@@ -1,0 +1,13 @@
+ALTER TABLE `Elements` 
+ADD `state_finalized` tinyint(1) DEFAULT NULL AFTER `state_deprecated`,
+ADD `state_approved` tinyint(1) DEFAULT NULL AFTER `state_finalized`,
+ADD `state_dismissed` tinyint(1) DEFAULT NULL AFTER `state_approved`,
+ADD `state_blocked` tinyint(1) DEFAULT NULL AFTER `state_dismissed`,
+ADD `state_finalizedInfo` text COLLATE utf8_unicode_ci AFTER `state_important2Info`,
+ADD `state_approvedInfo` text COLLATE utf8_unicode_ci AFTER `state_finalizedInfo`,
+ADD `state_dismissedInfo` text COLLATE utf8_unicode_ci AFTER `state_approvedInfo`,
+ADD `state_blockedInfo` text COLLATE utf8_unicode_ci AFTER `state_dismissedInfo`,
+ADD INDEX `state_finalized` (`state_finalized`),
+ADD INDEX `state_approved` (`state_approved`),
+ADD INDEX `state_dismissed` (`state_dismissed`),
+ADD INDEX `state_blocked` (`state_blocked`); 
