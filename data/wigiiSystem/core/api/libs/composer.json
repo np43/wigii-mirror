@@ -1,0 +1,7 @@
+{
+    "require": {
+        "guzzle/guzzle": "~3.7",
+        "apache/log4php": "~2.3",
+        "campaignmonitor/createsend-php": "~3.1"
+    }
+}
