@@ -1,0 +1,10 @@
+<?xml version='1.0' standalone='yes'?>
+<contacts>
+	<adds>
+		<item node="parameters['Element_evaluator']" value="CustomizedElementEvaluator" ></item>
+		<item addNodesTo="fields" >
+			<calculatedField type="Strings" funcExp='hello(implode(" - ", first_name, address.city, __element.sys_creationDate))'></calculatedField>
+			<calculatedField2 type="Strings" funcExp='inc(calculatedField2)'></calculatedField2>
+		</item>
+	</adds>
+</contacts>

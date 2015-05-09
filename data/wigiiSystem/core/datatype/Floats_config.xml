@@ -1,0 +1,15 @@
+<?xml version='1.0' standalone='yes'?>
+<Floats>
+	<!-- dans unique il y a deja: table, id_record, field par defaut -->
+	<dbFields unique="" >
+		<!--l'id est implicite. id_nomDuDatatypeSingulier, ainsi que id_element et field -->
+		<!-- possibilite pour sqlLengthname: Length, valueLength, numberLength -->
+		<value type="float" sqlType="double" require="1" searchable="1" />
+		<sys_user type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_username type="hidden" sqlType="varchar" require="0" searchable="0" />
+		<sys_date type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_creationUser type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_creationUsername type="hidden" sqlType="varchar" require="0" searchable="0" />
+		<sys_creationDate type="hidden" sqlType="int" require="0" searchable="0" />
+	</dbFields>
+</Floats>

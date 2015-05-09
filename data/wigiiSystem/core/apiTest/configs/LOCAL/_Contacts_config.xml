@@ -1,0 +1,174 @@
+<?xml version='1.0' standalone='yes'?>
+<contacts>
+
+	<parameters
+
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+		Notification_enable="1"
+		Notification_enableOnSharing="0"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="1"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="1"
+
+		Element_enableLockedStatus="0"
+		Element_enableImportant1Status="0"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="0"
+		Element_enableDeprecatedStatus="0"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="0"
+		Element_viewInfo="1"
+		Element_viewId="1"
+
+		Group_selectAllGroupsOnFirstLoad="1"
+		Group_enableDynamicConfig="1"
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		Group_IncludeChildrenGroupsOnSelect="1"
+
+		elementTotalWidth="550"
+		elementLabelWidth="200"
+		sendEmailTotalWidth="450"
+		sendEmailLabelWidth="150"
+		sendFeedbackTotalWidth="450"
+		shareMultipleElementLabelWidth="150"
+		shareMultipleElementTotalWidth="450"
+		sendFeedbackLabelWidth="150"
+		nbOfLevelToExpandOnInit="1"
+		/>
+
+	<mails fieldNameToUse="email" fieldNameToFetch="firstname,lastname,email" />
+	<generalUser userName="test" userPwd="test" />
+
+	<feedbackOnElement>
+		<template path="Feedback.php" inClientFolder="1" />
+		<fields>
+			<feedback_from type="Blobs" require="1" isInLine="1"/>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="MultipleAttributs" require="1" useCheckboxes="1" >
+				<attribute email="lionel@wigii.ch, ##GroupEmailNotification##" >contactAlertList</attribute>
+				<attribute email="lionel@wigii.ch" redirect="Owner" >badContent</attribute>
+				<attribute email="lionel@wigii.ch" >missingElement</attribute>
+				<attribute email="lionel@wigii.ch" >commentsAndSuggest</attribute>
+				<attribute email="lionel@wigii.ch" >feedback_special_option<label>avec un doc!</label></attribute>
+				<attribute email="lionel@wigii.ch" >technicalProblem</attribute>
+			</feedback_for>
+			<feedback_special_dept type="Attributs" require="0">
+				<label>Send doc too</label>
+				<attribute>none</attribute>
+				<attribute email="redirect@wigii.ch" redirect="Owner" >Owner</attribute>
+				<attribute email="Finance@wigii.ch" redirect="languageSpoken" >Finance</attribute>
+				<attribute email="Navigator@wigii.ch" redirect="question" >Navigator</attribute>
+				<attribute email="hr@wigii.ch" redirect="email" >Human Ressource</attribute>
+			</feedback_special_dept>
+			<feedback_special_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="0" isInLine="1"  htmlArea="1" activateHtmlArea="1" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="Feedback.php" inClientFolder="1" />
+		<fields>
+			<feedback_from type="Blobs" require="1" isInLine="1"/>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="MultipleAttributs" require="1" useCheckboxes="1" >
+				<attribute contentFeedback="1" email="lionel@wigii.ch" >missingElement</attribute>
+				<attribute contentFeedback="1" email="lionel@wigii.ch" >commentsAndSuggest</attribute>
+				<attribute email="lionel@wigii.ch" >feedback_special_option<label>avec un doc!</label></attribute>
+				<attribute email="lionel@wigii.ch" >technicalProblem</attribute>
+			</feedback_for>
+			<feedback_special_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1" htmlArea="1" activateHtmlArea="1" />
+		</fields>
+	</feedbackOnSystem>
+
+	<Notification>
+		<!-- <template path="NotificationContact.php" inClientFolder="1" /> -->
+	</Notification>
+
+	<fields>
+		<photo isInLine="0" editGroup="a" editGroupHasAtLeastFilled="0" type="Files" require="0" ignoreNotification="0" searchable="0" displayPreviewOnly="1" />
+		<text htmlArea="1" activateHtmlArea="1" editGroup="a" isInLine="1" type="Blobs" require="0" searchable="1" />
+		<link editGroup="a" type="Urls" require="0" searchable="1" />
+		<first_name isInLine="1" type="Strings" require="1" searchable="1" ><label>Label de prénom très long et en principe pas adapté du tout à l'écolde de "Genève"...!</label></first_name>
+		<last_name type="Varchars" require="1" searchable="1" />
+		<freeText onlyInForm="1" > Si search  et replace  sont des tableaux, alors str_replace() prendra une valeur de chaque tableau, et l'utilisera pour faire le remplacement dans subject . Si replace  a moins de valeurs que search , alors une chaîne vide sera utilisée pour effectuer les remplacements. Si search  est un tableau et que replace  est une chaîne, alors la chaîne de remplacement sera utilisée pour chaque élément de search . Cependant, l'inverse n'aurait aucun sens.
+
+Si search ou replace sont des tableaux, les éléments sont traités du premier, au dernier. </freeText>
+		<email type="Emails" enableForEmailing="1" require="0" searchable="1" isMultiple="1" hidden="0" ><help>L'email doit être rempli dans un format du type: xxx@yyy.zzz</help><label>Test d'email</label></email>
+		<email2 isInLine="1" type="Emails" enableForEmailing="0" require="0" searchable="1" isMultiple="0" hidden="0" />
+		<address type="Addresses" require="0" searchable="1" noState="1" noCountry="1"><label>Addresse privée</label></address>
+		<rdv type="TimeRanges" require="0" searchable="1" />
+		<site type="Urls" require="0" noCheck="0" searchable="1"  />
+		<myText1 type="Blobs" isInLine="1" require="0" searchable="1" htmlArea="0" />
+		<myText2 type="Texts" isInLine="1" require="0" searchable="1" htmlArea="1" activateHtmlArea="1" />
+		<question email="question@wigii.ch" type="Booleans" require="0" searchable="1"><label>Question piège</label></question>
+		<date type="Dates" isBirthDate="1" require="0" searchable="1" ><label>Birthdate</label></date>
+		<time type="Times" require="0" searchable="1" />
+		<freeText onlyInForm="0"  > Si search  et replace  sont des tableaux, alors str_replace() prendra une valeur de chaque tableau, et l'utilisera pour faire le remplacement dans subject . Si replace  a moins de valeurs que search , alors une chaîne vide sera utilisée pour effectuer les remplacements. Si search  est un tableau et que replace  est une chaîne, alors la chaîne de remplacement sera utilisée pour chaque élément de search . Cependant, l'inverse n'aurait aucun sens.
+
+Si search ou replace sont des tableaux, les éléments sont traités du premier, au dernier. </freeText>
+		<languageSpoken displayGroup="tag" allAttIndex="2" displayAsTag="1" type="MultipleAttributs" require="0" useMultipleColumn="3" isInLine="0" useCheckboxes="1" editHidden="0" searchable="1" isReversible="1" >
+			<label>Les langues</label>
+			<attribute email="german@wigii.ch" >German<label>Allemand d'école</label></attribute>
+			<attribute email="french@wigii.ch" >French<label>all language</label></attribute>
+			<attribute>English</attribute>
+			<attribute>Spanich</attribute>
+			<attribute email="leldore@wigii.ch" >attr4<label>l'eldoré + / enfants</label></attribute>
+		</languageSpoken>
+		<Owner displayGroup="tag" type="Attributs" displayAsTag="1" require="0" editHidden="0" searchable="1" isReversible="1" >
+			<attribute>none</attribute>
+			<attribute email="lionel@ekc.ch" >Lionel</attribute>
+			<attribute email="camille.weber@bluewin.ch" >Camille</attribute>
+			<attribute email="elaine@wigii.ch" >Elaine</attribute>
+		</Owner>
+		<Owner2 displayGroup="tag" type="Attributs" displayAsTag="1" require="0" editHidden="0" searchable="1" isReversible="1" >
+			<attribute>none</attribute>
+			<attribute>Lionel</attribute>
+			<attribute>Camille</attribute>
+			<attribute>Elaine</attribute>
+		</Owner2>
+		<Statut displayGroup="tag" type="MultipleAttributs" displayAsTag="1" require="0" editHidden="0" searchable="1" isReversible="1" >
+			<attribute>woman</attribute>
+			<attribute>man</attribute>
+			<attribute>company</attribute>
+		</Statut>
+	</fields>
+
+	<listView>
+		<fields>
+			<c0 field="photo" subField="path" width="10" />
+			<c7 elementAttribut="id" width="40" ><label>ID</label></c7>
+			<c1 field="first_name" width="120" />
+			<c2 field="last_name" width="120" />
+			<c3 field="address" subField="city" width="50" ><label>Ville privée</label></c3>
+			<c4 field="languageSpoken" width="null" sortable="1" />
+			<c5 field="email" width="null" />
+			<c6 elementAttribut="sys_date" width="75" unsortable="0" defaultSorted=" DESC " />
+		</fields>
+	</listView>
+
+	<selectSearchBar>
+		<fields>
+			<c1 field="languageSpoken" width="120" />
+			<c2 field="Owner" width="120" />
+			<c3 field="Statut" width="120" ><label>Statut privée</label></c3>
+			<Engagement type="groupFilter" width="120" >
+				<attribute groupLogExp="NOTINGR(id = 394)" >noGlobalEmailing</attribute>
+				<attribute groupLogExp="INGR(id = 394)" >hasGlobalEmailing</attribute>
+				<attribute groupLogExp="INGR(id = 396)" >isAmbassador</attribute>
+			</Engagement>
+			<groupBy type="groupByFieldListAndElementInfo" width="120" />
+		</fields>
+	</selectSearchBar>
+
+	<advancedSearchBar>
+		<fields>
+
+		</fields>
+	</advancedSearchBar>
+
+
+</contacts>

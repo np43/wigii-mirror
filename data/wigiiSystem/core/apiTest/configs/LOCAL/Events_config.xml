@@ -1,0 +1,102 @@
+<?xml version='1.0' standalone='yes'?>
+<events>
+	
+	<parameters
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="0"
+		Notification_enable="1"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="0"
+		
+		Element_viewVersion="0" 
+		Element_viewInfo="1"
+		Element_viewId="1"
+		
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_enableDynamicConfig="1" 
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		Group_IncludeChildrenGroupsOnSelect="1"
+		
+		sendFeedbackTotalWidth="450"
+		sendFeedbackLabelWidth="150"
+		elementTotalWidth="600"
+		elementLabelWidth="200"
+		nbOfLevelToExpandOnInit="3"
+		
+		lockable="0" 
+		
+		viewVersion="0" 
+		viewElementInfo="1" 
+		viewElementId="1"  
+		viewHtmlPreview="0"
+		alwaysAllGroupsChecked="0"
+		allowsPortalInGroup="1"
+		expandFirst="1"
+		notifyChangesDefault="0"
+		alertEmailReceiveContentFeedbacks="0"
+		emailAlertGUIVisible ="1"
+		emailAlertNoChangeOthersEmail="1"
+		leftPanelClickHide="1"
+		leftPanelOpenFirst="0"
+		/>
+	
+	<feedbackOnSystem>
+		<fields>
+			<feedback_from type="Blobs" require="1" isInLine="1"/>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="MultipleAttributs" require="1" useCheckboxes="1" >
+				<attribute contentFeedback="1" email="lionel@wigii.ch" >missingElement</attribute>
+				<attribute contentFeedback="1" email="lionel@wigii.ch" >commentsAndSuggest</attribute>
+				<attribute email="lionel@wigii.ch" >feedback_special_option<label>avec un doc!</label></attribute>
+				<attribute email="lionel@wigii.ch" >technicalProblem</attribute>
+			</feedback_for>
+			<feedback_special_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Texts" require="1" isInLine="1" htmlArea="1" activateHtmlArea="1" />
+		</fields>
+	</feedbackOnSystem>
+	
+	<fields >
+		<subject type="Strings" require="1" searchable="1" forceNotification="1" />
+		<location type="Strings" require="0" searchable="1" forceNotification="1" />
+		<period type="TimeRanges" require="0" searchable="1" forceNotification="1" />
+		<comments type="Blobs" require="0" searchable="1" forceNotification="1" htmlArea="1" activateHtmlArea="1" isInLine="1" />
+		<type type="Attributs" require="0" searchable="1" displayAsTag="1" >
+			<attribute>none</attribute>
+			<attribute>important</attribute>
+			<attribute>business</attribute>
+			<attribute>personal</attribute>
+			<attribute>vacation</attribute>
+			<attribute>anniversary</attribute>
+		</type>
+	</fields>
+	
+	<selectSearchBar>
+		<fields>
+			<c0 field="type" width="120" />
+			<groupBy type="groupByFieldListAndElementInfo" width="120" />
+		</fields>
+	</selectSearchBar>
+	
+	<listView>
+		<fields>
+			<c1 field="subject" width="null" />
+			<c2 field="location" width="120" />
+			<c3 field="period" subField="begDate" width="120" />
+			<c4 field="type" width="120" />
+		</fields>
+	</listView>
+	
+	<!-- <views defaultSortedBy="file_date DESC, file_name ASC, file_type ASC, file_size ASC">
+		<list nbItemPerPage="20">
+			<file_download iconable="1" subfield="download" />
+			<file_name width="200" unsortable="0" iconable="0" subfield="name"/>
+			<file_date width="160" unsortable="0" iconable="0" subfield="date" defaultSorted=" DESC " />
+			<keywords width="null" unsortable="0" iconable="0" />
+			<tags width="220" />
+			<srcFile_name width="160" unsortable="0" iconable="0" subfield="name"/>
+   		</list>
+	</views>
+	-->
+</events>

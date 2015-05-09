@@ -1,0 +1,107 @@
+<?xml version='1.0' standalone='yes'?>
+<contacts>
+
+	<parameters
+		lockable="1" 
+		tagable="1" 
+		feedbackable="1"
+		multipleEdit="1" 
+		versionable="0" 
+		viewElementInfo="1" 
+		viewElementId="1"  
+		viewHtmlPreview="0"
+		alwaysAllGroupsChecked="0"
+		mailable="1"
+		expandFirst="1"
+		notifyChangesDefault="0"
+		alertEmailReceiveContentFeedbacks="1"
+		allowGroupDynamicConfig="1"
+		emailAlertGUIVisible ="1"
+		emailAlertNoChangeOthersEmail="1"
+		leftPanelClickHide="1"
+		leftPanelOpenFirst="0"
+		elementDataWidth="600"
+		elementLabelWidth="200"
+		sendEmailDataWidth="350"
+		sendEmailLabelWidth="100"
+		sendFeedbackDataWidth="200"
+		sendFeedbackLabelWidth="80"
+		/>
+	
+	<mails fieldNameToUse="email" fieldNameToFetch="firstname,lastname,email" />
+	<generalUser userName="test" userPwd="test" />
+	
+	<feedback>
+		<fields>
+			<feedback_from type="Blobs" require="1" isInLine="1" />
+			<feedback_email type="Emails" require="1" />
+			<freeText>tralalal pouèt !!</freeText>
+			<feedback_for type="MultipleAttributs" require="1" useCheckboxes="1" >
+				<attribute contentFeedback="1" onlySelectedElement="1" email="lionel@wigii.ch" >badContent</attribute>
+				<attribute contentFeedback="1" email="lionel@wigii.ch" >missingElement</attribute>
+				<attribute contentFeedback="1" email="lionel@wigii.ch" >commentsAndSuggest</attribute>
+				<attribute email="lionel@wigii.ch" >technicalProblem</attribute>
+			</feedback_for>
+			<freeText>tralalal pouèt 222 !!</freeText>
+			<feedback_text type="Blobs" require="1" isInLine="0" height="250" width="410" />
+		</fields>
+	</feedback>
+	
+	<fields>
+		<freeText>tralalal pouèt !!</freeText>
+		<photo type="Files" require="0" ignoreNotification="1" searchable="0" displayPreviewOnly="1" />
+		<first_name type="Strings" require="1" searchable="1" />
+		<last_name type="Strings" require="1" searchable="1" />
+		<email type="Emails" require="0" searchable="1" isMultiple="0"  />
+		<address type="Addresses" require="0" searchable="1" noState="1" noCountry="1"><label>Addresse privée</label></address>
+		<rdv type="TimeRanges" require="0" searchable="1" />
+		<site type="Urls" require="0" noCheck="0" searchable="1"  />
+		<myText1 type="Blobs" isInLine="1" require="0" searchable="1" htmlArea="0" />
+		<myText2 type="Texts" isInLine="0" require="0" searchable="1" htmlArea="1" />
+		<question type="Booleans" require="0" searchable="1" />
+		<date type="Dates" require="0" searchable="1" />
+		<time type="Times" require="0" searchable="1" />
+		<languageSpoken allAttIndex="2" type="MultipleAttributs" require="0" useMultipleColumn="3" isInLine="0" useCheckboxes="1" editHidden="0" searchable="1" isReversible="1" >
+			<label>Les langues</label>
+			<attribute>German<label>Allemand d'école</label></attribute>
+			<attribute>French<label>all language</label></attribute>
+			<attribute>English</attribute>
+			<attribute>Spanich</attribute>
+		</languageSpoken>
+		<Statut type="Attributs" require="0" editHidden="0" searchable="0" isReversible="1" >
+			<attribute>none</attribute>
+			<attribute>woman</attribute>
+			<attribute>man</attribute>
+			<attribute>company</attribute>
+		</Statut>
+	</fields>
+	
+	<tags>
+		<languageSpoken allAttIndex="2" type="MultipleAttributs" require="0" useCheckboxes="1" editHidden="0" searchable="1" isReversible="1" >
+			<label>Les langues</label>
+			<attribute>none</attribute>
+			<attribute>German<label>allemand boch</label></attribute>
+			<attribute>French<label>all language</label></attribute>
+			<attribute>English</attribute>
+			<attribute>Spanich</attribute>
+		</languageSpoken>
+		<Statut type="MultipleAttributs" require="0" editHidden="0" searchable="0" isReversible="1" >
+			<attribute>woman</attribute>
+			<attribute>man</attribute>
+			<attribute>company</attribute>
+		</Statut>
+	</tags>
+	
+	<views defaultSortedBy="first_name_value ASC, last_name_value ASC">
+		<list nbItemPerPage="20">
+			<priority width="20" unsortable="0" iconable="0" />
+			<first_name width="120" unsortable="0" iconable="0" />
+			<address_city width="80" unsortable="0" iconable="0" subfield="city"><label>Ville privée</label></address_city>
+			<comments width="110" unsortable="0" iconable="0" />
+			<email width="null" unsortable="0" iconable="0" />
+			<tags width="120" />
+			<sys_date width="75" unsortable="0" iconable="0" defaultSorted=" DESC " />
+		</list>
+	</views>
+	
+</contacts>

@@ -1,0 +1,50 @@
+<?xml version='1.0' standalone='yes'?>
+<admin>
+	
+	<parameters 
+		viewEditUsersUsers="1"
+		desactivateImportCSV="0"
+		allowsPortalInGroup="1"
+		allowsEmailNotification="1"
+		emailNotificationFrom="no-reply@wigii.ch"
+		allowsSubscription="1"
+		allowsXmlPublish="1"
+		language="fr"
+		csvSeparator=";"
+		/>
+	
+	<pop3Config 
+		doubleLoginRequired="0" 
+		server="portal.medair.org" 
+		emailPostfix="@medair.org" 
+		usernameCanBeEmailAccount="1"
+		/>
+	
+	<smtpConfig
+		host="mail.wigii.ch"
+		username="mailer@wigii.ch"
+		password="mailer-wgi"
+	/>
+	
+	<login 
+		goForModule="Filemanager" 
+		loginLabel="#User" 
+		defaultUserName=""
+		loginPostfix="" 
+		/>
+	
+	<home 
+		moduleToDisplay="Filemanager;Contacts" 
+		/>
+	
+	<users>
+		
+		<forbidden>
+			<user username="lionel" withChildrenUsers="0" onlyChildrenUsers="1" />
+		</forbidden>
+		<public>
+			<user username="adminWWW" />
+		</public>
+	</users>
+	
+</admin>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<errorcodes>
+	<exceptions>
+		<ServiceException from="0" to="1099"/>
+		<AuthenticationServiceException from="1100" to="1199"/>
+		<ClientAdminServiceException from="1200" to="1299"/>
+		<ConfigServiceException from="1300" to="1399"/>
+		<ElementServiceException from="1400" to="1499"/>
+		<GroupAdminServiceException from="1500" to="1599"/>
+		<ModuleAdminServiceException from="1600" to="1699"/>
+		<WigiiNamespaceAdminServiceException from="1700" to="1799"/>
+		<ServiceProviderException from="1800" to="1899"/>
+		<TechnicalServiceProviderException from="1900" to="1999"/>
+		<UserAdminServiceException from="2000" to="2099"/>
+		<RestrictedServiceProviderException from="2100" to="2199"/>
+		<TechnicalServiceException from="2200" to="2299"/>
+		<MovingWindowIteratorException from="2300" to="2399"/>
+		<DbAdminServiceException from="2400" to="2499"/>
+		<MySqlFacadeException from="2500" to="2599"/>
+		<TranslationServiceException from="2600" to="2699"/>
+		<ExecutionServiceException from="2700" to="2799"/>
+		<SystemConsoleServiceException from="2800" to="2899"/>
+		<FormException from="2900" to="2999"/>
+		<AuthorizationServiceException from="3000" to="3099"/>
+		<ListException from="3100" to="3199"/>
+		<FormCheckerException from="3200" to="3299"/>
+		<MySqlQueryBuilderException from="3300" to="3399"/>
+		<FormExecutorException from="3400" to="3499"/>
+		<ActivityRecordException from="3500" to="3599"/>
+		<StatisticServiceException from="3600" to="3699"/>
+		<EmailServiceException from="3700" to="3799"/>
+		<StringTokenizerException from="3800" to="3899"/>
+		<NotificationServiceException from="3900" to="3999"/>
+		<ValueListException from="4000" to="4099"/>
+		<AdminContextException from="4100" to="4199"/>
+		<ListContextException from="4200" to="4299"/>
+		<DataFlowServiceException from="4300" to="4399"/>
+		<FieldRendererExceptionException from="4400" to="4499"/>
+		<WigiiGraphServiceException from="4500" to="4599"/>
+		<FuncExpEvalException from="4600" to="4699"/>
+		<WigiiBPLException from="4700" to="4799"/>
+	</exceptions>
+</errorcodes>

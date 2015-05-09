@@ -1,0 +1,20 @@
+<?xml version='1.0' standalone='yes'?>
+<Urls>
+	<dbFields unique="" >
+		<name type="text" sqlType="varchar" sqlLength="valueLength" multiLanguage="0" require="0" searchable="1" />
+		<url type="text" sqlType="varchar" sqlLength="valueLength" multiLanguage="0" require="1" searchable="1" />
+		<target type="select" sqlType="varchar" sqlLength="valueLength" multiLanguage="0" require="0" searchable="0">
+			<attribute>_blank</attribute>
+			<attribute>_self</attribute>
+			<attribute>_file</attribute>
+			<attribute>_video</attribute>
+			<attribute>_iframe</attribute>
+		</target>
+		<sys_user type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_username type="hidden" sqlType="varchar" require="0" searchable="0" />
+		<sys_date type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_creationUser type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_creationUsername type="hidden" sqlType="varchar" require="0" searchable="0" />
+		<sys_creationDate type="hidden" sqlType="int" require="0" searchable="0" />
+	</dbFields>
+</Urls>

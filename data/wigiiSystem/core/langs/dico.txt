@@ -1,0 +1,1682 @@
+date_on:on:le:::::::::
+date_at:at:à:::::::::
+dayOfWeek_long_1:Monday:Lundi:::::::::
+dayOfWeek_long_2:Tuesday:Mardi:::::::::
+dayOfWeek_long_3:Wednesday:Mercredi:::::::::
+dayOfWeek_long_4:Thursday:Jeudi:::::::::
+dayOfWeek_long_5:Friday:Vendredi:::::::::
+dayOfWeek_long_6:Saturday:Samedi:::::::::
+dayOfWeek_long_7:Sunday:Dimanche:::::::::
+dayOfWeek_1:Mo:Lu:::::::::
+dayOfWeek_2:Tu:Ma:::::::::
+dayOfWeek_3:We:Me:::::::::
+dayOfWeek_4:Th:Je:::::::::
+dayOfWeek_5:Fr:Ve:::::::::
+dayOfWeek_6:Sa:Sa:::::::::
+dayOfWeek_7:Su:Di:::::::::
+month_long_1:January:Janvier:::::::::
+month_long_2:February:Février:::::::::
+month_long_3:March:Mars:::::::::
+month_long_4:April:Avril:::::::::
+month_long_5:May:Mai:::::::::
+month_long_6:June:Juin:::::::::
+month_long_7:July:Juillet:::::::::
+month_long_8:August:Août:::::::::
+month_long_9:September:Septembre:::::::::
+month_long_10:October:Octobre:::::::::
+month_long_11:November:Novembre:::::::::
+month_long_12:December:Décembre:::::::::
+month_1:Jan:Jan:::::::::
+month_2:Feb:Fév:::::::::
+month_3:Mar:Mars:::::::::
+month_4:Apr:Avr:::::::::
+month_5:May:Mai:::::::::
+month_6:June:Juin:::::::::
+month_7:July:Juil:::::::::
+month_8:Aug:Août:::::::::
+month_9:Sept:Sept:::::::::
+month_10:Oct:Oct:::::::::
+month_11:Nov:Nov:::::::::
+month_12:Dec:Déc:::::::::
+Home:Home:Accueil:::::::::
+Events:Calendar:Calendrier:::::::::
+Contacts:Contacts:Contacts:::::::::
+Filemanager:Files:Fichiers:::::::::
+E-library:E-library:E-library:::::::::
+Info:Info:Info:::::::::
+Programmes:Programs:Programmes:::::::::
+Transfer:Transfer:Transfer:::::::::
+Confidential:Confidential:Confidentiel:::::::::
+Technical:Technical:Technique:::::::::
+Inventory:Inventory:Inventaire:::::::::
+Subscriptions:Subscriptions:Inscriptions:::::::::
+Worship:Worship:Louange:::::::::
+News:News:News:::::::::
+TestCases:Test cases:Cas de test:::::::::
+Tasks:Tasks:Tâches:::::::::
+Help:Help:Aide:::::::::
+#-element#:element:élément:::::::::
+#-elementContacts#:contact:contact:::::::::
+#-elementEvents#:event:event:::::::::
+#-elementFilemanager#:document:document:::::::::
+#-elementE-library#:document:document:::::::::
+#-elementInfo#:document:document:::::::::
+#-elementNews#:document:document:::::::::
+#-elementTestCases#:test case:cas de test:::::::::
+#-elementTasks#:task:tâche:::::::::
+#-elementProgrammes#:document:document:::::::::
+#-elementTransfer#:document:document:::::::::
+#-elementHelp#:item:article:::::::::
+#-elementInventory#:item:article:::::::::
+#-elementSubscriptions#:subscription:inscription:::::::::
+#-elementWorship#:document:document:::::::::
+#-elementsContacts#:contacts:contacts:::::::::
+#-elementsEvents#:events:events:::::::::
+#-elementsFilemanager#:documents:documents:::::::::
+#-elementsE-library#:documents:documents:::::::::
+#-elementsInfo#:documents:documents:::::::::
+#-elementsProgrammes#:documents:documents:::::::::
+#-elementsTransfer#:documents:documents:::::::::
+#-elementsWorship#:documents:documents:::::::::
+#-elementsSubscriptions#:subscriptions:inscriptions:::::::::
+#-elementsInventory#:items:articles:::::::::
+#-elementsHelp#:items:articles:::::::::
+#-elementsNews#:documents:documents:::::::::
+#-elementsTestCases#:test cases:cas de test:::::::::
+#-elementsTasks#:tasks:tâches:::::::::
+#-Element#:Element:Elément:::::::::
+#-ElementContacts#:Contact:Contact:::::::::
+#-ElementEvents#:Event:Event:::::::::
+#-ElementFilemanager#:Document:Document:::::::::
+#-ElementE-library#:Document:Document:::::::::
+#-ElementInfo#:Document:Document:::::::::
+#-ElementNews#:Document:Document:::::::::
+#-ElementTestCases#:Test case:Cas de test:::::::::
+#-ElementTasks#:Task:Tâche:::::::::
+#-ElementProgrammes#:Document:Document:::::::::
+#-ElementTransfer#:Document:Document:::::::::
+#-ElementHelp#:Item:Article:::::::::
+#-ElementInventory#:Item:Article:::::::::
+#-ElementSubscriptions#:Subscription:Inscription:::::::::
+#-ElementWorship#:Document:Document:::::::::
+#-ElementsContacts#:Contacts:Contacts:::::::::
+#-ElementsEvents#:Events:Events:::::::::
+#-ElementsFilemanager#:Documents:Documents:::::::::
+#-ElementsE-library#:Documents:Documents:::::::::
+#-ElementsInfo#:Documents:Documents:::::::::
+#-ElementsProgrammes#:Documents:Documents:::::::::
+#-ElementsTransfer#:Documents:Documents:::::::::
+#-ElementsWorship#:Documents:Documents:::::::::
+#-ElementsSubscriptions#:Subscriptions:Inscriptions:::::::::
+#-ElementsInventory#:Items:Articles:::::::::
+#-ElementsHelp#:Items:Articles:::::::::
+#-ElementsNews#:Documents:Documents:::::::::
+#-ElementsTestCases#:Test cases:Cas de test:::::::::
+#-ElementsTasks#:Tasks:Tâches:::::::::
+#AnElementContacts#:A contact:Un contact:::::::::
+#AnElementEvents#:An event:Un event:::::::::
+#AnElementFilemanager#:A document:Un document:::::::::
+#AnElementE-library#:A document:Un document:::::::::
+#AnElementInfo#:A document:Un document:::::::::
+#AnElementProgrammes#:A document:Un document:::::::::
+#AnElementTransfer#:A document:Un document:::::::::
+#AnElementWorship#:A document:Un document:::::::::
+#AnElementSubscriptions#:A subscription:Une inscription:::::::::
+#AnElementInventory#:An item:Un article:::::::::
+#AnElementHelp#:An item:Un article:::::::::
+#AnElementNews#:A document:Un document:::::::::
+#AnElementTestCases#:A test case:Un test case:::::::::
+#AnElementTasks#:A tasks:Une tâche:::::::::
+#ElementContacts#:Contact:Le contact:::::::::
+#ElementEvents#:Event:L'event:::::::::
+#ElementFilemanager#:Document:Le document:::::::::
+#ElementE-library#:Document:Le document:::::::::
+#ElementInfo#:Document:Le document:::::::::
+#ElementProgrammes#:Document:Le document:::::::::
+#ElementTransfer#:Document:Le document:::::::::
+#ElementWorship#:Document:Le document:::::::::
+#ElementSubscriptions#:Subscription:L'inscription:::::::::
+#ElementInventory#:Item:L'article:::::::::
+#ElementHelp#:Item:L'article:::::::::
+#ElementNews#:Document:Le document:::::::::
+#ElementTestCases#:Test case:Le cas de test:::::::::
+#ElementTasks#:Task:La tâche:::::::::
+#ElementsContacts#:Contacts:Les contacts:::::::::
+#ElementsEvents#:Events:Les events:::::::::
+#ElementsFilemanager#:Documents:Les documents:::::::::
+#ElementsE-library#:Documents:Les documents:::::::::
+#ElementsInfo#:Documents:Les documents:::::::::
+#ElementsProgrammes#:Documents:Les documents:::::::::
+#ElementsTransfer#:Documents:Les documents:::::::::
+#ElementsWorship#:Documents:Les documents:::::::::
+#ElementsSubscriptions#:Subscriptions:Les inscriptions:::::::::
+#ElementsInventory#:Items:Les articles:::::::::
+#ElementsHelp#:Items:Les articles:::::::::
+#ElementsNews#:Documents:Les documents:::::::::
+#ElementsTasks#:Tasks:Les tâches:::::::::
+#ElementsTestCases#:Test cases:Les cas de test:::::::::
+
+Projects:Projects:Projets:::::::
+#-elementProjects#:task:tâche:::::::
+#-elementsProjects#:tasks:tâches:::::::
+#-ElementProjects#:Task:Tâche:::::::
+#-ElementsProjects#:Tasks:Tâches:::::::
+#AnElementProjects#:A task:Une tâche:::::::
+#ElementProjects#:Task:Tâche:::::::::
+#ElementsProjects#:Tasks:Les tâches:::::::
+#newElementProjects#:new task:nouvelle tâche:::::::
+#NewElementProjects#:New task:Nouvelle tâche:::::::
+#ThisElementProjects#:This task:Cette tâche:::::::
+#ThoseElementsProjects#:Those tasks:Ces tâches:::::::
+#anElementProjects#:a task:une tâche:::::::
+#elementProjects#:task:la tâche:::::::
+#elementsProjects#:tasks:les tâches:::::::
+#ofElementProjects#:of the task:de cette tâche:::::::
+#ofElementsProjects#:of tasks:des tâches:::::::
+#thisElementProjects#:this task:cette tâche:::::::
+#thoseElementsProjects#:those tasks:ces tâches:::::::
+inGroupProjects:Choose #group#:Choisissez #group#:::::::
+
+Comments:Comments:Comments:::::::
+#-elementComments#:comment:commentaire:::::::
+#-elementsComments#:comments:commentaires:::::::
+#-ElementComments#:Comment:Commentaire:::::::
+#-ElementsComments#:Comments:Commentaires:::::::
+#AnElementComments#:A comment:Un commentaire:::::::
+#ElementComments#:Comment:Commentaire:::::::::
+#ElementsComments#:Comments:Les commentaires:::::::
+#newElementComments#:new comment:nouveau commentaire:::::::
+#NewElementComments#:New comment:Nouveau commentaire:::::::
+#ThisElementComments#:This comment:Ce commentaire:::::::
+#ThoseElementsComments#:Those comments:Ces commentaires:::::::
+#anElementComments#:a comment:un commentaire:::::::
+#elementComments#:comment:le commentaire:::::::
+#elementsComments#:comments:les commentaires:::::::
+#ofElementComments#:of the comment:de ce commentaire:::::::
+#ofElementsComments#:of comments:des commentaires:::::::
+#thisElementComments#:this comment:ce commentaire:::::::
+#thoseElementsComments#:those comments:ces commentaires:::::::
+inGroupComments:Choose #group#:Choisissez #group#:::::::
+
+#-group#:group:groupe:::::::::
+#Group#:Group:Groupe:::::::::
+#Groups#:Groups:Groupes:::::::::
+#TheGroups#:Groups:Les groupes:::::::::
+#TheGroup#:The group:Le groupe:::::::::
+#ThoseGroups#:Those groups:Ces groupes:::::::::
+#thoseGroups#:those groups:ces groupes:::::::::
+#ThisGroup#:This group:Ce groupe:::::::::
+#aGroup#:a group:un groupe:::::::::
+#group#:group:le groupe:::::::::
+#groups#:groups:les groupes:::::::::
+#-groups#:groups:groupes:::::::::
+#ofGroup#:of the group:du groupe:::::::::
+#ofGroups#:of groups:des groupe:::::::::
+#thisGroup#:this group:ce groupe:::::::::
+
+
+#-group#:folder:dossier:::::::::
+#Group#:Folder:Dossier:::::::::
+#Groups#:Folders:Dossiers:::::::::
+#TheGroups#:Folders:Les dossiers:::::::::
+#TheGroup#:The folder:Le dossier:::::::::
+#ThoseGroups#:Those folders:Ces dossiers:::::::::
+#thoseGroups#:those folders:ces dossiers:::::::::
+#ThisGroup#:This folder:Ce dossier:::::::::
+#aGroup#:a folder:un dossier:::::::::
+#group#:folder:le dossier:::::::::
+#groups#:folders:les dossiers:::::::::
+#-groups#:folders:dossiers:::::::::
+#ofGroup#:of the folder:du dossier:::::::::
+#ofGroups#:of folders:des dossiers:::::::::
+#thisGroup#:this folder:ce dossier:::::::::
+
+#newElementContacts#:new contact:nouveau contact:::::::::
+#newElementEvents#:new event:nouveau event:::::::::
+#newElementFilemanager#:new document:nouveau document:::::::::
+#newElementE-library#:new document:nouveau document:::::::::
+#newElementInfo#:new document:nouveau document:::::::::
+#newElementProgrammes#:new document:nouveau document:::::::::
+#newElementTransfer#:new document:nouveau document:::::::::
+#newElementWorship#:new document:nouveau document:::::::::
+#newElementSubscriptions#:new subscription:nouvelle inscription:::::::::
+#newElementInventory#:new item:nouvel article:::::::::
+#newElementHelp#:new item:nouvel article:::::::::
+#newElementNews#:new document:nouveau document:::::::::
+#newElementTestCases#:new test case:nouveau cas de test:::::::::
+#newElementTasks#:new task:nouvelle tâche:::::::::
+#NewElementContacts#:New contact:Nouveau contact:::::::::
+#NewElementEvents#:New event:Nouveau event:::::::::
+#NewElementFilemanager#:New document:Nouveau document:::::::::
+#NewElementE-library#:New document:Nouveau document:::::::::
+#NewElementInfo#:New document:Nouveau document:::::::::
+#NewElementProgrammes#:New document:Nouveau document:::::::::
+#NewElementTransfer#:New document:Nouveau document:::::::::
+#NewElementWorship#:New document:Nouveau document:::::::::
+#NewElementSubscriptions#:New subscription:Nouvelle inscription:::::::::
+#NewElementInventory#:New item:Nouvel article:::::::::
+#NewElementHelp#:New item:Nouvel article:::::::::
+#NewElementNews#:New document:Nouveau document:::::::::
+#NewElementTestCases#:New test case:Nouveau cas de test:::::::::
+#NewElementTasks#:New task:Nouvelle tâche:::::::::
+#ThisElementContacts#:This contact:Ce contact:::::::::
+#ThisElementEvents#:This event:Cet event:::::::::
+#ThisElementFilemanager#:This document:Ce document:::::::::
+#ThisElementE-library#:This document:Ce document:::::::::
+#ThisElementInfo#:This document:Ce document:::::::::
+#ThisElementProgrammes#:This document:Ce document:::::::::
+#ThisElementTransfer#:This document:Ce document:::::::::
+#ThisElementWorship#:This document:Ce document:::::::::
+#ThisElementSubscriptions#:This subscription:Cette inscription:::::::::
+#ThisElementInventory#:This item:Cet article:::::::::
+#ThisElementHelp#:This item:Cet article:::::::::
+#ThisElementNews#:This document:Ce document:::::::::
+#ThisElementTestCases#:This test case:Ce cas de test:::::::::
+#ThisElementTasks#:This task:Cette tâche:::::::::
+#ThoseElementsContacts#:Those contacts:Ces contacts:::::::::
+#ThoseElementsEvents#:Those events:Ces events:::::::::
+#ThoseElementsFilemanager#:Those documents:Ces documents:::::::::
+#ThoseElementsE-library#:Those documents:Ces documents:::::::::
+#ThoseElementsInfo#:Those documents:Ces documents:::::::::
+#ThoseElementsProgrammes#:Those documents:Ces documents:::::::::
+#ThoseElementsTransfer#:Those documents:Ces documents:::::::::
+#ThoseElementsWorship#:Those documents:Ces documents:::::::::
+#ThoseElementsSubscriptions#:Those subscriptions:Ces inscriptions:::::::::
+#ThoseElementsInventory#:Those items:Ces articles:::::::::
+#ThoseElementsHelp#:Those items:Ces articles:::::::::
+#ThoseElementsNews#:Those documents:Ces documents:::::::::
+#ThoseElementsTestCases#:Those test cases:Ces cas de test:::::::::
+#ThoseElementsTasks#:Those tasks:Ces tâches:::::::::
+
+#anElementContacts#:a contact:un contact:::::::::
+#anElementEvents#:an event:un event:::::::::
+#anElementFilemanager#:a document:un document:::::::::
+#anElementE-library#:a document:un document:::::::::
+#anElementInfo#:a document:un document:::::::::
+#anElementProgrammes#:a document:un document:::::::::
+#anElementTransfer#:a document:un document:::::::::
+#anElementWorship#:a document:un document:::::::::
+#anElementSubscriptions#:a subscription:une inscription:::::::::
+#anElementInventory#:an item:un article:::::::::
+#anElementHelp#:an item:un article:::::::::
+#anElementNews#:a document:un document:::::::::
+#anElementTestCases#:a test case:un cas de test:::::::::
+#anElementTasks#:a task:une tâche:::::::::
+#elementContacts#:contact:le contact:::::::::
+#elementEvents#:event:event:::::::::
+#elementFilemanager#:document:le document:::::::::
+#elementE-library#:document:le document:::::::::
+#elementInfo#:document:le document:::::::::
+#elementProgrammes#:document:le document:::::::::
+#elementTransfer#:document:le document:::::::::
+#elementWorship#:document:le document:::::::::
+#elementSubscriptions#:subscription:l'inscription:::::::::
+#elementInventory#:item:l'article:::::::::
+#elementHelp#:item:l'article:::::::::
+#elementNews#:document:le document:::::::::
+#elementTestCases#:test case:le cas de test:::::::::
+#elementTasks#:task:la tâche:::::::::
+#elementsContacts#:contacts:les contacts:::::::::
+#elementsEvents#:events:les events:::::::::
+#elementsFilemanager#:documents:les documents:::::::::
+#elementsE-library#:documents:les documents:::::::::
+#elementsInfo#:documents:les documents:::::::::
+#elementsProgrammes#:documents:les documents:::::::::
+#elementsTransfer#:documents:les documents:::::::::
+#elementsWorship#:documents:les documents:::::::::
+#elementsSubscriptions#:subscriptions:les inscriptions:::::::::
+#elementsInventory#:items:les articles:::::::::
+#elementsHelp#:items:les articles:::::::::
+#elementsNews#:documents:les documents:::::::::
+#elementsTestCases#:test cases:les cas de test:::::::::
+#elementsTasks#:tasks:les tâches:::::::::
+
+#ofElementContacts#:of the contact:du contact:::::::::
+#ofElementEvents#:of the event:de l'event:::::::::
+#ofElementFilemanager#:of the document:du document:::::::::
+#ofElementInfo#:of the document:du document:::::::::
+#ofElementE-library#:of the document:du document:::::::::
+#ofElementProgrammes#:of the document:du document:::::::::
+#ofElementTransfer#:of the document:du document:::::::::
+#ofElementWorship#:of the document:du document:::::::::
+#ofElementSubscriptions#:of the subscription:de l'inscriptions:::::::::
+#ofElementInventory#:of the item:de l'article:::::::::
+#ofElementHelp#:of the item:de l'article:::::::::
+#ofElementNews#:of the document:du document:::::::::
+#ofElementTestCases#:of the test case:du cas de test:::::::::
+#ofElementTasks#:of the task:de la tâche:::::::::
+#ofElementsContacts#:of contacts:de contacts:::::::::
+#ofElementsEvents#:of events:d'events:::::::::
+#ofElementsFilemanager#:of documents:de documents:::::::::
+#ofElementsE-library#:of documents:de documents:::::::::
+#ofElementsInfo#:of documents:de documents:::::::::
+#ofElementsProgrammes#:of documents:de documents:::::::::
+#ofElementsTransfer#:of documents:de documents:::::::::
+#ofElementsWorship#:of documents:de documents:::::::::
+#ofElementsSubscriptions#:of subscriptions:d'inscriptions:::::::::
+#ofElementsInventory#:of items:d'articles:::::::::
+#ofElementsHelp#:of items:d'articles:::::::::
+#ofElementsNews#:of documents:de document:::::::::
+#ofElementsTestCases#:of test cases:de cas de test:::::::::
+#ofElementsTasks#:of tasks:de tâches:::::::::
+#thisElement#:this element:cet élément:::::::::
+#thisElementContacts#:this contact:ce contact:::::::::
+#thisElementEvents#:this event:cet event:::::::::
+#thisElementFilemanager#:this document:ce document:::::::::
+#thisElementE-library#:this document:ce document:::::::::
+#thisElementInfo#:this document:ce document:::::::::
+#thisElementProgrammes#:this document:ce document:::::::::
+#thisElementTransfer#:this document:ce document:::::::::
+#thisElementWorship#:this document:ce document:::::::::
+#thisElementSubscriptions#:this subscription:cette inscription:::::::::
+#thisElementInventory#:this item:cet article:::::::::
+#thisElementHelp#:this item:cet article:::::::::
+#thisElementNews#:this document:ce document:::::::::
+#thisElementTestCases#:this test case:ce cas de test:::::::::
+#thisElementTasks#:this task:cette tâche:::::::::
+#thoseElements#:those elements:ces éléments:::::::::
+#thoseElementsContacts#:those contacts:ces contacts:::::::::
+#thoseElementsEvents#:those events:ces events:::::::::
+#thoseElementsFilemanager#:those documents:ces documents:::::::::
+#thoseElementsE-library#:those documents:ces documents:::::::::
+#thoseElementsInfo#:those documents:ces documents:::::::::
+#thoseElementsProgrammes#:those documents:ces documents:::::::::
+#thoseElementsTransfer#:those documents:ces documents:::::::::
+#thoseElementsWorship#:those documents:ces documents:::::::::
+#thoseElementsSubscriptions#:those subscriptions:ces inscriptions:::::::::
+#thoseElementsInventory#:those items:ces articles:::::::::
+#thoseElementsHelp#:those items:ces articles:::::::::
+#thoseElementNews#:those documents:ces documents:::::::::
+#thoseElementsTestCases#:those test cases:ces cas de test:::::::::
+#thoseElementsTasks#:those tasks:ces tâches:::::::::
+
+unavailableElement:Unavailable #-element#:#-Element# non disponible:::::::::
+unavailableElementExplication:The requested URL is no more available on this server.:L'URL demandée n'est plus dispnible sur ce serveur.:::::::::
+module:Tab:Onglet:::::::::
+browser:Browser:Navigateur:::::::::
+role:Role:Rôle:::::::::
+user:User:Utilisateur:::::::::
+calculatedRole:Calculated user:Utilisateur calculé:::::::::
+wigiiBusyLoading:Loading...:Chargement...:::::::
+wigiiNotLoadedMessage:If page does not load, please click on the HOME menu.:Si la page ne se charge pas, cliquez sur le menu ACCUEIL.:::::::
+wigiiFilteringLoading:Filtering...:Mise en place du filtre...:::::
+wigiiCredentialExpirationTime:days:jours::::::
+wigiiLoginIntroductionText:<b>Login problems?</b><br />Send an email to :<b>Problème de login?</b><br />Envoyez un email à :::::
+checked:tick:coché:
+unchecked:untick:décoché:
+
+inGroupContacts:Choose #group#:Choisissez #group#:::::::::
+inGroupFilemanager:Choose #group#:Choisissez #group#:::::::::
+inGroupE-library:Choose #group#:Choisissez #group#:::::::::
+inGroupInfo:Choose #group#:Choisissez #group#:::::::::
+inGroupHelp:Choose #group#:Choisissez #group#:::::::::
+inGroupInventory:Choose #group#:Choisissez #group#:::::::::
+inGroupTasks:Choose #group#:Choisissez #group#:::::::::
+inGroupEvents:Choose #group#:Choisissez #group#:::::::::
+inGroupNews:Choose #group#:Choisissez #group#:::::::::
+inGroupProgrammes:Choose #group#:Choisissez #group#:::::::::
+inGroupTransfer:Choose #group#:Choisissez #group#:::::::::
+inGroupTestCases:Choose #group#:Choisissez #group#:::::::::
+inGroupWorship:Choose #group#:Choisissez #group#:::::::::
+inGroupSubscriptions:Choose #group#:Choisissez #group#:::::::::
+
+Addresses_city:City:Ville:::::::::
+Addresses_country:Country:Pays:::::::::
+Addresses_state:State / County:Etats / Canton:::::::::
+Addresses_street:Street:Rue:::::::::
+Addresses_zip_code:Zip code / Post code:NPA / Code postal:::::::::
+Admin:Admin:Admin:::::::::
+CSVPretty:CSV (formatted):CSV (formaté):::::::::
+CSVRaw:CSV (raw data):CSV (données brut):::::::::
+Contacts:Contacts:Contacts:::::::::
+Files_date:Date:Date:::::::::
+Files_name:Filename:Nom du fichier:::::::::
+Files_size:Size:Taille:::::::::
+Files_type:Extension:Extension:::::::::
+Emails_value:::::::::::
+Emails_validated:Is confirmed:Est confirmée:::::::::
+Emails_proofKey:Key for confirmation link:Clé pour le lien de confirmation:::::::::
+Emails_proofKeyLink:Confirmation link:Lien de confirmation:
+Emails_proofKeyUnsubscribeLink:Unsubscribe link:Lien de désinscription:
+Emails_proof:Proof of confirmation:Preuve de la confirmation:::::::::
+Emails_proofStatus:Confirmation status:Statut de la confirmation:::::::::
+Emails_externalConfigGroup:#Group# id to use for config:Id du #-group# à utiliser pour la config:::::::::
+Emails_externalAccessLevel:External access level:Niveau d'accès externe:::::::::
+Emails_externalCode:External access code:Code d'accès externe:::::::::
+Emails_externalCodeLink:Access link:Lien d'accès:::::::::
+Emails_externalAccessEndDate:External access end date:Date de fin de l'accès externe:::::::::
+availableMailMergeField:Add in the message:Ajouter dans le message::::
+externalAccessMailMerge_help:This will add a link to access #thoseElements# directly from the email owner. This will result in an invalid link if no external access are defined for #anElement#.:Cette opération ajoutera un lien permettant au propriétaire de l'email d'accéder à #thoseElements#. Ce lien sera invalide dans le cas où aucun accès externe n'a été défini pour #anElement#.:::::
+Ok:Ok:Ok:::::::::
+TimeRanges_begDate:Start date:Date de début:::::::::
+TimeRanges_begTime:Start time:Heure de début:::::::::
+TimeRanges_endDate:End date:Date de fin:::::::::
+TimeRanges_endTime:End time:Heure de fin:::::::::
+TimeRanges_isAllDay:All day:Toute la journée:::::::::
+TimeRanges_onlyDate:This field is limited to dates only. You cannot define time in this field.:Ce champ est limité à l'utilisation des dates. Vous ne pouvez pas définir les heures.:::::::::
+timeRangesOnlyDateFrom:From:De::::
+timeRangesOnlyDateTo:To:à::::::
+Urls_name:Link name:Nom du lien:::::::::
+Urls_target:Link target:Cible du lien:::::::::
+Urls_url:Link url:Url du lien:::::::::
+Yes:Yes:Oui:::::::::
+_blank:Open in a new page:Ouvrir dans une nouvelle page:::::::::
+_file:Open a local file:Ouvrir un fichier local:::::::::
+_self:Open in the same page:Ouvrir dans le même page:::::::::
+_video:Embed a video player:Intègre un lecteur vidéo:::::::::
+_iframe:Open in an embeded frame:Ouvrir dans un frame intégré:::::::::
+aFile:A file:Un fichier:::::::::
+close:Close:Fermer:::::::::
+
+addElement:Add #anElement#:Ajouter #anElement#:::::::::
+addElementButton:Add:Ajouter:::::
+exportElementButton:Export:Exporter:::::::
+emailingButton:Email:Email:::::::
+emailingMultipleAdvanced:Advanced emailing:Emailing avancé:
+totalAttachementFilesize:Total attached file size (:La taille totale des fichiers attachés(::::::
+totalAttachementFilesizeExceed:) cannot exceed :) ne peut excéder :::::
+toAttacheBigerFilesLinkItInTheEmail:To attach bigger files link them in the email using the link icon with which you can use to upload on the server.:Pour attacher de plus gros fichier veuillez faire un lien dans l'email en utilisant le bouton lien avec lequel vous pouvez uploader directement sur le serveur.:::::
+multipleUnsubscribeEmails:Unsubscribe:Désinscrire:
+multipleUnsubscribeEmails_help:All selected #elements# email addresses matching the unsubscribe email list will be deleted.:Toutes les adresses emails des #-elements# sélectionnés correspondant à la liste d'email de désinscription seront effacés.:
+unsubscribeEmails:Unsubscribe:Désinscrire:
+areYouSureUnsubscribeEmails:Are you sure you want to remove email addresses of #thoseElements# matching the unsubscribe list?:Êtes-vous sûre de vouloir supprimer les adresses emails de #thoseElements# correspondant à la liste de désinscription?:
+unsubscribeEmailsAddressesResult:email addresses has been removed.:adresse email ont été supprimées.::::
+unsubscribeEmailsItemsResult:#-elements# matched the unsubscribe email list.:#-elements# correspondent à la liste de désinscription.:
+
+addElementInGroup:#ThisElement# will be added in #group#:#ThisElement# sera ajouté dans #group#:::::::::
+adminGroupButton:#Groups#:#Groups#:::::::::
+adminGroupButtonHelp:Administrate and manage #groups#.:Administre et gère #groups#:::::::::
+adminGroupUserButton:#Group# rights:Droits sur #groups#:::::::::
+adminGroupUserButtonHelp:Define access for users or roles for each #group#.:Définit l'accès des utilisateurs ou des rôles pour chaque #-group#.:::::::::
+adminModuleEditorButton:General configuration:Configuration générale:::::::::
+adminModuleEditorButtonHelp:Define configuration files.:Définit les fichiers de configurations:::::::::
+adminResetFilterGroupButtonHelp:Reset #group# filter:Réinitialise les filtres des #-groups#:::::::::
+adminResetFilterUserButtonHelp:Reset user filter:Réinitialise les filtres des utilisateurs:::::::::
+adminUserAdminButton:Admin level:Niveau d'admin:::::::::
+adminUserAdminButtonHelp:Define the administration level for each user.:Définit le niveau d'administration de chaque utilisateur.:::::::::
+adminUserButton:Users:Utilisateurs:::::::::
+adminUserButtonHelp:Administrate user list:Administre la liste des utilisateurs:::::::::
+adminRoleButton:Roles:Rôles:::::::::
+adminRoleButtonHelp:Administrate role list:Administre la liste des rôles:::::::::
+adminUserRoleButton:Role allocation:Allocation de rôle:::::::::
+adminUserRoleButtonHelp:Define the roles that each user can use.:Définit les rôles que chaque utilisateur peuvent utiliser.:::::::::
+adminUserUserButton:User ownership:Possession d'utilisateur:::::::::
+adminUserUserButtonHelp:Define the users a user can see in Admin.:Définit les utilisateurs qu'un utilisateur peut voir dans l'Admin.:::::::::
+adminUsersAreRed:Administrators are in red:Les administrateurs sont en rouge:::::::::
+usernameAlreadyUsed:Please choose another username (this one is already used):Veuillez choisir un autre nom d'utilisateur (celui-ci est déjà utilisé):::::
+itemShownInFolders:#Element# is shown in the following #groups#:#Element# est montré dans #groups# suivants:::::
+
+
+all:All:Tous:::::::::
+allElementsAvaible:All #elements#:Tous #elements:::::::::
+areYouSureDeleteFile:Are you sure you want to delete this file?:Etes-vous sûre de vouloir effacer ce fichier?:::::::::
+areYouSureDeleteElement:Are you sure you want to delete #thisElement#?:Etes-vous sûre de vouloir effacer #thisElement#?:::::::::
+areYouSureDeleteElements:Are you sure you want to delete these #-elements#?:Etes-vous sûre de vouloir effacer ces #-elements#?:::::::::
+areYouSureDeleteGroup:Are you sure that you want to delete the #-group#\::Etes-vous sûr de vouloir supprimer #group#\::::::::::
+areYouSureDeleteUser:Are you sure that you want to delete this user?:Etes-vous sûr de vouloir supprimer cet utilisateur?:::::::::
+areYouSureDeleteRole:Are you sure that you want to delete this role?:Etes-vous sûr de vouloir supprimer ce rôle?:::::::::
+attachedFile0:Attached file 1:Fichier attaché 1:::::::::
+attachedFile1:Attached file 2:Fichier attaché 2:::::::::
+attachedFile2:Attached file 3:Fichier attaché 3:::::::::
+attachedFile3:Attached file 4:Fichier attaché 4:::::::::
+attachedFile4:Attached file 5:Fichier attaché 5:::::::::
+attachedFile5:Attached file 6:Fichier attaché 6:::::::::
+attachedFile6:Attached file 7:Fichier attaché 7:::::::::
+attachedFile7:Attached file 8:Fichier attaché 8:::::::::
+attachedFile8:Attached file 9:Fichier attaché 9:::::::::
+attachedFile9:Attached file 10:Fichier attaché 10:::::::::
+attachedFile10:Attached file 11:Fichier attaché 11:::::::::
+attachedFile11:Attached file 12:Fichier attaché 12:::::::::
+attachedFile12:Attached file 13:Fichier attaché 13:::::::::
+attachedFile13:Attached file 14:Fichier attaché 14:::::::::
+attachedFile14:Attached file 15:Fichier attaché 15:::::::::
+audio:Audio:Audio:::::::::
+authenticationMethod:Authentication method:Méthode d'authentification:::::::::
+authenticationMethodHelp:This defines how the password of this user will be verified. If the method is Normal, this means that the password is stored in the wigii system and must be managed. If Pop3 or Pop3SSL is selected, this means that the password will be authenticated through an email account and automatically managed.:Cette option défini la manière dont le mot-de-passe de l'utilisateur est contrôlé. Si vous choisissez l'option 'Normal', alors cela indique que le mot-de-passe est sauvegardé dans le système wigii. Cela implique que vous devez gérer ces mots-de-passes. Si une autre option est choisie, cela implique que le mot-de-passe de l'utilisateur sera contrôler avec un méthode d'authentification sur un autre serveur. Cela implique que vous n'avez pas besoin de gérer les mots-de-passes, puisqu'ils seront gérés sur un autre serveur.:::::::::
+authenticationServer:Authentication server:Serveur d'authentification:::::::::
+authenticationServerHelp:This is the Pop3 server that you want to contact. For example, with a gmail account, specify <b>pop.gmail.com</b>.:Ceci contient le nom du serveur utilisé pour la méthode d'authentification choisie. Si vous avez par exemple défini un compte gmail, vous devrez indiquer avec la méthode pop3SSL le serveur <b>pop.gmail.com</b>.:::::::::
+back:Back:Retour:::::::::
+backToMyself:Myself:Moi-même:::::::::
+badContent:Incorrect content #ofElement#:Contenu #ofElement# incorrect:::::::::
+canModifyOwnPassword:Can change his/her password:Peut modifier son mot-de-passe:::::::::
+cancel:Cancel:Annuler:::::::::
+changeOwnPassword:Change my password:Modifier mon mot-de-passe:::::::::
+changeOwnDetails:Change my details:Modifier mes détails:::::::::
+changeRightsTo:Set rights for\::Définir les droits à\::::::::::
+clicToSelectAllGroups:Click to view the contents of all #groups#:Cliquez pour voir le contenu de tous #groups#:::::::::
+collapseAll:Collapse:Réduire:::::::::
+comments:Comments:Commentaires:::::::::
+commentsAndSuggest:Comments and suggestions:Commentaires et suggestions:::::::::
+company:Company:Entreprise:::::::::
+compulsory_field:Mandatory field:Champ obligatoire:::::::::
+compulsory_whenField:when:lorsque:::::::::
+compulsory_isFilled:is filled:est rempli:::::::::
+confNewPassword:Confirm new password:Confirmer le mot-de-passe:::::::::
+date:Date:Date:::::::::
+defaultChildrenAreAttachedToParents:By default, children will be attached to the current parent #group#.:Par défaut, les enfants seront attachés au #-group# parent.:::::::::
+defaultTextSearch:Search:Rechercher:::::::::
+defaultTextAdvancedSearch:Type in a query.\nUse the right side toolbar to add fields and operator.:Introduisez une requête.\nUtiliser la barre d'outil à droite pour ajouter des champs ou des opérateurs.:::::::::
+defaultTextGroupSearch:Add criteria on #group# ownership. Use the right side toolbar.:Ajouter des critères d'appartenance à des #-groups#. Utiliser la barre d'outil à droite.:::::::::
+delete:Delete:Supprimer:::::::::
+deleteDraft:Delete draft:Supprimer le brouillon:::::::
+deleteChildren:Delete all the children #groups# and their content ?:Effacer tous #groups# enfants et leur contenu ?:::::::::
+deleteConfigFile:Delete this configuration?:Effacer cette configuration?:::::::::
+deleteElement:Delete #element#:Supprimer #element#:::::::::
+deleteElements:Delete #elements#:Supprimer #elements#:::::::::
+deleteFile:If ticked, this will delete the current uploaded file when this form is submitted.:Si coché, le fichier actuellement uploadé sera effacé lorsque le formulaire est soumis.:::::::::
+deleteGroup:Delete #group#:Supprimer #group#:::::::::
+deleteLastWriteSharing:After this operation, you will no longer be able to modify #thisElement#.<br><br>Do you want to continue?:Après cette opération il ne vous sera plus possible de modifier #element#.<br><br>Voulez-vous continuer?:::::::::
+deleteUser:Delete user:Supprimer l'utilisateur:::::::::
+deleteRole:Delete role:Supprimer le rôle:::::::::
+description:Description:Description:::::::::
+detailElement:#Element# details:Détails #ofElement#:::::::::
+printElement:Print #element# details:Imprimer les détails #ofElement#:::::::::
+printDetails:Print:Imprimer:::::::::
+openElement:Open:Ouvrir:::::::::
+details:Details:Détails:::::::::
+doYouWantToSave_elementDialog:Do you want to save changes on #thisElement#?:Voulez-vous enregistrer les modifications de #thisElement#?:::::::::
+doYouWantToSave_organizeDialog:Do you want to apply changes?:Voulez-vous appliquer les changements?:::::::::
+doYouWantToSave_filtersDialog:Do you want to apply changes?:Voulez-vous appliquer les changements?:::::::::
+doYouWantToSave_confirmationDialog:Do you want to apply changes?:Voulez-vous appliquer les changements?:::::::::
+doYouWantToSave_feedbackDialog:Do you want to send this feedback?:Voulez-vous envoyer ce feedback?:::::::::
+doYouWantToSave_importDialog:Do you want to finish the importation?:Voulez-vous terminer l'importation?:::::::::
+doYouWantToSave_exportDialog:Do you want to finish the exportation?:Voulez-vous terminer l'exportation?:::::::::
+doYouWantToSave_changePasswordDialog:Do you want to finish the changes?:Voulez-vous appliquer les changements?:::::::::
+doYouWantToSave_emailingDialog:Do you want to send this email?:Voulez-vous envoyer l'email?:::::::::
+download:Download:Télécharger:::::::::
+downloadingElements:Download:Télécharger:::::::::
+exportDownloadingElements:Export (with files):Exporter (avec fichiers):::::::::
+noFileChangesAfterThisDate:No changes in files since:Aucun changement de fichiers depuis::::
+downloadingElementsTitle:Download started:Le téléchargement a commencé:::::::::
+noFilesFoundToDownload:Please select some files:Veuillez sélectionner des fichiers:
+clicLinksIfNotDownloading:Use the links below if the download didn't start\::Veuillez utliser les liens ci-dessous si le téléchargement n'a pas commencé\::
+detailReadButton:Read:Lire::::::
+detailViewButton:Display:Afficher:::::
+detailDownloadButton:Download:Télécharger::::
+detailCheckoutButton:Check-out:Check-out:::::
+detailCheckinButton:Check-in:Check-in:::::
+
+unusualServerTiming:The response time of the server is unusually long. Please try again.:Le temps de réponse du serveur est inhabituellement long. Veuillez réessayer.:
+
+edit:Modify:Modifier:::::::::
+copy:Copy:Copier:::::::::
+organize:Organize:Organiser:::::::::
+refresh:Refresh:Recharger:::::::::
+editElement:Modify #element#:Modifier #element#:::::::::
+copyElement:Copy #element#:Copier #element#:::::::::
+organizeElement:Organize #element#:Organiser #element#:::::::::
+backToParent:Back<br/>to parent:Retour<br/>au parent:::::::::
+editElements:Modify #elements#:Modifier #elements#:::::::::
+editGroup:Modify the #group#:Modifie #group#:::::::::
+newGroup:Create #aGroup#:Créer #aGroup#:::::::::
+copyGroup:Create a new #-group# with identical properties:Créer un nouveau #-group# avec des propriétés similaires:::::::::
+editGroupParent:Change parent #group#:Modifier #group# parent:::::::::
+editGroupParentTitle:<div class="lightGray lightGrayReverseFont" style="width\:300px; padding\:5px; float\:left; " >Click on #aGroup# to select it as parent.</div>:<div class="lightGray lightGrayReverseFont" style="width\:300px; padding\:5px; float\:left; " >Cliquez sur #aGroup# afin de le sélectionner comme #-group# parent.</div>:::::::::
+editSharing:Move:Déplacer:::::::::
+editSharingTitle:<div class="lightGray lightGrayReverseFont" style="width\:300px; padding\:5px; float\:left; " >Click on #groups# to select or unselect them.</div>:<div class="lightGray lightGrayReverseFont" style="width\:300px; padding\:5px; float\:left; " >Cliquez sur #groups# afin de les sélectionner ou les déselectionner.</div>:::::::::
+editUser:Modify:Modifier:::::::::
+elementsInGroup:#Elements# in:#Elements# dans:::::::::
+email:Email:Email:::::::::
+emails:Email list:Liste d'email:::::::::
+empty:Empty:Vide:::::::::
+enableGroupXmlPublish:Enable public links:Permettre les liens publiques:::::::::
+expandAll:Expand:Afficher:::::::::
+exportElementTo:Export #elements#:Exporter #elements#:::::::::
+exportElementToCSV:Export #elements# in CSV:Exporter #elements# en CSV:::::::::
+exportElementToExcel:Export #elements# to Excel:Exporter #elements# vers Excel:::::::::
+exportElementToExcelCalendar:Export #elements# to Excel calendar:Exporter #elements# vers un calendrier Excel:::::::::
+
+exportExcel:Export to Excel:Exporter vers Excel:::::::::
+exportExcel_help:Export in an Excel file:Exporter dans un fichier Excel:::::::::
+exportExcelCalendar:Export to Excel:Exporter vers Excel:::::::::
+exportExcelCalendar_help:Export in an Excel file in a calendar view:Exporter dans un fichier Excel dans une vue en calendrier:::::::::
+exportCSV:Export in CSV:Exporter en CSV:::::::::
+exportCSV_help:Export in a standard CSV (comma separated values) format. Use this format to do mailmerge or to import in other systems.:Exporter dans un format CSV standard (valeurs séparées par des vigrules). Utiliser ce format pour faire du publipostage ou pour importer les données dans d'autres systèmes.:::::::::
+afterExportWaitTillTheBrowserFinishedToLoad:<img src="images/icones/tango/22x22/status/awaiting.png" style="float\:left;margin-top\:15px;margin-right\:5px;"/><br />The export operation can take several minutes. After clicking Ok please wait till the browser finishes to load the export file.:<img src="images/icones/tango/22x22/status/awaiting.png" style="float\:left;margin-top\:15px;margin-right\:5px;"/><br />L'opération d'export peut prendre plusieurs minutes. Après avoir cliqué sur Ok veuillez attendre que le navigateur ait fini de charger le fichier d'export.:::::::::
+chooseTheExportFormat:Choose the export format:Choisissez le format d'exportation:::::::::
+chooseTheExportTemplate:Choose the export template:Choisissez le modèle d'exportation:::::::::
+csvFormat:Data type:Type des données:::::::::
+csvFormated:Formated:Formatées:::::::::
+csvFormatedIconTitle:Standard:Standard:::::::::
+csvFormatedIconHelp:Create a CSV file(comma separated value) with formated data.:Crée un fichier CSV (valeur séparées par des virgules) avec des données formatées.:::::::::
+csvRaw:RAW:Brutes:::::::::
+csvRawIconTitle:RAW:Brutes:::::::::
+csvRawIconHelp:Create a CSV file(comma separated value) with all RAW data for import purpose.:Crée un fichier CSV (valeur séparées par des virgules) avec toutes les données brut dans le but d'un import.:::::::::
+csvBackup:For backup:Pour une sauvegarde:::::::::
+csvBackupIconTitle:For backup:Pour une sauvegarde:::::::::
+csvBackupIconHelp:Create a CSV file(comma separated value) with all RAW data for backup purpose.:Crée un fichier CSV (valeur séparées par des virgules) avec les données brut dans le but d'une sauvegarde.:::::::::
+csvEncoding:Encoding:Encodage:::::::::
+csvSeparator:Separator:Séparateur:::::::::
+
+excelGrouping:How to regroup #elements# per #-group#:Comment regrouper #elements# par #-group#:::::::::
+excelTitle:create one title per #-group#:créer un titre par #-group#:::::::::
+excelTitleIconTitle:Standard:Standard:::::::::
+excelTitleIconHelp:Create one page with separation on sub#group#.:Crée une page avec des séparations par sous-#group#.:::::::::
+excelPage:create one page per #-group#:créer une page par #-group#:::::::::
+excelPageIconTitle:Multi-paged:Multi-page:::::::::
+excelPageIconHelp:Create one page per sub#group#.:Crée une page par sous-#group#.:::::::::
+excelList:no regrouping:aucun regroupement:::::::::
+excelListIconTitle:List:Liste:::::::::
+excelListIconHelp:List all #elements#.:Liste tous #elements#.:::::::::
+
+excelCalendarTemplate:Template:Modèle:::::::::
+excelCalendarAnnual:Annual:Annuel:::::::::
+excelCalendarAnnualIconTitle:Annual:Annuel:::::::::
+excelCalendarAnnualIconHelp:Display one complete year:Affiche une année complète:::::::::
+excelCalendarYear:Year:Année:::::::::
+
+feedback:Feedback:Feedback:::::::::
+feedbackOnElement:This feedback is about the #element#:Ce feedback est envoyé au sujet #ofElement#:::::::::
+
+feedbackAboutElement: about #element# \#: à propos #ofElement# \#:
+feedbackInTab:Feedback from :Feedback depuis :::::::::
+
+feedback_email:Your email address:Votre adresse email:::::::::
+feedback_for:Send feedback to:Envoyer le feedback à:::::::::
+feedback_from:User details:Détail de l'utilisateur:::::::::
+feedback_special_file:Attached document:Document attaché:::::::::
+feedback_file:Attach a document:Attacher un document:::::::::
+feedback_text:Explanation:Explications:::::::::
+file:Document:Document:::::::::
+fileFormat:File format:Format de fichier:::::::::
+finishCurrentOperation:Please finish the current operation first.:Veuillez terminer, s'il vous plaît, l'opération en cours.:::::::::
+forceToQuit:Force to end:Forcer à quitter:::::::::
+from_email:From <span style="font-size\:x-small;">(email)</span>:De <span style="font-size\:x-small;">(email)</span>:::::::::
+getGroupCreator:#Group# creator:Créateur de #-group#:::::::::
+getGroupCreator_help:Can create #groups# only with existing parent.:Peut uniquement créer des #-groups# depuis des parents existants.:::::::::
+getReadAllGroupsInWigiiNamespace:Access all #groups#:Accès à tous #groups#:::::::::
+getReadAllGroupsInWigiiNamespace_help:Can access all #groups# in namespace.:Peut accèder tous #groups# de l'espace de nom.:::::::::
+getRootGroupCreator:Root #group# creator:Créateur de #-group# racine:::::::::
+getRootGroupCreator_help:Can create root #group# (with no parent).:Peut créer des #-groups# racines (sans parents).:::::::::
+giveGeneralFeedback:Send us your feedback:Envoyer nous votre Feedback:::::::::
+giveFeedback:Send feedback:Donner un feedback:::::::::
+
+
+
+moduleView:Views:Affichages::::::::
+navigationStyle:Navigation:Navigation::::::::
+iconsNavigation:Icons:Icônes::::::::
+listNavigation:#Group# tree:Arborescence #ofGroups#::::::::
+listView:Change view to list:Changer la vue en liste::::::::
+blogView:Change view to blog:Changer la vue en blog::::::::
+calendarView:Change view to calendar:Changer la vue en calendrier::::::::
+mapView:Change view to map:Changer la vue en carte::::::::
+changeView:Change view:Changer la vue::::::::
+apply:Apply:Appliquer::::::::
+noGroupSelected:Please create #aGroup#.:Veuillez créer #aGroup#.:
+
+doYouWantToRemoveYouMultipleSelectionText:Discard current multiple selection?:Annuler la sélection multiple courante?:
+
+groupBy:Group by:Grouper par:::::::::
+groupConfigEdit:#Group# XML config:Configuration XML du #-group#:::::::::
+groupConfigEdit_help:Redefine the configuration for #thisGroup#. The configuration can redefine fields, views and filters.:Redéfinit une configuration pour #thisGroup#. Une configuration peut redéfinir les champs, les vues et les filtres.:::::::::
+groupConfigFile:Write a specific configuration for this #-group#.:Ecrivez une configuration spécifique pour ce #-group#.:::::::::
+groupDelete:Delete:Supprimer:::::::::
+deleteGroupOption:Please choose one option\::Veuillez séléctionner une option\::
+groupDelete_help:Delete #group# and all content.:Supprime #group# et tous le contenu.:::::::::
+groupDetail:#Group# properties:Propriétés #ofGroup#:::::::::
+groupEdit:Edit:Modifier:::::::::
+groupEdit_help:Edit #group# details:Modifie les détails du #-group#:::::::::
+groupEmailNotification:Notification email:Email de notification:::::::::
+groupEmailNotification_help:Define the list of email addresses which recieve notification on changing content.:Défini la liste des adresses email qui receoivent les notifications lors de changement dans le contenu.:::::::::
+groupHtmlContent:Cover page:Page de couverture:::::::::
+groupHtmlContentPreview:Cover page:Page de couverture:::::::::
+groupHtmlContent_help:Setup a cover page:Ajouter une page de couverture:::::::
+groupNew:New:Nouveau:::::::::
+groupNewCopy:Copy:Copier:::::::::
+groupNewCopy_help:Create a new copy of this #group#. The groupname needs to be changed.:Créer un nouvelle copie de #thisGroup#. Le nom de #ofGroup# devra être modifié.:::::::::
+groupNew_help:Create a new #group#:Créer un nouveau #-group#:::::::::
+groupParent:Parent #group#:#Group# parent:::::::::
+groupPortal:External webpage:Page web externe:::::::::
+groupPortalPreview:External webpage:Page web externe:::::::::
+groupPortal_help:Display an external webpage:Afficher une page web externe:::::::
+groupXmlPublish:Publish #group#:Publier #group#:::::::::
+groupXmlPublishPreview:Publish XML:Publier en XML:::::::::
+groupCsvPublishPreview:Publish CSV:Publier en CSV:::::::::
+groupCsvRawPublishPreview:Publish CSV (RAW):Publier en CSV (RAW):::::::::
+groupCsvBackupPublishPreview:Publish in CSV for backup:Publier en CSV for backup:::::::::
+groupXmlPublish_help:Define public links to allow other applications access to the #group# content.:Défini des liens publique qui permet à d'autres applications d'accéder au contenu de #thisGroup#.:::::::::
+groupname:#Group# name:Nom du #group#:::::::::
+groupNames:#Groups#:#Groups#:::::::::
+historicOfElement:History #ofElement#:Historique #ofElement#:::::::::
+elementAdditionalInformation:Additional information #ofElement#:Information additionnelle #ofElement#:::::::::
+idOfElement:#Element# id:Id #ofElement#:::::::::
+foldersOfElement:Folder(s):Dossier(s):::::::::
+image:Image:Image:::::::::
+importElementMenuItem:Import from CSV...:Importer depuis un CSV...::::
+importElementIn:Import a list #ofElements#:Importer une liste #ofElements#:::::::::
+importInDataValidationExplanation:The only data validation done during import, is to verify that fields match in this module.:La seule validation de donnée effectuée lors de l'importation est le contrôle de la correspondance des champs dans ce module.:::::::::
+importInFilesExplanation:If you import files field, ensure that the content is imported either by ftp, either directly in DB. In addition if the path is the same than an existing element it will result in a broken link when the element will be updated or deleted.:Si vous importer des champs de type fichiers, assurer-vous que le contenu est uploadé soit par ftp, soit directement en base de donnée. De plus, dans le cas ou le path serait identique à celui d'un élément existant, ceci résulterait en un lien invalide lors d'une mise à jour de l'élément ou sa suppression.:::::::::
+importInHeaders:Data headers (CSV format):Entêtes des données (format CSV):::::::::
+importInMultilanguageExplanation:For multilanguage values, you need one column per language. Each language must be present. The order of the languages are:Pour les valeurs multilangues vous devez définir une colonne par langue. Chaque langue doit être présente. L'ordre des langues est:::::::::
+importInProcessExplanation:First select the #group# in which you want to import data, then define the headers\:<ul><li>this list is already completed with the current fields</li><li>you can delete some of them (new ones will be invalid)</li><li>all separators must match</li></ul>:Premiérement sélectionnez #group# dans lequel vous désirez faire l'import, puis définissez les en-têtes\:<ul><li>la liste actuelle est déjà complétée avec les champs définissant #anElement#</li><li>vous pouvez supprimer les en-têtes non nécessaire (tout en-tête ajoutée serait invalide)</li><li>tous les séparateurs doivent être identique</li></ul>:::::::::
+importInRawData:Raw data to import (CSV format):Données brut à importer (format CSV):::::::::
+importAvailableHeaders:Here is the list of headers you can use in your import file:Voici la liste des en-têtes que vous pouvez utiliser dans votre fichier d'import::::::
+noDataToImport:No data to import.:Aucune données à importer.:::::
+elementsImported:#-elements# imported.:#-elements# importés.:
+csvFile:CSV file:Fichier CSV:
+
+importInInvalidHeaders:Invalid headers:En-tête invalides:::::::
+importErrorOnLines:Error on lines:Erreurs aux lignes:::::::
+invalidData:Invalid datas:Données invalides:::::::
+importErrorOnLinesDetails:Additionnal information is added in the begining of lines containing error.:Plus d'information sont ajoutées aux débuts des lignes contenants des erreurs.:::::::
+
+updateElementMenuItem:Update from CSV...:Mettre à jour depuis un CSV...::::
+updateElementIn:Update a list #ofElements#:Mettre à jour une liste #ofElements#::::::::
+updateInGroupId:Update folder:Mettre à jour le dossier::::::::
+updateInProcessExplanation:First select the #group# in which you want to update data, then define the headers\:<ul><li>this list is already completed with the current fields</li><li>you can delete some of them (new ones will be invalid)</li><li>the key field must remain</li><li>all separators must match</li></ul>:Premiérement sélectionnez #group# dans lequel vous désirez faire la mise à jour, puis définissez les en-têtes\:<ul><li>la liste actuelle est déjà complétée avec les champs définissant #anElement#</li><li>vous pouvez supprimer les en-têtes non nécessaire (tout en-tête ajoutée serait invalide)</li><li>le champ clé doit être présent dans la list des champs</li><li>tous les séparateurs doivent être identique</li></ul>:::::::::
+updateInGroupIdMustHaveWriteRights:Please select a folder in which you have write rights.:Veuillez sélectionner un dossier dans lequel vous avez des droits d'écriture.::::
+noDataToUpdate:No data to update:Aucune donnée à mettre à jour:::::
+fieldKey:Choose the key fields:Choisissez le champ clé:
+updateInRawData:Raw data to update (CSV format):Données brut à mettre à jour (format CSV)::::::
+fieldKeyMustBeInHeader:Field key must appear in the header list.:Le champ clé doit apparaître dans les en-têtes.:::::
+ifElementIdInHeaderFieldKeyMustBeElementId:If you provide #element# ids, then "#element# id" must be used as key field.:Si vous donnez les ids #ofElements#, vous devez choisir comme champ clé "Id #ofElement#."::::::
+elementsUpdated:#-elements# updated.:#-elements# mis à jour.:
+elementsHaventBeenFound:#-elements# are not corresponding to any existing #-element#.:#-elements# ne correspondent a aucun #anElement# existant.:::
+clicHereToImportNoneExistingElements:Clic here to import remaining #-elements#...:Cliquez ici pour importer #elements# restant...:
+noDataToImport:No data to update.:Aucune données à mettre-à-jour.:::::
+
+findDuplicatesMenuItem:Find duplicates...:Trouver les doublons...::::
+finDuplicatesInGroupId:Find duplicates in #group#:Trouver les duplicatas dans #group#:
+findDuplicatesIn:Find duplicates:Trouver les doublons:
+findDuplicatesInExplanation:This feature will provide you with a list #ofElements# having duplicates in the current #group#.:Cette fonctionnalité vous affichera une liste #ofElements# ayant des duplicatas dans #group# courant.::::
+removeDuplicatesFilter:Duplicates filter is ON:Filtre sur les doublons:
+
+
+inGroupName:In #-group#:Dans #group#:::::::::
+inGroupId:Import in #group#:Importer dans #group#:::::::::
+inTheLast30days:In the last 30 days:Dans les 30 derniers jours:::::::::
+inTheLast60days:In the last 60 days:Dans les 60 derniers jours:::::::::
+info_lastLogin:Last login:Dernier login:::::::::
+info_nbFailedLogin:Actual failed login try:Nb actuelle d'essai infructueux de login:::::::::
+info_lastFailedLogin:Last failed login:Dernier essai infructueux:::::::::
+info_nbLogin:Nb login:Nb de login:::::::::
+integratedFile:On-line document:Document en-ligne:::::::::
+userAdminRights:Administration rights:Droits d'administrateur:
+isAdminCreator:Administrator creator:Créateur d'administrateur:::::::::
+isAdminCreator_help:Can create administrators.:Peut créer des administrateurs.:::::::::
+isModuleEditor:Config editor:Editeur de configuration:::::::::
+isModuleEditor_help:Can change the configuration of tabs in the namespace.:Peut modifier la configuration des tabs par espace de nom.:::::::::
+isWigiiNamespaceCreator:Namespace creator:Créateur d'espace de nom:::::::::
+isWigiiNamespaceCreator_help:Can create namespace and define namespace to user or #groups#.:Peut créer des espaces de noms et définir l'espace de nom des utilisateurs ou des #-groups#.:::::::::
+isReadAllUsersInWigiiNamespace:Access to all users:Accès à tous les utilisateurs:::::::::
+isReadAllUsersInWigiiNamespace_help:Can access all users in the namespace.:Peut accéder à tous les utilisateurs de l'espace de nom.:::::::::
+isRole:Is a role:Est un rôle:::::::::
+isRoleHelp:If ticked, this user is a role. That means you can allocate other users to use this role (go in Role allocation matrix).:Si coché, cet utilisateur est un rôle. Cela vous permet d'allouer d'autres utilisateurs à ce rôle (aller dans la matrice Allocation de rôle).:::::::::
+isUploaded:is already uploaded:est déjà importé:::::::::
+isUserCreator:User creator:Créateur d'utilisateur:::::::::
+isUserCreator_help:Can create users.:Peut créer des utilisateurs.:::::::::
+language:Language:Langue:::::::::
+last_name:Last name:Nom:::::::::
+logout:Logout:Déconnexion:::::::::
+login:Login:Se connecter:::::::::
+man:Man:Homme:::::::::
+message:Message:Message:::::::::
+missingElement:Missing #element#:#-Element# manquant:::::::::
+moduleAccess:Tabs access:Accès aux onglets:::::::::
+moduleConfigEdit:Edit the file:Modifie le fichier:::::::::
+moduleEditorCalc:Calculate (#-elements#):Recalcul (#-elements#):::::::::
+moduleEditorCalc_help:Calculate the value of each auto calc field for each #-element#:Recalcul les valeurs des champs auto-calculés pour chaque #-element#:::::::::
+moduleEditorConfigField:File content:Contenu du fichier:::::::::
+moduleEditorDelete:Delete:Supprimer:::::::::
+moduleEditorDeleteFile:Delete a config file:Supprimer un fichier de configuration:::::::::
+moduleEditorDelete_help:Delete the selected file:Supprime le fichier sélectionné:::::::::
+moduleEditorEdit:Edit:Modifier:::::::::
+moduleEditorEdit_help:Edit the selected file:Modifie le fichier sélectionné:::::::::
+moduleEditorFilenameField:Filename:Nom du fichier:::::::::
+moduleEditorNew:New file:Nouveau fichier:::::::::
+moduleEditorNew_help:Create a new file.:Créée un nouveau fichier.:::::::::
+moduleEditorZip:Export config to zip:Exporter config en ZIP:::::::::
+moduleEditorZip_help:Download all the current files into a ZIP folder.:Télécharge tous les fichiers dans un dossier ZIP.:::::::::
+
+moduleEditorNewNamespace:Create a namespace:Créer un espace de nom:
+moduleEditorNewNamespace_help:Open a wizard to help you creating a new namespace.:Ouvre un wizard pour créer un nouvel espace de nom.::::
+moduleEditorNewNamespaceName:New namespace name:Nom du nouvel espace de nom:
+moduleEditorNewNamespaceTabs:Select the tabs to enable:Sélectionné les onglets à activer:
+moduleEditorNewNamespaceSupportExplanation:Define a support name and email to add it in the feedback options.:Définisser un nom et un email pour le support afin de l'ajouter dans les options de feedback.:
+moduleEditorNewNamespaceSupportName:Name:Nom:
+moduleEditorNewNamespaceSupportEmail:Email:Email:
+moduleEditorNewNamespaceLinkToUserExplanation:Please define the user who will be managing this new namespace.:Veuillez définir le nom de l'utilisateur allant gérer cet espace de nom:
+moduleEditorNewNamespaceAuthenticationExplanation:If this user is new, please define his credentials.:Si cet utilisateur est nouveau, veuillez définir ces paramêtres d'authentification.:::
+wigiiNamespaceAlreadyExist:This namespace already exist, please choose an other name.:Cet espace de nom existe déjà, veuillez choisir un autre nom.::::
+wigiiNamespaceWronFormat:A namespace name cannot contains special chars.:Le nom d'un espace de nom ne peut pas contenir de caractère spéciaux.:::
+wigiiNamespaceWrongFormat:The namespace name can only contains alphanumerical characters and space, dot, dash or underscore.:Le nom d'un espace ne peut que contenir des caractères alphanumérique et espace, point, tiret, sous-tiret.:::
+usernameWrongFormat:Wrong format:Mauvais format:
+wigiiNamespaceAlreadyExist:The namespace name already exists. Please choose a new one.:Le nom de l'espace existe déjà, veuillez choisir un autre nom.:
+newUserNeedsCredentials:For new user you need to define credentials.:Pour un nouvel utilisateur il est obligatoire de définir les paramêtres d'accès.:::
+
+moveInTrashBin:Sent to \: :Envoyé(s) dans \: :
+trashbinGroupName:zz. Trashbin:zz. Corbeille::::
+trashBinGroupOperationImpossible:#ThisGroup# is the trashbin, therefore the operation cannot complete.:#ThisGroup# est la corbeille, par conséquent l'opération ne peut pas se terminer.::::
+blockedElementsOperationImpossible:blocked items found, therefore the operation cannot complete.:éléments bloqués, par conséquent l'opération ne peut pas se terminer.::::
+moduleEditorRemoveNamespace:Delete a namespace:Effacer un espace de nom:
+moduleEditorRemoveNamespace_help:Open a wizard to help you deleting a namespace.:Ouvre un wizard pour effacer un espace de nom.::::
+moduleEditorRemoveNamespaceExplanation:YOU ARE ABOUT TO DELETE A COMPLETE NAMESPACE!<br /><br />This operation is NOT REVERSIBLE.<br /><br />All users, all roles, all folders, and all items created in this namespace WILL BE DELETED.<br />Sole items linked to other namespace would remain.:VOUS ALLEZ EFFACER UN ESPACE DE NOM COMPLET!<br /><br />Cette opération EST IRREVERSIBLE!<br /><br />Tous les utilisateurs, tous les rôles, tous #groups#, ainsi que TOUS #elements# créés dans cette espace de nom SERONT EFFACES!<br />Seul les données liées à des #-groups# d'un autre espace de nom seront conservés.::::
+moduleEditorRemoveNamespaceName:Type in the namespace name to delete:Veuillez entrer le nom de l'espace de nom à effacer:::::
+moduleEditorRemoveNamespaceConfirmation:Are you sure you want to DELETE this namespace?:Etes-vous sûre de vouloir EFFACER cette espace de nom?:::
+moduleEditorRemoveNamespaceConfirm:Yes, I want to delete all.:Oui, je veux tous effacer.:::
+moduleEditorRemoveNamespaceDiscard:No, I want to keep this namespace.:Non, je souhaite garder cette espace de nom.:::::
+wigiiNamespaceIsNotExisting:This namespace do not exist.:Cette espace de nom n'existe pas.::::
+moduleEditorRemoveEmailNotification:Unsubscribe email from notifications:Désinscrire un email des notifications:
+moduleEditorRemoveEmailNotification_help:This is a wizard to unsubscribe a specific email address from the notifications.:Ouvre un wizard pour désinscrire un email des notifications.::::
+moduleEditorRemoveEmailNotificationExplanation:YOU ARE ABOUT TO UNSUBSCRIBE AN EMAIL TO ALL NOTIFICATION (of folders you can access)!<br /><br />This operation is NOT REVERSIBLE.:VOUS ALLEZ DESINSCRIRE UN EMAIL DE TOUTES LES NOTIFICATIONS (des dossiers accessibles)!<br /><br />Cette opération EST IRREVERSIBLE!::::
+moduleEditorRemoveEmailNotificationEmail:Type in the email address to unsubscribe:Veuillez entrer l'adresse email à désinscrire:::::
+moduleEditorRemoveEmailNotificationConfirmation:Are you sure you want to unsubscribe this email?:Etes-vous sûre de vouloir désinscrire cet email?:::
+moduleEditorRemoveEmailNotificationConfirm:Yes, I want to unsubscribe this email from notifications.:Oui, je veux désinscrire cet email des notifications.:::
+moduleEditorRemoveEmailNotificationDiscard:No, I want to keep subscription for notifications.:Non, je souhaite garder les inscriptions aux notifications.:::::
+emailNotificationErased:notifications erased.:notifications effacées.::::::
+
+name:Name:Nom:::::::::
+wigiiNamespace:Namespace:Espace de nom:::::::::
+noWigiiNamespace:Empty namespace:Espace de nom vide:::::::::
+nbDatasDisplayedOn:#-Elements# display:#-Elements# affichés:::::::::
+nbDatasFound:found:trouvés:::::::::
+neverExpires:never:jamais:::::::::
+newPassword:New password:Nouveau mot de passe:::::::::
+noGroupFound:#Group# not found:#Group# introuvable:::::::::
+noGroupFoundExplanation:#ThisGroup# is probably deleted or you don't have rigths to view it.:#ThisGroup# est probablement supprimé ou vous n'avez pas les droits pour le visualiser.:::::::::
+noParent:No parent:Aucun parent:::::::::
+noRightsOnGroup:You do not have access to any #group#. Please check with your administrator.:Vous n'avez accès à aucun #-group#. Veuillez contacter votre administrateur.:::::::::
+noRightsOnUser:You do not have rights to this user. If you remove this user of #thisGroup# you will no more be able to add him again.:Vous n'avez aucun droit sur cet utilisateur. Si vous lui enlever ces droits, vous ne serez plus en mesure de les lui remettre.:::::::::
+none:&nbsp;:&nbsp;:::::::::
+object:Subject:Objet:::::::::
+ok:Ok:Ok:::::::::
+oldPassword:Current password:Mot-de-passe actuel:::::::::
+
+operationDoneSuccessfully:Operation successful:Opération réussie:::::::::
+operationCancelled:Operation cancelled:Opération annulée:::::::::
+operationPartlyDone:Operation partly done:Opération partiellement réussie::::::
+operationUnsuccessfull:Operation unsuccessfull:Opération non réussie::::::
+operationImpossible:Operation impossible:Opération impossible::::::
+operationDonePleaseRefresh:Operation successful, reload the view to see changes.:Opération réussie, recharger la vue pour voir les changements.:
+operationDoneWaitNextAction:Please wait while your previous request is loading...:Merci de patienter pendant le chargement de la requête...:::::::::
+
+other:Other:Autre:::::::::
+owner:Owner:Propriétaire:::::::::
+parseErrorInTextSearch:Invalid text search input. See below for technical details.:Texte de recherche invalide. Ci-dessous des explications plus technique.:::::::::
+password:Password:Mot de passe:::::::::
+passwordDate:Last change of password:Dernier changement de mot-de-passe:::::::::
+passwordLife:Password expires every (x days):Le mot-de-passe expire chaque (x jours):::::::::
+rolePasswordLife:Role expiration after (x days):Le rôle expire après (x jours):::::::::
+pdf:PDF:PDF:::::::::
+photo:Photo:Photo:::::::::
+pleaseEnterCode:Please enter this code\::Veuillez recopier le code\::::::::::
+presentation:Presentation:Présentation:::::::::
+realUser:Real user:Utilisateur réel:::::::::
+recalcXmlPublishCode:Recalculate a new code:Recalcul un nouveau code:::::::::
+requiredSeparator:A separator is required for CSV exportation (defautl is\:  , ):Un séparateur doit être défini pour l'exportation CSV (par défaut\:  ; ):::::::::
+resetMultipleSelection:Deselect view:Déselectionner la vue:::::::::
+reverseSelectedItem:Click to reverse the filter. When active, the result will only have #elements# without\::Cliquez pour inverser le filtre. Lorsque activé, le résultat contiendra #elements# qui n'ont pas\::::::::::
+roleAreBold:Roles are bold:Les rôles sont en gras:::::::::
+scrollToLoadNextElements:load next:charger les suivants:::::::::
+scrollToLoadNextElements_help:Scrolling the list automatically loads next ones.:Scroller la liste charge automatiquement #elements# suivants.:::::::::
+selectMultipleAll:Select view:Sélectionner la vue:::::::::
+sendLink:Link:Lien:::::::::
+sendRefByEmail:Send a direct link to #thisElement# by email.:Envoyer un lien direct vers #thisElement# par email.:::::::::
+sendRefByEmailObject:Link to #anElement#:Lien vers #anElement#:::::::::
+sendRefByEmailText:Direct link to #element#\::Lien direct vers #element#\::::::::::
+rootGroup:Root #group#:#Group# racine:::::::::
+shareElement:Share:Partager:::::::::
+shareElements:Organize:Organiser:::::::::
+transferElements:Share:Partager:::::::::
+transferMultipleElement:Share:Partager:::::::::
+transferMultipleElementTo:Please select the sharing destination(s)\::Veuillez sélectionner la(les) destination(s) de partage\:::::::::
+transfer_predefined:Share with:Partager avec:::::::::
+transferNoneUniqueModule:The sharing feature can be used only towards a unique kind of data. Please change your selection to share #thoseElements# to unique destination.:La fonctionnalité de partage n'est permise qu'avec un même type de donnée. Veuillez modifier votre sélection afin de partager #thoseElements# vers une destination unique.:::::::
+transferChangeModule1:The selected destination(s) will <u>move</u> #thoseElements# and transform them in:La(Les) destination(s) choisie(nt) vont <u>déplacer</u> et transformer #thoseElements# dans le type::::
+transferChangeModule2: type.:.::::
+transferChangeModule3:<b>Clik Ok to proceed.</b>:<b>Cliquer Ok pour continuer.</b>:
+transferNoneWritableGroups:#ThoseElements# are shared in other areas. Please first remove any other sharing to be able to move #thoseElements#.:#ThoseElements# sont partagés dans d'autre espaces. Pour terminé cette action tous les autres partages doivent être supprimé.:::::
+
+sortBy:Sort by:Trier par:::::::::
+srcFile:Source document:Document source:::::::::
+starsAreNotTheRigthNumber:The number of stars is <u>not signigicant</u>. It only indicates that there is a password.:Le nombre d'étoile <u>n'est pas significatif</u>. Cela indique uniquement qu'un mot de passe est défini.:::::::::
+state_archived:Archived:Archivé:::::::::
+state_mark_archived:Mark as archived:Marquer comme archivé:::::::::
+state_deprecated:Deprecated:Obsolète:::::::::
+state_mark_deprecated:Mark as deprecated:Marquer comme obsolète:::::::::
+state_finalized:Finalized:Finalisé:::::::::
+state_finalize:Finalize:Finaliser:::::::::
+state_approved:Approved:Approuvé:::::::::
+state_approve:Approve:Approuver:::::::::
+state_dismissed:Dismissed:Rejeté:::::::::
+state_dismiss:Dismiss:Rejeter:::::::::
+state_hidden:Hidden:Masqué:::::::::
+state_hide:Hide:Masquer:::::::::
+state_important1:Important:Important:::::::::
+state_make_important1:Mark as important:Marquer comme important:::::::::
+state_important2:Very important:Très important:::::::::
+state_make_important2:Mark as very important:Marquer comme très important:::::::::
+state_locked:Locked:Vérouillé:::::::::
+state_lock:Lock:Vérouiller:::::::::
+state_blocked:Blocked:Bloqué:::::::::
+state_block:Block:Bloquer:::::::::
+state_noStatus:No status defined:Aucun status défini:::::::::
+state_ownLocked:Locked by you:Vérouillé par vous-même:::::::::
+lockedThe:Locked on :Vérrouillé le :::::::
+deprecatedThe:Deprecated on :Obsolète le :::::::
+finalizedThe:Finalized on :Finalisé le :::::::
+approvedThe:Approved on :Approuvé le :::::::
+dismissedThe:Dismissed on :Rejeté le :::::::
+blockedThe:Blocked on :Bloqué le :::::::
+stayConnected:Stay connected:Rester connecté:::::::::
+subject:Subject:Sujet:::::::::
+switchMultipleSelectionMode:Switch to multiple selection mode:Switch dans le mode de sélection multiple:::::::::
+sys_creationDate:Created on:Créé le:::::::::
+sys_creationUser:Created by:Créé par:::::::::
+sys_creationUsername:Created by:Créé par:::::::::
+sys_date:Last update on:Dernier changement le:::::::::
+sys_username:Last update done by:Dernier changement fait par:::::::::
+sys_user:Last update done by:Dernier changement fait par:::::::::
+historicOfObject:Additional information:Information additionnelle:::::::::
+table:Spreadsheet:Tableur:::::::::
+technicalProblem:Technical problem:Problème technique:::::::::
+text:Text:Texte:::::::::
+
+title:Title:Titre:::::::::
+to_email:To <span style="font-size\:x-small;">(BCC)</span>:A <span style="font-size\:x-small;">(CCi)</span>:::::::::
+toggleAdvancedSearch:Open/Close the advanced search window.:Ouvre/ferme la fenêtre de recherche avancée:::::::::
+toggleElementInfo:Click here to toggle the display of the :Clique ici pour afficher/cacher les :::::::::
+type:Type:Type:::::::::
+ugr_:No access:Pas d'accès:::::::::
+ugr__help:Access denied:Aucun accès:::::::::
+ugr_r:Read:Lecture:::::::::
+ugr_r_help:Normal user:Utilisateur normal:::::::::
+ugr_s:Limited write:Ecriture limitée:::::::::
+ugr_s_help:Limited #element# admin:Administrateur limité des #-elements#:::::::::
+ugr_w:Write:Ecriture:::::::::
+ugr_w_help:#Element# admin:Administrateur des #elements#:::::::::
+ugr_x:Admin:Admin:::::::::
+ugr_x_help:#Group# and #element# admin:Administrateur de #-group# et de #-element#:::::::::
+url:Url:Url:::::::::
+userConfigEdit:Special configuration:Configuration spéciale:::::::::
+userDetailConfigEdit:<font class="R">!!! The user has a special configuration file, please contact your administrator !!!</font>:<font class="R">!!! L'utilisateur a un fichier de configuration spécial, veuillez contacter votre administrateur !!!</font>:::::::::
+userConfigEdit_help:Redefine the configuration for this user/role. The configuration can redefine fields, views and filters.:Redéfinit une configuration pour cet utilisateur/rôle. Une configuration peut redéfinir les champs, les vues et les filtres.:::::::::
+userConfigFile:Write a specific configuration for this user/role:Ecrivez une configuration spécifique pour cet utilisateur/role:::::::::
+userDelete:Delete:Supprimer:::::::::
+userDelete_help:Delete user and all #groups# managed only by him:Supprime l'utilisateur et tous #groups# qui sont administrés uniquement par lui:::::::::
+userDoNotOwns: does not own : n'est pas propriéaire de :::::::::
+userEdit:Edit:Modifier:::::::::
+userEdit_help:Edit user details:Modifie les détails de l'utilisateur:::::::::
+userRoleAllocation:Map roles:Associer des rôles:::::::::
+userRoleAllocation_help:Define the roles the user has:Défini les rôles de l'utilisateur:::::::::
+roleUserAllocation:Map users:Associer des utilisateurs:::::::::
+roleUserAllocation_help:Define the users of the role:Défini les utilisateurs du rôle.:::::::::
+userRights:Access rights:Droit d'accès:::::::::
+userRightsFor:Access rights for:Droit d'accès pour:::::::::
+userRights_help:Défini les droits d'accès du rôle:Défini les droits d'accès du role:::::::::
+userElementsAvaible:User #elements#:Tous #elements# de l'utilisateur:::::::::
+userFilterLabel:User filter:Filtrer les utilisateurs:::::::::
+roleFilterLabel:Role filter:Filtrer les rôles:::::::::
+user2FilterLabel:Horizontal filter:Filtrer horizontalement:::::::::
+groupFilterLabel:#Group# filter:Filtrer #groups#:::::::::
+
+guUserFilterLabel:User / Role filter:Filtrer les utilisateurs/rôles:::::::::
+guUserFilterExplanation:username, namespace, role@wigiiNamespace:nom, espace de nom, role@espace de nom:::::::::
+guGroupFilterLabel:#Group# filter:Filtrer #groups#:::::::::
+guGroupFilterExplanation:groupname, namespace, keyword:nom #ofGroup#, espace de nom, mots dans la description:::::::::
+urUserFilterLabel:User filter:Filtrer les utilisateurs:::::::::
+urUserFilterExplanation:username, namespace, keyword:nom, espace de nom, mots dans la description:::::::::
+urRoleFilterLabel:Allocated role filter:Filtrer les rôles alloués:::::::::
+urRoleFilterExplanation:rolename, namespace, keyword in description:nom du rôle, espace de nom, mots dans la description:::::::::
+uuUserFilterLabel:User filter (owner):Filtrer les utilisateurs (propriétaire):::::::::
+uuUserFilterExplanation:username, namespace, role@wigiiNamespace:nom, espace de nom, role@espace de nom:::::::::
+uuUser2FilterLabel:User filter (owned):Filtrer les utilisateurs (possédé):::::::::
+uuUser2FilterExplanation:username, namespace, role@wigiiNamespace:nom, espace de nom, role@espace de nom:::::::::
+guScreenshot:images/gui/gu.png:images/gui/gu.png:::::::::
+urScreenshot:images/gui/ur.png:images/gui/ur.png:::::::::
+uuScreenshot:images/gui/uu.png:images/gui/uu.png:::::::::
+setFilterDialogTitle:Setup filters for the matrix\: :Définir des filtres pour la matrice\: :::::::::
+setFilterTitle:Do you want to define filters?:Voulez-vous définir des filtres?:::::::::
+setFilterMessage:Before displaying the matrix you can define filters to reduce the number of results.  Using no filters can result in a relative long display time.:Avant d'afficher la matrice vous pouvez définir des filtres pour réduire le nombre de résultat. Sans filtre l'affichage peut être relativement long.:::::::::
+setFilterDisplayAllLabel:Reset (display all):Reset (tout afficher):::::::::
+setFilterOk:Ok:Ok:::::::::
+setFilterCancel:Cancel:Annuler:::::::::
+
+userHasRole: can use role : peut utiliser le rôle :::::::::
+userHasnotRole: cannot use role : ne peut pas utiliser le rôle :::::::::
+userNew:New:Nouveau:::::::::
+roleNew:New:Nouveau:::::::::
+userNew_help:Create a new user:Créer un nouvel utilisateur:::::::::
+userOwns: owns : est proptiétaire de :::::::::
+username:User:Utilisateur:::::::::
+rolename:Role name:Nom du rôle:::::::::
+usual:through a fixed password:via un mot-de-passe défini:::::::::
+pop3SSL:through a SSL POP3 server:via un serveur POP3 SSL:::::::::
+pop3:through POP3 server:via un serveur POP3:::::::::
+version:Version:Version:::::::::
+video:Video:Vidéo:::::::::
+view:View:Affichage:::::::::
+viewAllElementsAvaible:Display all #elements#:Afficher tous #elements:::::::::
+viewElementsInGroup:Click on GO button to view #elements# in:Cliquez sur le bouton GO pour afficher #elements# dans:::::::::
+
+wasLastGroupAdminParticipant:Cannot delete last Admin link:Impossible de supprimer le dernier droit Admin:::::::::
+wasLastGroupAdminParticipantExplanation:To be able to perform the operation, first you need to define another user with an Admin link.:Pour réussir à faire cette opération, vous devez d'abord ajouter un droit Admin sur un autre utilisateur.:::::::::
+operationDoneSuccessfullyButWasSomLastGroupAdminParticipant:Operation partly done:Opération partiellement réussie::::::
+wasSomLastGroupAdminParticipantExplanation:The Admin right to the following #groups# is the last one. Therefor it cannot be removed.:Le droit d'accès Admin pour #groups# suivants est le dernier. Par conséquent il ne peut être retiré.::::
+
+welcomeToWigiiExplanation:Login and enjoy:Loguez-vous et profitez...:::::::::
+welcomeToWigiiTitle:Welcome...:Bienvenue...:::::::::
+connectToWigii:Connect with your Wigii account:Connectez-vous à l'aide de votre compte Wigii:::::
+woman:Woman:Femme:::::::::
+xmlPublishCode:Code:Code:::::::::
+
+groupUp:Up:Monter:::::::::
+subFoldersContent:display sub#-groups# content:afficher le contenu des sous-#-groups#::::::
+listAllElements:display the complete list #ofElements#:afficher la liste complète #ofElements#::::::::
+subFoldersList:return to sub#-groups# list:retour à la liste des sous-#-groups#::::::
+
+elementLocked:#Element# is currently under modification.:#Element# est actuellement en train d'être modifié.:::::::::
+elementLockedExplanation:An other user has open #thisElement# and is doing a modification. Please try later.:Un autre utilisateur a ouvert #thisElement# et est en train d'effectuer des modifications. Veuillez réessayer plus tard.:::::::::
+thoseElementsAreLocked:The following #-elements# are locked.:#Elements# suivants sont vérouillés.:
+thoseElementsAreLockedExpl:An other user is currently modifying the listed #-elements#. Please remove them from the current selection to proceed.:Un autre utilisateur est actuellement en train de modifier #elements# listés. Veuillez les enleveer de votre sélection pour continuer.:
+selectAtLeastOneElement:Select at least one #element#:Sélectionner au moins #anElement#:::::::::
+elementsSelected:#-elements# selected:#-elements# sélectionnés:::::::::
+multipleDialogTitle:Summary:Résumé::::::
+viewMultipleSelection:View selection:Voir la sélection:::::
+stopAndCloseMultipleSelectionDialog:Stop & Close:Arrêter & Fermer::::
+crtGroupHasNotEnoughFilledFields: field(s) should at least be filled.: champ(s) doivent être rempli au minimum.:::::::::
+clickHereToChangePassword:Click here to change your password.:Cliquez ici pour modifier votre mot de passe.:::::::::
+pleaseChangePasswordExternally:Please change your password on server\::Veuillez changez votre mot de passe sur le serveur\::::::::::
+pleaseChangePasswordOnComputer:Please change your password by changing it on your computer.<br /><br />CTRL+ALT+DEL Change password...:Veuillez modifier votre mot-de-passe sur votre ordinateur.<br /><br />CTRL+ALT+DEL Modifier le mot-de-passe...:::::::::
+
+goToIconsView:Switch to icon view:Afficher la vue en icônes:::::::::
+goToIconsView_help:#Groups# will be displayed as icons. The #group# hierarchy will be displayed in a menu.:#TheGroups# sont affichés en icônes. L'arborescence est visible dans le menu.:::::::::
+goToListView:Switch to list view:Afficher la vue en liste:::::::::
+goToListView_help:#Groups# will be displayed in hierarchy and #elements# in a list.:#TheGroups# seront affiché en arborescence et #elements# en liste.:::::::::
+
+viewElementsInPortal:See #elements#:Voir #elements#:::::::::
+viewPortalContent:Back to cover page:Retour à la page de couverture:::::::::
+
+afterMoreThan365days:In more than 365 days:Dans plus de 365 jours:::::::::
+afterMoreThan90days:In more than 90 days:Dans plus de 90 jours:::::::::
+afterMoreThan60days:In more than 60 days:Dans plus de 60 jours:::::::::
+afterMoreThan30days:In more than 30 days:Dans plus de 30 jours:::::::::
+afterMoreThan7days:In more than 7 days:Dans plus de 7 jours:::::::::
+after24H:In more than 24h:Dans plus de 24h:::::::::
+inThose24H:Most recent:Les plus récents:::::::::
+inTheLast7days:Last 7 days:7 derniers jours:::::::::
+inTheLast30days:Last 30 days:30 derniers jours:::::::::
+inTheLast60days:Last 60 days:60 derniers jours:::::::::
+inTheLast90days:Last 90 days:90 derniers jours:::::::::
+inTheLast365days:Last 365 days:365 derniers jours:::::::::
+before365days:Older than 365 days:Plus ancien que 365 jours:::::::::
+
+openIconsView:Open:Ouvrir:::::::::
+browseIconsView:Browse #elements#:Parcourir #elements#:::::::::
+adminAccess:Advanced rights:Droits avancés:::::::::
+no:No:Non:::::::::
+
+elementPreview:#Element# preview:Aperçu #ofElement#:::::::::
+weblink:Website link:Site internet:::::::::
+multipleCheckboxCheck:Tick the checkbox if you want to update this field:Cochez la case si vous désirez mettre à jour ce champ:::::::::
+multipleCheckboxCheckAddOnly:Tick the checkbox if you want to concatenate the value of this field to the existing value.:Cochez cette case si vous désirer concatener la valeurs de ce champ à la valeur actuelle.:::::::::
+
+keepInOriginalGroup:Keep in original #groups#:Garder dans #groups# d'origines:::::::::
+
+shareMultipleElementTitle:<div class="lightGray lightGrayReverseFont" style="width\:300px; padding\:5px; float\:left; " >Click on #group# you want to add/set</div>:<div class="lightGray lightGrayReverseFont" style="width\:300px; padding\:5px; float\:left; " >Cliquer sur #groups# que vous désirez ajouter/définir</div>:::::::::
+shareMultipleElement:Add/Move selected #elements# in #aGroup#:Ajouter/Déplacer #elements# sélectionnés dans #aGroup#:::::::::
+inTab:Choose tab:Choisissez l'onglet:::::::::
+
+cannotCreateRootGroups:Cannot create root #groups#:Impossible de crééer des #-groups# racines:::::::::
+parentGroupShouldBeDefined:Please define a valid parent #group#.:Veuillez définir #aGroup# parent valable.:::::::::
+
+elementRemainsInGroups:#ThisElement# remains in #groups#\: :#ThisElement# est encore disponible dans #groups#\: :::::::::
+elementsRemainsInSomeUnWritableGroups:Some #elements# remain in some unwritable #groups#. #Elements# ids\: :Certain #-elements# reste dans des #-groups# en lecture seule. #Elements# ids\: :::::::::
+elementRemainsInUnWritableGroups:#ThoseElements# are only removed from writable #-groups# but remain in other #-groups#.:#ThoseElements# sont effacés des #-groups# modifiable, mais ils restent dans d'autre #-group#.:::::::::
+
+moveChildrenAndContentToParent:Keep content (add to parent):Garder le contenu (ajouter au parent):::::::::
+moveChildrenAndContentToParentExplanation:If "Keep content" is selected then every #elements# and sub #groups# will be attached to the current parent #group#.:Si "Garder le contenu" est sélectionné alors tous #elements# et sous-#-groups# seront attachés au #-group# parent.::::::::
+deleteChildrenAndContent:Delete content & sub #groups#:Effacer le contenu & les sous-#groups#::::::::
+rootGroupThenDeleteChildrenAndContentExplanation:#ThisGroup# is a root #group#. All content will be automaticaly deleted. To keep content, <b>first</b> move it to another #group#.:#ThisGroup# est #aGroup# racine. Tout le contenu sera effacé automatiquement. Pour garder le contenu, veuiller <b>d'abord</b> le déplacer dans un autre #-group#::::::::
+
+editAlertsTitle:Toggle on/off #groups# to receive notification.:Cliquez on/off sur #groups# pour recevoir les notifications.:::::::::
+closeAndSave:Close & Save:Fermer & Sauver:::::::
+
+invalidDate:Invalid date:Date invalide:::::::
+invalidEmail:Invalid email address:Adresse email invalide:::::::
+invalidEmails:One of the email address is invalid:Une des adresse email est invalide:::::::
+invalidNumber:Invalid number:Nombre invalide:::::::
+emailForEditEmailAlertNeedsToBeValidOrNull:Please make sure you've typed a valid email address.:Veuillez vérifier que vous avez bien entré une adresse email valide.:::::::
+
+roleAccess:Role access:Accès aux rôles:::::::
+userAllocation:User allocated:Utilisateur alloué:::::::
+noRoleAccess:No role assigned:Aucun rôle alloué:::::::
+noUserAllocated:No user use this role:Aucun utilisateur utilise ce rôle:::::::
+noAccessDefined:No access:Aucun accès:::::::
+passwordExpiredNoAccess:Password expired:Mot-de-passe expiré:::::::
+userExpired:User expired:Utilisateur expiré:::::::
+userExpiredNoAccess:User expired:Utilisateur expiré:::::::
+roleExpired:Role expired:Rôle expiré:::::::
+roleExpiredNoAccess:Role expired:Rôle expiré:::::::
+expired:expired:expiré:::::::
+
+elementStates:Status:Statut:::::::
+changeElementStates:Change<br />status:Changer<br />le statut:::::::
+setElementsState:Set status to:Définir le statut à:::::::
+
+lockAndModify:Modify:Modifier:::::::
+
+lastSharing:Impossible to delete #thisGroup#.:Impossible de supprimer #thisGroup#.:
+lastSharingExplanation:#ThisGroup# is the last #-group# #thisElement# is part of. If you want to delete #thisElement#, use the delete button.: #ThisGroup# est le dernier #-group# dont #thisElement# fait partie. Si vous voulez effacer #thisElement#, utilisez le bouton supprimer.:
+
+checkin:Check-in:Check-in:::::::
+checkout:Check-out:Check-out:::::::
+
+checkoutTitleText:Add a message:Ajoutez un message:::::::
+checkinTitleText:Add a message:Ajoutez un message:::::::
+
+defaultWigiiNamespace::::::::
+otherWigiiNamespace:Others...:Autres...::::::::
+historicNoUserFound:deleted user:utilisateur effacé:::::::
+adminConsole:Admin console:Console d'administration:::::::
+closeAdmin:Close:Fermer:::::::
+openAdmin:Open admin console:Ouvrir la console d'admin:::::::
+adminModuleTitle:Administration console:Console d'administration:::::::
+
+elementNotFound:#Element# is deleted:#Element# est effacé:::::::::
+elementNotFoundExplanation:#ThisElement# is no more available.:#ThisElement# n'est plus disponible.:::::::::
+elementUnreachable:Unreachable #thisElement#:Impossible d'atteindre #thisElement#:::::::::
+elementUnreachableExplanation:Contact your administrator to get access rights.:Veuillez contacter votre administrateur pour obtenir les droits d'accès.:::::::::
+
+switchToRoleToFoundDocument:#Element# not found.:#Element# introuvable.:::::::
+switchToRoleToFoundDocumentExplanation:You may be able to find #thisElement# by switching to one of the following spaces.:Vous pourriez trouver #thisElement# en naviguant vers un de ces espaces.:::::::
+
+usingRole:with role:avec le rôle:::::::
+byUser:by:par:::::::
+
+userLocked:The user/role is currently under modification.:L'utilisateur / rôle est actuellement en train d'être modifié.:::::::::
+userLockedExplanation:An other user has open this user/role and is doing a modification. Please try later.:Un autre utilisateur a ouvert cet utilisateur / rôle et est en train d'effectuer des modifications. Veuillez réessayer plus tard.:::::::::
+
+groupLocked:#TheGroup# is currently under modification.:#TheGroup# est actuellement en train d'être modifié.:::::::::
+groupLockedExplanation:An other user has open #thisGroup# and is doing a modification. Please try later.:Un autre utilisateur a ouvert #thisGroup# et est en train d'effectuer des modifications. Veuillez réessayer plus tard.:::::::::
+
+customElementsSelection:custom selection #ofElements#:sélection personnalisée #ofElements#:::::::::
+
+noElementInGroup:Empty #group#. No #element# is loaded.:#Group# vide. Aucun #-element# trouvé.:::::::::
+noElementMatchSearchCriteria:No #element# matches the search criteria.:Aucun #-element# ne correspond aux critères de recherche.:::::::::
+noUserFound:<h3 style="margin\:10px;">No user found</h3>:<h3 style="margin\:10px;">Aucun utilisateur trouvé</h3>:::::::::
+noRoleFound:<h3 style="margin\:10px;">No role found</h3>:<h3 style="margin\:10px;">Aucun rôle trouvé</h3>:::::::::
+noGroupFound:<h3 style="margin\:10px;">No #group# found</h3>:<h3 style="margin\:10px;">Aucun #-group# trouvé</h3>:::::::::
+resetFilterUser:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminFilterUser div.resetButton').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset filters</u> to find information)</div></div>:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminFilterUser div.resetButton').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset les filtres</u> pour trouver de l'information)</div></div>:::::::::
+resetFilterGroup:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminFilterGroup div.resetButton').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset filters</u> to find information)</div></div>:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminFilterGroup div.resetButton').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset les filtres</u> pour trouver de l'information)</div></div>:::::::::
+resetFilterUser2:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminFilterUser2 div.resetButton').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset filters</u> to find information)</div></div>:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminFilterUser2 div.resetButton').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset les filtres</u> pour trouver de l'information)</div></div>:::::::::
+
+noResultFound:<h3 style="margin\:10px;">No result found</h3>:<h3 style="margin\:10px;">Aucun résultat trouvé</h3>:::::::::
+redefineFilterGU:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminGroupUser').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset filters</u> to find information)</div></div>:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminGroupUser').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset les filtres</u> pour trouver de l'information)</div></div>:::::::::
+redefineFilterUR:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminUserRole').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset filters</u> to find information)</div></div>:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminUserRole').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset les filtres</u> pour trouver de l'information)</div></div>:::::::::
+redefineFilterUU:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminUserUser').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset filters</u> to find information)</div></div>:<div style="float\:left;cursor\:pointer;" onClick="$('\#adminUserUser').click();" ><div style="float\:left;margin-left\:10px;">(</div><img src="images/icones/26px/cancel.png" style="margin-top\:-5px;float\:left;"/><div style="float\:left;"><u>Reset les filtres</u> pour trouver de l'information)</div></div>:::::::::
+
+emptyMatrixGU:The matrix is empty. You should be able to adminitrate at least one #group# and one user/role.:La matrice est vide. Vous devez avoir l'administration d'au moins #aGroup# et un utilisateur/rôle.:::::::::
+emptyMatrixUR:The matrix is empty. You should be able to adminitrate at least one one user and one role.:La matrice est vide. Vous devez avoir l'administration d'au moins un utilisateur et un rôle.:::::::::
+emptyMatrixUU:The matrix is empty. You should be able to adminitrate at least one user/role.:La matrice est vide. Vous devez avoir l'administration d'au moins un utilisateur/rôle.:::::::::
+noUserOwned:To display the matrix you should own at least one user OR role.:Pour afficher la matrice vous devez posséder au moins un utilisateurs ou rôle.:::::::::
+
+rootGroupNeedsRelogin:Change in root #groups# are visible after re-login.:Les changements apporter à des #-groups# racines sont visibles après re-login.:
+
+aNotificationWillBeDone:<h3 style="margin\:0px 0px 0px 0px;">Customize the notification email\:</h3>(reference link and details #ofElement# are automatically added):<h3 style="margin\:0px 0px 0px 0px;">Personalisez l'email de notification\:</h3>(les détails et la référence #ofElement# sont ajouté automatiquement):::::::::
+notificationInTab:Notification from :Notification de :::::::::
+sendNotification:Notify:Notifier:::::
+skipNotification:Do not notify:Ne pas notifier:::::::::
+addMessageToNotification:Notification details:Détails de la notification:::::::::
+addNotificationEmailSubject:Subject:Objet:::::::::
+addNotificationEmailFrom:From:De:::::::::
+addNotificationEmailTo:To:A:::::::::
+subscribedEmails:Subscribed email list:Liste des emails inscrits:::::::::
+invalidEmailFromOrTo:Invalid email, please check emails in "From" and "To".:Email invalide, veuillez contrôler les emails "De" et "A".:
+someElementsHasBeenPreventedToBeOrphans:You have not specified a destination #group# for some #-elements# and unticked their current #group# location. This way #thoseElements# will become inaccessible. Please ensure that the #-elements# have at least one destination #group#.:Vous n'avez pas spécifié #aGroup# de destination pour certain #elements# et avez décocher leur #-group#. #ThoseElements# deviendraient par conséquent innaccessibles. Veuillez vous assurer que #elements# ont au moins #aGroup# de destination.::::
+
+ToBeRemoved:!!!-----------------------------------------:::::::
+thoseElementsAreAddedInGroups:#ThoseElements# are added in #groups#:#ThoseElements# sont ajoutés dans #groups#:::::::::
+thoseElementsAreRemovedFromGroups:#ThoseElements# are removed from #groups#:#ThoseElements# sont supprimé des #-groups#:::::::::
+thoseElementsAreSettedInGroups:#ThoseElements# are defined with the #groups#:#ThoseElements# sont défini avec #groups#:::::::::
+thoseElementsWhereInGroups:#ThoseElements# where in #groups#:#ThoseElements# étaient dans #groups#:::::::::
+thoseElementsAreUpdated:#ThoseElements# are updated:#ThoseElements# sont mis-à-jour:::::::::
+thoseElementsStateChanged:The state of #thoseElements# has changed:Le statu de #thoseElements# a changé:::::::::
+thoseElementsAreDeleted:#ThoseElements# are deleted:#ThoseElements# sont effacés:::::::::
+thoseElementsAreMovedInModuleGroup:#ThoseElements# are moved in tab:#ThoseElements# sont déplacer dans l'onglet:::::::::
+thoseElementsAreMovedFromModule:#ThoseElements# are moved from tab:#ThoseElements# sont déplacer depuis l'onglet:::::::::
+newElementsInGroup:#ThoseElements# are imported in #group#:#ThoseElements# sont importés dans #group#:::::::::
+ToBeRemoved:!!!-----------------------------------------:::::::
+
+hasImportedThoseElementsInGroup:has imported the following #elements# in #group#:a importé #elements# suivants dans #group#:::::::
+hasAddedThoseElementsInGroup:has added the following #elements# in #group#:a ajouté #elements# suivants dans #group#:::::::::
+hasRemovedThoseElementsFromGroup:has removed the following #elements# from #group#:a supprimé #elements# suivants du #-group#:::::::::
+hasSettedThoseElementsInGroups:has defined the following #elements# with the #groups#:a défini #elements# suivants avec #groups#:::::::::
+thoseElementsWhereInGroups:#ThoseElements# where in #groups#:#ThoseElements# étaient dans #groups#:::::::::
+hasUpdatedFollowingElements:has updated the following #elements#:a mis-à-jour #elements# suivants:::::::::
+hasUpdatedFollowingElementsWithChanges:has updated the following #elements# with those changes:a mis-à-jour #elements# suivant avec ces changements:::::::::
+hasStateChangedFollowingElements:has changed the state of the following #elements#:a modifié le statut de #thoseElements#:::::::::
+hasDeletedThoseElements:has deleted the following #elements#:a effacé #elements# suivants:::::::::
+hasDeletedThoseElementsFromGroups:has deleted the following #elements# from #groups#\::a effacé #elements# suivants des #-groups#\::::::::::
+hasMovedThoseElementsInModuleGroup:has moved the following #elements# in tab:a déplacer #elements# suivants dans l'onglet:::::::::
+inGroup:in #group#:dans #group#::::::::
+thoseElementsWhereChangedWith:The following changes have been made:Les changements suivant sont effecutés:::::::::
+
+hasAddedAnElementInGroup:has added the following #element# in #group#:a ajouté #element# suivant dans #group#:::::
+hasAddedAnElementToRootElement:has added #anElement# to:a ajouté #anElement# à:::::
+hasUpdatedThisElement:has updated the following #element#:a mis-à-jour #element# suivant:::::::::
+hasUpdatedThisElementToRootElement:has updated #anElement# of:a mis-à-jour #anElement# de:::::::::
+hasChangedThisElementState:has changed the state of the following #element#:a modifié le statut #ofElement# suivant:::::::::
+hasChangedThisElementStateToRootElement:has changed the state of #anElement# of:a modifié le statut d'#anElement# de:::::::::
+hasDeletedThisElementFromGroups:has deleted the following #element# from #group#(s)\: :a effacé #element# suivant des #-groups#\: :::::::::
+hasDeletedThisElementFromRootElement:has deleted #anElement# from:a effacé #anElement# de:::::::::
+hasRestoredThisElementToGroups:has restored the following #element# to #group#(s)\: :a restauré #element# suivant dans #groups#\: :::::::::
+hasRestoredThisElementToRootElement:has restored #anElement# to:a restauré #anElement# dans:::::::::
+hasAddedThisElementToGroup:has added the following #element# in #group#\: :a ajouté #element# suivant dans #group#\: :::::::::
+hasMovedThisElementOutOfGroup:has moved the following #element# out #ofGroup#\: :a supprimé #element# suivant #ofGroup#\: :::::::::
+viewElement:View #element#:Voir #element#:::::
+accessSystem:Access the:Accéder à::::::
+theFollowingChangesHasBeenMade:The following changes have been made:Les changements suivants ont été effectués:::::::
+theFollowingStatesAreSet:The following statuses are currently set:Les statuts suivants sont actuellement définis::::
+theFollowingStateHasBeenAdded:The following status has been set:Le statut suivant a été ajouté::::
+theFollowingStateHasBeenRemoved:The following status has been removed:Le statut suivant a été supprimé::::
+
+newElementInGroup:#NewElement# in #group#:#NewElement# dans #group#:::::::::
+thisElementIsUpdated:#ThisElement# has been updated:#ThisElement# a été mis à jour:::::::::
+thisElementStateChanged:The state of #thisElement# has changed:Le statut de #thisElement# a changé:::::::::
+thisElementIsDeleted:#ThisElement# is deleted from #group#(s)\: :#ThisElement# est effacé des #-groups#\: :::::::::
+thisElementIsAddedToGroup:#ThisElement# is added in #group#\: :#ThisElement# est ajouté dans #group#\: :::::::::
+thisElementIsMovedOutOfGroup:#ThisElement# is moved out #ofGroup#\: :#ThisElement# est supprimé #ofGroup#\: :::::::::
+
+navigateTo:navigate to:naviguer vers:::::::::
+asInRoleMenu:as:comme:::::::::
+superAdmin:Super admin:Super admin:::::::::
+groupnameAlreadyUsed:#Group# name is already used in the system.:Le nom du #-group# est déjà utilisé dans le système.:::::::::
+
+from:from:de:::::::::
+to:to:à:::::::::
+
+save:Save:Sauvegarder:::::::::
+saveAndClose:Save & Close:Sauvegarder & Fermer:::::::::
+
+Programmes_tab_help_SDN:IRS only can see this tab:Seul les IRS peuvent voir cet onglet:::::::::
+Transfer_tab_help_SDN:IRS only can see this tab:Seul les IRS peuvent voir cet onglet:::::::::
+Contacts_tab_help_SDN:NRS and IRS have access to some #groups# in this tab:NRS et IRS peuvent accéder à certain #-groups# dans cet onglet:::::::::
+Filemanager_tab_help_SDN:NRS and IRS have access to some #groups# in this tab:NRS et IRS peuvent accéder à certain #-groups# dans cet onglet:::::::::
+
+passworLife_help:Define the number of days the password is valid. Leave it empty for no expiration. Type <b>'reset'</b> to reset the password date to today.:Défini le nombre de jour que le mot-de-passe reste valide. Laisser le champ vide pour définir aucune expiration. Typer 'reset' pour redéfinir la date de changement de password à aujourd'hui.::::::::
+
+feedbackAccessToElement:Feedback is about #element#:Le feedback est à propos #ofElement#:::::::::
+directAccessElement:Direct access to #thisElement#:Accès direct à #thisElement#:::::::::
+clicHere:Click here:Cliquer ici:::::::::
+
+link:Link:Lien:::::::::
+userType:Select type:Sélectionner le type:::::::::
+
+notificationWigiiNamespaceFrom:Notification from:Notification depuis:::::::::
+
+compulsoryFieldOtherwiseEmptyOtherEmailFields:You must fill this field if one of the confirmation email fields is filled.:Vous devez remplir ce champ si un des champs de l'email de confirmation est rempli.:::::::::
+
+
+groupSubscription:Subscription form parameters:Paramêtres du formulaire d'inscription:::::::::
+groupSubscriptionPreview:Subscription form details:Détails du formulaire d'inscription:::::::::
+groupSubscription_help:Subscription form parameters:Paramêtres du formulaire d'inscription:::::::::
+enableGroupSubscription:Publish the form:Publier le formulaire:::::::::
+maxSubscriptionNb:Maximum number of subscriptions:Nombre maximum d'inscription:::::::::
+subscriptionBackgroundColorCode:Background color:Couleur du fond:::::::::
+subscriptionEndMessageAddin:Customize confirmation message:Personnalisez le message de confirmation:
+subscriptionClosingMessageAddin:Additional message after expiration:Message aditionnel après expiration:::::::::
+subscriptionConfEmail:<h4>Confirmation email</h4><div>(leave blank to not send any email confirmation)<br><br></div>:<h4>Email de confirmation</h4><div>(laisser les champs vide pour ne pas envoyer d'eamil de confirmation)<br><br></div>:::::::::
+subscriptionConfEmailAttachement1:Attachment 1:Attaché 1:::::::::
+subscriptionConfEmailAttachement2:Attachment 2:Attaché 2:::::::::
+subscriptionConfEmailFrom:From:De:::::::::
+subscriptionConfEmailSubject:Subject:Objet:::::::::
+subscriptionConfEmailText:Content:Contenu:::::::::
+subscriptionDetails:<h4>Details</h4><div>(this information will be dispayed above the form)<br><br></div>:<h4>Détails</h4><div>(ces informations seront affichées au-dessus du formulaire)<br><br></div>:::::::::
+subscriptionIllustration:Insert a web picture:Insérer une image web:::::::::
+introductionText:Introduction text:Texte d'introduction:::::::::
+subscriptionPeriod:Subscription timeframe:Période d'inscription:::::::::
+subscriptionReturnUrl:Link to parent website:Lié au site internet parent:::::::::
+subscriptionVisual:<h4>Form display</h4>:<h4>Affichage du formulaire</h4>:::::::::
+newSubscriptionConfirmData:Do you confirm those data?:Confirmez-vous ces données?:::::::
+newSubscriptionConfirmDataWithEmail:A confirmation email will be sent to :Un email de confirmation sera envoyé à :::::::
+subscriptionDone:Thank you for your subscription:Merci pour votre inscription:::::::
+newSubscription:Fill in another form:Remplir un autre formulaire:::::::
+groupSubscriptionLink:Subscription form link:Lien du formulaire d'inscription:::::::
+groupSubscriptionExternalAccessRequestLink:Link to request access for subscribers (in case of link loss):Lien permettant aux personnes inscrites de demander le lien d'accès (en cas de perte du lien):::::::
+subscriptionConfEmailFromIsAddedTitle:Email added in notification:Email ajouté à la notification:::::::
+subscriptionConfEmailFromIsAddedExpl:The following emails are added for notification when #newElement# is added in the #group#:Les emails suivant sont ajouté pour être notifié lorsque un #newElement# est ajouté dans ce #-group#:::::::
+subscriptionPeriodToEarly:The form will be available on :Le formulaire sera disponible dés le :::::::::
+subscriptionPeriodToLate:Subscription period finished on :La période d'inscription s'est terminée le :::::::::
+subscriptionMaxNbReached:Maximum number of subscription reached:Nombre maximum d'inscription atteint:::::::::
+subscriptionMaxNbLefted: subscriptions still possible: inscriptions encore possibles:::::::::
+subscriptionPeriodWillEnd:This form is available until :Ce formulaire est disponible jusqu'au :Dieses Formular ist verfügbar bis zum ::::::::
+subscriptionClosed:Form unavailable:Formulaire indisponible:::::::::
+subscriptionProposeNewSubscriptionWhenDone:Propose to fill a new form after:Proposer de remplir un autre formulaire après:
+subscriptionEnableCaptcha:Enable a captcha:Activer un captcha:
+captchaInvalidCode:Invalid security code:Code de sécurité invalide:
+
+advancedSearchAddFieldButton:Add a new field filter.:Ajouter un nouveau filtre sur un champs.:::::::::
+advancedSearchAddGroupOperatorButton:Add a new #group# filter:Ajouter un nouveau filtre sur #groups#:::::::::
+
+as_addGroupOperator:#Group# filter:Filtre sur #groups#:::::::::
+as_af_dataFields:Filter on data:Filtre sur les données:::::::::
+as_af_elementFields:Filter on element:Filtre sur l'élément:::::::::
+INGR:Contained in #group# list (and sub #groups#):Contenu dans une liste de #-groups# (et sous #-group#):::::::::
+NOTINGR:Not contained in #group# list (and sub #groups#):Non contenu dans une liste de #-groups# (et sous #-group#):::::::::
+ING:Contained in #group# list:Contenu dans une liste de #-groups#:::::::::
+NOTING:Not contained in #group# list:Non contenu dans une liste de #-groups#:::::::::
+
+cronJobsStop:Postpone:Différer:::::::::
+cronJobsStop_help:Click to postpone the background jobs (sending emails...) for 10min:Cliquer pour différer de 10min les travaux d'arrière plan(envoie d'email...):::::::::
+cronJobs:Background tasks:Tâches d'arrière plan:::::::::
+cronJobsStartButton:Start:Démarrer:::::::::
+
+addIndicatorMenuItem:Add a calculation indicator...:Ajouter un indicateur calculé...:
+addIndicator:Add an indicator:Ajouter un indicateur:::::::::
+closeIndicators:collapse:femer:::::::::
+showIndicators:expand:afficher:::::::::
+
+addIndicatorForElements:Add an indicator for #elements#:Ajouter un indicateur pour #elements#::::::::
+FUNC_AVG:avg:moy:::::::::
+FUNC_COUNT:count:nb:::::::::
+FUNC_COUNT_DISTINCT:distinct:unique:::::::::
+FUNC_MAX:max:max:::::::::
+FUNC_MIN:min:min:::::::::
+FUNC_SUM:sum:som:::::::::
+indicator_field:Choose field:Choisissez un champ:::::::::
+indicator_function:Choose function:Choisissez une fonction:::::::::
+indicator_label:Define a label (optional):Définissez un nom (optionel):::::::::
+invalidFunctionForSelectedField:Invalid function for the choosed field.:Fonction non compatible avec le champ choisi.:::::::::
+elementField:#Element# field:Champ #ofElement#:::::::::
+elementFields:#Element# fields:Champs #ofElement#:::::::::
+elementAttribute:System attributes:Attributs système:::::::::
+
+systemPrincipal:An external user:Un utilisateur externe:
+invalidUrl:Invalid url:Url invalide:::::::::
+errorSummary:The form contains the following errors, please correct them:Le formulaire contient les erreurs suivantes, veuillez les corriger:::::
+formHasErrors:Please check the fields with a cross:Veuillez contrôler les champs avec une croix:::::::::
+doYouWantToSaveChange:Do you want to save change?:Voulez-vous enregistrer les modifications?:
+pleaseFinishYourCurrentAction:Please finish your current action.:Veuillez terminer l'action courante.:
+doYouWantToMoveThisFolderUnderParent:Are you sure you want to move this folder under folder\: :Êtes-vous sûre de vouloir déplacer le dossier dans le dossier\: :::::
+doYouWantToMoveOrKeepInBoth:Move in :Déplacer dans :::::
+move:Yes:Oui:
+keepInBoth:Yes and keep in current folder:Oui et garder dans le dossier actuel::::
+
+invalidCaptchaCode:Please enter again the code displayed in the image:Veuillez rentrer à nouveau le code de l'image:::::::::
+invalidPassword:The password is invalid:Le mot de passe est invalide:::::::::
+invalidUsernameOnPop3Server:The username is not existing on the pop3 server:Le nom d'utilisateur est inexistant sur le serveur pop3::::::::
+pop3ServerConnectionProblem:Connection with pop3 server failed. Please try again.:Erreur dans la connection avec le serveur pop3. Veuillez réessayer.:::::::::
+invalidUsername:Unknown user:Utilisateur inconnu:::::::::
+forbiddenUser:Forbidden user:Utilisateur interdit:::::::::
+toManyLoginFailure:Please wait. To many login failed.:Veuillez attendre. Trop de tentatives infructeuses de login.:::::::::
+noModuleAccess:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />No access is defined for this role:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />Aucun accès n'est définit pour ce rôle:::::::::
+noModuleAccessDefined:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />No access (role) is defined for this user:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />Aucun accès (rôle) n'est définit pour cet utilisateur:::::::::
+passwordExpired:Your password expired. Please change it.:Votre mot-de-passe a expiré. Veuillez le modifier.:::::::::
+roleExpired:This role is expired.:Ce rôle est expiré.:::::::::
+choosedRoleHasNoModuleAccess:This role exists but no access is defined. Please contact your administrator.:Ce rôle existe mais aucun accès n'est défini. Veuillez contacter votre administrateur.:::::::::
+choosedUserHasNoModuleAccess:This user exists but no access is defined. Please contact your administrator.:Cet utilisateur existe mais aucun accès n'est défini. Veuillez contacter votre administrateur.:::::::::
+youDontHaveAnyAccess:You don't have any access defined in the system. Please contact your administrator.:Vous n'avez aucun accès défini dans le système. Veuillez contacter votre administrateur.::::::
+logoutInProgress:Logout in progress...:Logout en cours...::::
+logoutInProgress:Logout in progress...:Logout en cours...::::
+roleAccessIsChanged:Your access has been changed.:Vos accès ont été modifiés.:
+
+updateExistingFile:load a new file:charger un nouveau fichier:::::::::
+removeExistingFile:remove existing file:effacer le fichier actuel:::::::::
+backToFilename:back:retour:::::::::
+downloadCurrentFile:Download file:Télécharger le fichier:
+clickToBrowseAndFindANewFile:Click to browse and find the new file.:Cliquez pour naviguer et trouver le nouveau fichier.:::::::::
+newOnLineFile:write content:écrire le contenu:::::::::
+updateExistingOnLineFile:update content:changer le contenu:::::::::
+removeExistingOnLineFile:remove content:supprimer le contenu:::::::::
+newDocument:New document:Nouveau document:::::::::
+
+onlyInWrite_help:This document is visible only if the user has a modification right.:Ce document est visible uniquement si l'utilisateur à un droit de modification.:::::::::
+creationDateField_help:Please fill an approximate date if #thisElement# has been created before today.:Veuillez remplir une date approximative dans le cas où #thisElement# a été créé avant aujourd'hui:::::::::
+
+mustToUploadAtLeastOneFile:Please upload a file:Veuillez ajouter un fichier:::::::::
+
+validateEmailSubject:Confirm your email address:Confirmer votre adresse email:::::::::
+confirmationEmailSubject:Thank you for your subscription!:Merci pour votre inscription!:::::::::
+emailIsValidated:This email was confirmed by his owner.:Cet email a été confirmé par son propriétaire.:::::::::
+emailIsNotValidated:This email address is not confirmed by his owner.:Cette adresse email n'a pas été confirmée par son propriétaire.:::::::::
+confirmationLinkIsMandatoryForLegalReason:For legal reason you must add in the confirmation email a confirmation link to prove the subscriber is the owner of the email.:Pour des raisons légales vous devez ajouter un lien de confirmation afin de prouver que la personne inscrite soit bien l'auteur de l'adresse email.::::::
+validateEmailFromCodeDone:Email address confirmation done:Confirmation de l'adresse email effectuée:E-mail Adresse bestätigt::::::::
+validateEmailFromCodeThankYouText:Thank you for confirming your email address.:Merci d'avoir confirmé votre adresse email.:Danke für die Bestätigung Ihrer E-mail Adresse.::::::::
+unsubscribeEmailFromCodeDone:Email address has been successfully unsubscribed.:L'adresse email a été désinscrite.:::::::::
+validateEmailFromCodeClose:Close:Fermer:::::::::
+confirmationEmailSentTextAfterSubscriptionDone:A confirmation email as been sent to your email address.:Un email de confirmation a été envoyé à votre adresse email.:::::::::
+
+externalAccessMenusendEmailTitle:Choose an action:Choisissez une action:
+externalAccessMenusendEmailHelp:Use this email addresse for a specific action. Clic for more details.:Utilisez cette addresse email pour une action particulière. Cliquer pour plus de détail.:
+externalAccessMenusendEmail:Send an email:Ecrire un email:
+externalAccessMenuValidationLink:Send an email with a confirmation link:Envoyer un email avec un lien de confirmation:
+externalAccessMenuViewLink:Send an email and activate external access (<b>read only</b>):Envoyer un email et activer l'accès externe (<b>lecture seule</b>):
+externalAccessMenuEditLink:Send an email and activate external access (<b>write</b>):Envoyer un email et activer l'accès externe (<b>écriture</b>):
+externalAccessMenuStopEdit:<b>Disable</b> external access on #thisElement#:<b>Désactiver</b> l'accès externe de #thisElement#:
+externalAccessMenuStopRead:<b>Disable</b> external access on #thisElement#:<b>Désactiver</b> l'accès externe de #thisElement#:
+multipleExternalAccess:External access:Accès externe:::::
+multipleExternalAccess_help:This operation allow you to define if #thoseElements# can be accessed from a protected unique public url. By sending this link to the emails people would be able to view or change their own #element#.:Cette opération permet de définir si #thoseElements# peuvent être accéder par une url publique protégée. En envoyant cette url aux emails cela leur permettera d'accéder leur propre #-element#:::::
+multipleExternalAccessMenuView:Enable external access (<b>read only</b>):Activer l'accès externe (<b>lecture seule</b>):
+multipleExternalAccessMenuEdit:Enable external access (<b>write</b>):Activer l'accès externe (<b>écriture</b>):
+multipleExternalAccessMenuStop:<b>Disable</b> external access:<b>Désactiver</b> l'accès externe:
+externalAccessViewEmailSubject:Have a look to #anElement#:Visualiser #anElement#:
+externalAccessEditEmailSubject:Update #anElement#:Mettez-à-jour #anElement#:
+areYouSureToStopExternalAccess:Are you sure to disable this link?:Etes-vous sûre de vouloir désactiver ce lien?:
+helloBaseText:Hello, here is my message...:Bonjour, voici mon message...:
+thisElementCanBeEditedExternalyThroughACodedLink:#ThisElement# can be edited through an external link containing a static code.:#ThisElement# peut être modifié depuis un lien externe contenant un code d'accès static.:
+thisElementCanBeViewedExternalyThroughACodedLink:#ThisElement# can be viewed through an external link containing a static code.:#ThisElement# peut être visualisez depuis un lien externe contenant un code d'accès static.:
+
+externalAccessConfirmData:Are you sure to make those changes?:Êtes-vous sûre de vouloir faire ces changements?:::::::
+externalAccessNotAvailable:#Element# not available.:#Element# non disponible.:::::::
+externalAccessConfirmDelete:YOU ARE ABOUT TO DELETE ALL YOUR INFORMATION!:VOUS ALLEZ EFFACER TOUTES VOS INFORMATIONS!:
+externalAccessDeleteExplanation:Are you sure you want to continue?:Etes-vous sûre de vouloir continuer?:
+
+externalAccessChangeEmail:The current url you are using to manage #thisElement# will no more be available.<br /><br />A new link will be sent to the new email adress:Le lien que vous utilisez actuellement pour gérer #thisElement# ne sera plus disponible.<br /><br />Un nouveau lien sera envoyé à la nouvelle adresse email::::::::
+externalAccessChangeEmailIntroductionTextInValidationEmail:Your email address has been updated.:Votre adresse email a été modifiée.::::
+availableTill:available until:disponible jusqu'au:
+externalAccessMenuEndDate:Stop access on (optional):Arrêter l'accès le (optionel):
+externalAccessEndDateTitle:The access to this page is available until:L'accès à cette page est disponible jusqu'au::::::::
+externalAccessTypeHereForJournal:Type here...:Ecrivez ici...::::::::
+
+thankYouForYourSubscription:Thank you for your subscription.:Merci pour votre inscriptions.:::::::::
+pleaseValidateYourEmailByClickingOnTheFollowingLink:Please confirm your email address by clicking on the following link:Veuillez confirmer votre adresse email en cliquant sur le lien suivant:
+youCanUpdateYourDetailsByClickingOnTheFollowingLink:You can update your details by clicking on the following link:Vous pouvez modifier vos détails en cliquant sur le lien suivant:
+youCanViewYourDetailsByClickingOnTheFollowingLink:You can view your details by clicking on the following link:Vous pouvez visualisez vos détails en cliquant sur le lien suivant:
+validationLink:Confirmation link:Lien de confirmation:
+externalAccessLink:Access link:Lien d'accès:
+externalAccessEditLink:Update link:Lien pour mettre-à-jour:
+enableExternalAccessRequest:Enable external access request form:Activer un formulaire de demande d'accès externe:
+
+externalAccessRequestEmail:Please enter your email address to receive a link allowing you to update your details\::Veuillez entrer votre adresse email afin de recevoir un lien permettant de modifier vos détails\:::::::
+externalAccessRequestEmailSubject:You have requested an access on your subscription:Vous avez demandé un accès de votre inscription:::::::
+externalAccessRequestEmailIntroductionText:See below links to interact with your subscription.:Veuillez trouver ci-dessous des liens pour interagir avec votre inscription.::::::
+allowExternalAccess:Do you wish to allow the subscribers to edit their subscriptions later?:Voulez-vous permettre à la personne inscrite de modifier son inscription ultérieurement?:::::
+addinConfirmationEmail:Confirmation email options:Options de l'email de confirmation::::
+
+subscriptionConfEmail:Confirmation email:Email de confirmation:::::
+
+1thSubscriptionfound:st subscription:ère inscription:::::::
+2thSubscriptionfound:nd subscription:ème inscription:::::::
+3thSubscriptionfound:rd subscription:ème inscription:::::::
+4thSubscriptionfound:th subscription:ème inscription:::::::
+externalAccessRequestEmailIsSent:An email with a link to update your details has been sent. You can now close the window.:Un email avec un lien permettant de modifier vos détails a été envoyé. Vous pouvez maintenant fermer la fenêtre.::::::::
+
+yourEmailIsAlreadyValidated:Your email is confirmed.:Votre email est confirmé.::::::::
+youHaveDeletedYourSubscription:You have deleted your subscription.:Vous avez effacé votre inscription.:::::::
+theLinkToEditThisSubscriptionHasEndedOn:Viewing/editing your subscription was possible only until:La visualisation/modification de votre inscription était possible uniquement jusqu'au:::::::::
+
+unknownEmailForExternalAccessRequest:This email address is not recorded in one of the subscriptions.:Cette adresse email n'existe pas dans les inscriptions.::::::::
+
+cickToAddAttributsContent:Click to choose an option ...:Cliquer pour choisir une valeur ...:::::::
+cickToAddMultipleAttributsContent:Click to choose options ...:Cliquer pour choisir les options ...:::::::
+cickToAddTextsContent:Click to add text ...:Cliquer pour ajouter du texte ...:::::::
+cickToAddTimeRangesContent:Click to add a timeframe ...:Cliquer pour définir une période de temps ...:::::::
+cickToAddAddressesContent:Click to add an address ...:Cliquer pour ajouter une adresse ...:::::::
+cickToAddBlobsContent:Click to add text ...:Cliquer pour ajouter du texte ...:::::::
+cickToAddDatesContent:Click to add a date ...:Cliquer pour ajouter une date ...:::::::
+cickToAddEmailsContent:Click to add an email address ...:Cliquer pour ajouter une adresse email ...:::::::
+cickToAddFloatsContent:Click to add a value ...:Cliquer pour ajouter une valeur ...:::::::
+cickToAddNumericsContent:Click to add a value ...:Cliquer pour ajouter une valeur  ...:::::::
+cickToAddLinksContent:Click to add links ...:Cliquer pour ajouter des liens ...:::::::
+cickToAddStringsContent:Click to add a value ...:Cliquer pour ajouter une valeur  ...:::::::
+cickToAddTimesContent:Click to add a value ...:Cliquer pour ajouter une valeur  ...:::::::
+cickToAddUrlsContent:Click to add a url ...:Cliquer pour ajouter une url ...:::::::
+cickToAddVarcharsContent:Click to add a value ...:Cliquer pour ajouter une valeur  ...:::::::
+cickToAddGroupContent:<font style="font-size\:14px;font-weight\:bold;">+</font> <u>Click to add values ...</u>:<font style="font-size\:14px;font-weight\:bold;">+</font> <u>Cliquer pour ajouter des valeurs ...</u>:::::::
+cickToChangeGroupContent:<font style="font-size\:14px;font-weight\:bold;">+</font> <u><b>Edit values ...</b></u>:<font style="font-size\:14px;font-weight\:bold;">+</font> <u><b>Modifier les valeurs ...</b></u>:::::::
+cickToCollapseGroupContent:<font style="color\:\#aaa;font-weight\:normal;">- <u>collapse ...</u></font>:<font style="color\:\#aaa;font-weight\:normal;">- <u>minimiser ...</u></font>:::::::
+cickToCollapseGroupContent:&nbsp;:&nbsp;::::::::
+cickToShowGroupContent:<font style="font-size\:14px;font-weight\:bold;font-style\:normal;">+</font> <u>expand ...</u>:<font style="font-size\:14px;font-weight\:bold;font-style\:normal;">+</font> <u>afficher ...</u>:::::::
+noGroupContent:<font style="font-size\:14px;font-weight\:bold;">-</font> no defined value:<font style="font-size\:14px;font-weight\:bold;">-</font> aucune valeur définie ...:::::::
+withGroupContent:clic to toggle values:cliquer pour afficher/masquer les valeurs:::::::
+
+cm_renameGroup:Rename/Move #group#:Renommer/déplacer #group#:::::::
+cm_createSubGroup:Create a sub #group#:Créer un sous-#-group#:::::::
+cm_copyGroup:Copy #group# properties:Copier les propriétés du #-group#:::::::
+cm_openGroup:Open #group#:Ouvrir #group#:::::::
+cm_deleteGroup:Delete #group#:Supprimer #group#:::::::
+cm_portal:Link to a web address:Lier à une adresse web:::::::
+cm_htmlContent:Edit cover page:Modifier la page de couverture:::::::
+cm_subscription:Subscription form parameters:Paramêtres du formulaire d'inscription:::::::::
+cm_groupDetail:#Group# properties:Propriété du #-group#::::::
+cm_xmlPublish:Publish #group#:Publier #group#:::::::::
+cm_emailNotification:Edit notification email list:Modifier la liste des emails de notification:::::::::
+
+subscriptionAdditionalOption:Advanced options:Options avancées:::::::::
+
+emptyContentMultipleLanguage:no translation available:aucune traduction disponible:::::::
+theSystemHasJustBeenUpgraded:The Wigii system needs to upgrade. Please restart your browser.:Le système Wigii doit se mettre à jour. Veuillez relancer votre navigateur internet.:::::::
+
+organizeElementTitle:Organize:Organiser::::::::
+organizeNbSelectedGroups:#-groups# selected.:#-groups# sélectionnés.::::::
+organizeElementsTitle:Organize:Organiser::::::::
+
+pleaseSelectAtLeastOneGroup:Please select at least one #group#.:Veuillez sélectionner au moins #aGroup#.:::::
+
+addJournalItem:<font style="font-size\:14px;font-weight\:bold;">+</font> <u>add...</u>:<font style="font-size\:14px;font-weight\:bold;">+</font> <u>ajouter...</u>::::::
+addJournalItemPostBackMessage:Bellow is your message, please copy it and try later:Ci-dessous est votre message. Veuillez le copier et essayer utlérieurement:
+externalAccessUsernameForJournal:external access:accès externe::::
+
+keepNotifiedButton:My notifications:Mes notifications:::::::
+keepNotifiedTitle:Keep notified:Restez notifié:::::::
+keepNotifiedEmailInputLabel:Please fill in the email address you want to define notifications for\::Veuillez entrer l'adresse email pour laquelle vous désirez définir les notifications\:::::::::
+keepNotifiedEmailIntroduction:The notification are defined for the following email address\::Les notifications sont définies pour l'adresse email suivante\::::::::::
+changeKeepNotifiedEmailLabel:change email address:changer l'adresse email::::::
+noEmailIsSettedSuccessfully:No email address is defined.:Aucune adresse email est définie.:
+
+
+defineFilters:Define filters...:Définir un filtre...::::::::
+defineFiltersForElementsTitle:Filter #elements# with:Filtrer #elements# avec::::::::
+removeFilters:Remove filters:Supprimer les filtres::::::::
+resetFilters:Reset:Reset::::::::
+editFilters:Modify filters...:Modifier le filtre...::::::::
+simpleFiltersHelpInDialog:Separate values with a vertical bar "|" to match at least one possible values (OR).<br />Separate values with a space or the symbol "&" to match all values (AND).<br />Add the symbol "!" to filter #elements# wihtout values (NOT).<br />Use syntax "\#IDNumber" to filter on #element#'s IDs.:Séparer les valeurs avec une barre verticale "|" pour trouver au moins une des valeurs (OU).<br />Séparer les valeurs avec un espace ou le symbole "&" pour filtrer sur toute les valeurs (ET).<br />Ajouter le symbole "!" pour filtrer #elements# n'ayant pas les valeurs (NON).<br />Utilser la syntaxe "\#numéroID" pour filtrer #elements# sur leurs ID.::::::
+simpleFiltersHelp:To define advanced filter click on <b class="grayFont">V</b>:Pour définir des filtres avancés clicker sur <b class="grayFont">V</b>::::::
+advancedFiltersHelp:Define advanced filtering options:Définir des options avancées de filtre:::::
+searchBarGoButtonText:Filter:Filtrer::::
+userRoleAllocationFilterText:Filter:Filtrer::::
+
+advancedFilterHelp_Emails_proofStatus:0 = not confirmed, 1 = confirmed, 2 = deleted:0 = non confirmé, 1 = confirmé, 2 = supprimé:
+advancedFilterHelp_Emails_proofKey:Confirmation code:Code de confirmation:
+advancedFilterHelp_Emails_proof:Proof of confirmation (IP address + date):Preuve de confirmation (adresse IP + date):
+advancedFilterHelp_Emails_externalConfigGroup:#Group# id used for configuration in external access:Id du #-group# utilisé pour déterminer la configuration lors d'un accès externe:
+advancedFilterHelp_Emails_externalAccessLevel:0 = no access, 1 = read access, 2 = write access:0 = pas d'accès, 1 = accès en lecture, 2 = accès en écriture:
+advancedFilterHelp_Emails_externalCode:This code is used in the external access url to give permission on viewing/editing #thisElement#:Ce code est utilisé dans l'url d'accès externe afin de donner accès en lecture/édition à #thisElement#:
+advancedFilterHelp_Emails_externalAccessEndDate:End date for possible external access:Date de fin de l'accès externe:
+
+
+__textSearch:Filter #elements# to match those words:Filtrer #elements# contenant ces mots:
+limitFilterInGroup:Filter in #-group#:Filtrer dans #group#:
+advancedFilters:Advance filtering:Filtre avancé:
+advancedFiltersButtonText:advanced:avancé:
+__reverseSelectSearch:By ticking a box you will reverse the result of the corresponding filter above.:En cochant une case, vous inversez le résultat du filtre correspondant ci-dessus.:
+__textAdvancedSearch:Build a custom filter (click in the textbox to display the menu).:Construisez un filtre personnalisé (cliquez dans la zone de texte pour faire apparaître le menu).:
+__textGroupSearch:Build a filter on #groups# (click in the box to display the menu).:Construisez un filtre sur #groups# (cliquez dans la zone de texte pour faire apparaître le menu).:
+filterSelectEplanation:Choose the desired combination of values (OR between values in the same field, AND between fields):Choisissez la combinaison de valeurs désirées (OU entre les valeurs d'un même champs, ET entre les champs):
+filtersSetSucessfully:Filters applied!<br />All further operations will consider the filters.:Le filtre est activé!<br />Toutes les prochaines actions tiendront comptent du filtre.:
+filtersRemovedSucessfully:Filters removed:Le filtre est supprimé:
+noFilterSet:No filters has been set:Aucun filtre n'a été défini:
+followingActionsWillMatchFilters:Click on "<b class="R">Remove filters</b>" to retrieve the complete list .:Cliquez sur "<b class="R">Supprimer le filtre</b>" pour retrouver la liste complète.:
+
+goSearch:Apply filters on list.:Appliquer les filtres sur la liste.:::::::::
+resetAllFilters:Reset filters:Reset les filtres:::::::::
+resetAllFilters_help:Reset all search filters:Reset toutes les conditions de filtre:::::::::
+openAdvancedSearch:Advanced search:Recherche avancée:::::::::
+closeAdvancedSearch:Close:Fermer:::::::::
+goForAdvancedSearch:Search:Rechercher:::::::::
+goForAdvancedSearch_help:Click to apply filters define in the several search boxes.:Cliquez pour appliquer les filtres définis dans les différents zone de recherche.:::::::::
+
+homePageTitle::::::::
+homePageIntroduction::::::::::
+changeOwnName:(Change name):(Changer le nom)::::::::
+homeButtonHome:HOME:ACCUEIL:::::
+homeButtonBack:BACK:RETOUR::::::
+
+roleSelected:role(s) selected:rôle(s) sélectionné(s):::::
+userSelected:user(s) selected:utilisateur(s) sélectionné(s):::::
+clicToDefineUgr:-- click --:-- cliquer --:::::
+
+infoReadMore:Read more >:Lire la suite >:::::
+
+compulsory_field_filename:Please add a document name:Veuillez ajouter un nom pour le document:
+
+missExternalAccessEmailPre:Email:Email:
+missExternalAccessEmailPost:has no external access setup.:n'a aucun accès externe.:
+
+showInOutlookButton:Show in Outlook:Montrer dans Outlook::::
+toEnableOutlookButtonHelp:This calendar is currently only available online. Please ask your administrator to ''Publish the folder...''.:Ce calendrier n'est actuellement disponible qu'en-ligne. Veuillez contacter votre administrateur afin de ''Publier le dossier...'':
+howToLinkInOutlook1:To show this calendar in Outlook please copy the following link\::Pour montrer ce calendrier dans Outlook, veuillez copier le lien ci-dessous\::
+howToLinkInOutlook2:1) Open Outlook, go to the Calendar, right click on My calendar\n2) Add Calendar, choose "From Internet"\n3) Paste the link\n4) Enjoy!\n<i class="grayFont">Remember, you can only <b>view</b> the calendar in Outlook, modifications can only be made online.</i>:1) Ouvrez Outlook, allez dans l'onglet Calendrier, cliquez droit sur Mes calendriers\n2) Ajoutez un calendrier, choisissez "depuis internet"\n3) coller le lien\n4) Terminé!\n<i class="grayFont">Rappelez-vous, vous pouvez <b>consulter</b> uniquement le calendrier dans Outlook, les modifications ne sont possibles qu'en ligne.</i>:::
+
+sendTestEmail:Send a test email:Envoyer un email de test:
+sendTestEmailSubjectPrefix:TEST:TEST:
+sendTestEmailHelp:This test email will be sent to the from address only.:Cet email de test sera envoyé uniquement à l'adresse "de"."
+testEmailSentSuccessfullyTo:Test email has been sent to:L'email de test a été envoyé à:::
+allEmailingEmailFields:Send to all email fields:Envoyer à tous les champs email:::::
+
+previousVersions:Download previous versions:Télécharger les versions précédentes:
+areYouSureToDeleteVersion:Are you sure to delete version:Êtes-vous sûre de vouloir effacer la version::::
+
+noRoleFoundForWigiiNamespace:You don't have access to the namespace:Vous n'avez pas accès à l'espace de nom::::
+noRoleFoundForWigiiNamespaceExplanation:Please contact your administrator.:Veuillez contacter votre administrateur.:::::
+noModuleAccessFoundForRole:You don't have access to:Vous n'avez pas accès à::::
+noModuleAccessFoundForRoleExplanation:Please contact your administrator.:Veuillez contacter votre administrateur.:::::
+folderNotFound:You don't have access to the #-group#:Vous n'avez pas accès au #-group#::::
+folderNotFoundExplanation:Please contact your administrator.:Veuillez contacter votre administrateur.:::::
+itemNotFound:#Element# dosen't exist:#Element# n'existe pas::::
+itemNotAvailable:You don't have access to the #-element#:Vous n'avez pas accès au #-element#::::
+itemNotFoundExplanation:Please contact your administrator.:Veuillez contacter votre administrateur.:::::
+itemNotAvailableExplanation:Please contact your administrator.:Veuillez contacter votre administrateur.:::::
+
+wigiiUploadProgress:uploading...:téléchargement en cours...:::::
+autoSaveConfirmation:Saved!:Sauvegardé!::::
+saveHtmlAreaContent:Save:Sauvegarder:::
+autoSaveTrigged:Saving:Sauvegarde::::
+
+noBegDateEntered:Please provide start date:Veuillez entrer une date de début:
+begDateAfterEndDate:End date must be after start date:La date de fin doit être après la date de début::::
+thisFieldHasBeenEmptied:- empty -:- vide -:
+displayEvenIfEmpty:- empty -:- vide -:
+seeMore:See more...:Voir plus...:
+selectInList:-- select --:-- sélectionner --:
+
+finishElementBeforeAddingSubItems_prefix:Please finish the #element# before adding :Veuillez terminer #element# avant d'ajouter :::
+
+invalidXml:Invalid XML:XML invalide:
+
+filesVersionNotInSync:file version is not in sync with:a une version de fichier non synchronisée avec:::::::::
+cannotUploadOldVersion:An older version of the file cannot be uploaded. Current version is :Il n&apos;est pas possible de charger une ancienne version du fichier. La version actuelle est :::::::::
+cannotChangeVersionWithoutUploading:The file version cannot be changed without uploading a new file:Il n&apos;est pas possible de modifier la version sans charger un nouveau fichier:::::::::
+
+Dimensions:Dimensions:Dimensions:::::::::
+#anElementDimensions#:a dimension:une dimension:::::::::
+#elementDimensions#:dimension:la dimension:::::::::
+#theElementDimensions#:the dimension:la dimension:::::::::
+#-elementDimensions#:dimension:dimension:::::::
+#-elementsDimensions#:dimensions:dimensions:::::::
+#ElementDimensions#:Dimension:La dimension:::::::::
+#ThisElementDimensions#:This dimension:Cette dimension:::::::
+#thoseElementsDimensions#:those dimensions:ces dimensions:::::::
+#thisElementDimensions#:this dimension:cette dimension:::::::
+#ThoseElementsDimensions#:Those dimensions:Ces dimensions:::::::
+#elementsDimensions#:dimensions:les dimensions:::::::
+#ofElementDimensions#:of the dimension:de cette dimension:::::::
+#ofElementsDimensions#:of dimensions:des dimensions:::::::
+Dimensions_idGroup:One or several group ids separated by comma or semicolon:Un ou plusieurs ID de groupes séparés par une virgule ou un point-virgule:::::::::
+Dimensions_email:One or several email addresses separated by comma or semicolon:Une ou plusieurs adresses mail séparées par une virgule ou un point-virgule:::::::::
+syncDimensionNewValue:new value in dimension:nouvelle valeur dans la dimension:::::::
+syncDimensionDeletedValue:dimension value has been deleted:la valeur a été supprimée de la dimension:::::::
+syncCfgFieldsNewValue:new field in config:nouveau champ défini dans la config:::::::
+syncCfgFieldsDeletedValue:field deleted from config:le champ a été supprimé de la config:::::::

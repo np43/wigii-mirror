@@ -1,0 +1,22 @@
+<?xml version='1.0' standalone='yes'?>
+<Emails>
+	<dbFields unique="" >
+		<value type="text" sqlType="text" multiLanguage="0" require="1" searchable="1" />
+		<!-- PROOF_STATUS_NONE = 0; PROOF_STATUS_VALIDATED = 1; PROOF_STATUS_DELETED = 2; -->
+		<proofStatus type="hidden" sqlType="int" multiLanguage="0" require="0" searchable="0" />
+		<proofKey type="hidden" sqlType="varchar" sqlLength="nameLength" multiLanguage="0" require="0" searchable="0" />
+		<proof type="hidden" sqlType="varchar" sqlLength="valueLength" multiLanguage="0" require="0" searchable="0" />
+		<externalConfigGroup type="hidden" sqlType="int" multiLanguage="0" require="0" searchable="0" />
+		<!-- EXTERNAL_ACCESS_STOP = 0; EXTERNAL_ACCESS_VIEW = 1; EXTERNAL_ACCESS_EDIT = 2; -->
+		<externalAccessLevel type="hidden" sqlType="int" multiLanguage="0" require="0" searchable="0" />
+		<!-- externalCode is 40 hexdecimal characters representing a code encripted by SHA-1 -->
+		<externalCode type="hidden" sqlType="varchar" sqlLength="nameLength" multiLanguage="0" require="0" searchable="0" />
+		<externalAccessEndDate type="hidden" sqlType="int" multiLanguage="0" require="0" searchable="0" />
+		<sys_user type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_username type="hidden" sqlType="varchar" require="0" searchable="0" />
+		<sys_date type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_creationUser type="hidden" sqlType="int" require="0" searchable="0" />
+		<sys_creationUsername type="hidden" sqlType="varchar" require="0" searchable="0" />
+		<sys_creationDate type="hidden" sqlType="int" require="0" searchable="0" />
+	</dbFields>
+</Emails>

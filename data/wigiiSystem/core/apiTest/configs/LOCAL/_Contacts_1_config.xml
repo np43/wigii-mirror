@@ -1,0 +1,31 @@
+<?xml version='1.0' standalone='yes' ?>
+<Contacts>
+
+	<adds>
+		<item node="parameters['tagable']" value="1" ></item>
+		<item node="parameters['viewElementInfo']" value="1" ></item>
+		<item node="parameters['Element_viewId']" value="0" ></item>
+		<item node="parameters['viewNothingElseThanForm']" value="1" ></item>
+		<item node="fields->address['require']" value="0" />
+		<item node="fields->email['require']" value="0" />
+		<!-- <item node="fields->phone['require']" value="1" />
+		<item node="fields->mobile['require']" value="1" />
+		<item node="fields->date_birth['require']" value="1" /> -->
+		<item node="views->list->email['width']" value="150" />
+		<item node="views->list->tags['width']" value="null" />
+		<item addNodesTo="fields" >
+			<freeText align="left" padding-top="20" onlyInForm="1" >Free text très important pour l'inscription!!! et encore tiout plein de texte tellement importantn!!!</freeText>
+			<specialRemark type="Blobs" isInLine="0" width="390" height="100" require="0" searchable="1"><label>Spécial remarques pour tout un tas d'élément très intéressant lorsqu'un label est particuliérement long et inadapté à son usage!!!</label></specialRemark>
+			<emergencyContact type="Blobs" require="0" searchable="1">
+				<label>Contact d'urgenceéé</label>
+				<label_en>Emergency contact</label_en>
+			</emergencyContact>
+			<calculatedField type="Strings" funcExp='implode(" - ", first_name, address.city, "!!", implode(":", "1", first_name, "2", address.city))'/>
+		</item>
+	</adds>
+
+	<deletes>
+
+	</deletes>
+
+</Contacts>
