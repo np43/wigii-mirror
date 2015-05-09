@@ -1,0 +1,106 @@
+<?xml version='1.0' standalone='yes'?>
+<computations>
+
+	<parameters
+		FeedbackOnSystem_enable="0"
+		FeedbackOnElement_enable="0"
+		Notification_enable="0"
+		Notification_enableOnSharing="0"
+		Notification_enableDynamicSubscription="0"
+		Notification_alwaysForceNotification="0"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="0"
+
+		ExcelExport_enableSysDate="1"
+		ExcelExport_enableId="0"
+		
+		Element_enableLockedStatus="0"
+		Element_enableLockedStatusOnEdit="0"
+		Element_enableImportant1Status="0"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="1"
+		Element_enableDeprecatedStatus="1"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="1" 
+		Element_viewInfo="1"
+		Element_viewId="1"
+		Element_evaluator="GeometryElementEvaluator"
+		reloadDetailAfterModify="1"
+		
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_enableDynamicConfig="1" 
+		Group_enablePortal="0"
+		Group_enableSubscription="0"
+		Group_enableXmlPublish="0"
+		nbOfLevelToExpandOnInit="1"
+		
+		elementTotalWidth="950"
+		elementLabelWidth="200"
+		sendEmailTotalWidth="750"
+		sendEmailLabelWidth="200"
+		/>
+	
+	<feedbackOnElement>
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1">
+				<attribute email="xxxx@yyyy.ch" checked="1">localSupport<label>xxxxx</label></attribute>
+				<attribute email="support-wigii@xxx.xx">support<label>Technical Support</label></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute email="xxxx@yyyy.ch" checked="1">localSupport<label>xxxxx</label></attribute>
+				<attribute email="support-wigii@xxx.xx">support<label>Technical Support</label></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+	
+	<Notification>
+		<template path="Notification.php" inClientFolder="0" />
+	</Notification>
+	
+	<Emailing>
+		<template path="Emailing.php" inClientFolder="0" />
+	</Emailing>
+	
+	<fields>
+		<title excelExport="auto" type="Strings" require="1"><label_l01>Title</label_l01><label_l02>Titre</label_l02></title>
+		<input type="Blobs"	require="0" searchable="1" expand="1" excelExport="auto" noWrap="1" height="200" reportParam="1"><label_l01>Input expression</label_l01><label_l02>Expression d&apos;entrée</label_l02></input>
+		<pageFormat type="Attributs" useRadioButtons="1" useMultipleColumn="2" require="0" reportParam="1">
+			<label_l01>Page format</label_l01><label_l02>Format de la page</label_l02>
+			<attribute checked="1">A4P<label_l01>A4 portrait</label_l01><label_l02>A4 portrait</label_l02></attribute>
+			<attribute>A4L<label_l01>A4 landscape</label_l01><label_l02>A4 paysage</label_l02></attribute>
+		</pageFormat>
+		<statusBar type="Strings" readonly="1" searchable="0" onlyInDetail="1"><label_l01>&gt;&gt;&gt;</label_l01><label_l02>&gt;&gt;&gt;</label_l02></statusBar>
+		<innerFieldsConfig type="Blobs" hidden="1" require="0" searchable="0" excelExport="auto" noWrap="1"><label_l01>Inner fields configuration</label_l01><label_l02>Configuration des champs internes</label_l02></innerFieldsConfig>	
+		<internalState type="Blobs" hidden="1" require="0" searchable="0" excelExport="auto" noWrap="1" calculateOnFetch="1" funcExp='executeComputation(input, statusBar, innerFieldsConfig)'><label_l01>Internal state</label_l01><label_l02>Etat interne</label_l02></internalState>		
+		<innerFieldsData type="Blobs" hidden="1" require="0" searchable="1" excelExport="auto" noWrap="1" calculateOnFetch="1" funcExp='manageInnerFields(innerFieldsConfig)'><label_l01>Inner fields</label_l01><label_l02>Champs internes</label_l02></innerFieldsData>
+		<result type="Files" readonly="1" onlyInDetail="1" excelExport="auto" calculateOnFetch="0" funcExp='buildComputationResultReport(title, statusBar, internalState)'><label_l01>Result</label_l01><label_l02>Résultat</label_l02></result>
+	</fields>
+
+	<listView lineHeight="medium" >
+		<fields>
+			<c0 field="title" width="250" isDefaultSortingKey="1"/>		
+			<c1 field="input" width="null" />								
+			<c2 elementAttribut="sys_date" width="100" defaultSorted=" DESC " />
+			<c3 elementAttribut="state_archived" width="16" />
+			<c4 elementAttribut="state_deprecated" width="16" />
+		</fields>
+	</listView>
+
+	<selectSearchBar>
+		<fields>		
+			<c1 elementAttribut="sys_date" ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></c1>
+			<c2 elementAttribut="sys_creationDate" ><label_l01>Creation date</label_l01><label_l02>Date de création</label_l02></c2>
+		</fields>
+	</selectSearchBar>
+
+</computations>

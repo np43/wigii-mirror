@@ -1,0 +1,52 @@
+computationStatusNotImplemented:#theElement# is not implemented:#theElement# n'est pas implémenté:::::::::
+computationStatusNotDefined:Undefined #element#. Nothing to do.:#element# n'est pas défini. Il n'y a rien à faire.:::::::::
+computationStatusModifyInputExp:Click on modify and then set the input expression.:Cliquez sur Modifier puis indiquez l'expression d'entrée:::::::::
+computationStatusSelectTaggedValues:Click on modify and then enter the desired values using the input fields.:Cliquez sur Modifier puis entrez les valeurs désirées dans les champs à disposition.:::::::::
+computationStatusReady:Report on computation results is ready to be built.:Le rapport sur les résultats du calcul est prêt à être construit.:::::::::
+computationStatusDone:Report on computation results is available.:Le rapport sur les résultats du calcul est disponible.:::::::::
+computationStatusFailed:An error occured while building the report on the computation results.:Une erreur est survenue pendant la construction du rapport sur les résultats du calcul.:::::::::
+
+Computations:Computations:Calculs:::::::::
+#anElementComputations#:a computation:un calcul:::::::::
+#elementComputations#:computation:le calcul:::::::::
+#theElementComputations#:the computation:le calcul:::::::::
+#-elementComputations#:computation:calcul:::::::
+#-elementsComputations#:computations:calculs:::::::
+#ElementComputations#:Computation:Le calcul:::::::::
+#ThisElementComputations#:This computation:Ce calcul:::::::
+#ThoseElementsComputations#:Those computations:Ces calculs:::::::
+#thisElementComputations#:this computation:ce calcul:::::::
+#thoseElementsComputations#:those computations:ces calculs:::::::
+#elementsComputations#:computations:les calculs:::::::
+#ofElementComputations#:of the computation:du calcul:::::::
+#ofElementsComputations#:of computations:des calculs:::::::
+
+Values:Values:Valeurs:::::::::
+#anElementValues#:a value:une valeur:::::::::
+#elementValues#:value:la valeur:::::::::
+#theElementValues#:the value:la valeur:::::::::
+#-elementValues#:value:valeur:::::::
+#-elementsValues#:values:valeurs:::::::
+#ElementValues#:Value:La valeur:::::::::
+#ThisElementValues#:This value:Cette valeur:::::::
+#thoseElementsValues#:those values:ces valeurs:::::::
+#thisElementValues#:this value:cette valeur:::::::
+#ThoseElementsValues#:Those values:Ces valeurs:::::::
+#elementsValues#:values:les valeurs:::::::
+#ofElementValues#:of the value:de la valeur:::::::
+#ofElementsValues#:of values:des valeurs:::::::
+
+Sequences:Sequences:Suites:::::::::
+#anElementSequences#:a sequence:une suite:::::::::
+#elementSequences#:sequence:la suite:::::::::
+#theElementSequences#:the sequence:la suite:::::::::
+#-elementSequences#:sequence:suite:::::::
+#-elementsSequences#:sequences:suites:::::::
+#ElementSequences#:Sequence:La suite:::::::::
+#ThisElementSequences#:This sequence:Cette suite:::::::
+#thoseElementsSequences#:those sequences:ces suites:::::::
+#thisElementSequences#:this sequence:cette suite:::::::
+#ThoseElementsSequences#:Those sequences:Ces suites:::::::
+#elementsSequences#:sequences:les suites:::::::
+#ofElementSequences#:of the sequence:de la suite:::::::
+#ofElementsSequences#:of sequences:des suites:::::::

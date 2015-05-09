@@ -1,0 +1,84 @@
+<?xml version='1.0' standalone='yes'?>
+<news>
+	
+	<parameters
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+		Notification_enable="0"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="0"
+		Notification_enableMessage="1"
+		Notification_enableMessageOnDelete="1"
+		Notification_enableOnSharing="0"
+		
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableId="1"
+		
+		Element_enableLockedStatus="0"
+		Element_enableLockedStatusOnEdit="0"
+		Element_enableImportant1Status="0"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="0"
+		Element_enableDeprecatedStatus="0"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="0" 
+		Element_viewInfo="1"
+		Element_viewId="0"
+		Element_evaluator="PerfLogElementEvaluator"
+		
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_enableDynamicConfig="1" 
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		Group_IncludeChildrenGroupsOnSelect="1"
+		nbOfLevelToExpandOnInit="1"
+		
+		elementTotalWidth="700"
+		elementLabelWidth="200"
+		sendEmailTotalWidth="550"
+		sendEmailLabelWidth="200"
+		sendFeedbackTotalWidth="500"
+		sendFeedbackLabelWidth="175"
+		shareMultipleElementTotalWidth="500"
+		shareMultipleElementLabelWidth="175"		
+		/>
+	
+	<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute email="intranet@medair.org">itnranetSupport<label_l01>Intranet support</label_l01><label_l02>Support intranet</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="intranet@medair.org">itnranetSupport<label_l01>Intranet support</label_l01><label_l02>Support intranet</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+	
+	<Notification>
+		<template path="Notification.php" inClientFolder="1" />
+	</Notification>
+	
+	<fields >		
+		<calculatedField 	excelExport="auto" 	type="Strings" htmlArea="1"	searchable="0" funcExp="displayPerfLog()" calculateOnFetch="1"><label_l01>Performance Log</label_l01><label_l02>Log de performance</label_l02></calculatedField>		
+	</fields>		
+	
+	<listView>
+		<fields>	                       
+                       <c0 elementAttribut="sys_date" width="100"><label_l01>Date</label_l01><label_l02>Date</label_l02></c0>
+		</fields>
+	</listView>
+	
+</news>

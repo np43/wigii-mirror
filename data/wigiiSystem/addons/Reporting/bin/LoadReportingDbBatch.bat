@@ -1,0 +1,1 @@
+..\..\..\core\_cliImplExecutor\wigii_cli.bat -c Medair -uRootPrincipal execBatch LoadReportingDbBatch

@@ -1,0 +1,1340 @@
+﻿/**
+ *  This file is part of Wigii.
+ *
+ *  Wigii is free software: you can redistribute it and\/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Wigii is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
+ *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ */
+
+/*
+ * This file contains a QlikView script that allows to extract from a Wigii database structure
+ * all the necessary data. The extraction is done in csv and in qvd
+ */
+
+
+//General format settings
+SET ThousandSep="'";
+SET DecimalSep='.';
+SET MoneyThousandSep="'";
+SET MoneyDecimalSep='.';
+SET MoneyFormat='$#''##0;-$#''##0';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD/MM/YYYY';
+SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+
+//connect to Wigii (please configure your local ODBC connection with this name
+ODBC CONNECT32 TO Wigii;
+
+//Database name:
+LET vWigiiDb = 'wigii';
+
+//Trashbin folder name filter: define false() to not filter, default is '*trashbin*'
+//all the folders matching this expression + all the folders contained in those folders will be removed from the data model
+LET vWildCardTrashbinFilter = '*trashbin*';
+
+//to rebuild the complete qvd's define this variable to 0, else define this variable as (now()-25569)*86400 - (2*3600) - (nb of hours *3600)
+//the -25569)*86400 is to convert to unix timestamp, the - (2*3600) is because it seem that the timestamp is in front of two hours of real time
+LET vLastUpdate = (now()-25569)*86400 - (2*3600) - (4*3600); //load any change since last 4 hours
+
+
+///$tab Dico
+//*******************************
+//Load Dico.xls files containing 3 sheets with two columns containing any translations for fields, attributs and multiple attributs
+//translation are done in only one language
+//*******************************
+IF NOT isNull(fileSize('Dico.xlsx')) THEN
+	Attributs_map:
+	Mapping LOAD code, 
+	     translation
+	FROM
+	[Dico.xlsx]
+	(ooxml, embedded labels, table is Attributs);
+	
+	MultipleAttributs_map:
+	Mapping LOAD code, 
+	     translation
+	FROM
+	[Dico.xlsx]
+	(ooxml, embedded labels, table is MultipleAttributs);
+	
+	Fields_map:
+	Mapping LOAD code, 
+	     translation
+	FROM
+	[Dico.xlsx]
+	(ooxml, embedded labels, table is Fields);
+ELSE //if not exist please complete the following tabs to do translation
+	Attributs_map:
+	Mapping LOAD * INLINE [
+	    code, translation
+	    english, English
+	    french, French
+	];
+	MultipleAttributs_map:
+	Mapping LOAD * INLINE [
+	    code, translation
+	    english, English
+	    french, French
+	];
+	Fields_map:
+	Mapping LOAD * INLINE [
+	    code, translation
+	    english, English
+	    french, French
+	];
+	
+ENDIF
+
+
+
+///$tab Filters
+//**************************
+// Reduce Fields, Elements, and Groups to some namespace and modules
+//**************************
+
+//load fields for a set of namespace and modules
+
+IF NOT isNull(fileSize('Filters.xlsx')) THEN
+	[Filters]:
+	LOAD *, RowNo() as f.counter;
+	LOAD f.wigiiNamespace, 
+	     f.modulename
+	FROM
+	[Filters.xlsx]
+	(ooxml, embedded labels, table is Filters);
+
+
+	[Sys_fields]:
+	LOAD *, sys.wigiiNamespace&'-'&sys.modulename&'-'&sys.fieldname as sys.key, RowNo() as sys.counter;
+	LOAD sys.wigiiNamespace, 
+	     sys.modulename,
+	     sys.fieldname
+	FROM
+	[Filters.xlsx]
+	(ooxml, embedded labels, table is Sys_fields);
+	
+else
+	[Filters]:
+	LOAD *, RowNo() as f.counter;
+	LOAD * INLINE [
+	    f.wigiiNamespace, f.modulename
+	];
+
+	[Sys_fields]:
+	LOAD *, sys.wigiiNamespace&'-'&sys.modulename&'-'&sys.fieldname as sys.key, RowNo() as f.counter;
+	LOAD * INLINE [
+	    sys.wigiiNamespace, sys.modulename, sys.fieldname
+	];
+endif
+
+
+
+
+///$tab Wigii Structure Tables
+//**************************
+// Wigii strucute table
+// script MUST run before the Wigii DT script in order to interpret correctly the exist id_element
+//**************************
+
+//
+[Groups]:
+LOAD `id_group`,
+    groupname,
+    modulename as groupModulename,
+    wigiiNamespace as groupWigiiNamespace,
+    description,
+    portal,
+    htmlContent,
+    `id_group_parent`,
+    subscription,
+    emailNotification,
+    xmlPublish,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+SQL SELECT *
+FROM `$(vWigiiDb)`.Groups
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Groups.qvd] (qvd) WHERE NOT EXISTS(`id_group`);
+ENDIF
+
+STORE [Groups] into Groups.qvd(qvd);
+//drop table [Groups];
+
+[Groups_Groups]:
+LOAD `id_group`,
+    id_group_owner
+    ;
+SQL SELECT *
+FROM `$(vWigiiDb)`.Groups_Groups
+;
+
+STORE [Groups_Groups] into Groups_Groups.qvd(qvd);
+//drop table [Groups_Groups];
+
+//
+[Elements]:
+LOAD if(IsNull(`id_element_root`), `id_element`, `id_element_root`) as `id_element_root`,
+	`id_element`,
+	`id_element_parent`,
+    modulename,
+    modulename_parent,
+	if(IsNull(`id_element_root`), `modulename`, `modulename_root`) as `modulename_root`,
+	if(IsNull(`id_element_root`), `linkName`, `linkName_root`) as `linkName_root`,
+    linkName,
+    peerId,
+    version,
+    tags,
+    `state_locked`,
+    `state_lockedInfo`,
+    subField(subField(`state_lockedInfo`, '##_|1_##',1),'##_&1_##',2) as state_lockedRealUsername,
+    subField(subField(`state_lockedInfo`, '##_|1_##',8),'##_&1_##',2) as state_lockedMessage,
+    date(((subField(subField(`state_lockedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_lockedDate,
+    `state_important1`,
+    `state_important1Info`,
+    subField(subField(`state_important1Info`, '##_|1_##',1),'##_&1_##',2) as state_important1RealUsername,
+    subField(subField(`state_important1Info`, '##_|1_##',8),'##_&1_##',2) as state_important1Message,
+    date(((subField(subField(`state_important1Info`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_important1Date,
+    `state_important2`,
+    `state_important2Info`,
+    subField(subField(`state_important2Info`, '##_|1_##',1),'##_&1_##',2) as state_important2RealUsername,
+    subField(subField(`state_important2Info`, '##_|1_##',8),'##_&1_##',2) as state_important2Message,
+    date(((subField(subField(`state_important2Info`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_important2Date,
+    `state_hidden`,
+    `state_hiddenInfo`,
+    subField(subField(`state_hiddenInfo`, '##_|1_##',1),'##_&1_##',2) as state_hiddenRealUsername,
+    subField(subField(`state_hiddenInfo`, '##_|1_##',8),'##_&1_##',2) as state_hiddenMessage,
+    date(((subField(subField(`state_hiddenInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_hiddenDate,
+    `state_archived`,
+    `state_archivedInfo`,
+    subField(subField(`state_archivedInfo`, '##_|1_##',1),'##_&1_##',2) as state_archivedRealUsername,
+    subField(subField(`state_archivedInfo`, '##_|1_##',8),'##_&1_##',2) as state_archivedMessage,
+    date(((subField(subField(`state_archivedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_archivedDate,
+    `state_deprecated`,
+    `state_deprecatedInfo`,
+    subField(subField(`state_deprecatedInfo`, '##_|1_##',1),'##_&1_##',2) as state_deprecatedRealUsername,
+    subField(subField(`state_deprecatedInfo`, '##_|1_##',8),'##_&1_##',2) as state_deprecatedMessage,
+    date(((subField(subField(`state_deprecatedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_deprecatedDate,
+    `state_finalized`,
+    `state_finalizedInfo`,
+    subField(subField(`state_finalizedInfo`, '##_|1_##',1),'##_&1_##',2) as state_finalizedRealUsername,
+    subField(subField(`state_finalizedInfo`, '##_|1_##',8),'##_&1_##',2) as state_finalizedMessage,
+    date(((subField(subField(`state_finalizedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_finalizedDate,
+    `state_approved`,
+    `state_approvedInfo`,
+    subField(subField(`state_approvedInfo`, '##_|1_##',1),'##_&1_##',2) as state_approvedRealUsername,
+    subField(subField(`state_approvedInfo`, '##_|1_##',8),'##_&1_##',2) as state_approvedMessage,
+    date(((subField(subField(`state_approvedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_approvedDate,
+    `state_dismissed`,
+    `state_dismissedInfo`,
+    subField(subField(`state_dismissedInfo`, '##_|1_##',1),'##_&1_##',2) as state_dismissedRealUsername,
+    subField(subField(`state_dismissedInfo`, '##_|1_##',8),'##_&1_##',2) as state_dismissedMessage,
+    date(((subField(subField(`state_dismissedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_dismissedDate,
+    `state_blocked`,
+    `state_blockedInfo`,
+    subField(subField(`state_blockedInfo`, '##_|1_##',1),'##_&1_##',2) as state_blockedRealUsername,
+    subField(subField(`state_blockedInfo`, '##_|1_##',8),'##_&1_##',2) as state_blockedMessage,
+    date(((subField(subField(`state_blockedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_blockedDate,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+SQL 
+SELECT E3.*, subE.id_element_root, subE.modulename_root, subE.linkName_root, EParent.modulename as modulename_parent
+FROM `$(vWigiiDb)`.Elements AS E3 
+LEFT JOIN (
+	SELECT EE2.id_element as id_element, EE2.id_element_owner as id_element_root, E2.modulename as modulename_root, EE2.linkName as linkName_root
+	FROM `$(vWigiiDb)`.Elements_Elements AS EE2 
+	INNER JOIN (
+		SELECT EE.id_element as id_element, min(EE.id_elements_elements) as id_elements_elements 
+		FROM `$(vWigiiDb)`.Elements_Elements AS EE 
+		WHERE EE.linkType = 'subitem' 
+		GROUP BY EE.id_element
+		) AS rootLink ON rootLink.id_elements_elements = EE2.id_elements_elements
+	INNER JOIN `$(vWigiiDb)`.Elements E2 ON E2.id_element = EE2.id_element_owner
+	) AS subE ON subE.id_element = E3.id_element AND E3.id_element_parent IS NOT NULL
+LEFT JOIN `$(vWigiiDb)`.Elements AS EParent ON EParent.id_element = E3.id_element_parent
+WHERE E3.sys_date > $(vLastUpdate);
+
+//other query that works
+//SELECT MainE.*, SubJoin.id_element_root, SubJoin.modulename_root, SubJoin.linkName_root, EParent.modulename as modulename_parent
+//FROM `$(vWigiiDb)`.Elements as MainE
+//LEFT JOIN (
+//SELECT * FROM (
+//	select EE.id_element, EE.id_element_owner as id_element_root, E2.modulename as modulename_root, EE.linkName as linkName_root from `$(vWigiiDb)`.Elements_Elements EE
+//	inner join `$(vWigiiDb)`.Elements as E on E.id_element = EE.id_element and E.id_element_parent is not null
+//	inner join `$(vWigiiDb)`.Elements as E2 on E2.id_element = EE.id_element_owner
+//	where EE.linkType = 'subitem'
+//	order by EE.id_elements_elements ASC
+//	) as SubE
+//GROUP BY SubE.id_element
+//) as SubJoin ON SubJoin.id_element = MainE.id_element
+//LEFT JOIN `$(vWigiiDb)`.Elements as EParent ON EParent.id_element = MainE.id_element_parent
+//WHERE MainE.sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Elements.qvd] (qvd) WHERE NOT EXISTS(`id_element`);
+ENDIF
+
+STORE [Elements] into Elements.qvd(qvd);
+
+//
+[Element Group pairing]:
+LOAD `id_element_group`,
+    `id_element` as `id_element_root`,
+    `id_group`;
+SQL SELECT *
+FROM `$(vWigiiDb)`.`Elements_Groups`;
+STORE [Element Group pairing] into Elements_Groups.qvd(qvd);
+//drop table [Element Group pairing];
+
+
+NoConcatenate [Elements2]:
+Load * Resident [Elements];
+Right Join LOAD
+	id_element_root,
+	id_group
+Resident [Element Group pairing];
+//add wigiiNamespace
+Left Join load
+	id_group,
+	groupWigiiNamespace as wigiiNamespace
+Resident Groups;
+
+drop field id_group from Elements2;
+
+//reduce [Elements to only one id_element/wigiinamespace pair]
+NoConcatenate [tempE]:
+LOAD Distinct *
+Resident [Elements2];
+DROP Table [Elements];
+DROP Table [Elements2];
+RENAME Table [tempE] to [Elements];
+
+//Drop table [Elements];
+
+
+
+///$tab Wigii DT
+//********************************
+// Load each Wigii DT Tables
+//********************************
+
+//
+[MultipleAttributs2]:
+Load
+	`id_MultipleAttribut`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    applymap('MultipleAttributs_map',value,value) as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    `sys_date`;
+LOAD `id_MultipleAttribut`,
+	`id_element`,
+    field,
+    subfield(replace(text(value),';',','),'XAGU___XAGU') as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+SQL SELECT *
+FROM `$(vWigiiDb)`.MultipleAttributs
+where sys_date > $(vLastUpdate);
+
+NoConcatenate [MultipleAttributs]:
+LOAD
+	`id_MultipleAttribut`,
+	FirstValue(`id_element`) as id_element,
+	FirstValue(field) as field,
+	concat(value, '; ') as value,
+	FirstValue(`sys_creationUser`) as sys_creationUser,
+	FirstValue(`sys_creationUsername`) as sys_creationUsername,
+	FirstValue(`sys_creationDate`) as sys_creationDate,
+	FirstValue(`sys_user`) as sys_user,
+	FirstValue(`sys_username`) as sys_username,
+	FirstValue(`sys_date`) as sys_date
+RESIDENT [MultipleAttributs2]
+Group By id_MultipleAttribut;
+drop table [MultipleAttributs2];
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [MultipleAttributs.qvd] (qvd) WHERE NOT EXISTS(`id_MultipleAttribut`);
+ENDIF
+
+STORE [MultipleAttributs] into MultipleAttributs.qvd(qvd);
+//drop table [MultipleAttributs];
+
+//
+[Attributs]:
+LOAD `id_Attribut`,
+    `id_element`,
+    applymap('Fields_map',field,field) as field,
+    applymap('Attributs_map',text(value),text(value)) as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+SQL SELECT *
+FROM `$(vWigiiDb)`.Attributs
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Attributs.qvd] (qvd) WHERE NOT EXISTS(`id_Attribut`);
+ENDIF
+
+STORE [Attributs] into Attributs.qvd(qvd);
+//drop table [Attributs];
+
+//
+[Dates]:
+LOAD `id_Date`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    date(value, '$(DateFormat) $(TimeFormat)') as value,
+    year(value) as year,
+    month(value) as month,
+    day(value) as day,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Dates
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Dates.qvd] (qvd) WHERE NOT EXISTS(`id_Date`);
+ENDIF
+
+STORE [Dates] into Dates.qvd(qvd);
+//drop table [Dates];
+
+//
+[Links]:
+LOAD `id_Link`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Num#(value) as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Links
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Links.qvd] (qvd) WHERE NOT EXISTS(`id_Link`);
+ENDIF
+
+STORE [Links] into Links.qvd(qvd);
+//drop table [Links];
+
+//
+[Booleans]:
+LOAD `id_Boolean`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Num#(value) as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Booleans
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Booleans.qvd] (qvd) WHERE NOT EXISTS(`id_Boolean`);
+ENDIF
+
+STORE [Booleans] into Booleans.qvd(qvd);
+//drop table [Booleans];
+
+//
+[Times]:
+LOAD `id_Time`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Time(value, '$(TimeFormat)') as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Times
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Times.qvd] (qvd) WHERE NOT EXISTS(`id_Time`);
+ENDIF
+
+STORE [Times] into Times.qvd(qvd);
+//drop table [Times];
+
+//
+[Floats]:
+LOAD `id_Float`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Num#(value) as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Floats
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Floats.qvd] (qvd) WHERE NOT EXISTS(`id_Float`);
+ENDIF
+
+STORE [Floats] into Floats.qvd(qvd);
+//drop table [Floats];
+
+//
+[Urls]:
+LOAD `id_url` as id_Url,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Text(url) as url,
+    Text(name) as name,
+    Text(target) as target,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Urls
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Urls.qvd] (qvd) WHERE NOT EXISTS(`id_Url`);
+ENDIF
+
+STORE [Urls] into Urls.qvd(qvd);
+//drop table [Urls];
+
+//
+[Numerics]:
+LOAD `id_Numeric`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Num#(value) as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Numerics
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Numerics.qvd] (qvd) WHERE NOT EXISTS(`id_Numeric`);
+ENDIF
+
+STORE [Numerics] into Numerics.qvd(qvd);
+//drop table [Numerics];
+
+//
+[Addresses]:
+LOAD `id_Addresse` as id_Address,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Text(street) as street,
+    Text(zip_code) as zip_code,
+    Text(city) as city,
+    Text(state) as state,
+    Text(country) as country,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Addresses
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Addresses.qvd] (qvd) WHERE NOT EXISTS(`id_Address`);
+ENDIF
+
+STORE [Addresses] into Addresses.qvd(qvd);
+//drop table [Addresses];
+
+//
+[Varchars]:
+LOAD `id_Varchar`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Text(value_l01) as value, //default language
+    Text(value_l01) as value_l01,
+    Text(value_l02) as value_l02,
+    Text(value_l03) as value_l03,
+    Text(value_l04) as value_l04,
+    Text(value_l05) as value_l05,
+    Text(value_l06) as value_l06,
+    Text(value_l07) as value_l07,
+    Text(value_l08) as value_l08,
+    Text(value_l09) as value_l09,
+    Text(value_l10) as value_l10,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Varchars
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Varchars.qvd] (qvd) WHERE NOT EXISTS(`id_Varchar`);
+ENDIF
+
+STORE [Varchars] into Varchars.qvd(qvd);
+//drop table [Varchars];
+
+//
+[TimeRanges]:
+LOAD `id_TimeRange`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    Num#(isAllDay) as isAllDay,
+    Time(begTime, '$(TimeFormat)') as begTime,
+    date(begDate, '$(DateFormat)') as begDate,
+    date(endDate, '$(DateFormat)') as endDate,
+	Time(endTime, '$(TimeFormat)') as endTime,
+    date(begDate&' '&begTime, '$(DateFormat) $(TimeFormat)') as start,
+    date(endDate&' '&endTime, '$(DateFormat) $(TimeFormat)') as end,
+    year(begDate) as startYear,
+    month(begDate) as startMonth,
+    day(begDate) as startDay,
+    year(endDate) as endYear,
+    month(endDate) as endMonth,
+    day(endDate) as endDay,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.TimeRanges
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [TimeRanges.qvd] (qvd) WHERE NOT EXISTS(`id_TimeRange`);
+ENDIF
+
+STORE [TimeRanges] into TimeRanges.qvd(qvd);
+//drop table [TimeRanges];
+
+//
+[Blobs]:
+LOAD `id_Blob`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    text(value) as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Blobs
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Blobs.qvd] (qvd) WHERE NOT EXISTS(`id_Blob`);
+ENDIF
+
+STORE [Blobs] into Blobs.qvd(qvd);
+//drop table [Blobs];
+
+//
+[Emails]:
+LOAD `id_Email`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+    text(value) as value,
+    text(proofKey) as proofKey,
+    text(proof) as proof,
+    text(proofStatus) as proofStatus,
+    text(externalCode) as externalCode,
+    text(externalAccessLevel) as externalAccessLevel,
+    text(externalAccessEndDate) as externalAccessEndDate,
+    text(externalConfigGroup) as externalConfigGroup,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Emails
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Emails.qvd] (qvd) WHERE NOT EXISTS(`id_Email`);
+ENDIF
+
+STORE [Emails] into Emails.qvd(qvd);
+//drop table [Emails];
+
+//
+[Texts]:
+LOAD `id_Text`,
+	`id_element`,
+    applymap('Fields_map',field,field) as field,
+   	Text(value_l01) as value, //default language
+    Text(value_l01) as value_l01,
+    Text(value_l02) as value_l02,
+    Text(value_l03) as value_l03,
+    Text(value_l04) as value_l04,
+    Text(value_l05) as value_l05,
+    Text(value_l06) as value_l06,
+    Text(value_l07) as value_l07,
+    Text(value_l08) as value_l08,
+    Text(value_l09) as value_l09,
+    Text(value_l10) as value_l10,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+
+SQL SELECT *
+FROM `$(vWigiiDb)`.Texts
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Texts.qvd] (qvd) WHERE NOT EXISTS(`id_Text`);
+ENDIF
+
+STORE [Texts] into Texts.qvd(qvd);
+//drop table [Texts];
+
+//
+[Strings]:
+LOAD `id_String`,
+    `id_element`,
+    applymap('Fields_map',field,field) as field,
+    Text(value) as value,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+SQL SELECT *
+FROM `$(vWigiiDb)`.Strings
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Strings.qvd] (qvd) WHERE NOT EXISTS(`id_String`);
+ENDIF
+
+STORE [Strings] into Strings.qvd(qvd);
+//drop table [Strings];
+
+//
+[Files]:
+LOAD `id_File`,
+    `id_element`,
+    applymap('Fields_map',field,field) as field,
+    text(name) as name,
+    text(type) as type,
+    num#(size) as size,
+    text(mime) as mime,
+    text(path) as path,
+    num#(user) as user,
+    text(username) as username,
+    date(date, '$(DateFormat) $(TimeFormat)') as date,
+    text(content) as content,
+    text(thumbnail) as thumbnail,
+    text(textContent) as textContent,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+SQL SELECT *
+FROM `$(vWigiiDb)`.Files
+where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+IF $(vLastUpdate)>0 then
+	LOAD * FROM [Files.qvd] (qvd) WHERE NOT EXISTS(`id_File`);
+ENDIF
+
+STORE [Files] into Files.qvd(qvd);
+//drop table [Files];
+
+
+
+///$tab FieldList
+
+//**************************
+// Create a Field list with all the fields per datatype
+//**************************
+
+[Field list]:
+Load 
+	'Dates' as datatype,
+	id_element,
+	field as fieldname,
+	'Dates - '&field as dt_fieldname
+Resident [Dates];
+
+Load 
+	'Links' as datatype,
+	id_element,
+	field as fieldname,
+	'Links - '&field as dt_fieldname
+Resident [Links];
+
+Load 
+	'MultipleAttributs' as datatype,
+	id_element,
+	field as fieldname,
+	'MultipleAttributs - '&field as dt_fieldname
+Resident [MultipleAttributs];
+
+Load 
+	'Attributs' as datatype,
+	id_element,
+	field as fieldname,
+	'Attributs - '&field as dt_fieldname
+Resident [Attributs];
+
+Load 
+	'Strings' as datatype,
+	id_element,
+	field as fieldname,
+	'Strings - '&field as dt_fieldname
+Resident [Strings];
+
+Load 
+	'Booleans' as datatype,
+	id_element,
+	field as fieldname,
+	'Booleans - '&field as dt_fieldname
+Resident [Booleans];
+
+Load 
+	'Times' as datatype,
+	id_element,
+	field as fieldname,
+	'Times - '&field as dt_fieldname
+Resident [Times];
+
+Load 
+	'Floats' as datatype,
+	id_element,
+	field as fieldname,
+	'Floats - '&field as dt_fieldname
+Resident [Floats];
+
+Load 
+	'Urls' as datatype,
+	id_element,
+	field as fieldname,
+	'Urls - '&field as dt_fieldname
+Resident [Urls];
+
+Load 
+	'Numerics' as datatype,
+	id_element,
+	field as fieldname,
+	'Numerics - '&field as dt_fieldname
+Resident [Numerics];
+
+Load 
+	'Addresses' as datatype,
+	id_element,
+	field as fieldname,
+	'Addresses - '&field as dt_fieldname
+Resident [Addresses];
+
+Load 
+	'Varchars' as datatype,
+	id_element,
+	field as fieldname,
+	'Varchars - '&field as dt_fieldname
+Resident [Varchars];
+
+Load 
+	'TimeRanges' as datatype,
+	id_element,
+	field as fieldname,
+	'TimeRanges - '&field as dt_fieldname
+Resident [TimeRanges];
+
+Load 
+	'Emails' as datatype,
+	id_element,
+	field as fieldname,
+	'Emails - '&field as dt_fieldname
+Resident [Emails];
+
+Load 
+	'Blobs' as datatype,
+	id_element,
+	field as fieldname,
+	'Blobs - '&field as dt_fieldname
+Resident [Blobs];
+
+Load 
+	'Texts' as datatype,
+	id_element,
+	field as fieldname,
+	'Texts - '&field as dt_fieldname
+Resident [Texts];
+
+Load 
+	'Files' as datatype,
+	id_element,
+	field as fieldname,
+	'Files - '&field as dt_fieldname
+Resident [Files];
+
+
+
+///$tab Namespace - Module - Field]
+
+//**************************
+// Create a table with all the fields per namespace and module
+//**************************
+
+//start from the Field list table
+NoConcatenate [tempNMFE]:
+Load * Resident [Field list];
+//add modulename and id_element_root
+Left Join Load
+	id_element,
+	id_element_root,
+	modulename,
+	wigiiNamespace
+Resident Elements;
+
+NoConcatenate [tempNMF]:
+load Distinct
+	wigiiNamespace,
+	modulename,
+	fieldname,
+	datatype
+Resident [tempNMFE];
+
+NoConcatenate [Namespace - Module - Field]:
+load Distinct
+	wigiiNamespace as nmf.wigiiNamespace,
+	modulename as nmf.modulename,
+	fieldname as nmf.fieldname,
+	datatype as nmf.datatype,
+	datatype&' - '&fieldname as [nmf.dt-field]
+Resident [tempNMF]
+order by wigiiNamespace asc, modulename asc, fieldname asc;
+
+NoConcatenate [DT - Field]:
+load Distinct
+	nmf.datatype as dtf.datatype,
+	nmf.fieldname as dtf.fieldname,
+	[nmf.dt-field] as [dtf.dt-field]
+Resident [Namespace - Module - Field]
+order by nmf.fieldname asc, nmf.datatype asc;
+
+drop Table [tempNMFE];
+drop Table [tempNMF];
+
+
+store [Namespace - Module - Field] into [Namespace - Module - Field].csv (txt);
+store [Namespace - Module - Field] into [Namespace - Module - Field].qvd;
+store [DT - Field] into [DT - Field].csv (txt);
+store [DT - Field] into [DT - Field].qvd;
+
+
+
+///$tab Reduction
+
+
+//remove trashbin folders and sub groups
+
+if(isNull(vWildCardTrashbinFilter)) then
+	LET vWildCardTrashbinFilter = '*trashbin*';
+end if
+
+if(vWildCardTrashbinFilter <> False()) then
+	//lookup trashbin and folders in trashbin
+	NoConcatenate [trashGroups]:
+	LOAD id_group as idTrashGroup //, groupname
+	Resident [Groups]
+	Where 
+	//*** !! WARNING
+	//filter out any Group named *trashbin*
+	WildMatch(groupname, '$(vWildCardTrashbinFilter)')
+	;
+	//include all the children of those folders
+	Concatenate (trashGroups) load id_group as idTrashGroup
+	Resident Groups_Groups
+	where Exists(idTrashGroup, id_group_owner);
+
+ELSE
+	[trashGroups]:
+	LOAD * INLINE [
+	    idTrashbinFilter
+	    -1
+	];
+
+
+ENDIF
+
+Let vFilterLength=peek('f.counter',-1,'Filters');
+
+if vFilterLength > 1 then
+
+	//reduce [Namespace - Module - Field]
+	[tempNMF]:
+	Left Keep LOAD *, RowNo() as nmf.counter
+	Resident [Namespace - Module - Field]
+	Where exists(f.wigiiNamespace, nmf.wigiiNamespace) and Exists(f.modulename, nmf.modulename);
+	DROP Table [Namespace - Module - Field];
+	RENAME Table [tempNMF] to [Namespace - Module - Field];
+
+	//reduce [Module - Field]
+	[tempDTF]:
+	Left Keep LOAD *, RowNo() as dtf.counter
+	Resident [DT - Field]
+	Where Exists([nmf.dt-field], [dtf.dt-field]);
+	DROP Table [DT - Field];
+	RENAME Table [tempDTF] to [DT - Field];
+
+	//reduce Groups
+	[tempGroups]:
+	Left Keep LOAD *, RowNo() as Groups.counter
+	Resident [Groups]
+	Where exists(f.wigiiNamespace, groupWigiiNamespace) and Exists(f.modulename, groupModulename) 
+	//remove any trash folders or folders in trash
+	and not Exists(idTrashGroup, id_group)
+	;
+	DROP Table [Groups];
+	RENAME Table [tempGroups] to [Groups];
+	
+	//reduce Element Group paring
+	[tempElementGroupPairing]:
+	Left Keep LOAD *
+	Resident [Element Group pairing]
+	Where exists(id_group);
+	DROP Table [Element Group pairing];
+	RENAME Table [tempElementGroupPairing] to [Element Group pairing];
+
+	//reduce Elements
+	[tempElements]:
+	Left Keep LOAD *, RowNo() as Elements.counter
+	Resident [Elements]
+	Where exists(id_element_root) and exists(f.wigiiNamespace, wigiiNamespace) and Exists(f.modulename, modulename) and (isNull(linkName) or not(WildMatch(linkName, '__deleted_*')) or linkName='');
+	DROP Table [Elements];
+	RENAME Table [tempElements] to [Elements];
+else
+	//count [Namespace - Module - Field]
+	NoConcatenate [tempNMF]:
+	LOAD *, RowNo() as nmf.counter
+	Resident [Namespace - Module - Field];
+	DROP Table [Namespace - Module - Field];
+	RENAME Table [tempNMF] to [Namespace - Module - Field];
+
+	//count [Module - Field]
+	NoConcatenate [tempDTF]:
+	LOAD *, RowNo() as dtf.counter
+	Resident [DT - Field];
+	DROP Table [DT - Field];
+	RENAME Table [tempDTF] to [DT - Field];
+
+	//count Groups
+	NoConcatenate [tempGroups]:
+	LOAD *, RowNo() as Groups.counter
+	Resident [Groups]
+	Where 
+	//remove any trash folders or folders in trash
+	not Exists(idTrashGroup, id_group)
+	;
+	DROP Table [Groups];
+	RENAME Table [tempGroups] to [Groups];
+
+	//reduce Element Group paring
+	[tempElementGroupPairing]:
+	Left Keep LOAD *
+	Resident [Element Group pairing]
+	Where exists(id_group);
+	DROP Table [Element Group pairing];
+	RENAME Table [tempElementGroupPairing] to [Element Group pairing];
+
+	//count Elements
+	NoConcatenate [tempElements]:
+	LOAD *, RowNo() as Elements.counter
+	Resident [Elements]
+	where (isNull(linkName) or not(WildMatch(linkName, '__deleted_*')) or linkName='');
+	DROP Table [Elements];
+	RENAME Table [tempElements] to [Elements];
+
+endif
+
+
+///$tab Namespace - Module Tables
+//**************************
+// Create one table per Namespace - Module
+//**************************
+
+Let vFieldListLength=peek('nmf.counter',-1,'Namespace - Module - Field');
+
+let vCrtNamespace = '';
+let vCrtModule = '';
+let valueLabel = '';
+FOR i=1 TO $(vFieldListLength)
+	
+	//peek fieldname, and datatype
+	LET vWigiiNamespace = peek('nmf.wigiiNamespace', $(i)-1,'Namespace - Module - Field');
+	LET vModule = peek('nmf.modulename', $(i)-1,'Namespace - Module - Field');
+	LET vFieldname = peek('nmf.fieldname', $(i)-1,'Namespace - Module - Field');
+	LET vDatatype = trim(peek('nmf.datatype', $(i)-1,'Namespace - Module - Field'));
+	//last char removed
+	LET vDTField = Left('$(vDatatype)', len('$(vDatatype)')-1); //Lower(Left('$(vDatatype)',1))& Right(Left('$(vDatatype)', len('$(vDatatype)')-1), len('$(vDatatype)')-2); //first char lower case, last char removed
+	
+	//New namespace and module -> create new table
+	if '$(vWigiiNamespace)' <> '$(vCrtNamespace)' or '$(vModule)' <> '$(vCrtModule)' then
+		
+		//store previous table
+		if '' <> '$(vCrtNamespace)' or '' <> '$(vCrtModule)' then
+			STORE [$(vCrtNamespace).$(vCrtModule)] into [$(vCrtNamespace).$(vCrtModule)].qvd;
+			STORE [$(vCrtNamespace).$(vCrtModule)] into [$(vCrtNamespace).$(vCrtModule)].csv (txt); 
+			DROP table [$(vCrtNamespace).$(vCrtModule)];
+		ENDIF
+		
+		//prefix all the element subfield with el.
+		QUALIFY *;
+		NoConcatenate [el]:
+		LOAD * 
+		Resident [Elements]
+		WHERE wigiiNamespace = '$(vWigiiNamespace)' and modulename = '$(vModule)';
+		UNQUALIFY *;
+		//rename the table el to $(vWigiiNamespace).$(vModule)
+		rename Table [el] to [$(vWigiiNamespace).$(vModule)];
+	endif
+	
+	//concatenate all the sub field values to table
+	
+	//rename subfieldname value  with nothing
+	if FieldNumber('$(vFieldname)', '$(vWigiiNamespace).$(vModule)') <> 0 then
+		valueLabel = '$(vFieldname).$(vDatatype)';
+	ELSE
+		valueLabel = '$(vFieldname)';
+	endif
+
+	let noOfFields =  NoOfFields('$(vDatatype)');	
+	//check if field requires sys fields or not
+	if exists('sys.key', '$(vWigiiNamespace)-$(vModule)-$(vFieldname)') then
+		let cols = ''; //'value as [$(valueLabel)]';
+		for j=4 to $(noOfFields)
+			if '$(cols)' <> '' then
+				cols = '$(cols), '; //add a coma + space
+			ENDIF
+			if FieldName($(j) ,'$(vDatatype)') = 'value' then
+				//if value, then only fieldname
+				cols = '$(cols)'&FieldName($(j) ,'$(vDatatype)')&' as [$(valueLabel)]';
+			else
+				//if other subfield, then subfield name
+				cols = '$(cols)'&FieldName($(j) ,'$(vDatatype)')&' as [$(valueLabel) '&FieldName($(j) ,'$(vDatatype)')&']';
+			endif
+			
+		NEXT
+	//check if there is more value fields than value
+	elseif $(noOfFields) > 10 then
+		let cols = ''; //'value as [$(valueLabel)]';
+		for j=4 to $(noOfFields)-6
+			if '$(cols)' <> '' then
+				cols = '$(cols), '; //add a coma + space
+			ENDIF
+			if FieldName($(j) ,'$(vDatatype)') = 'value' then
+				//if value, then only fieldname
+				cols = '$(cols)'&FieldName($(j) ,'$(vDatatype)')&' as [$(valueLabel)]';
+			else
+				//if other subfield, then subfield name
+				cols = '$(cols)'&FieldName($(j) ,'$(vDatatype)')&' as [$(valueLabel) '&FieldName($(j) ,'$(vDatatype)')&']';
+			endif
+			
+		NEXT
+	ELSE
+		let cols = 'value as [$(valueLabel)]';
+	endif
+	
+	//load only the values
+	[$(vFieldname)]:
+	Left join LOAD
+		id_element as el.id_element, 
+		$(cols)
+	Resident [$(vDatatype)]
+	Where [field] = '$(vFieldname)';
+	
+	vCrtNamespace = '$(vWigiiNamespace)';
+	vCrtModule = '$(vModule)';
+NEXT
+
+//store previous table
+if '' <> '$(vCrtNamespace)' or '' <> '$(vCrtModule)' then
+	STORE [$(vCrtNamespace).$(vCrtModule)] into [$(vCrtNamespace).$(vCrtModule)].qvd;
+	STORE [$(vCrtNamespace).$(vCrtModule)] into [$(vCrtNamespace).$(vCrtModule)].csv (txt);
+	DROP table [$(vCrtNamespace).$(vCrtModule)];
+ENDIF
+
+
+
+
+
+///$tab Cleanup
+//cleanup of Wigii tables
+Drop Tables Groups, Groups_Groups, Elements, [Element Group pairing], Addresses, Attributs, Blobs, Booleans, Dates, Emails, Files, Floats, Links, MultipleAttributs, Numerics, Strings, Texts, TimeRanges, Times, Urls, Varchars;
+//cleanup of Field list
+Drop Table [Field list];
+
+
+
+///$tab Exit
+
+//Groups, Elements, [Element Group pairing], 
+//Drop Tables Addresses, Attributs, Blobs, Booleans, Dates, Emails, Files, Floats, Links, MultipleAttributs, Numerics, Strings, Texts, TimeRanges, Times, Urls, Varchars;
+//drop Fields sys_user, sys_creationUser, sys_username, sys_creationUsername, sys_date, sys_creationDate;
+EXIT Script;
+
+
+///$tab Field Tables
+//**************************
+// Create one table per Field
+//**************************
+//
+//Let vFieldListLength=peek('dtf.counter',-1,'DT - Field');
+//
+//QUALIFY *;
+//UNQUALIFY id_element;
+//
+//FOR i=1 TO $(vFieldListLength)
+//	
+//	//peek fieldname, and datatype
+//	LET vFieldname = peek('dtf.fieldname', $(i)-1,'DT - Field');
+//	LET vDatatype = trim(peek('dtf.datatype', $(i)-1,'DT - Field'));
+//	//first char lower case, last char removed
+//	//LET vDTField = Lower(Left('$(vDatatype)',1))& Right(Left('$(vDatatype)', len('$(vDatatype)')-1), len('$(vDatatype)')-2)&'Field';
+//	
+//	//create a table for that field
+//	NoConcatenate [$(vFieldname)]:
+//	load *
+//	Resident [$(vDatatype)]
+//	where $(vDatatype).field = '$(vFieldname)';
+//	
+//	//rename table (this is to prevent the qualify to qualify double time the DT
+//	RENAME Table [$(vFieldname)] to [$(vDatatype).$(vFieldname)];
+//	
+//NEXT
+//
+//UNQUALIFY *;
+//
+////cleanup of DT tables
+//Drop Tables Addresses, Attributs, Blobs, Booleans, Dates, Emails, Files, Floats, Links, MultipleAttributs, Numerics, Strings, Texts, TimeRanges, Times, Urls, Varchars;
+//
+//

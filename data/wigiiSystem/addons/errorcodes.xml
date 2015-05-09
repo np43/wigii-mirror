@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<errorcodes>
+	<exceptions>
+		<ReportingException from="10000" to="10099"/>		
+		<GeometryException from="10100" to="10199"/>
+	</exceptions>
+</errorcodes>

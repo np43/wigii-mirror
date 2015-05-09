@@ -1,0 +1,108 @@
+<?xml version='1.0' standalone='yes'?>
+<reports>
+	
+	<parameters
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+		Notification_enable="0"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="0"
+		Notification_enableMessage="1"
+		Notification_enableMessageOnDelete="1"
+		Notification_enableOnSharing="0"
+		
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableId="1"
+		
+		Element_enableLockedStatus="0"
+		Element_enableLockedStatusOnEdit="0"
+		Element_enableImportant1Status="0"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="0"
+		Element_enableDeprecatedStatus="0"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="0" 
+		Element_viewInfo="1"
+		Element_viewId="0"
+		Element_evaluator="ReportingElementEvaluator"
+		
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_enableDynamicConfig="1" 
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		Group_IncludeChildrenGroupsOnSelect="1"
+		nbOfLevelToExpandOnInit="1"
+		
+		elementTotalWidth="700"
+		elementLabelWidth="200"
+		sendEmailTotalWidth="550"
+		sendEmailLabelWidth="200"
+		sendFeedbackTotalWidth="500"
+		sendFeedbackLabelWidth="175"
+		shareMultipleElementTotalWidth="500"
+		shareMultipleElementLabelWidth="175"	
+		reloadDetailAfterModify="1"	
+		/>
+	
+	<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute email="intranet@medair.org">itnranetSupport<label_l01>Intranet support</label_l01><label_l02>Support intranet</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="intranet@medair.org">itnranetSupport<label_l01>Intranet support</label_l01><label_l02>Support intranet</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+	
+	<Notification>
+		<template path="Notification.php" inClientFolder="1" />
+	</Notification>
+	
+	<fields >			
+		<reportName readonly="1" expand="1" excelExport="auto" type="Strings" require="1" searchable="1" jsCode="
+if(typeof(tempLoadingBar) == 'undefined'){
+	tempLoadingBar = '';
+}
+if(tempLoadingBar){
+	$('#loadingBar').text(tempLoadingBar);
+}
+setVis('loadingBar', false);
+if($('#elementDialog form').length){
+	$('#elementDialog').parent().find('button.ok').click(function(){ 
+		tempLoadingBar = $('#loadingBar').text();
+		$('#loadingBar').text('Calculating report...');
+		setVis('loadingBar', true); 
+	});
+}
+$('#elementDialog .el_edit').text('Refresh');"><label_l01>Report name</label_l01><label_l02>Nom du rapport</label_l02></reportName>
+		<reportDescr readonly="1" expand="1" excelExport="auto" type="Strings" require="0" ><label_l01>Description</label_l01><label_l02>Description</label_l02></reportDescr>
+		<freeText onlyInDetail="1"><div class="label" style="width:175px;">Refresh report:</div><div style="width:450px;" class="value"><button onclick="$('#elementDialog .el_edit').click();">refresh</button></div></freeText>
+		<reportParamsConfig hidden="1" height="250" isInLine="1" noWrap="1" type="Blobs" require="0" onlyInForm="1" expand="1"><label_l01>Report parameters configuration</label_l01><label_l02>Configuration des paramètres du rapport</label_l02></reportParamsConfig>
+		<reportParamsValues hidden="1" type="Blobs" height="250" isInLine="1" noWrap="1" require="0" onlyInForm="1" expand="1" funcExp="manageInnerFields(reportParamsConfig)" calculateOnFetch="1"><label_l01>Report parameters values</label_l01><label_l02>Valeurs des paramètres du rapport</label_l02></reportParamsValues>
+		<reportPdf readonly="1" type="Files" onlyInDetail="1" funcExp='executeReport(reportName, "PDF")'><label_l01>Report in pdf</label_l01><label_l02>Rapport en pdf</label_l02></reportPdf>		
+		<reportHtml readonly="1" type="Files" onlyInDetail="1" funcExp='executeReport(reportName, "HTML")'><label_l01>Report in html</label_l01><label_l02>Rapport en html</label_l02></reportHtml>		
+	</fields>		
+	
+	<listView>
+		<fields>	                       
+        	<c0 field="reportName" width="100" />
+        	<c1 field="reportDescr" width="null" />
+        	<c2 elementAttribut="sys_date" width="100" ><label>Last run</label></c2>
+		</fields>
+	</listView>
+	
+</reports>
