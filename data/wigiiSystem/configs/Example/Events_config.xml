@@ -1,0 +1,200 @@
+<?xml version='1.0' standalone='yes'?>
+<events>
+
+	<parameters
+	
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+
+		Notification_enable="1"
+		Notification_enableOnSharing="1"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="1"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="0"
+		Notification_includeSenderInNotification="0"
+		Notification_includeOtherNamespaceInUpdateOrSetState="0"
+		Notification_hideElementView="0"
+		Notificatin_hideAccessButton="0"
+
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableCreationSysDate="0"
+		ExcelExport_enableId="0"
+
+		Element_enableLockedStatus="0"
+		Element_enableImportant1Status="1"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="0"
+		Element_enableDeprecatedStatus="1"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="0"
+		Element_viewInfo="1"
+		Element_viewId="0"
+		Element_evaluator="CustomizedElementEvaluator"
+
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_selectAllGroupsOnSearch="1"
+		Group_enableDynamicConfig="1"
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		nbOfLevelToExpandOnInit="2"
+
+		elementTotalWidth="860"
+		elementLabelWidth="300"
+
+		reloadDetailAfterModify="0"
+		useGoogleServiceToPreviewOfficeDocuments="0"
+
+		trashBinGroup=""
+		/>
+	<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+
+	<Notification>
+		<template path="Notification.php" inClientFolder="1" />
+	</Notification>
+
+	<Emailing>
+		<template path="Emailing.php" inClientFolder="1" />
+	</Emailing>
+
+	<fields >
+		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="500"  /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+			
+			<subject excelExport="auto" type="Strings" require="1" displayAsTitle1="1"><label_l01>Subject</label_l01><label_l02>Sujet</label_l02></subject>
+			<period excelExport="50" type="TimeRanges" require="1" displayAsTitle2="1"><label_l01>When</label_l01><label_l02>Quand</label_l02></period>
+			<location excelExport="auto" type="Strings" require="0" displayAsTitle3="1" expand="1"><label_l01>Location</label_l01><label_l02>Location</label_l02></location>
+			<author excelExport="auto" type="Emails" enableForNotification="1" enableForEmailing="1" autoFillWithPrincipalEmail="1" require="0" ><label_l01>Contact email</label_l01><label_l02>Email de contact</label_l02></author>
+			<labels excelExport="auto" type="Attributs" require="0" displayAsTag="1" expand="1" >
+				<label_l01>Labels</label_l01><label_l02>Label</label_l02>
+				<attribute>none</attribute>
+				<attribute color="0000FF">training<label_l01>Training</label_l01><label_l02>Formation</label_l02></attribute>
+				<attribute color="00CCFF">meeting<label_l01>Meeting</label_l01><label_l02>Réunion</label_l02></attribute>
+				<attribute color="CCFFCC">briefing<label_l01>Briefing</label_l01><label_l02>Briefing</label_l02></attribute>
+				<attribute color="FFCC99">absent<label_l01>Absent</label_l01><label_l02>Absence</label_l02></attribute>
+				<attribute color="00FF00">holiday<label_l01>Holiday</label_l01><label_l02>Vacances</label_l02></attribute>
+				<attribute color="C0C0C0">dayOff<label_l01>Day off</label_l01><label_l02>Jour de congé</label_l02></attribute>
+				<attribute color="FFFF99">Other<label_l01>Other (specify in description)</label_l01><label_l02>Autre (préciser dans la description)</label_l02></attribute>
+			</labels>
+			<description excelExport="0" type="Blobs" require="0" htmlArea="1" activateHtmlArea="1" isInLine="1" expand="1" />
+		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
+		
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="300" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1"><label_l01>Comments</label_l01><label_l02>Commentaires</label_l02></comments>
+			<groupFiles groupStart="1"><label_l01>Attach files</label_l01><label_l02>Attacher des fichiers</label_l02></groupFiles>
+				<integratedFile excelExport="0" type="Files" htmlArea="1" require="0" searchable="0"><label_l01>Minutes</label_l01><label_l02>Procès-verbal</label_l02></integratedFile>
+				<file excelExport="none" type="Files" require="0" searchable="0"><label_l01>Doc 1</label_l01><label_l02>Doc 1</label_l02></file>
+				<file2 excelExport="none" type="Files" require="0" searchable="0"><label_l01>Doc 2</label_l01><label_l02>Doc 2</label_l02></file2>
+				<file3 excelExport="none" type="Files" require="0" searchable="0"><label_l01>Doc 3</label_l01><label_l02>Doc 3</label_l02></file3>
+				<file4 excelExport="none" type="Files" require="0" searchable="0"><label_l01>Doc 4</label_l01><label_l02>Doc 4</label_l02></file4>
+				<file5 excelExport="none" type="Files" require="0" searchable="0"><label_l01>Doc 5</label_l01><label_l02>Doc 5</label_l02></file5>
+				<flyer excelExport="none" type="Files" require="0" searchable="0" displayPreviewOnly="1"><label_l01>Flyer</label_l01><label_l02>Flyer</label_l02></flyer>
+			<groupFiles groupEnd="1"/>
+		<groupright groupEnd="1" expand="1" noFieldset="1" />
+		
+		<!-- calculated fields -->
+		<calculatedStart excelExport="none" type="Dates" hidden="1" require="0" includeTime="1" funcExp='implode(" ", period.begDate, period.begTime)'><label_l01>Begining</label_l01><label_l02>Début</label_l02></calculatedStart>
+		<attachments excelExport="none" type="Strings" require="0" hidden="1" htmlArea="1" funcExp='implode(" ", integratedFile.mime,file.mime,file2.mime,file3.mime,file4.mime,file5.mime,flyer.mime)' />
+		<attachmentsForExport excelExport="auto" type="Strings" require="0" hidden="1" funcExp='doOnNotNull("(@)", first(integratedFile.date,file.date,file2.date,file3.date,file4.date,file5.date,flyer.date))' />
+		
+	</fields>
+
+	<selectSearchBar>
+		<fields>
+			<c0 field="period" />
+			<c1 field="labels" />
+			<c6 elementAttribut="sys_date" ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></c6>
+			<c7 elementAttribut="sys_creationDate" ><label_l01>Creation date</label_l01><label_l02>Date de création</label_l02></c7>
+		</fields>
+	</selectSearchBar>
+	<calendarSelectSearchBar>
+		<fields>
+			<c0 field="period" />
+			<c1 field="labels" />
+			<c6 elementAttribut="sys_date" ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></c6>
+			<c7 elementAttribut="sys_creationDate" ><label_l01>Creation date</label_l01><label_l02>Date de création</label_l02></c7>
+		</fields>
+	</calendarSelectSearchBar>
+
+	<exportMenu>
+		<fields>
+			<export type="Attributs">
+				<attribute>exportExcelCalendar</attribute>
+				<attribute>exportExcel<label_l01>List events in Excel</label_l01><label_l02>Listes les events en Excel</label_l02></attribute>
+				<attribute>exportCSV</attribute>
+			</export>
+		</fields>
+	</exportMenu>
+	<exportExcelCalendar>
+		<parameters
+			periodFieldname="period"
+			subjectFieldname="subject"
+			locationFieldname="location"
+			postLocationFieldname="attachmentsForExport"
+			labelFieldname="labels"
+			descriptionFieldname="description"
+			organizerFieldname="author"
+			/>
+		<fields>
+			<freetext displayAsTitle="1" needTranslation="1">chooseTheExportTemplate</freetext>
+			<excelCalendarTemplate type="Attributs" require="1" isInLine="1">
+				<attribute>excelCalendarAnnual</attribute>
+			</excelCalendarTemplate>
+			<excelCalendarYear type="Strings" require="1" />
+			<freeText needTranslation="1" >afterExportWaitTillTheBrowserFinishedToLoad</freeText>
+		</fields>
+	</exportExcelCalendar>
+
+	<!-- *********************************************
+	**** WARNING
+	**** for module with calendar views, the fields:
+	**** in calendarView should be considered as:
+	**** - first string field as Subject
+	**** - an Address field will be considered as Location
+	**** - if no address field is found, then the second string field will be considered as Location
+	**** - first Blobs field will be considered as description
+	**** - first TimeRanges field will be considered as period
+	**** - any other field will be ignored
+	************************************************ -->
+	<calendarView isDefaultView="1">
+		<fields>
+			<c1 field="subject"/>
+			<c2 field="location"/>
+			<c6 field="attachments"/>
+			<c3 field="period" subField="begDate" isDefaultSortingKey="1" defaultSorted="ASC" />
+			<c5 field="labels"/>
+		</fields>
+	</calendarView>
+
+	<listView>
+		<fields>
+			<c0 elementAttribut="state_locked" width="12" />
+			<c1 elementAttribut="state_important1" width="12" />
+			<c5 field="subject" width="null"/>
+			<c2 field="location" width="120"/>
+			<c3 field="calculatedStart" isDefaultSortingKey="1" defaultSorted=" ASC " width="120"/>
+			<c4 field="labels"  width="120"/>
+		</fields>
+	</listView>
+</events>

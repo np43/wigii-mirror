@@ -1,0 +1,33 @@
+<?xml version='1.0' standalone='yes'?>
+<sys>
+	<parameters
+		siteTitle="Wigii system"
+		companyColor="#3E4552"
+		companyReverseColor="#fff"
+		globalContactEmail="support@xxx.xx"
+		hideIntroductionTextAndGlobalEmailonLoginPage="0"
+		emailNotificationFrom="no-reply@xxx.xx"
+		csvDefaultSeparator=","
+		storeFileContentIntoDatabase="0"
+		wigiiCredentialCookieLifeTime="365"
+		changePasswordUrl=""
+		tabsContentUrlForLoginPage=""
+		tabsContentUrlForHomePage=""
+		homePageNbColumn="5"
+		listPageSize="200"
+		defaultWigiiNamespace=""
+		prioritizeWigiiNamespaceInHomePage=""
+		prioritizeModuleInHomePage=""
+		
+		totalMaxAttachementFilesize="8388608"
+		preventFolderContentCaching="1"
+		>
+		<!-- default propagation is 1 if not defined, 0, 1 or 2 can be defined -->
+		<MODULE_defaultPropagation>
+			<!-- <Filemanager propagation="2" /> -->
+		</MODULE_defaultPropagation>
+	</parameters>
+
+</sys>
+
+

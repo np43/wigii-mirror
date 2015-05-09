@@ -1,0 +1,25 @@
+<?xml version='1.0' standalone='yes'?>
+<contacts>
+
+	<parameters
+		
+		FeedbackOnSystem_enable="1"
+		
+		sendFeedbackTotalWidth="500"
+		sendFeedbackLabelWidth="175"
+		
+		/>
+	
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+	
+</contacts>

@@ -1,0 +1,25 @@
+<?xml version='1.0' standalone='yes'?>
+<admin>
+	<parameters />
+	
+	<users>
+		<!-- 
+		<authorized>
+			<user username="web100218l" withChildrenUsers="0" onlyChildrenUsers="0" />
+		</authorized> 
+		-->
+		
+		<forbidden>
+			<!-- <user username="web100218l" withChildrenUsers="0" onlyChildrenUsers="1" /> -->
+		</forbidden>
+		
+		<!-- 
+		<public>
+			<user username="Start" isDefaultLogin="1">
+				<label_l01><img src="images/icones/32x32/card.png"/></label_l01><label_l02><img src="images/icones/32x32/card.png"/></label_l02>
+			</user>
+		</public>
+		-->
+	</users>
+	
+</admin>

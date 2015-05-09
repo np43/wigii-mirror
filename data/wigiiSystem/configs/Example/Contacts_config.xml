@@ -1,0 +1,134 @@
+<?xml version='1.0' standalone='yes'?>
+<contacts>
+
+	<parameters
+
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+
+		Notification_enable="1"
+		Notification_enableOnSharing="1"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="1"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="0"
+		Notification_includeSenderInNotification="0"
+		Notification_includeOtherNamespaceInUpdateOrSetState="0"
+		Notification_hideElementView="0"
+		Notificatin_hideAccessButton="0"
+
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableCreationSysDate="0"
+		ExcelExport_enableId="0"
+
+		Element_enableLockedStatus="0"
+		Element_enableImportant1Status="1"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="0"
+		Element_enableDeprecatedStatus="1"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="0"
+		Element_viewInfo="1"
+		Element_viewId="0"
+		Element_evaluator="CustomizedElementEvaluator"
+
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_selectAllGroupsOnSearch="1"
+		Group_enableDynamicConfig="1"
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		nbOfLevelToExpandOnInit="2"
+
+		elementTotalWidth="660"
+		elementLabelWidth="200"
+
+		reloadDetailAfterModify="0"
+		useGoogleServiceToPreviewOfficeDocuments="0"
+
+		trashBinGroup=""
+		/>
+
+	<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+
+	<Notification>
+		<template path="Notification.php" inClientFolder="1" />
+	</Notification>
+
+	<Emailing>
+		<template path="Emailing.php" inClientFolder="1" />
+	</Emailing>
+
+	<fields>
+		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="400"  /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+			<title excelExport="auto" type="Attributs" useRadioButtons="1" useMultipleColumn="2" require="0" expand="1"><label_l01>Gender</label_l01><label_l02>Genre</label_l02>
+				<attribute>none</attribute>
+				<attribute>mrs<label_l01>Mrs</label_l01><label_l02>Mme</label_l02></attribute>
+				<attribute>mr<label_l01>Mr.</label_l01><label_l02>M.</label_l02></attribute>
+			</title>
+			<first_name excelExport="30" type="Strings" require="1" expand="1" ><label_l01>First name</label_l01><label_l02>Prénom</label_l02></first_name>
+			<last_name excelExport="30" type="Strings" require="1" expand="1" ><label_l01>Last name</label_l01><label_l02>Nom</label_l02></last_name>
+			<dateOfBirth excelExport="auto" type="Dates" expand="1" isBirthDate="1"><label_l01>Date of birth (dd/mm/yyyy)</label_l01><label_l02>Date de naissance (jj/mm/aaaa)</label_l02></dateOfBirth>
+			<groupContactInfo groupStart="1"><label_l01>Contact information</label_l01><label_l02>Information de contact</label_l02></groupContactInfo>
+				<address1 excelExport="0" type="Addresses" require="0" noState="0" noCountry="0"><label_l01>Address</label_l01><label_l02>Adresse</label_l02></address1>
+				<nb1 excelExport="none" type="Strings" require="0" expand="1"><label_l01>Phone</label_l01><label_l02>Télphone</label_l02></nb1>
+				<nb2 excelExport="none" type="Strings" require="0" expand="1"><label_l01>Mobile</label_l01><label_l02>Mobile</label_l02></nb2>
+				<nb3 excelExport="none" type="Strings" require="0" expand="1"><label_l01>Private phone</label_l01><label_l02>Tél. privé</label_l02></nb3>
+				<email1 excelExport="30" type="Emails" require="0" expand="1" label1="first_name" other1="last_name" enableForEmailing="1" ><label_l01>Email (prof.)</label_l01><label_l02>Email (prof.)</label_l02></email1>
+				<email2 excelExport="30" type="Emails" require="0" expand="1" label1="first_name" other1="last_name" enableForEmailing="1" ><label_l01>Email (priv.)</label_l01><label_l02>Email (priv.)</label_l02></email2>
+				<skype excelExport="0" type="Strings" require="0" expand="1"><label_l01>Skype</label_l01><label_l02>Skype</label_l02></skype>
+			<groupContactInfo groupEnd="1" expand="1" />
+		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
+
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="200" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+			<photo excelExport="none" type="Files" require="0" ignoreNotification="1" displayPreviewOnly="1" />
+			<comments excelExport="0" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" ><label_l01>Notes</label_l01><label_l02>Notes</label_l02></comments>
+		<groupright groupEnd="1" expand="1" noFieldset="1" />
+
+		<!-- calculated fields -->
+		<calculatedPhone excelExport="none" type="Strings" hidden="1" htmlArea="1" funcExp='implode(", ", nb1, nb2, nb3)' ><label_l01>Phone numbers</label_l01><label_l02>Numéros de téléphone</label_l02></calculatedPhone>
+		<calculatedEmail excelExport="none" type="Strings" hidden="1" htmlArea="1" funcExp='implode(", ", email1.value, email2.value)' ><label_l01>All emails</label_l01><label_l02>Tous les emails</label_l02></calculatedEmail>
+		<calculatedName excelExport="none" type="Strings" hidden="1" htmlArea="1" funcExp='implode(" ", first_name, last_name)' ><label_l01>Full name</label_l01><label_l02>Nom complet</label_l02></calculatedName>
+
+	</fields>
+
+	<listView>
+		<fields>
+			<c1 field="calculatedName" width="null" isDefaultSortingKey="1" />
+			<c2 field="calculatedPhone" width="null" />
+			<c3 field="calculatedEmail" width="null" />
+			<c9 elementAttribut="state_important1" width="16" />
+			<c6 elementAttribut="sys_date" width="75" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></c6>
+		</fields>
+	</listView>
+
+	<selectSearchBar>
+		<fields>
+			<c1 field="title" />
+			<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
+			<e2 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e2>
+		</fields>
+	</selectSearchBar>
+
+</contacts>

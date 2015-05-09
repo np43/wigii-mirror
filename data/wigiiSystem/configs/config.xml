@@ -1,0 +1,539 @@
+<?xml version='1.0' standalone='yes'?>
+<sys>
+	<!-- 
+	  deletedSubElementsLinkNamePrefix: if defined, then sub elements will not be deleted when deleting them from the GUI, but link name will be prefixed with the defined value 
+	  -->
+	<parameters deletedSubElementsLinkNamePrefix="__deleted_"
+		Field_dynamicAttributeList="require,
+			expand,
+			readOnly,
+			disabled,
+			hidden,
+			readonlyInPublic,
+			requireInPublic,
+			onlyInForm,
+			onlyInDetail,
+			onlyInWrite,
+			onlyInPublic,
+			notInPublic,
+			forceCollapse,
+			protectExistingEntries,
+			doNotPersist,
+			allowOnReadOnly,
+			activateHtmlArea,
+			includeTime,
+			enableForEmailing,
+			isDefaultForEmailing,
+			enableForNotification,
+			enableForDownloading,
+			secret,
+			noDecimals,
+			noThousandSeparator,
+			onlyDate,
+			checked,
+			allowNewValue,
+			searchable,
+			persistCookie,
+			formExp,
+			prefixFilter"
+		Field_enableDynamicAttributes="1"
+	/>
+	
+	<BaseEmail>
+		<template path="BaseEmail.php" />
+	</BaseEmail>
+
+
+	<login>
+		<fields>
+			<username type="Strings" enableDynamicAttributes="1" expand="1" require="logNot(adminIsPublicAccessEnabled())" persistCookie="1" />
+			<password type="Strings" enableDynamicAttributes="1" expand="1" secret="1" require="logNot(adminIsPublicAccessEnabled())" />
+			<stayConnected type="Booleans" require="0" persistCookie="1" />
+			<loginAsPublic type="Booleans" enableDynamicAttributes="1" hidden="logNot(adminIsPublicAccessEnabled())" require="0">
+				<label_l01>Ignore user credentials and login as public</label_l01>
+				<label_l02>Ignorer les paramètres utilisateur et se connecter en public</label_l02>
+			</loginAsPublic>
+		</fields>
+	</login>
+
+	<changePassword>
+		<fields>
+			<oldPassword type="Strings" secret="1" require="1" expand="1"/>
+			<newPassword type="Strings" secret="1" require="1" expand="1"/>
+			<confNewPassword type="Strings" secret="1" require="1" expand="1"/>
+		</fields>
+	</changePassword>
+
+	<Emailing>
+		<fields>
+			<from_email type="Emails" require="1" />
+			<to_email type="Emails" require="1" isInLine="1" isMultiple="1"/>
+			<attachedFile0 type="Files" require="0" noLabel="1" />
+			<attachedFile1 type="Files" require="0" noLabel="1" />
+			<attachedFile2 type="Files" require="0" noLabel="1" />
+			<attachedFile3 type="Files" require="0" noLabel="1" />
+			<attachedFile4 type="Files" require="0" noLabel="1" />
+			<!-- <attachedFile5 type="Files" require="0" noLabel="1" />
+			<attachedFile6 type="Files" require="0" noLabel="1" />
+			<attachedFile7 type="Files" require="0" noLabel="1" />
+			<attachedFile8 type="Files" require="0" noLabel="1" />
+			<attachedFile9 type="Files" require="0" noLabel="1" />
+			<attachedFile10 type="Files" require="0" noLabel="1" />
+			<attachedFile11 type="Files" require="0" noLabel="1" />
+			<attachedFile12 type="Files" require="0" noLabel="1" />
+			<attachedFile13 type="Files" require="0" noLabel="1" />
+			<attachedFile14 type="Files" require="0" noLabel="1" /> -->
+			<object type="Strings" require="1" expand="1" />
+			<message type="Blobs" require="1" isInLine="1" htmlArea="1" fullToolbarHtmlArea="1" activateHtmlArea="1" template="" height="300" />
+		</fields>
+	</Emailing>
+
+	<exportMenu>
+		<fields>
+			<export type="Attributs">
+				<attribute>exportExcel</attribute>
+				<attribute>exportCSV</attribute>
+			</export>
+		</fields>
+	</exportMenu>
+
+	<exportExcel>
+		<fields>
+			<freetext displayAsTitle="1" needTranslation="1">chooseTheExportTemplate</freetext>
+			<excelGrouping type="Attributs" require="1" isInLine="1">
+				<attribute>excelTitle</attribute>
+				<!-- <attribute>excelPage</attribute>-->
+				<attribute>excelList</attribute>
+			</excelGrouping>
+			<localLinks type="Booleans" hidden="1" />
+			<freeText needTranslation="1" >afterExportWaitTillTheBrowserFinishedToLoad</freeText>
+		</fields>
+	</exportExcel>
+
+	<exportCSV>
+		<fields>
+			<freetext displayAsTitle="1" needTranslation="1">chooseTheExportFormat</freetext>
+			<csvFormat type="Attributs" require="1">
+				<attribute>csvFormated</attribute>
+				<attribute>csvRaw</attribute>
+				<attribute>csvBackup</attribute>
+			</csvFormat>
+			<csvSeparator type="Strings" require="1" persistCookie="1" />
+			<csvEncoding type="Attributs" require="1">
+				<attribute>ISO-8859-1</attribute>
+				<attribute>UTF-8</attribute>
+			</csvEncoding>
+			<freeText needTranslation="1" >afterExportWaitTillTheBrowserFinishedToLoad</freeText>
+		</fields>
+	</exportCSV>
+
+	<importElementIn>
+		<fields>
+			<inGroupId type="Attributs" require="1" />
+			<csvSeparator type="Strings" require="1" persistCookie="1" />
+			<csvFile type="Files" />
+			<importInRawData type="Blobs" noWrap="1" height="400" isInLine="1" />
+		</fields>
+	</importElementIn>
+
+	<updateElementIn>
+		<fields>
+			<updateInGroupId type="Attributs" require="1" />
+			<fieldKey type="Attributs" require="1" />
+			<csvSeparator type="Strings" require="1" persistCookie="1" />
+			<csvFile type="Files" />
+			<updateInRawData type="Blobs" noWrap="1" height="400" isInLine="1" />
+		</fields>
+	</updateElementIn>
+
+	<findDuplicatesIn>
+		<fields>
+			<fieldKey type="Attributs" require="1" />
+		</fields>
+	</findDuplicatesIn>
+
+	<shareMultipleElement>
+		<fields>
+			<inGroupId type="Strings" hidden="1" require="1"/>
+			<inTab type="Attributs"/>
+			<selectExample type="Attributs" hidden="1"><attribute>none</attribute></selectExample>
+			<checkboxExample hidden="1" type="Booleans" />
+			<!-- inTab will be completed by the module the principal can access -->
+			<!-- the inGroup field will be duplicated per module the principal can access. -->
+		</fields>
+	</shareMultipleElement>
+
+	<userEdit>
+		<fields>
+			<wigiiNamespace type="Strings" require="0" expand="1"/>
+			<username type="Strings" require="1" expand="1"/>
+			<authenticationMethod type="Attributs" require="0" >
+				<attribute>usual</attribute>
+				<attribute>pop3</attribute>
+				<attribute>pop3SSL</attribute>
+			</authenticationMethod>
+			<authenticationServer type="Strings" expand="1"/>
+			<password type="Strings" secret="1" require="0" expand="1"/>
+			<passwordHasBeenEdited type="Booleans" require="0" />
+			<canModifyOwnPassword type="Booleans" require="0" />
+			<passwordLife type="Strings" require="0" help="passworLife_help" expand="1"/>
+			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" height="100" expand="1"/>
+			<userAdminRights groupStart="1" />
+				<isWigiiNamespaceCreator type="Booleans" require="0" />
+				<isModuleEditor type="Booleans" require="0" />
+				<isReadAllUsersInWigiiNamespace type="Booleans" require="0" />
+				<isAdminCreator type="Booleans" require="0" />
+				<isUserCreator type="Booleans" require="0" />
+				<getReadAllGroupsInWigiiNamespace type="Booleans" require="0" />
+				<getRootGroupCreator type="Booleans" require="0" />
+				<getGroupCreator type="Booleans" require="0" />
+			<userAdminRights groupEnd="1" />
+			<moduleAccess type="Strings" require="0" isInLine="1" expand="1"/>
+		</fields>
+	</userEdit>
+
+	<userDelete>
+		<fields>
+			<!-- no fields are needed -->
+			<!-- <freetext needTranslation="1" >areYouSureDeleteUser</freetext> -->
+		</fields>
+	</userDelete>
+
+	<roleEdit>
+		<fields>
+			<wigiiNamespace type="Strings" require="0" expand="1"/>
+			<rolename type="Strings" require="1" expand="1"/>
+			<rolePasswordLife type="Strings" require="0" help="passworLife_help" expand="1"/>
+			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" height="100" expand="1"/>
+			<authenticationMethod type="Attributs" require="0" hidden="1">
+				<attribute>usual</attribute>
+				<attribute>pop3</attribute>
+				<attribute>pop3SSL</attribute>
+			</authenticationMethod>
+			<authenticationServer type="Strings" expand="1"  hidden="1"/>
+			<password type="Strings" secret="1" require="0" expand="1"  hidden="1"/>
+			<passwordHasBeenEdited type="Booleans" require="0" hidden="1" />
+			<canModifyOwnPassword type="Booleans" require="0"  hidden="1"/>
+			<userAdminRights groupStart="1" />
+				<isWigiiNamespaceCreator type="Booleans" require="0" />
+				<isModuleEditor type="Booleans" require="0" />
+				<isReadAllUsersInWigiiNamespace type="Booleans" require="0" />
+				<isAdminCreator type="Booleans" require="0" />
+				<isUserCreator type="Booleans" require="0" />
+				<getReadAllGroupsInWigiiNamespace type="Booleans" require="0" />
+				<getRootGroupCreator type="Booleans" require="0" />
+				<getGroupCreator type="Booleans" require="0" />
+			<userAdminRights groupEnd="1" />
+			<moduleAccess type="Strings" require="0" isInLine="1"/>
+		</fields>
+	</roleEdit>
+
+	<userConfigEdit>
+		<fields>
+			<deleteConfigFile type="Booleans" require="0" readonly="1" />
+			<userConfigFile type="Blobs" require="0" isInLine="1" noWrap="1" height="400" />
+		</fields>
+	</userConfigEdit>
+
+	<userDetail>
+		<fields>
+			<isRole type="Booleans" require="0" />
+			<wigiiNamespace htmlArea="1" type="Strings" require="0" />
+			<username type="Strings" require="1" />
+			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" />
+			<info_lastLogin type="Dates" require="0" />
+			<info_nbLogin htmlArea="1" type="Strings" require="0" />
+			<info_lastFailedLogin htmlArea="1" type="Dates" require="0" />
+			<info_nbFailedLogin htmlArea="1" type="Strings" require="0" />
+			<passwordLife htmlArea="1" type="Strings" require="0" />
+			<passwordDate htmlArea="1" type="Strings" require="0" />
+			<moduleAccess htmlArea="1" type="Strings" />
+			<userAllocation htmlArea="1" type="Strings" isInLine="0" />
+			<roleAccess htmlArea="1" type="Strings" isInLine="0" />
+			<canModifyOwnPassword type="Booleans" require="0" />
+			<authenticationMethod type="Attributs" require="0" >
+				<attribute>usual</attribute>
+				<attribute>pop3</attribute>
+				<attribute>pop3SSL</attribute>
+			</authenticationMethod>
+			<authenticationServer type="Strings" />
+			<userDetailConfigEdit type="Booleans" require="0" />
+			<userAdminRights groupStart="1" />
+				<isWigiiNamespaceCreator type="Booleans" />
+				<isModuleEditor type="Booleans" />
+				<isReadAllUsersInWigiiNamespace type="Booleans" />
+				<isAdminCreator type="Booleans" />
+				<isUserCreator type="Booleans" />
+				<getReadAllGroupsInWigiiNamespace type="Strings" />
+				<getRootGroupCreator type="Strings" />
+				<getGroupCreator type="Strings" />
+			<userAdminRights groupEnd="1" />
+			<historicOfObject groupStart="1" />
+				<sys_username type="Strings" />
+				<sys_date type="Dates" includeTime="1" />
+				<sys_creationUsername type="Strings" />
+				<sys_creationDate type="Dates" includeTime="1" />
+			<historicOfObject groupEnd="1" />
+		</fields>
+	</userDetail>
+
+	<groupEdit>
+		<fields>
+			<wigiiNamespace type="Strings" require="0" expand="1" />
+			<groupParent type="Attributs"/>
+			<groupname type="Strings" require="1" />
+			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" expand="1"/>
+		</fields>
+	</groupEdit>
+
+	<groupDelete>
+		<fields>
+			<deleteGroupOption type="Attributs" useRadioButtons="1" isInLine="1" expand="1" require="1" >
+				<attribute>moveChildrenAndContentToParent</attribute>
+				<attribute>deleteChildrenAndContent</attribute>
+			</deleteGroupOption>
+		</fields>
+	</groupDelete>
+
+	<groupDetail>
+		<fields>
+			<wigiiNamespace htmlArea="1" type="Strings" require="0" />
+			<groupname htmlArea="1" type="Strings" require="1" />
+			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" />
+			<groupParentName type="Strings" require="0" />
+			<groupConfigEdit type="Booleans" require="0" />
+			<groupEmailNotification type="Emails" isMultiple="1" isInLine="0" require="0" />
+			<groupPortal type="Booleans" require="0" />
+			<groupPortalPreview type="Urls" require="0" />
+			<groupPortalPreviewExternalSystemConnection type="Booleans" require="0" ><label>Cookie for external system connection</label></groupPortalPreviewExternalSystemConnection>
+			<groupHtmlContent type="Booleans" require="0" />
+			<groupHtmlContentPreview type="Blobs" height="100" htmlArea="1" isInLine="1" require="0" />
+			<groupXmlPublish type="Booleans" require="0" />
+			<groupXmlPublishPreview type="Urls" require="0" />
+			<groupCsvPublishPreview type="Urls" require="0" />
+			<groupCsvRawPublishPreview type="Urls" require="0" />
+			<groupCsvBackupPublishPreview type="Urls" require="0" />
+			<groupSubscription type="Booleans" require="0" />
+			<groupSubscriptionLink type="Urls" require="0" />
+			<groupSubscriptionExternalAccessRequestLink type="Urls" require="0" />
+			<groupSubscriptionPreview type="Blobs" htmlArea="1" allowScripting="1" isInLine="1" require="0" />
+			<historicOfObject groupStart="1" />
+				<sys_username type="Strings" />
+				<sys_date type="Dates" includeTime="1" />
+				<sys_creationUsername type="Strings" />
+				<sys_creationDate type="Dates" includeTime="1" />
+			<historicOfObject groupEnd="1" />
+		</fields>
+	</groupDetail>
+
+	<groupConfigEdit>
+		<fields>
+			<groupConfigFile type="Blobs" require="0" isInLine="1" noWrap="1" height="400" expand="1" />
+		</fields>
+	</groupConfigEdit>
+	<groupHtmlContent>
+		<fields>
+			<text type="Blobs" require="0" htmlArea="1" fullToolbarHtmlArea="1" activateHtmlArea="1" isInLine="1" height="400" expand="1" />
+		</fields>
+	</groupHtmlContent>
+	<groupPortal>
+		<fields>
+			<url type="Urls" require="0" expand="1" onlyUrl="1" noCheck="1" />
+			<groupExternalSystemConnection groupStart="1" ><label>Connect external systems</label></groupExternalSystemConnection>
+				<freetext>By setting a Cookie name, the system will create a cookie when you click on this folder in the following format:<br />username|custom|expiration|roles<br /><br />The | will be replaced with the defined separator.<br />The whole string will be encoded if the Encrypt checkbox is ticked.<br /><i>username</i>: username of the current user<br /><i>custom</i>: the content of the custom field<br /><i>expiration</i>: the date calculated by adding expiration value to the time when the user display the folder (yyyy-mm-dd hh:mm:ss)<br /><i>roles</i>: the list of the roles that the user has in this tab<br /></freetext>
+				<groupPortalCookieName type="Strings" require="0" expand="1" ><label>Cookie name</label></groupPortalCookieName>
+				<groupPortalCookieSeparator type="Strings" require="0" expand="1" ><label>Separator</label></groupPortalCookieSeparator>
+				<groupPortalCookieCustomParameter type="Strings" require="0" expand="1" ><label>Custom parameter</label></groupPortalCookieCustomParameter>
+				<groupPortalCookieExpiration type="Strings" require="0" expand="1" ><label>Expiration (in hours)</label></groupPortalCookieExpiration>
+				<groupPortalCookieIncludeRoles type="Booleans" require="0" expand="1" ><label>Include roles?</label></groupPortalCookieIncludeRoles>
+				<groupPortalCookieDomain type="Strings" require="0" expand="1" ><label>Cookie domain?</label></groupPortalCookieDomain>
+				<groupPortalCookieEncrypt type="Booleans" require="0" expand="1" ><label>Encrypt cookie content?</label></groupPortalCookieEncrypt>
+				<groupPortalCookieRotationKey type="Strings" secret="1" require="0" expand="1" ><label>Rotation nb (if encryption is enabled)?</label></groupPortalCookieRotationKey>
+			<groupExternalSystemConnection groupEnd="1" />
+		</fields>
+	</groupPortal>
+	<groupEmailNotification>
+		<fields>
+			<emails type="Emails" isMultiple="1" isInLine="1" require="0" expand="1" />
+		</fields>
+	</groupEmailNotification>
+	<groupXmlPublish>
+		<fields>
+			<enableGroupXmlPublish type="Booleans" require="0" />
+			<recalcXmlPublishCode type="Booleans" require="0" />
+			<xmlPublishCode type="Strings" readonly="1" isInLine="1" require="0" expand="1" />
+		</fields>
+	</groupXmlPublish>
+	<groupSubscription>
+		<fields>
+			<title type="Varchars" htmlArea="1" require="0" isInLine="1" expand="1" />
+			<introductionText type="Texts" isInLine="1" htmlArea="1" activateHtmlArea="1" mediumToolbarHtmlArea="1" require="0" />
+			<subscriptionPeriod type="TimeRanges" onlyDate="1" require="0" />
+
+			<maxSubscriptionNb  type="Strings" require="0" expand="0"/>
+			<subscriptionConfEmail groupStart="1" require="0" />
+			<subscriptionConfEmailFrom type="Emails" expand="1" isMultiple="0" require="0" />
+			<subscriptionConfEmailSubject type="Varchars" require="0" expand="1"/>
+			<subscriptionConfEmailText type="Texts" expand="1" isInLine="1" htmlArea="1" activateHtmlArea="1" mediumToolbarHtmlArea="1" require="0" />
+			<subscriptionConfEmailAttachement1 type="Files" require="0" />
+			<subscriptionConfEmailAttachement2 type="Files" require="0" />
+			<subscriptionConfEmail groupEnd="1" />
+
+			<subscriptionAdditionalOption groupStart="1" require="0" />
+			<subscriptionProposeNewSubscriptionWhenDone type="Booleans" require="0" expand="1" />
+			<subscriptionEnableCaptcha type="Booleans" require="0" expand="1" />
+			<enableExternalAccessRequest type="Booleans" require="0" expand="1" />
+			<subscriptionReturnUrl type="Urls" onlyUrl="1" require="0" expand="1"/>
+			<subscriptionBackgroundColorCode type="Strings" require="0" colorPicker="1" expand="1" />
+			<subscriptionEndMessageAddin type="Texts" htmlArea="1" activateHtmlArea="1" mediumToolbarHtmlArea="1" isInLine="1" require="0" expand="0" />
+			<subscriptionClosingMessageAddin type="Texts" htmlArea="1" mediumToolbarHtmlArea="1" activateHtmlArea="1" isInLine="1" require="0" />
+			<subscriptionAdditionalOption groupEnd="1" require="0"></subscriptionAdditionalOption>
+
+			<enableGroupSubscription checked="1" type="Booleans" require="0" />
+
+		</fields>
+	</groupSubscription>
+	<externalAccessRequest>
+		<fields>
+			<externalAccessRequestEmail type="Emails" require="1" isInLine="1" />
+		</fields>
+	</externalAccessRequest>
+
+	<moduleConfigEdit>
+		<fields>
+			<moduleEditorFilenameField type="Strings" require="1" />
+			<moduleEditorConfigField type="Blobs" require="0" isInLine="1" noWrap="1" height="400" />
+		</fields>
+	</moduleConfigEdit>
+
+	<addIndicator>
+		<fields>
+			<freetext needTranslation="1" displayAsTitle="1">addIndicatorForElements</freetext>
+			<indicator_field type="Attributs"/>
+			<indicator_function type="Attributs"/>
+			<indicator_label type="Strings"/>
+			<!-- inTab will be completed by the module the principal can access -->
+			<!-- the inGroup field will be duplicated per module the principal can access. -->
+		</fields>
+	</addIndicator>
+
+	<filters>
+		<fields>
+			<limitFilterInGroup type="Attributs"><attribute></attribute></limitFilterInGroup>
+			<!-- <freetext needTranslation="1">filterSelectEplanation</freetext> -->
+			<filters_Attributs0 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs1 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs2 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs3 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs4 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs5 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs6 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs7 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs8 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs9 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs10 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs11 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs12 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs13 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs14 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs15 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs16 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs17 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs18 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs19 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs20 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs21 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs22 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs23 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs24 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs25 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs26 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs27 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs28 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs29 type="MultipleAttributs" hidden="1"/>
+			<!-- <filters_Attributs30 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs31 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs32 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs33 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs34 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs35 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs36 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs37 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs38 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs39 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs40 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs41 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs42 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs43 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs44 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs45 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs46 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs47 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs48 type="MultipleAttributs" hidden="1"/>
+			<filters_Attributs49 type="MultipleAttributs" hidden="1"/> -->
+			<__textSearch type="Blobs" isInLine="1" expand="1" help="simpleFiltersHelpInDialog"/>
+			<!-- filters_Attributs0 will be filled with the valid options -->
+			<advancedFilters groupStart="1" />
+				<__reverseSelectSearch hidden="1" type="MultipleAttributs" useCheckboxes="1" isInLine="1" useMultipleColumn="2"/>
+				<__textAdvancedSearch type="Blobs" expand="1" isInLine="1"/>
+				<__textGroupSearch type="Strings" expand="1" isInLine="1"/>
+			<advancedFilters groupEnd="1" />
+		</fields>
+	</filters>
+
+	<moduleEditorNewNamespace>
+		<fields>
+			<moduleEditorNewNamespaceName type="Strings" require="1" />
+			<moduleEditorNewNamespaceTabs type="MultipleAttributs" useCheckboxes="1" isInLine="1" useMultipleColumn="2" require="1" />
+			<freeText><HR /></freeText>
+			<freeText needTranslation="1">moduleEditorNewNamespaceSupportExplanation</freeText>
+			<moduleEditorNewNamespaceSupportName type="Strings" require="0" expand="1"/>
+			<moduleEditorNewNamespaceSupportEmail type="Strings" require="0" expand="1"/>
+			<freeText><HR /></freeText>
+			<freeText needTranslation="1">moduleEditorNewNamespaceLinkToUserExplanation</freeText>
+			<username type="Strings" require="1" expand="1"/>
+			<freeText needTranslation="1">moduleEditorNewNamespaceAuthenticationExplanation</freeText>
+			<authenticationMethod type="Attributs" require="0" expand="1">
+				<attribute>usual</attribute>
+				<attribute>pop3</attribute>
+				<attribute>pop3SSL</attribute>
+			</authenticationMethod>
+			<authenticationServer type="Strings" expand="1"/>
+			<password type="Strings" secret="1" require="0" expand="1"/>
+		</fields>
+	</moduleEditorNewNamespace>
+
+	<moduleEditorRemoveNamespace>
+		<fields>
+			<freeText needTranslation="1">moduleEditorRemoveNamespaceExplanation</freeText>
+			<moduleEditorRemoveNamespaceName type="Strings" require="1" />
+			<moduleEditorRemoveNamespaceConfirmation type="Attributs" useRadioButtons="1" require="1" expand="1">
+				<attribute>none</attribute>
+				<attribute>moduleEditorRemoveNamespaceConfirm</attribute>
+				<attribute>moduleEditorRemoveNamespaceDiscard</attribute>
+			</moduleEditorRemoveNamespaceConfirmation>
+		</fields>
+	</moduleEditorRemoveNamespace>
+
+	<moduleEditorRemoveEmailNotification>
+		<fields>
+			<freeText needTranslation="1">moduleEditorRemoveEmailNotificationExplanation</freeText>
+			<moduleEditorRemoveEmailNotificationEmail type="Emails" require="1" />
+			<moduleEditorRemoveEmailNotificationConfirmation type="Attributs" useRadioButtons="1" require="1" expand="1">
+				<attribute>none</attribute>
+				<attribute>moduleEditorRemoveEmailNotificationConfirm</attribute>
+				<attribute>moduleEditorRemoveEmailNotificationDiscard</attribute>
+			</moduleEditorRemoveEmailNotificationConfirmation>
+		</fields>
+	</moduleEditorRemoveEmailNotification>
+
+	<elementDelete>
+		<fields>
+		</fields>
+	</elementDelete>
+
+	<elementsDelete>
+		<fields>
+		</fields>
+	</elementsDelete>
+</sys>
