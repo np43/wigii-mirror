@@ -1,0 +1,185 @@
+/*
+ * jQuery Scroller plugin 0.1
+ *
+ * URL du site
+ * http://docs.jquery.com/Plugins/__***___** (URL sur jquery)
+ *
+ * Copyright (c) 2009 Benjamin Girardet
+ *
+ * $Id$ ???
+ *
+ * todo: ajouter license
+ */
+
+;(function($) {
+	
+	//LWR, this array stores the page status per urls, to know wich page request, and if there is more pages or not (the value is "full" it no more data available)
+	$.pageStatusPerUrl = new Array();
+	
+	$.fn.scroller = function(options) {
+
+		return this.each(function(){
+			var settings = $.extend($.fn.scroller.defaults, options), data = {}, top = 0;
+			$.each(settings, function(a,b){
+				var code = 'data.' + a + '=b;';
+				eval(code);
+			});
+			data.isLoadingBottom = false;
+			data.isLoadingTop = false;
+			$.data(this, 'scroller', data);
+			//bind the scroll event on the s method
+			$(this).scroll($.fn.s);
+			//define the scroll at the top
+			$(this).scrollTop(0);
+//			s.call(this);
+			
+			//LWR, reset the pageStatusUrl
+			$.pageStatusPerUrl[settings.bottomUrl] = 1;
+		});
+	};
+
+	$.fn.scroller.defaults = {
+		scrolltop: false, // load content when scrolling up ?
+		scrollbottom: true, // load content when scrolling down ?
+		topMarge: 300, // marge (in px) to trigger a loading
+		bottomMarge: 300, // marge (in px) to trigger a loading
+		removeTop: true, // remove content in the top when scrolling down a lot ?
+		removeBottom: true, // remove content in the bottom when scrolling up a lot ?
+		topRemovingMarge: 3000, // marge (in px) before removing content
+		bottomRemovingMarge: 3000, // marge (in px) before removing content
+		topUrl: '', // url for the content to load
+		bottomUrl: '', // url for the content to load
+		topCallback: function() {}, // callback after loading content in the top
+		bottomCallback: function() {}, // callback after loading content in the bottom
+		scrollToNumber: 'first', // not used for now
+		scrollToOffset: 0,  // not used for now
+		//LWR, add callback on busy activity
+		busyFunction: function(isBusy){}
+	};
+	
+	$.fn.s = function () {
+		var data, settings, scrollingDiv, isLoadingBottom, isLoadingTop,scrollPosition,readerVisibleHeight,totalReaderHeight,bottomMarge,topMarge,firstChild,removingNumber,removingHeight,lastChild,lastElementNumber,nextElementNumber,firstElementNumber,firstElementNumber;
+		
+		data = $.data(this, 'scroller');
+		settings = data;
+		scrollingDiv = $(this);
+		isLoadingBottom = settings.isLoadingBottom;
+		isLoadingTop = settings.isLoadingTop;
+		scrollPosition = $(this).scrollTop();
+		readerVisibleHeight = $(this).outerHeight();
+		
+ 		totalReaderHeight = 0;
+		$(this).children().each(function(){
+			// this function that compute the total height suppose that there is no margin between the children
+			//LWR, change .reader in this, because we just want to calculate the height of the children
+			totalReaderHeight = totalReaderHeight + $(this).outerHeight();
+		});
+
+		// calculating the bottom marge left after scrolling
+		bottomMarge = totalReaderHeight - readerVisibleHeight - scrollPosition;
+
+		// calculating the top marge according to the scrolling position
+		topMarge = scrollPosition;
+
+//		// if we reach the topRemovingMarge, we try to remove an element at the top
+//		if(settings.removeTop && settings.scrolltop && topMarge > settings.topRemovingMarge) {
+//			firstChild = $(this).children(':first');
+//			// check if when we remove a chapter a the bottom the content still overflow for at least 600 px
+//			if(firstChild.outerHeight() < settings.topRemovingMarge - readerVisibleHeight) {
+//				// getting the number of this element
+//				removingNumber = firstChild.attr('class').replace(/([^0-9]*)([0-9]+)([^0-9]*)/, "$2");
+//				// getting the height of this chapter
+//				removingHeight = firstChild.outerHeight();
+//				removingNumber = parseInt(removingNumber);
+//				s = $(this).scrollTop();
+//				firstChild.remove();
+//				$(this).scrollTop(s - removingHeight);
+//			}
+//		}
+//
+//		// if we reach the bottomRemovingMarge, we try to remove an element at the bottom
+//		if(settings.removeBottom && settings.scrollbottom && bottomMarge > settings.bottomRemovingMarge) {
+//			lastChild = $(this).children(':last');
+//			// check if when we remove a chapter a the bottom the content still overflow for at least 600 px
+//			if(lastChild.outerHeight() < settings.bottomRemovingMarge - readerVisibleHeight) {
+//				// getting the number of this element
+//				removingNumber = lastChild.attr('class').replace(/([^0-9]*)([0-9]+)([^0-9]*)/, "$2");
+//				removingNumber = parseInt(removingNumber);
+//				lastChild.remove();
+//			}
+//		}
+		
+		//LWR, add the full detection on this url
+		if($.pageStatusPerUrl[settings.bottomUrl] != "full" && settings.scrollbottom && bottomMarge < settings.bottomMarge) {
+			
+			// load content
+			//LWR, comments the calculation of LastElementNumber, use nextPage in place
+//			lastElementNumber;
+//			lastElementNumber = $(this).children(':last').attr('class').replace(/([^0-9]*)([0-9]+)([^0-9]*)/, "$2");
+//			lastElementNumber = parseInt(lastElementNumber);
+//			nextElementNumber = lastElementNumber + 1;
+			
+			if(!settings.isLoadingBottom){
+				settings.isLoadingBottom = true;
+				
+				//LWR, calculate the pageStatus of this URL call
+				//initialise to 1
+				if($.pageStatusPerUrl[settings.bottomUrl] == null) $.pageStatusPerUrl[settings.bottomUrl] = 1;
+				$.pageStatusPerUrl[settings.bottomUrl] = $.pageStatusPerUrl[settings.bottomUrl] + 1;
+				nextPage = $.pageStatusPerUrl[settings.bottomUrl];
+				
+				//LWR, begin the isBusy callback
+				settings.busyFunction(true);
+				
+				$.ajax({
+					type	: "POST",
+					url		: settings.bottomUrl,
+					//LWR, change nextElementNumber with nextPage
+					data	: "page=" + nextPage, //nextElementNumber,
+					dataType: 'html',
+					success: function(data, textStatus) {
+						//LWR, add the detection of no more data available
+						//if full then don't do the bottom callback
+						if(data == ""){
+							$.pageStatusPerUrl[settings.bottomUrl] = "full";
+						}
+						//LWR, change nextElementNumber with nextPage and add settings to be able to make it full if we detect we have everything
+						settings.bottomCallback.call(this, settings, data, nextPage); //nextElementNumber);
+						settings.isLoadingBottom = false;
+						
+						//LWR, finish the isBusy callback
+						settings.busyFunction(false);
+					}
+				});
+			}
+		}
+		
+		if(settings.scrolltop && topMarge < settings.topMarge) {
+			// load content
+			firstElementNumber;
+			firstElementNumber = $(this).children(':first').attr('class').replace(/([^0-9]*)([0-9]+)([^0-9]*)/, "$2");
+			firstElementNumber = parseInt(firstElementNumber);
+			prevElementNumber = firstElementNumber - 1;
+
+			if(!settings.isLoadingTop){
+				settings.isLoadingTop = true;
+				$.ajax({
+					type	: "POST",
+					url		: settings.topUrl,
+					data	: "page=" + prevElementNumber,
+					dataType: 'html',
+					success: function(data, textStatus) {
+						settings.topCallback.call(this, data, textStatus, prevElementNumber);
+						settings.isLoadingTop = false;
+					}
+				});
+			}
+
+		}
+
+		// storing the data to the div again
+		$.data(this, 'isLoadingBottom', isLoadingBottom);
+		$.data(this, 'isLoadingTop', isLoadingTop);
+	};
+
+})(jQuery);

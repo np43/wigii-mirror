@@ -1,0 +1,174 @@
+div.elementDetail {
+	float:left;
+}
+
+#elementDetail_toolbar{ 
+	margin-bottom:5px;
+	margin-top:-7px; margin-left:-8px; margin-right:-8px; 
+}
+
+#elementDetail_toolbar,
+#elementDetail_toolbar div.commands,
+#elementDetail_toolbar div.commands div {
+	padding:0px;
+	float:left;
+}
+
+#elementDetail_toolbar div.commands div img{
+	float:left;
+	cursor:pointer;
+	margin-left:5px;
+}
+#elementDetail_toolbar div.commands div.elementStatus img{
+	margin-top:3px;
+}
+#elementStatusMenu {
+	cursor: pointer;
+	position: absolute;
+	padding: 0px;
+}
+
+#elementDetail_toolbar div.commands div#elementStatusMenu div {
+	position: block;
+	float: none;
+	padding: 3px 15px 3px 15px;
+}
+#elementDetail_toolbar div.commands div#elementStatusMenu div input {
+	margin-top:1px;
+	margin-left:-2px;
+	margin-right:3px;
+	float:left;
+}
+#elementDetail_toolbar div.commands div#elementStatusMenu div input, #elementDetail_toolbar div.commands div#elementStatusMenu div label {
+	cursor:pointer;
+}
+#elementDetail_toolbar div.commands div div{
+	padding:0px;
+	float:left;
+	cursor:pointer;
+	padding-top:6px;
+	margin-right:5px;
+	background-image:none;
+}
+
+div.elementDetail fieldset{
+	padding:5px;
+	margin:0px;
+	border-width:1px;
+	border-color:#ccc;
+	/* border-top-color:#A9A9A9;
+	border-bottom-color:#A9A9A9; */
+	float:left;
+	clear:both;
+}
+
+div.field div.label {
+	float:left;
+	margin-top:2px;
+	margin-bottom:5px;
+	font-size:0.9em;
+	color:#333;
+	/* font-style:italic; */
+	/* border-bottom:dotted 1px #ccc; */
+}
+
+div.field div.value, 
+div.freeText, 
+div.title, 
+div.separator {
+	float:left;
+	clear:right;
+	margin-bottom:5px;
+	/* border:1px #ccc solid; */
+	padding:2px 0px;
+/*	word-wrap: break-word; */
+}
+
+div.field {
+	float:left;
+}
+
+div.field div.value p{
+	margin:0px;
+}
+
+div.elementDetail div.valueTag {
+	margin-bottom:0px;	
+}
+
+div.value .tag,
+div.elementDetail div.value .tag {
+	padding:0px 10px 2px 10px;
+	float:left;
+	margin-right:5px;
+	margin-top:2px;
+	background-image: url('../../images/gui/layout_banner-bg-20.png'); 
+	background-repeat: repeat-x;
+	background-position: bottom;
+}
+
+div.displayId {
+	margin-top:5px;
+	margin-bottom:5px;
+	padding-left:0px;
+	font-size:0.9em;
+}
+div.displayId .label { color:#666; }
+div.displayId .value { color:#000; }
+
+div.displayVersion {
+	margin-top:5px;
+	margin-bottom:5px;
+	padding-left:0px;
+	font-size:0.9em;
+}
+div.displayVersion .label { color:#666; }
+div.displayVersion .value { color:#000; }
+
+div.displayHistoric {
+	margin-top:5px;
+	margin-bottom:5px;
+	padding-left:0px;
+	font-size:0.9em;
+	cursor:pointer;
+}
+div.displayHistoric .label { color:#666; margin-right:5px; }
+div.displayHistoric .value { color:#000; }
+
+#elementHistoricExpanded table{
+	margin:0px;
+	margin-top:5px;
+	padding:0px;
+	border-collapse:collapse;
+	border:none;
+}
+#elementHistoricExpanded table td {
+	padding:0px;
+	margin:0px;	
+}
+
+/* FILES PART */
+div.value div.generalButton {
+	float:left;
+	height:15px;
+	padding:3px;
+	cursor:pointer;
+	background-image: url('../../images/gui/layout_banner-bg.png'); 
+	background-repeat: repeat-x;
+	background-position: bottom;
+}
+
+
+div#editElementSharingMenu  {
+	cursor:pointer;
+	position:absolute;
+	padding: 0px;
+	width:auto;
+}
+
+div#editElementSharingMenu li.root{
+	padding:5px;
+}
+
+
+

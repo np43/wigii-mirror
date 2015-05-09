@@ -1,0 +1,69 @@
+input, select, textarea {
+	border:1px solid #7288A6;
+	padding:2px;
+	margin-bottom:2px;
+}
+
+input[type=checkbox]{
+	border:none;
+}
+input[type=submit]{
+	margin:2px;
+}
+
+form div.value{
+	padding-bottom:2px;
+}
+
+.Matrix .simpleTree .root ul.level1 {
+	margin-top:-16px;
+}
+
+#adminUserAdminMatrix.Matrix .MatrixItems table td div input {
+	margin-top:-3px;
+}
+
+#adminUserUserMatrix.Matrix .MatrixItems table td input,
+#adminUserRoleMatrix.Matrix .MatrixItems table td input {
+	margin-top:-3px;
+}
+
+
+#searchBar div.selectSearch div.selectBox .selectBoxItem {
+	white-space:nowrap;
+}
+
+#moduleView .list div.headerList div {
+	padding-left:17px;
+}
+
+div.cm>div{
+	padding-left:25px; /* to prevent the exit making line return */
+}
+div.cm>.exit{
+	float:left;
+	border-right-width:1px;
+	border-left-width:0px;
+}
+#elementStatusMenu div, #elementStatusMenu div.checked {
+	padding-left:52px; /* to prevent the exit making line return */
+	background-position:32px 3px;
+}
+#userMenu, #userMenu * {
+	z-index:4;
+}
+.sf-menu li ul {
+	z-index:1;
+}
+.sf-navbar li:hover ul {
+	height:auto;
+	z-index:2;
+}
+.sf-navbar li.selected ul{
+	z-index:1;
+}
+.sf-navbar li:hover ul a{
+	padding:5px 10px;
+	display:table-row;
+}
+

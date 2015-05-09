@@ -1,0 +1,107 @@
+/**************************************
+* groupSelectorPanel
+**************************************/
+#groupSelectorPanel_contextMenu {
+	z-index:1;
+	padding:0px;
+	margin: 0px;
+	width:auto;
+	height:auto;
+}
+
+#groupSelectorPanel_contextMenu .commands div {
+	padding:5px;
+	cursor:pointer;
+}
+
+/**************************************
+* groupSelectorPanel
+**************************************/
+#groupSelectorPanel {
+	overflow-y:auto;
+	overflow-x:hidden;
+	float:left;
+	border-left:none;
+	border-bottom:none;
+}
+
+#groupSelectorPanel_divSelector {
+	border-width:2px;
+	border-right:none;
+	border-left:none;
+	overflow:visible;
+	background-image: url('../../images/gui/layout_header-bg_51.png'); 
+	background-repeat: repeat-x;
+	background-position: bottom;
+	z-index:0;
+}
+
+#groupSelectorPanel_divHighlight {
+	left:0px;
+	z-index:0;
+}
+
+#groupSelectorPanel_addElement {
+	position:absolute;
+	cursor:pointer;
+	z-index:1;
+}
+
+#groupSelectorPanel_treeview { 
+	margin:5px; 
+	margin-right:20px;
+}
+
+.simpleTree li span.text { 
+	cursor:pointer;
+}
+.simpleTree li div.disabled, .simpleTree li span.disabled {
+	cursor:default;
+	background:none;
+} 
+
+.simpleTree li div.description {
+	display:none;
+}
+
+.simpleTree span, .simpleTree div.divAsSpan {
+	padding-right:5px;
+	padding-left:5px;
+}
+.simpleTree span.level1, .simpleTree div.divAsSpan.level1 {
+ 	font-weight:bold;
+}
+.simpleTree .root {
+	background:none;
+	
+}
+.simpleTree .root>span {
+	margin:0px 10px 0px 0px;
+	font-weight:bold;
+	float:left;
+	padding:0px;
+	cursor:pointer;
+}
+.simpleTree .root>img {
+	margin:5px 10px 0px 0px;
+	cursor:pointer;
+	float:left;
+}
+.simpleTree .root>ul {
+	margin-top:10px;
+}
+.simpleTree .root>span img{
+	margin:-2px 0px 0px 0px;
+}
+
+
+#groupSelectorPanel_controlButton {
+	padding:5px;
+}
+#groupSelectorPanel_controlButton img {
+	margin-right:5px;
+	cursor:pointer;
+}
+
+
+

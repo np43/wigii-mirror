@@ -1,0 +1,42 @@
+form div.field div.label {
+	padding-top:7px;
+}
+form div.field div.value {
+	font-weight:normal;
+}
+form div.subLabel {
+	float:left;
+}
+form div.subLabel label {
+	font-size:0.9em;
+	margin-bottom:2px;
+	font-weight:normal;
+}
+form div.subInput{
+	float:left;
+	clear:right;
+	margin-bottom:2px;
+}
+form div.label img {
+	vertical-align:middle;
+	margin-right:5px;
+}
+form .addC {
+	cursor:pointer;
+	margin-bottom:5px;
+	padding:7px 0px;
+	float:left;
+}
+form .addC span {
+	font-size:14px;
+	font-weight:bold;
+}
+form select.filled, input.filled, textarea.filled {
+	border:2px solid #f00;
+}
+
+
+
+
+
+

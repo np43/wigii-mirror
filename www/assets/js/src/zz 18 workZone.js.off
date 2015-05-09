@@ -1,0 +1,1132 @@
+//code for elementList
+function selectLine(id, toggleIfMultiple){
+	if(arguments.length < 2) toggleIfMultiple = false;
+	if(typeof(id) == 'string'){
+		obj = $('#'+id);
+	} else obj = $(id);
+	
+	//remove all from parents who are selected
+	obj.parent().find("*").removeClass("selected");
+	if(switchSelectionModeIsMultiple){
+		if(obj.hasClass('readOnly')){
+			$('#moduleView .title .onlyWriteRights').hide();
+		} else if(allMultipleSelectionHaveWriteRights) {
+			$('#moduleView .title .onlyWriteRights').show();
+		}
+		if(toggleIfMultiple){
+			obj.toggleClass('multipleSelected');
+		} else {
+			obj.addClass('multipleSelected');
+		}
+	} else {
+		obj.parent().find("*").removeClass("multipleSelected");
+		obj.addClass('selected');
+	}
+	
+	//after the selection is made, check if need to change the contextMenu
+	matchContextMenu(obj);
+}
+
+switchSelectionModeIsMultiple = false;
+allMultipleSelectionHaveWriteRights = false;
+function setSelectionMode(isMultiple){
+	if(switchSelectionModeIsMultiple != isMultiple){
+		//reset all in write when selectionMode is changed
+		allMultipleSelectionHaveWriteRights = false;
+	}
+	switchSelectionModeIsMultiple = isMultiple;
+	if(switchSelectionModeIsMultiple){
+		$('#moduleView .title .multiple').show();
+		$('#moduleView .title .notMultiple').hide();
+		//when we switch we first have no selection, so the onlyInWriteRights icons are empty
+		if(!allMultipleSelectionHaveWriteRights){
+			$('#moduleView .title .onlyWriteRights').hide();
+		}
+		$('#moduleView .title .switchSelectionMode').addClass('grayBorder').addClass('multipleSelectActive');
+	} else {
+		$('#moduleView .title .multiple').hide();
+		$('#moduleView .title .notMultiple').show();
+		$('#moduleView .title .switchSelectionMode').removeClass('grayBorder').removeClass('multipleSelectActive');
+	}
+}
+
+function selectAllMultipleSelect(crtWigiiNamespace, crtModule){
+	$('#moduleView .dataList tr').addClass('multipleSelected');  
+	update('NoAnswer/'+crtWigiiNamespace+'/'+crtModule+'/element/addMultipleSelection/all');
+}
+function deselectAllMultipleSelect(crtWigiiNamespace, crtModule){
+	$('#moduleView .dataList tr').removeClass('multipleSelected');  
+	update('NoAnswer/'+crtWigiiNamespace+'/'+crtModule+'/element/removeListFromMultipleSelection/all');
+}
+function resetMultipleSelect(crtWigiiNamespace, crtModule){
+	$('#moduleView .multipleSelected').removeClass('multipleSelected'); 
+	update('NoAnswer/'+crtWigiiNamespace+'/'+crtModule+'/element/resetMultipleSelection');
+}
+function switchSelectionMode(id){
+	setSelectionMode(!switchSelectionModeIsMultiple);
+	selectLine(id);
+}
+
+function matchContextMenu(obj, contextMenuId){
+	if(arguments.length < 2) contextMenuId = 'elementList_contextMenu';
+	//show all
+	$('#'+contextMenuId+' div').show();
+	if(switchSelectionModeIsMultiple){
+		//multiple mode
+		$('#'+contextMenuId+' div.compatibleMultipleSelection').addClass('multipleSelected');
+		$('#'+contextMenuId+' div.onlyUniqueSelection').hide();
+	} else {
+		//unique mode
+		$('#'+contextMenuId+' div.compatibleMultipleSelection').removeClass('multipleSelected');
+		$('#'+contextMenuId+' div.onlyMultipleSelection').hide();
+	}
+	//hide action on readOnly
+//	if((!switchSelectionModeIsMultiple && obj.hasClass('readOnly')) || (switchSelectionModeIsMultiple && $('#moduleView .dataList .readOnly.multipleSelected').length > 0)){
+//		$('#'+contextMenuId+' .onlyWriteRights').hide();
+//	}
+	if((obj!=null && !switchSelectionModeIsMultiple && obj.hasClass('readOnly')) || (switchSelectionModeIsMultiple && !allMultipleSelectionHaveWriteRights)){
+		$('#'+contextMenuId+' .onlyWriteRights').hide();
+	}
+}
+//
+//function matchContextMenuOnSelectionMode(){
+//	if(switchSelectionModeIsMultiple){
+//		$('#elementList_contextMenu div.compatibleMultipleSelection img').removeClass('bluebg').addClass('orangebg');
+//		$('#elementList_contextMenu div.onlyUniqueSelection').hide();
+//		$('#elementList_contextMenu div.onlyMultipleSelection').show();
+//	} else {
+//		$('#elementList_contextMenu div.compatibleMultipleSelection img').addClass('bluebg').removeClass('orangebg');
+//		$('#elementList_contextMenu div.onlyUniqueSelection').show();
+//		$('#elementList_contextMenu div.onlyMultipleSelection').hide();
+//	}
+//}
+//function matchContextMenuOnItemRigths(obj){
+//	if((!switchSelectionModeIsMultiple && obj.hasClass('readOnly')) || (switchSelectionModeIsMultiple && $('#moduleView .dataList .readOnly.multipleSelected').length > 0)){
+//		$('#elementList_contextMenu .onlyWriteRights').hide();
+//	} else {
+//		$('#elementList_contextMenu .onlyWriteRights').show();
+//	}
+//}
+
+function displayLineInEmail(id, sep){
+	if(arguments.length < 2) sep = ' ';
+	if(typeof(id) == 'string'){
+		obj = $('#'+id);
+	} else obj = $(obj);
+	//remove all from parents who are selected
+	result = new Array();
+	$(obj).each(function(){
+		result[result.length] = $(this).text();
+	});
+	result = result.join(sep);
+	return result;
+}
+
+
+
+function fetchIdsFromObj(li){
+	if(typeof(li) == 'string'){
+		li = $('#'+li);
+	} else {
+		li = $(li);
+	}
+	idGroup = li.attr('id').split('_')[1];
+	
+	if(idGroup == 'ALL'){
+		//if all then we go and look to childrens
+		idGroup = new Array();
+		$(li).children('ul').children('[id]').each(function(){
+			idGroup[idGroup.length] = $(this).attr('id').split('_')[1];
+		});
+		idGroup = idGroup.join('/');
+	}
+	return idGroup;
+}
+
+
+/* Selectionne un groupe du volet de gauche */
+//doubleSelectGroup = false; //si cette variable est vrai cela indique que l'appelle de la fonction selectGroup c'est fait de manière rapprochée(doubleclic)
+//oldIdGroup = null; //on sauvegarde le dernier idGroup, pour ne pas faire un double clic simplement en changeant de groupe rapidement...
+//selectGroupTimer = null;
+selectGroupString = null;
+groupSelectorPanel_contextMenuIdGroup = null;
+
+function positionDivSelector(){
+	divSelectorTop = null; //return value with the top value of the div selector, null if hidden
+	
+	li = $('#groupSelectorPanel_treeview li.selected');
+	if(li.length == 0) return;
+	
+	idLi = li.attr('id');
+	canWriteElement = idLi.split("_")[2];
+	
+	//special ROOT case
+	if(li.hasClass('root')){
+		//$('#groupSelectorPanel_treeview li.root>span>input').attr('checked',true);
+		$('#groupSelectorPanel_addElement').hide('fast');
+		$('#moduleView .title .addNewElement').hide('fast');
+		if(!switchSelectionModeIsMultiple) $('#moduleView .title .import').show('fast');
+		myHeight = li.children('ul').height()+5-10;
+		myTop = li.children('ul').position().top+5+$('#groupSelectorPanel_treeview').position().top+$('#groupSelectorPanel').scrollTop()+10;
+		$('#groupSelectorPanel_divSelector').animate({top: myTop, height: myHeight })
+			.css('left',$('#groupSelectorPanel_treeview').position().left)
+			.css('width', $('#groupSelectorPanel').get(0).scrollWidth)
+			.show();
+			
+		divSelectorTop = myTop;
+		
+	} else {
+		//unselect the all button
+		//$('#groupSelectorPanel_treeview li.root>span>input').attr('checked',false);
+		
+		//the Add needs to be only on write elements
+		selectedPosTop = $('#groupSelectorPanel li.selected span').position().top+2+$('#groupSelectorPanel_treeview').position().top+$('#groupSelectorPanel').scrollTop();
+		if(canWriteElement == "0"){	
+			$('#groupSelectorPanel_addElement').hide('fast');
+			$('#moduleView .title .addNewElement').hide('fast');
+			$('#moduleView .title .import').hide('fast');
+		} else {
+			if(!switchSelectionModeIsMultiple) $('#moduleView .title .import').show('fast');
+			$('#moduleView .title .addNewElement').show('fast');
+			$('#groupSelectorPanel_addElement').show('fast')
+			.css('left', $('#groupSelectorPanel').width()-40-15)
+			.animate({
+			top: selectedPosTop - 35
+			});	
+		}
+		//detect if we need to highlight the full li or just
+		//the span
+		if($('li.pin', li).length>0){ myHeight = li.height()+2;}
+		else { myHeight = $('span:first', li).height(); }
+		if(li.filter(':visible').length == 0){ 
+			$('#groupSelectorPanel_addElement').hide('fast');
+			$('#moduleView .title .addNewElement').hide('fast');
+			$('#moduleView .title .import').hide('fast');
+			$('#groupSelectorPanel_divSelector').hide('normal');
+			divSelectorTop = null
+		} else { 
+			myTop = li.position().top+2+$('#groupSelectorPanel_treeview').position().top+$('#groupSelectorPanel').scrollTop();
+			$('#groupSelectorPanel_divSelector').animate({top: myTop, height: myHeight })
+			.css('left',$('#groupSelectorPanel_treeview').position().left)
+			.css('width', $('#groupSelectorPanel').get(0).scrollWidth)
+			.show();
+			divSelectorTop = myTop;
+		}
+		
+	}
+	return divSelectorTop;
+	
+}
+function selectGroup(wigiiNamespaceName, moduleName, li, selectChildren, doUpdatePhp){
+	
+	if(li.length == 0) return;
+	
+	span = $('span:first', li);
+	idGroup = fetchIdsFromObj(li);
+	//fetchIdsFromObj solve the ALL id.
+	//if no id is found that means there is no group defined. --> nothing to do.
+	if(idGroup == "") return;
+	
+	idLi = li.attr('id');
+	canWriteElement = idLi.split("_")[2];
+	
+	
+//	if(arguments.length < 4) selectChildren = true;
+	if(arguments.length < 5) doUpdatePhp = true;
+	
+	//we can change group with a element open
+//	if(hasAtLeastOneOpenItem()){
+//		update("confirmationDialog/"+wigiiNamespaceName+"/"+moduleName+"/finishCurrentOperation/");
+//		return;
+//	}
+	
+	//dans tous les cas, si l'on sélectionne un groupe,
+	//on désélectionne le viewAllButton
+	$("#groupSelectorPanel_viewAllButton").addClass('darkgray').addClass('whiteft').removeClass('green');
+	$("#groupSelectorPanel_viewAllCheckbox").attr('checked',false);
+	
+	//si c'est un doubleClic alors on regarde uniquement le contenu du groupe lui-même (sans les enfants)
+	if(!selectChildren){			
+		//dans ce cas on mets en bleu uniquement le span
+		//et l'on vire le blanc à tout le reste.
+		$("#groupSelectorPanel_treeview *").removeClass("selected pin");
+		$("#groupSelectorPanel_treeview li").addClass("unpin");
+		li.removeClass("unpin").addClass("pin selected");
+		string = 'NoAnswer/'+wigiiNamespaceName+'/'+moduleName+'/groupSelectorPanel/selectGroup/'+idGroup;
+
+	} else {
+		$("#groupSelectorPanel_treeview *").removeClass("selected pin");
+		$("#groupSelectorPanel_treeview li").addClass("unpin");
+		li.removeClass("unpin").addClass("pin selected").find("li").removeClass("unpin").addClass("pin");
+		
+		string = 'NoAnswer/'+wigiiNamespaceName+'/'+moduleName+'/groupSelectorPanel/selectGroupAndChildren/'+idGroup;
+		
+	}
+	
+	//avant de positioner le DivSelector on s'assure d'ouvrir l'arbre jusqu'au li sélectionner
+	$(li).parents('.folder-close').removeClass('folder-close').addClass('folder-open');
+	$(li).parents('.folder-close-last').removeClass('folder-close-last').addClass('folder-open-last');
+	$(li).parents(':hidden:not(.description)').css('display','block');
+	if(selectChildren){
+		if($(li).hasClass('folder-close')) $(li).removeClass('folder-close').addClass('folder-open');
+		if($(li).hasClass('folder-close-last')) $(li).removeClass('folder-close-last').addClass('folder-open-last');
+		$(li).children(':hidden:not(.description)').css('display','block');
+		
+	}
+	
+	elementList_resize();
+	
+	divSelectorTop = parseInt(positionDivSelector());
+	
+	//position the scroll of the treeview to match the top of the divSelector if the top is hidden
+	//alert(selectedPosTop+" "+divSelectorTop+" "+$('#groupSelectorPanel').scrollTop()+" "+$('#groupSelectorPanel').height()+" "+(parseInt($('#groupSelectorPanel').height())+parseInt($('#groupSelectorPanel').scrollTop())));
+	if(	divSelectorTop!==null && (
+			(divSelectorTop > (parseInt($('#groupSelectorPanel').height())+parseInt($('#groupSelectorPanel').scrollTop()))) ||
+			(divSelectorTop < $('#groupSelectorPanel').scrollTop())
+			)
+		){
+		$('#groupSelectorPanel').scrollTop(selectedPosTop-50);
+	}
+	
+	if(doUpdatePhp) update(string);
+	
+//	//lorsque l'on fait un select, cela annule les checks. Donc il faut en tenir compte ici
+//	if(leftPanelExpanded) { checkGroupActions = ""; selectGroupFinalAction = string; }
+	
+//	//si c'est le premier clic, on attend un momment avant de faire la requête
+//	if(doUpdatePhp && !doubleSelectGroup && !leftPanelExpanded) selectGroupTimer = setTimeout("update(string)",300);
+//	else 
+//	if(doUpdatePhp && !leftPanelExpanded) update(string);
+	
+//	//on met la variable doubleSelectGroup à vrai pendant x seconde, ainsi si
+//	//l'on reclic durant cet interval de temps, ce sera pris comme un double clic
+//	doubleSelectGroup = true;
+//	oldIdGroup = idGroup;
+//	setTimeout("doubleSelectGroup = false", 600);
+	return string;
+}
+
+//cette fonction va étendre la vue du left pannel
+//ou la remettre en petit..
+//cette variable permet de connaître l'état du leftPanel
+//ainsi l'on peut faire ou non les updates php en fonction de l'état
+leftPanelExpanded = false;
+leftPanelOriginalWidth = null;
+selectGroupFinalAction = "";
+checkGroupActions = "";
+expandGroupSelectorPanel = function(bigger){
+	if(arguments.length < 1) {
+		bigger = !leftPanelExpanded;
+	}
+	if(bigger){
+		//on reset les actions pour le leftPanel
+		selectGroupFinalAction = "";
+		checkGroupActions = "";
+		leftPanelExpanded = true;
+		w = $(document).width()/3*2;
+		leftPanelOriginalWidth = $('#groupSelectorPanel').width();
+		position = $('#groupSelectorPanel').position();
+		
+		$('#groupSelectorPanel').css('position', 'absolute').css('top', position.top).css('left', position.left).animate({ 
+			width: w+"px"
+		  }, 300, "linear", function(){
+			$('#groupSelectorPanel .onlyInSmall').css('display','none');
+			//le visibility est là juste pour l'input du emailGUI qui est hidden plutot
+			//que display none, car avec un display none, il y a un bug qui fait planter
+			//le js...
+			$('#groupSelectorPanel .onlyInBig').css('display','inline').css('visibility','visible');
+			//dans le cas ou le bouton showEmailAlert existe
+			//alors on clique dessus pour mettre à jour les données
+			//sauf qu'il faut faire cela après que l'animation de l'agrandissement
+			//se soit terminé... :)
+			if($('#leftPanel_showEmailAlert').get()!=null){
+				$('#leftPanel_showEmailAlert').click();
+			}
+		  } );
+	} else {
+		leftPanelExpanded = false;
+		$('#groupSelectorPanel .onlyInBig').css('display','none');
+		$('#groupSelectorPanel').animate({ 
+			width: leftPanelOriginalWidth+"px"
+		  }, 200, "linear", function(){
+				$('#groupSelectorPanel .onlyInSmall').css('display','inline');		
+		  });
+	}
+}
+
+updateGroupSelectorPanelAction = function(){
+	//c'est lorsque l'on rapetici le leftPanel que l'on fait un update de l'état:
+	var updateText = "";
+	//on vérifie les sélections de groupes
+	if(selectGroupFinalAction != ""){
+		updateText += selectGroupFinalAction+"/";
+	}
+	//on vérifie les check de groupes
+	if(checkGroupActions != ""){
+		updateText += checkGroupActions;
+	}
+	
+	//on fait l'update si nécessaire
+	if(updateText != ""){
+		update(updateText);
+	}
+	selectGroupFinalAction = "";
+	checkGroupActions = "";
+}
+
+//this will replace all the select by checkboxes in the container,
+//or replace the checkboxes by a select
+function toggleAdvancedSearch(crtWigiiNamespace, crtModule, selectSearchContainer, makeMultiple){
+	setVis("busyDiv", true);
+	//$('.toggleAdvancedSearch', selectSearchContainer).toggle();
+	if(makeMultiple){
+		if(jQuery.browser.msie && version < 8.0){
+			alert('Microsoft Internet Explorer 7 is not performant enough to do this action. Please upgrade your browser!');
+			setVis("busyDiv", false);
+			return;
+		}
+		$(selectSearchContainer).children('.selectBoxItem').each(function(){
+			if($(".groupBy", this).length == 0){
+				selectItem = $("select", this);
+				selectItem.unbind('click').unbind('change');
+				selectItem
+					.attr('multiple', 'mutiple') 
+					.attr('size', '5')
+					.attr('name', selectItem.attr('name')+'[]')
+					.width(120);
+				//if the none value is defined, then in multiple not preselect this one
+				if(selectItem.val()==null || selectItem.val() == selectItem.children(':first').attr('value')){
+					selectItem.val([]);
+				}
+				//add the code to make the multiple attribut click toggle
+				multipleSelectVals[selectItem.attr('id')] = selectItem.val();
+				selectItem.click(function(){ 
+					multipleSelectOnClick($(this).attr('id'));
+					if($(this).val()==null || $(this).val()==$(this).children(':first').attr('value')){
+						$(this).removeClass("redBorder").addClass("grayBorder");
+					} else {
+						$(this).removeClass("grayBorder").addClass("redBorder");
+					}
+				});
+			}
+		});
+		
+		//unlink the search button and the search box:
+		$('#searchBar div.textSearch .inputTextSearch :input:first').css('border-right-width', "1px");
+		$('#searchBar div.textSearch .inputTextSearch .goForSearch').hide(); //.css('border-left-width', "1px").css('margin-left', '10px');
+		$('#searchBar div.textSearch .goForAdvancedSearch').show();
+		$('#searchBar div.textSearch .advancedSearchButton .open').hide();
+		$('#searchBar div.textSearch .advancedSearchButton .close').show();
+		
+		$('#searchBar div.textSearch .inputTextSearch .addField').show();
+		$('#searchBar div.textSearch .inputTextSearch .generateTimestampFromDate').show();
+		$('#searchBar div.textSearch .inputTextSearch .addGroupOperator').show();
+		
+		//display the advancedSearch textarea
+		$('#searchBar div.textSearch .inputTextSearch :input:eq(1)').blur().show();
+		$('#searchBar div.textSearch .inputTextSearch :input:eq(2)').blur().show();
+		
+		//unlink all the events on change, keydown, focus and blur:
+		$('#searchBar div.textSearch .inputTextSearch :input').unbind();
+		$('#searchBar div.textSearch .inputTextSearch input').keydown(searchBar_onKeyDownInTextAdvancedSearch);
+		$('#searchBar div.selectSearch img.reverse').unbind('click');
+		$('#searchBar div.selectSearch img.reverse')
+		.click(function(){ 
+			$(this).toggleClass('actif'); 
+		});
+		
+		$('#searchBar div.textSearch .inputTextSearch :input')
+		.focus(searchBar_onFocusInTextSearch)
+		.blur(searchBar_onBlurInTextAdvancedSearch)
+		;
+		
+		$('#searchBar div.textSearch .inputTextSearch .goForSearch').unbind('click')
+		.click(function(){
+			convertTimestamps($('#searchBar div.textSearch .inputTextSearch :input:eq(1)'));
+			clearTimeout(searchBar_goForSearchTimeout);
+			searchBar_onSubmitSearch(crtWigiiNamespace, crtModule);
+		});
+		
+//		//change the input search bar in textarea
+//		inputSearch = $('#searchBar div.textSearch .inputTextSearch :input');
+//		inputSearch.after('<textarea class="'+inputSearch.attr('class')+'" name="'+inputSearch.attr('name')+'" >'+inputSearch.val()+'</textarea>');
+//		//$('#searchBar div.textSearch .inputTextSearch textarea').height($('#searchBar .selectSearch .filterTitle').height()-inputSearch.offset().top);
+//		inputSearch.next().focus(searchBar_onFocusInTextSearch).blur(searchBar_onBlurInTextSearch).keydown(searchBar_onKeyDownInTextSearch);
+//		inputSearch.remove();
+//		//change the advancedSearchButton position
+////		$('#searchBar div.toggleAdvancedSearch').css('margin-top', $(selectSearchContainer).children('select:first').height()-12);
+////		$('#searchBar div.resetSearch').css('margin-top', $(selectSearchContainer).children('select:first').height()-12);
+////		$('#searchBar div.goForSearch').css('margin-top', 30).css('padding', '16px 20px 18px 20px');
+		$('#searchBar').addClass('advancedSearch');
+		
+	} else {
+		//hide the advanced search go button
+		$('#searchBar div.textSearch .goForAdvancedSearch').hide();
+		$('#searchBar div.textSearch .advancedSearchButton .close').hide();
+		$('#searchBar div.textSearch .advancedSearchButton .open').show();
+		
+		
+		//hide the advancedSearch textarea
+		$('#searchBar div.textSearch .inputTextSearch :input:eq(1)').hide();
+		$('#searchBar div.textSearch .inputTextSearch :input:eq(2)').hide();
+		
+		$('#searchBar div.textSearch .inputTextSearch .addField').hide();
+		$('#searchBar div.textSearch .inputTextSearch .generateTimestampFromDate').hide();
+		$('#searchBar div.textSearch .inputTextSearch .addGroupOperator').hide();
+		
+		//link the goForSearch to the search input
+		$('#searchBar div.textSearch .inputTextSearch :input:first').css('border-right-width', "0px");
+		$('#searchBar div.textSearch .inputTextSearch .goForSearch').show();//.css('border-left-width', "0px").css('margin-left', '0px');
+		
+		
+//		//change the input search bar in textarea
+//		textSearch = $('#searchBar div.textSearch .inputTextSearch textarea');
+//		textSearch.after('<input class="'+textSearch.attr('class')+'" name="'+textSearch.attr('name')+'" value="'+textSearch.val().replace(/"/g, "&quot;")+'" />');
+//		textSearch.next().focus(searchBar_onFocusInTextSearch).blur(searchBar_onBlurInTextSearch).keydown(searchBar_onKeyDownInTextSearch);
+//		//$('#searchBar div.textSearch .inputTextSearch :input').height($('#searchBar .selectSearch .filterTitle').height()-inputSearch.offset().top);
+//		textSearch.remove();
+//		//change the advancedSearchButton position
+////		$('#searchBar div.goForSearch').css('margin-top', 0).css('padding', '1px 5px 3px 5px');
+////		$('#searchBar div.toggleAdvancedSearch').css('margin-top', 5);
+////		$('#searchBar div.resetSearch').css('margin-top', 5);
+		$(selectSearchContainer).children('.selectBoxItem').each(function(){
+			if($(".groupBy", this).length == 0){
+				selectItem = $("select", this);
+				selectItem
+					.removeAttr('multiple') 
+					.attr('size', 1)
+					.attr('name', selectItem.attr('name').replace('[]', ''));
+				//if no value selected, then preselect the first value
+				if(selectItem.val()==null){
+					selectItem.val(selectItem.children(':first').attr('value'));
+				}
+				multipleSelectVals[selectItem.attr('id')] = null;
+				selectItem.unbind('click').unbind('change');
+			}
+		});
+		$(selectSearchContainer).children('.selectBoxItem').each(function(){
+			$('select', this).change(function(){ 
+				if($(this).val()==$(this).children(':first').attr('value')){
+					$(this).removeClass("redBorder").addClass("grayBorder");
+				} else {
+					$(this).removeClass("grayBorder").addClass("redBorder");		
+				}
+				searchBar_onSubmitSearch(crtWigiiNamespace, crtModule); 
+			});
+		});
+		
+		$('#searchBar div.textSearch .inputTextSearch :input:first').unbind()
+		.focus(searchBar_onFocusInTextSearch)
+		.blur(searchBar_onBlurInTextSearch)
+		.keydown(searchBar_onKeyDownInTextSearch)
+		;
+
+		$('#searchBar').removeClass('advancedSearch');
+		
+		$('#searchBar div.selectSearch img.reverse').unbind('click')
+		.click(function(){ 
+			$(this).toggleClass('actif');
+			searchBar_onSubmitSearch(crtWigiiNamespace, crtModule); 
+		});
+		
+		$('#searchBar div.textSearch .inputTextSearch .goForSearch').unbind('click')
+		.click(function(){
+			clearTimeout(searchBar_goForSearchTimeout);
+			searchBar_goForSearchTimeout = setTimeout(function(){ searchBar_onSubmitSearch(crtWigiiNamespace, crtModule); }, 100);
+		}).click();
+		
+	}
+	//need to resize the workzone
+	groupSelectorPanel_setHeight();
+	moduleView_setHeight();
+	searchBar_resize();
+	elementList_resize();
+	portal_resize();
+//	workZone_defaultView();
+	setVis("busyDiv", false);
+}
+
+searchBar_defaultTextSearch = '';
+searchBar_defaultTextAdvancedSearch = '';
+searchBar_defaultTextGroupSearch = '';
+//this function is deprecated (since 21 january 2010, 3.1005. the search is now always done on the whole groups first
+//function searchBar_onSelectGroup(li, selectChildren){
+//	searchBox = $('#searchBar div.textSearch .inputTextSearch :input');
+//	if(searchBox.hasClass('empty')){
+//		searchBox.val(searchBox.val().split('\"')[0]);
+//		searchBox.val(searchBox.val()+'\"'+li.children('span:first, div.divAsSpan:first').text()+'\"');
+//	} else {
+//		//searchBar_defaultTextSearch = searchBar_defaultTextSearch.split('\"')[0];
+//		//searchBar_defaultTextSearch = searchBar_defaultTextSearch+'\"'+li.children('span:first').text()+'\"';
+//	}
+//}
+searchBar_goForSearchFromBlur = false;
+function searchBar_onFocusInTextSearch(){
+	searchBox = $(this);
+	if(searchBox.hasClass('empty')){
+		//searchBar_defaultTextSearch = searchBox.val();
+//		alert('remove empty');
+		searchBox.removeClass('empty').removeClass('grayFont').addClass('darkGrayFont').val('');
+	} else {
+		//searchBox.select();
+	}
+}
+
+searchBar_onBlurInTextSearchTimeout = null;
+function searchBar_onBlurInTextSearch(){
+	clearTimeout(searchBar_onBlurInTextSearchTimeout);
+	searchBar_onBlurInTextSearchTimeout = setTimeout(function(){ 
+		searchBox = $('#searchBar div.textSearch .inputTextSearch :input:first');
+		changed = lastSearchBarTextSearchValue!=searchBox.val();
+		if(searchBox.val() == ''){
+//			alert('add empty '+searchBox.val());
+			searchBox.val(searchBar_defaultTextSearch);
+			searchBox.addClass('grayFont').addClass('empty').removeClass('darkGrayFont');
+		} else {
+//			alert('remove empty '+searchBox.val());
+			searchBox.removeClass('empty').removeClass('grayFont').addClass('darkGrayFont');
+		}
+		if(changed) searchBox.next().click();
+	}, 100);
+}
+function searchBar_onBlurInTextAdvancedSearch(){
+	searchBox = $(this);
+	if(searchBox.val() == '' || searchBox.hasClass('empty')){
+		if(searchBox.get(0).tagName=="TEXTAREA"){
+			searchBox.val(searchBar_defaultTextAdvancedSearch);
+		} else if(searchBox.attr('name')=="__textGroupSearch"){
+			searchBox.val(searchBar_defaultTextGroupSearch);
+		} else {
+			searchBox.val(searchBar_defaultTextSearch);
+		}
+		searchBox.addClass('grayFont').addClass('empty').removeClass('darkGrayFont');
+	} else {
+		searchBox.removeClass('empty').removeClass('grayFont').addClass('darkGrayFont');
+	}
+}
+
+function convertTimestamps(obj){
+	//advanced search: match any TIMESTAMP() and convert them into a real timestamp
+	orignalText = $(obj).val();
+	res = orignalText.match(/TIMESTAMP\(([0-9]{4}\-[0-9]{2}\-[0-9]{2}[ \:0-9]*)\)/gi);
+	for(r in res){
+		d = new Date(res[r].replace("TIMESTAMP", "").replace("(", "").replace(")", "").replace(/-/g, "/"));
+		orignalText = orignalText.replace(res[r], Math.round(d.getTime()/1000));
+	}
+	$(obj).val(orignalText);
+}
+function searchBar_onKeyDownInTextSearch(e){
+	if(this.nodeName.toLowerCase() == "textarea"){
+		return;
+	}
+	if(e.keyCode == 13){
+		e.preventDefault();
+		$(this).blur();
+		e.stopPropagation();
+		//searchBar_onBlurInTextSearch(true);
+		//$('#searchBar div.textSearch .inputTextSearch :input').next().click();
+	}
+}
+function searchBar_onKeyDownInTextAdvancedSearch(e){
+	if(this.nodeName.toLowerCase() == "textarea"){
+		return;
+	}
+	if(e.keyCode == 13){
+		e.preventDefault();
+		$(this).blur();
+		$('#searchBar div.textSearch .inputTextSearch .goForSearch').click();
+		e.stopPropagation();
+		//searchBar_onBlurInTextSearch(true);
+		//$('#searchBar div.textSearch .inputTextSearch :input').next().click();
+	}
+}
+lastSearchBarTextSearchValue = "";
+lastSearchBarTextAdvancedSearchValue = "";
+lastSearchBarTextGroupSearchValue = "";
+function searchBar_onSubmitSearch(crtWigiiNamespace, crtModule){
+	setVis("busyDiv", true);
+	
+	url = SITE_ROOT +"Update"+EXEC_requestSeparator+ 'NoAnswer/'+crtWigiiNamespace+'/'+crtModule+'/searchBar/';
+
+	//alert($('#searchBar div.textSearch .inputTextSearch input').attr('class'));
+	if($('#searchBar div.textSearch .inputTextSearch :input:first').hasClass('empty')){
+		//searchBar_defaultTextSearch = $('#searchBar div.textSearch .inputTextSearch :input').val();
+		$('#searchBar div.textSearch .inputTextSearch :input:first').val('');
+	}
+	if($('#searchBar div.textSearch .inputTextSearch :input:eq(1)').hasClass('empty')){
+		//searchBar_defaultTextSearch = $('#searchBar div.textSearch .inputTextSearch :input').val();
+		$('#searchBar div.textSearch .inputTextSearch :input:eq(1)').val('');
+	}
+	if($('#searchBar div.textSearch .inputTextSearch :input:eq(2)').hasClass('empty')){
+		//searchBar_defaultTextSearch = $('#searchBar div.textSearch .inputTextSearch :input').val();
+		$('#searchBar div.textSearch .inputTextSearch :input:eq(2)').val('');
+	}
+//	alert('1');
+	//create the hidden input near reverse img
+	$('#searchBar .selectSearch .selectBoxItem img.reverse').each(function(i){
+		val = $(this).next().attr('name');
+		val = val.replace('[]','');
+		if(!$(this).hasClass('actif')) val = '';
+		$(this).after('<input class="hiddenToDeleteAfterSubmit" type="hidden" value="'+val+'" name="__reverseSelectSearch[]" />');
+	});
+//	alert('2');
+//	//add the searchBar_defaultTextSearch current value
+//	$('#searchBar div.textSearch .inputTextSearch :input:last').after('<input class="hiddenToDeleteAfterSubmit" type="hidden" name="__defaultTextSearch" />')
+////	alert('3');
+//	$('#searchBar div.textSearch .inputTextSearch :input:last').val(searchBar_defaultTextSearch);
+//	alert('4');
+	
+	//add the advancedSearch is active or not
+	$('#searchBar div.textSearch .inputTextSearch :input:last').after('<input class="hiddenToDeleteAfterSubmit" type="hidden" name="__advancedSearch" value="'+$('#searchBar').hasClass('advancedSearch')+'" />');
+//	alert('5');
+	
+//	//add the goToListInGroup id if in icons view
+//	if($('#iconsGroupPanel_crt').length>0){
+//		$('#searchBar div.textSearch .inputTextSearch :input:last').after('<input class="hiddenToDeleteAfterSubmit" type="hidden" name="goToListInGroup" value="'+getGroupIdInIconsView(crtGroupIdInIconsView)+'" />');
+//	}
+	
+	
+	//alert($('#searchBar :input').serialize());
+//	$.post(encodeURI(url), $('#searchBar :input').serialize() , parseUpdateResult);
+	var myAjax = new jQuery.ajax({
+			url: encodeURI(url),
+			data: $('#searchBar :input').serialize(),
+			type: 'POST',
+			success : parseUpdateResult,
+			cache:false,
+			error: errorOnUpdate 
+		});
+	onUpdateErrorCounter = 0;
+	
+	//select all if new text is typed into the text input
+	crtSearchBarTextSearchValue = $('#searchBar div.textSearch .inputTextSearch :input:first').val();
+	crtSearchBarTextAdvancedSearchValue = $('#searchBar div.textSearch .inputTextSearch :input:eq(1)').val();
+	crtSearchBarTextGroupSearchValue = $('#searchBar div.textSearch .inputTextSearch :input:eq(2)').val();
+	if(	(crtSearchBarTextSearchValue && lastSearchBarTextSearchValue != crtSearchBarTextSearchValue) ||
+		(crtSearchBarTextAdvancedSearchValue && lastSearchBarTextAdvancedSearchValue != crtSearchBarTextAdvancedSearchValue) ||
+		(crtSearchBarTextGroupSearchValue && lastSearchBarTextGroupSearchValue != crtSearchBarTextGroupSearchValue)
+		){
+		//do something on change... --> this code is in the WigiiExecutor::searchBar answer 
+	}
+	lastSearchBarTextSearchValue = crtSearchBarTextSearchValue;
+	lastSearchBarTextAdvancedSearchValue = crtSearchBarTextAdvancedSearchValue;
+	lastSearchBarTextGroupSearchValue = crtSearchBarTextGroupSearchValue;
+	
+//	alert('6');
+	//restores settings
+	if($('#searchBar div.textSearch .inputTextSearch :input:first').hasClass('empty')){
+		$('#searchBar div.textSearch .inputTextSearch :input:first').val(searchBar_defaultTextSearch);
+	}
+	if($('#searchBar div.textSearch .inputTextSearch :input:eq(1)').hasClass('empty')){
+		$('#searchBar div.textSearch .inputTextSearch :input:eq(1)').val(searchBar_defaultTextAdvancedSearch);
+	}
+	if($('#searchBar div.textSearch .inputTextSearch :input:eq(2)').hasClass('empty')){
+		$('#searchBar div.textSearch .inputTextSearch :input:eq(2)').val(searchBar_defaultTextGroupSearch);
+	}
+	
+//	alert('7');
+	$('#searchBar input[type=hidden].hiddenToDeleteAfterSubmit').remove();
+//	alert('8');
+	
+}
+
+function resetSearchBar(crtWigiiNamespace, crtModule){
+	$('#searchBar .selectSearch .selectBoxItem img.reverse').removeClass('actif');
+	$('#searchBar .selectSearch .selectBoxItem select:not(.groupBy)[multiple]').val([]).removeClass('redBorder').addClass('grayBorder');
+	$('#searchBar .selectSearch .selectBoxItem select:not(.groupBy):not([multiple])').val('').removeClass('redBorder').addClass('grayBorder');
+	if(searchBar_defaultTextSearch != ''){
+		$('#searchBar .textSearch .inputTextSearch :input:first').val(searchBar_defaultTextSearch);
+		$('#searchBar .textSearch .inputTextSearch :input:eq(1)').val(searchBar_defaultTextAdvancedSearch);
+		$('#searchBar .textSearch .inputTextSearch :input:eq(2)').val(searchBar_defaultTextGroupSearch);
+	}
+	$('#searchBar div.textSearch .inputTextSearch :input:first').addClass('empty grayFont');
+	$('#searchBar .textSearch .inputTextSearch :input:eq(1)').addClass('empty grayFont');
+	$('#searchBar .textSearch .inputTextSearch :input:eq(2)').addClass('empty grayFont');
+	//call the submit search to reset also the list filters
+	//this is done in the template, by adding this call on the click option
+	//searchBar_onSubmitSearch(crtWigiiNamespace, crtModule);
+}
+
+function cloneGroupSelectorForMenu(id, emptyHTML){
+	if(arguments.length < 2) emptyHTML = true;
+	if(emptyHTML){
+		$('#'+id).html('');
+	}
+	$('#'+id).append($('#groupSelectorPanel_treeview').html());
+	$('#'+id+' *').show().removeClass('selected');
+	//span needs to be inline
+	$('#'+id+' span, #'+id+' div.divAsSpan').css('display','inline');
+	$('#'+id+' .description').css('display','none');
+	$('#'+id+' .portal').css('display','none');
+	$('#'+id+' .folder-close').removeClass('folder-close').addClass('folder-open');
+	$('#'+id+' .folder-close-last').removeClass('folder-close-last').addClass('folder-open-last');
+	$('#'+id+' li').css('cursor','default');
+	$('#'+id+' span, #'+id+' div.divAsSpan').css('cursor','pointer');
+	//remove the control buttons
+	$('#'+id+' li.root').children('span, div.divAsSpan, img').remove();
+	$('#'+id+'>li.root').css('position', 'relative').css('max-height', $('#workZone').height()).css('overflow-y', 'scroll').css('overflow-x', 'hidden');
+	if(browserName == "msie" && version=="7"){
+		$('#'+id+'>li.root').css('min-width', 350); //$('#'+id+' div.alertEmailMenuTitle').width());
+	}
+	//remove events:
+	$('#'+id+' li.root').find("*").unbind().removeAttr('onmouseover').removeAttr('onmouseout').removeAttr('onclick');
+	
+}
+
+function emptyGroupSelectorMenu(id){
+	$('#'+id).html('');
+}
+
+
+
+/***********************************
+ * Templates method
+ **********************************/
+
+function moduleView_setHeight(){
+	$('#moduleView').height($(window).height()-$('#userBar').outerHeight()-$('#navigationBar').outerHeight()-$('#tabsBar').outerHeight()-$('#searchBar').outerHeight()-$('#iconsGroupPanel_crt').outerHeight()-$('#footerBar').outerHeight()-5);
+}
+
+editAlertEmailGoButtonTimout = null;
+userManageAlertEmailsInputValue = null;
+function prepareGroupPanelSelectorForEmailNotificationMenu(myWigiiNamespace, module, title, secondTitle){
+	if($('#elementDialog').parent().hasClass('ui-dialog')){
+		tempZIndex = $('#elementDialog').parent().css('zIndex')+1;
+	} else {
+		tempZIndex = 100;
+	}
+	$('#userManageAlertEmailsMenu').html('')
+	$('#userManageAlertEmailsMenu').prepend(title).css('zIndex', tempZIndex);
+	
+	
+	_left = $('#userManageAlertEmails').position().left;
+	if((_left + $('#userManageAlertEmailsMenu').width())>$(window).width()){
+		_left = $(window).width()-$('#userManageAlertEmailsMenu').width()-3; 
+	}
+	_top = $('#userManageAlertEmails').position().top+$('#userManageAlertEmails').outerHeight();
+	$('#userManageAlertEmailsMenu').css('top', _top).css('left', _left);
+	//positionElementOnDom($('#userManageAlertEmailsMenu'), $('#userManageAlertEmails'), 'fromLeft', null, true);
+	
+	//add click on goButton
+	$('#userManageAlertEmailsMenu .alertEmailMenuTitle .goButton:first')
+		.click(function(){ setVis('busyDiv', true); })
+		.click(function(){ 
+			clearTimeout(editAlertEmailGoButtonTimout); 
+			if($(this).prev().val()!='' && $('#userManageAlertEmailsMenu li.root').length == 0){
+				
+				$('#userManageAlertEmailsMenu .alertEmailMenuTitle').append(secondTitle);
+								
+				cloneGroupSelectorForMenu('userManageAlertEmailsMenu', false);
+				
+				$('#userManageAlertEmailsMenu li span.disabled, #userManageAlertEmailsMenu li div.divAsSpan.disabled').css('color', "#666").css('cursor', 'default');
+				
+				$('#userManageAlertEmailsMenu li span, #userManageAlertEmailsMenu li div.divAsSpan').click(function(){
+					if($(this).hasClass("disabled")) return;
+					$(this).parent().toggleClass('selected');
+					if($(this).parent().hasClass('selected')){
+						$(this).parent().find("li").addClass('selectedHerited');
+					} else {
+						$(this).parent().find("li").removeClass('selectedHerited');
+					}
+					update('NoAnswer/'+myWigiiNamespace+'/'+module+'/toggleEmailAlert/'+($(this).parent().hasClass('selected')? 1 : 0)+'/'+fetchIdsFromObj($(this).parent().attr('id')));
+				});
+			}
+			
+			update('NoAnswer/'+myWigiiNamespace+'/'+module+'/setEmailAccountForPFromEditEmailAlertForm/'+escape($(this).prev().val()));
+			
+			if($(this).prev().val()==''){
+				$('#userManageAlertEmailsMenu').slideUp();
+			}
+			setVis('busyDiv', false);
+			
+		})
+		.prev()
+			.focus(function(){ $(this).select(); })
+			.val(userManageAlertEmailsInputValue)
+			.blur(function(){ editAlertEmailGoButtonTimout = setTimeout(function(){ $('#userManageAlertEmailsMenu .alertEmailMenuTitle .goButton:first').click(); },100); })
+			.keydown(function(e){ if(e.keyCode == 13){ $(this).blur(); } })
+	;
+}
+
+function searchBar_resize(){
+	selectSearch = $('#searchBar div.selectSearch div.selectBox');
+	if(selectSearch.length > 0){
+		selectSearch.width($('#searchBar').width()-$('#searchBar div.textSearch').outerWidth()-10-20-5).height('auto');
+	}
+	//$('#searchBar div.selectSearch div.filterTitle').height(Math.max($('#searchBar div.selectSearch .selectBox').height(), $('#searchBar div.textSearch').height()));
+	textSearch = $('#searchBar div.textSearch div.inputTextSearch textarea');
+	if(textSearch.length > 0){
+		textSearch.height(Math.max(60, $('#searchBar div.selectSearch div.selectBox').height()-$('#searchBar div.textSearch div.advancedSearchButton').height()-$('#searchBar div.textSearch div.advancedSearchButton').height()-(2*$('#searchBar div.textSearch div.inputTextSearch input').height())));
+	}
+}
+//$(window).resize(searchBar_resize);
+
+function groupSelectorPanel_setHeight(){
+	$('#groupSelectorPanel').height($(window).height()-$('#userBar').outerHeight()-$('#navigationBar').outerHeight()-$('#tabsBar').outerHeight()-$('#searchBar').outerHeight()-$('#footerBar').outerHeight()-5);
+}
+
+/***********************
+ * GroupSelectorPanel
+ **********************/
+function show_groupSelectorPanel_contextMenu(obj){
+	groupSelectorPanel_contextMenuIdGroup = obj.attr('id');
+	position = obj.position();
+//	positionElement($('#groupSelectorPanel_contextMenu'), 
+//		position.top+2+$('#groupSelectorPanel_treeview').position().top+$('#groupSelectorPanel').position().top,
+//		$('#groupSelectorPanel').width(),
+//		1,1, 'right', 0);
+	
+	if(obj.hasClass('root') || $('span.text', obj).hasClass('disabled')){
+		$('#groupSelectorPanel_divHighlight').hide();
+	} else {
+		$('#groupSelectorPanel_divHighlight')
+			.css('top', obj.position().top+4+$('#groupSelectorPanel_treeview').position().top+$('#groupSelectorPanel').scrollTop())
+			.height(obj.children('span').height())
+			.width($('#groupSelectorPanel').get(0).scrollWidth)
+			.css('display','block')
+		;
+	}
+//	$('#groupSelectorPanel_contextMenu')
+//		.show()
+//		.mouseleave(function(){ $(this).hide(); $('#groupSelectorPanel_divHighlight').hide(); })
+//		.click(function(){ $(this).hide(); })
+//		.mouseover(function(){ clearTimeout(hideContextMenu); })
+//	;
+//	$('#groupSelectorPanel_contextMenu').children('.description').remove();
+//	$('#groupSelectorPanel_contextMenu').children('.commands').before(obj.children('.description').clone());
+}
+
+
+/***********************
+ * ElementList
+ **********************/
+function ElementPListRows_actOnFinishAddElementP(){
+	$('#moduleView .list .dataList table').width($('#moduleView .list .headerList').outerWidth()-16);
+	$('#moduleView .list .headerList div').each(function(i){
+		tempWidth = $(this).outerWidth() -1;
+		//alert($(this).attr('class')+" "+tempWidth);
+		if ( i+1 == $('#moduleView .list .headerList div').length){	
+			$('#moduleView .list .dataList table col:eq('+i+')').width((tempWidth-16));
+			//it is good to filter on the grayBorder class, to help preventing counting sub tables
+			$('#moduleView .list .dataList table tr').find('td.grayBorder:eq('+i+')').find('div').width((tempWidth-16-5));
+		} else {
+			$('#moduleView .list .dataList table col:eq('+i+')').width((tempWidth));
+			//it is good to filter on the grayBorder class, to help preventing counting sub tables
+			$('#moduleView .list .dataList table tr').find('td.grayBorder:eq('+i+')').find('div').width((tempWidth-5));
+		}
+	});
+}
+
+ElementPListRows_makeHeaders_getTotalWidth = 0;
+ElementPListRows_makeHeaders_getNbNoWidth = 0;
+ElementPListRows_makeHeaders_totalPaddingInCol = 0;
+//those variables are filled in ElementPListRowsForElementList.php at the end of the method makeHeader
+function ElementPListRows_makeHeaders(){
+	$('#moduleView .list div.noWidth').width(parseInt(($('#moduleView .list').width()-ElementPListRows_makeHeaders_getTotalWidth)/ElementPListRows_makeHeaders_getNbNoWidth)-1-ElementPListRows_makeHeaders_totalPaddingInCol);
+}
+
+function elementList_resize(){
+	//ElementPListRows_makeHeaders needs to be called before
+	//actOnFinishAddElementP
+	ElementPListRows_makeHeaders();
+	ElementPListRows_actOnFinishAddElementP();
+	$('#moduleView .list .dataList').height($('#moduleView').height()-$('#moduleView .list .headerList').outerHeight()-$('#moduleView .list').prev().outerHeight()-$('#moduleView .list').prev().prev().outerHeight());
+}
+
+function show_elementList_contextMenu(e, obj){
+	elementList_contextMenuIdElement = obj.attr('id');
+	positionElementOnMouse($('#elementList_contextMenu'), e, 'right', obj);
+	
+	matchContextMenu(obj);
+
+	$('#elementList_contextMenu')
+		.unbind('mouseleave').mouseleave(function(){ $(obj).removeClass('over'); $(this).hide(); })
+		.unbind('mouseenter').mouseenter(function(){
+			$(obj).addClass('over');
+		})
+		.show()
+	;
+}
+
+function addEventsOnElementListTd(obj){
+	$(obj)
+	.unbind('mouseover').unbind('mouseout')
+	.mouseover(function(e){ showHelp(this, $(this).text(), null, 'left', 200, 200, 0, e); })
+	.mouseout(function(){ hideHelp(); })
+	;
+}
+function addEventsOnElementListTr(obj, crtWigiiNamespace, crtModule){
+	$(obj)
+	.unbind('mouseover').unbind('mouseout').unbind('click')
+	.mouseover(function(e){ show_elementList_contextMenu(e, $(this)); })
+	.click(function(){ click_elementList_selectElement(crtWigiiNamespace,crtModule); })
+	;
+	$('td div.download', obj).unbind('click').click(function(e){
+		//define the fieldName
+		fieldName = $(this).attr('class');
+		fieldName = fieldName.match('download_(.*)')[1];
+		download(crtWigiiNamespace+'/'+crtModule+'/download/'+$(this).parent().parent().attr('id').split('_')[1]+'/'+fieldName);
+		e.stopPropagation();
+	});
+}
+
+function click_elementList_selectElement(myWigiiNamespace, module){
+	selectLine(elementList_contextMenuIdElement, true);
+	//$('#moduleView .title .nbLoaded').text(elementList_contextMenuIdElement+" "+$('#moduleView .dataList table tr#'+elementList_contextMenuIdElement).hasClass('multipleSelected'));
+	//if multipleSelect then only add/del the id of the multipleSelection on the click
+	if($('#'+elementList_contextMenuIdElement).hasClass('selected')){
+		update('elementDialog/'+myWigiiNamespace+'/'+module+'/element/detail/'+fetchIdsFromObj(elementList_contextMenuIdElement));
+	} else {
+		update('NoAnswer/'+myWigiiNamespace+'/'+module+'/element/addMultipleSelection/'+fetchIdsFromObj(elementList_contextMenuIdElement)+'/'+$('#'+elementList_contextMenuIdElement).hasClass('multipleSelected')+'/'+!$('#'+elementList_contextMenuIdElement).hasClass('readOnly'));
+	}
+}
+
+function portal_toggleList(titleList, titleWebsite){
+	if($('#moduleView .list:visible').length > 0){
+		$('#moduleView .title .toggleList u').text(titleList); //'".$transS->h($p, "viewListInPortal")."');
+		$('#moduleView .list').slideUp('normal', function(){ 
+			$('#moduleView .list').hide();
+			$('#moduleView .portal').show(); 
+			portal_resize(); 
+		});
+	} else {
+		$('#moduleView .title .toggleList u').text(titleWebsite); //'".$transS->h($p, "viewWebsiteInPortal")."');
+		$('#moduleView .portal').slideUp('normal', function(){ 
+			$('#moduleView .portal').hide();
+			$('#moduleView .list').show(); 
+			elementList_resize(); 
+		});
+	}
+}
+function portal_toggleCalendar(titleCalendar, titleWebsite){
+	if($('#moduleView .calendar:visible').length > 0){
+		$('#moduleView .title .toggleList u').text(titleCalendar); //'".$transS->h($p, "viewListInPortal")."');
+		$('#moduleView .calendar').slideUp('normal', function(){ 
+			$('#moduleView .calendar').hide();
+			$('#moduleView .portal').show(); 
+			portal_resize(); 
+		});
+	} else {
+		$('#moduleView .title .toggleList u').text(titleWebsite); //'".$transS->h($p, "viewWebsiteInPortal")."');
+		$('#moduleView .portal').slideUp('normal', function(){ 
+			$('#moduleView .portal').hide();
+			$('#moduleView .calendar').show(); 
+			elementList_resize(); 
+		});
+	}
+}
+
+function portal_resize(){
+	if($('#moduleView .portal:visible').length > 0){
+		$('#moduleView .portal').height($('#moduleView .list').parent().height()-$('#moduleView .title').outerHeight());
+		if($('#moduleView .portal>.media').length > 0){
+			$('#moduleView .portal').css('overflow','hidden');
+			$('#moduleView .portal .media>iframe').attr('height', $('#moduleView .portal').height()).attr('width', $('#moduleView .title').width());
+		} else {
+			$('#moduleView .portal').css('overflow','auto').width($('#moduleView').width()-20).height($('#moduleView').height()-$('#moduleView>.title').outerHeight());
+		}
+	}
+}
+
+
+function elementCalendar_resize(){
+	$('#moduleView .calendar').height($('#moduleView .calendar').parent().height()-$('#moduleView .calendar').prev().outerHeight());
+	$('#moduleView .calendar').fullCalendar('option', 'height', $('#moduleView').height()-$('#moduleView>div.title').height());
+}
+
+elementCalendarContextMenuTimeout = null;
+function show_elementCalendar_contextMenu(e, obj){
+	elementCalendar_contextMenuIdElement = obj.attr('id');
+	positionElementOnMouse($('#elementCalendar_contextMenu'), e, 'right', obj);
+	
+	clearTimeout(elementCalendarContextMenuTimeout);
+	
+	matchContextMenu(obj);
+
+	$('#elementCalendar_contextMenu')
+		.unbind('mouseleave').mouseleave(function(){ $(obj).removeClass('over'); $(this).hide(); })
+		.unbind('mouseenter').mouseenter(function(){
+			$(obj).addClass('over');
+		})
+		.show()
+	;
+}
+elementCalendar_currentEventSelected = null;
+elementCalendar_contextMenuIdElement = null;
+function selectEvent_elementCalendar(){
+	if(switchSelectionModeIsMultiple){
+		//multiple mode
+		$('#moduleView .calendar div.over').addClass('multipleSelected');
+	} else {
+		//unique mode
+		$('#moduleView .calendar .selected').removeClass('selected');
+		$('#moduleView .calendar div.over').addClass('selected');
+	}
+	elementCalendar_currentEventSelected = elementCalendar_contextMenuIdElement;
+}
+function clickEvent_elementCalendar(domObj, calEvent, jsEvent, view, myWigiiNamespace, module){
+	if(switchSelectionModeIsMultiple){
+		//multiple mode
+		$(domObj).addClass('multipleSelected');
+	} else {
+		//unique mode
+		$('#moduleView .calendar .selected').removeClass('selected');
+		$(domObj).addClass('selected');
+	}
+	elementCalendar_currentEventSelected = calEvent.id;
+	if(!switchSelectionModeIsMultiple){
+		update('elementDialog/'+myWigiiNamespace+'/'+module+'/element/detail/'+elementCalendar_currentEventSelected);
+	}
+}
+function show_elementCalendar_contextMenu(e, obj){
+	//elementCalendar_contextMenuIdElement = obj.attr('id');
+	positionElementOnMouse($('#elementCalendar_contextMenu'), e, 'right', obj);
+	
+	matchContextMenu(obj, 'elementCalendar_contextMenu');
+
+	$('#elementCalendar_contextMenu')
+		.unbind('mouseleave').mouseleave(function(){ $(obj).removeClass('over'); $(this).hide(); })
+		.unbind('mouseenter').mouseenter(function(){
+			$(obj).addClass('over');
+		}).css('z-index', obj.css('z-index')+1)
+		.show()
+	;
+}
+
+
+function getGroupIdInIconsView(id){
+	if(id==null) return null;
+	id = id.split('_')[1];
+	if(id==0){
+		//select the roots groups
+		id = '';
+		$('#groupSelectorPanel_treeview #group_0'+'>ul').children('li[id]').each(function(){
+			id += $(this).attr('id').split('_')[1]+'/';
+		});
+	}
+	return id;
+}
+
+
+
+
+/***********************
+ * Workzone
+ **********************/
+function workZone_defaultView (){
+	groupSelectorPanel_setHeight();
+	moduleView_setHeight();
+	searchBar_resize();
+	elementList_resize();
+	elementCalendar_resize();
+	portal_resize();
+}
+
+//$('#moduleView .list').resize(elementList_resize);
+$(window).resize(workZone_defaultView);
+
+
+
+
+
+

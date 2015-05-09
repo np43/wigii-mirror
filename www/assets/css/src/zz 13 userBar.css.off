@@ -1,0 +1,126 @@
+/**************************************
+* userBar
+**************************************/
+#userBar {
+	float: left;
+	width: 100%;
+	margin-bottom: 0px;
+}
+
+#userBarButtons {
+	float:left;
+	margin:none;
+	padding:none;
+	border:none;
+}
+
+#userName,#userLogout,#userChangePassword,#userManageAlertEmails,#userFeedbackOnSystem,#userAdminAccess,#userChangeLanguage
+	{
+	float: left;
+	padding: 8px 10px 7px 10px;
+	font-size: 12px;
+}
+
+#userLogout,#userChangePassword,#userManageAlertEmails,#userFeedbackOnSystem {
+	border-top: none;
+	border-bottom: none;
+	border-right: none;
+	cursor: pointer;
+}
+
+#userChangeLanguage{
+	border-top: none;
+	border-bottom: none;
+	cursor: pointer;	
+}
+#userAdminAccess{
+	border-top: none;
+	border-bottom: none;
+	border-left: none;
+	cursor: pointer;	
+}
+
+
+#userChangeLanguage img {
+	float:left;
+	margin-top:-1px;
+	margin-left:-3px;
+}
+#userChangePassword img {
+	float:left;
+	margin-top:-3px;
+	width:18px;
+}
+
+#userFeedbackOnSystem img {
+	float:left;
+	margin-top:-3px;
+	width:18px;
+}
+
+#userManageAlertEmails img {
+	float:left;
+	margin-top:-3px;
+	width:18px;
+}
+
+/*************************
+* MENU
+*************************/
+#roleMenu {
+	cursor: pointer;
+	position: absolute;
+	padding: 0px;
+}
+
+#roleMenu div {
+	position: block;
+	float: none;
+	padding: 3px 15px 3px 15px;
+}
+
+#userLanguageMenu {
+	cursor: pointer;
+	position: absolute;
+	padding: 0px;
+}
+
+#userLanguageMenu div {
+	position: block;
+	float: none;
+	padding: 3px 15px 3px 15px;
+}
+
+#userManageAlertEmailsMenu {
+	cursor: pointer;
+	position: absolute;
+	width:auto;
+	padding: 0px;
+}
+div#userManageAlertEmailsMenu li.root{
+	padding:5px;
+}
+
+div#userManageAlertEmailsMenu div {
+	
+}
+
+div#userManageAlertEmailsMenu div.alertEmailMenuTitle label {
+	float:left;
+	margin:0px;
+	margin-right:5px;
+	padding-top:2px;
+}
+div#userManageAlertEmailsMenu div.alertEmailMenuTitle input {
+	float:left;
+	margin:0px;
+	height:16px;
+}
+div#userManageAlertEmailsMenu div.alertEmailMenuTitle div.goButton {
+	float:left;
+	border-left:none;
+	height:18px;
+	padding-top:2px;
+	width:26px;
+	text-align:center;
+}

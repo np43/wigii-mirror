@@ -1,0 +1,31 @@
+/**************************************
+* tabBar
+**************************************/
+#tabsBar {
+	padding:0px;
+	margin:0px;
+}
+
+#tabsBar ul {
+	list-style: none;
+	padding:0px;
+	margin:0px;
+}
+
+#tabsBar ul li{
+	float: left; 
+	margin:0px 5px;
+	padding:5px 20px 3px 20px;
+	font-weight:bold;
+	border-bottom-width: 0 !important;
+	cursor:pointer;
+	background-image: url('../../images/gui/layout_header_tabs_inactive-bg.png'); 
+	background-repeat: repeat-x;
+	background-position: bottom;
+}
+
+#tabsBar ul li.activeTab{
+	padding:10px 20px 5px 20px;
+	margin-top:-5px;
+	background-image:none;
+}

@@ -1,0 +1,255 @@
+
+#adminUser_list {
+	min-width:200px;
+	overflow-y:auto;
+	overflow-x:hidden;
+	float:left;
+	padding-right:16px;
+	border-top:none;
+	border-bottom:none;
+	border-left:none;
+	border-right-width:5px;
+}
+#adminGroup_list {
+	overflow-y:hidden;
+	overflow-x:hidden;
+	float:left;
+	padding-right:0px;
+	border-top:none;
+	border-bottom:none;
+	border-left:none;
+	border-right-width:5px;
+	margin:0px;
+}
+
+#adminModuleEditor_list {
+	min-height:250px;
+	min-width:400px;
+	float:left;
+	margin-bottom:100px;
+	padding:5px;
+	padding-bottom:45px; /* in chrome the margin-bottom is ignored if no items is bellow */
+	border-top:none;
+	border-bottom:none;
+	border-right:none;
+	border-left-width:5px;
+}
+#adminModuleEditor_list .configFile {
+	cursor:pointer;
+	margin-bottom:2px;
+}
+#adminModuleEditor_detail div.commands div{
+	clear:both;
+}
+#adminModuleEditor_detail div.commands div div{
+	clear:none;
+}
+
+#adminUser_list{
+	padding-left:5px;
+	padding-top:5px;
+}
+
+#adminGroup_detail, #adminUser_detail, #adminModuleEditor_detail{
+	float:left;
+	margin-bottom:20px;
+}
+#adminGroup_detail .elementDetail, #adminUser_detail .elementDetail {
+	padding-left:25px;
+	padding-right:20px;
+	padding-bottom:5px;
+	overflow-y:auto;
+	overflow-x:auto;
+}
+
+div.configFile {
+	white-space:nowrap;
+}
+div.userLegend {
+	white-space:nowrap;
+	margin-top:5px;
+	margin-bottom:5px;
+	font-style:italic;
+	float:left;
+	clear:both;
+}
+div.userHeader {
+	white-space:nowrap;
+}
+#adminUser_list div.userHeader
+{
+	border:none;
+	padding:5px 0px;
+	margin:0px;
+	cursor:pointer;
+}
+#adminUser_list div.description,
+#adminRole_list div.description
+{
+	position:absolute;
+	display:none;
+	border-style:solid;
+	border-color:#369;
+	border-width:1px;
+	font-size:12px;
+	background-color:#fffcde;
+	padding:5px 5px 5px 5px;
+	margin: 0px;
+	width:auto;
+	height:auto;
+	z-index:9999999;
+	max-width:300px;
+	white-space:normal;
+	text-decoration:none;
+}
+#adminUser_list div.description p,
+#adminRole_list div.description p{
+	margin:0px;
+	padding:0px;
+}
+
+#adminRole_list {
+	overflow:auto;
+}
+
+#adminRole_list>div {
+	border:none;
+	padding:5px 2px;
+	margin:0px;
+	padding-left:25px;
+	cursor:pointer;
+	background-image:url('../../images/gui/iconcheckbox.png');
+	background-repeat:no-repeat;
+	background-position:0px 4px;
+}
+#adminRole_list>div.S {
+	background-image:url('../../images/gui/iconcheckbox_checked.png');
+}
+
+#editGroupParentMenu {
+	cursor: pointer;
+	position: absolute;
+	width:auto;
+	padding: 0px;
+}
+div#editGroupParentMenu li.root{
+	padding:5px;
+}
+
+
+#adminGroup_treeview_expandAll, #adminGroup_treeview_collapseAll{
+	float:left;
+	margin:5px;
+	margin-top:10px;
+	margin-bottom:0px;
+}
+#adminGroup_treeview span {
+	display:inline;
+	float:none;
+	border:none;
+	padding:0px;
+	margin:0px;
+	cursor:pointer;
+}
+
+#adminGroup_contextMenu {
+	position:absolute;
+	padding:0px;
+	z-index:100;
+}
+
+#adminGroup_contextMenu div.title {
+	padding:5px;
+}
+#adminGroup_contextMenu div.button {
+	padding-bottom:2px;
+	padding-top:2px;
+	border-left:none;
+	border-right:none;
+	border-bottom:none;
+	border-top:none;
+	cursor:pointer;
+	padding-right:5px;
+	padding-left:5px;
+}
+
+#elementDetail_toolbar {
+	padding-top:5px;
+	padding-bottom:5px;
+	margin:20px;
+}
+#elementDetail_toolbar div.commands div{
+	padding:0px;
+	float:left;
+	cursor:pointer;
+	margin-left:5px;
+	height:30px;
+}
+#elementDetail_toolbar div.commands div.disabled,
+#elementDetail_toolbar div.commands div.disabled div,
+#elementDetail_toolbar div.commands div.disabled img{
+	cursor:default;
+}
+#elementDetail_toolbar div.commands div img{
+	padding:0px;
+	float:left;
+	margin-left:8px;
+}
+#elementDetail_toolbar div.commands div div{
+	margin-left:5px;
+	padding-top:6px;
+	text-decoration:inherit;
+	border-width:0px;
+	height:auto;
+}
+#elementDetail_toolbar div.commands div.roleUserAllocation div,
+#elementDetail_toolbar div.commands div.userRoleAllocation div,
+#elementDetail_toolbar div.commands div.userRights div{
+	font-weight:bold;
+	border-width:1px;
+	padding:6px;
+}
+#elementDetail_toolbar div.commands div.disabled div,
+#elementDetail_toolbar div.commands div.disabled:hover div {
+	text-decoration:none;
+}
+
+/************************
+ special duplication of groupPanel CSS just for UserGroup admin matrix
+************************/
+#groupAdminForMatrix_treeview li {
+	padding:0px;
+	padding-left:25px;
+	margin:0px;
+	list-style:none;
+	display:block;
+}
+#groupAdminForMatrix_treeview ul.level1 li {
+	padding-left:0px;
+	padding-top:2px;
+}
+#groupAdminForMatrix_treeview ul.level1 li li {
+	padding-left:10px;
+}
+#groupAdminForMatrix_treeview li.root {
+	padding:0px;
+}
+#groupAdminForMatrix_treeview li div.divAsSpan {
+	background-image:url('../../images/gui/iconsimplefolder.png');
+	background-repeat:no-repeat;
+	background-position:-8px center;
+	padding-left:20px;
+}
+#groupAdminForMatrix_treeview,
+#groupAdminForMatrix_treeview ul {
+	padding:0px;
+	margin:0px;
+	overflow:hidden;
+	list-style:none;
+	display:block;
+	min-width:200px;
+}
+
+
+
+

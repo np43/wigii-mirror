@@ -1,0 +1,25 @@
+#organizeDialog div.introduction {
+	margin-bottom:8px;
+	text-decoration:underline;
+}
+#organizeDialog span.nb {
+	font-weight:bold;
+}
+#organizeDialog span.zero {
+	color:#f00;
+}
+
+#organizeDialog div.notifiedIntroduction {
+	margin-bottom:8px;
+}
+#organizeDialog div.notifiedIntroduction input {
+	width:400px;
+	margin-top:5px;
+}
+#organizeDialog div.notifiedIntroduction span.error {
+	color:#f00;
+	margin-bottom:5px;
+}
+#organizeDialog div.notifiedIntroduction span.email {
+	font-weight:bold;
+}

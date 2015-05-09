@@ -1,0 +1,213 @@
+/**************************************
+* groupSelectorPanel
+**************************************/
+#elementList_contextMenu {
+	z-index:1;
+	padding:0px;
+	margin: 0px;
+	width:auto;
+	height:auto;
+}
+
+#elementList_contextMenu .commands div {
+	padding:5px;
+	cursor:pointer;
+	float:left;
+}
+
+
+/* TITLE */
+#moduleView .title {
+	float:left;
+	width:100%;
+	margin:0px;
+/*	border-bottom:#999999 solid 1px; */
+/*	background-image: url('../../images/gui/layout_list_path-bg.png'); 
+	background-repeat: repeat-x;
+	background-position: bottom;*/
+}
+#moduleView .title div.rollover {
+	float:left;
+	padding:2px 5px 6px 5px;
+	cursor:pointer;
+}
+#moduleView .title div.multipleSelectActive {
+	border-style: inset;
+	border-width: 1px;
+	padding:3px 4px 3px 4px;
+}
+#moduleView .title div.multipleTitle {
+	float:left;
+	margin:5px 5px 5px 10px;
+}
+
+#moduleView .title div.normaltitle {
+	float:left;
+	margin:5px 5px 5px 10px;
+}
+#moduleView .title div.nbLoaded { 
+	float:right;
+	margin:5px 0px 5px 5px;
+}
+#moduleView .title div.loadMoreLines { 
+	float:right;
+	margin:5px 5px 5px -5px;
+	cursor:pointer;
+	color:blue;
+	text-decoration:underline;
+}
+#moduleView .title div.linkText { 
+	float:right;
+	margin:5px 0px 5px 5px;
+}
+#moduleView .title div.total { 
+	float:right;
+	margin:5px 10px 5px 5px;
+}
+
+
+/* LIST */
+#moduleView .list {
+	float:left;
+	width:100%;
+}
+
+#moduleView .list div.headerList{
+	font-weight:bold;
+	float:left;
+	background-image: url('../../images/gui/layout_list_header-bg.png'); 
+	background-repeat: repeat-x;
+	background-position: bottom;
+}
+
+#moduleView .list div.headerList div{
+	text-align:left;
+	padding-left:15px;
+	white-space: nowrap;
+	overflow:hidden;
+	float:left;
+	border-left:none;
+	border-bottom:none;
+	border-top:none;
+	cursor:pointer;
+}
+#moduleView .list div.headerList div.noSorting{
+	cursor:default;
+}
+#moduleView .list div.headerList div.DESC{
+	background-image:url('../../images/icones/sanscons/arrow2_s.gif');
+	background-repeat:no-repeat;
+}
+#moduleView .list div.headerList div.ASC{
+	background-image:url('../../images/icones/sanscons/arrow2_n.gif');
+	background-repeat:no-repeat;
+}
+
+#moduleView .list div.dataList{
+	overflow-x:auto;
+	overflow-y:scroll;
+}
+	
+#moduleView .list div.dataList table{
+	border-collapse:collapse;
+	table-layout:fixed;
+}
+#moduleView .list div.dataList table tr{
+	cursor:pointer;
+}
+#moduleView .list div.dataList table tr.groupByTitle td{
+	cursor:default;
+	border-top:none;
+	border-left:none;
+	border-right:none;
+}
+#moduleView .list div.dataList table tr.readOnly td{
+	font-style:italic;
+}
+#moduleView .list div.dataList table tr.groupByTitle td{
+	padding-top:10px;
+	padding-left:5px;
+	padding-bottom:5px;
+	font-weight:bold;
+	border-bottom-width:1px;
+	border-bottom-style:solid;
+}
+#moduleView .list div.dataList table tr.multipleSelected{
+
+}
+
+#moduleView .list div.dataList table tr td{
+	border-left:none;
+	border-top:none;
+	border-bottom:none;
+	padding:0px;
+	margin:0px;
+}
+#moduleView .list div.dataList table tr td div{
+	text-align:left;
+	overflow:hidden;
+	padding:1px 0px 1px 5px;
+	white-space: nowrap;
+	/*width:inherited;*/ 
+	height:18px;
+}
+#moduleView .list div.dataList table tr td div p{
+	margin:0px; padding:0px;
+}
+
+#moduleView .list div.dataList table tr td div.overflowed{
+	background-image:url('../../images/gui/troisPoints.gif');
+	background-repeat:no-repeat;
+	background-position:bottom right;
+}
+
+
+#editElementSharingMenu {
+	cursor: pointer;
+	position: absolute;
+	width:auto;
+	padding: 0px;
+}
+
+#exportMenu {
+	cursor: pointer;
+	position: absolute;
+	padding: 0px;
+	z-index:5;
+}
+
+#exportMenu div {
+	position: block;
+	float: none;
+	padding: 3px 15px 3px 15px;
+}
+
+/***********************
+* Portal
+************************/
+#moduleView .portal {
+	float:left;
+}
+#moduleView .portal iframe {
+	border:none;
+}
+	
+/*
+#moduleView .list table {
+	padding:0px;
+	margin:0px;
+}
+
+#moduleView .list table thead {
+	padding:0px;
+	margin:0px;
+	background:#DDD;
+}
+
+#moduleView .list table th {
+	text-align:left;
+	padding:0px;
+	margin:0px;
+}
+*/
+

@@ -1,0 +1,155 @@
+
+
+#iconsView, #iconsGroupPanel_container, #iconsGroupPanel_crt, #iconsGroupPanel_crt ul {
+	float:left;
+	margin:0px;
+	padding:0px;
+}
+
+#iconsView {
+	clear:both;
+	border:#a9a9a9 solid 1px;
+	border-left:none;
+	border-bottom:none;
+}
+
+#iconsGroupPanel_crt li{
+	float:left;
+	padding:32px 5px 10px 5px;
+	width:100px;
+	height:60px;
+	margin-right:50px;
+	margin-top:0px;
+	list-style:none;
+	cursor:pointer;
+	text-align:center;
+	background-image:url('../../images/icones/tango/32x32/places/folder.png');
+	background-repeat:no-repeat;
+	background-position:center top;
+}
+#iconsGroupPanel_crt li.notLeaf{
+	background-image:url('../../images/icones/tango/32x32/places/folder-parent.png');
+}
+/*
+#iconsGroupPanel_crt li:hover{
+	background-image:url('../../images/icones/64px/Download Folder.png');
+}
+#iconsGroupPanel_crt li.notLeaf:hover{
+	background-image:url('../../images/icones/64px/Download Folder.png');
+}
+*/
+
+#iconsGroupPanel_crt li div.divAsSpan{
+	float:left;
+	padding:5px;
+	width:100px;
+	margin:0px;
+}
+
+#iconsGroupPanel_crt li div.divAsSpan:hover {
+	
+}
+
+#iconsGroupPanel_crt li.path{
+	padding:0px;
+	margin:0px;
+	width:auto;
+	height:auto;
+	background:none;
+	margin-bottom:0px;
+/*	padding-right:16px; */
+	margin-top:10px;
+	/* background-position:right center;
+	background-repeat:no-repeat;
+	background-image:url('../../images/gui/layout_tree_expand_out.png'); */
+}
+#iconsGroupPanel_crt li.path img{
+	float:left;
+	padding:6px 2px 6px 2px;
+}
+#iconsGroupPanel_crt li.root{
+	margin-left:5px;
+}
+#iconsGroupPanel_crt li.root div.divAsSpan img{
+	padding:0px;
+	margin-top:-2px;
+}
+#iconsGroupPanel_crt li.root div.divAsSpan{
+	float:left;
+	padding:0px;
+	width:auto;
+	margin:0px;
+}
+
+#iconsGroupPanel_crt li.path div.divAsSpan{
+	width:auto;
+}
+#iconsGroupPanel_crt li.path div.disabled{
+	background-color:transparent;
+}
+#iconsGroupPanel_crt li.up{
+	padding-left:26px;
+	padding-right:0px;
+	margin-left:5px;
+	margin-top:10px;
+	background-image:url('../../images/icones/tango/22x22/actions/go-up.png');
+	background-position:left 2px;
+	background-repeat:no-repeat;
+}
+#iconsGroupPanel_crt li.up div.divAsSpan, #iconsGroupPanel_crt li.back div.divAsSpan{
+	float:left;
+	padding:5px;
+	margin:0px;
+}
+#iconsGroupPanel_crt li.back{
+	padding-left:26px;
+	padding-right:0px;
+	margin-left:5px;
+	margin-top:10px;
+	background-image:url('../../images/icones/tango/22x22/actions/undo.png');
+	background-position:left center;
+	background-repeat:no-repeat;
+}
+
+
+div.pathMenu {
+	cursor: pointer;
+	position: absolute;
+	z-index:100;
+	padding: 0px;
+	display:none;
+}
+div.pathMenu div{
+	float: none;
+	white-space:nowrap;
+	padding: 3px 15px 3px 15px;
+}
+div.pathMenu div.notLeaf {
+	padding-right:20px;
+	margin-right:5px;
+	background-position:right center;
+	background-repeat:no-repeat;
+	background-image:url('../../images/gui/layout_tree_expand_out.png');
+}
+
+#pathMenuForIconsViewRoot {
+	top:0px;
+	left:0px;
+}
+
+#pathMenuForIconsViewRoot .folder img {
+	margin-right:5px;
+}
+
+#pathMenuForIconsViewRoot .goToList, #pathMenuForIconsViewRoot .browse {
+	font-style:italic;
+}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,275 @@
+/******************************
+* JQUERY-UI
+******************************/
+.ui-widget { font-family: Arial,sans-serif; font-size: small; }
+/* border color, background color, and color are redefined in theme.css */
+.ui-widget { border: 2px solid #f00; background: #f00; color: #f00; }
+/* background color are redefined in theme.css */
+.ui-widget .ui-widget-header { border:none; background:#f00; background-image: url('../../images/gui/layout_banner_alt-bg.png');background-repeat: repeat-x; color:#<?=$darkGrayR;?>; -moz-border-radius-bottomleft: 0px; -webkit-border-radius-bottomleft: 0px; -moz-border-radius-bottomright: 0px; -webkit-border-radius-bottomright: 0px; }
+.ui-widget .ui-widget-header .ui-icon-closethick { background-image:url("images/ui-icons_222222_256x240.png"); }
+.ui-widget .ui-widget-header .ui-dialog-titlebar-close { background:none; border:none; margin }
+.ui-widget .ui-widget-header .ui-dialog-titlebar-close:hover { background:url("images/ui-bg_glass_75_e6e6e6_1x400.png") repeat-x scroll 50% 50% #E6E6E6; }
+
+.ui-dialog .ui-dialog-title {
+	margin-bottom:2px;
+	width: auto;
+}
+
+.ui-dialog { padding:2px; overflow:visible; }
+.ui-dialog .ui-dialog-content { border: 0; padding: .7em .7em; background: none; overflow: visible; }
+/* background color are redefined in theme.css */
+.ui-dialog .ui-dialog-buttonpane { background:#f00; border:none; }
+
+.ui-dialog .ui-dialog-titlebar {
+	padding:0.1em 1em;
+}
+
+.ui-tabs { border:none; padding:0px; }
+/* border color are redefined in theme.css */
+.ui-tabs .ui-tabs-nav { border:none; border-bottom:1px solid #f00;  background:none; margin-left:5px;margin-right:0px; padding:0px; }
+
+.ui-tabs .ui-tabs-nav li a { float: left; text-decoration: none; padding: 0.2em 0.4em; }
+.ui-tabs .ui-tabs-panel { padding: 0px; border-width: 0; border-bottom-width:1px; background: none; }
+
+.ui-datepicker { z-index:999999; }
+.ui-colorpicker { z-index:999999; }
+
+.multilanguage.ui-tabs .ui-tabs-panel { border-width: 0; }
+.multilanguage.ui-tabs .ui-tabs-panel div.value {
+	margin-top:-1px;
+	padding:0px;
+	border:none;
+}
+.ui-tabs .ui-tabs-panel div.value input, .ui-tabs .ui-tabs-panel div.value textarea {
+	margin-top:0px;
+	padding-top:5px;
+	padding-right:5px;
+	padding-left:5px;
+	padding-bottom:3px;
+}
+
+
+/****************************/
+/* SysInfo (system information at field level) */
+/****************************/
+div.field div.addinfo {
+	display:none;
+	padding:4px;
+	border-width:2px;
+	position:absolute;
+	background-color:#fff;
+	font-weight:normal;
+}
+
+/****************************/
+/* help (infoBulle) */
+/****************************/
+#help{
+	position:absolute;
+	z-index:999999;
+	border-style:solid;
+	border-color:#369;
+	border-width:1px;
+	font-size:12px;
+	background-color:#fffcde;
+	padding:5px 5px 5px 5px;
+	margin: 0px;
+	width:auto;
+	height:auto;
+}
+#help p {
+	margin:0px;
+	padding:0px;
+	margin-top:5px;
+}
+
+/* pour afficher les ids des groupes */
+#help span.idGrp {
+	font-size:x-small;
+}
+
+/**************************************
+* freeText
+**************************************/
+h4 {
+	margin-bottom:0px;
+	margin-top:20px;
+	font-size:14px;
+}
+
+
+/**************************************
+* footerBar
+**************************************/
+#footerBar {
+	text-align:center;
+	padding:2px 0px;
+	cursor:default;
+	width:100%;
+	margin-top:5px;
+	position: fixed;
+	bottom:0px;
+	left:0px;
+}
+
+#cronJobs, #wigiiVersionLabel, #pUsername {
+	float:left;
+}
+#cronJobs, #pUsername {
+	margin-left:10px;
+}
+#cronJobsStart, #cronJobsStop {
+	cursor:pointer;
+}
+
+#userFeedbackOnSystem {
+	float:right;
+	margin-right:10px;
+}
+#userFeedbackOnSystem img {
+	vertical-align:bottom;
+}
+#userFeedbackOnSystem.disabeld a, #userFeedbackOnSystem a {
+	cursor:pointer;
+}
+
+/**************************************
+* contextMenu
+**************************************/
+div.cm{
+	position:absolute;
+	background:#fff;
+	display:none;
+	float:left;
+	padding:0px;
+	z-index:999998;
+}
+div.cm>div{
+	padding:4px 15px;
+	padding-right:25px; /* to prevent the exit making line return */
+	border-top-width:0px;
+	border-left-width:0px;
+	border-right-width:0px;
+}
+div.cm>.exit{
+	float:right;
+	width:auto;
+	padding:1px 5px;
+	padding-top:0px;
+	background:#fff;
+	cursor:pointer;
+	border-left-width:1px;
+}
+div.cm>div:last-child{
+	border:none;
+}
+div.cm>div>a{
+	color:#000;
+	text-decoration:none;
+}
+div.cm div.unchecked {
+	text-align:left;
+	padding-left:27px;
+	background:url('../../images/gui/iconcheckbox.png') no-repeat 7px 3px;
+}
+div.cm div.checked {
+	text-align:left;
+	padding-left:27px;
+	background:url('../../images/gui/iconcheckbox_checked.png') no-repeat 7px 3px;
+}
+
+/**************************************
+* Summary
+**************************************/
+#summaryDialog {
+	top:50px;
+	left:50px;
+}
+#summaryDialog>div.handler {
+	height:10px;
+	cursor:move;
+}
+#summaryDialog>textarea.content {
+	width:300px;
+	max-height:400px;
+}
+#summaryDialog>textarea.content:hover {
+	background:#fff;
+}
+
+/**************************************
+* loginPage
+**************************************/
+#loginPage {
+	/*padding:20px;*/
+}
+
+#quickStart {
+/*	float:left;
+	margin-left:40px;
+	*/
+	margin:10px;
+}
+#quickStartTabs.introduction {
+	margin-right:auto;
+	margin-left:auto;
+	margin-bottom:20px;
+	min-height:400px;
+}
+
+#loginForm {
+	/*
+	float:left;
+	width:400px;
+	*/
+	margin-top:0px;/* 7px; */
+	padding:10px;
+	/* padding-bottom:7px; */
+	border-left:none;
+	border-top:none;
+	border-right:none;
+	border-bottom:none;
+}
+
+
+#quickStartTabs {
+	border:none;
+	margin-top:0px;
+}
+
+#quickStartTabs ul.ui-tabs-nav {
+	border:1px solid #A9A9A9;
+	border-top:none;
+	border-left:none;
+	border-right:none;
+	background:none;
+
+}
+
+#quickStartTabs ul.ui-tabs-nav li {
+	border-color:#A9A9A9;
+}
+
+#quickStartTabs div.ui-tabs-panel {
+	border-top:none;
+	border-left:none;
+	border-bottom:none;
+	border-right:none;
+}
+
+#quickStartTabs h1 {
+	margin:16px 0px;
+}
+#quickStartTabs h2 {
+	margin:14px 0px;
+}
+
+#quickStartTabs h3 {
+	margin:12px 0px;
+}
+
+#quickStartTabs p {
+	margin:6px 0px;
+}
+
+

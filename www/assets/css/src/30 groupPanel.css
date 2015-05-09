@@ -1,0 +1,182 @@
+/**************************************
+* Group Panel
+**************************************/
+
+.groupPanel {
+	float:left;
+	display:table;
+	overflow-y:hidden;
+	overflow-x:hidden;
+	margin-bottom:20px;
+}
+
+#groupPanel.BSB {
+	border-right-width:0px;
+	border-top-width:0px;
+	border-bottom-width:0px;
+	border-left-width:0px;
+}
+
+#groupPanel>div.collapse {
+	float:right;
+	width:10px;
+	height:10px; /* updated by JS*/
+	font-size:large;
+	font-weight:bold;
+	text-align:center;
+	cursor:pointer;
+	padding:1px;
+	vertical-align:middle;
+}
+#groupPanel #group_0, #groupPanel .keepNotify {
+	margin-right:12px;
+}
+
+
+.groupPanel .keepNotify {
+	padding:5px;
+}
+#keepNotifyButton {
+	font-weight:bold;
+	background:no-repeat url('../../images/icones/22x22/iconenvelopewhite22x22.png') 10px -1px;
+	padding:5px 10px 5px 40px;
+}
+.groupPanel li {
+	padding:0px;
+	margin:0px;
+	list-style:none;
+	display:block;
+}
+.groupPanel li.noRights>div, .groupPanel li.noRights>div>a.H {
+	font-style:italic;
+}
+.groupPanel li.readOnly>div, .groupPanel li.readOnly>div>a.H {
+	font-style:italic;
+}
+
+.groupPanel li>div>a.H {
+	color:#000;
+	text-decoration:none;
+}
+.groupPanel span.folder {
+	padding-left:25px;
+	padding-top:6px;
+	padding-bottom:6px;
+	cursor:pointer;
+}
+.groupPanel span.checkbox {
+	padding-left:25px;
+	cursor:pointer;
+	background:no-repeat url('../../images/gui/iconcheckbox.png') 0 -2px;
+}
+.groupPanel div.selected.mixed span.checkbox {
+	background:no-repeat url('../../images/gui/iconcheckbox_mixed.png') 0 -2px;
+}
+.groupPanel div.selected span.checkbox {
+	background:no-repeat url('../../images/gui/iconcheckbox_checked.png') 0 -2px;
+}
+.groupPanel span.without-ul {
+	background:no-repeat url('../../images/gui/iconsimplefolder.png') 0 3px;
+}
+.groupPanel span.with-ul-hidden {
+	background:no-repeat url('../../images/gui/iconfolderexpand.png') 0 3px;
+}
+.groupPanel span.with-ul-displayed {
+	background:no-repeat url('../../images/gui/iconfolderreduce.png') 0 3px;
+}
+.groupPanel ul {
+	padding:0px;
+	margin:0px;
+	overflow:hidden;
+	list-style:none;
+	display:block;
+	min-width:200px;
+}
+
+.groupPanel>ul {
+	padding-top:10px;
+	padding-bottom:10px;
+	overflow-y:scroll;
+}
+
+.groupPanel li>div {
+	padding-top:6px;
+	padding-bottom:6px;
+	padding-right:2px;
+	padding-left:10px;
+	cursor:pointer;
+}
+.groupPanel li>div span.description{
+	position:absolute;
+	display:none;
+	border-style:solid;
+	border-color:#369;
+	border-width:1px;
+	font-size:12px;
+	background-color:#fffcde;
+	padding:5px 5px 5px 5px;
+	margin: 0px;
+	width:auto;
+	height:auto;
+	z-index:9999999;
+	max-width:300px;
+	white-space:normal;
+}
+.groupPanel li>div span.description p{
+	margin:0px;
+	padding:0px;
+}
+.groupPanel li>div span.description>p.descrId{
+	font-size:x-small;
+	color:#6F757F;
+}
+.groupPanel li>div span.menu{
+	float:right;
+	cursor:pointer;
+	padding-left:10px;
+	padding-right:10px;
+	padding-top:5px;
+	margin-top:-3px;
+	margin-left:10px;
+	margin-right:3px;
+}
+.groupPanel li>div:hover span.menu, #groupPanel li>div.over span.menu{
+	background:center center url("../../images/gui/arrow-bottom-footer.png") no-repeat transparent;
+}
+
+.groupPanel li.level1>div {
+	font-weight:bold;
+}
+
+
+#organizeDialog .groupPanel li.selected.disabled, #organizeDialog .groupPanel li.selected div.disabled.selected {
+	background-color:transparent;
+}
+#organizeDialog {
+	font-size:small;
+
+}
+
+#adminRoleAccessRightGroup_list {
+	font-size:small;
+	float:none;
+	display:block;
+}
+
+#adminRoleAccessRightGroup_list li>div>div, #adminRoleAccessRightGroup_list li>div>a {
+	display:inline-block;
+}
+#adminRoleAccessRightGroup_list li>div>div.ar {
+	margin-top:-4px;
+	margin-bottom:-4px;
+	margin-left:2px;
+	padding:4px 2px 4px 10px;
+	width:98px;
+}
+#adminRoleAccessRightGroup_list li>div>div.ar.blackFont {
+	color:#000;
+}
+
+
+
+

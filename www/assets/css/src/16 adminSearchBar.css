@@ -1,0 +1,121 @@
+/**************************************
+* adminSearchBar
+**************************************/
+
+#adminSearchBar {
+	padding:0px; /* 2px 0px 2px 0px; */
+	min-height:0px;
+}
+
+#adminSearchBar div.adminButton, #adminSearchBar div.adminLabel {
+	float:left;
+	font-size:16px;
+	padding-top:5px;
+	padding-left:5px;
+	padding-right:5px;
+	height:25px;
+	border-top:none;
+	border-left:none;
+	border-bottom:none;
+}
+
+#adminSearchBar div.adminLabel {
+	cursor:pointer;
+	padding-right:50px;
+}
+#adminSearchBar div.adminButton {
+	cursor:pointer;
+	background-repeat: repeat-x;
+}
+#adminSearchBar div.adminButton:hover {
+	text-decoration:underline;
+}
+
+#adminSearchBar div.adminFilterUser, #adminSearchBar div.adminFilterUser2, #adminSearchBar div.adminFilterGroup {
+	float:left;
+	padding-top:5px;
+	padding-bottom:4px;
+	padding-right:5px;
+	padding-left:5px;
+	border-top:none;
+	border-left:none;
+	border-bottom:none;
+}
+
+#adminSearchBar div.adminFilterUser div.text, #adminSearchBar div.adminFilterUser2 div.text, #adminSearchBar div.adminFilterGroup div.text {
+	float:left;
+	margin-right:5px;
+}
+#adminSearchBar div.adminFilterUser div.resetButton, #adminSearchBar div.adminFilterUser2 div.resetButton, #adminSearchBar div.adminFilterGroup div.resetButton {
+	float:left;
+	height:19px;
+	padding-top:0px;
+	width:24px;
+	cursor:pointer;
+	margin-left:5px;
+}
+#adminSearchBar div.adminFilterUser div.goButton, #adminSearchBar div.adminFilterUser2 div.goButton, #adminSearchBar div.adminFilterGroup div.goButton {
+	float:left;
+	height:19px;
+	padding-top:1px;
+	width:24px;
+	text-align:center;
+	border-right:none;
+	cursor:pointer;
+	background-image: url('../../images/gui/layout_banner-bg-20.png'); 
+	background-repeat: repeat-x;
+	background-position: bottom;
+}
+#adminSearchBar div.adminFilterUser div.goButton:hover, #adminSearchBar div.adminFilterUser2 div.goButton:hover, #adminSearchBar div.adminFilterGroup div.goButton:hover {
+	background-image: url('../../images/gui/layout_banner-alt-bg-20.png'); 
+}
+
+#adminSearchBar div.adminFilterUser div.text input, #adminSearchBar div.adminFilterUser2 div.text input, #adminSearchBar div.adminFilterGroup div.text input {
+	width:120px;
+	padding:1px;
+	background:url('../../images/icones/18px/magnifier.png') 2px 0px #fff no-repeat;
+	padding-left:20px;
+	height:18px;
+}
+#adminSearchBar div.adminFilterUser div.text select.empty,
+#adminSearchBar div.adminFilterUser div.text input.empty,
+#adminSearchBar div.adminFilterUser2 div.text select.empty,
+#adminSearchBar div.adminFilterUser2 div.text input.empty,
+#adminSearchBar div.adminFilterGroup div.text select.empty,
+#adminSearchBar div.adminFilterGroup div.text input.empty {
+	font-style:italic;
+}
+#adminSearchBar div.adminFilterUser div.select, #adminSearchBar div.adminFilterUser2 div.select, #adminSearchBar div.adminFilterGroup div.select {
+	float:left;
+	margin-right:5px;
+}
+#adminSearchBar div.adminFilterUser div.select select, #adminSearchBar div.adminFilterUser2 div.select select, #adminSearchBar div.adminFilterGroup div.select select {
+	width:124px;
+	height:22px;
+}
+#adminSearchBar div.adminToolbar {
+	float:left;
+	padding-top:2px;
+	height:28px;
+}
+#adminSearchBar div.adminToolbar div {
+	float:left;
+	cursor:pointer;
+}
+
+#adminAccessMenu {
+	cursor: pointer;
+	position: absolute;
+	padding: 0px;
+	background:#fff;
+}
+
+#adminAccessMenu div {
+	position: block;
+	float: none;
+	padding: 3px 15px 3px 15px;
+}
+
+
+
+

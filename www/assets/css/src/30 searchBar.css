@@ -1,0 +1,146 @@
+/**************************************
+* searchBar
+**************************************/
+#searchBar {
+	padding-top:10px;
+	padding-bottom:10px;
+	padding-left:10px;
+	padding-right:2px;
+}
+
+#searchBar div.firstBox{
+	float:left;
+}
+
+#searchBar input{
+	font-size:16px;
+	height:23px;
+	padding:2px;
+	padding-right:0px;
+	border-right-width:0px;
+	width:403px;
+	margin:0px;
+	float:left;
+}
+#searchBar #goForSearch {
+	height:23px;
+	float:left;
+	padding:2px 15px;
+	font-size:18px;
+	font-weight:bold;
+}
+#searchBar .searchButtons {
+	float:left;
+	background-color:#fff;
+	border-left-width:0px;
+	border-right-width:0px;
+	font-size:16px;
+	font-weight:bold;
+	height:23px;
+	padding:4px 5px 0px 0px;
+}
+#searchBar .searchButtons span {
+	padding-right:5px;
+	padding-left:5px;
+}
+
+/* toolBar box */
+#searchBar div.toolbarBox{
+	float:right;
+	padding-top:2px;
+}
+#searchBar div.toolbarBox div{
+	float:right;
+}
+#searchBar div.toolbarBox div.addNewElement
+{
+	padding:3px 8px;
+	font-weight:bold;
+	font-size:16px;
+	margin:0px 8px;
+}
+#searchBar div.toolbarBox>div
+{
+	padding:0px 8px;
+	padding-top:5px;
+}
+#searchBar div.toolbarBox div.sortBy div.value,
+#searchBar div.toolbarBox div.groupBy div.value
+{
+	margin-bottom:0px;
+	font-weight:normal;
+	padding:3px 8px;
+	padding-right:24px;
+	background-color:#fff;
+	background-image:url(../../images/gui/navigate-down.png);
+	background-repeat:no-repeat;
+	background-position:right center;
+	min-height:0;
+
+}
+#searchBar div.toolbarBox div.sortBy div.value a,
+#searchBar div.toolbarBox div.groupBy div.value a
+{
+	text-decoration:none;
+	color:#000;
+}
+#searchBar div.toolbarBox div.sortBy div.direction {
+	padding:11px 13px;
+	float:left;
+	background-position:center center;
+	background-repeat:no-repeat;
+}
+#searchBar div.toolbarBox div.sortBy>.H,
+#searchBar div.toolbarBox div.groupBy>.H {
+	margin-top:-3px;
+}
+#searchBar div.toolbarBox div.sortBy.disabledR .value,
+#searchBar div.toolbarBox div.groupBy.disabledR .value {
+	background-color:inherit;
+	background-image:url(../../images/gui/navigate-down-shade.png);
+}
+#searchBar div.toolbarBox div.sortBy div.direction.ASC {
+	background-image:url('../../images/gui/arrow-top-footer.png');
+}
+#searchBar div.toolbarBox div.sortBy div.direction.DESC {
+	background-image:url('../../images/gui/arrow-bottom-footer.png');
+}
+#searchBar div.toolbarBox div.sortBy div.direction.ASC {
+	background-image:url('../../images/gui/arrow-top-footer.png');
+}
+#searchBar div.toolbarBox div.sortBy div.direction.DESC {
+	background-image:url('../../images/gui/arrow-bottom-footer.png');
+}
+#searchBar div.toolbarBox div.sortBy div.disabledBg div.direction.ASC {
+	background-image:url('../../images/gui/arrow-top-title.png');
+}
+#searchBar div.toolbarBox div.sortBy div.disabledBg div.direction.DESC {
+	background-image:url('../../images/gui/arrow-bottom-title.png');
+}
+
+#searchBar div.toolbarBox .cm,
+#searchBar div.toolbarBox .cm div
+{
+	float:none;
+	color:#000;
+}
+#searchBar div.toolbarBox .cm p
+{
+	margin:5px;
+}
+#searchBar div.toolbarBox .cm div.exit {
+	float:right;
+}
+
+#searchBar div.toolbarBox .cm>div {
+	cursor:pointer;
+}
+
+#searchBar div.toolbarBox div.refresh {
+	background:url('../../images/icones/tango/16x16/actions/view-refresh.png') 0px 5px no-repeat;
+	padding: 6px 0px 0px 18px;
+	text-align: center;
+	margin-left: 4px;
+	margin-right: 4px;
+	cursor: pointer;
+}

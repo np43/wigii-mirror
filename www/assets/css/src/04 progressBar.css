@@ -1,0 +1,35 @@
+/* WebAppers Progress Bar, version 0.2
+* (c) 2007 Ray Cheung
+*
+* WebAppers Progress Bar is freely distributable under the terms of an Creative Commons license.
+* For details, see the WebAppers web site: http://wwww.Webappers.com/
+*
+/*--------------------------------------------------------------------------*/
+
+img.percentImage1 {
+	background: white url(images_progressBar/percentImage_back1.png) top left no-repeat;
+	padding: 0;
+	margin: 0px 0 0 0;
+	background-position: 1px 0;
+}
+
+img.percentImage2 {
+	background: white url(images_progressBar/percentImage_back2.png) top left no-repeat;
+	padding: 0;
+	margin: 0px 0 0 0;
+	background-position: 1px 0;
+}
+
+img.percentImage3 {
+	background: white url(images_progressBar/percentImage_back3.png) top left no-repeat;
+	padding: 0;
+	margin: 0px 0 0 0;
+	background-position: 1px 0;
+}
+
+img.percentImage4 {
+	background: white url(images_progressBar/percentImage_back4.png) top left no-repeat;
+	padding: 0;
+	margin: 0px 0 0 0;
+	background-position: 1px 0;
+}

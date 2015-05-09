@@ -1,0 +1,252 @@
+/**************************************
+* searchBar
+**************************************/
+
+#searchBar {
+	padding:10px 5px 5px 5px;
+	min-height:0px;
+	background-image: url('../../images/gui/layout_header-bg_51.png'); 
+	background-repeat: repeat-x;
+	background-position: bottom;
+}
+
+/***************
+* TextSearch
+***************/
+#searchBar div.textSearch{
+	padding-right:20px;
+	float:left;
+}
+#searchBar div.textSearch * {
+	float:left;
+}
+#searchBar div.textSearch div.goToView{
+	cursor:pointer;
+}
+#searchBar div.textSearch div.goToView div{
+	margin-left:5px;
+	margin-top:5px;
+	margin-right:5px;
+	text-decoration:underline;
+}
+#searchBar div.textSearch div.advancedSearchButton{
+	cursor:pointer;
+}
+#searchBar div.textSearch div.advancedSearchButton div{
+	margin-left:5px;
+	margin-top:5px;
+	margin-right:2px;
+	text-decoration:underline;
+}
+#searchBar div.textSearch div.advancedSearchButton img { /* binoculars */
+	
+}
+#searchBar div.textSearch div.resetSearchButton{
+	cursor:pointer;
+	margin-right:5px;
+}
+#searchBar div.textSearch div.resetSearchButton div {
+	margin-left:2px;
+	margin-top:5px;
+	text-decoration:underline;
+}
+#searchBar div.textSearch div.resetSearchButton img { /* cancel */
+	
+}
+#searchBar div.textSearch div.goForAdvancedSearch{
+	cursor:pointer;
+	float:right;
+	margin-right:0px;
+	padding-right:5px;
+}
+#searchBar div.textSearch div.goForAdvancedSearch div {
+	margin-left:2px;
+	margin-top:5px;
+}
+#searchBar div.textSearch div.goForAdvancedSearch img { /* magnifier */
+	
+}
+#searchBar div.textSearch div.inputTextSearch {
+	margin-bottom:5px;
+}
+
+#searchBar div.textSearch div.inputTextSearch textarea {
+	font-size:12px;
+	line-height: 1.5em;
+	padding:2px;
+	height:23px;
+	width:400px;
+	margin:0px;
+	color:#f00;
+	margin-top:5px;
+}
+#searchBar div.textSearch div.inputTextSearch input{
+	font-size:16px;
+	height:23px;
+	padding:2px;
+	padding-right:0px;
+	border-right-width:0px;
+	width:403px;
+	margin:0px;
+	color:#f00;
+}
+#searchBar div.textSearch div.inputTextSearch input.groupSearch{
+	font-size:12px;
+	border-right-width:1px;
+	margin-top:5px;
+}
+
+#searchBar div.textSearch div.inputTextSearch input.empty,
+#searchBar div.textSearch div.inputTextSearch textarea.empty {
+	font-style:italic;
+	color:#A9A9A9;
+}
+
+#searchBar div.textSearch div.inputTextSearch div.goForSearch{
+	background:url('../../images/icones/26px/magnifier.png') 0px 0px #fff no-repeat;
+	border-left-width:0px;
+	height:27px; 
+	width:28px;
+	cursor:pointer;
+	background-position: middle;
+}
+
+#searchBar div.textSearch div.inputTextSearch div.addField{
+	background:url('../../images/icones/tango/22x22/actions/list-add.png') 3px 3px #fff no-repeat;
+	height:27px; 
+	width:28px;
+	cursor:pointer;
+	background-position: middle;
+	margin-left:10px;
+	margin-top:5px;
+	float:right;
+}
+#searchBar div.textSearch div.inputTextSearch div.generateTimestampFromDate{
+	background:url('../../images/icones/tango/22x22/status/maintenance-time.png') 3px 3px #fff no-repeat;
+	height:27px; 
+	width:28px;
+	cursor:pointer;
+	background-position: middle;
+	margin-left:10px;
+	margin-top:5px;
+	float:right;
+	clear:right;
+}
+#searchBar div.textSearch div.inputTextSearch div.addGroupOperator{
+	background:url('../../images/icones/tango/22x22/actions/list-add.png') 3px 3px #fff no-repeat;
+	height:27px; 
+	width:28px;
+	cursor:pointer;
+	background-position: middle;
+	margin-left:10px;
+	margin-top:5px;
+	float:right;
+}
+
+/***************
+* SelectSearch
+***************/
+#searchBar div.selectSearch {
+	float:left;
+	border-top:none;
+	border-bottom:none;
+	border-right:none;
+}
+#searchBar div.selectSearch div.filterTitle{
+	float:left;
+	padding-left:5px;
+	padding-right:5px;
+	text-align:center;
+}
+#searchBar div.selectSearch div.filterTitle *{
+	float:left;
+	clear:both;
+}
+
+#searchBar div.selectSearch div.selectBox {
+	float:left;
+	width:10px; /* by default very small, like this when constructing the searchBar directly added on left */
+	height:10px;
+	padding-left:20px;
+}
+#searchBar div.selectSearch div.selectBox .selectBoxItem {
+	float:left;
+	margin-left:5px;
+	margin-bottom:5px;
+}
+#searchBar div.selectSearch div.selectBox .selectBoxItem img {
+	float:left;
+	margin-top:-2px;
+	margin-right:5px;
+}
+#searchBar div.selectSearch div.selectBox .selectBoxItem img:hover {
+	border-style:outset;
+}
+#searchBar div.selectSearch div.selectBox .selectBoxItem img.actif {
+	border-style:inset;
+}
+#searchBar div.selectSearch div.selectBox .selectBoxItem img.actif:hover {
+	border-style:inset;
+}
+
+#searchBar div.selectSearch div.selectBox .selectBoxItem select {
+	float:left;
+}
+
+/*********************
+* ChangeViewMenu
+**********************/
+
+#changeViewMenu {
+	cursor: pointer;
+	position: absolute;
+	padding: 0px;
+}
+
+#searchBar div.textSearch #changeViewMenu div {
+	position: block;
+	float: none;
+	padding: 3px 15px 3px 15px;
+}
+#searchBar div.textSearch #changeViewMenu div.subTitle {
+	padding: 6px 15px 3px 15px;
+}
+#searchBar div.textSearch #changeViewMenu div input, #searchBar div.textSearch #changeViewMenu div label{
+	position: block;
+	float: none;
+	cursor: pointer;
+}
+
+#searchBar div.textSearch #changeViewMenu div.goButton{
+	float:left;
+	margin:0px 5px 5px 15px;
+	padding: 2px 5px 2px 5px;
+}
+
+
+/*****************
+* Advanced search menu
+********************/
+
+#addFieldMenu, #generateTimestampFromDateMenu, #addGroupOperatorMenu {
+	cursor: pointer;
+	position: absolute;
+	padding: 0px;
+}
+
+#searchBar div.textSearch #addFieldMenu div, #searchBar div.textSearch #generateTimestampFromDateMenu div, #searchBar div.textSearch #addGroupOperatorMenu div {
+	display: block;
+	float: none;
+	padding: 1px 15px 1px 30px;
+}
+#searchBar div.textSearch #addFieldMenu div.subTitle, #searchBar div.textSearch #generateTimestampFromDateMenu div.subTitle, #searchBar div.textSearch #addGroupOperatorMenu div.subTitle {
+	padding: 10px 15px 3px 15px;
+	font-weight:bold;
+}
+#searchBar div.textSearch #addFieldMenu div.subTitle2, #searchBar div.textSearch #generateTimestampFromDateMenu div.subTitle2, #searchBar div.textSearch #addGroupOperatorMenu div.subTitle2 {
+	padding: 1px 15px 1px 30px;
+}
+#searchBar div.textSearch #addFieldMenu div.subLevel, #searchBar div.textSearch #generateTimestampFromDateMenu div.subLevel, #searchBar div.textSearch #addGroupOperatorMenu div.subLevel {
+	padding: 1px 15px 1px 50px;
+	font-size:12px;
+}

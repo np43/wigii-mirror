@@ -1,0 +1,386 @@
+
+.elementDialog .T {
+	margin-bottom:15px;
+	margin-top:-5px; margin-left:-8px; margin-right:-8px;
+	float:left;
+}
+
+.elementDialog .T>div {
+	padding:6px 3px 6px 28px;
+	float:left;
+	text-align:center;
+	margin-left:5px;
+	margin-right:5px;
+	cursor:pointer;
+}
+
+.elementDialog .T>div.el_edit {
+	background:url('../../images/icones/22x22/iconeditfiles22x22.png') 0px 3px no-repeat;
+}
+.elementDialog .T>div.el_copy {
+	background:url('../../images/icones/22x22/iconcopy22x22.png') 0px 3px no-repeat;
+}
+.elementDialog .T>div.el_copy {
+	background:url('../../images/icones/22x22/iconcopy22x22.png') 0px 3px no-repeat;
+}
+.elementDialog .T>div.el_status {
+	padding-top:1px;
+	padding-bottom:1px;
+	background:url('../../images/icones/tango/22x22/emblems/emblem-noStatus.png') 0px 3px no-repeat;
+}
+.elementDialog .T>div.el_organize {
+	background:url('../../images/icones/22x22/iconfolder22x22.png') 0px 3px no-repeat;
+}
+.elementDialog .T>div.el_delete {
+	background:url('../../images/icones/26px/cancel.png') 0px 0px no-repeat;
+}
+.elementDialog .T>div.el_feedback {
+	background:url('../../images/icones/22x22/iconfeedback22x22.png') 0px 3px no-repeat;
+}
+.elementDialog .T>div.el_sendLink {
+	background:url('../../images/icones/22x22/iconsendlink22x22.png') 0px 3px no-repeat;
+}
+.elementDialog .T>div.el_back {
+	background:url('../../images/icones/tango/22x22/actions/dynamic-blue-left.png') 0px 3px no-repeat;
+	padding-top:1px;
+	padding-bottom:1px;
+	float:right;
+}
+div.ui-dialog-titlebar a.el_feedback, .elementDialog .T>a.el_feedback {
+	background:url('../../images/icones/18px/feedbacks.png') 0px 0px no-repeat;
+	padding:3px;
+	padding-left:20px;
+	float:right;
+	margin-right:10px;
+}
+div.ui-dialog-titlebar a.el_sendLink, .elementDialog .T>a.el_sendLink {
+	background:url('../../images/icones/18px/mail.png') 0px 0px no-repeat;
+	padding:3px;
+	padding-left:20px;
+	float:right;
+	margin-right:10px;
+}
+div.ui-dialog-titlebar a.el_deleteDraft, .elementDialog .T>a.el_deleteDraft {
+	background:url('../../images/icones/tango/22x22/emblems/trash.png') 0px 0px no-repeat;
+	padding:3px;
+	padding-left:25px;
+	float:right;
+	margin-right:30px;
+}
+div.ui-dialog-titlebar a.el_printDetails, .elementDialog .T>a.el_printDetails {
+	background:url('../../images/icones/18px/print.png') 0px 0px no-repeat;
+	padding:3px;
+	padding-left:20px;
+	float:right;
+	margin-right:20px;
+	text-decoration:none;
+}
+div.ui-dialog-titlebar a.el_printDetails:hover {
+	text-decoration:underline;
+}
+
+
+div.elementDetail {
+	float:left;
+}
+
+div.elementDetail h4, div.elementDetail h3 {
+	margin-top:10px;
+	margin-bottom:5px;
+}
+
+
+/* FIELD */
+div.field {
+	float:left;
+	margin-right:10px;
+}
+div.label,
+div.field div.label {
+	float:left;
+	margin-bottom:5px;
+	font-style:italic;
+	font-weight:normal;
+	padding-top:5px;
+	padding-right:20px;
+}
+div.field div.label img {
+	vertical-align:middle;
+	/* margin-top:5px; */
+}
+div.field div.label img.prev {
+	vertical-align:middle;
+	width:80px;
+}
+
+div.value,
+div.field div.value,
+div.freeText,
+div.title,
+div.separator {
+	float:left;
+	margin-bottom:5px;
+	padding:5px 0px;
+}
+div.value,
+div.field div.value {
+	font-weight:bold;
+	min-height:26px;
+}
+div.field div.fieldGroup {
+	padding:2px 0px 2px 10px;
+}
+div.field div.noFieldset {
+	border:none;
+	padding:2px 0px;
+}
+
+
+div.field div.preview {
+	float:left;
+	margin-bottom:5px;
+	margin-top:-5px;
+}
+div.field div.preview table {
+	width:100%;
+	font-weight:normal;
+	min-height:20px; /* min-height is to ensure keeping the refresh button even if no items found */
+}
+div.field div.preview table th {
+	text-align:left;
+	font-weight:normal;
+	font-style:italic;
+}
+div.field div.preview table tr td div {
+	min-height:18px;
+}
+div.field div.preview table img.refresh {
+	float:right;
+	margin-right:5px;
+	cursor:pointer;
+}
+div.field div.preview table tr.loadNextLines font {
+	font-style:italic;
+}
+div.field div.preview table tr.loadNextLines span {
+	display:none;
+}
+div.field div.preview table td.delete {
+	background:url('../../images/icones/18px/cancel.png') no-repeat left top;
+}
+div.field div.preview table td.edit {
+	background:url('../../images/icones/18px/edit.png') no-repeat left top;
+}
+div.field div.preview table td.restore {
+	background:url('../../images/icones/tango/16x16/actions/undo.png') no-repeat left top;
+}
+div.field div.preview table tr td.edit div,
+div.field div.preview table tr td.restore div,
+div.field div.preview table tr td.delete div {
+	text-decoration:none;
+	width:18px;
+}
+div.field div.preview table td {
+	vertical-align:top;
+}
+div.field div.preview table td>div {
+	max-height:48px;
+	overflow:hidden;
+}
+/* file details */
+div.fdet {
+	word-wrap:break-word;
+	font-size:16px;
+	margin-bottom:0px;
+	font-weight:bold;
+}
+div.field div.file div.small {
+	font-size:small;
+	margin-bottom:0px;
+}
+div.fdet a, div.value a.fdet {
+	text-decoration:none;
+	white-space:nowrap;
+}
+div.fdet a span, div.value a.fdet span {
+	padding:3px;
+}
+div.fdet a span img, div.value a.fdet span img {
+	border:none;
+	vertical-align:bottom;
+}
+div.fdet a span font, div.value a.fdet span font{
+	font-weight:normal;
+	font-size:small;
+}
+div.fdet font.grayFont {
+	font-style:italic;
+	font-size:x-small;
+	font-weight:normal;
+}
+
+
+
+div.field div.file div {
+	float:left;
+	margin-right:10px;
+	font-size:18px;
+	font-weight:bold;
+	padding:2px;
+	padding-right:5px;
+	margin-bottom:5px;
+}
+div.field div.file div.clear {
+	float:none;
+	padding:0px;
+}
+div.field div.file div img {
+	vertical-align:middle;
+	margin-left:5px;
+	margin-right:5px;
+}
+div.field div.text {
+	font-weight:normal;
+}
+div.field div.value p{
+	margin:0px;
+}
+
+div.displayId {
+	margin-top:5px;
+	margin-bottom:5px;
+	padding-left:0px;
+	font-size:0.9em;
+}
+div.displayId .label { color:#666; }
+div.displayId .value { color:#000; }
+
+div.displayVersion {
+	margin-top:5px;
+	margin-bottom:5px;
+	padding-left:0px;
+	font-size:0.9em;
+}
+div.displayVersion .label { color:#666; }
+div.displayVersion .value { color:#000; }
+
+.elementHistoric {
+	margin-top:5px;
+	margin-bottom:5px;
+	padding-left:0px;
+	font-size:0.9em;
+	float:left;
+}
+.elementHistoric>.label {
+	border-width:0px;
+	padding-left:15px;
+	cursor:pointer;
+	width:95%;
+	min-width:300px;
+}
+.elementHistoric>div.collapsed {
+	background:url('../../images/gui/arrow-bottom-title.png') no-repeat left center;
+}
+.elementHistoric>div.expanded {
+	border-bottom-width:1px;
+	background:url('../../images/gui/arrow-top-title.png') no-repeat left center;
+}
+.elementHistoric .label {
+	color:#666;
+	padding-right:5px;
+}
+
+.elementHistoric table{
+	margin:0px;
+	margin-top:5px;
+	padding:0px;
+	border-collapse:collapse;
+	border:none;
+}
+.elementHistoric table td {
+	padding:0px;
+	margin:0px;
+}
+
+/*.elementStates>div.value img, .elementStates>div.value span {
+	vertical-align:middle;
+}*/
+
+div.elementStatusMenu.cm {
+	margin-top:5px;
+}
+div.elementStatusMenu.cm>div {
+	text-align:left;
+	padding-left:27px;
+	background:url('../../images/gui/iconcheckbox.png') no-repeat 7px 3px;
+}
+div.elementStatusMenu.cm div.checked {
+	background:url('../../images/gui/iconcheckbox_checked.png') no-repeat 7px 3px;
+}
+div.elementStatusMenu.cm div.exit {
+	background:none;
+	padding-left:5px;
+}
+
+.elementGroups {
+	clear:both;
+}
+.elementGroups>div.value>div {
+	padding-top:0px;
+	padding-bottom:8px;
+/* 	to make the folder icons printable don't use the background property
+	padding-left:27px;
+	background:url('../../images/icones/22x22/iconfolder22x22.png') no-repeat left top;
+	*/
+}
+.elementGroups>div.value {
+	padding:0px;
+	margin:0px;
+}
+
+div.value div.generalButton {
+	float:left;
+	height:15px;
+	padding:3px;
+	cursor:pointer;
+	margin-top:4px;
+	margin-right:5px;
+}
+div.value div.generalButton:hover>span{
+	text-decoration:underline;
+}
+
+div.value div.generalButton span {
+	margin-top:0px;
+	margin-left:5px;
+	margin-right:5px;
+}
+div.value div.generalButton img {
+	margin-left:5px;
+	vertical-align:middle;
+	border:none;
+}
+
+div.field.comments div.label {
+    width: 100%;
+    padding: 5px 10px;
+    margin-bottom: 0px;
+    background-color: #95C33B;
+    font-weight: bold;
+    color: #fff;
+}
+div.field.comments div.value {
+    max-height: 300px;
+    overflow-y: auto;
+    border-bottom: 1px solid #95C33B;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width:100%;
+}
+div.field.comments {
+	overflow: hidden;
+	max-height: none;
+	width:100%;
+}
+
+

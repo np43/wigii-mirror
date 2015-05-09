@@ -1,0 +1,17 @@
+
+#elementCalendar_contextMenu {
+	z-index:1;
+	padding:0px;
+	margin: 0px;
+	width:auto;
+	height:auto;
+	position:absolute;
+}
+
+#elementCalendar_contextMenu .commands div {
+	padding:5px;
+	cursor:pointer;
+	float:left;
+}
+
+
