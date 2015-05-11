@@ -1,0 +1,69 @@
+<?php
+/*
+ * Created on 3 déc. 09
+ * by LWR
+ */
+$exec = $this->getExecutionService();
+
+$fieldXml = $field->getXml();
+$elementId = $this->getRecord()->getId();
+
+/******************
+ * Preview only!!!!
+ ******************/
+if($fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification() && !$this->isForExternalAccess()){
+	
+	$src = SITE_ROOT.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/download/".$elementId."/".$field->getFieldName();
+	
+	$idPrev = "PreviewImage".$fieldName;
+	//the default preview management is done into the download part
+	//add the time to prevent rpeview caching!!!
+	$this->put('<div id="'.$idPrev.'" class="ui-widget ui-corner-tl ui-corner-bl white">');
+	$this->put('<a href="'.$src.'" target="_self" >');
+	$this->put('<img style="width:150px;" src="'.$src.'/thumbs?_'.time().'" />');
+	$this->put('</a>');
+	$this->put('</div>');
+	//hide the field value
+	$exec->addJsCode("$('#$idPrev').parent().add($('#$idPrev').parent().next()).css('padding',0).css('margin', 0);");
+	//next field should not have border
+	$exec->addJsCode("$('#$idPrev').parent().parent().next().next().css('border','none');");
+	//position the pics on the left
+	$exec->addJsCode("
+$('#$idPrev')
+.mouseenter(function(){ $(this).css('z-index',$('#elementDialog').parent().css('z-index')+100); })
+.mouseleave(function(){ $(this).css('z-index',$('#elementDialog').parent().css('z-index')); })
+.css('top',".$this->getPreviewCrtHeight(50).").css('margin-left', -169).css('border-right','none').css('position', 'absolute').css('padding','5px').css('padding-right','2px').find('img').css('border','none'); 
+");
+	
+	//.click(function(){ $(this).css('z-index',$('#elementDialog').parent().parent().attr('z-index')+1); })
+	
+/******************
+ * Normal view
+ ******************/
+} else {
+	
+	if(!$this->isForNotification()){
+		//the ssrc is used for the media unzip, pdf, or html type
+		if(is_a($this->getRecord(), "ActivityRecord")){
+			$src = SITE_ROOT.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/download/".$this->getRecord()->getActivity()->getActivityName()."/".$field->getFieldName()."/".$this->getRecord()->getAttachedRecord()->getId();
+		} else if($this->isForExternalAccess()) {
+			$src = SITE_ROOT.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/downloadFromExternalAccess/".$exec->getCrtParameters(0)."/download/".$elementId."/".$field->getFieldName();
+		} else {
+			$src = SITE_ROOT.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/download/".$elementId."/".$field->getFieldName();
+		}
+		//the default preview management is done into the download part
+		//add the time to prevent rpeview caching!!!
+		$this->put('<img style="margin-left:'.(($parentWidth-80)/2).'px; width:80px;" src="'.$src.'/thumbs?_'.time().'" />');
+	} else {
+		//in notification mode, we just add a link to a standard preview (which work without rights)
+		$type = $this->getRecord()->getFieldValue($fieldName, "type");
+		
+		if (file_exists("./images/preview/prev$type.png")){
+			$path = SITE_ROOT_forFileUrl."images/preview/prev".$type.".png";
+		} else {
+			$path = SITE_ROOT_forFileUrl."images/preview/preview.jpg";
+		}
+		$this->put('<img style="margin-left:'.(($parentWidth-80)/2).'px; margin-bottom:5px; width:80px;" src="'.$path.'" />');
+	}
+	
+}

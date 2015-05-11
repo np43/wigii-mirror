@@ -1,0 +1,345 @@
+if (jQuery.browser.msie && !window.CanvasRenderingContext2D) {
+
+(function () {
+
+  var m = Math,mr = m.round,ms = m.sin,mc = m.cos;
+
+  var Z = 10;
+  var Z2 = Z / 2;
+
+  var G_vmlCMjrc_ = {
+    init: function (opt_doc) {
+      var doc = opt_doc || document;
+      if (jQuery.browser.msie) {
+        var self = this;
+        doc.attachEvent("onreadystatechange", function () {
+          self.init_(doc);
+        });
+      }
+    },
+    init_: function (doc) {
+      if (doc.readyState == "complete") {
+        // create xmlns
+        if (!doc.namespaces["g_vml_"]) {
+          doc.namespaces.add("g_vml_", "urn:schemas-microsoft-com:vml");
+        }
+
+        // setup default css
+        var ss = doc.createStyleSheet();
+        ss.cssText = "canvas{display:inline-block;overflow:hidden;" +
+            // default size is 300x150 in Gecko and Opera
+            "text-align:left;width:300px;height:150px}" +
+            "g_vml_\\:*{behavior:url(#default#VML)}";
+
+   
+      }
+    },
+
+    i: function (el) {
+      el.getContext = function () {
+        if (this.context_) {
+          return this.context_;
+        }
+        return this.context_ = new CR_(this);
+      };
+
+      var attrs = el.attributes;
+      if (attrs.width && attrs.width.specified) {
+        el.style.width = attrs.width.nodeValue + "px";
+      } else {
+        el.width = el.clientWidth;
+      }
+      if (attrs.height && attrs.height.specified) {
+        el.style.height = attrs.height.nodeValue + "px";
+      } else {
+        el.height = el.clientHeight;
+      }
+      return el;
+    }
+  };
+
+
+  G_vmlCMjrc_.init();
+
+  function cM() { return [[1, 0, 0],[0, 1, 0],[0, 0, 1]]; }
+
+  
+  function pS(styleString) {
+    var str, alpha = 1;
+
+    styleString = String(styleString);
+    if (styleString.substring(0, 3) == "rgb") {
+      var start = styleString.indexOf("(", 3);
+      var end = styleString.indexOf(")", start + 1);
+      var guts = styleString.substring(start + 1, end).split(",");
+
+      str = "#";
+      for (var i = 0; i < 3; i++) {
+        str += dec2hex[Number(guts[i])];
+      }
+
+      if ((guts.length == 4) && (styleString.substr(3, 1) == "a")) {
+        alpha = guts[3];
+      }
+    } else {
+      str = styleString;
+    }
+
+    return [str, alpha];
+  }
+
+  
+  function pL(lineCap) {
+    switch (lineCap) {
+      case "butt":
+        return "flat";
+      case "round":
+        return "round";
+      case "square":
+      default:
+        return "square";
+    }
+  }
+  
+   function CR_(surfaceElement) {
+    this.m_ = cM();
+    this.mStack_ = [];
+    this.aStack_ = [];
+    this.cP_ = [];
+    this.strokeStyle = "#000";
+    this.fillStyle = "#000";
+    this.lineWidth = 1;
+    this.lineJoin = "miter";
+    this.lineCap = "butt";
+    this.miterLimit = Z * 1;
+    this.globalAlpha = 1;
+    this.canvas = surfaceElement;
+    var el = surfaceElement.ownerDocument.createElement('div');
+    el.style.width =  surfaceElement.clientWidth + 'px';
+    el.style.height = surfaceElement.clientHeight + 'px';
+    el.style.overflow = 'hidden';
+    el.style.position = 'absolute';
+    surfaceElement.appendChild(el);
+    this.element_ = el;
+    this.arcScaleX_ = 1;
+    this.arcScaleY_ = 1;
+  };
+
+  var contextPrototype = CR_.prototype;
+
+  contextPrototype.beginPath = function() { this.cP_ = []; };
+
+  contextPrototype.moveTo = function(aX, aY) {
+    this.cP_.push({type: "moveTo", x: aX, y: aY}); this.currentX_ = aX; this.currentY_ = aY;
+  };
+
+  contextPrototype.lineTo = function(aX, aY) {
+    this.cP_.push({type: "lineTo", x: aX, y: aY});
+    this.currentX_ = aX;
+    this.currentY_ = aY;
+  };
+ 
+  contextPrototype.bezierCurveTo = function(aCP1x, aCP1y,
+                                            aCP2x, aCP2y,
+                                            aX, aY) {
+    this.cP_.push({type: "bezierCurveTo",
+                           cp1x: aCP1x,
+                           cp1y: aCP1y,
+                           cp2x: aCP2x,
+                           cp2y: aCP2y,
+                           x: aX,
+                           y: aY});
+    this.currentX_ = aX;
+    this.currentY_ = aY;
+  };
+
+  contextPrototype.fillRect = function(aX, aY, aWidth, aHeight) {
+    this.beginPath();
+    this.moveTo(aX, aY);
+    this.lineTo(aX + aWidth, aY);
+    this.lineTo(aX + aWidth, aY + aHeight);
+    this.lineTo(aX, aY + aHeight);
+    this.closePath();
+    this.fill();
+  };
+
+  contextPrototype.stroke = function(aFill) {
+    var lineStr = [];
+    var lineOpen = false;
+    var a = pS(aFill ? this.fillStyle : this.strokeStyle);
+    var color = a[0];
+    var opacity = a[1] * this.globalAlpha;
+
+    var W = 10;
+    var H = 10;
+
+    lineStr.push('<g_vml_:shape',
+                 ' fillcolor="', color, '"',
+                 ' filled="', Boolean(aFill), '"',
+                 ' style="position:absolute;width:', W, ';height:', H, ';"',
+                 ' coordorigin="0 0" coordsize="', Z * W, ' ', Z * H, '"',
+                 ' stroked="', !aFill, '"',
+                 ' strokeweight="', this.lineWidth, '"',
+                 ' strokecolor="', color, '"',
+                 ' path="');
+
+    var newSeq = false;
+    var min = {x: null, y: null};
+    var max = {x: null, y: null};
+
+    for (var i = 0; i < this.cP_.length; i++) {
+      var p = this.cP_[i];
+
+      if (p.type == "moveTo") {
+        lineStr.push(" m ");
+        var c = this.gC_(p.x, p.y);
+        lineStr.push(mr(c.x), ",", mr(c.y));
+      } else if (p.type == "lineTo") {
+        lineStr.push(" l ");
+        var c = this.gC_(p.x, p.y);
+        lineStr.push(mr(c.x), ",", mr(c.y));
+      } else if (p.type == "close") {
+        lineStr.push(" x ");
+      } else if (p.type == "bezierCurveTo") {
+        lineStr.push(" c ");
+        var c = this.gC_(p.x, p.y);
+        var c1 = this.gC_(p.cp1x, p.cp1y);
+        var c2 = this.gC_(p.cp2x, p.cp2y);
+        lineStr.push(mr(c1.x), ",", mr(c1.y), ",",
+                     mr(c2.x), ",", mr(c2.y), ",",
+                     mr(c.x), ",", mr(c.y));
+      } else if (p.type == "at" || p.type == "wa") {
+        lineStr.push(" ", p.type, " ");
+        var c  = this.gC_(p.x, p.y);
+        var cStart = this.gC_(p.xStart, p.yStart);
+        var cEnd = this.gC_(p.xEnd, p.yEnd);
+
+        lineStr.push(mr(c.x - this.arcScaleX_ * p.radius), ",",
+                     mr(c.y - this.arcScaleY_ * p.radius), " ",
+                     mr(c.x + this.arcScaleX_ * p.radius), ",",
+                     mr(c.y + this.arcScaleY_ * p.radius), " ",
+                     mr(cStart.x), ",", mr(cStart.y), " ",
+                     mr(cEnd.x), ",", mr(cEnd.y));
+      }
+
+
+      // TODO: Following is broken for curves due to
+      //       move to proper paths.
+
+      // Figure out dimensions so we can do gradient fills
+      // properly
+      if(c) {
+        if (min.x == null || c.x < min.x) {
+          min.x = c.x;
+        }
+        if (max.x == null || c.x > max.x) {
+          max.x = c.x;
+        }
+        if (min.y == null || c.y < min.y) {
+          min.y = c.y;
+        }
+        if (max.y == null || c.y > max.y) {
+          max.y = c.y;
+        }
+      }
+    }
+    lineStr.push(' ">');
+
+    if (typeof this.fillStyle == "object") {
+      var focus = {x: "50%", y: "50%"};
+      var width = (max.x - min.x);
+      var height = (max.y - min.y);
+      var dimension = (width > height) ? width : height;
+
+      focus.x = mr((this.fillStyle.focus_.x / width) * 100 + 50) + "%";
+      focus.y = mr((this.fillStyle.focus_.y / height) * 100 + 50) + "%";
+
+      var colors = [];
+
+      // inside radius (%)
+      if (this.fillStyle.type_ == "gradientradial") {
+        var inside = (this.fillStyle.radius1_ / dimension * 100);
+
+        // percentage that outside radius exceeds inside radius
+        var expansion = (this.fillStyle.radius2_ / dimension * 100) - inside;
+      } else {
+        var inside = 0;
+        var expansion = 100;
+      }
+
+      var insidecolor = {offset: null, color: null};
+      var outsidecolor = {offset: null, color: null};
+
+      this.fillStyle.colors_.sort(function (cs1, cs2) {
+        return cs1.offset - cs2.offset;
+      });
+
+      for (var i = 0; i < this.fillStyle.colors_.length; i++) {
+        var fs = this.fillStyle.colors_[i];
+
+        colors.push( (fs.offset * expansion) + inside, "% ", fs.color, ",");
+
+        if (fs.offset > insidecolor.offset || insidecolor.offset == null) {
+          insidecolor.offset = fs.offset;
+          insidecolor.color = fs.color;
+        }
+
+        if (fs.offset < outsidecolor.offset || outsidecolor.offset == null) {
+          outsidecolor.offset = fs.offset;
+          outsidecolor.color = fs.color;
+        }
+      }
+      colors.pop();
+
+      lineStr.push('<g_vml_:fill',
+                   ' color="', outsidecolor.color, '"',
+                   ' color2="', insidecolor.color, '"',
+                   ' type="', this.fillStyle.type_, '"',
+                   ' focusposition="', focus.x, ', ', focus.y, '"',
+                   ' colors="', colors.join(""), '"',
+                   ' opacity="', opacity, '" />');
+    } else if (aFill) {
+      lineStr.push('<g_vml_:fill color="', color, '" opacity="', opacity, '" />');
+    } else {
+      lineStr.push(
+        '<g_vml_:stroke',
+        ' opacity="', opacity,'"',
+        ' joinstyle="', this.lineJoin, '"',
+        ' miterlimit="', this.miterLimit, '"',
+        ' endcap="', pL(this.lineCap) ,'"',
+        ' weight="', this.lineWidth, 'px"',
+        ' color="', color,'" />'
+      );
+    }
+
+    lineStr.push("</g_vml_:shape>");
+
+    this.element_.insertAdjacentHTML("beforeEnd", lineStr.join(""));
+
+    this.cP_ = [];
+  };
+
+  
+  contextPrototype.fill = function() {
+    this.stroke(true);
+  };
+
+  
+  contextPrototype.closePath = function() {
+    this.cP_.push({type: "close"});
+  };
+
+  contextPrototype.gC_ = function(aX, aY) {
+    return {
+      x: Z * (aX * this.m_[0][0] + aY * this.m_[1][0] + this.m_[2][0]) - Z2,
+      y: Z * (aX * this.m_[0][1] + aY * this.m_[1][1] + this.m_[2][1]) - Z2
+    }
+  };
+
+  // set up externs
+  G_vmlCMjrc = G_vmlCMjrc_;
+  //CR = CR_;
+
+})();
+
+}
