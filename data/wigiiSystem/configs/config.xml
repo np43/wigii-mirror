@@ -294,6 +294,10 @@
 			</deleteGroupOption>
 		</fields>
 	</groupDelete>
+	
+	<groupEmpty>
+		<fields/>
+	</groupEmpty>
 
 	<groupDetail>
 		<fields>

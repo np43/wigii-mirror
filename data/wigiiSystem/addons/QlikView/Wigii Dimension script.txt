@@ -1,0 +1,195 @@
+﻿/**
+ *  This file is part of Wigii.
+ *
+ *  Wigii is free software: you can redistribute it and\/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Wigii is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
+ *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ */
+
+/*
+ * This file contains a QlikView script that allows to transform the Setup.Dimensions.qvd 
+ * into one qvd per dimension. This script basically contains one sub called ETLDimensions
+ * that does the job. This script can be run only after the initial Wigii Base script succeeded.
+ * The first part of this script is commented and is an example of what should be added
+ * at the start of the QlikScript that include this one.
+ */
+
+
+//PLEASE incorporate the following section into your Qlik script and change the values as necessary
+/*************
+
+//General format settings
+SET ThousandSep="'";
+SET DecimalSep='.';
+SET MoneyThousandSep="'";
+SET MoneyDecimalSep='.';
+SET MoneyFormat='$#''##0;-$#''##0';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD/MM/YYYY';
+SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+
+$(Include=\..\include\wigii dimension script.txt); //update that path to where the wigii dimension script is installed relatively to your script
+
+//the 111 refers to the folder id containing the Dimensions in Setup/Dimensions that you want to extract
+//please adapt 111 to the relevant id
+//second parameter is the prefix to give to the generated qvd's
+Call ETLDimensions (111, 'Dimension');
+
+//END of section to incorporate
+*******************/
+
+///$tab Groups
+sub ETLDimensions (vDimensionGroupId, vPrefix)
+
+	[Dimensions]:
+	LOAD id_group,
+		 id_group as id_group_dimension, 
+		 groupname as [Dimension],
+		 RowNo() as [Row Nb]
+	//     groupModulename, 
+	//     groupWigiiNamespace, 
+	//     description, 
+	//     portal, 
+	//     htmlContent, 
+	//     id_group_parent, 
+	//     subscription, 
+	//     emailNotification, 
+	//     xmlPublish, 
+	//     sys_creationUser, 
+	//     sys_creationUsername, 
+	//     sys_creationDate, 
+	//     sys_user, 
+	//     sys_username, 
+	//     sys_date
+	FROM
+	[Groups.qvd]
+	(qvd) where groupWigiiNamespace='Setup' and groupModulename='Dimensions' and (id_group_parent = $(vDimensionGroupId));
+
+	//Groups groups
+	[allGrp]:
+	load id_group
+	From [Groups_Groups.qvd] (qvd)
+	where id_group_owner = $(vDimensionGroupId);
+
+	[allGrpDim]: //contains all the groups and subgroups of dimensions
+	load id_group,
+		 id_group_owner as id_group_dimension
+	From [Groups_Groups.qvd] (qvd)
+	where exists(id_group_dimension, id_group_owner);
+	Concatenate load id_group, id_group_dimension Resident [Dimensions];
+
+	drop field id_group from Dimensions;  //remove id_group, as id_group_dimension will be used to match
+
+	///$tab Elements_Groups
+	[Elements_Groups]:
+	LOAD 
+	//	 id_element_group, 
+		 id_element_root as id_Dimension_value, 
+		 id_group
+	FROM
+	[Elements_Groups.qvd]
+	(qvd) where Exists(id_group);
+
+	///$tab Setup
+	[Dimensions value]:
+	LOAD 
+		 el.id_element as id_Dimension_value, 
+	//     el.id_element_root, 
+	//     el.id_element_parent, 
+	//     el.modulename, 
+	//     el.modulename_parent, 
+	//     el.modulename_root, 
+	//     el.linkName_root, 
+	//     el.linkName, 
+	//     el.peerId, 
+	//     el.version, 
+	//     el.tags, 
+	//     el.sys_creationUser, 
+	//     el.sys_creationUsername, 
+	//     el.sys_creationDate, 
+	//     el.sys_user, 
+	//     el.sys_username, 
+	//     el.sys_date, 
+	//     el.wigiiNamespace, 
+	//     el.Elements.counter, 
+	//     checked, 
+	//     email, 
+	//     [email proofKey], 
+	//     [email proof], 
+	//     [email proofStatus], 
+	//     [email externalCode], 
+	//     [email externalAccessLevel], 
+	//     [email externalAccessEndDate], 
+	//     [email externalConfigGroup], 
+	//     idGroup, 
+		 label as Dimension_label, 
+	//     [label value_l01], 
+	//     [label value_l02], 
+	//     [label value_l03], 
+	//     [label value_l04], 
+	//     [label value_l05], 
+	//     [label value_l06], 
+	//     [label value_l07], 
+	//     [label value_l08], 
+	//     [label value_l09], 
+	//     [label value_l10], 
+		 value as Dimension_value
+	FROM
+	[Setup.Dimensions.qvd]
+	(qvd);
+	join load * Resident Elements_Groups; //add groups in which items are
+	left join load * Resident allGrpDim; //add to which group dimension it belongs
+	left join load * Resident Dimensions; //add dimension name
+	
+	
+	///$tab ETL Wigii Dimensions
+	/************
+	* 
+	* This script transform Dimensions table and the Dimension Values table into
+	* one table per dimension
+	* 
+	************/
+
+	//create one table per Dimension
+
+	LET vLastRowNb = Peek('Row Nb', -1, 'Dimensions');
+	TRACE $(vLastRowNb);
+
+	FOR i = 0 TO ($(vLastRowNb)-1) //Peek starts at 0
+		LET vCrtDimensionCode = Peek('Dimension', $(i), 'Dimensions');
+		
+		[$(vCrtDimensionCode)]:
+		NoConcatenate LOAD 
+			 [Dimension_value] as [$(vCrtDimensionCode) Code], 
+			 if([Dimension_label]='' or IsNull([Dimension_label]), [Dimension_value], [Dimension_label]) as [$(vCrtDimensionCode) Value]
+		Resident 
+		[Dimensions value]
+		Where [Dimension]='$(vCrtDimensionCode)';
+		;
+		STORE [$(vCrtDimensionCode)] into [$(vPrefix)_$(vCrtDimensionCode).qvd];
+		
+		DROP Table [$(vCrtDimensionCode)];
+		
+	NEXT
+
+	drop table Elements_Groups;
+	drop table allGrpDim;
+	DROP Table [Dimensions value];
+	drop table allGrp;
+	drop table Dimensions;
+
+end sub

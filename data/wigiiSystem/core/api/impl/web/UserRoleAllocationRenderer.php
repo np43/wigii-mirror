@@ -127,6 +127,9 @@ $('.description', this).show();
 $('#$id .description').hide();
 });
 $('#$id').parent().find('.introduction .nb').text($('#$id>div.S').length);
+" //put at the top all the selected users/roles
+."
+$('#$id').prepend($('#$id .userHeader.S'));
 ");
 
 	}

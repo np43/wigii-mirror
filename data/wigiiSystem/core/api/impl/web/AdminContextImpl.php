@@ -6,15 +6,15 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  Wigii is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *  
+ *
  *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
@@ -96,8 +96,8 @@ class AdminContextImpl extends Model implements AdminContext {
 		 */
 		$subScreens = array();
 		$subScreens[] = "adminGroup";
-		if($p->isUserCreator()) $subScreens[] = "adminUser"; //there is no added value having the list of users without doing anything
-		if($p->isUserCreator()) $subScreens[] = "adminRole"; //there is no added value having the list of users without doing anything
+		$subScreens[] = "adminUser"; //even if not user creator, this is needed to be able to define access rights from existing users to folders or associate users to roles
+		$subScreens[] = "adminRole"; //even if not user creator, this is needed to be able to define rights for roles to folders, and map users to roles
 		$subScreens[] = "adminGroupUser";
 		$subScreens[] = "adminUserRole";
 		if($p->isAdminCreator()) $subScreens[] = "adminUserUser";
@@ -106,13 +106,13 @@ class AdminContextImpl extends Model implements AdminContext {
 
 		return $subScreens;
 	}
-	
+
 	public function setDesiredHPage($nb){ $this->desiredHPage = $nb; }
 	public function getDesiredHPage(){ return $this->desiredHPage; }
-	
+
 	public function setDesiredVPage($nb){ $this->desiredVPage = $nb; }
 	public function getDesiredVPage(){ return $this->desiredVPage; }
-	
+
 	public function setUserListFilter($listFilter){ $this->userListFilter = $listFilter; }
 	public function getUserListFilter(){
 		//autowired
@@ -172,11 +172,11 @@ class AdminContextImpl extends Model implements AdminContext {
 	protected function setIsGroupFilterSet($isSet){
 		$this->groupFilterIsSet = $isSet;
 	}
-	
+
 	protected function getGroupFilterText(){
 		return $this->getGroupFilterPost(self::GroupFilterText);
 	}
-	
+
 	public function resetGroupFilter(){
 		$this->groupFilterPost = null;
 		$this->setDesiredHPage(null);
@@ -187,7 +187,7 @@ class AdminContextImpl extends Model implements AdminContext {
 	}
 	public function setGroupFilterFromPost(){
 		$this->groupFilterPost = $this->getPost();
-		
+
 		//do the checks:
 		//prevent injections
 		foreach($this->groupFilterPost as $name=>$val){
@@ -200,7 +200,7 @@ class AdminContextImpl extends Model implements AdminContext {
 				}
 			}
 		}
-		
+
 		/**
 		 * search the id if one keyword #number
 		 */
@@ -214,13 +214,13 @@ class AdminContextImpl extends Model implements AdminContext {
 		}
 		$fslId = FieldSelectorListArrayWebImpl::createInstance();
 		$fslId->addFieldSelector("id");
-		
+
 		//create logExp on text search
 		$fsl = FieldSelectorListArrayWebImpl::createInstance();
 		$fsl->addFieldSelector("groupname");
 		$fsl->addFieldSelector("wigiiNamespace");
 		$fsl->addFieldSelector("description");
-		
+
 		$expId = TechnicalServiceProvider::getSearchBarOrLogExpParser()->createLogExpOnCriteria($fslId, implode(" ", $filterOnId));
 		$textLogExp = TechnicalServiceProvider::getSearchBarOrLogExpParser()->createLogExpOnCriteria($fsl, $tempTextSearch);
 		if($textLogExp!=null && $expId != null){
@@ -231,11 +231,11 @@ class AdminContextImpl extends Model implements AdminContext {
 		} else if($expId != null){
 			$textLogExp = $expId;
 		}
-		
+
 		//create log exp on user type
 		$this->setDesiredHPage($this->groupFilterPost[AdminContext::HorizontalPagingText]);
 		$this->setDesiredVPage($this->groupFilterPost[AdminContext::VerticalPagingText]);
-		
+
 		$logExp = $textLogExp;
 
 		$this->setIsGroupFilterSet($logExp != null);
@@ -295,11 +295,11 @@ class AdminContextImpl extends Model implements AdminContext {
 		$listFilter2 = $this->getUser2ListFilter();
 		$listFilter2->setFieldSelectorLogExp(null);
 	}
-	
+
 	public function setUserFilterFromPost(){
 		$this->doSetUserFilterFromPost(null, AdminContext::UserFilterText, AdminContext::UserFilterType);
 	}
-	
+
 	public function setUser2FilterFromPost(){
 		$this->doSetUserFilterFromPost(2, AdminContext::User2FilterText, AdminContext::User2FilterType);
 	}
@@ -321,7 +321,7 @@ class AdminContextImpl extends Model implements AdminContext {
 				if(false===array_search($post[$name], array(null, "user", "role", "calculatedRole"))) throw new AdminContextException('invalid '.$userFilterType.' '.$val, AdminContextException::INVALID_ARGUMENT);
 			}
 		}
-		
+
 		if($nb==2){
 			$this->user2FilterPost = $post;
 		} else {
@@ -332,7 +332,7 @@ class AdminContextImpl extends Model implements AdminContext {
 		 */
 		if($nb==2) $tempTextSearch = $this->getUser2FilterText();
 		else $tempTextSearch = $this->getUserFilterText();
-		
+
 		preg_match_all('/(\#[\d]{1,})/', $tempTextSearch, $matches);
 		$filterOnId = array();
 		foreach ($matches[0] as $key => $value) {
@@ -342,13 +342,13 @@ class AdminContextImpl extends Model implements AdminContext {
 		}
 		$fslId = FieldSelectorListArrayWebImpl::createInstance();
 		$fslId->addFieldSelector("id");
-		
+
 		//create logExp on text search
 		$fsl = FieldSelectorListArrayWebImpl::createInstance();
 		$fsl->addFieldSelector("username");
 		$fsl->addFieldSelector("wigiiNamespace");
 		$fsl->addFieldSelector("description");
-		
+
 		$expId = TechnicalServiceProvider::getSearchBarOrLogExpParser()->createLogExpOnCriteria($fslId, implode(" ", $filterOnId));
 		$textLogExp = TechnicalServiceProvider::getSearchBarOrLogExpParser()->createLogExpOnCriteria($fsl, $tempTextSearch);
 		if($textLogExp!=null && $expId != null){
@@ -359,11 +359,11 @@ class AdminContextImpl extends Model implements AdminContext {
 		} else if($expId != null){
 			$textLogExp = $expId;
 		}
-		
+
 		//create log exp on user type
 		$this->setDesiredHPage($post[AdminContext::HorizontalPagingText]);
 		$this->setDesiredVPage($post[AdminContext::VerticalPagingText]);
-		
+
 		//set desired page number
 		if($nb==2){
 			if($this->getUser2FilterType() !== null){
@@ -400,7 +400,7 @@ class AdminContextImpl extends Model implements AdminContext {
 				//$typeLogExp = null;
 			}
 		}
-		
+
 		//merge text and type log exp
 		if(isset($textLogExp) && isset($typeLogExp)){
 			$logExp = LogExp::createAndExp();
@@ -411,7 +411,7 @@ class AdminContextImpl extends Model implements AdminContext {
 		} else if(isset($typeLogExp)){
 			$logExp = $typeLogExp;
 		}
-		
+
 		if($nb==2){
 			$this->setIsUser2FilterSet($logExp != null);
 			$listFilter = $this->getUser2ListFilter();

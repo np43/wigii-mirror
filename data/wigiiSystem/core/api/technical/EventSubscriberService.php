@@ -179,6 +179,7 @@ class EventSubscriberService {
 					break;
 				case "Group":
 					switch($eventName){
+						case "selectGroup":
 						case "insert":
 						case "update":
 						case "delete":

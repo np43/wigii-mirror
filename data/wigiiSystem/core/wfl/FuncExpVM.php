@@ -110,7 +110,7 @@ class FuncExpVM implements FuncExpEvaluator {
 	/**
 	 * Sets a parent FuncExp evaluator to which this FuncExp evaluator
 	 * can delegate evaluation of functions it does not understand (no symbol mapping)
-	 * @param $funcExpEvaluator a FuncExpEvaluator instance
+	 * @param FuncExpEvaluator $funcExpEvaluator a FuncExpEvaluator instance
 	 * The evaluator should implement the 'evaluateFuncExp' function which evaluates
 	 * a FuncExp and returns its value, or evaluates a FieldSelector and returns its value,
 	 * or evaluates any objects and returns its value (by default returns back the object)
@@ -118,7 +118,11 @@ class FuncExpVM implements FuncExpEvaluator {
 	public function setParentFuncExpEvaluator($funcExpEvaluator) {
 		$this->parentFuncExpEvaluator = $funcExpEvaluator;
 	}
-	protected function getParentFuncExpEvaluator() {
+	/**
+	 * Returns a reference to the parent FuncExpEvaluator if set
+	 * @return FuncExp
+	 */
+	public function getParentFuncExpEvaluator() {
 		return $this->parentFuncExpEvaluator;
 	}
 	

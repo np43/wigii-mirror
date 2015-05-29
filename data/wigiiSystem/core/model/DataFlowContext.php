@@ -6,15 +6,15 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  Wigii is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *  
+ *
  *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
@@ -26,36 +26,36 @@
  * Updated by CWE on 14 février 2013: added wigii events dispatcher
  */
 class DataFlowContext
-{			
+{
 	private $dataFlowService;
-	
+
 	// Object lifecycle
-	
+
 	public static function createInstance($dataFlowService) {
 		if(is_null($dataFlowService)) throw new DataFlowServiceException("dataFlowService instance cannot be null", DataFlowServiceException::INVALID_ARGUMENT);
 		$returnValue = new self();
 		$returnValue->dataFlowService = $dataFlowService;
 		return $returnValue;
-	}	
-	
+	}
+
 	// dependency injection
-	
+
 	private $_debugLogger;
 	private function debugLogger() {
 		if (!isset ($this->_debugLogger)) {
 			$this->_debugLogger = DebugLogger :: getInstance("DataFlowContext");
 		}
 		return $this->_debugLogger;
-	}	
-	
-	
+	}
+
+
 	// DataFlow interaction
-	
+
 	/**
 	 * Writes some data to the output data flow
-	 * The underlying DataFlowService will process the data chunk and 
+	 * The underlying DataFlowService will process the data chunk and
 	 * call if needed the next steps in the data flow chain.
-	 * This method can be called as many times a needed. 
+	 * This method can be called as many times a needed.
 	 * Each call results in one data chunk to be passed to the DataFlowService for further processing.
 	 * @param $resultData some result data, can be any kind of object
 	 * @param $dataFlowActivity the reference to the current executing dataflow activity.
@@ -64,31 +64,31 @@ class DataFlowContext
 	public function writeResultToOutput($resultData, $dataFlowActivity) {
 		$this->getDataFlowService()->processResultFromActivity($this, $resultData, $dataFlowActivity);
 	}
-	
+
 	/**
 	 * Returns a reference to the underlying DataFlow Service
 	 */
 	public function getDataFlowService() {
 		return $this->dataFlowService;
-	}	
+	}
 	/**
 	 * Returns true if the current step is the last step of the dataflow
-	 * Or equivalently if no more DataFlowActivity is coming after the one 
+	 * Or equivalently if no more DataFlowActivity is coming after the one
 	 * which is currently executing
 	 */
 	public function isCurrentStepTheLastStep() {
 		return $this->getDataFlowService()->isStepTheLastStep($this->getStepId(), $this);
 	}
-	
+
 	// Attributes
-	
+
 	/**
 	 * Resets all the attributes
 	 */
 	public function reset() {
 		$this->freeMemory();
 		unset($this->contextId);
-		unset($this->stepId);		
+		unset($this->stepId);
 	}
 	/**
 	 * Frees the memory used by this DataFlowContext, called before recycling
@@ -104,10 +104,10 @@ class DataFlowContext
 			unset($this->recyclableAttributes);
 		}
 		unset($this->checkedIfWigiiEventsAreEnabled);
-		unset($this->wigiiEventsEnabled);				
+		unset($this->wigiiEventsEnabled);
 	}
-	
-	
+
+
 	private $contextId;
 	/**
 	 * Returns the data flow execution instance id
@@ -121,7 +121,7 @@ class DataFlowContext
 	public function setContextId($contextId) {
 		$this->contextId = $contextId;
 	}
-	
+
 	private $stepId;
 	/**
 	 * Returns the current executing step ID in this DataFlow
@@ -135,7 +135,7 @@ class DataFlowContext
 	public function setStepId($stepId) {
 		$this->stepId = $stepId;
 	}
-	
+
 	private $dataFlowActivitySelectorList;
 	/**
 	 * Returns the DataFlowActivity list of this DataFlow context
@@ -148,7 +148,7 @@ class DataFlowContext
 	 */
 	public function setDataFlowActivitySelectorList($dfaSL) {
 		$this->dataFlowActivitySelectorList = $dfaSL;
-	}	
+	}
 
 	private $principal;
 	/**
@@ -164,13 +164,13 @@ class DataFlowContext
 	public function setPrincipal($principal) {
 		$this->principal = $principal;
 	}
-	
-	
-	
+
+
+
 	// User defined attributes
 	private $attributes;
 	private $recyclableAttributes;
-	
+
 	/**
 	 * Characterizes this dataflow context with an attribute
 	 * @param $key the attribute key
@@ -179,19 +179,19 @@ class DataFlowContext
 	 * else no clean up code is executed, relies only on the garbage collection.
 	 */
 	public function setAttribute($key, $val, $recyclable=false) {
-		if(is_null($key)) throw new DataFlowServiceException('dataflow context attribute key cannot be null', DataFlowServiceException::INVALID_ARGUMENT);		
-		if(!isset($this->attributes)) $this->attributes = array();		
+		if(is_null($key)) throw new DataFlowServiceException('dataflow context attribute key cannot be null', DataFlowServiceException::INVALID_ARGUMENT);
+		if(!isset($this->attributes)) $this->attributes = array();
 		$this->attributes[$key] = $val;
 		if($this->debugLogger()->isEnabled()) $this->debugLogger()->write("sets attribute '$key' with value '".(is_object($val) ? "instance of ".get_class($val) : $val)."'");
 		if(!isset($this->recyclableAttributes)) $this->recyclableAttributes = array();
 		$oldVal = $this->recyclableAttributes[$key];
 		if($oldVal !== $val) $this->recycleObject($oldVal);
 		if($recyclable) $this->recyclableAttributes[$key] = $val;
-		else unset($this->recyclableAttributes[$key]);		
+		else unset($this->recyclableAttributes[$key]);
 	}
-	
+
 	/**
-	 * Sets the attributes as defined the given array. 
+	 * Sets the attributes as defined the given array.
 	 * Uses the array key as attribute keys and the array values as attribute values.
 	 * The values are shallow copied from the given array.
 	 */
@@ -199,9 +199,9 @@ class DataFlowContext
 		if(empty($attributes)) return;
 		if(!is_array($attributes)) throw new DataFlowServiceException('attributes should be an array', DataFlowServiceException::INVALID_ARGUMENT);
 		if(!isset($this->attributes)) $this->attributes = $attributes;
-		else $this->attributes = array_merge($this->attributes, $attributes);			
+		else $this->attributes = array_merge($this->attributes, $attributes);
 	}
-	
+
 	/**
 	 * Returns the value of an attribute characterizing this context or null if not defined
 	 */
@@ -210,7 +210,7 @@ class DataFlowContext
 		if(!isset($this->attributes)) return null;
 		else return $this->attributes[$key];
 	}
-	
+
 	/**
 	 * Returns an iterator on the list of attributes attached to this context
 	 * The iterator is compatible with the foreach control structure : foreach(DataFlowContext->getAttributeIterator() as $key=>$val){...}
@@ -218,21 +218,21 @@ class DataFlowContext
 	public function getAttributesIterator() {
 		return $this->attributes;
 	}
-	
+
 	/**
 	 * Returns true if this context has some attributes defined (only counts the existence of keys, not the values)
 	 */
 	public function hasAttributes() {
 		return !empty($this->attributes);
 	}
-	
+
 	/**
 	 * Returns the number of attributes attached to this context. Only counts the existence of keys, not the values.
 	 */
 	public function countAttributes() {
 		return count($this->attributes);
 	}
-	
+
 	/**
 	 * Removes the given context attributes if defined
 	 * Ignores invalid keys.
@@ -241,27 +241,27 @@ class DataFlowContext
 	public function removeAttributes($keys) {
 		if(empty($this->attributes)) return;
 		if(empty($keys)) return;
-		if(is_array($keys)) $this->attributes = array_diff_key($this->attributes, array_combine($keys, $keys)); 		
-		else unset($this->attributes[$keys]);		
+		if(is_array($keys)) $this->attributes = array_diff_key($this->attributes, array_combine($keys, $keys));
+		else unset($this->attributes[$keys]);
 	}
-	
+
 	/**
 	 * Removes all context attributes, except the given array of keys if defined
 	 */
 	public function removeAllAttributes($exceptTheseKeys=null) {
 		if(empty($this->attributes)) return;
 		if(isset($exceptTheseKeys)) {
-			if(is_array($exceptTheseKeys)) $this->attributes = array_intersect_key($this->attributes, array_combine($exceptTheseKeys, $exceptTheseKeys));			
-			else $this->attributes = array($exceptTheseKeys=>$this->attributes[$exceptTheseKeys]);			
+			if(is_array($exceptTheseKeys)) $this->attributes = array_intersect_key($this->attributes, array_combine($exceptTheseKeys, $exceptTheseKeys));
+			else $this->attributes = array($exceptTheseKeys=>$this->attributes[$exceptTheseKeys]);
 		}
-		else unset($this->attributes);		
-	}	
-	
+		else unset($this->attributes);
+	}
+
 	// Wigii events
-	
+
 	private $checkedIfWigiiEventsAreEnabled;
 	private $wigiiEventsEnabled;
-	
+
 	/**
 	 * Returns true if WigiiEvents are enabled in this DataFlowContext
 	 * If true, then it is worth calling getWigiiEventsDispatcher and trigger the right event.
@@ -273,7 +273,7 @@ class DataFlowContext
 		}
 		return $this->wigiiEventsEnabled;
 	}
-	
+
 	private $wigiiEventsDispatcher;
 	/**
 	 * Returns an object implementing WigiiEvents interface that can be used
@@ -286,30 +286,30 @@ class DataFlowContext
 		}
 		return $this->wigiiEventsDispatcher;
 	}
-	
+
 	// Implementation
-	
+
 	private function recycleObject($obj) {
 		if(isset($obj) && method_exists($obj, "freeMemory")) $obj->freeMemory();
-	}	
+	}
 }
 
 class DataFlowContextWigiiEvents implements WigiiEvents {
 	private $dataFlowContext;
-	
+
 	public static function createInstance($dataFlowContext) {
 		$returnValue = new self();
 		$returnValue->dataFlowContext = $dataFlowContext;
 		return $returnValue;
 	}
-		
+
 	/**
 	 * readElement
 	 * this event is thrown each time an element is displayed in a detail window
 	 */
 	public function readElement($pWithElement){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "read", "Element", $pWithElement->getElement()->getModule(), $pWithElement);
-	}	
+	}
 
 	/**
 	 * download file
@@ -346,7 +346,7 @@ class DataFlowContextWigiiEvents implements WigiiEvents {
 	public function deleteElement($pWithElementWithGroupPList){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "delete", "Element", $pWithElementWithGroupPList->getElement()->getModule(), $pWithElementWithGroupPList);
 	}
-	
+
 	/**
 	 * restore element
 	 */
@@ -360,7 +360,7 @@ class DataFlowContextWigiiEvents implements WigiiEvents {
 	public function insertMultipleElement($pWithModuleWithElementPListWithGroupList){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "insert", "MultipleElement", $pWithModuleWithElementPListWithGroupList->getModule(), $pWithModuleWithElementPListWithGroupList);
 	}
-	
+
 	/**
 	 * updateMultipleElement
 	 */
@@ -374,7 +374,7 @@ class DataFlowContextWigiiEvents implements WigiiEvents {
 	public function updateMultipleElementState($pWithModuleWithElementPListWithState){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "setState", "MultipleElement", $pWithModuleWithElementPListWithState->getModule(), $pWithModuleWithElementPListWithState);
 	}
-	
+
 	/**
 	 * deleteMultipleElement
 	 */
@@ -402,36 +402,36 @@ class DataFlowContextWigiiEvents implements WigiiEvents {
 	public function Emailing($pWithModuleWithElementIdsWithRecord){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "Emailing", "MultipleElement", $pWithModuleWithElementIdsWithRecord->getModule(), $pWithModuleWithElementIdsWithRecord);
 	}
-	
-	
+
+
 	/**
 	 * sendEmail
 	 */
 	public function sendEmail($pWithElementWithEmailWithFieldname){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "sendEmail", "Element", $pWithElementWithEmailWithFieldname->getElement()->getModule(), $pWithElementWithEmailWithFieldname);
 	}
-	
+
 	/**
 	 * sendExternalValidationLink
 	 */
 	public function sendExternalValidationLink($pWithElementWithEmailWithFieldname){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "sendExternalValidationLink", "Element", $pWithElementWithEmailWithFieldname->getElement()->getModule(), $pWithElementWithEmailWithFieldname);
 	}
-	
+
 	/**
 	 * setExternalAccessViewLink
 	 */
 	public function setExternalAccessViewLink($pWithElementWithEmailWithFieldname){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "setExternalAccessViewLink", "Element", $pWithElementWithEmailWithFieldname->getElement()->getModule(), $pWithElementWithEmailWithFieldname);
 	}
-	
+
 	/**
 	 * setExternalAccessEditLink
 	 */
 	public function setExternalAccessEditLink($pWithElementWithEmailWithFieldname){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "setExternalAccessEditLink", "Element", $pWithElementWithEmailWithFieldname->getElement()->getModule(), $pWithElementWithEmailWithFieldname);
 	}
-	
+
 	/**
 	 * stopExternalAccessLink
 	 */
@@ -445,28 +445,28 @@ class DataFlowContextWigiiEvents implements WigiiEvents {
 	public function sendMultipleExternalValidationLink($pWithModuleWithElementPlistWithEmailWithFieldname){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "sendMultipleExternalValidationLink", "MultipleElement", $pWithModuleWithElementPlistWithEmailWithFieldname->getModule(), $pWithModuleWithElementPlistWithEmailWithFieldname);
 	}
-	
+
 	/**
 	 * setMultipleExternalAccessViewLink
 	 */
 	public function setMultipleExternalAccessViewLink($pWithModuleWithElementPlistWithEmailWithFieldname){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "setMultipleExternalAccessViewLink", "MultipleElement", $pWithModuleWithElementPlistWithEmailWithFieldname->getModule(), $pWithModuleWithElementPlistWithEmailWithFieldname);
 	}
-	
+
 	/**
 	 * setMultipleExternalAccessEditLink
 	 */
 	public function setMultipleExternalAccessEditLink($pWithModuleWithElementPlistWithEmailWithFieldname){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "setMultipleExternalAccessEditLink", "MultipleElement", $pWithModuleWithElementPlistWithEmailWithFieldname->getModule(), $pWithModuleWithElementPlistWithEmailWithFieldname);
 	}
-	
+
 	/**
 	 * stopMultipleExternalAccessLink
 	 */
 	public function stopMultipleExternalAccessLink($pWithModuleWithElementPlistWithFieldname){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "stopMultipleExternalAccessLink", "MultipleElement", $pWithModuleWithElementPlistWithFieldname->getModule(), $pWithModuleWithElementPlistWithFieldname);
 	}
-	
+
 	/**
 	 * exportElements
 	 */
@@ -519,6 +519,13 @@ class DataFlowContextWigiiEvents implements WigiiEvents {
 	 */
 	public function navigate($pWithUserIdWithWigiiNamespaceWithModule){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "navigate", "User", null, $pWithUserIdWithWigiiNamespaceWithModule);
+	}
+
+	/**
+	 * selectGroup
+	 */
+	public function selectGroup($pWithGroupPList){
+		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "selectGroup", "Group", null, $pWithGroupPList);
 	}
 
 	/**

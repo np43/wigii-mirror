@@ -250,6 +250,29 @@ class WigiiExecutor {
 		return $policyEvaluator;
 	}
 
+	/**
+	 * Returns an instance of a FuncExpEvaluator configured for the context of the given Record.
+	 * @param Principal $p principal executing the request
+	 * @param ExecutionService $exec current ExecutionService instance
+	 * @param Record $rec record for which to get an FuncExpEvaluator
+	 * @return FuncExpEvaluator
+	 */
+	public function getFuncExpEvaluator($p, $exec, $rec) {
+		if(!isset($rec)) throw new ServiceProviderException('record cannot be null', ServiceProviderException::INVALID_ARGUMENT);
+		// gets RecordEvaluator
+		if($rec instanceof Element) $evaluatorClassName = (string)$this->getConfigurationContext()->getParameter($p, $rec->getModule(), "Element_evaluator");
+		else $evaluatorClassName = null;
+		if(empty($evaluatorClassName)) $evaluatorClassName = (string)$this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "Element_evaluator");
+		$evaluator = ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
+		// injects the context
+		$evaluator->setContext($p, $rec);
+		// gets vm
+		$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
+		$returnValue->setFreeParentEvaluatorOnFreeMemory(true);
+		//$this->debugLogger()->write("instanciated FuncExpEvaluator of class ".get_class($returnValue));
+		return $returnValue;
+	}
+
 	//functional
 
 	/**
@@ -1738,6 +1761,11 @@ invalidCompleteCache();
 	}
 	protected function createDeleteGroupFormExecutor($groupP, $record, $formId, $submitUrl, $request) {
 		$r = DeleteGroupFormExecutor :: createInstance($this, $groupP, $record, $formId, $submitUrl, $request);
+		$r->setRootPrincipal($this->getRootPrincipal()); //needed for moving group into trashbin
+		return $r;
+	}
+	protected function createEmptyGroupFormExecutor($groupP, $record, $formId, $submitUrl, $request) {
+		$r = EmptyGroupFormExecutor :: createInstance($this, $groupP, $record, $formId, $submitUrl, $request);
 		$r->setRootPrincipal($this->getRootPrincipal()); //needed for moving group into trashbin
 		return $r;
 	}
@@ -3966,6 +3994,66 @@ invalidCompleteCache();
 				$form->ResolveForm($p, $exec, $state);
 
 				break;
+			case "groupEmpty" :
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
+					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					if (!$exec->getCrtModule()->isAdminModule())
+						throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
+
+					if (!isset ($transS))
+						$transS = ServiceProvider :: getTranslationService();
+					if (!isset ($groupAS))
+						$groupAS = ServiceProvider :: getGroupAdminService();
+					if (!isset ($ac))
+						$ac = $this->getAdminContext($p);
+
+					$totalWidth = 450;
+					$labelWidth = 150;
+					$action = $exec->getCrtRequest();
+
+					$i = 0;
+					$workingModuleName = $exec->getCrtParameters($i++);
+					$groupId = $exec->getCrtParameters($i++);
+					$isFromGroupPanel = $exec->getCrtParameters($i++)=="groupPanel";
+					$groupP = $groupAS->getGroup($p, $groupId, null, true);
+					// checks that group exists and that principal has access to group
+					if(!isset($groupP) || is_null($groupP->getGroup()->getDetail())) {
+						$this->openAsMessage($exec->getIdAnswer(), 250, $transS->t($p, "noGroupFound"), $transS->t($p, "noGroupFoundExplanation"));
+						break;
+					}
+
+					$group = $groupP->getGroup();
+					$workingModule = $group->getModule();
+
+					// prevents deletion of groups containing blocked elements
+					if($group->getDetail()->getNumberOfBlockedElements() > 0) {
+						$this->openAsMessage($exec->getIdAnswer(), 250, $transS->t($p, "operationImpossible"), $group->getDetail()->getNumberOfBlockedElements().' '.$transS->t($p, "blockedElementsOperationImpossible"));
+						break;
+					}
+
+					if (false === $this->lockEntity($p, $exec, "actOnCloseDialog('elementDialog');", "group", $group))
+						break;
+
+					//set url to refresh on done, depending on context
+					if($isFromGroupPanel){
+						//invalid cache of group
+						$exec->invalidCache($p, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/".$group->getId(), $exec->getCrtWigiiNamespace(), $workingModule);
+						$request = "groupPanel/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $workingModule->getModuleUrl() . "/display/groupPanel";
+					} else {
+						$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/" . $this->getAdminContext($p)->getSubScreen();
+					}
+
+					$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupEmpty"), $exec->getCrtModule());
+					$form = $this->createEmptyGroupFormExecutor($groupP, $groupEditRec, "emptyGroup_form", $action, $request);
+					$form->setCorrectionWidth(19);
+					$form->setLabelWidth($labelWidth);
+					$form->setTotalWidth($totalWidth);
+
+					$state = "start";
+					if ($_POST["action"] != null) $state = addslashes($_POST["action"]);
+					$form->ResolveForm($p, $exec, $state);
+
+					break;
 			case "groupConfigEdit" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
@@ -6846,20 +6934,88 @@ onUpdateErrorCounter = 0;
 				$elementId = addslashes($_POST["elementId"]);
 				$previewListId = addslashes($_POST["previewListId"]);
 
-				list($sessElementId, $linkName, $linkType, $listFilter, $elementIsBlocked) = $sessAS->getData($elS, $previewListId."_".$exec->getCrtContext());
+				list($sessElementId, $linkName, $linkType, $listFilter, $elementIsBlocked, $query) = $sessAS->getData($elS, $previewListId."_".$exec->getCrtContext());
 				if($sessElementId!=$elementId) throw new ServiceException("getNextElementInPreviewList elementId is not equal to stored context", ServiceException::DATA_INTEGRITY_ERROR);
 				$listFilter->setDesiredPageNumber($page);
-				$elementPList = ElementPListRowsForPreview::createInstance($this->createTRM(), $p, $exec, $this->getConfigurationContext(), $listFilter->getFieldSelectorList(), $sessElementId, $linkName, $elementIsBlocked, $previewListId);
 
-				if($linkType == 'subitem') {
-					$nbRow = $elS->getSubElementsForField($p, $sessElementId, $linkName, $elementPList, $listFilter);
+				$linkType = Links::linkTypeFromString($linkType);
+				// link of type query
+				if($linkType == Links::LINKS_TYPE_QUERY) {
+					// loads element
+					$element = $this->createElementForForm($p, $exec->getCrtModule(), $elementId);
+					$elementP = $elS->fillElement($p, $element);
+
+					// parses query and creates func exp
+					$queryFx = str2fx($query);
+					// gets func exp evaluator
+					$evalFx = $this->getFuncExpEvaluator($p, $exec, $element);
+					$querySource = null;
+					try {
+						// evaluates query and builds data source object
+						$querySource = $evalFx->evaluateFuncExp($queryFx, $this);
+						// frees evaluator
+						$evalFx->freeMemory();
+					}
+					catch(Exception $e) {
+						$evalFx->freeMemory();
+						throw $e;
+					}
+					// updates list filter if set
+					if($querySource instanceof ElementPListDataFlowConnector) {
+						$querySourceLf = $querySource->getListFilter();
+						if(isset($querySourceLf)) {
+							if(!is_null($listFilter->getFieldSelectorList())) $querySourceLf->setFieldSelectorList($listFilter->getFieldSelectorList());
+							if(!is_null($listFilter->getFieldSortingKeyList())) $querySourceLf->setFieldSortingKeyList($listFilter->getFieldSortingKeyList());
+							if($listFilter->getPageSize() > 0) {
+								$querySourceLf->setPageSize($listFilter->getPageSize());
+								$querySourceLf->setDesiredPageNumber($listFilter->getDesiredPageNumber());
+							}
+						}
+						else $querySource->setListFilter($listFilter);
+					}
+					// executes data flow and builds html
+					if(isset($querySource)) {
+						$currentNamespace = $p->getWigiiNamespace();
+						$adaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
+						$p->setAdaptiveWigiiNamespace(true);
+						$nbRow = ServiceProvider::getDataFlowService()->processDataSource($p, $querySource, dfasl(
+								dfas('ElementPListRowsForPreview',
+										'setTrm', $this->createTRM(),
+										'setP', $p,
+										'setExec', $exec,
+										'setConfigService', $this->getConfigurationContext(),
+										'setFsl', $listFilter->getFieldSelectorList(),
+										'setElementId', $element->getId(),
+										'setLinkName', $linkName,
+										'setLinkType', $linkType,
+										'setElementIsBlocked', $elementIsBlocked,
+										'setPreviewListId', $previewListId,
+										'setWidth', null,
+										'setUpdateContentOnly', true)
+						), false);
+						$total = $querySource->getListFilter()->getTotalNumberOfObjects();
+						if(method_exists($querySource, 'freeMemory')) $querySource->freeMemory();
+						if($adaptiveWigiiNamespace) $p->setAdaptiveWigiiNamespace(false);
+						$p->bindToWigiiNamespace($currentNamespace);
+					}
 				}
+				// else subitem or links
 				else {
-					/* not implemented */
+					$elementPList = ElementPListRowsForPreview::createInstance($this->createTRM(), $p, $exec, $this->getConfigurationContext(), $listFilter->getFieldSelectorList(), $sessElementId, $linkName, $elementIsBlocked, $previewListId, $linkType);
+
+					if($linkType == Links::LINKS_TYPE_SUBITEM) {
+						$nbRow = $elS->getSubElementsForField($p, $sessElementId, $linkName, $elementPList, $listFilter);
+						$total = $listFilter->getTotalNumberOfObjects();
+					}
+					else {
+						/* not implemented */
+					}
 				}
 
 				//add the nb of new rows
-?>_X_NBNEWROWS_X_<?=$nbRow;?>_X_NBNEWROWS_X_<?=$listFilter->getTotalNumberOfObjects();
+				if($nbRow <= 0) $nbRow = 0;
+				if($total <= 0) $total = 0;
+?>_X_NBNEWROWS_X_<?=$nbRow;?>_X_NBNEWROWS_X_<?=$total;
 
 				break;
 			case "getCalendarEvents" :
@@ -7676,6 +7832,8 @@ onUpdateErrorCounter = 0;
 								if ($exec->getCrtParameters(0) == "selectGroupAsConfig") {
 									$doUpdate = true;
 								}
+
+				$this->throwEvent()->selectGroup(PWithGroupPList::createInstance($p, $groupList));
 
 				$lc->setGroupPList($groupList, $withChildren);
 				$this->getConfigurationContext()->setGroupPList($p, $exec->getCrtModule(), $groupList, $withChildren);

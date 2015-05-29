@@ -29,21 +29,26 @@ $fieldXml = $field->getXml();
 if(!$this->isForNotification()){
 	$fieldId = $this->getDetailRenderer()->getDetailId()."__".$fieldName;
 }
+$linkType = Links::linkTypeFromString((string)$fieldXml['linkType']);
 
-$strValue = $this->formatValueFromRecord($fieldName, null, $this->getRecord());
-//wrap link
-// $jsUpdate = "update('elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/subelement/list/".$this->getRecord()->getId()."/".$fieldName."');";
-// $strValue = '<a href="#" onclick="'.$jsUpdate.'">'.$strValue.'</a>';
-$strValue = '<div '.($fieldXml["fsl"]!="" ? 'class="H" ' : '').'style="float: left">('.$strValue.')</div>';
+if($linkType == Links::LINKS_TYPE_QUERY) {
+	$strValue = '<div '.($fieldXml["fsl"]!="" ? 'class="H linkTypeQuery" ' : 'class="linkTypeQuery" ').'style="float: left"></div>';
+}
+else {
+	$strValue = $this->formatValueFromRecord($fieldName, null, $this->getRecord());
+	//wrap link
+	// $jsUpdate = "update('elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/subelement/list/".$this->getRecord()->getId()."/".$fieldName."');";
+	// $strValue = '<a href="#" onclick="'.$jsUpdate.'">'.$strValue.'</a>';
+	$strValue = '<div '.($fieldXml["fsl"]!="" ? 'class="H" ' : '').'style="float: left">('.$strValue.')</div>';	
+}
 
 $this->put($strValue);
 
 // add button
-$subEltModule = $this->getModuleAdminService()->getModule($this->getP(), (string)$fieldXml['module'])->getModuleUrl();
-//the onclick on addNewSubElement is done in setListenerToPreviewList()
-$subEltModule = ServiceProvider::getModuleAdminService()->getModule($this->getP(), (string)$fieldXml['module'])->getModuleUrl();
 $trashBinPrefix = (string)$this->getConfigService()->getParameter($this->getP(), null, "deletedSubElementsLinkNamePrefix");
-if(!empty($trashBinPrefix) && strpos($field->getFieldName(), $trashBinPrefix)!==0 && !$this->isForPrint() && !$this->isForExternalAccess() && !$this->isForNotification()){
+if(!empty($trashBinPrefix) && strpos($field->getFieldName(), $trashBinPrefix)!==0 && 
+		!$this->isForPrint() && !$this->isForExternalAccess() && !$this->isForNotification() &&
+		$linkType == Links::LINKS_TYPE_SUBITEM){
 	$this->put('<div class="addNewSubElement ui-corner-all Green" style="font-weight: bold; float: right; margin: 0 4px; padding: 2px 4px" >+ <font class="H">'.$this->t("addElementButton").'</font></div>');
 	$this->addJsCode("setListenerToAddSubItem('".$fieldId."', '".$this->getRecord()->getId()."', '".$fieldName."');");
 }

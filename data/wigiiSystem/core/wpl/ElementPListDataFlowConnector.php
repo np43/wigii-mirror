@@ -35,6 +35,7 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 	private $startEltNumber;
 	private $endEltNumber;
 	private $currentEltNumber;
+	private $calculatedGroupList;
 	
 	// Object lifecycle
 	
@@ -51,6 +52,7 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		unset($this->listFilter);
 		unset($this->dataFlowService);
 		unset($this->dataFlowContext);
+		unset($this->calculatedGroupList);
 		$this->nElements = 0;	
 		$this->lockedForUse = false;	
 	}
@@ -152,7 +154,13 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 	public function setListFilter($listFilter) {
 		$this->listFilter = $listFilter;
 	}
-	
+	/**
+	 * Returns the list filter used to select the elements
+	 * @return ListFilter
+	 */
+	public function getListFilter() {
+		return $this->listFilter;
+	}
 	private $maxWigiiBagSize = 100;
 	/**
 	 * Sets the maximum number of elements that can be stored into one instance of a wigii bag
@@ -190,6 +198,8 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 				$this->startEltNumber = ($this->listFilter->getDesiredPageNumber()-1)*$maxElements+1;
 				$this->endEltNumber = $this->startEltNumber + $maxElements;
 			}
+			// stores ListFilter into data flow context so that it can be used in next stages
+			$dataFlowContext->setAttribute('ListFilter', $this->listFilter);
 		}
 		// stores FieldSelectorList into data flow context so that it can be used in next stages
 		$fsl = $lf->getFieldSelectorList();
@@ -259,10 +269,16 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 			$n = $this->getElementService()->getSelectedElementsInGroups($principal, $this->inGroupLogExp, $this, $lf);
 		}
 		
+		// updates user ListFilter with totalNumberOfObjects if set
+		if(isset($this->listFilter)) {
+			$this->listFilter->setTotalNumberOfObjects($lf->getTotalNumberOfObjects());
+		}
+		
 		// fetches all the elements until reaching the max
-		//$this->debugLogger()->write(implode(',', array($n, $maxElements, $lf->getPageSize())));
+		//fput('ElementPListDataFlowConnector: '.implode(',', array($n, $maxElements, $lf->getPageSize(), $lf->getTotalNumberOfObjects(), $lf->getDesiredPageNumber())));
 		while($n < $lf->getTotalNumberOfObjects() &&
 				($maxElements < 0 || $n < $maxElements)) {			
+			//fput('ElementPListDataFlowConnector: '.implode(',', array($n, $maxElements, $lf->getPageSize(), $lf->getTotalNumberOfObjects(), $lf->getDesiredPageNumber())));
 			$lf->setDesiredPageNumber($lf->getDesiredPageNumber()+1);
 			//$this->debugLogger()->write("gets next ".$lf->getPageSize()." elements on max of ".($maxElements > 0 ? $maxElements : $lf->getTotalNumberOfObjects()));
 			$this->nElements = 0;
@@ -271,7 +287,8 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 			} 	
 			else {
 				$n += $this->getElementService()->getSelectedElementsInGroups($principal, $this->inGroupLogExp, $this, $lf);
-			}					
+			}
+			if($this->nElements == 0) break;					
 		}		
 	}
 	
@@ -301,6 +318,11 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		if(!$this->instanciatedApiClient) {
 			$this->dataFlowContext->setAttribute('GroupBasedWigiiApiClient', ServiceProvider::getGroupBasedWigiiApiClient($this->dataFlowContext->getPrincipal(), $groupList), true);
 			$this->instanciatedApiClient = true;
+			$this->calculatedGroupList = $groupList;
 		} 
+	}
+	
+	public function getCalculatedGroupList() {
+		return $this->calculatedGroupList;
 	}
 }

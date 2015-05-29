@@ -26,6 +26,7 @@
 
 $fieldXml = $field->getXml();
 $fieldId = $this->getFormRenderer()->getFormId()."__".$fieldName;
+$linkType = Links::linkTypeFromString((string)$fieldXml['linkType']);
 
 //defining width if existant
 if($parentWidth != null){
@@ -46,57 +47,35 @@ $inputId = $formId.'_'.$fieldName;
 
 $strValue = $this->formatValueFromRecord($fieldName, null, $this->getRecord());
 $exec = ServiceProvider::getExecutionService();
-//wrap link
-// if(!$this->getRecord()->isNew()) {
-// 	$jsUpdate = "update('elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/subelement/list/".$this->getRecord()->getId()."/".$fieldName."');";
-// 	$strValue = '<a href="#" onclick="'.$jsUpdate.'">'.$strValue.'</a>';
-// }
-$strValue = '<div '.($fieldXml["fsl"]!="" ? 'class="H" ' : '').'style="float: left">('.$strValue.')</div>';
+if($linkType == Links::LINKS_TYPE_QUERY) {
+	if($this->getRecord()->isNew()){
+		$strValue = '<div '.($fieldXml["fsl"]!="" ? 'class="H linkTypeQuery" ' : 'class="linkTypeQuery" ').'style="float: left">(0)</div>';
+	}
+	else {
+		$strValue = '<div '.($fieldXml["fsl"]!="" ? 'class="H linkTypeQuery" ' : 'class="linkTypeQuery" ').'style="float: left"></div>';
+	}
+}
+else {
+	//wrap link
+	// if(!$this->getRecord()->isNew()) {
+	// 	$jsUpdate = "update('elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/subelement/list/".$this->getRecord()->getId()."/".$fieldName."');";
+	// 	$strValue = '<a href="#" onclick="'.$jsUpdate.'">'.$strValue.'</a>';
+	// }
+	$strValue = '<div '.($fieldXml["fsl"]!="" ? 'class="H" ' : '').'style="float: left">('.$strValue.')</div>';
+}
 $this->put($strValue);
 
 // add button
 $subEltModule = ServiceProvider::getModuleAdminService()->getModule($this->getP(), (string)$fieldXml['module'])->getModuleUrl();
 $trashBinPrefix = (string)$this->getConfigService()->getParameter($this->getP(), null, "deletedSubElementsLinkNamePrefix");
-if(!empty($trashBinPrefix) && strpos($field->getFieldName(), $trashBinPrefix)!==0){
+if(!empty($trashBinPrefix) && strpos($field->getFieldName(), $trashBinPrefix)!==0 && $linkType == Links::LINKS_TYPE_SUBITEM){
 	if($this->getRecord()->isNew()){
 		$this->put('<div class="grayFont" style="float: right; margin: 0 4px; padding: 2px 4px">'.$this->t("finishElementBeforeAddingSubItems_prefix").$this->t("#elements".$subEltModule."#").'.</div>');
-	} else {
-		//the onclick on addNewSubElement is done in setListenerToPreviewList()
+	} else {		
 		$this->put('<div class="addNewSubElement ui-corner-all Green" style="font-weight: bold; float: right; margin: 0 4px; padding: 2px 4px">+ <font class="H">'.$this->t("addElementButton").'</font></div>');
 	}
+	$this->addJsCode("setListenerToAddSubItem('".$fieldId."', '".$this->getRecord()->getId()."', '".$fieldName."');");
 }
-$this->addJsCode("setListenerToAddSubItem('".$fieldId."', '".$this->getRecord()->getId()."', '".$fieldName."');");
-
-//HIDDEN FIELDS
-
-//subfield value is calculated on based on original value - difference between newIds and originalIds
-
-////originalIds is not persisted and is used in the implementation only to manage links after the form is checked.
-////originalIds contains a list of element ids separated by a comma. It represent the current state of table Elements_Elements for this item -->
-//$subFieldName = "originalIds";
-//$inputNode = "input";
-//$inputType = "hidden";
-//$inputId = $inputPathId;
-//$inputName = $fieldName.'_'.$subFieldName;
-//$this->put('<'.$inputNode.' id="'.$inputId.'" name="'.$inputName.'" ');
-//if($inputType != null) $this->put(' type="'.$inputType.'" ');
-//$this->put(' value="');
-//$this->put(stripslashes($_POST[$inputName]));
-//$this->put('" />');
-//
-////newIds is not persited and is used in the implementation only to manage links after the form is checked.
-////newIds contains a list of element ids separated by a comma. It represent the list of links the user defined with the selection/unselection process -->
-//$subFieldName = "newIds";
-//$inputNode = "input";
-//$inputType = "hidden";
-//$inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
-//$inputName = $fieldName.'_'.$subFieldName;
-//$this->put('<'.$inputNode.' id="'.$inputId.'" name="'.$inputName.'" ');
-//if($inputType != null) $this->put(' type="'.$inputType.'" ');
-//$this->put(' value="');
-//$this->put(stripslashes($_POST[$inputName]));
-//$this->put('" />');
-
 
 //display preview if fsl!=null
 if($fieldXml["fsl"]!=""){

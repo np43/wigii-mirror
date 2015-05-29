@@ -188,6 +188,11 @@ interface WigiiEvents {
 	public function navigate($pWithUserIdWithWigiiNamespaceNameWithModuleName);
 
 	/**
+	 * selectGroup
+	 */
+	public function selectGroup($pWithGroupPList);
+
+	/**
 	 * switchLanguage
 	 */
 	public function switchLanguage($pWithUserWithLanguage);

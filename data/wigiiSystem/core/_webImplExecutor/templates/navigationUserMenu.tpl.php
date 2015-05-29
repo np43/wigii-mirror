@@ -40,7 +40,7 @@ if(!isset($config)) $config = $this->getConfigurationContext();
 	}
 	?><li id="userName"><?
 		echo '<a href="#" onclick="return false;" class="sf-with-ul">';
-		if($p->isRealUserPublic()) {			
+		if($p->isRealUserPublic()) {
 			echo $transS->t($p, $realUser->getUsername(), $authS->getPublicUserConfigForPrincipal($p));
 		}
 		else {
@@ -135,9 +135,9 @@ if(!isset($config)) $config = $this->getConfigurationContext();
 			?></li><?
 
 			//logout
-			?><li id="userMenuLogout"><?	
+			?><li id="userMenuLogout"><?
 				// reset wigii_anchor cookie
-				$wigii_anchor_cookie = "$.cookie('wigii_anchor', '#logout',  { path: '/' });";			
+				$wigii_anchor_cookie = "$.cookie('wigii_anchor', '#logout',  { path: '/' });";
 				echo '<a href="#" onclick="'.$wigii_anchor_cookie.$this->getJsCodeBeforeLogout($p).' '.$exec->getUpdateJsCode($p->getRealUserId(), "'+crtRoleId+'", "'+crtWigiiNamespaceUrl+'", "'+crtModuleName+'", 'NoAnswer', 'logout', 'logout', true, true).' return false;">'.$transS->t($p, ($p->isRealUserPublic()?"login":"logout")).'</a>';
 			?></li><?
 		?></ul><?

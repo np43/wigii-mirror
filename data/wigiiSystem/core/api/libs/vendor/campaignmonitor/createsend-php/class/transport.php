@@ -4,8 +4,8 @@ define('CS_REST_GET', 'GET');
 define('CS_REST_POST', 'POST');
 define('CS_REST_PUT', 'PUT');
 define('CS_REST_DELETE', 'DELETE');
-define('CS_REST_SOCKET_TIMEOUT', 10);
-define('CS_REST_CALL_TIMEOUT', 10);
+define('CS_REST_SOCKET_TIMEOUT', 180); //changed value from 10 to 180 the 06/05/2015 due to Fatal error: Error making request with curl_error: Operation timed out after 10000 milliseconds with 0 bytes received in /home/wigii/prod/data/wigiiSystem/core/api/libs/vendor/campaignmonitor/createsend-php/class/transport.php on line 158
+define('CS_REST_CALL_TIMEOUT', 180); //changed value from 10 to 180 the 06/05/2015 due to Fatal error: Error making request with curl_error: Operation timed out after 10000 milliseconds with 0 bytes received in /home/wigii/prod/data/wigiiSystem/core/api/libs/vendor/campaignmonitor/createsend-php/class/transport.php on line 158
 
 function CS_REST_TRANSPORT_get_available($requires_ssl, $log) {
     if(function_exists('curl_init') && function_exists('curl_exec')) {

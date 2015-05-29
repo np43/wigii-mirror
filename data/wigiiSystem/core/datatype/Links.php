@@ -24,6 +24,9 @@
  * by LWR
  */
 class Links extends DataTypeInstance{
+	const LINKS_TYPE_SUBITEM = 0;
+	const LINKS_TYPE_LINK = 1;
+	const LINKS_TYPE_QUERY = 2;
 	
 	/**
 	* overrides parent class
@@ -39,6 +42,23 @@ class Links extends DataTypeInstance{
 		//calculation is incremented based on the change. originalIds may not include the complete list
 		//i.e. the principal could not have access to all linked items
 		$field->setValue($value+(count($newIds)-count($originalIds)), $elementId, $wigiiBag,"value");
+	}
+	
+	public static function linkTypeToString($type) {
+		switch($type) {
+			case Links::LINKS_TYPE_SUBITEM: return 'subitem';
+			case Links::LINKS_TYPE_LINK: return 'link';
+			case Links::LINKS_TYPE_QUERY: return 'query';
+			default: throw new ServiceException('unsupported link type: '.$type);
+		}
+	}
+	public static function linkTypeFromString($type) {
+		switch(strtolower($type)) {
+			case 'subitem': return Links::LINKS_TYPE_SUBITEM;
+			case 'link': return Links::LINKS_TYPE_LINK;
+			case 'query': return Links::LINKS_TYPE_QUERY;
+			default: throw new ServiceException('unsupported link type: '.$type);
+		}
 	}
 }
 

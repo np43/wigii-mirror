@@ -1107,24 +1107,9 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 	 * @return FuncExpEvaluator returns a configured FuncExpEvaluator ready to be used to executes func exp
 	 */
 	protected function getFuncExpEval($p, $exec) {
-		$config = $this->getWigiiExecutor()->getConfigurationContext();
-		$rec = $this->getRecord();
-		// Gets element evaluator
-		// if subelement -> then tries to get the sub element evaluator
-		// if not found then gets root evaluator
-		if($rec instanceof Element && $rec->isSubElement()) {
-			$evaluatorClassName = (string)$config->getParameter($p, $rec->getModule(), "Element_evaluator");
-		}
-		else $evaluatorClassName = null;
-		if(empty($evaluatorClassName)) $evaluatorClassName = (string)$config->getParameter($p, $exec->getCrtModule(), "Element_evaluator");
-		$evaluator = ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
+		$returnValue = $this->getWigiiExecutor()->getFuncExpEvaluator($p, $exec, $this->getRecord());
 		// injects a reference to the current FormExecutor
-		$evaluator->setFormExecutor($this);
-		// injects the context
-		$evaluator->setContext($p, $rec);
-		// gets vm
-		$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
-		$returnValue->setFreeParentEvaluatorOnFreeMemory(true);
+		$returnValue->getParentFuncExpEvaluator()->setFormExecutor($this);
 		return $returnValue;
 	}
 

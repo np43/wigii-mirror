@@ -369,7 +369,19 @@ $('#".$this->getId()." .MatrixColHeaders div.noRights').each(function(){
 		//load the values
 		if($groupP->getRights() == null) return;
 		$this->crtGroupPForAddUserRP = $groupP;
-		$this->getGroupAdminService()->getAllUsers($this->getP(), $id, $this, $this->getAdminContext()->getUserListFilter());
+		$lf = $this->getAdminContext()->getUserListFilter();
+		//if the folder is in another namespace than the Principal then don't find the roles outside of current namespace
+		$origLE = $lf->getFieldSelectorLogExp();
+		if($groupP->getGroup()->getWigiiNamespace()->getWigiiNamespaceName()!= $this->getP()->getWigiiNamespace()->getWigiiNamespaceName()){
+			$fsle = LogExp::createAndExp();
+			$fsle->addOperand(LogExp::createEqualExp(FieldSelector::createInstance("wigiiNamespace"), $this->getP()->getWigiiNamespace()->getWigiiNamespaceName()));
+			if($origLE){
+				$fsle->addOperand($origLE->reduceNegation(true));
+			}
+			$lf->setFieldSelectorLogExp($fsle);
+		}
+		$this->getGroupAdminService()->getAllUsers($this->getP(), $id, $this, $lf);
+		$lf->setFieldSelectorLogExp($origLE);
 	}
 
 	//UserPList implementation

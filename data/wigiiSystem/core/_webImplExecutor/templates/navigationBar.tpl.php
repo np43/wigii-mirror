@@ -43,6 +43,8 @@ if($p->isPlayingRole()){
 	$wigiiNamespace = $realUser->getWigiiNamespace()->getWigiiNamespaceName();
 }
 $roleList = $p->getRoleListener();
+//add the real user itself in the list, to ensure to appear if he has some admin rights
+$roleList->addUser($p->getRealUser());
 $defaultWigiiNamespace = $roleList->getDefaultWigiiNamespace();
 $adminRoleIds = $roleList->getAdminRoleIds();
 $calculatedRolesIds = $roleList->getCalculatedRoleIds();

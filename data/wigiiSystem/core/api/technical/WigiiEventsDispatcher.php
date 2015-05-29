@@ -368,6 +368,14 @@ class WigiiEventsDispatcher implements WigiiEvents, MultiplexedEvent, EventSubsc
 	}
 
 	/**
+	 * selectGroup
+	 */
+	public function selectGroup($pWithGroupPList){
+		$e = $this->createEventStackInstance("selectGroup", "Group", null, $pWithGroupPList);
+		$this->dispatchEvent($e);
+	}
+
+	/**
 	 * switchLanguage
 	 */
 	public function switchLanguage($pWithUserWithLanguage){

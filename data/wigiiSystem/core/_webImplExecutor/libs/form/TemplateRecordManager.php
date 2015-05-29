@@ -176,7 +176,43 @@ class TemplateRecordManager extends Model {
 		}
 		return $this->moduleAS;
 	}
-
+	private $dflowS;
+	public function setDataFlowService($dataFlowService)
+	{
+		$this->dflowS = $dataFlowService;
+	}
+	protected function getDataFlowService()
+	{
+		// autowired
+		if(!isset($this->dflowS))
+		{
+			$this->dflowS = ServiceProvider::getDataFlowService();
+		}
+		return $this->dflowS;
+	}
+	
+	/**
+	 * Returns an instance of a FuncExpEvaluator configured for the context of the given Record.
+	 * @param Principal $p principal executing the request
+	 * @param Record $rec record for which to get an FuncExpEvaluator
+	 * @return FuncExpEvaluator
+	 */
+	protected function getFuncExpEvaluator($p, $rec) {
+		if(!isset($rec)) throw new ServiceProviderException('record cannot be null', ServiceProviderException::INVALID_ARGUMENT);
+		// gets RecordEvaluator
+		if($rec instanceof Element) $evaluatorClassName = (string)$this->getConfigService()->getParameter($p, $rec->getModule(), "Element_evaluator");
+		else $evaluatorClassName = null;
+		if(empty($evaluatorClassName)) $evaluatorClassName = (string)$this->getConfigService()->getParameter($p, $this->getExecutionService()->getCrtModule(), "Element_evaluator");
+		$evaluator = ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
+		// injects the context
+		$evaluator->setContext($p, $rec);
+		// gets vm
+		$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
+		$returnValue->setFreeParentEvaluatorOnFreeMemory(true);
+		//$this->debugLogger()->write("instanciated FuncExpEvaluator of class ".get_class($returnValue));
+		return $returnValue;
+	}
+	
 	public static function createInstance($isForNotification = false, $isForPrint=false, $isForExternalAccess=false, $isForListView=false, $isForPreviewList=false, $isOutputEnabled = true){
 		$r = new TemplateRecordManager();
 		$r->reset(null, $isForNotification, $isForPrint, $isForExternalAccess, $isForListView, $isForPreviewList, $isOutputEnabled);
@@ -342,12 +378,15 @@ class TemplateRecordManager extends Model {
 
 		// gets link type
 		$fieldXml = $element->getFieldList()->getField($linkName)->getXml();
-		switch((string)$fieldXml['linkType']) {
-			case 'subitem':
-				$isSubitem = true;
+		$query = null;
+		$linkType = Links::linkTypeFromString((string)$fieldXml['linkType']);		
+		switch($linkType) {
+			case Links::LINKS_TYPE_SUBITEM:
 				break;
-			case 'link':
-				$isSubitem = false;
+			case Links::LINKS_TYPE_LINK:				
+				break;
+			case Links::LINKS_TYPE_QUERY:
+				$query = (string)$fieldXml['source'];
 				break;
 			default: /*no preview supported*/ return;
 		}
@@ -358,13 +397,6 @@ class TemplateRecordManager extends Model {
 		$previewListId = 'previewList_'.$element->getId()."_".$linkName;
 		$this->put('<div class="SBIB ui-corner-all preview" id="'.$previewListId.'" style="overflow-x:auto;width:'.$width.'px;'.($fieldXml['expand']=="0" ? 'display:none;' : '').'">');
 
-		$listFilter = ListFilter::createInstance();
-		$listFilter->setFieldSelectorList($fsl);
-		$listFilter->setFieldSortingKeyList($fskl);
-		if($limit){
-			$listFilter->setPageSize($limit);
-			$listFilter->setDesiredPageNumber(1);
-		}
 		$elementIsBlocked = $element->isState_blocked();
 		// checks if parent is blocked
 		if(!$elementIsBlocked && $element->isSubElement()) {
@@ -375,20 +407,99 @@ class TemplateRecordManager extends Model {
 				}
 			}
 		}
-
-		$elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId);
+		
+		$listFilter = ListFilter::createInstance();
+		$listFilter->setFieldSelectorList($fsl);
+		$listFilter->setFieldSortingKeyList($fskl);
+		if($limit){
+			$listFilter->setPageSize($limit);
+			$listFilter->setDesiredPageNumber(1);
+		}
+		
 		$elS = ServiceProvider::getElementService();
-
-		$this->getSessionAdminService()->storeData($elS, $previewListId."_".$this->getExecutionService()->getCrtContext(), array($element->getId(), $linkName, (string)$fieldXml['linkType'], $listFilter, $elementIsBlocked));
-
-		$elementPList->actOnBeforeAddElementP($p);
-		if($isSubitem) {
-			$nb = $elS->getSubElementsForField($p, $element->getId(), $linkName, $elementPList, $listFilter);
+		
+		// links of type query
+		if($linkType == Links::LINKS_TYPE_QUERY && !empty($query)) {
+			// parses query and creates func exp
+			$queryFx = str2fx($query);
+			// gets func exp evaluator
+			$evalFx = $this->getFuncExpEvaluator($p, $element);
+			$querySource = null;
+			try {
+				// evaluates query and builds data source object
+				$querySource = $evalFx->evaluateFuncExp($queryFx, $this);								
+				// frees evaluator
+				$evalFx->freeMemory();
+			}
+			catch(Exception $e) {
+				$evalFx->freeMemory();
+				throw $e;
+			}
+			// updates list filter if set
+			if($querySource instanceof ElementPListDataFlowConnector) {
+				$querySourceLf = $querySource->getListFilter();
+				if(isset($querySourceLf)) {
+					if(isset($fsl)) $querySourceLf->setFieldSelectorList($fsl);
+					if(isset($fskl)) $querySourceLf->setFieldSortingKeyList($fskl);
+					if($limit) {
+						$querySourceLf->setPageSize($limit);
+						$querySourceLf->setDesiredPageNumber(1);
+					}
+				}
+				else $querySource->setListFilter($listFilter);				
+			}
+			// executes data flow and builds html
+			if(isset($querySource)) {
+				$currentNamespace = $p->getWigiiNamespace();
+				$adaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
+				$p->setAdaptiveWigiiNamespace(true);
+				$nb = $this->getDataFlowService()->processDataSource($p, $querySource, dfasl(
+					dfas('ElementPListRowsForPreview',
+						'setTrm', $this,
+						'setP', $p,
+						'setExec', $this->getExecutionService(),
+						'setConfigService', $this->getConfigService(),
+						'setFsl', $fsl,
+						'setElementId', $element->getId(),
+						'setLinkName', $linkName,
+						'setLinkType', $linkType,
+						'setElementIsBlocked', $elementIsBlocked,
+						'setPreviewListId', $previewListId,
+						'setWidth', $width)
+				), false);				
+				if(!$nb) {
+					// if no rows, then displays an empty table
+					$elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+					if($querySource instanceof ElementPListDataFlowConnector) {
+						$groupList = $querySource->getCalculatedGroupList();
+						if(isset($groupList) && !$groupList->isEmpty()) {
+							$g = reset($querySource->getCalculatedGroupList()->getListIterator());
+							$elementPList->setModule($g->getModule());
+						}						
+					}
+					$elementPList->actOnBeforeAddElementP($p);
+					$elementPList->actOnFinishAddElementP($p, ($listFilter->isPaged() ? ($listFilter->getTotalNumberOfObjects() > 0 ? $listFilter->getTotalNumberOfObjects():0) : ($nb > 0? $nb:0)), ($nb > 0? $nb:0), $listFilter->getPageSize(), $width);
+				}		
+				if(method_exists($querySource, 'freeMemory')) $querySource->freeMemory();		
+				if($adaptiveWigiiNamespace) $p->setAdaptiveWigiiNamespace(false);
+				$p->bindToWigiiNamespace($currentNamespace);
+			}
 		}
-		else {
-			/* not implemented */
-		}
-		$elementPList->actOnFinishAddElementP($p, ($listFilter->isPaged() ? $listFilter->getTotalNumberOfObjects() : $nb), $nb, $listFilter->getPageSize(), $width);
+		// else subitem or link
+		else {	
+			$elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+			$elementPList->actOnBeforeAddElementP($p);
+			if($linkType == Links::LINKS_TYPE_SUBITEM) {
+				/*TODO: if(!asyncload)*/ $nb = $elS->getSubElementsForField($p, $element->getId(), $linkName, $elementPList, $listFilter);
+			}
+			else {
+				/* not implemented */
+			}
+			$elementPList->actOnFinishAddElementP($p, ($listFilter->isPaged() ? $listFilter->getTotalNumberOfObjects() : $nb), $nb, $listFilter->getPageSize(), $width);
+			//TODO: if(asyncLoad) $this->addJsCode("$('#".$previewListId." .refresh').click()");
+		}	
+		$this->getSessionAdminService()->storeData($elS, $previewListId."_".$this->getExecutionService()->getCrtContext(), array($element->getId(), $linkName, (string)$fieldXml['linkType'], $listFilter, $elementIsBlocked, $query));
+		
 		$this->put('</div>');
 
 		$this->isForPreviewList($trmIsForPreviewList);
@@ -864,12 +975,15 @@ class TemplateRecordManager extends Model {
 		}
 		return $value;
 	}
-	public function doFormatForHtmlText($value){
+	/**
+	 *
+	 */
+	public function doFormatForHtmlText($value, $purify=true){
 		$purifier = TechnicalServiceProvider::getHTMLPurifier();
 		if(is_array($value)){
 			$result = array();
 			foreach($value as $key=>$val){
-				if($this->isHTMLPurifierEnabled()){
+				if($purify && $this->isHTMLPurifierEnabled()){
 					$result[$key] = $purifier->purify(htmlspecialchars_decode($val, ENT_QUOTES));
 				} else {
 					$result[$key] = htmlspecialchars_decode($val, ENT_QUOTES);
@@ -877,7 +991,7 @@ class TemplateRecordManager extends Model {
 			}
 			return $result;
 		}
-		if($this->isHTMLPurifierEnabled()){
+		if($purify && $this->isHTMLPurifierEnabled()){
 			return $purifier->purify(htmlspecialchars_decode($value, ENT_QUOTES));
 		} else {
 			return htmlspecialchars_decode($value, ENT_QUOTES);
@@ -1425,7 +1539,7 @@ class TemplateRecordManager extends Model {
 			case "Blobs":
 			case "Texts":
 				if($xml["htmlArea"]=="1"){
-					return $this->doFormatForHtmlText($value);
+					return $this->doFormatForHtmlText($value, $xml["deactivateHTMLPurifier"]!="1");
 				} else {
 					return $this->doFormatForText($value);
 				}
@@ -1612,7 +1726,7 @@ class TemplateRecordManager extends Model {
 						break;
 					case "textContent":
 						if($xml["htmlArea"]=="1"){
-							return $this->doFormatForHtmlText($value);
+							return $this->doFormatForHtmlText($value, $xml["deactivateHTMLPurifier"]!="1");
 						} else {
 							return $this->doFormatForText($value);
 						}
@@ -1664,7 +1778,7 @@ class TemplateRecordManager extends Model {
 								$previewClass = 'htmlPreview';
 								if($xml["htmlArea"]=="1"){
 									if($xml["displayContentInDetail"]=="1"){
-										$textContent = '</div></div><div style="width:100%" class="field" >'.$this->doFormatForHtmlText($this->getRecord()->getFieldValue($fieldName, "textContent")).'</div><div><div>';
+										$textContent = '</div></div><div style="width:100%" class="field" >'.$this->doFormatForHtmlText($this->getRecord()->getFieldValue($fieldName, "textContent"), $xml["deactivateHTMLPurifier"]!="1").'</div><div><div>';
 									}
 								} else if($type == ".jpg"  || $type == ".jpeg"  || $type == ".gif"  || $type == ".png"  || $type == ".bmp"){
 									if($xml["displayContentInDetail"]=="1"){
@@ -1712,7 +1826,7 @@ class TemplateRecordManager extends Model {
 				} else if($xml["colorPicker"]=="1"){
 					return $this->doFormatForColor($value);
 				} else if($xml["htmlArea"]=="1"){
-					return $this->doFormatForHtmlText($value);
+					return $this->doFormatForHtmlText($value, $xml["deactivateHTMLPurifier"]!="1");
 				} else {
 					return $this->doFormatForText($value, $doRegroupSimilarValue);
 				}

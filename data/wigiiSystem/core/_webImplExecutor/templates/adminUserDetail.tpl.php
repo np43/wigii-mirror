@@ -6,15 +6,15 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  Wigii is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *  
+ *
  *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
@@ -34,7 +34,7 @@ if(!isset($ac)) $ac = $this->getAdminContext($p);
 	$crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 	$crtModule = $exec->getCrtModule()->getModuleUrl();
 	$workingModule = $ac->getWorkingModule()->getModuleUrl();
-	
+
 	$exec->addJsCode(" adminUserDetailOnResize(); ");
 
 	?><div id="elementDetail_toolbar" class="T" style="" ><?
@@ -46,7 +46,11 @@ if(!isset($ac)) $ac = $this->getAdminContext($p);
 					$activities = array("roleNew", "userEdit", "userDelete", "roleUserAllocation", "userRights");
 				}
 			} else {
-				$activities = array();
+				if($isFromAdminUser){
+					$activities = array("userRoleAllocation", "userRights");
+				} else {
+					$activities = array("roleUserAllocation", "userRights");
+				}
 			}
 			foreach($activities as $act){
 				switch($act){
@@ -90,9 +94,9 @@ if(!$(this).hasClass('disabled')){
 	});
 	$('#elementDetail_toolbar .userRights').next('.cm').css('display','table').css('position', 'absolute').css('top',$('#elementDetail_toolbar .userRights').position().top +30).css('left', $('#elementDetail_toolbar .userRights').position().left+45).find('div').css('float','none').css('margin','0px').css('padding','6px 10px');
 	$('#elementDetail_toolbar .userRights').next('.cm').mouseleave(function(){ $(this).remove(); });
-	$('#elementDetail_toolbar .userRights').next('.cm').find('div').click(function(){ 
+	$('#elementDetail_toolbar .userRights').next('.cm').find('div').click(function(){
 		update('elementDialog/$crtWigiiNamespace/$crtModule/$act/'+$(this).attr('title')+'/'+adminUser_crtSelectedUser);
-		$(this).parent().remove(); 
+		$(this).parent().remove();
 	});
 }
 ";
@@ -105,7 +109,7 @@ if(!$(this).hasClass('disabled')){
 		?></div><?
 		?><div class="clear" style="padding:0px;"></div><?
 	?></div><div class="clear"></div><?
-	
+
 	?><div id="elementDetail" class="elementDetail"><?
 		if($userPRenderer->isEmpty()){
 			echo $transS->t($p, "noUserFound");

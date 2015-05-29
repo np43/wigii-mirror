@@ -62,6 +62,7 @@ $groupPTree->end($p, $exec);
 				$activities[] = "groupNewCopy";
 				$activities[] = "groupEdit";
 				$activities[] = "groupDelete";
+				//TODO TICKET #6162 $activities[] = "groupEmpty";
 				if($this->getConfigurationContext()->allowGroupDynamicConfig($p, $ac->getWorkingModule())) $activities[] = "groupConfigEdit";
 			}
 			if($this->getConfigurationContext()->getParameter($p, $ac->getWorkingModule(), "Group_enableSubscription")=="1") $activities[] = "groupSubscription";
@@ -92,6 +93,10 @@ $groupPTree->end($p, $exec);
 						break;
 					case "groupDelete":
 						$img = '<img src="'.SITE_ROOT_forFileUrl.'/images/icones/26px/cancel.png"/> ';
+						$r = "admin $protectLevel1";
+						break;
+					case "groupEmpty":
+						$img = '<img src="'.SITE_ROOT_forFileUrl.'/images/icones/tango/22x22/places/user-trash.png" style="margin-top:4px;margin-right:2px;"/> ';
 						$r = "admin $protectLevel1";
 						break;
 					case "groupConfigEdit":

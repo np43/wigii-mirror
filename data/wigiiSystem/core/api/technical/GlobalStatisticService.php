@@ -6,15 +6,15 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  Wigii is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *  
+ *
  *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
@@ -127,7 +127,7 @@ class GlobalStatisticService implements MultiplexedEvent {
 			$realUserId = $realUser->getId();
 			$realUsername = $realUser->getUsername();
 		}
-		
+
 		$entityId = null;
 		if(method_exists($object, "getGroup")){
 			if($object->getGroup()!=null) $entityId = $object->getGroup()->getId();
@@ -144,14 +144,24 @@ class GlobalStatisticService implements MultiplexedEvent {
 		} else if(method_exists($object, "getRecord")){
 			if($object->getRecord()!=null) $entityId = $object->getRecord()->getId();
 		}
-		
+
 		$wigiiNamespace = (isset($wigiiNamespace)?$wigiiNamespace->getWigiiNamespaceName():null);
 		$module = (isset($module)?$module->getModuleName():null);
-		
+
 		if($eventName == "navigate"){
 			$module = $object->getModuleName();
 			$wigiiNamespace = $object->getWigiiNamespaceName();
 			$entityId = $object->getUserId();
+		}
+		if($eventName == "selectGroup"){
+			$groupPList = $object->getGroupPList();
+			$firstGroupP = reset($groupPList->getListIterator());
+			$module = $firstGroupP->getGroup()->getModule()->getModuleName();
+			if($groupPList->count()==1){
+				$entityId = $firstGroupP->getId();
+			} else {
+				$entityId = 0;
+			}
 		}
 
 		$sqlB = $this->getMySqlFacade()->getSqlBuilder();

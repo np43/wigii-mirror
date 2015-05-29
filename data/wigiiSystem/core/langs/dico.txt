@@ -512,9 +512,10 @@ allElementsAvaible:All #elements#:Tous #elements:::::::::
 areYouSureDeleteFile:Are you sure you want to delete this file?:Etes-vous sûre de vouloir effacer ce fichier?:::::::::
 areYouSureDeleteElement:Are you sure you want to delete #thisElement#?:Etes-vous sûre de vouloir effacer #thisElement#?:::::::::
 areYouSureDeleteElements:Are you sure you want to delete these #-elements#?:Etes-vous sûre de vouloir effacer ces #-elements#?:::::::::
-areYouSureDeleteGroup:Are you sure that you want to delete the #-group#\::Etes-vous sûr de vouloir supprimer #group#\::::::::::
-areYouSureDeleteUser:Are you sure that you want to delete this user?:Etes-vous sûr de vouloir supprimer cet utilisateur?:::::::::
-areYouSureDeleteRole:Are you sure that you want to delete this role?:Etes-vous sûr de vouloir supprimer ce rôle?:::::::::
+areYouSureDeleteGroup:Are you sure you want to delete the #-group#\::Etes-vous sûr de vouloir supprimer #group#\::::::::::
+areYouSureEmptyGroup:Are you sure you want to delete the content of the #-group#\::Etes-vous sûr de vouloir supprimer le contenu du #_group#\::::::::::
+areYouSureDeleteUser:Are you sure you want to delete this user?:Etes-vous sûr de vouloir supprimer cet utilisateur?:::::::::
+areYouSureDeleteRole:Are you sure you want to delete this role?:Etes-vous sûr de vouloir supprimer ce rôle?:::::::::
 attachedFile0:Attached file 1:Fichier attaché 1:::::::::
 attachedFile1:Attached file 2:Fichier attaché 2:::::::::
 attachedFile2:Attached file 3:Fichier attaché 3:::::::::
@@ -565,6 +566,7 @@ deleteElement:Delete #element#:Supprimer #element#:::::::::
 deleteElements:Delete #elements#:Supprimer #elements#:::::::::
 deleteFile:If ticked, this will delete the current uploaded file when this form is submitted.:Si coché, le fichier actuellement uploadé sera effacé lorsque le formulaire est soumis.:::::::::
 deleteGroup:Delete #group#:Supprimer #group#:::::::::
+emptyGroup:Empty #group#:Vider #group#:::::::::
 deleteLastWriteSharing:After this operation, you will no longer be able to modify #thisElement#.<br><br>Do you want to continue?:Après cette opération il ne vous sera plus possible de modifier #element#.<br><br>Voulez-vous continuer?:::::::::
 deleteUser:Delete user:Supprimer l'utilisateur:::::::::
 deleteRole:Delete role:Supprimer le rôle:::::::::
@@ -713,7 +715,9 @@ groupConfigEdit_help:Redefine the configuration for #thisGroup#. The configurati
 groupConfigFile:Write a specific configuration for this #-group#.:Ecrivez une configuration spécifique pour ce #-group#.:::::::::
 groupDelete:Delete:Supprimer:::::::::
 deleteGroupOption:Please choose one option\::Veuillez séléctionner une option\::
-groupDelete_help:Delete #group# and all content.:Supprime #group# et tous le contenu.:::::::::
+groupDelete_help:Delete #group# and all content.:Supprime #group# et tout le contenu.:::::::::
+groupEmpty:Empty:Vider:::::::::
+groupEmpty_help:Delete #group# content.:Supprime tout le contenu du #-group#.:::::::::
 groupDetail:#Group# properties:Propriétés #ofGroup#:::::::::
 groupEdit:Edit:Modifier:::::::::
 groupEdit_help:Edit #group# details:Modifie les détails du #-group#:::::::::
@@ -1400,7 +1404,7 @@ invalidUsernameOnPop3Server:The username is not existing on the pop3 server:Le n
 pop3ServerConnectionProblem:Connection with pop3 server failed. Please try again.:Erreur dans la connection avec le serveur pop3. Veuillez réessayer.:::::::::
 invalidUsername:Unknown user:Utilisateur inconnu:::::::::
 forbiddenUser:Forbidden user:Utilisateur interdit:::::::::
-toManyLoginFailure:Please wait. To many login failed.:Veuillez attendre. Trop de tentatives infructeuses de login.:::::::::
+toManyLoginFailure:Please wait. Too many login failed.:Veuillez attendre. Trop de tentatives infructeuses de login.:::::::::
 noModuleAccess:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />No access is defined for this role:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />Aucun accès n'est définit pour ce rôle:::::::::
 noModuleAccessDefined:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />No access (role) is defined for this user:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />Aucun accès (rôle) n'est définit pour cet utilisateur:::::::::
 passwordExpired:Your password expired. Please change it.:Votre mot-de-passe a expiré. Veuillez le modifier.:::::::::
@@ -1527,6 +1531,7 @@ cm_createSubGroup:Create a sub #group#:Créer un sous-#-group#:::::::
 cm_copyGroup:Copy #group# properties:Copier les propriétés du #-group#:::::::
 cm_openGroup:Open #group#:Ouvrir #group#:::::::
 cm_deleteGroup:Delete #group#:Supprimer #group#:::::::
+cm_emptyGroup:Empty #group#:Vider #group#:::::::
 cm_portal:Link to a web address:Lier à une adresse web:::::::
 cm_htmlContent:Edit cover page:Modifier la page de couverture:::::::
 cm_subscription:Subscription form parameters:Paramêtres du formulaire d'inscription:::::::::

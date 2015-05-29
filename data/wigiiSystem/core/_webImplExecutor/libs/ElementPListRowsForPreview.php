@@ -22,10 +22,10 @@
 /**
  * ElementPListRowsForPreview display elementP in a simple html table. This is used when displaying
  * element list preview from Links dataType
- * @author LWR
- * Created 30 July 2013
+ * Created by LWR on 30 July 2013
+ * Modified by CWE on 29 April 2015 to implement DataFlowActivity interface 
  */
-class ElementPListRowsForPreview implements ElementPList {
+class ElementPListRowsForPreview implements ElementPList, DataFlowActivity {
 
 	private $trm_;
 	protected function getTRM(){ return $this->trm_; }
@@ -63,11 +63,29 @@ class ElementPListRowsForPreview implements ElementPList {
 	public function setExec($exec){$this->exec = $exec;}
 	protected function getExec(){ return $this->exec; }
 
+	private $width;
+	public function setWidth($width) {$this->width = $width;}
+	protected function getWidth() {return $this->width;}
+	
+	private $linkType;
+	/**
+	 * Sets the link type as a numeric constant (see Links class)
+	 * @param int $linkType one of Links::LINKS_TYPE_*
+	 */
+	public function setLinkType($linkType) {$this->linkType = $linkType;}
+	/**
+	 * Gets link type as a numeric constant
+	 * @return int one of Links::LINK_TYPE_*
+	 */
+	protected function getLinkType() {return $this->linkType;}
+	
+	// Object lifecycle
+	
 	/**
 	 * @param TemplateRecordManager $trm
 	 * @param FieldSelectorList $fsl
 	 */
-	public static function createInstance($trm, $p, $exec, $configService, $fsl, $elementId, $linkName, $elementIsBlocked, $previewListId){
+	public static function createInstance($trm, $p, $exec, $configService, $fsl, $elementId, $linkName, $elementIsBlocked, $previewListId, $linkType){
 		$elPl = new self();
 		$elPl->setTrm($trm);
 		$elPl->setP($p);
@@ -78,9 +96,36 @@ class ElementPListRowsForPreview implements ElementPList {
 		$elPl->setLinkName($linkName);
 		$elPl->setElementIsBlocked($elementIsBlocked);
 		$elPl->setPreviewListId($previewListId);
+		$elPl->setLinkType($linkType);
 		return $elPl;
 	}
-
+	
+	public function reset(){
+		$this->elementIds = array();
+		$this->nb = 0;
+		$this->module = null;
+		unset($this->isDeletedSubElement);
+		unset($this->parentElementBlocked);
+		$this->updateContentOnly = false;
+		//don't change the other parameters
+	}
+	
+	public function freeMemory() {
+		unset($this->trm_);
+		unset($this->configService);
+		unset($this->fsl);
+		unset($this->previewListId);
+		unset($this->elementId);
+		unset($this->linkName);
+		unset($this->elementIsBlocked);
+		unset($this->p);
+		unset($this->exec);
+		unset($this->width);
+		unset($this->linkType);
+	}
+	
+	// ElementPList implementation
+	
 	/**
 	 * Adds an element to the list
 	 * throws ListException::ALREADY_EXISTS if we try to put a second time the same element in the list
@@ -90,15 +135,6 @@ class ElementPListRowsForPreview implements ElementPList {
 	private $module;
 	public function getElementsIds(){
 		return $this->elementIds;
-	}
-
-	public function reset(){
-		$this->elementIds = array();
-		$this->nb = 0;
-		$this->module = null;
-		unset($this->isDeletedSubElement);
-		unset($this->parentElementBlocked);
-		//don't change the other parameters
 	}
 
 	public function addElementP($elementP){
@@ -121,7 +157,7 @@ class ElementPListRowsForPreview implements ElementPList {
 	protected function isDeletedSubElement(){
 		if(!isset($this->isDeletedSubElement)){
 			$trashBinPrefix = (string)$this->getConfigService()->getParameter($this->getP(), null, "deletedSubElementsLinkNamePrefix");
-			$this->isDeletedSubElement = (!empty($trashBinPrefix) && (strpos($this->getLinkName(), $trashBinPrefix)===0));
+			$this->isDeletedSubElement = (!empty($trashBinPrefix) && !empty($this->linkName) && (strpos($this->getLinkName(), $trashBinPrefix)===0));
 		}
 		return $this->isDeletedSubElement;
 	}
@@ -130,15 +166,26 @@ class ElementPListRowsForPreview implements ElementPList {
 		$trm = $this->getTRM();
 
 		$element = $elementP->getElement();
-		$cacheLookup = $this->getExec()->getCurrentCacheLookup($this->getP(), "selectElementDetail", "element/detail/".$elementP->getId());
-		$trm->put('<tr href="#'.$cacheLookup.'" class="H" '.($element->isState_dismissed() ? 'style="text-decoration:line-through" ' : '').'id="prev$$'.$this->getElementId()."$$".$this->getLinkName()."$$".$elementP->getId().'">');
+		// builds element link
+		if($this->getLinkType() == Links::LINKS_TYPE_QUERY) {
+			$p = $this->getP();
+			$wigiiNamespace = $p->getWigiiNamespace();
+			$module = $element->getModule();
+			$linkId = 'prev$$'.$this->getElementId()."$$".$this->getLinkName()."$$".$wigiiNamespace->getWigiiNamespaceUrl()."$$".$module->getModuleUrl()."$$".$elementP->getId();
+			$cacheLookup = $this->getExec()->getCacheLookup($p->getRealUserId(), $p->getUserId(), $wigiiNamespace, $module, "selectElementDetail", "element/detail/".$elementP->getId());
+		}
+		else {
+			$cacheLookup = $this->getExec()->getCurrentCacheLookup($this->getP(), "selectElementDetail", "element/detail/".$elementP->getId());
+			$linkId = 'prev$$'.$this->getElementId()."$$".$this->getLinkName()."$$".$elementP->getId();
+		}
+		$trm->put('<tr href="#'.$cacheLookup.'" class="H" '.($element->isState_dismissed() ? 'style="text-decoration:line-through" ' : '').'id="'.$linkId.'">');
 		if($this->isDeletedSubElement()){
 			if($element->isState_blocked() || $this->isElementBlocked()) {
 				$trm->put('<td class="disabledBg"><div>'.$trm->doFormatForState('blocked', true).'</div></td>'); //no restore
 			}
 			else $trm->put('<td class="restore"><div></div></td>'); //restore
 		} else {			
-			if($element->isState_blocked() || $this->isElementBlocked()) {
+			if($element->isState_blocked() || $this->isElementBlocked() || $this->getLinkType() == Links::LINKS_TYPE_QUERY) {
 				$s = '';
 				$s .= $trm->doFormatForState('approved', $element->isState_approved(), false, true);
 				$s .= $trm->doFormatForState('finalized', $element->isState_finalized(), false, true);
@@ -176,15 +223,20 @@ class ElementPListRowsForPreview implements ElementPList {
 
 	public function makeHeaders($principal){
 		$trm = $this->getTRM();
-		//add headers
+		$cs = $this->getConfigService();
+				
 		//center config service on subElement
-		$this->getConfigService()->selectSubElementsConfig($principal, $this->getElementId(), $this->getLinkName());
-		$module = $this->getConfigService()->getCurrentModule($principal);
-		if(!isset($this->module)) $this->module = $module;
+		if(!isset($this->module) && isset($this->elementId) && isset($this->linkName) &&
+			($cs->getCurrentMasterElementId() != $this->elementId || $cs->getCurrentFieldName() != $this->linkName)) {
+			$cs->selectSubElementsConfig($principal, $this->getElementId(), $this->getLinkName());
+			$this->module = $cs->getCurrentModule($principal);
+		}
+		
+		//add headers
 		$fieldList = FieldListArrayImpl::createInstance(true, true);
-		$this->getConfigService()->getFields($principal, $module, null, $fieldList);
+		$cs->getFields($principal, $this->module, null, $fieldList);
 		$fsListView = FieldSelectorListForActivity :: createInstance(false, false);
-		$this->getConfigService()->getFields($principal, $module, Activity::createInstance("listView"), $fsListView);
+		$cs->getFields($principal, $this->module, Activity::createInstance("listView"), $fsListView);
 		$trm->put('<tr class="header">');
 		if($this->isDeletedSubElement()){
 			$trm->put('<th class="lH"></th>'); //restore
@@ -225,7 +277,8 @@ class ElementPListRowsForPreview implements ElementPList {
 		//add refresh button and see more if necessary
 		$trm->put('<tr class="loadNextLines"><td colspan="'.(count($this->getFsl()->getListIterator())+($this->isDeletedSubElement() ? 1 : 2)).'">'.(($total>$number) ? '<font class="H grayFont">'.$trm->t("seeMore").'</font>' : '').'<span class="totalItems">'.$total.'</span><span class="pageSize">'.$pageSize.'</span><span class="nbItem">'.$number.'</span>'.$refresh.'</td></tr>');
 		$trm->put('</table>');
-		$trm->addJsCode("setListenerToPreviewList('".$this->getElementId()."', '".$this->getLinkName()."', '".$this->getPreviewListId()."', '".(isset($this->module) ? $this->module->getModuleUrl(): Module::EMPTY_MODULE_URL)."', $width);");
+		
+		$trm->addJsCode("setListenerToPreviewList('".$this->getElementId()."', '".$this->getLinkName()."', '".$this->getPreviewListId()."', '".(isset($this->module) ? $this->module->getModuleUrl(): Module::EMPTY_MODULE_URL)."', $width".", '".Links::linkTypeToString($this->getLinkType())."');");
 	}
 
 	/**
@@ -260,6 +313,71 @@ class ElementPListRowsForPreview implements ElementPList {
 		return WigiiBagBaseImpl::createInstance();
 	}
 
+	
+	// DataFlowActivity implementation
+	
+	private $updateContentOnly;
+	public function setUpdateContentOnly($bool) {
+		$this->updateContentOnly = $bool;
+	}	
+	
+	/**
+	 * Sets the module of the elements inside the list
+	 * @param Module $module
+	 */
+	public function setModule($module) {
+		$this->module = $module;
+	}
+	
+	public function startOfStream($dataFlowContext) {
+		// checks ConfigService injection
+		if(!isset($this->configService)) {
+			$apiClient = $dataFlowContext->getAttribute('GroupBasedWigiiApiClient');
+			if(isset($apiClient)) $this->setConfigService($apiClient->getConfigService());
+			if(!isset($this->configService)) throw new DataFlowServiceException('ConfigService is not set, please inject one', DataFlowServiceException::CONFIGURATION_ERROR);
+		}
+		// checks Principal injection
+		if(!isset($this->p)) {
+			$this->setP($dataFlowContext->getPrincipal());			
+		}
+	}
+	
+	public function processDataChunk($data, $dataFlowContext) {
+		if($this->nb == 0) {
+			// sets module of element
+			if(($data instanceof ElementP) || ($data instanceof Element)) $this->module = $data->getDbEntity()->getModule();
+			// initializes the list preview
+			if(!$this->updateContentOnly) $this->actOnBeforeAddElementP($this->getP());
+		}
+		// displays element in preview list 
+		$this->addElementP($data);
+	}
+	
+	/**
+	 * Pushes the number of selected elements in the stream for further processing
+	 * @see DataFlowActivity::endOfStream()
+	 */
+	public function endOfStream($dataFlowContext) {		
+		// extracts the listFilter paging info if set
+		$listFilter = $dataFlowContext->getAttribute('ListFilter');
+		if(isset($listFilter) && $listFilter->isPaged()) {
+			$total = $listFilter->getTotalNumberOfObjects();
+			$pageSize = $listFilter->getPageSize();
+		}
+		else {
+			$total = $this->nb;
+			$pageSize = null;
+		}
+		// ends the list preview
+		if(!$this->updateContentOnly) $this->actOnFinishAddElementP($this->getP(), ($total > 0 ? $total:0), ($this->nb > 0? $this->nb:0), $pageSize, $this->getWidth());
+		// pushes the number of element in the stream
+		$dataFlowContext->writeResultToOutput($this->nb, $this);
+	}
 
+	public function processWholeData($data, $dataFlowContext) {
+		$this->startOfStream($dataFlowContext);
+		$this->processDataChunk($data, $dataFlowContext);
+		$this->endOfStream($dataFlowContext);
+	}	
 }
 

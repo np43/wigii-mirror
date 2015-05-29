@@ -62,6 +62,7 @@ if($exec->getIdAnswer()!='groupPanel' && $exec->getIsUpdating()){ //!$exec->getI
 		?><div id="cm_renameGroup" class="admin H fB <?=$protectLevel1;?>"><?=$transS->t($p, "cm_renameGroup");?>...</div><?
 		?><div id="cm_createSubGroup" class="admin H fB"><?=$transS->t($p, "cm_createSubGroup");?>...</div><?
 		?><div id="cm_copyGroup" class="admin H fB"><?=$transS->t($p, "cm_copyGroup");?>...</div><?
+		/*TODO ticket #6162 ?><div id="cm_emptyGroup" class="admin H fB <?=$protectLevel1;?>"><?=$transS->t($p, "cm_emptyGroup");?>...</div><?*/
 		?><div id="cm_deleteGroup" class="admin H fB <?=$protectLevel1;?>"><?=$transS->t($p, "cm_deleteGroup");?>...</div><?
 		?><div id="cm_findDuplicatesIn" class="H fB"><?=$transS->t($p, "findDuplicatesIn");?>...</div><?
 		?><div id="cm_portal" class="write H fB"><?=$transS->t($p, "cm_portal");?>...</div><?
