@@ -1384,15 +1384,14 @@ function setListenersToRows(listSelector, elSelector, folderSelector, cmSelector
 	//add click on multiple select
 	//this needs to include as well the folders, not only the elements
 	$(elSelector+' div.mul').unbind();
-	$(elSelector+' div.mul').click(function(e){
+	$(elSelector+' div.mul, '+folderSelector+' div.mul').click(function(e){
 		if($(this).parent().parent().hasClass('folder')){
-			clickFolderLineInMultipleSelectionMode($(this).closest(elSelector));
+			clickFolderLineInMultipleSelectionMode($(this).closest(folderSelector));
 		} else {
 			clickLineInMultipleSelectionMode($(this).closest(elSelector));
 		}
 		e.stopPropagation();
 	});
-
 
 	//make new lines, no more new
 	$(listSelector+' .new').removeClass("new");
@@ -2663,7 +2662,7 @@ function setListenerToPreviewListLines(previewListId, moduleName, linkType, wLis
 	if(gtIndex){
 		moreSelector = ":gt("+(gtIndex)+")";
 	}
-	
+
 	if(crtLinkType == 'query') {
 		$('#'+crtPreviewListId+' tr:not(.loadNextLines)'+moreSelector).click(function(e){
 			var res = $(this).attr('id').split('$$');
@@ -2672,9 +2671,9 @@ function setListenerToPreviewListLines(previewListId, moduleName, linkType, wLis
 			var eltId = res[5];
 			window.open(SITE_ROOT+'#'+wigiiNamespaceUrl+'/'+moduleUrl+'/item/'+eltId);
 			e.stopPropagation();
-		});	
+		});
 	}
-	else {	
+	else {
 		$('#'+crtPreviewListId+' tr:not(.loadNextLines)'+moreSelector).click(function(e){
 			var res = $(this).attr('id').split('$$');
 			var ownerEltId = res[1];
@@ -2715,7 +2714,7 @@ function setListenerToPreviewListLines(previewListId, moduleName, linkType, wLis
 			e.stopPropagation();
 		});
 	}
-	
+
 	$('#'+crtPreviewListId+' tr:not(.loadNextLines)'+moreSelector+' td:not(.delete, .restore, .edit)>div')
 		.mouseenter(function(e){
 			showHelp(this, $(this).html(), 30, 'fromLeft', 500, Math.max(200, $(this).width()), 60000);
@@ -2808,7 +2807,7 @@ function setListenerToPreviewList(elementId, linkName, previewListId, moduleName
 	});
 
 	// if linkType is query then updates link value with total
-	if(crtLinkType == 'query') {		
+	if(crtLinkType == 'query') {
 		$('#'+crtPreviewListId).prev().find('.linkTypeQuery').html('('+$('#'+crtPreviewListId+' tr.loadNextLines .totalItems').text()+')');
 	}
 }
