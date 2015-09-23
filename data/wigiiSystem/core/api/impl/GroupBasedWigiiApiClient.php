@@ -192,6 +192,25 @@ class GroupBasedWigiiApiClient {
 		if(!isset($this->funcExpBuilder)) throw new ServiceException("mandatory dependency FuncExpBuilder has not been injected, please addon one", ServiceException::CONFIGURATION_ERROR);
 		return $this->funcExpBuilder;
 	}	
+	
+	/**
+	 * Returns current WigiiNamespace or empty WigiiNamespace if not centered on groups.
+	 * @return WigiiNamespace
+	 */
+	public function getWigiiNamespace() {
+		if(!isset($this->gbwacConfigS)) return ServiceProvider::getWigiiNamespaceAdminService()->getEmptyWigiiNamespaceForDefaultClient();
+		else return $this->gbwacConfigS->getWigiiNamespace();
+	}
+	
+	/**
+	 * Returns current Module or null if not centered on groups.
+	 * @return Module
+	 */
+	public function getModule() {
+		if(isset($this->gbwacConfigS)) $returnValue = $this->gbwacConfigS->getModule();
+		else $returnValue = null;
+		return $returnValue;
+	}
 }
 /**
  * ConfigService wrapper
@@ -241,6 +260,19 @@ class GBWACConfigService implements ConfigService {
 				else $this->oneGroup = false;
 			}
 		}
+	}
+	
+	// Context
+	
+	public function getWigiiNamespace() {
+		if(isset($this->firstGroup)) return $this->firstGroup->getWigiiNamespace();
+		else return ServiceProvider::getWigiiNamespaceAdminService()->getEmptyWigiiNamespaceForDefaultClient();
+	}
+	/**
+	 * @return Module or null if not centered on some groups
+	 */
+	public function getModule() {
+		return $this->groupListModule;
 	}
 	
 	// Config service wrapper

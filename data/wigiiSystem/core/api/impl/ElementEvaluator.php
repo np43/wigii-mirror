@@ -26,6 +26,19 @@
  */
 class ElementEvaluator extends RecordEvaluator
 {	
+	const ELEMENT_FLOW_ADD = 'element-add';
+	const ELEMENT_FLOW_EDIT = 'element-edit';
+	const ELEMENT_FLOW_DELETE = 'element-delete';
+	const ELEMENT_FLOW_COPY = 'element-copy';
+	const ELEMENT_FLOW_DATAFLOW = 'element-dataflow';
+	const ELEMENT_FLOW_MULTIPLE_ADD = 'multiple-add';
+	const ELEMENT_FLOW_MULTIPLE_EDIT = 'multiple-edit';
+	const ELEMENT_FLOW_MULTIPLE_DELETE = 'multiple-delete';
+	const ELEMENT_FLOW_MULTIPLE_COPY = 'multiple-copy';
+	const ELEMENT_FLOW_UNSPECIFIED = 'unspecified';
+	
+	private $_debugLogger;
+	
 	// object lifecycle
 
 	public static function createInstance()
@@ -40,6 +53,7 @@ class ElementEvaluator extends RecordEvaluator
 		// contextual information that can be kept between two evaluations
 		if(!$keepContext) {
 			unset($this->elementPListEvalContext);
+			unset($this->dataFlowContext);
 		}
 		parent::freeMemory($keepContext);
 	}
@@ -51,6 +65,18 @@ class ElementEvaluator extends RecordEvaluator
 	protected function copyContextFromRecordEvaluator($recordEvaluator) {
 		parent::copyContextFromRecordEvaluator($recordEvaluator);
 		$this->elementPListEvalContext = $recordEvaluator->elementPListEvalContext;
+		$this->dataFlowContext = $recordEvaluator->dataFlowContext;
+	}
+	
+	// dependency injection
+	
+	private function debugLogger()
+	{
+		if(!isset($this->_debugLogger))
+		{
+			$this->_debugLogger = DebugLogger::getInstance("ElementEvaluator");
+		}
+		return $this->_debugLogger;
 	}
 	
 	// implementation
@@ -65,7 +91,7 @@ class ElementEvaluator extends RecordEvaluator
 	// current context accessible to FuncExp language implementation
 
 	/**
-	 * Returns the element currently evaluated
+	 * @return Element Returns the element currently evaluated
 	 */
 	protected function getElement() {return $this->getRecord();}
 
@@ -101,6 +127,54 @@ class ElementEvaluator extends RecordEvaluator
 	protected function getElementPListEvalContext() {
 		return $this->elementPListEvalContext;	
 	}	
+	
+	
+	private $dataFlowContext;
+	/**
+	 * @param DataFlowContext $dataFlowContext injects the current DataFlowContext that can be used by FuncExp implementors to interact with the current running DataFlow.
+	 * This method is called in data flow activities which subclass ElementDFAWithFuncExpVM
+	 */
+	public function setDataFlowContext($dataFlowContext) {
+		$this->dataFlowContext = $dataFlowContext;
+	}
+	/**
+	 * @return DataFlowContext instance or null if not currently evaluating a data flow of elements.
+	 */
+	protected function getDataFlowContext() {
+		return $this->dataFlowContext;
+	}
+	
+	/**
+	 * @return String returns the name of the current flow in which this element is evaluated.
+	 * One of ELEMENT_FLOW_ADD, ELEMENT_FLOW_EDIT, ELEMENT_FLOW_DELETE, ELEMENT_FLOW_COPY, ELEMENT_FLOW_DATAFLOW, ELEMENT_FLOW_MULTIPLE_ADD, ELEMENT_FLOW_MULTIPLE_EDIT, ELEMENT_FLOW_MULTIPLE_DELETE, ELEMENT_FLOW_MULTIPLE_COPY, ELEMENT_FLOW_UNSPECIFIED
+	 */
+	protected function getCurrentFlowName() {
+		// checks element dynamic attribute 'ctlCurrentFlow' and returns its value if exists
+		$ctlCurrentFlow = $this->getElement()->getDynamicAttribute('ctlCurrentFlow');
+		if(isset($ctlCurrentFlow)) {
+			$returnValue = $ctlCurrentFlow->getValue();
+		}
+		// else calculates current flow name and stores it into the dynamic attribute 'ctlCurrentFlow'
+		else {
+			$formExec = $this->getFormExecutor();
+			if(isset($formExec)) {
+				if(is_a($formExec, 'EditMultipleElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EDIT;
+				elseif(is_a($formExec, 'DeleteMultipleElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_DELETE;
+				elseif(is_a($formExec, 'DeleteElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_DELETE;
+				elseif(is_a($formExec, 'CopyElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_COPY;
+				elseif(is_a($formExec, 'AddElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_ADD;
+				elseif(is_a($formExec, 'EditElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_EDIT;
+				else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+			}
+			elseif(!is_null($this->getDataFlowContext())) $returnValue = ElementEvaluator::ELEMENT_FLOW_DATAFLOW;
+			else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+
+			$ctlCurrentFlow = ElementDynAttrFixedValueImpl::createInstance($returnValue);
+			$this->getElement()->setDynamicAttribute('ctlCurrentFlow', $ctlCurrentFlow, false);
+		}
+		
+		return $returnValue;
+	}
 	
 	
 	// root FuncExp language (can be extended in subclasses)
@@ -379,5 +453,266 @@ class ElementEvaluator extends RecordEvaluator
 		if($args[1] instanceof FieldSelector) $fieldName = $args[0];
 		else $fieldName = $this->evaluateArg($args[0]);
 		return $this->getElement()->getLinkedElement($fieldName);
+	}
+	
+	/**
+	 * Sets the matrix as an Element dynamic attribute for later use (for instance in other func exp calls).
+	 * FuncExp signature: <code>setMatrix(elementAttributeName, matrix)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) elementAttributeName: String|FieldSelector. The name of the dynamic element attribute under which to store the matrix or a FieldSelector of type element attribute selector (fs_e)
+	 * - Arg(1) matrix: stdClass. The matrix to be set as a dynamic element attribute.
+	 * @return stdClass returns the matrix for further use
+	 */
+	public function setMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new ElementServiceException('setMatrix func exp takes at least two arguments which are elementAttributeName and matrix', ElementServiceException::INVALID_ARGUMENT);
+		$elementAttributeName = $args[0];
+		if(!($elementAttributeName instanceof FieldSelector)) {
+			$elementAttributeName = $this->evaluateArg($args[0]);
+			if(!($elementAttributeName instanceof FieldSelector)) {
+				$elementAttributeName = fs_e($elementAttributeName);
+			}		
+		}
+		if(!$elementAttributeName->isElementAttributeSelector()) throw new ElementServiceException('elementAttributeName should be either a string or a Element attribute field selector', ElementServiceException::INVALID_ARGUMENT);
+		$matrix = $this->evaluateArg($args[1]);
+		if(!(is_object($matrix))) throw new ElementServiceException('matrix should be a StdClass instance', ElementServiceException::INVALID_ARGUMENT);
+		
+		$element = $this->getElement();
+		$da = $element->getDynamicAttribute($elementAttributeName->getSubFieldName());
+		if(!isset($da)) {
+			$da = ElementDynAttrMutableValueImpl::createInstance();
+			$element->setDynamicAttribute($elementAttributeName->getSubFieldName(), $da);
+		}
+		$da->setValue($matrix);
+		return $matrix;
+	}
+	
+	/**
+	 * Returns the current selected sub element master id
+	 * or null if no sub element configuration has been selected
+	 * @return Scalar
+	 */
+	public function cfgSubElementCurrentMasterId($args) {
+		$form = $this->getFormExecutor();
+		if(isset($form)) {
+			return $form->getWigiiExecutor()->getConfigurationContext()->getCurrentMasterElementId();
+		} else {
+			return null;
+		}
+	}
+	
+	/**
+	 * Returns the current selected group name, ID or object
+	 * FuncExp signature : <code>cfgCurrentGroup(returnAttribute=groupname|id|group, silent=false)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) returnAttribute: String. The name of the group attribute to return. Defaults to groupname. If 'group' then returns Group object.
+	 * - Arg(1) silent: Boolean. If true, then if current group cannot be retrieved, then no Exception is thrown, but null is returned instead, else Exception is thrown as usual. Defaults to no silent (false). 
+	 * @return String|Int|Group
+	 * @throws ServiceException INVALID_STATE if Wigii is not capable to return a current selected group name in the calling context.
+	 */
+	public function cfgCurrentGroup($args) {
+		$this->debugLogger()->logBeginOperation('cfgCurrentGroup');
+		$nArgs = $this->getNumberOfArgs($args);
+		$returnAttribute = 'groupname';
+		if($nArgs > 0) $returnAttribute = $this->evaluateArg($args[0]);
+		$silent = false;
+		if($nArgs > 1) $silent = ($this->evaluateArg($args[1]) == true);
+		
+		// checks element dynamic attribute 'cfgCurrentGroup' and returns its value if exists
+		$cfgCurrentGroup = $this->getElement()->getDynamicAttribute('cfgCurrentGroup');
+		if(isset($cfgCurrentGroup)) {
+			$returnValue = $cfgCurrentGroup->getValue();
+		}
+		// else calculates current group and stores it into the dynamic attribute 'cfgCurrentGroup'
+		else {
+			$flowContext = $this->getCurrentFlowName();
+			if($flowContext == ElementEvaluator::ELEMENT_FLOW_ADD ||
+				$flowContext == ElementEvaluator::ELEMENT_FLOW_COPY) {
+				$exec = ServiceProvider::getExecutionService();
+				$p = $this->getPrincipal();
+					
+				$returnValue = $this->getFormExecutor()->getGroupInWhichToAdd($p, $exec);
+				if(!$returnValue->isEmpty()) $returnValue = reset($returnValue->getListIterator());
+				else $returnValue = null;
+			}
+			elseif($flowContext == ElementEvaluator::ELEMENT_FLOW_EDIT ||
+					$flowContext == ElementEvaluator::ELEMENT_FLOW_DELETE ||
+					$flowContext == ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EDIT ||
+					$flowContext == ElementEvaluator::ELEMENT_FLOW_MULTIPLE_DELETE) {
+					
+				$exec = ServiceProvider::getExecutionService();
+				$p = $this->getPrincipal();
+				$gAS = ServiceProvider::getGroupAdminService();
+				
+				// gets all groups containing element
+				$groupPList = GroupPListArrayImpl::createInstance();
+				ServiceProvider::getElementService()->getAllGroupsContainingElement($p, $this->getElement(), $groupPList, lf($gAS->getFieldSelectorListForGroupWithoutDetail()));
+				// if more than one group, intersects with ListContext
+				if($groupPList->count() > 1) {
+					$returnValue = null;
+					$lc = $this->getFormExecutor()->getWigiiExecutor()->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+					if(isset($lc)) {
+						$selectedGroups = $lc->getGroupPList();						
+						if(isset($selectedGroups) && !$selectedGroups->isEmpty()) {
+							$selectedGroups = $selectedGroups->getListIterator();
+							if(is_array($selectedGroups)) {
+								// retrieves hierarchy of groups below selected groups and intersects tree with groups containing element
+								$groupList = GroupListArrayImpl::createInstance();
+								$gAS->getSelectedGroupsWithChildrenWithoutDetail($p, lxIn(fs('id'),array_keys($selectedGroups)), $groupList, null,
+									lxIn(fs('id'), array_keys($groupPList->getListIterator()))
+								);								
+								if($groupList->count() == 1) {
+									$returnValue = reset($groupList->getListIterator());
+								}
+							}
+						}
+					}
+				}
+				elseif(!$groupPList->isEmpty()) {
+					$returnValue = reset($groupPList->getListIterator());
+				}
+				else $returnValue = null;
+			}
+			elseif($flowContext == ElementEvaluator::ELEMENT_FLOW_DATAFLOW) {
+				$exec = ServiceProvider::getExecutionService();
+				$p = $this->getPrincipal();
+					
+				// gets all groups containing element
+				$groupPList = GroupPListArrayImpl::createInstance();
+				ServiceProvider::getElementService()->getAllGroupsContainingElement($p, $this->getElement(), $groupPList, lf(ServiceProvider::getGroupAdminService()->getFieldSelectorListForGroupWithoutDetail()));
+				// if more than one group, intersects with GroupBasedWigiiApiClient::getGroupList
+				if($groupPList->count() > 1) {
+					$returnValue = null;
+					$apiClient = $this->getDataFlowContext()->getAttribute('GroupBasedWigiiApiClient');
+					if(isset($apiClient)) {
+						$selectedGroups = $apiClient->getGroupList();
+						if(isset($selectedGroups) && !$selectedGroups->isEmpty()) {
+							$selectedGroups = $selectedGroups->getListIterator();
+							if(is_array($selectedGroups)) {
+								// retrieves hierarchy of groups below selected groups and intersects tree with groups containing element
+								$groupList = GroupListArrayImpl::createInstance();
+								$gAS->getSelectedGroupsWithChildrenWithoutDetail($p, lxIn(fs('id'),array_keys($selectedGroups)), $groupList, null,
+										lxIn(fs('id'), array_keys($groupPList->getListIterator()))
+								);
+								if($groupList->count() == 1) {
+									$returnValue = reset($groupList->getListIterator());
+								}
+							}
+						}
+					}
+				}
+				elseif(!$groupPList->isEmpty()) {
+					$returnValue = reset($groupPList->getListIterator());
+				}
+				else $returnValue = null;
+			}
+			else $returnValue = null;
+			
+			if(!is_null($returnValue)) $returnValue = $returnValue->getDbEntity();
+			
+			$cfgCurrentGroup = ElementDynAttrFixedValueImpl::createInstance($returnValue);
+			$this->getElement()->setDynamicAttribute('cfgCurrentGroup', $cfgCurrentGroup, false);
+		}
+		
+		$this->debugLogger()->logEndOperation('cfgCurrentGroup');
+		if(is_null($returnValue)) {
+			if($silent) return null;
+			else {
+				if(!isset($flowContext)) $flowContext = $this->getCurrentFlowName();
+				throw new ServiceException("Not able to evaluate current group in flow '".$flowContext."'", ServiceException::UNSUPPORTED_OPERATION);
+			}
+		}
+		else {
+			if($returnAttribute == 'group') return $returnValue;
+			else return $returnValue->getAttribute($returnAttribute);
+		}
+	}
+	
+	/**
+	 * Returns the name of the flow the element is currently in.
+	 * FuncExp signature : <code>ctlCurrentFlow()</code><br/>
+	 * @return String one of 'element-add', 'element-edit', 'element-delete', 'element-copy', 'element-dataflow', 'multiple-add','multiple-edit', 'multiple-delete', 'multiple-copy', 'unspecified'
+	 * Returns 'unspecified' if the ElementEvaluator cannot determine in which flow it is currently operating.
+	 */
+	public function ctlCurrentFlow($args) {
+		return $this->getCurrentFlowName();
+	}
+		
+	/**
+	 * Refreshes the group panel around a given group. If no group is given, then takes the current group.
+	 * FuncExp signature : <code>ctlRefreshGroupPanel(group=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) group: Group|int. The Group or group ID around which to refresh the group panel.
+	 */
+	public function ctlRefreshGroupPanel($args) {
+		$this->debugLogger()->logBeginOperation('ctlRefreshGroupPanel');
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) $group = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'group'), $this, true);
+		else $group = $this->evaluateArg($args[0]);
+		
+		$p = $this->getPrincipal();		
+		if($group != null && !($group instanceof Group)) {
+			$group = ServiceProvider::getGroupAdminService()->getGroupWithoutDetail($p, $group);
+		}
+		if($group != null) {			
+			$this->debugLogger()->write('invalids group panel cache');
+			$exec = ServiceProvider::getExecutionService();
+			$exec->addRequests("groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel");
+			$exec->addJsCode("invalidCache('moduleView');");
+			$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
+		}
+		$this->debugLogger()->logEndOperation('ctlRefreshGroupPanel');
+	}
+	
+	/**
+	 * Refreshes the module view.
+	 * FuncExp signature : <code>ctlRefreshModuleView()</code><br/>
+	 */
+	public function ctlRefreshModuleView($args) {
+		$exec = ServiceProvider::getExecutionService();
+		$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
+	}
+	
+	/**
+	 * Copies the current element in the specified folder (not sharing but real copy)
+	 * See method 'elementCopyTo' in WigiiBPL class.
+	 * FuncExp signature : <code>copyElementTo(groupId)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) groupId: int. The ID of the group in which to insert the element. If the group ID is null, then takes the current folder.
+	 * If the group has another Module than the Element, then a matching on FieldName and DataType is done.
+	 */
+	public function copyElementTo($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) $groupId = $this->evaluateFuncExp(fx('group', '.'), $this);
+		else $groupId = $this->evaluateArg($args[0]);
+		
+		$parameter = TechnicalServiceProvider::createWigiiBPLParameterInstance();
+		$parameter->setValue('element', $this->getElement());
+		$parameter->setValue('groupId', $groupId);
+		ServiceProvider::getWigiiBPL()->elementCopyTo($this->getPrincipal(), $this, $parameter);
+	}
+	
+	/**
+	 * Builds a copy of a current Element which can be dumped into a DataFlow.
+	 * FuncExp signature : <code>copyElement(configSelector=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) configSelector: ConfigSelector. An optional ConfigSelector used to choose the right configuration of the copied Element.
+	 * If ConfigSelector points to a different module than the source element, then a matching is done of the fieldName and DataType.
+	 * @return DataFlowDumpable
+	 */
+	public function copyElement($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs > 0) $cs = $this->evaluateArg($args[0]);
+		else $cs = null;
+		return ServiceProvider::getWigiiBPL()->buildCopyElementDataFlowConnector($this->getElement(), $cs);
+	}
+	
+	/**
+	 * Builds a DataFlowDumpable object which dumps the current element instance into a DataFlow.
+	 * FuncExp signature : <code>thisElement()</code><br/>
+	 * @return DataFlowDumpable
+	 */
+	public function thisElement($args) {
+		return array2df($this->getElement());
 	}
 }

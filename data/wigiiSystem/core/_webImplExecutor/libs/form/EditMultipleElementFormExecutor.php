@@ -196,8 +196,43 @@ class EditMultipleElementFormExecutor extends EditElementFormExecutor implements
 				$fieldName = $field->getFieldName();
 				if($field->getDataType() == null) continue;
 				if($this->getRecordWigiiBag()->isMultipleChecked($fieldName)){
-					//perform operation on each subField:
-					$elS->visitDataTypeSubfields($field, $field->getDataType(), $this);
+					// Update Emails subfields only if email changes
+					if($field->getDataType()->getDataTypeName() == "Emails") {
+						$newValue = $this->getRecord()->getFieldValue($fieldName);
+						$appendNewValue = $this->getRecordWigiiBag()->isMultipleAddOnlyChecked($fieldName);
+						$rec = $this->getRecord();
+						foreach($this->getElementPAList()->getListIterator() as $elementP) {
+							$element = $elementP->getElement();
+							$currentValue = $element->getFieldValue($fieldName);							
+							if($appendNewValue) {
+								if($newValue == null) $updatedValue = $currentValue;
+								elseif($currentValue == null) $updatedValue = $newValue;
+								else $updatedValue = str_update($currentValue, $newValue, SUPDOP_ADD, '/'.ValueListArrayMapper::Natural_Separators.'/', ", ");
+							}
+							else {
+								if($newValue == null) $updatedValue = null;
+								elseif($currentValue == null) $updatedValue = $newValue;
+								else $updatedValue = str_update($currentValue, $newValue, SUPDOP_SET, '/'.ValueListArrayMapper::Natural_Separators.'/', ", ");
+							}
+							if($updatedValue != $currentValue) {
+								// copies all the subfields from the mutiple edit form, except external access code which is recalculated
+								$element->setFieldValue($updatedValue, $fieldName, "value");								
+								$element->setFieldValue($rec->getFieldValue($fieldName, "proofKey"), $fieldName, "proofKey");
+								// updates proof only if email is not emptied (keep possible delete status)
+								if($updatedValue) {
+									$element->setFieldValue($rec->getFieldValue($fieldName, "proofStatus"), $fieldName, "proofStatus");
+									$element->setFieldValue($rec->getFieldValue($fieldName, "proof"), $fieldName, "proof");
+								}
+								$element->setFieldValue($rec->getFieldValue($fieldName, "externalConfigGroup"), $fieldName, "externalConfigGroup");
+								$element->setFieldValue($rec->getFieldValue($fieldName, "externalAccessLevel"), $fieldName, "externalAccessLevel");
+								$element->setFieldValue($rec->getFieldValue($fieldName, "externalAccessEndDate"), $fieldName, "externalAccessEndDate");
+								if(!empty($updatedValue)) $element->setFieldValue($elS->getEmailExternalCode($p, $element->getId(), $fieldName, $updatedValue), $fieldName, "externalCode");
+								else $element->setFieldValue(null, $fieldName, "externalCode");
+							}
+						}
+					}
+					// else perform operation on each subField:
+					else $elS->visitDataTypeSubfields($field, $field->getDataType(), $this);
 					$fsl->addFieldSelector($fieldName);
 				}
 				//autoCalc field needs to be updated too:
@@ -383,6 +418,11 @@ class EditMultipleElementFormExecutor extends EditElementFormExecutor implements
 				$element->getWigiiBag()->setHidden(true, $field->getFieldName());
 			}
 			if($isKey && $field->getFieldName() == $isKey->getName()){
+				$element->getWigiiBag()->setHidden(true, $field->getFieldName());
+			}
+			$fieldXml = $field->getXml();
+			// hides fields which have no label as the multiple edit doesn't allow to modify them.
+			if($fieldXml["noLabel"] == "1") {
 				$element->getWigiiBag()->setHidden(true, $field->getFieldName());
 			}
 		}

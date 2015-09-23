@@ -289,7 +289,10 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 				$n += $this->getElementService()->getSelectedElementsInGroups($principal, $this->inGroupLogExp, $this, $lf);
 			}
 			if($this->nElements == 0) break;					
-		}		
+		}
+
+		// updates the number of elements to make it readable from calling process
+		$this->nElements = $n;
 	}
 	
 	// ElementPList implementation		
@@ -324,5 +327,19 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 	
 	public function getCalculatedGroupList() {
 		return $this->calculatedGroupList;
+	}
+	
+	/**
+	 * Converts this ElementPList data flow connector to its FuncExp equivalent
+	 * @return FuncExp
+	 */
+	public function toFx() {
+		$lxFxBuilder = TechnicalServiceProvider::getFieldSelectorLogExpFuncExpBuilder();
+		$args = array();
+		if(isset($this->inGroupLogExp)) $args[] = $lxFxBuilder->logExp2funcExp($this->inGroupLogExp);
+		elseif(isset($this->linkSelector)) $args[] = $this->linkSelector->toFx();		
+		if(isset($this->listFilter)) $args[] = $this->listFilter->toFx();		
+		$lxFxBuilder->freeMemory();
+		return fx('elementPList', $args);
 	}
 }

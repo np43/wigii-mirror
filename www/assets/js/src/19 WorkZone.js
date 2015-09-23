@@ -2098,6 +2098,7 @@ function setNavigationBarNotInHomeState(displayFeedbackOnSystem){
 function setNavigationBarInAdminState(){
 	$('#navigationBar .homeOnly').hide();
 	$('#navigationBar .notHome').show();
+	$('#userMenu .notHome').hide();
 	$('#navigationBar .home').hide();
 	$('#userFeedbackOnSystem').hide();
 	$('#userFeedbackOnSystem a').addClass('disabled');

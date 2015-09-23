@@ -52,13 +52,14 @@ class TemplateRecordManager extends Model {
 
 	private $record;
 	public function getRecord(){ return $this->record; }
-	protected function setRecord($record){
+	public function setRecord($record){
 		$this->record = $record;
 		if($record->getAttachedRecord() && is_a($record->getAttachedRecord(), "Element") && $record->getAttachedRecord()->isSubElement()){
 			$this->getTranslationService()->setSubExecutionModule($record->getAttachedRecord()->getModule());
 		} else if(is_a($record, "Element") && $record->isSubElement()){
 			$this->getTranslationService()->setSubExecutionModule($record->getModule());
 		}
+		else $this->getTranslationService()->resetSubExecutionModule();
 		return $this;
 	}
 
@@ -392,7 +393,8 @@ class TemplateRecordManager extends Model {
 		}
 
 		$trmIsForPreviewList = $this->isForPreviewList();
-		$this->isForPreviewList(true);
+		$trmRecord = $this->getRecord();
+		$this->setForPreviewList(true);
 
 		$previewListId = 'previewList_'.$element->getId()."_".$linkName;
 		$this->put('<div class="SBIB ui-corner-all preview" id="'.$previewListId.'" style="overflow-x:auto;width:'.$width.'px;'.($fieldXml['expand']=="0" ? 'display:none;' : '').'">');
@@ -453,20 +455,30 @@ class TemplateRecordManager extends Model {
 				$currentNamespace = $p->getWigiiNamespace();
 				$adaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
 				$p->setAdaptiveWigiiNamespace(true);
-				$nb = $this->getDataFlowService()->processDataSource($p, $querySource, dfasl(
-					dfas('ElementPListRowsForPreview',
-						'setTrm', $this,
-						'setP', $p,
-						'setExec', $this->getExecutionService(),
-						'setConfigService', $this->getConfigService(),
-						'setFsl', $fsl,
-						'setElementId', $element->getId(),
-						'setLinkName', $linkName,
-						'setLinkType', $linkType,
-						'setElementIsBlocked', $elementIsBlocked,
-						'setPreviewListId', $previewListId,
-						'setWidth', $width)
-				), false);				
+				try {
+					$nb = $this->getDataFlowService()->processDataSource($p, $querySource, dfasl(
+						dfas('ElementPListRowsForPreview',
+							'setTrm', $this,
+							'setP', $p,
+							'setExec', $this->getExecutionService(),
+							'setConfigService', $this->getConfigService(),
+							'setFsl', $fsl,
+							'setElementId', $element->getId(),
+							'setLinkName', $linkName,
+							'setLinkType', $linkType,
+							'setElementIsBlocked', $elementIsBlocked,
+							'setPreviewListId', $previewListId,
+							'setWidth', $width)
+					), false);				
+				}
+				catch(ServiceException $se) {
+					// if AuthorizationServiceException::FORBIDDEN then displays an empty table
+					if($se->getWigiiRootException()->getCode() == AuthorizationServiceException::FORBIDDEN) {
+						$nb = 0;
+					}
+					// else propagates exception
+					else throw $se;
+				}
 				if(!$nb) {
 					// if no rows, then displays an empty table
 					$elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
@@ -502,7 +514,8 @@ class TemplateRecordManager extends Model {
 		
 		$this->put('</div>');
 
-		$this->isForPreviewList($trmIsForPreviewList);
+		$this->setForPreviewList($trmIsForPreviewList);
+		$this->setRecord($trmRecord);
 	}
 
 	/**
@@ -1792,14 +1805,17 @@ class TemplateRecordManager extends Model {
 								}
 								//add preview
 								$preview = ' <img class="H read '.$previewClass.'" style="vertical-align: bottom;" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" /> ';
-								if($fieldId) {
+								if($fieldId && !$this->isForPreviewList()) {
 									$exec->addJsCode("setListenerToPreviewFile('$fieldId', '$fieldName', '$src', '".time()."');");
 								}
 							}
-							if($fieldId) {
+							if($fieldId && !$this->isForPreviewList()) {
 								$exec->addJsCode("setListenerToDownloadFile('$fieldId', '".$fieldName."', '$src');");
 							}
-							return '<img class="prev" style="vertical-align: bottom;" src="'.$prevPath.'" /> <a class="H fileDownload" href="#" target="_self"> '.$name.$type." (".$size.")</a>".$preview.$textContent;
+							if($this->isForPreviewList()) {
+								return '<img class="prev" style="vertical-align: bottom;" src="'.$prevPath.'" />'.$name.$type." (".$size.")".$textContent;
+							}
+							else return '<img class="prev" style="vertical-align: bottom;" src="'.$prevPath.'" /> <a class="H fileDownload" href="#" target="_self"> '.$name.$type." (".$size.")</a>".$preview.$textContent;
 						}
 						break;
 				}

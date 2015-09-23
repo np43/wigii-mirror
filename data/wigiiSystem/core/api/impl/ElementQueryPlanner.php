@@ -459,7 +459,9 @@ class ElementQueryPlanner extends Model implements FieldList
 	 */
 	public function areFieldSelected()
 	{
-		return !$this->userDefinedFieldSelectorList || $this->userDefinedFieldSelectorList && (count($this->fieldSelectorList) > 0);
+		return !$this->userDefinedFieldSelectorList || 
+			$this->userDefinedFieldSelectorList && (count($this->fieldSelectorList) > 0) ||
+			($this->structuralFieldsCounter > 0);
 	}
 
 	// FieldList implementation

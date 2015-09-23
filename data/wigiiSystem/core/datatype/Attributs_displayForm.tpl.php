@@ -102,7 +102,9 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 			if($fieldXml["displayAsTag"]=="1"){
 				$label = $this->doFormatForTag($label, $fieldXml);
 			}
-			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" >'.$label.'</label>');
+			if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
+			else $labelWidth = ($parentWidth-30);									
+			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;width:'.$labelWidth.'px;">'.$label.'</div></label>');			
 		}
 		if($useMultipleColumn>0){
 			$this->put('</div>');
@@ -152,43 +154,70 @@ if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as 
 $this->put('" >');
 
 $val = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, $subFieldName));
-$valExistsInOption = false;
-//define the options:
-foreach($fieldXml->attribute as $attribute_key => $attribute){
-	if($attribute == "none" && (string)$fieldXml["flex"]=="1"){
-		$this->put('<option '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="" title="" ></option>');
-		continue;
-	}
-	
-	// filters dropdown using prefix filter
-	if($filterDropDown && $attribute != "none" && strpos((string)$attribute, $prefixFilter)!==0) continue;
-	
-	if(!$valExistsInOption) $valExistsInOption = $val == (string)$attribute;
-	if(($val == (string)$attribute)){
-		$selected = ' selected="selected" ';
-	} else {
-		$selected = "";
-	}
 
-	$label = $this->getRecord()->getRedirectedFieldLabel($this->getP(), $fieldName, $attribute);
-	$tempDisabled = false;
-	if(!$label && $label!=="0"){
-		$label = $transS->t($p, (string)$attribute, $attribute);
-		$tempDisabled = true;
-	}
-
-	if($attribute["optGroupStart"]=="1"){
-		$this->put('<optgroup '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' label="'.$label.'" >');
-	} else if($attribute["optGroupEnd"]=="1"){
-		$this->put('</optgroup>');
-	} else {
-		//a disable option cannot be selected
-		//limit attribute options to 64 chars
-		$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.$selected.' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" title="'.$label.'" >'.(strlen($label)>64 ? str_replace(" ", "&nbsp;", substr($label, 0, 61))."..." : str_replace(" ", "&nbsp;", $label)).'</option>');
+$sameAsField = (string)$fieldXml["sameAsField"];
+if(!empty($sameAsField)) {	
+	$sameAsFieldId = $formId.'_'.$sameAsField.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
+	$this->addJsCode('$("#'.$inputId.'").html($("#'.$sameAsFieldId.' option").clone()).find("option[selected]").prop("selected", false);');
+	$this->addJsCode('$("#'.$inputId.'").'.'find("option[value='."'$val'".']").prop("selected", "selected");');
+	// checks for an eventual new value
+	if($fieldXml["allowNewValues"]=="1"){
+		$existingKeys = array();
+		foreach($fieldXml->attribute as $attribute_key => $attribute){
+			$existingKeys[(string)$attribute] = (string)$attribute;
+		}
+		if($existingKeys[$val] == null) {
+			$htmlOption = "'".'<option selected="selected" value="'.$val.'" title="'.$transS->t($p, $val).'" >'.(strlen($transS->t($p, $val))>64 ? str_replace(" ", "&nbsp;", substr($transS->t($p, $val), 0, 61))."..." : str_replace(" ", "&nbsp;", $transS->t($p, $val))).'</option>'."'";
+			$this->addJsCode('$("#'.$inputId.'").append('.$htmlOption.')');
+		}		
 	}
 }
-if($fieldXml["allowNewValues"]=="1" && !$valExistsInOption){
-	$this->put('<option selected="selected" value="'.$val.'" title="'.$transS->t($p, $val).'" >'.(strlen($transS->t($p, $val))>64 ? str_replace(" ", "&nbsp;", substr($transS->t($p, $val), 0, 61))."..." : str_replace(" ", "&nbsp;", $transS->t($p, $val))).'</option>');
+else {
+	$valExistsInOption = false;
+	//define the options:
+	foreach($fieldXml->attribute as $attribute_key => $attribute){
+		if($attribute == "none" && (string)$fieldXml["flex"]=="1"){
+			$this->put('<option '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="" title="" ></option>');
+			continue;
+		}
+		
+		// filters dropdown using prefix filter
+		if($filterDropDown && $attribute != "none" && strpos((string)$attribute, $prefixFilter)!==0) continue;
+		
+		if(!$valExistsInOption) $valExistsInOption = $val == (string)$attribute;
+		if(($val == (string)$attribute)){
+			$selected = ' selected="selected" ';
+		} else {
+			$selected = "";
+		}
+	
+		$label = $this->getRecord()->getRedirectedFieldLabel($this->getP(), $fieldName, $attribute);
+		$tempDisabled = false;
+		if(!$label && $label!=="0"){
+			$label = $transS->t($p, (string)$attribute, $attribute);
+			$tempDisabled = true;
+		}
+	
+		// cleans up the html
+		$html2text = new Html2text();
+		$html2text->html2text($label);
+		$label = $html2text->get_text();
+		$html2text->clear();
+		unset($html2text);
+	
+		if($attribute["optGroupStart"]=="1"){
+			$this->put('<optgroup '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' label="'.$label.'" >');
+		} else if($attribute["optGroupEnd"]=="1"){
+			$this->put('</optgroup>');
+		} else {
+			//a disable option cannot be selected
+			//limit attribute options to 64 chars
+			$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.$selected.' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" title="'.$label.'" >'.(strlen($label)>64 ? str_replace(" ", "&nbsp;", substr($label, 0, 61))."..." : str_replace(" ", "&nbsp;", $label)).'</option>');
+		}
+	}
+	if($fieldXml["allowNewValues"]=="1" && !$valExistsInOption){
+		$this->put('<option selected="selected" value="'.$val.'" title="'.$transS->t($p, $val).'" >'.(strlen($transS->t($p, $val))>64 ? str_replace(" ", "&nbsp;", substr($transS->t($p, $val), 0, 61))."..." : str_replace(" ", "&nbsp;", $transS->t($p, $val))).'</option>');
+	}
 }
 $this->put('</'.$inputNode.'>');
 

@@ -196,10 +196,14 @@ if(reqOnHash.length > 0) {
 		wigiiNamespace:(reqOnHash.length > 0 ? (reqOnHash[0] != null ? reqOnHash[0].replace('%20', ' ') : '<?=WigiiNamespace::EMPTY_NAMESPACE_URL; ?>'): '<?=WigiiNamespace::EMPTY_NAMESPACE_URL; ?>'),
 		module:(reqOnHash.length > 1 ? (reqOnHash[1] != null ? reqOnHash[1].replace('%20', ' ') : '<?=Module::EMPTY_MODULE_URL; ?>'): '<?=Module::EMPTY_MODULE_URL; ?>'),
 		type:(reqOnHash.length > 2 ? (reqOnHash[2] != null ? reqOnHash[2].replace('%20', ' ') : null): null),
-		id:(reqOnHash.length > 3 ? (reqOnHash[3] != null ? reqOnHash[3].replace('%20', ' ') : null): null)
+		id:(reqOnHash.length > 3 ? (reqOnHash[3] != null ? reqOnHash[3].replace('%20', ' ') : null): null),
+		remainingParams:(reqOnHash.length > 4 ? reqOnHash.slice(4).join('/') : null)
 	};
 	if(reqOnHash.module == 'Home') {
 		reqOnHash = 'NoAnswer/'+reqOnHash.wigiiNamespace+'/'+reqOnHash.module+'/start';
+	}
+	else if(reqOnHash.type=='find') {
+		reqOnHash = 'NoAnswer/'+reqOnHash.wigiiNamespace+'/'+reqOnHash.module+'/find/'+reqOnHash.id+(reqOnHash.remainingParams != null ? '/'+reqOnHash.remainingParams : '');
 	}
 	else {
 		reqOnHash = 'NoAnswer/'+reqOnHash.wigiiNamespace+'/'+reqOnHash.module+'/navigate'+(reqOnHash.type != null ? '/'+reqOnHash.type+'/'+reqOnHash.id : '');

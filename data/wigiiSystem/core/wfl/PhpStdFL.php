@@ -40,6 +40,22 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		if(isset($timestamp)) return date($format, $timestamp);
 		else return date($format);
 	}
+	
+	/**
+	 * strtotime. See http://www.php.net/manual/en/function.strtotime.php
+	 */
+	public function strtotime($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException("strtotime function takes at least one parameter, the time string", FuncExpEvalException::INVALID_ARGUMENT);
+		$timeString = $this->evaluateArg($args[0]);
+		if(is_null($timeString)) throw new FuncExpEvalException("strtotime function takes at least one parameter, the time string", FuncExpEvalException::INVALID_ARGUMENT);
+		if($nArgs > 1) {
+			$timestamp = $this->evaluateArg($args[1]);
+		}
+		else $timestamp = null;
+		if(isset($timestamp)) return strtotime($timeString, $timestamp);
+		else return strtotime($timeString);
+	}
 
 	/**
 	 * explode. See http://php.net/explode

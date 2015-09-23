@@ -131,6 +131,8 @@ class ElementDFAWithFuncExpVM implements DataFlowActivity
 			
 			// gets element evaluator
 			$eltEval = $this->getElementEvaluator($p, $this->getElementEvaluatorClassName(), $element);
+			// injects DataFlowContext
+			$eltEval->setDataFlowContext($dataFlowContext);
 			// gets vm
 			$this->vm = $this->getFuncExpVM($p, $eltEval, $this->getFuncExpVMClassName());
 			// configures the vm

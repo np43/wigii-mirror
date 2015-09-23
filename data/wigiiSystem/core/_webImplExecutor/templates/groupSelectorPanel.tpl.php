@@ -77,6 +77,10 @@ if($exec->getIdAnswer()!='groupPanel' && $exec->getIsUpdating()){ //!$exec->getI
 
 	//get all groups
 	$groupPTree = GroupPTreeGroupPanelImpl::createInstance($p, $exec, $configS->getParameter($p, $exec->getCrtModule(), "nbOfLevelToExpandOnInit"), true);
+	// injects trashbin
+	$trashbinID = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
+	if(empty($trashbinID)) $trashbinID = null;
+	$groupPTree->setTrashBinGroup($trashbinID);
 	$groupPTree->start($p, $exec);
 	$groupS->getAllGroups($p, $exec->getCrtModule(), $groupPTree);
 	$groupPTree->end($p, $exec);

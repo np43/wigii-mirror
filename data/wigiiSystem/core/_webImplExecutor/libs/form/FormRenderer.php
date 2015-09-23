@@ -229,6 +229,13 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 
 		//open field div
 		if(!empty($help)){
+			// filters html tags in help text
+			$html2text = new Html2text();
+			$html2text->html2text($help);
+			$help = $html2text->get_text();
+			$help = str_replace("\\'", "'", str_replace('"', "'", $help));
+			$html2text->clear();
+			unset($html2text);
 			$help = ' title="'.$help.'" ';
 		}
 		$style = "width:".$this->getTotalWidth()."px;";

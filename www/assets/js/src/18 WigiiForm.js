@@ -339,10 +339,13 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 
 	$(formId+' textarea.noWrap').css('overflow','auto').tabby();
 	$(formId+' :input:enabled:not([readonly]):first').focus();
+	
+	/*
+	 * CWE 2015.06.18: switches chosen and flex plugin to select2 plugin to improve rendering performances and functionalities
 	$(formId+' select.chosen:not(.allowNewValues)').chosen({
 		//nothing special
 
-	});
+	});	
 	$(formId+' select.chosen.allowNewValues').chosen({
 //	    create_option: true,
 //	    // persistent_create_option decides if you can add any term, even if part
@@ -351,11 +354,24 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 //	    // with the skip_no_results option you can disable the 'No results match..'
 //	    // message, which is somewhat redundant when option adding is enabled
 //	    skip_no_results: true
-	  });
-	$(formId+' select.flex.allowNewValues').flexselect({allowMismatch: true });
+	  });	
+	  
+	$(formId+' select.flex.allowNewValues').flexselect({allowMismatch: true });	
 	$(formId+' select.flex:not(.allowNewValues)').flexselect({allowMismatch: false });
+	
+	*/
+	
+	// flex or chosen class enables select2 plugin	
+	$(formId+' select.chosen:not(.allowNewValues)').select2();
+	$(formId+' select.flex:not(.allowNewValues)').select2();		
+	$(formId+' select.chosen.allowNewValues').select2({
+		tags:[]		
+	});
+	$(formId+' select.flex.allowNewValues').select2({
+		tags:[]
+	});
+	
 	$(formId+' textarea:not(.htmlArea,.isJournal).wordlimit').each(function(){ $(this).wordlimit({ allowed: $(this).attr('class').match(/ wordlimit_([0-9]*) /g)[0].replace(/ wordlimit_([0-9]*) /g, '$1') }); });
-
 
 	$(formId+' .colorPickerInput:input:enabled:not([readonly])').ColorPicker({
 		onSubmit: function(hsb, hex, rgb, el) {
@@ -1047,14 +1063,16 @@ function setListenerForAutoSave(formId, submitUrlForAutoSave, labelAutoSaveTrigg
 	});
 
 	//mark if a field receive the new focus
-	$('#'+formId+' :input').focus(function(e){
+	onFocus = function(e){
 		if($(this).parents('.field').length){
 			focusAutoSaveFieldId = $(this).parents('.field').attr('id');
 		}
-	});
+	};
+	
+	$('#'+formId+' :input').focus(onFocus);
 
 	//on standard fields save on blur if dirty, when changing field
-	$('#'+formId+' :input:not(:radio,:checkbox)').blur(function(){
+	onBlur = function(){
 		var autoSaveFieldId = $(this).parents('.field').attr('id');
 		//reinitialise focusAutosaveFieldId to empty
 		focusAutoSaveFieldId = '';
@@ -1070,8 +1088,14 @@ function setListenerForAutoSave(formId, submitUrlForAutoSave, labelAutoSaveTrigg
 				crtAutoSaveFieldDirty[autoSaveFieldId]=false;
 			}
 	    },10);
-	});
+	};
+	$('#'+formId+' :input:not(:radio,:checkbox)').blur(onBlur);
 
+	// select2 dropdowns
+	$('#'+formId+' select.flex, '+'#'+formId+' select.chosen')
+		.on('select2:open', onFocus)
+		.on('select2:close', onBlur);
+	
 	//CKEditors
 	$('#'+formId+' div.value textarea.htmlArea').blur(function(){
 		crtActiveCKEditor = null;
@@ -1081,6 +1105,9 @@ function setListenerForAutoSave(formId, submitUrlForAutoSave, labelAutoSaveTrigg
 		crtActiveCKEditor = this;
 	});
 
+	
+	// select2 dropdowns event for autosave : http://code.runnable.com/UmuP-67-dQlIAAFU/events-in-select2-for-jquery
+	
 	//launch auto saving evey 30 seconds
 	$('#'+formId).stopTime(formId+'autoSaveFormCKEditors');
 	$('#'+formId).everyTime(1000*30, formId+'autoSaveFormCKEditors', function(i){

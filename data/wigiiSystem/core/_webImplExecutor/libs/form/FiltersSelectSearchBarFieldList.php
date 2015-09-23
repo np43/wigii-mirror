@@ -159,11 +159,15 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 		$filtersRec->getFieldList()->renameField($filterAttrI->getFieldName(), $fieldName);
 
 		if($fieldXml["type"] == "groupFilter" || $elField["type"]=="Attributs" || $elField["type"]=="MultipleAttributs"){
+			/*
 			if(false && $attrNb < 10){ //don't mix checkboxes and multiple list, it makes unclear
 				$size = 'useCheckboxes="1" useMultipleColumn="2" isInLine="1"';
 			} else {
 				$size = 'size="'.min(min(max(4, $attrNb/3), 8), $attrNb).'"'; //min 4, between 4-8 is nb/3 or 4, more is 8
 			}
+			*/
+			// activate chosen drop downs in advanced search
+			$size='chosen="1"';
 			$filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="MultipleAttributs" expand="1" '.$size.'><label>'.$label.'</label>' . $attribute . '</'.$filterAttrI->getFieldName().'>'));
 		} else if($elField["type"]=="Booleans"){
 			$filterAttrI->setDataType($configS->getDataType("Attributs"));

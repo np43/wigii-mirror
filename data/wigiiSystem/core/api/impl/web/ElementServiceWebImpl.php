@@ -825,15 +825,22 @@ class ElementServiceWebImpl extends ElementServiceImpl
 	}
 	protected function getSqlLogicForValidationCode(){
 		//getEmailValidationCode: md5(trim(strtolower(CLIENT_NAME."-".microtime()."-".time()."-".rand()."-".$email)));
-		$salt = microtime()."-".time()."-".rand();
-		return "MD5(TRIM(LOWER(CONCAT('".CLIENT_NAME."-', '$salt', '-',`value`))))";
+		//$salt = microtime()."-".time()."-".rand();
+		//return "MD5(TRIM(LOWER(CONCAT('".CLIENT_NAME."-', '$salt', '-',`value`))))";
+		// salt should be calculated for each row
+		return "MD5(TRIM(LOWER(CONCAT('".CLIENT_NAME."-', NOW(), RAND(), '-',`value`))))";
 	}
 	protected function getSqlLogicForExternalCode(){
-		//getEmailExternalCode: sha1(trim(strtolower(CLIENT_NAME."-"."-".microtime()."-".time()."-".rand()."-".$fieldName."-".$value)));
-		$salt = microtime()."-".time()."-".rand();
-		return "SHA1(TRIM(LOWER(CONCAT('".CLIENT_NAME."-', '$salt', '-', `field`, '-',`value`))))";
+		//getEmailExternalCode: sha1(trim(strtolower(CLIENT_NAME."-"."-".microtime()."-".time()."-".rand()."-".$fieldName."-".$value)));		
+		//$salt = microtime()."-".time()."-".rand();
+		//return "SHA1(TRIM(LOWER(CONCAT('".CLIENT_NAME."-', '$salt', '-', `field`, '-',`value`))))";
+		// salt should be calculated for each row
+		return "SHA1(TRIM(LOWER(CONCAT('".CLIENT_NAME."-', NOW(), RAND(), '-', `field`, '-',`value`))))";
 	}
 
+	/**
+	 * @deprecated since v.4.322 R1746 (27.08.2015)
+	 */
 	public function correctEmailValidationCode($principal, $elementIds){
 		$this->executionSink()->publishStartOperation("correctEmailValidationCode", $principal);
 		try

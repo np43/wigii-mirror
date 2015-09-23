@@ -40,6 +40,7 @@ class MultipleAttributs extends DataTypeInstance {
 		//nécessaire pour assurer que la valeur retournée est bel et bien une option
 		//définie
 		$options = array();
+		$fieldXml = $field->getXml();
 		foreach($field->getXml()->attribute as $attribute_key => $attribute){
 			$options[(string)$attribute] = $transS->t($p, (string)$attribute, $attribute);
 		}
@@ -50,7 +51,7 @@ class MultipleAttributs extends DataTypeInstance {
 		//contrôle que le résultat fourni corrsepond à une clé du tableau d'options
 		//ou a vide. En effet un multiple-select peut très bien n'avoir rien de sélectionné
 		//contrairement à un select ou il y a forcément une option sélectionnée
-		if($value != null){ //il peut être null dans le cas ou rien n'est sélectionné...
+		if($value != null && $fieldXml["allowNewValues"]!="1"){ //il peut être null dans le cas ou rien n'est sélectionné...
 			foreach($value as $tempKey){
 				 if ($tempKey != null && !array_key_exists(stripslashes($tempKey), $options)) $ok=false;
 			}
@@ -70,12 +71,20 @@ class MultipleAttributs extends DataTypeInstance {
 			//$value = formatMultipleValues($value);
 			$translated = array();
 			$fieldXml = $field->getXml();
+			$existingKeys = array();
 			foreach($fieldXml->attribute as $attr){
 //				eput($attr);
-				if(array_search((string)$attr, $value) === false) continue; //$value[(string)$attr] == null) continue;
-				$translated[] = $transS->t($p, (string)$attr, $attr);
+				$sAttr = (string)$attr;
+				if(array_search($sAttr, $value) === false) continue; //$value[(string)$attr] == null) continue;
+				$translated[] = $transS->t($p, $sAttr, $attr);
+				$existingKeys[$sAttr] = $sAttr;
 			}
-
+			// adds non existing values in array if allowNewValues
+			if($fieldXml["allowNewValues"]=="1"){
+				foreach($value as $v) {
+					if($existingKeys[$v] == null) $translated[] = $transS->t($p, $v);
+				}
+			}
 			if($returnArray) return $translated;
 			if(!$fieldXml["useMultipleColumn"] || $fieldXml["useMultipleColumn"]=="1"){
 				return implode("<br />", $translated);

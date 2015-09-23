@@ -35,6 +35,9 @@ class FieldWithSelectedSubfields extends Model {
 		return $returnValue;
 	}
 	
+	/**
+	 * @return Field
+	 */
 	public function getField() {
 		return $this->field;
 	}

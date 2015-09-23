@@ -675,17 +675,46 @@ class ServiceProvider
 	 */
 	protected function getElementPolicyEvaluatorInstance($principal, $className=null) {
 		if(!isset($this->elementPolicyEvaluators)) $this->elementPolicyEvaluators = array();
+		$configurator = null;
 		// if className is null then uses default
-		if(empty($className)) $className = $this->getDefaultElementPolicyEvaluatorClass();
+		if(empty($className)) {
+			$className = $this->getDefaultElementPolicyEvaluatorClass();
+			$cacheKey = $className;			
+		}
+		// else extracts any configuration
+		else {
+			$cacheKey = $className;
+			$s = $className;
+			$params = strpos($s, '(');
+			if($params > 0) {				
+				$className = substr($s, 0, $params);	
+				$cacheKey = $className;
+				$params = substr($s, $params+1, -1);
+				if(!empty($params)) {
+					$cacheKey = $className.'('.md5($params).')';
+					// parses params func exp and evaluates it
+					$params = evalfx($principal, $params);
+					// prepares configurator
+					if(!($params instanceof ObjectConfigurator)) {
+						$configurator = ObjectConfigurator::createInstance($params);
+					}
+					else $configurator = $params;
+				}				
+			}
+		}
+		
 		// looks in cache
-		$returnValue = $this->elementPolicyEvaluators[$className];
+		$returnValue = $this->elementPolicyEvaluators[$cacheKey];
 		// not in cache then creates instance
 		if(!isset($returnValue))
 		{
 			$returnValue = $this->createClientClassInstanceOrStandard($principal, $className);
 			// checks that it is an ElementPolicyEvaluator
 			if(!($returnValue instanceof ElementPolicyEvaluator)) throw new ServiceProviderException("$className is not a subclass of a ElementPolicyEvaluator", ServiceProviderException::INVALID_ARGUMENT);
-			$this->elementPolicyEvaluators[$className] = $returnValue;
+			// applies special configuration
+			if(isset($configurator)) $configurator->configure($returnValue);
+			// puts in cache
+			$this->elementPolicyEvaluators[$cacheKey] = $returnValue;
 		} else {
 			//if elementPolicyEvaluator is found, check if isLockedForUse
 			//in this case create a new instance and do not cache it
@@ -693,6 +722,8 @@ class ServiceProvider
 				$returnValue = $this->createClientClassInstanceOrStandard($principal, $className);
 				// checks that it is an ElementPolicyEvaluator
 				if(!($returnValue instanceof ElementPolicyEvaluator)) throw new ServiceProviderException("$className is not a subclass of a ElementPolicyEvaluator", ServiceProviderException::INVALID_ARGUMENT);
+				// applies special configuration
+				if(isset($configurator)) $configurator->configure($returnValue);
 			}
 		}
 		$returnValue->reset();

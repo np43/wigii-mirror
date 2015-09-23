@@ -230,6 +230,14 @@ class ServiceProviderWebImpl extends ServiceProvider
 		$s->setConfigService($this->getWigiiExecutor()->getConfigurationContext());
 		return $s;
 	}
+	
+	protected function createWigiiBPLInstance()
+	{
+		$returnValue = new WigiiBPL();
+		$returnValue->setConfigService($this->getWigiiExecutor()->getConfigurationContext());
+		$returnValue->setWigiiExecutor($this->getWigiiExecutor());
+		return $returnValue;
+	}
 }
 
 

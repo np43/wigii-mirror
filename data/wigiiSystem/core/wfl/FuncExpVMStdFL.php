@@ -845,13 +845,13 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 
 	/**
 	 * Evaluates the first argument and converts it to a string into the JSON syntax.
-	 * The first argument should be an array.
+	 * The first argument should be an array or an instance of StdClass.
 	 * If no arg then returns empty string.
 	 */
 	public function newJsonString($args) {
 		if($this->getNumberOfArgs($args) < 1) return '';
 		$v = $this->evaluateArg($args[0]);
-		if(!is_array($v)) throw new FuncExpEvalException("first argument should evaluate to an array", FuncExpEvalException::INVALID_ARGUMENT);
+		if(!(is_array($v) || is_a($v, 'stdClass'))) throw new FuncExpEvalException("first argument should evaluate to an array or PHP stdClass", FuncExpEvalException::INVALID_ARGUMENT);
 		$v = json_encode($v);
 		if(!$v) throw new FuncExpEvalException("could not create a JSON string based on the input", FuncExpEvalException::INVALID_ARGUMENT);
 		return $v;

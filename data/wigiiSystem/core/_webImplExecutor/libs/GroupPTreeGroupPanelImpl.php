@@ -48,6 +48,21 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 	public function getNbLevelToExpandOnInit(){ return $this->nbLevelToExpandOnInit; }
 	protected function setNbLevelToExpandOnInit($var){ $this->nbLevelToExpandOnInit = $var; }
 	
+	protected $trashBinGroup;
+	/**
+	 * Informs the GroupPanel of an eventual trashbin
+	 * @param int $groupId the id of the group used as a trashbin, null if not initialized or not defined.
+	 */
+	public function setTrashBinGroup($groupId) {
+		$this->trashBinGroup = $groupId;
+	}
+	/**
+	 * @return int return the id of the group used as a trashbin or null if not defined.
+	 */
+	protected function getTrashBinGroup() {
+		return $this->trashBinGroup;
+	}
+	
 	protected $displayCM;
 	public function getDisplayContextMenu(){ return $this->displayCM; }
 	protected function setDisplayContextMenu($var){ $this->displayCM = $var; }
@@ -117,12 +132,18 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 		}
 		return false;
 	}
-	private function parentLookup($parentGroup){
+	/**
+	 * Looks if a given group is one of the parent of the current item in the tree. 
+	 * @param int|Group $parentGroup the parent group id or parent group to lookup
+	 * @return boolean true if given group is a parent of current item in the list, else false
+	 */
+	protected function parentLookup($parentGroup){
 		if($parentGroup == null){
 			return true;
 		}
 		if(isset($this->parentStack)){
-			return array_key_exists($parentGroup->getId(), $this->parentStack);
+			if(is_object($parentGroup)) return array_key_exists($parentGroup->getId(), $this->parentStack);
+			else array_key_exists($parentGroup, $this->parentStack);
 		}
 		return false;
 	}
@@ -145,7 +166,9 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 		} else if($parentGroup) {
 			//new parent
 			$this->depth ++;
-			?><ul<?=($this->getNbLevelToExpandOnInit()+1<=$this->depth ? ' class="n" style="display:none;" ' : '');?>><?
+			// verifies if current group is contained in trashbin, if yes, does not unfold.
+			$isInTrashBin = isset($this->trashBinGroup) && ($parentGroup->getId() == $this->trashBinGroup || $this->parentLookup($this->trashBinGroup));			
+			?><ul<?=($this->getNbLevelToExpandOnInit()+1<=$this->depth || $isInTrashBin ? ' class="n" style="display:none;" ' : '');?>><?
 			$this->pushParent($parentGroup);
 		} else if(!$this->first){
 			?></li><?

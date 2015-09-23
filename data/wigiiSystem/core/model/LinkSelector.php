@@ -114,4 +114,16 @@ class LinkSelector extends Model
 	public function setRootConfigSelector($configSelector) {
 		$this->rootConfigSelector = $configSelector;
 	}
+	
+	/**
+	 * Converts this link selector to its FuncExp equivalent
+	 * @return FuncExp
+	 */
+	public function toFx() {
+		return fx('ls', 
+			$this->ownerElementId, 
+			$this->fieldName, 
+			(isset($this->rootConfigSelector)?$this->rootConfigSelector->toFx():null)
+		);
+	}
 }

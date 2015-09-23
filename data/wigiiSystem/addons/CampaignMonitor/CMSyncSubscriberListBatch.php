@@ -289,14 +289,35 @@ class CMSyncSubscriberListBatch extends WigiiBatch {
 			
 			// Creates custom fields
 			if(is_array($this->cmListsCustomFields)) {
+				// prepares custom fields array
 				$customFields = array();
+				foreach($this->cmListsCustomFields as $customFieldDetail) {
+					$customFields[$customFieldDetail['FieldName']] = $customFieldDetail;
+				}
+				$addedCustomFields = array();
+				$deletedCustomFields = array();
 				foreach($listIds as $listId) {
-					foreach($this->cmListsCustomFields as $customFieldDetail) {
-						$key = $this->executeCreateCustomField($listId, $customFieldDetail);
-						$customFields[$key] = $key;
+					// gets existing custom fields
+					$currentCustomFields = $this->executeGetCustomFields($listId);
+					// deletes unwanted custom fields
+					$customFieldsToDelete = array_diff_key($currentCustomFields, $customFields);
+					if(!empty($customFieldsToDelete)) {
+						$deletedCustomFields = array_merge($deletedCustomFields, $customFieldsToDelete);
+						$this->executeDeleteCustomFields($listId, $customFieldsToDelete);
+					}
+					
+					// adds new custom fields
+					$customFieldsToAdd = array_diff_key($customFields, $currentCustomFields);
+					if(!empty($customFieldsToAdd)) {
+						foreach($customFieldsToAdd as $customFieldDetail) {
+							$key = $this->executeCreateCustomField($listId, $customFieldDetail);
+							$addedCustomFields[$customFieldDetail['FieldName']] = $key;
+						}					
 					}
 				}
-				$this->executionSink()->log("Created the following custom fields into the lists : ".implode(", ", $customFields));
+				$this->executionSink()->log("The following custom fields where created into the lists : ".implode(', ', $addedCustomFields).
+				", the following fields where deleted from CM: ".implode(', ', $deletedCustomFields).
+				", the following fields where already present in CM: ".implode(', ', array_keys(array_diff_key($customFields, $addedCustomFields))));
 			}
 		}		
 	}
@@ -320,6 +341,36 @@ class CMSyncSubscriberListBatch extends WigiiBatch {
 		}		
 		else {
 			throw new ServiceException("Error in creating custom field '".$customFieldDetail['FieldName']."' on Campaign Monitor. Response is : ".json_encode($result), $result->http_status_code);
+		}
+	}
+	private function executeDeleteCustomFields($listId, $customFields) {
+		if(!empty($customFields)) {
+			$cm = $this->getCMClientForLists();
+			$cm->set_list_id($listId);
+			
+			foreach($customFields as $fieldName=>$key) {
+				$result = $cm->delete_custom_field($key);
+				if(!empty($result) && $result->http_status_code != 200) {
+					$response = $result->response;
+					if(!(is_object($response) && $response->{'Code'} == 253)) throw new ServiceException("Error in deleting custom field '".$fieldName."' on Campaign Monitor. Response is : ".json_encode($result), $result->http_status_code);
+				}
+			}		
+		}
+	}
+	private function executeGetCustomFields($listId) {
+		$cm = $this->getCMClientForLists();
+		$cm->set_list_id($listId);
+		$result = $cm->get_custom_fields();
+		if($result->was_successful()) {
+			// fills an array [custom field name => custom field key]
+			$returnValue = array();
+			foreach($result->response as $customField) {
+				$returnValue[$customField->{'FieldName'}] = $customField->{'Key'};
+			}
+			return $returnValue;
+		}
+		else {
+			throw new ServiceException("Error in getting custom field list for list '".$listId."' on Campaign Monitor. Response is : ".json_encode($result), $result->http_status_code);
 		}
 	}
 	

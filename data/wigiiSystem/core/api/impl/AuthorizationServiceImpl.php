@@ -277,6 +277,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "getGroupWithoutDetail":
 					case "getGroupsWithoutDetail":
 					case "getSelectedGroupsWithoutDetail":
+					case "getSelectedGroupsWithChildrenWithoutDetail":
 					case "getGroupsPath":
 						$this->assertPrincipalIsRootOrIsPublicOrHasAttachedUser($principal);
 						return null; /* principal gets no special rights */

@@ -160,6 +160,23 @@ class RecordEvaluator implements FuncExpEvaluator
 	protected function getFormExecutor() {
 		return $this->formExecutor;
 	}
+	
+	private $matrixLogExpEvaluator;
+	/**
+	 * @return RecordMatrixLogExpEvaluator
+	 */
+	protected function getMatrixLogExpEvaluator() {
+		if(!$this->matrixLogExpEvaluator) {
+			$this->matrixLogExpEvaluator = RecordMatrixLogExpEvaluator::createInstance();
+		}
+		return $this->matrixLogExpEvaluator;
+	}
+	/**
+	 * @param RecordMatrixLogExpEvaluator $matrixLogExpEvaluator injects the log exp evaluator to use to evaluate log exp against a record matrix.
+	 */
+	public function setMatrixLogExpEvaluator($matrixLogExpEvaluator) {
+		$this->matrixLogExpEvaluator = $matrixLogExpEvaluator;
+	}
 
 	// configuration
 
@@ -292,7 +309,7 @@ class RecordEvaluator implements FuncExpEvaluator
 				$fName = $funcExp->getName();
 				if(method_exists($this, $fName)) {
 					$returnVal = $this->$fName($funcExp->getArguments());
-					if($this->debugLogger()->isEnabled()) $this->debugLogger()->write($fName." returns ".$returnVal);
+					if($this->debugLogger()->isEnabled()) $this->debugLogger()->write($fName." returns ".(is_object($returnVal) ? get_class($returnVal) : $returnVal));
 					return $returnVal;
 				}
 				else throw new RecordException("FuncExp '$fName' does not map to any public method defined in class ".get_class($this), RecordException::INVALID_ARGUMENT);
@@ -1068,6 +1085,45 @@ class RecordEvaluator implements FuncExpEvaluator
 			}
 		}
 		return $returnValue;
+	}	
+	
+	/**
+	 * Sets a calculated value to a field only if check returns true, else displays error message.
+	 * FuncExp signature : <code>ctlCheck(calculatedValue, checkExp, errorMessage)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) calculatedValue: Any. The calculated value to set to the field
+	 * - Arg(1) checkExp: Boolean. An expression which should evaluate to true if check is OK, else false. It can contain a FieldSelector pointing to current field, which will return the new calculated value.
+	 * - Arg(2) errorMessage: String. Evaluates to a String that will be displayed as an error message if checkExp returns false.
+	 * @return Any the calculated value to set to the field
+	 */
+	public function ctlCheck($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 3) throw new FuncExpEvalException("ctlCheck func exp takes three arguments: the calculatedValue, checkExp and errorMessage", FuncExpEvalException::INVALID_ARGUMENT);
+		// udpates current value with new calculated value
+		$returnValue = $this->evaluateArg($args[0]);
+		$this->updateCurrentFieldSubFieldValue(null, $returnValue);
+		// verifies the condition
+		if(!$this->evaluateArg($args[1])) {
+			// if not true, then shows an error message
+			$message = $this->evaluateArg($args[2]);
+			$form = $this->getFormExecutor();
+			if(isset($form)) {
+				$form->addErrorToField($message, $this->getCurrentField()->getFieldName());
+			}
+			else throw new FuncExpEvalException($message, FuncExpEvalException::INVALID_RETURN_VALUE);
+		}
+		return $returnValue;
+	}
+	
+	/**
+	 * Returns false if attached FormExecutor has some errors, else returns true.
+	 * FuncExp signature : <code>ctlCheckNoError()</code><br/>
+	 * @return boolean false if attached FormExecutor has some errors, else true.
+	 */
+	public function ctlCheckNoError($args) {
+		$form = $this->getFormExecutor();
+		if(isset($form) && $form->hasError()) return false;
+		else return true;
 	}
 	
 	/**
@@ -1159,6 +1215,464 @@ class RecordEvaluator implements FuncExpEvaluator
 		$v = json_encode($v);
 		if(!$v) throw new RecordException("could not create a JSON string based on the input", RecordException::INVALID_ARGUMENT);
 		return $v;
+	}
+	
+	// Record matrix functions
+	
+	/**
+	 * Gets a matrix out of the Record as a StdClass instance
+	 * FuncExp signature: <code>getMatrix(fromRow, toRow, col1, col2, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fromRow: int. The start index from which to extract the matrix rows.
+	 * - Arg(1) toRow: int. The stop index to which to extract the matrix rows.
+	 * - Arg(2...) colI: string. The name of the matrix column to be extracted.
+	 * @return stdClass StdClass {rows : array(StdClass as row), index : null, errors : null} as matrix
+	 * @example With a module configuration containing the fields ProjectCode_1, Location_1, ProjectCode_2, Location_2, ProjectCode_3, Location_3 and data
+	 * ProjectCode_1 = P1, Location_1 = L1,
+	 * ProjectCode_2 = P2, Location_2 = L2,
+	 * ProjectCode_3 = P3, Location_3 = L3
+	 * The call of getMatrix("1", "3", "ProjectCode_", "Location_")
+	 * will return an stdClass instance of the form 
+	 * {rows => array(
+	 * 		{ProjectCode_ => {value=>P1, other data type subfields...}, Location_ => {value => L1, other data type subfields...}}
+	 * 		{ProjectCode_ => {value=>P2, other data type subfields...}, Location_ => {value => L2, other data type subfields...}}
+	 * 		{ProjectCode_ => {value=>P3, other data type subfields...}, Location_ => {value => L3, other data type subfields...}}
+	 * 	), 
+	 * 	index => null, 
+	 * 	errors => null
+	 * }
+	 */
+	public function getMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 3) throw new RecordException('getMatrix func exp takes at least three arguments which are fromRow, toRow and matrix columns', RecordException::INVALID_ARGUMENT);
+		$fromRow = $this->evaluateArg($args[0]);
+		$toRow = $this->evaluateArg($args[1]);
+		$columns = array();
+		for($i = 2; $i<$nArgs;$i++) {
+			$columns[] = $this->evaluateArg($args[$i]);
+		}
+		
+		$returnValue = array(
+				'rows'=>$this->getRecord()->exportMatrix($columns, $fromRow, $toRow), 
+				'index'=>null, 
+				'errors'=>null
+		);
+		$returnValue = (object)$returnValue;
+		return $returnValue;
+	}
+	/**
+	 * Stores back a matrix of type StdClass into a Record
+	 * FuncExp signature: <code>storeMatrix(matrix, fromRow, toRow, col1, col2, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) matrix: stdClass. The matrix to be stored in the Record based on the format of the object given by the getMatrix func exp.
+	 * - Arg(1) fromRow: int. The start index from which to store the matrix rows in the Record.
+	 * - Arg(2) toRow: int. The stop index to which to store the matrix rows in the Record.
+	 * - Arg(3...) colI: string. The name of the matrix column to be saved.
+	 * @return int the number of updated rows
+	 */
+	public function storeMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 4) throw new RecordException('storeMatrix func exp takes at least four arguments which are matrix, fromRow, toRow and matrix columns', RecordException::INVALID_ARGUMENT);
+		$matrix = $this->evaluateArg($args[0]);
+		if(!(is_object($matrix))) throw new RecordException('matrix should be a StdClass instance', RecordException::INVALID_ARGUMENT);
+		$fromRow = $this->evaluateArg($args[1]);
+		$toRow = $this->evaluateArg($args[2]);
+		$columns = array();
+		for($i = 3; $i<$nArgs;$i++) {
+			$columns[] = $this->evaluateArg($args[$i]);
+		}		
+		$returnValue = $this->getRecord()->updateMatrix($columns, $fromRow, $toRow, $matrix->{'rows'});
+		
+		// displays any errors if FormExecutor is defined and matrix has some errors.
+		$formExecutor = $this->getFormExecutor();		
+		if(isset($formExecutor)) {
+			// displays global errors
+			$errors = $matrix->{'errors'};
+			if(!empty($errors)) {
+				foreach($errors as $error) {
+					$formExecutor->addErrorToField($error, $this->getCurrentField()->getFieldName());
+				}
+				// clear global errors
+				$matrix->{'errors'} = null;
+			}			
+			// displays field errors
+			if($matrix->{'hasRowsInError'}) {
+				$rows = $matrix->{'rows'};
+				if(!empty($rows)) {
+					$i = $fromRow;
+					foreach($rows as $row) {
+						// adds error to field
+						foreach($columns as $col) {
+							$fieldName = $col.$i;
+							$fieldValue = $row->{$col};
+							if(is_object($fieldValue)) {
+								$errors = $fieldValue->{'errors'};
+								// displays error only for rows between start and stop index
+								if($i <= $toRow && !empty($errors)) {
+									foreach($errors as $error) {
+										$formExecutor->addErrorToField($error, $fieldName);
+									}
+								}
+								// clears errors on field
+								$fieldValue->{'errors'} = null;
+							}
+						}
+						$i++;
+					}					
+				}
+				$matrix->{'hasRowsInError'}=false;
+			}						
+		}
+		
+		return $returnValue;
+	}
+	/**
+	 * Dumps the rows of a matrix into a given dataflow. 
+	 * FuncExp signature: <code>visitMatrix(matrix, dfasl, resultField=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) matrix: stdClass. The matrix to dump into the data flow. The matrix should have the format of the object given by the getMatrix func exp.
+	 * - Arg(1) dfasl: DataFlowActivitySelectorList. The data flow in which each row of the matrix is dumped.
+	 * - Arg(2) resultField: String. Optional string specifying under which dynamic field in the matrix object the eventual result of the data flow should be stored.
+	 * Meaning that if resultField is defined then matrix will be of the form {rows:..., index:..., errors:..., resultField:data flow result}.
+	 * The DataFlowContext has a reference on the matrix under the 'matrix' attribute so that index or errors can be updated if needed.
+	 * Dynamic columns on rows can be added by adding fields to the row stdClass instance.
+	 * Field and subfield values can be updated directly in the objects coming through the data flow, rows are passed by reference and not cloned.
+	 * @return stdClass returns the matrix for further use
+	 */
+	public function visitMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new RecordException('visitMatrix func exp takes at least two arguments which are matrix and dfasl', RecordException::INVALID_ARGUMENT);
+		$matrix = $this->evaluateArg($args[0]);
+		if(!(is_object($matrix))) throw new RecordException('matrix should be a StdClass instance', RecordException::INVALID_ARGUMENT);
+		$dfasl = $this->evaluateArg($args[1]);
+		if($nArgs > 2) $resultField = $this->evaluateArg($args[2]);
+		else $resultField = null;
+		
+		// executes the data flow
+		$rows = $matrix->{'rows'};
+		if(!empty($rows)) {
+			$dfS = ServiceProvider::getDataFlowService();
+			// opens
+			$dfctx = $dfS->startStream($this->getPrincipal(), $dafsl);
+			// initialises context
+			$dfctx->setAttribute('matrix', $matrix);
+			// runs data flow
+			foreach($rows as $row) {
+				$dfS->processDataChunk($row, $dfctx);
+			}
+			// ends
+			$result = $dfS->endStream($dfctx);
+		}
+		else $result = null;
+		// stores result
+		if(isset($resultField)) {
+			$matrix->{$resultField} = $result;
+		}
+		return $matrix;
+	}
+	/**
+	 * Sorts the matrix rows against a column.
+	 * FuncExp signature: <code>sortMatrix(matrix, col, asc=true)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) matrix: stdClass. The matrix to sort. The matrix should have the format of the object given by the getMatrix func exp.
+	 * - Arg(1) col: String. The name of the column in the matrix against which the rows are sorted. 
+	 * If multi-column sorting is needed, then add a dynamically calculated column using the visitMatrix function. 
+	 * - Arg(2) asc: Boolean. If true then sorting is acending, else descending order. Default is ascending.
+	 * @return stdClass returns the matrix for further use
+	 */
+	public function sortMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new RecordException('sortMatrix func exp takes at least two arguments which are matrix and col', RecordException::INVALID_ARGUMENT);
+		$matrix = $this->evaluateArg($args[0]);
+		if(!(is_object($matrix))) throw new RecordException('matrix should be a StdClass instance', RecordException::INVALID_ARGUMENT);
+		$col = $this->evaluateArg($args[1]);
+		if($nArgs > 2) $asc = ($this->evaluateArg($args[2]) == true);
+		else $asc = true;
+		
+		$rows = $matrix->{'rows'};
+		if(!empty($rows)) {						
+			// prepares sortable array
+			$sortableArray = array();
+			$pad = strlen((count($rows)-1));
+			$i = 0;
+			foreach($rows as $row) {
+				$k = $row->{$col};
+				if(is_object($k)) $k = $k->{'value'};
+				// builds a key which can be sorted alphabetically even if numeric or null and not unique.
+				$k = $k.'A'.str_pad($i, $pad, '0', STR_PAD_LEFT);
+				$sortableArray[$k] = $row;
+				$i++;
+			}
+			
+			// sorts array
+			if($asc) ksort($sortableArray);
+			else krsort($sortableArray);
+			
+			// replaces rows array in matrix
+			$matrix->{'rows'} = $sortableArray;
+		}
+		return $matrix;
+	}
+	/**
+	 * Filters the matrix rows against a LogExp. If logExp evaluates false on a row, the row is removed from the matrix.
+	 * FuncExp signature: <code>filterMatrix(matrix, logExp)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) matrix: stdClass. The matrix to filter. The matrix should have the format of the object given by the getMatrix func exp.
+	 * - Arg(1) logExp: LogExp. The logExp to be evaluated on each row. If returns false, then the row is removed from the matrix.
+	 * @return stdClass returns the matrix for further use
+	 */
+	public function filterMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new RecordException('filterMatrix func exp takes at least two arguments which are matrix and logExp', RecordException::INVALID_ARGUMENT);
+		$matrix = $this->evaluateArg($args[0]);
+		if(!(is_object($matrix))) throw new RecordException('matrix should be a StdClass instance', RecordException::INVALID_ARGUMENT);
+		$logExp = $this->evaluateArg($args[1]);
+		if(!($logExp instanceof LogExp)) throw new RecordException('logExp should be a non null instance of LogExp');
+		
+		// evaluates log exp on each row
+		if(!$this->getMatrixLogExpEvaluator()->evaluate($matrix, $logExp, 'filterResultFlag')) {
+			$rows = $matrix->{'rows'};
+			if(!empty($rows)) {
+				$filteredRows = array();
+			
+				// keeps only rows for which logExp evaluates positively.
+				foreach($rows as $row) {
+					if($row->{'filterResultFlag'}) $filteredRows[] = $row;
+				}
+					
+				$matrix->{'rows'} = $filteredRows;
+			}
+		}
+		return $matrix;
+	}
+	/**
+	 * Summarizes a column of a matrix using an aggregation function. The aggregation can be grouped against the value of another column.
+	 * FuncExp signature: <code>summarizeMatrix(matrix, op=[SUM,COUNT,PRODUCT,AVG], col, groupByCol=null, resultField=op_col)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) matrix: stdClass. The matrix to summarize. The matrix should have the format of the object given by the getMatrix func exp.
+	 * - Arg(1) op: String. The aggregation operation. One of the following strings "SUM", "COUNT", "PRODUCT", "AVG".
+	 * - Arg(2) col: String. The name of the column to summarize.
+	 * - Arg(3) groupByCol: String. Optional string, specifying the name of the column on which to group by first, before running the aggregation operation.
+	 * - Arg(4) resultField: String. Optional string specifying under which dynamic field in the matrix object the summary result should be stored. Defaults to op_col.
+	 * @example consider the matrix 
+	 * $m = {rows => array(
+	 * 			{ProjectCode_=>{value=>P1},Sector_=>{value=>S1},Percentage_=>{value=>30}},
+	 * 			{ProjectCode_=>{value=>P1},Sector_=>{value=>S2},Percentage_=>{value=>70}},
+	 * 			{ProjectCode_=>{value=>P2},Sector_=>{value=>S1},Percentage_=>{value=>40}},
+	 * 			{ProjectCode_=>{value=>P2},Sector_=>{value=>S2},Percentage_=>{value=>80}},
+	 * 		),
+	 * 	index=>null,
+	 * 	errors=>null
+	 * }
+	 * the call of summarizeMatrix($m,"SUM","Percentage_","ProjectCode_") will update the matrix by adding a dynamic field "SUM_Percentage_" with the grouped-sum result, 
+	 * will update the index with the group by calculation and add an index entry for the aggregated field.
+	 * $m = {rows => array(
+	 * 			StdClass(1){ProjectCode_=>{value=>P1},Sector_=>{value=>S1},Percentage_=>{value=>30}},
+	 * 			StdClass(2){ProjectCode_=>{value=>P1},Sector_=>{value=>S2},Percentage_=>{value=>70}},
+	 * 			StdClass(3){ProjectCode_=>{value=>P2},Sector_=>{value=>S1},Percentage_=>{value=>40}},
+	 * 			StdClass(4){ProjectCode_=>{value=>P2},Sector_=>{value=>S2},Percentage_=>{value=>80}},
+	 * 		),
+	 * 	SUM_Percentage_=>array(P1=>100,P2=>120)
+	 * 	index=>array(
+	 * 		ProjectCode_=> array(P1=>array(StdClass(1),StdClass(2)), P2=>array(StdClass(3),StdClass(4))),
+	 * 		SUM_Percentage_=> array(P1=>array(StdClass(1),StdClass(2)), P2=>array(StdClass(3),StdClass(4))),
+	 * 	),
+	 * 	errors=null
+	 * }
+	 * @return stdClass returns the matrix for further use
+	 */
+	public function summarizeMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 3) throw new RecordException('summarizeMatrix func exp takes at least three arguments which are matrix, op and col', RecordException::INVALID_ARGUMENT);
+		$matrix = $this->evaluateArg($args[0]);
+		if(!(is_object($matrix))) throw new RecordException('matrix should be a StdClass instance', RecordException::INVALID_ARGUMENT);
+		$op = $this->evaluateArg($args[1]);
+		$op = strtoupper($op);
+		switch($op) {
+			case "SUM":
+			case "COUNT":
+			case "PRODUCT":
+			case "AVG":
+				break;
+			default: throw new RecordException("op should be one of 'SUM', 'COUNT', 'PRODUCT', 'AVG'", RecordException::INVALID_ARGUMENT);	
+		}
+		$col = $this->evaluateArg($args[2]);
+		if($nArgs > 3) $groupByCol = $this->evaluateArg($args[3]);
+		else $groupByCol = null;
+		if($nArgs > 4) $resultField = $this->evaluateArg($args[4]);
+		else $resultField = $op.'_'.$col;
+		
+		$rows = $matrix->{'rows'};
+		if(!empty($rows)) {
+			// builds global stat object
+			if(!isset($groupByCol)) {
+				$stat = array('SUM'=>0,'COUNT'=>0,'PRODUCT'=>1,'AVG'=>0);
+				$stat = (object)$stat;
+				$groupedStats = array($stat);
+				$index = null;
+			}
+			// prepares grouped stat object and retrieves index
+			else {
+				$stat = null;
+				$groupedStats = array();
+				$index = $matrix->{'index'};
+				if(!isset($index)) $index = array();
+				// clears groupBy index
+				$index[$groupByCol] = array();
+				$index[$resultField] = array();
+			}
+			foreach($rows as $row) {
+				$value = $row->{$col};
+				if(is_object($value)) $value = $value->{'value'};
+				
+				// group by
+				if(isset($groupByCol)) {
+					$groupByValue = $row->{$groupByCol};
+					if(is_object($groupByValue)) $groupByValue = $groupByValue->{'value'};
+					if(!is_scalar($groupByValue)) throw new RecordException('can only group on scalars', RecordException::INVALID_ARGUMENT);
+					// gets stat object
+					$stat = $groupedStats[$groupByValue];
+					if(!isset($stat)) {
+						$stat = array('SUM'=>0,'COUNT'=>0,'PRODUCT'=>1,'AVG'=>0);
+						$stat = (object)$stat;
+						$groupedStats[$groupByValue] = $stat;
+					}
+					// updates GroupBy index
+					$subIndex = $index[$groupByCol];
+					if(!isset($subIndex)) $subIndex = array();
+					$refs = $subIndex[$groupByValue];
+					if(!isset($refs)) $refs = array();
+					$refs[] = $row;
+					$subIndex[$groupByValue] = $refs;
+					$index[$groupByCol] = $subIndex;
+					// updates Summary index
+					$subIndex = $index[$resultField];
+					if(!isset($subIndex)) $subIndex = array();
+					$refs = $subIndex[$groupByValue];
+					if(!isset($refs)) $refs = array();
+					$refs[] = $row;
+					$subIndex[$groupByValue] = $refs;
+					$index[$resultField] = $subIndex;
+				}
+				// only considers non-null values
+				if(isset($value)) {
+					// computes stat
+					switch($op) {
+						case "SUM":
+							$stat->SUM += $value;
+							break;							
+						case "COUNT":
+							$stat->COUNT += 1;
+							break;
+						case "PRODUCT":
+							$stat->PRODUCT *= $value;
+							break;
+						case "AVG":
+							$stat->SUM += $value;
+							$stat->COUNT += 1;
+							break;						
+					}
+				}
+			}
+			// finalizes stat
+			foreach($groupedStats as &$stat) {
+				switch($op) {			
+					case "AVG":
+						if($stat->COUNT > 0) $stat->AVG = $stat->SUM / $stat->COUNT;
+						break;
+				}
+				$stat = $stat->{$op};
+			}
+			// stores result in matrix
+			$matrix->{$resultField} = (isset($groupByCol)? $groupedStats: reset($groupedStats));
+			// stores index back in matrix
+			if(isset($index)) $matrix->{'index'} = $index;
+		}
+		return $matrix;
+	}
+	/**
+	 * Checks the matrix by evaluating a LogExp. If it returns false, then an error message can be attached to the cells of a specified column for each row in error.
+	 * FuncExp signature: <code>checkMatrix(matrix, checkExp, errorMessage, errorCol=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) matrix: stdClass. The matrix to check. The matrix should have the format of the object given by the getMatrix func exp.
+	 * - Arg(1) checkExp: LogExp. A logExp to run on the matrix. The logExp can either check columns into a row, or check calculated fields at the matrix level (like the ones issued from the summarizeMatrix func exp).
+	 * - Arg(2) errorMessage: String. The error message to be displayed. (automatically translated).
+	 * - Arg(3) errorCol: String. Optional string, specifying the name of the column to which to attach the error message if check fails. If not specified, then the error message is attached to the current field of the record (the one to which the func exp is running)
+	 * @example consider the matrix
+	 * $m = {rows => array(
+	 * 			StdClass(1){ProjectCode_=>{value=>P1},Sector_=>{value=>S1},Percentage_=>{value=>30}},
+	 * 			StdClass(2){ProjectCode_=>{value=>P1},Sector_=>{value=>S2},Percentage_=>{value=>70}},
+	 * 			StdClass(3){ProjectCode_=>{value=>P2},Sector_=>{value=>S1},Percentage_=>{value=>40}},
+	 * 			StdClass(4){ProjectCode_=>{value=>P2},Sector_=>{value=>S2},Percentage_=>{value=>80}},
+	 * 		),
+	 * 	SUM_Percentage_=>array(P1=>100,P2=>120)
+	 * 	index=>array(
+	 * 		ProjectCode_=> array(P1=>array(StdClass(1),StdClass(2)), P2=>array(StdClass(3),StdClass(4))),
+	 * 		SUM_Percentage_=> array(P1=>array(StdClass(1),StdClass(2)), P2=>array(StdClass(3),StdClass(4))),
+	 * 	),
+	 * 	errors=null
+	 * }
+	 * the call of checkMatrix($m,lxSmEq(fs("SUM_Percentage_"), "100"), "Sum of percentage should be smaller or equal to 100 per project.", "Percentage_") 
+	 * will update the matrix by adding the error message on the rows affected by the failing check expression
+	 * $m = {rows => array(
+	 * 			StdClass(1){ProjectCode_=>{value=>P1},Sector_=>{value=>S1},Percentage_=>{value=>30}},
+	 * 			StdClass(2){ProjectCode_=>{value=>P1},Sector_=>{value=>S2},Percentage_=>{value=>70}},
+	 * 			StdClass(3){ProjectCode_=>{value=>P2},Sector_=>{value=>S1},Percentage_=>{value=>40, errors=>array("Sum of percentage should be smaller or equal to 100 per project.")}},
+	 * 			StdClass(4){ProjectCode_=>{value=>P2},Sector_=>{value=>S2},Percentage_=>{value=>80, errors=>array("Sum of percentage should be smaller or equal to 100 per project.")}},
+	 * 		),
+	 * 	SUM_Percentage_=>array(P1=>100,P2=>120)
+	 * 	index=>array(
+	 * 		ProjectCode_=> array(P1=>array(StdClass(1),StdClass(2)), P2=>array(StdClass(3),StdClass(4))),
+	 * 		SUM_Percentage_=> array(P1=>array(StdClass(1),StdClass(2)), P2=>array(StdClass(3),StdClass(4))),
+	 * 	),
+	 * 	errors=null
+	 * 	hasRowsInError=true
+	 * }
+	 * @return stdClass returns the matrix for further use
+	 */
+	public function checkMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 3) throw new RecordException('checkMatrix func exp takes at least three arguments which are matrix, checkExp and errorMessage', RecordException::INVALID_ARGUMENT);
+		$matrix = $this->evaluateArg($args[0]);
+		if(!(is_object($matrix))) throw new RecordException('matrix should be a StdClass instance', RecordException::INVALID_ARGUMENT);
+		$checkExp = $this->evaluateArg($args[1]);
+		if(!($checkExp instanceof LogExp)) throw new RecordException('checkExp should be a non null instance of LogExp');
+		$errorMessage = $this->evaluateArg($args[2]);
+		if($nArgs > 3) $errorCol = $this->evaluateArg($args[3]);
+		else $errorCol = null;
+		
+		// evaluates log exp on each row
+		if(!$this->getMatrixLogExpEvaluator()->evaluate($matrix, $checkExp, 'checkResultFlag')) {
+			// if logExp did not evaluate positively for all rows, then adds the error message to the matrix
+			if(is_null($errorCol)) {
+				$errors = $matrix->{'errors'};
+				if(!isset($errors)) $errors = array();
+				$errors[] = $errorMessage;
+				$matrix->{'errors'} = $errors;
+			}
+			// if an errorCol is specified, then adds error to each field in error.
+			else {
+				$rows = $matrix->{'rows'};
+				if(!empty($rows)) {
+					foreach($rows as $row) {
+						if($row->{'checkResultFlag'}===false) {
+							$colVal = $row->{$errorCol};
+							if(!is_object($colVal)) {
+								$colVal = array('value'=>$colVal);
+								$colVal = (object)$colVal;
+								$row->{$errorCol} = $colVal;
+							}
+							$errors = $colVal->{'errors'};
+							if(!isset($errors)) $errors = array();
+							$errors[] = $errorMessage;
+							$colVal->{'errors'} = $errors;
+							$matrix->{'hasRowsInError'} = true;
+						}
+					}
+				}
+			}
+		}
+		return $matrix;
 	}
 	
 	// System functions
@@ -1437,5 +1951,120 @@ class RecordEvaluator implements FuncExpEvaluator
 			}
 		}
 		return $versionSync;
+	}
+}
+/**
+ * A LogExp evaluator on a matrix extracted from a Record
+ * Created by CWE on Sept. 8th 2015.
+ */
+class RecordMatrixLogExpEvaluator extends FieldSelectorLogExpAbstractEvaluator {
+	private $_debugLogger;
+	private $matrix;
+	private $currentRow;
+	
+	// Object life cycle
+	
+	public static function createInstance() {
+		$returnValue = new self();
+		return $returnValue;
+	}
+	
+	public function reset() {
+		$this->freeMemory();
+	}
+	public function freeMemory() {
+		unset($this->currentRow);
+		unset($this->matrix);
+	}
+	
+	// Dependency injection
+	
+	private function debugLogger()
+	{
+		if(!isset($this->_debugLogger))
+		{
+			$this->_debugLogger = DebugLogger::getInstance("RecordMatrixLogExpEvaluator");
+		}
+		return $this->_debugLogger;
+	}
+	
+	// Implementation
+	
+	/**
+	 * Evaluates a LogExp against each row of a given matrix, sets the boolean result to the result field of each row.  
+	 * @param stdClass $matrix the matrix against which to evaluate the log exp.
+	 * @param LogExp $logExp the log exp to evaluate. Can combine columns of a row and calculated fields at the matrix level.
+	 * @param string $resultField the name of the column in the row in which to set the boolean result. Defaults to 'resultFlag'.
+	 * @return boolean returns true if logExp evaluated to true for all rows, else false.
+	 * @throws Exception in case of error.
+	 */
+	public function evaluate($matrix, $logExp, $resultField='resultFlag') {
+		if(!(is_object($matrix))) throw new RecordException('matrix should be a StdClass instance', RecordException::INVALID_ARGUMENT);
+		if(!($logExp instanceof LogExp)) throw new RecordException('logExp should be a LogExp instance', RecordException::INVALID_ARGUMENT);
+		$returnValue = true;
+		$this->debugLogger()->logBeginOperation('evaluate');
+		$this->reset();
+		$this->matrix = $matrix;
+		$rows = $this->matrix->{'rows'};
+		// evaluates log exp on each row
+		if(!empty($rows)) {
+			foreach($rows as $row) {
+				$this->currentRow = $row;
+				$result = $logExp->acceptLogExpVisitor($this);
+				$row->{$resultField} = $result;
+				if(!$result) $returnValue = false; 
+			}
+		}
+		$this->debugLogger()->logEndOperation('evaluate');
+		return $returnValue;
+	}
+	
+	// LogExpVisitor implementation
+	
+	protected function getValue($obj){
+		$returnValue = null;
+		// if field is defined in row, then returns its value
+		$fieldName = $obj->getFieldName();
+		$fieldValue = $this->currentRow->{$fieldName};
+		if(is_object($fieldValue)) {
+			$subFieldName = $obj->getSubFieldName();
+			if(is_null($subFieldName)) $subFieldName = 'value';
+			$returnValue = $fieldValue->{$subFieldName};
+		}
+		elseif($fieldValue != null) $returnValue = $fieldValue;
+		// else looks at matrix level
+		else {
+			$fieldValue = $this->matrix->{$fieldName};
+			// if object then returns subfield value
+			if(is_object($fieldValue)) {
+				$subFieldName = $obj->getSubFieldName();
+				if(is_null($subFieldName)) $subFieldName = 'value';
+				$returnValue = $fieldValue->{$subFieldName};
+			}						
+			// else if array then distributes values in rows using index
+			elseif(is_array($fieldValue)) {
+				// retrieves index
+				$index = $this->matrix->{'index'};
+				if(isset($index)) $index = $index[$fieldName];
+				// if there is no index that can be used to distribute the values, then returns the array
+				if(empty($index)) $returnValue = $fieldValue;
+				else {
+					foreach($fieldValue as $key => $value) {
+						// retrieves matching rows using the index
+						$rows = $index[$key];
+						// distribute value on all matching rows
+						if(!empty($rows)) {
+							foreach($rows as $row) {
+								$row->{$fieldName} = $value;
+							}
+						}
+					}
+					// returns distributed value
+					$returnValue = $this->currentRow->{$fieldName};
+				}
+			}
+			else $returnValue = $fieldValue;
+		}
+		return $returnValue;
 	}
 }

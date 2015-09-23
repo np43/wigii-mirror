@@ -273,6 +273,10 @@ class WigiiExecutor {
 		return $returnValue;
 	}
 
+	protected function getElementPListHtmlRendererDFAS($params=null) {
+		return dfas('ElementPListHtmlRendererDFA', $params);
+	}
+	
 	//functional
 
 	/**
@@ -757,7 +761,7 @@ invalidCompleteCache();
 	 * List Context management
 	 */
 	private $listContextList;
-	protected function getListContext($p, $wigiiNamespace, $module, $name) {
+	public function getListContext($p, $wigiiNamespace, $module, $name) {
 		$this->executionSink()->publishStartOperation("getListContext " . $name);
 		$sessAS = ServiceProvider :: getSessionAdminService();
 		$exec = ServiceProvider::getExecutionService();
@@ -2431,8 +2435,27 @@ invalidCompleteCache();
 				if($listContext->isGroupByOnlyDuplicates()){
 					$desiredPage = null;
 					$pageSize = null;
+					$groupLogExp = $listContext->getGroupLogExp();
+					// remove trashbin if exists
+					$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
+					if($trashBinGroup && ($groupLogExp instanceof LogExpInGroup)) {
+						$groupLogExp = $groupLogExp->reduceNegation(true);
+						$lx = $groupLogExp->getGroupSelectionLogExp();
+						if(isset($lx) && ($lx instanceof LogExpBin) && ($lx->getOperator() == 'IN')) {
+							$ids = $lx->getValue();
+							if(is_array($ids)) {
+								$ids = array_diff($ids, array($trashBinGroup));
+								if(!empty($ids)) {
+									$lx->setValue($ids);
+								}
+							}
+						}
+					}
 				}
-				$nbRow = $elS->getSelectedElementsInGroups($p, $listContext->getGroupLogExp(), //getGroupList(), $
+				else {
+					$groupLogExp = $listContext->getGroupLogExp();
+				}
+				$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp, //getGroupList(), $
 	$elementPList,
 	$listContext
 	,$desiredPage,$pageSize
@@ -2536,8 +2559,27 @@ invalidCompleteCache();
 				if($listContext->isGroupByOnlyDuplicates()){
 					$desiredPage = null;
 					$pageSize = null;
+					$groupLogExp = $listContext->getGroupLogExp();
+					// remove trashbin if exists
+					$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
+					if($trashBinGroup && ($groupLogExp instanceof LogExpInGroup)) {
+						$groupLogExp = $groupLogExp->reduceNegation(true);
+						$lx = $groupLogExp->getGroupSelectionLogExp();
+						if(isset($lx) && ($lx instanceof LogExpBin) && ($lx->getOperator() == 'IN')) {
+							$ids = $lx->getValue();
+							if(is_array($ids)) {
+								$ids = array_diff($ids, array($trashBinGroup));
+								if(!empty($ids)) {
+									$lx->setValue($ids);
+								}
+							}
+						}
+					}
 				}
-				$nbRow = $elS->getSelectedElementsInGroups($p, $listContext->getGroupLogExp(), //getGroupList(), $
+				else {
+					$groupLogExp = $listContext->getGroupLogExp();
+				}
+				$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp, //getGroupList(), $
 	$elementPList,
 	$listContext
 	,$desiredPage,$pageSize
@@ -6978,21 +7020,31 @@ onUpdateErrorCounter = 0;
 						$currentNamespace = $p->getWigiiNamespace();
 						$adaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
 						$p->setAdaptiveWigiiNamespace(true);
-						$nbRow = ServiceProvider::getDataFlowService()->processDataSource($p, $querySource, dfasl(
-								dfas('ElementPListRowsForPreview',
-										'setTrm', $this->createTRM(),
-										'setP', $p,
-										'setExec', $exec,
-										'setConfigService', $this->getConfigurationContext(),
-										'setFsl', $listFilter->getFieldSelectorList(),
-										'setElementId', $element->getId(),
-										'setLinkName', $linkName,
-										'setLinkType', $linkType,
-										'setElementIsBlocked', $elementIsBlocked,
-										'setPreviewListId', $previewListId,
-										'setWidth', null,
-										'setUpdateContentOnly', true)
-						), false);
+						try {
+							$nbRow = ServiceProvider::getDataFlowService()->processDataSource($p, $querySource, dfasl(
+									dfas('ElementPListRowsForPreview',
+											'setTrm', $this->createTRM(),
+											'setP', $p,
+											'setExec', $exec,
+											'setConfigService', $this->getConfigurationContext(),
+											'setFsl', $listFilter->getFieldSelectorList(),
+											'setElementId', $element->getId(),
+											'setLinkName', $linkName,
+											'setLinkType', $linkType,
+											'setElementIsBlocked', $elementIsBlocked,
+											'setPreviewListId', $previewListId,
+											'setWidth', null,
+											'setUpdateContentOnly', true)
+							), false);
+						}
+						catch(ServiceException $se) {
+							// if AuthorizationServiceException::FORBIDDEN then displays an empty table
+							if($se->getWigiiRootException()->getCode() == AuthorizationServiceException::FORBIDDEN) {
+								$nbRow = 0;
+							}
+							// else propagates exception
+							else throw $se;
+						}
 						$total = $querySource->getListFilter()->getTotalNumberOfObjects();
 						if(method_exists($querySource, 'freeMemory')) $querySource->freeMemory();
 						if($adaptiveWigiiNamespace) $p->setAdaptiveWigiiNamespace(false);
@@ -8566,22 +8618,22 @@ onUpdateErrorCounter = 0;
 					}
 
 					//add content on Files with htmlArea, for detail, or edit
-					if ($exec->getCrtParameters(0) == "detail" || $exec->getCrtParameters(0) == "print" || $exec->getCrtParameters(0) == "edit" || $exec->getCrtParameters(0) == "copy" || $exec->getCrtParameters(0) == "lockAndModify" || $exec->getCrtParameters(0) == "checkInAndModify" || $exec->getCrtParameters(0) == "checkinFile") {
-						$htmlAreaFileFields = $this->doesCrtModuleHasHtmlAreaFiles($exec->getCrtModule());
-						$fsl = FieldSelectorListArrayImpl :: createInstance();
-						if ($htmlAreaFileFields) {
-							foreach ($htmlAreaFileFields as $fieldXml) {
-								$fsl->addFieldSelector($fieldXml->getName(), "content");
-								//							eput($fieldXml->getName());
-							}
-						}
-						if (!$fsl->isEmpty()) {
-							$formFieldList = $element->getFieldList();
-							$element->setFieldList(FieldListArrayImpl :: createInstance());
-							$elS->fillElement($p, $element, $fsl);
-							$element->setFieldList($formFieldList);
-						}
-					}
+// 					if ($exec->getCrtParameters(0) == "detail" || $exec->getCrtParameters(0) == "print" || $exec->getCrtParameters(0) == "edit" || $exec->getCrtParameters(0) == "copy" || $exec->getCrtParameters(0) == "lockAndModify" || $exec->getCrtParameters(0) == "checkInAndModify" || $exec->getCrtParameters(0) == "checkinFile") {
+// 						$htmlAreaFileFields = $this->doesCrtModuleHasHtmlAreaFiles($exec->getCrtModule());
+// 						$fsl = FieldSelectorListArrayImpl :: createInstance();
+// 						if ($htmlAreaFileFields) {
+// 							foreach ($htmlAreaFileFields as $fieldXml) {
+// 								$fsl->addFieldSelector($fieldXml->getName(), "content");
+// 								//							eput($fieldXml->getName());
+// 							}
+// 						}
+// 						if (!$fsl->isEmpty()) {
+// 							$formFieldList = $element->getFieldList();
+// 							$element->setFieldList(FieldListArrayImpl :: createInstance());
+// 							$elS->fillElement($p, $element, $fsl);
+// 							$element->setFieldList($formFieldList);
+// 						}
+// 					}
 					//add element to the current selected element in list context
 					$this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList")->setCrtSelecteditem($elementId);
 
@@ -8718,6 +8770,14 @@ onUpdateErrorCounter = 0;
 							//copy
 							$element->setId(0);
 							$element->getWigiiBag()->loadFromFixedBag(); //recopy the fixed bag as normal bag without elementId
+							// empties any hidden fields which have clearOnCopy active
+							$hiddenClearOnCopyFields = $configS->mf($p, $element->getModule())->xpath("*[@hidden='1' and @clearOnCopy='1']");
+							if($hiddenClearOnCopyFields) {
+								$formBag = $element->getWigiiBag();
+								foreach($hiddenClearOnCopyFields as $fieldXml) {
+									$formBag->emptyFieldValue($fieldXml->getName());
+								}
+							}
 							if(isset($policyEval)) $policyEval->initializeElementStateOnCopy($p, $element);
 							$form = $this->createCopyElementFormExecutor($element, "copyElement_form", $action, $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList"));
 						}
@@ -10083,6 +10143,132 @@ document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->get
 						break;
 				}
 				break;
+			case "find":
+				$authS = ServiceProvider :: getAuthenticationService();
+				$transS = ServiceProvider :: getTranslationService();
+				$p = $authS->getMainPrincipal();
+				
+				$query = $exec->getCrtParameters(0);
+				$businessKey = $exec->getCrtParameters(1);
+				$strQuery = base64url_decode($query);
+				$strBusinessKey = base64url_decode($businessKey);								
+																
+				$query = str2fx($strQuery);
+				$businessKey = str2fx($strBusinessKey);
+				
+				// builds query object
+				$query = evalfx($p, $query);
+				// separates source from dfasl
+				if($query instanceof DataFlowSelector) {
+					$source = $query->getSource();
+					$dfasl = $query->getDataFlowActivitySelectorList();
+				}
+				elseif($query instanceof ElementPListDataFlowConnector) {
+					$source = $query;
+					$dfasl = null;
+				}
+				else throw new ServiceException('query '.$strQuery.' is not supported.', ServiceException::UNSUPPORTED_OPERATION);
+				
+				// builds business key selector
+				$businessKey = evalfx($p, $businessKey);
+				if(!($businessKey instanceof LogExp)) throw new ServiceException('businessKey selector '.$strBusinessKey.' is not a valid log exp.', ServiceException::INVALID_ARGUMENT);
+				
+				// injects businessKey selector in source
+				if($source instanceof ElementPListDataFlowConnector) {
+					$lf = $source->getListFilter();
+					if(is_null($lf)) {
+						$lf = ListFilter::createInstance();
+						$source->setListFilter($lf);
+					}
+					
+					// if fsl is not set, then only fetches element.id									
+					if(is_null($lf->getFieldSelectorList())) {
+						$lf->setFieldSelectorList(fsl(fs_e('id')));
+					}					
+					
+					// creates log exp
+					$logExp = $lf->getFieldSelectorLogExp();
+					if(is_null($logExp)) {
+						$logExp = $businessKey;
+					}
+					else {
+						$logExp = lxAnd($logExp, $businessKey);
+					}
+					$lf->setFieldSelectorLogExp($logExp);
+				}
+				else throw new ServiceException('query '.$strQuery.' with a source of class '.get_class($source).' is not supported.', ServiceException::UNSUPPORTED_OPERATION);
+				
+				// sets a default ElementPListHtmlRendererDFA if not present
+				$outputEnabled = false;							
+				if(is_null($dfasl)) {
+					$htmlRendererDfa = $this->getElementPListHtmlRendererDFAS(array(
+						'setOutputEnabled' => $outputEnabled,
+						'setRedirectIfOneElement' => !$outputEnabled,
+						'setRedirectIfOneGroup' => !$outputEnabled,
+						'setListIsNavigable' => true,
+						'setWigiiExecutor' => $this
+					));
+														
+					$dfasl = dfasl($htmlRendererDfa);
+					$outputEnabled = $htmlRendererDfa->getDataFlowActivityParameter('setOutputEnabled');
+					
+					// echoes default header
+					if($outputEnabled) {
+						if ($exec->getIsUpdating()) {
+							echo ExecutionServiceImpl :: answerRequestSeparator;
+							echo 'mainDiv';
+							echo ExecutionServiceImpl :: answerParamSeparator;
+						}
+						echo '<div style="margin-left:30px;">';
+						echo '<h1>Search</h1>';
+						echo '<p>';
+						echo $strQuery;
+						echo '</p>';
+						echo '<p>';
+						echo $strBusinessKey;
+						echo '</p>';
+						echo '<p><br/><a href="#';
+						echo $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl();
+						echo '" onclick="window.location = $(this).attr('."'href'".');window.location.reload();">Go back</a><br/></p><br/>';
+						echo '</div>';
+					}					
+				}
+				
+				// runs the find data flow
+				$p->setAdaptiveWigiiNamespace(true);
+				if($outputEnabled) echo '<div style="margin-left:30px;"><h1>Found results</h1>';
+				$result = ServiceProvider::getDataFlowService()->processDataSource($p, $source, $dfasl, false);
+				
+				// show no result page if no elements found
+				if(!$outputEnabled && $source instanceof ElementPListDataFlowConnector && $source->isEmpty()) {
+					$this->debugLogger()->write('noElements found');					
+					$group = $source->getCalculatedGroupList();					
+					if(isset($group)) $group = reset($group->getListIterator());
+					if(isset($group)) $group = $group->getDbEntity();
+					if(isset($group)) {
+						$okJsCode = 'update("mainDiv/'.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/navigate/folder/".$group->getId().'");';
+					}
+					else {
+						$okJsCode = 'update("NoAnswer/NoWigiiNamespace/Home/start");';
+					}
+					if ($exec->getIsUpdating()) {
+						echo ExecutionServiceImpl :: answerRequestSeparator;
+						echo "confirmationDialog";
+						echo ExecutionServiceImpl :: answerParamSeparator;
+					}
+					$this->openAsMessage("confirmationDialog", 300, $transS->t($p, "noResultFound"), $transS->t($p, "noElementMatchSearchCriteria"), $okJsCode);
+					$exec->addJsCode('$("#workZone").empty();');
+				}				
+				// frees memory of source
+				if(isset($source) && method_exists($source, 'freeMemory')) $source->freeMemory();
+				
+				if($outputEnabled) echo '</div>';
+				$p->bindToWigiiNamespace($exec->getCrtWigiiNamespace());
+				// if result is not empty, assumes it is some js code to send back to client
+				if(!empty($result)) $exec->addJsCode($result);				
+				
+				break;
+				
 			default :
 				/*
 				$str = "Unknown request '".$_GET['url']."'";

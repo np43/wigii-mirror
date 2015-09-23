@@ -139,6 +139,18 @@ interface GroupAdminService
 	 * throws GroupAdminServiceException in case of error
 	 */
 	public function getSelectedGroupsWithoutDetail($principal, $groupSelectionLogExp, $groupList);
+	
+	/**
+	 * Fills a list of groups, including children, given a parent group selection LogExp and an optional children group filtering LogExp
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param LogExp $parentGroupSelectionLogExp LogExp which selects the groups from which we will extract the children.
+	 * @param GroupList $groupList the GroupList to be filled with all selected parent and children groups, without details. 
+	 * @param LogExp $childrenGroupFilterLogExp an optional LogExp used to filter the selected children groups.
+	 * @param LogExp $groupFilterLogExp an optional LogExp which filters resulting list of groups. 
+	 * @throws GroupAdminServiceException in case of error
+	 * @return the number of selected groups.
+	 */
+	public function getSelectedGroupsWithChildrenWithoutDetail($principal, $parentGroupSelectionLogExp, $groupList, $childrenGroupFilterLogExp=null, $groupFilterLogExp=null);
 
 	/**
 	 * Fills a list of groups given group selection LogExp

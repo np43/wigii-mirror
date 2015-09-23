@@ -127,6 +127,33 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 		if($this->headers == null || $this->headers[$key]!=null){
 			$this->importFieldSelectorList->addFieldSelector($fieldName, $subFieldName);
 			$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, $subFieldName);
+			if($dataType->getDataTypeName()=="Emails"){
+				//always add all the other subfields in the case of Emails
+				if($this->headers[$this->getItemKey($fieldName, "value", $lang)] == null)
+					$this->importFieldSelectorList->addFieldSelector($fieldName, "value");
+				$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, "value");
+				if($this->headers[$this->getItemKey($fieldName, "proofStatus", $lang)] == null)
+					$this->importFieldSelectorList->addFieldSelector($fieldName, "proofStatus");
+				$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, "proofStatus");
+				if($this->headers[$this->getItemKey($fieldName, "proofKey", $lang)] == null)
+					$this->importFieldSelectorList->addFieldSelector($fieldName, "proofKey");
+				$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, "proofKey");
+				if($this->headers[$this->getItemKey($fieldName, "proof", $lang)] == null)
+					$this->importFieldSelectorList->addFieldSelector($fieldName, "proof");
+				$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, "proof");
+				if($this->headers[$this->getItemKey($fieldName, "externalConfigGroup", $lang)] == null)
+					$this->importFieldSelectorList->addFieldSelector($fieldName, "externalConfigGroup");
+				$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, "externalConfigGroup");
+				if($this->headers[$this->getItemKey($fieldName, "externalAccessLevel", $lang)] == null)
+					$this->importFieldSelectorList->addFieldSelector($fieldName, "externalAccessLevel");
+				$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, "externalAccessLevel");
+				if($this->headers[$this->getItemKey($fieldName, "externalCode", $lang)] == null)
+					$this->importFieldSelectorList->addFieldSelector($fieldName, "externalCode");
+				$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, "externalCode");
+				if($this->headers[$this->getItemKey($fieldName, "externalAccessEndDate", $lang)] == null)
+					$this->importFieldSelectorList->addFieldSelector($fieldName, "externalAccessEndDate");
+				$this->importFieldSelectorListFromFile->addFieldSelector($fieldName, "externalAccessEndDate");
+			}
 			//mark the header as took
 			$this->keptHeaders[$key] = $key;
 		}
@@ -322,29 +349,72 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 							$temp = array_combine($temp, $temp);
 							$el->setFieldValue($temp, $fs->getFieldName(), $fs->getSubFieldName());
 						//calculate special email subfields
-						} else if(	$dataType->getDataTypeName()=="Emails" &&
-									(!$fs->getSubFieldName() || $fs->getSubFieldName()=="value") &&
-									$dataRow[$pos-1]){
-							$posProofKey = $this->headers[$fs->getFieldName()." proofKey"];
-							$posExternalCode = $this->headers[$fs->getFieldName()." externalCode"];
-							//calculate proofKey if not existing
-							if($posProofKey === null){
-								$el->setFieldValue($elS->getEmailValidationCode($p, $dataRow[$pos-1]), $fs->getFieldName(), "proofKey");
-							//calculate proofKey if not filled
-							} else if($dataRow[$posProofKey-1]==null){
-								$dataRow[$posProofKey-1] = $elS->getEmailValidationCode($p, $dataRow[$pos-1]);
-								$el->setFieldValue($dataRow[$posProofKey-1], $fs->getFieldName(), "proofKey");
-							}
-							//calculate externalCode if not existing
-							if($posExternalCode === null){
-								$el->setFieldValue($elS->getEmailExternalCode($p, 0, $fs->getFieldName(), $dataRow[$pos-1]), $fs->getFieldName(), "externalCode");
-							//calculate ExternalCode if not filled
-							} else if($dataRow[$posExternalCode-1]==null){
-								$dataRow[$posExternalCode-1] = $elS->getEmailExternalCode($p, 0, $fs->getFieldName(), $dataRow[$pos-1]);
-								$el->setFieldValue($dataRow[$posExternalCode-1], $fs->getFieldName(), "externalCode");
-							}
-							$el->setFieldValue($dataRow[$pos-1], $fs->getFieldName(), $fs->getSubFieldName());
-							$nb++;
+						} else if ($dataType->getDataTypeName() == "Emails") {									
+							if(!$fs->getSubFieldName() || $fs->getSubFieldName() == "value") {
+								$newValue = str_replace('\n', "\n", $dataRow[$pos -1]);
+								
+								// value
+								$el->setFieldValue($newValue, $fs->getFieldName(), "value");
+								$nb++;
+								
+								// proofKey
+								$subPos = $this->headers[$fs->getFieldName() . " proofKey"];
+								if($subPos) {
+									// takes proofKey value in CSV if exists
+									if($dataRow[$subPos -1]!=null) $el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proofKey");
+									// if empty but column present, then forces recalculation
+									else $el->setFieldValue($elS->getEmailValidationCode($p, $newValue), $fs->getFieldName(), "proofKey");
+									$nb++;
+								}
+								else $el->setFieldValue($elS->getEmailValidationCode($p, $newValue), $fs->getFieldName(), "proofKey");
+								// proofStatus
+								$subPos = $this->headers[$fs->getFieldName() . " proofStatus"]; 
+								if($subPos) {
+									// takes proofStatus from CSV file if present (can be forced to null or 0 if CSV has subfield present but empty)
+									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proofStatus");
+									$nb++;
+								}
+								else $el->setFieldValue(0, $fs->getFieldName(), "proofStatus");
+								// proof
+								$subPos = $this->headers[$fs->getFieldName() . " proof"];
+								if($subPos) {
+									// takes proof from CSV file if present (can be forced to null if CSV has subfield present but empty)
+									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proof");
+									$nb++;
+								}
+								else $el->setFieldValue(null, $fs->getFieldName(), "proof");
+								// externalConfigGroup
+								$subPos = $this->headers[$fs->getFieldName() . " externalConfigGroup"];
+								if($subPos) {
+									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalConfigGroup");
+									$nb++;
+								}
+								else $el->setFieldValue(null, $fs->getFieldName(), "externalConfigGroup");
+								// externalAccessLevel
+								$subPos = $this->headers[$fs->getFieldName() . " externalAccessLevel"];
+								if($subPos) {
+									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalAccessLevel");
+									$nb++;
+								}
+								else $el->setFieldValue(0, $fs->getFieldName(), "externalAccessLevel");
+								// externalAccessEndDate
+								$subPos = $this->headers[$fs->getFieldName() . " externalAccessEndDate"];
+								if($subPos) {
+									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalAccessEndDate");
+									$nb++;
+								}
+								else $el->setFieldValue(null, $fs->getFieldName(), "externalAccessEndDate");
+								// externalCode
+								$subPos = $this->headers[$fs->getFieldName() . " externalCode"];
+								if($subPos) {
+									// takes externalCode value in CSV if exists
+									if($dataRow[$subPos -1]!=null) $el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalCode");
+									// if empty but column present, then forces recalculation
+									else $el->setFieldValue($elS->getEmailExternalCode($p, $el->getId(), $fs->getFieldName(), $newValue), $fs->getFieldName(), "externalCode");
+									$nb++;
+								}
+								else $el->setFieldValue($elS->getEmailExternalCode($p, $el->getId(), $fs->getFieldName(), $newValue), $fs->getFieldName(), "externalCode");
+							}	
 						} else {
 							//normal
 							$el->setFieldValue(str_replace('\n', "\n", $dataRow[$pos-1]), $fs->getFieldName(), $fs->getSubFieldName());

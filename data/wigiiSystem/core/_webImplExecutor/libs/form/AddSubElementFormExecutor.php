@@ -50,7 +50,7 @@ class AddSubElementFormExecutor extends AddElementFormExecutor {
 		$fe->setLinkName($linkName);
 		return $fe;
 	}
-	protected function getGroupInWhichToAdd($p, $exec){
+	public function getGroupInWhichToAdd($p, $exec){
 		$groupPList = GroupPListArrayImpl::createInstance();
 		ServiceProvider::getElementService()->getAllGroupsContainingElement($p,
 			Element::createInstance($exec->getCrtModule(),null,null,array('id' => $this->getMasterElementId())),
@@ -105,7 +105,15 @@ class AddSubElementFormExecutor extends AddElementFormExecutor {
 			}
 		}
 
-		$elS->insertSubElement($p, $this->getMasterElementId(), $this->getLinkName(), $this->getRecord(), $fsl);
+		// merges policy evaluator field selector list
+		if(isset($this->fieldSelectorListFromPolicyEvaluator)) {
+			$fslForUpdate = FieldSelectorListArrayImpl::createInstance(false);
+			$fslForUpdate->mergeFieldSelectorList($fsl);
+			$fslForUpdate->mergeFieldSelectorList($this->fieldSelectorListFromPolicyEvaluator);
+		}
+		else $fslForUpdate = $fsl;
+		
+		$elS->insertSubElement($p, $this->getMasterElementId(), $this->getLinkName(), $this->getRecord(), $fslForUpdate);
 		$this->updateFilesOnDisk($p, $exec, $storeFileInWigiiBag, null, true);
 
 		if($this->getState()=="persistAndSkipNotify"){

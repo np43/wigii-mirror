@@ -352,6 +352,25 @@ class FuncExpBuilder {
 		return $returnValue;
 	}
 	
+	/**
+	 * Converts a FieldSelectorList to its FuncExp equivalent
+	 * @param FieldSelectorList $fsl
+	 * @return FuncExp
+	 */
+	public function fsl2fx($fsl) {
+		if(isset($fsl) && !$fsl->isEmpty()) {
+			$fsArr = array();
+			foreach($fsl->getListIterator() as $fs) {
+				$subFieldName = $fs->getSubFieldName();
+				if(isset($subFieldName)) $fsArr[] = fx('fs', $fs->getFieldName(), $subFieldName);
+				else $fsArr[] = fx('fs', $fs->getFieldName());				
+			}
+			$returnValue = fx('fsl', $fsArr);
+		}
+		else $returnValue = null;
+		return $returnValue;
+	}
+	
 	// LinkSelector builder
 	
 	/**
@@ -508,6 +527,23 @@ class FuncExpBuilder {
 				}
 				else throw new StringTokenizerException("invalid FieldSelectorKey syntax '".$fsk."' correct syntax is field.subfield ASC|DESC", StringTokenizerException::SYNTAX_ERROR);
 			}
+		}
+		else $returnValue = null;
+		return $returnValue;
+	}
+	
+	/**
+	 * Converts a FieldSortingKeyList to its FuncExp equivalent
+	 * @param FieldSortingKeyList $fskl
+	 * @return FuncExp
+	 */
+	public function fskl2fx($fskl) {
+		if(isset($fskl) && !$fskl->isEmpty()) {
+			$fskArr = array();
+			foreach($fskl->getListIterator() as $fsk) {
+				$fskArr[] = fx('fsk', $fsk->getFieldName(), $fsk->getSubFieldName(), $fsk->isAscending());
+			}
+			$returnValue = fx('fskl', $fskArr);
 		}
 		else $returnValue = null;
 		return $returnValue;

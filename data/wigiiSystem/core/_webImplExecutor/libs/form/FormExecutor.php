@@ -36,6 +36,9 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 
 	private $wigiiExecutor;
 	protected function setWigiiExecutor($var){$this->wigiiExecutor = $var; }
+	/**
+	 * @return WigiiExecutor
+	 */
 	public function getWigiiExecutor(){return $this->wigiiExecutor; }
 
 	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl){
@@ -616,7 +619,8 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 					}
 				}
 			}
-		}
+		}			
+		
 		if(!$fieldSelectorList->isEmpty()) return $fieldSelectorList;
 		else return null;
 	}
@@ -833,6 +837,11 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 	protected function createInstanceFieldSelectorList(){
 		return FieldSelectorListArrayWebImpl::createInstance();
 	}
+	/**
+	 * @var FieldSelectorList field selector list defined by ElementPolicyEvaluator on element save.
+	 */
+	protected $fieldSelectorListFromPolicyEvaluator = null;
+	
 	public function ResolveForm($p, $exec, $state){
 		$configS = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
 		$this->executionSink()->publishStartOperation("ResolveForm", $p);
@@ -860,7 +869,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 					$policyEval = $this->getElementPolicyEvaluator();
 					if(isset($policyEval)) {
 						$policyEval->setExecutionService($exec);
-						$policyEval->updateElementStateOnSave($p, $rec);
+						$this->fieldSelectorListFromPolicyEvaluator = $policyEval->updateElementStateOnSave($p, $rec);
 					}
 				}
 

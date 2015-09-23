@@ -362,12 +362,12 @@ div.value div.generalButton img {
 }
 
 div.field.comments div.label {
-    width: 100%;
+	width: 100%;
     padding: 5px 10px;
     margin-bottom: 0px;
-    background-color: #95C33B;
+    border-bottom: 1px solid #95c33b;
     font-weight: bold;
-    color: #fff;
+    color: #95c33b;    
 }
 div.field.comments div.value {
     max-height: 300px;
@@ -383,4 +383,42 @@ div.field.comments {
 	width:100%;
 }
 
+/*
+not used for now, but potential replacement of fieldset html tag, to be improved.
+<fieldset><legend>Legend</legend> Fieldset</fieldset>
+<div class="fieldset"><h1><span>Legend</span></h1> Fieldset</div>
+see http://jsbin.com/ulema/158/edit?html,css,output
 
+div.fieldset {
+    border: 2px groove threedface;
+    border-top: none;
+    padding: 0.5em;
+    margin: 1em 2px;
+}
+div.fieldset > h1 {
+    font: 1em normal;
+    margin: -1em -0.5em 0;
+}   
+div.fieldset > h1 > span {
+    float: left;
+}
+div.fieldset > h1:before {
+    border-top: 2px groove threedface;
+    content: ' ';
+    float: left;
+    margin: 0.5em 2px 0 -1px;
+    width: 0.75em;
+}
+div.fieldset > h1:after {
+    border-top: 2px groove threedface;
+    content: ' ';
+    display: block;
+    height: 1.5em;
+    left: 2px;
+    margin: 0 1px 0 0;
+    overflow: hidden;
+    position: relative;
+    top: 0.5em;
+}
+
+*/

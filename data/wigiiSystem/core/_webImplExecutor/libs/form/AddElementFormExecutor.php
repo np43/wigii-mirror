@@ -47,7 +47,10 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 	protected function getGroupIdInWhichToAdd($p, $exec){
 		return $exec->getCrtParameters(1);
 	}
-	protected function getGroupInWhichToAdd($p, $exec){
+	/**
+	 * @return GroupListAdvancedImpl containing the group in which to add the element
+	 */
+	public function getGroupInWhichToAdd($p, $exec){
 		$groupAS = ServiceProvider::getGroupAdminService();
 		$groupPList = GroupListAdvancedImpl::createInstance();
 		$groupAS->getGroupsWithoutDetail($p, array($this->getGroupIdInWhichToAdd($p, $exec)=>$this->getGroupIdInWhichToAdd($p, $exec)), $groupPList);
@@ -136,7 +139,15 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 			}
 		}
 
-		$elS->insertElement($p, $this->getRecord(), $this->getGroupIdInWhichToAdd($p, $exec), $fsl);
+		// merges policy evaluator field selector list
+		if(isset($this->fieldSelectorListFromPolicyEvaluator)) {
+			$fslForUpdate = FieldSelectorListArrayImpl::createInstance(false);
+			$fslForUpdate->mergeFieldSelectorList($fsl);
+			$fslForUpdate->mergeFieldSelectorList($this->fieldSelectorListFromPolicyEvaluator);
+		}
+		else $fslForUpdate = $fsl;
+		
+		$elS->insertElement($p, $this->getRecord(), $this->getGroupIdInWhichToAdd($p, $exec), $fslForUpdate);
 		$this->updateFilesOnDisk($p, $exec, $storeFileInWigiiBag, null, true);
 
 		if($this->getState()=="persistAndSkipNotify"){

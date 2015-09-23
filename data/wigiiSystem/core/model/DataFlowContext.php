@@ -176,7 +176,7 @@ class DataFlowContext
 	 * @param $key the attribute key
 	 * @param $val the attribute value. Accepts null. Any existing value under the given key is replaced.
 	 * @param $recyclable optional boolean. If true, then the method freeMemory (if exists) will be called on value, when the data flow is recycled,
-	 * else no clean up code is executed, relies only on the garbage collection.
+	 * else no clean up code is executed, relies only on the garbage collection. Defaults to false.
 	 */
 	public function setAttribute($key, $val, $recyclable=false) {
 		if(is_null($key)) throw new DataFlowServiceException('dataflow context attribute key cannot be null', DataFlowServiceException::INVALID_ARGUMENT);

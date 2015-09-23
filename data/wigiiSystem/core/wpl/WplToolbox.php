@@ -183,20 +183,42 @@ class WplToolbox
 		}
 		// else
 		else {
-			if(is_string($cfgAttribut->label)){
+			if(is_array($cfgAttribut->label)) {
+				$label = '';
+				foreach($cfgAttribut->label as $lang => $loc_label) {
+					$label .= "<label_$lang>".$loc_label."</label_$lang>";
+				}
+			}
+			elseif(is_string($cfgAttribut->label)){
 				$label = '<label>'.$cfgAttribut->label.'</label>';
 			} else $label = '';
-			$returnValue = new SimpleXMLElement('<attribute>'.$cfgAttribut->value.$label.'</attribute>');
+			// attribute label can contain html and sometimes some non-escaped characters like & < or >
+			// assumes xml/html is well formated, if not, fallback in a label construction which disables the html.
+			$libxmlErrSettings = libxml_use_internal_errors(true);
+			try {
+				$returnValue = new SimpleXMLElement('<attribute>'.$cfgAttribut->value.$label.'</attribute>');
+				$xmlErrors = libxml_get_errors();
+				if(!empty($xmlErrors)) throw new Exception();
+				libxml_use_internal_errors($libxmlErrSettings);
+			}
+			catch(Exception $xmlE) {
+				libxml_clear_errors();
+				libxml_use_internal_errors($libxmlErrSettings);
+				if(is_string($cfgAttribut->label)){
+					$label = '<label>'.$cfgAttribut->label.'</label>';
+				} else $label = '';
+				$returnValue = new SimpleXMLElement('<attribute>'.$cfgAttribut->value.$label.'</attribute>');
+				if(is_array($cfgAttribut->label)) {
+					foreach($cfgAttribut->label as $lang => $label) {
+						$returnValue->{'label_'.$lang} = $label;
+					}
+				}
+			}
 			if(is_array($cfgAttribut->attributes)) {
 				foreach($cfgAttribut->attributes as $k => $v) {
 					$returnValue->addAttribute($k, $v);
 				}
-			}
-			if(is_array($cfgAttribut->label)) {
-				foreach($cfgAttribut->label as $lang => $label) {
-					$returnValue->{'label_'.$lang} = $label;
-				}
-			}
+			}					
 		}
 		return $returnValue;
 	}

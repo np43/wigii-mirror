@@ -98,10 +98,25 @@ class FiltersFormExecutor extends FormExecutor {
 		} else {
 			//define context to what is defined in the advanced search
 			if($rec->getFieldValue("limitFilterInGroup")==null){
-				if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") != "0"){
-					$this->getListContext()->setGroupPList($configS->getRootGroupsInModule($p, $exec->getCrtModule()), true);
+				if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") != "0"){					
+					$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
+					if($trashBinGroup){
+						//prevent searching in trashBinGroup except if current group is trashBinGroup
+						if(reset($this->getListContext()->getGroupPList()->getListIterator())->getId() == $trashBinGroup){
+							$this->getListContext()->setGroupPList($this->getListContext()->getGroupPList(), true);
+						} else {
+							$groupPListWithoutTrash = GroupPListArrayImpl::createInstance();
+							foreach($configS->getRootGroupsInModule($p, $exec->getCrtModule())->getListIterator() as $groupP){
+								if($groupP->getId()==$trashBinGroup) continue;
+								$groupPListWithoutTrash->addGroupP($groupP);
+							}
+							$this->getListContext()->setGroupPList($groupPListWithoutTrash, true);
+						}
+					} else {
+						$this->getListContext()->setGroupPList($configS->getRootGroupsInModule($p, $exec->getCrtModule()), true);
+					}
 				} else {
-					$this->getListContext()->setGroupPList($this->getListContext()->getGroupPList(), true);
+					$this->getListContext()->setGroupPList($this->getListContext()->getGroupPList(), true);					
 				}
 			} else {
 				$this->getListContext()->setGroupPList($configS->getGroupPList($p, $exec->getCrtModule(), $rec->getFieldValue("limitFilterInGroup"), true), true);
@@ -408,6 +423,12 @@ $('#filters_form :input').bind('click blur', function(){
 		}
 	}, 100);
 });
+$('#filters_form select.chosen').on('select2:select', function(){ 
+	$(this).addClass('filled').find('~ span.select2').addClass('filled');
+}).on('select2:unselect', function(){ 
+	if(!$(this).select2('val')) $(this).removeClass('filled').find('~ span.select2').removeClass('filled');
+});
+				
 ");
 
 

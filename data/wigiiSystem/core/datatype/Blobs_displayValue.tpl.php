@@ -30,7 +30,7 @@ $fieldXml = $field->getXml();
 $val = $this->formatValueFromRecord($fieldName, null, $this->getRecord());
 
 if($fieldXml["displayOnRightSide"]!="1"){
-	if($fieldXml["height"] != null && !$this->isForNotification() && !$this->isForPrint()){
+	if((string)$fieldXml["height"]!=null && (string)$fieldXml["height"] != "0" && !$this->isForNotification() && !$this->isForPrint()){
 		$this->put('<div style="width:'.($parentWidth).'px;height:'.$fieldXml["height"].'px;overflow-y:auto;overflow-x:auto;" >');
 	} else if($this->isForPrint() && !$this->isForNotification()){
 		$this->put('<div style="width:auto;overflow-y:visible;height:auto;overflow-x:auto;" >');

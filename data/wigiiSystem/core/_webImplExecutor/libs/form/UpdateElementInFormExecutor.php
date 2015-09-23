@@ -217,7 +217,8 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 		$transS = ServiceProvider :: getTranslationService();
 		$groupAS = ServiceProvider :: getGroupAdminService();
 		$elS = ServiceProvider :: getElementService();
-
+		$configS = $this->getWigiiExecutor()->getConfigurationContext();
+		
 		$rec = $this->getRecord();
 		//set group
 		$groupId = $rec->getFieldValue("updateInGroupId");
@@ -229,10 +230,11 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 				$this->addErrorToField($transS->h($p, "updateInGroupIdMustHaveWriteRights"), "updateInGroupId");
 			}
 		} else {
-			//take write root groups
+			$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");			
+			//take write root groups, except trashbin
 			$this->groupPList = GroupListArrayImpl :: createInstance();
 			foreach ($this->getWriteGroupPList()->getListIterator() as $groupP) {
-				$this->groupPList->addGroup($groupP->getDbEntity());
+				if($groupP->getId() != $trashBinGroup) $this->groupPList->addGroup($groupP->getDbEntity());
 			}
 		}
 
@@ -396,31 +398,70 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 								$nb++;
 								$temp = array_combine($temp, $temp);
 								$el->setFieldValue($temp, $fs->getFieldName(), $fs->getSubFieldName());
-								//calculate special email subfields
+								//calculate special email subfields: takes what is in the CSV or proposes a default value if not present.
 							} else
-								if ($dataType->getDataTypeName() == "Emails" && (!$fs->getSubFieldName() || $fs->getSubFieldName() == "value") && $dataRow[$pos -1]) {
-									$posProofKey = $this->headers[$fs->getFieldName() . " proofKey"];
-									$posExternalCode = $this->headers[$fs->getFieldName() . " externalCode"];
-									//calculate proofKey if not existing
-									if ($posProofKey === null) {
-										$el->setFieldValue($elS->getEmailValidationCode($p, $dataRow[$pos -1]), $fs->getFieldName(), "proofKey");
-										//calculate proofKey if not filled
-									} else
-										if ($dataRow[$posProofKey -1] == null) {
-											$dataRow[$posProofKey -1] = $elS->getEmailValidationCode($p, $dataRow[$pos -1]);
-											$el->setFieldValue($dataRow[$posProofKey -1], $fs->getFieldName(), "proofKey");
+								if ($dataType->getDataTypeName() == "Emails") {									
+									if(!$fs->getSubFieldName() || $fs->getSubFieldName() == "value") {
+										$newValue = str_replace('\n', "\n", $dataRow[$pos -1]);
+										
+										// value
+										$el->setFieldValue($newValue, $fs->getFieldName(), "value");
+										$nb++;
+										
+										// proofKey
+										$subPos = $this->headers[$fs->getFieldName() . " proofKey"];
+										if($subPos) {
+											$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proofKey");
+											$nb++;
 										}
-									//calculate externalCode if not existing
-									if ($posExternalCode === null) {
-										$el->setFieldValue($elS->getEmailExternalCode($p, 0, $fs->getFieldName(), $dataRow[$pos -1]), $fs->getFieldName(), "externalCode");
-										//calculate ExternalCode if not filled
-									} else
-										if ($dataRow[$posExternalCode -1] == null) {
-											$dataRow[$posExternalCode -1] = $elS->getEmailExternalCode($p, 0, $fs->getFieldName(), $dataRow[$pos -1]);
-											$el->setFieldValue($dataRow[$posExternalCode -1], $fs->getFieldName(), "externalCode");
+										// new code is calculated in actOnCheckedRecord because one record in CSV can update several elements in case of email key
+										else $el->setFieldValue(null, $fs->getFieldName(), "proofKey");
+										// proofStatus
+										$subPos = $this->headers[$fs->getFieldName() . " proofStatus"]; 
+										if($subPos) {
+											// takes proofStatus from CSV file if present (can be forced to null or 0 if CSV has subfield present but empty)
+											$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proofStatus");
+											$nb++;
 										}
-									$el->setFieldValue($dataRow[$pos -1], $fs->getFieldName(), $fs->getSubFieldName());
-									$nb++;
+										else $el->setFieldValue(0, $fs->getFieldName(), "proofStatus");
+										// proof
+										$subPos = $this->headers[$fs->getFieldName() . " proof"];
+										if($subPos) {
+											// takes proof from CSV file if present (can be forced to null if CSV has subfield present but empty)
+											$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proof");
+											$nb++;
+										}
+										else $el->setFieldValue(null, $fs->getFieldName(), "proof");
+										// externalConfigGroup
+										$subPos = $this->headers[$fs->getFieldName() . " externalConfigGroup"];
+										if($subPos) {
+											$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalConfigGroup");
+											$nb++;
+										}
+										else $el->setFieldValue(null, $fs->getFieldName(), "externalConfigGroup");
+										// externalAccessLevel
+										$subPos = $this->headers[$fs->getFieldName() . " externalAccessLevel"];
+										if($subPos) {
+											$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalAccessLevel");
+											$nb++;
+										}
+										else $el->setFieldValue(0, $fs->getFieldName(), "externalAccessLevel");
+										// externalAccessEndDate
+										$subPos = $this->headers[$fs->getFieldName() . " externalAccessEndDate"];
+										if($subPos) {
+											$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalAccessEndDate");
+											$nb++;
+										}
+										else $el->setFieldValue(null, $fs->getFieldName(), "externalAccessEndDate");
+										// externalCode
+										$subPos = $this->headers[$fs->getFieldName() . " externalCode"];
+										if($subPos) {
+											$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalCode");
+											$nb++;
+										}
+										// new code is calculated in actOnCheckedRecord because one record in CSV can update several elements in case of email key
+										else $el->setFieldValue(null, $fs->getFieldName(), "externalCode");
+									}									
 								} else {
 									//normal
 									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$pos -1]), $fs->getFieldName(), $fs->getSubFieldName());
@@ -467,7 +508,8 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 		$rec = $this->getRecord();
 
 		//lookup existing element list
-		$originalElementPAList = ElementPAdvancedListArrayImpl :: createInstance(null, $this->importFieldSelectorList);
+		$originalElementPAList = ElementPAdvancedListArrayImpl :: createInstance(null, $this->importFieldSelectorList);		
+		$filteredElementPAList = ElementPAdvancedListArrayImpl :: createInstance(null, $this->importFieldSelectorList);
 		$fieldSelectorLogExpParser = TechnicalServiceProvider :: getFieldSelectorLogExpParser();
 		$lf = ListFilter :: createInstance();
 		$lf->setFieldSelectorList($this->importFieldSelectorList);
@@ -485,6 +527,7 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 		//noneUsedLines is an array containing each imported lines with it id and as value "true"
 		//the true indicates the line is not used. In the following loop, this flag will be set to false when the line is used
 		$noneUsedLines = array_combine(array_keys($elementPListIterator), array_fill(0, count($elementPListIterator), true));
+		$nbBlockedElements = 0;
 		//		eput($fieldKey." ".$subFieldKey);
 		//		eput($this->fieldKeyCheck);
 		//		eput($elementPListIterator);
@@ -502,42 +545,109 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 			//updatedElementP id is either the line nb either the real id, depending on the field key
 			$noneUsedLines[$updatedElementP->getId()] = false;
 
-			//visit subfields and update as appropriate
-			foreach ($this->computedFieldList->getListIterator() as $field) {
-				if ($field->getDataType() != null) {
-					//perform operation on each subField:
-					$this->crtUpdatedElement = $updatedElementP->getDbEntity();
-					$this->crtOriginalElement = $elementP->getDbEntity();
-					$elS->visitDataTypeSubfields($field, $field->getDataType(), $this);
-				}
+			$this->crtUpdatedElement = $updatedElementP->getDbEntity();
+			$this->crtOriginalElement = $elementP->getDbEntity();
+			
+			//ignores blocked elements
+			if($this->crtOriginalElement->isState_blocked()) {
+				$nbBlockedElements++;
 			}
-			//update any element attribute
-			$importFieldSelectorList = $this->importFieldSelectorListFromFile->getListIterator();
-			if($importFieldSelectorList["(__element(modulename))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(modulename))"]), $importFieldSelectorList["(__element(modulename))"]);
-			if($importFieldSelectorList["(__element(version))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(version))"]), $importFieldSelectorList["(__element(version))"]);
-			if($importFieldSelectorList["(__element(state_locked))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_locked))"]), $importFieldSelectorList["(__element(state_locked))"]);
-			if($importFieldSelectorList["(__element(state_lockedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_lockedInfo))"]), $importFieldSelectorList["(__element(state_lockedInfo))"]);
-			if($importFieldSelectorList["(__element(state_important1))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_important1))"]), $importFieldSelectorList["(__element(state_important1))"]);
-			if($importFieldSelectorList["(__element(state_important1Info))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_important1Info))"]), $importFieldSelectorList["(__element(state_important1Info))"]);
-			if($importFieldSelectorList["(__element(state_important2))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_important2))"]), $importFieldSelectorList["(__element(state_important2))"]);
-			if($importFieldSelectorList["(__element(state_important2Info))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_important2Info))"]), $importFieldSelectorList["(__element(state_important2Info))"]);
-			if($importFieldSelectorList["(__element(state_hidden))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_hidden))"]), $importFieldSelectorList["(__element(state_hidden))"]);
-			if($importFieldSelectorList["(__element(state_hiddenInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_hiddenInfo))"]), $importFieldSelectorList["(__element(state_hiddenInfo))"]);
-			if($importFieldSelectorList["(__element(state_archived))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_archived))"]), $importFieldSelectorList["(__element(state_archived))"]);
-			if($importFieldSelectorList["(__element(state_archivedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_archivedInfo))"]), $importFieldSelectorList["(__element(state_archivedInfo))"]);
-			if($importFieldSelectorList["(__element(state_deprecated))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_deprecated))"]), $importFieldSelectorList["(__element(state_deprecated))"]);
-			if($importFieldSelectorList["(__element(state_deprecatedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_deprecatedInfo))"]), $importFieldSelectorList["(__element(state_deprecatedInfo))"]);
-			if($importFieldSelectorList["(__element(state_finalized))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_finalized))"]), $importFieldSelectorList["(__element(state_finalized))"]);
-			if($importFieldSelectorList["(__element(state_finalizedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_finalizedInfo))"]), $importFieldSelectorList["(__element(state_finalizedInfo))"]);
-			if($importFieldSelectorList["(__element(state_approved))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_approved))"]), $importFieldSelectorList["(__element(state_approved))"]);
-			if($importFieldSelectorList["(__element(state_approvedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_approvedInfo))"]), $importFieldSelectorList["(__element(state_approvedInfo))"]);
-			if($importFieldSelectorList["(__element(state_dismissed))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_dismissed))"]), $importFieldSelectorList["(__element(state_dismissed))"]);
-			if($importFieldSelectorList["(__element(state_dismissedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_dismissedInfo))"]), $importFieldSelectorList["(__element(state_dismissedInfo))"]);
-			if($importFieldSelectorList["(__element(state_blocked))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_blocked))"]), $importFieldSelectorList["(__element(state_blocked))"]);
-			if($importFieldSelectorList["(__element(state_blockedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_blockedInfo))"]), $importFieldSelectorList["(__element(state_blockedInfo))"]);
-			if($importFieldSelectorList["(__element(sys_creationDate))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(sys_creationDate))"]), $importFieldSelectorList["(__element(sys_creationDate))"]);
-			if($importFieldSelectorList["(__element(sys_creationUser))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(sys_creationUser))"]), $importFieldSelectorList["(__element(sys_creationUser))"]);
-			if($importFieldSelectorList["(__element(sys_creationUsername))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(sys_creationUsername))"]), $importFieldSelectorList["(__element(sys_creationUsername))"]);
+			else {
+				//adds current element to filtered list
+				$filteredElementPAList->addElementP($elementP);
+				
+				//visit subfields and update as appropriate
+				if(isset($this->computedFieldList)) {
+					foreach ($this->computedFieldList->getListIterator() as $field) {
+						if ($field->getDataType() != null) {										
+							//update special email subfields: updates subfield if declared in CSV or email changed. proofKey and externalCode are recalculated if empty.
+							if($field->getDataType()->getDataTypeName() == "Emails") {						
+								$newValue = $this->crtUpdatedElement->getFieldValue($field->getFieldName());
+								$currentValue = $this->crtOriginalElement->getFieldValue($field->getFieldName());
+								
+								if($newValue == null) $updatedValue = null;
+								elseif($currentValue == null) $updatedValue = $newValue;
+								else $updatedValue = str_update($currentValue, $newValue, SUPDOP_SET, '/'.ValueListArrayMapper::Natural_Separators.'/', ", ");
+								
+								$emailChanged = ($updatedValue != $currentValue);										
+								// value
+								$this->crtOriginalElement->setFieldValue($updatedValue, $field->getFieldName(), "value");
+														
+								// proofKey						
+								if($emailChanged || $this->headers[$field->getFieldName() . " proofKey"]) {
+									$value = $this->crtUpdatedElement->getFieldValue($field->getFieldName(), "proofKey");
+									// generates proofKey if empty
+									if(empty($value)) $value = $elS->getEmailValidationCode($p, $updatedValue);
+									$this->crtOriginalElement->setFieldValue($value, $field->getFieldName(), "proofKey");
+								}
+								// proofStatus (updates proof only if email is not emptied (keep possible delete status))
+								if(($emailChanged && $updatedValue) || $this->headers[$field->getFieldName() . " proofStatus"]) {
+									$this->crtOriginalElement->setFieldValue($this->crtUpdatedElement->getFieldValue($field->getFieldName(), "proofStatus"), $field->getFieldName(), "proofStatus");
+								}
+								// proof (updates proof only if email is not emptied (keep possible delete status))
+								if(($emailChanged && $updatedValue) || $this->headers[$field->getFieldName() . " proof"]) {
+									$this->crtOriginalElement->setFieldValue($this->crtUpdatedElement->getFieldValue($field->getFieldName(), "proof"), $field->getFieldName(), "proof");
+								}
+								// externalConfigGroup
+								if($emailChanged || $this->headers[$field->getFieldName() . " externalConfigGroup"]) {
+									$this->crtOriginalElement->setFieldValue($this->crtUpdatedElement->getFieldValue($field->getFieldName(), "externalConfigGroup"), $field->getFieldName(), "externalConfigGroup");
+								}
+								// externalAccessLevel
+								if($emailChanged || $this->headers[$field->getFieldName() . " externalAccessLevel"]) {
+									$this->crtOriginalElement->setFieldValue($this->crtUpdatedElement->getFieldValue($field->getFieldName(), "externalAccessLevel"), $field->getFieldName(), "externalAccessLevel");
+								}
+								// externalAccessEndDate
+								if($emailChanged || $this->headers[$field->getFieldName() . " externalAccessEndDate"]) {
+									$this->crtOriginalElement->setFieldValue($this->crtUpdatedElement->getFieldValue($field->getFieldName(), "externalAccessEndDate"), $field->getFieldName(), "externalAccessEndDate");
+								}
+								// externalCode
+								if($emailChanged || $this->headers[$field->getFieldName() . " externalCode"]) {
+									$value = $this->crtUpdatedElement->getFieldValue($field->getFieldName(), "externalCode");
+									// generates externalCode if empty
+									if(empty($value)) {
+										$value = $elS->getEmailExternalCode($p, $this->crtOriginalElement->getId(), $field->getFieldName(), $updatedValue);
+										// resets externalAccessLevel to 0 if not present in CSV and new externalCode is generated
+										if(!($emailChanged || $this->headers[$field->getFieldName() . " externalAccessLevel"])) {
+											$this->crtOriginalElement->setFieldValue(0, $field->getFieldName(), "externalAccessLevel");
+										}
+									}
+									$this->crtOriginalElement->setFieldValue($value, $field->getFieldName(), "externalCode");
+								}
+							} else {
+								//perform operation on each subField						
+								$elS->visitDataTypeSubfields($field, $field->getDataType(), $this);
+							}
+						}
+					}
+				}
+				//update any element attribute
+				$importFieldSelectorList = $this->importFieldSelectorListFromFile->getListIterator();
+				if($importFieldSelectorList["(__element(modulename))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(modulename))"]), $importFieldSelectorList["(__element(modulename))"]);
+				if($importFieldSelectorList["(__element(version))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(version))"]), $importFieldSelectorList["(__element(version))"]);
+				if($importFieldSelectorList["(__element(state_locked))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_locked))"]), $importFieldSelectorList["(__element(state_locked))"]);
+				if($importFieldSelectorList["(__element(state_lockedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_lockedInfo))"]), $importFieldSelectorList["(__element(state_lockedInfo))"]);
+				if($importFieldSelectorList["(__element(state_important1))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_important1))"]), $importFieldSelectorList["(__element(state_important1))"]);
+				if($importFieldSelectorList["(__element(state_important1Info))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_important1Info))"]), $importFieldSelectorList["(__element(state_important1Info))"]);
+				if($importFieldSelectorList["(__element(state_important2))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_important2))"]), $importFieldSelectorList["(__element(state_important2))"]);
+				if($importFieldSelectorList["(__element(state_important2Info))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_important2Info))"]), $importFieldSelectorList["(__element(state_important2Info))"]);
+				if($importFieldSelectorList["(__element(state_hidden))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_hidden))"]), $importFieldSelectorList["(__element(state_hidden))"]);
+				if($importFieldSelectorList["(__element(state_hiddenInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_hiddenInfo))"]), $importFieldSelectorList["(__element(state_hiddenInfo))"]);
+				if($importFieldSelectorList["(__element(state_archived))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_archived))"]), $importFieldSelectorList["(__element(state_archived))"]);
+				if($importFieldSelectorList["(__element(state_archivedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_archivedInfo))"]), $importFieldSelectorList["(__element(state_archivedInfo))"]);
+				if($importFieldSelectorList["(__element(state_deprecated))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_deprecated))"]), $importFieldSelectorList["(__element(state_deprecated))"]);
+				if($importFieldSelectorList["(__element(state_deprecatedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_deprecatedInfo))"]), $importFieldSelectorList["(__element(state_deprecatedInfo))"]);
+				if($importFieldSelectorList["(__element(state_finalized))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_finalized))"]), $importFieldSelectorList["(__element(state_finalized))"]);
+				if($importFieldSelectorList["(__element(state_finalizedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_finalizedInfo))"]), $importFieldSelectorList["(__element(state_finalizedInfo))"]);
+				if($importFieldSelectorList["(__element(state_approved))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_approved))"]), $importFieldSelectorList["(__element(state_approved))"]);
+				if($importFieldSelectorList["(__element(state_approvedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_approvedInfo))"]), $importFieldSelectorList["(__element(state_approvedInfo))"]);
+				if($importFieldSelectorList["(__element(state_dismissed))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_dismissed))"]), $importFieldSelectorList["(__element(state_dismissed))"]);
+				if($importFieldSelectorList["(__element(state_dismissedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_dismissedInfo))"]), $importFieldSelectorList["(__element(state_dismissedInfo))"]);
+				if($importFieldSelectorList["(__element(state_blocked))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_blocked))"]), $importFieldSelectorList["(__element(state_blocked))"]);
+				if($importFieldSelectorList["(__element(state_blockedInfo))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(state_blockedInfo))"]), $importFieldSelectorList["(__element(state_blockedInfo))"]);
+				if($importFieldSelectorList["(__element(sys_creationDate))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(sys_creationDate))"]), $importFieldSelectorList["(__element(sys_creationDate))"]);
+				if($importFieldSelectorList["(__element(sys_creationUser))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(sys_creationUser))"]), $importFieldSelectorList["(__element(sys_creationUser))"]);
+				if($importFieldSelectorList["(__element(sys_creationUsername))"]) $this->crtOriginalElement->setAttribute($this->crtUpdatedElement->getAttribute($importFieldSelectorList["(__element(sys_creationUsername))"]), $importFieldSelectorList["(__element(sys_creationUsername))"]);
+			}
 		}
 
 		//keep only lines which hasn't been marked as read false
@@ -545,17 +655,17 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 		$noneUsedLines = array_filter($noneUsedLines);
 
 		//store changes
-//		fput($originalElementPAList);
+//		fput($filteredElementPAList);
 //		fput($this->importFieldSelectorList);
-		if(!$originalElementPAList->isEmpty()){
-			$elS->updateMultipleElement($this->getRootPrincipal(), $p, $originalElementPAList, $this->importFieldSelectorList);
+		if(!$filteredElementPAList->isEmpty()){
+			$elS->updateMultipleElement($this->getRootPrincipal(), $p, $filteredElementPAList, $this->importFieldSelectorList);
 			//fill any empty email codes
 			$elS->fillEmptyEmailValidationAndExternalCode($p);
 			//correct any change of validation code in the update
-			$elS->correctEmailValidationCode($p, $originalElementPAList->getIds());
+			//deprecated since v.4.322 R1746 (27.08.2015): $elS->correctEmailValidationCode($p, $filteredElementPAList->getIds());
 
 			//add the groups for notification
-			$this->getWigiiExecutor()->throwEvent()->insertMultipleElement(PWithModuleWithElementPListWithGroupList :: createInstance($p, $exec->getCrtModule(), $originalElementPAList, $this->groupPList));
+			$this->getWigiiExecutor()->throwEvent()->insertMultipleElement(PWithModuleWithElementPListWithGroupList :: createInstance($p, $exec->getCrtModule(), $filteredElementPAList, $this->groupPList));
 		}
 
 		//important to clear the cancel stack
@@ -584,7 +694,7 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 			//display the number of data updated
 			$exec->addRequests("moduleView/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/moduleView/");
 
-			$message = $originalElementPAList->count()." ".$transS->t($p, "elementsUpdated");
+			$message = $filteredElementPAList->count()." ".$transS->t($p, "elementsUpdated").($nbBlockedElements>0?" (".$nbBlockedElements." ".$transS->t($p, "blockedElementsIgnored").")":"");
 			$message .= "<br />";
 			$message .= "<br />";
 			$message .= "<span class='R'><b>".(count($noneUsedLines))."</b> ".$transS->t($p, "elementsHaventBeenFound")."</span><br />";
@@ -613,9 +723,10 @@ var myAjax = new jQuery.ajax({
 });
 $(this).removeAttr(\'onclick\');
 ">'.$transS->t($p, "clicHereToImportNoneExistingElements").'</button><br /><br />';
-			$this->getWigiiExecutor()->openAsMessage($exec->getIdAnswer(), 350, ($originalElementPAList->isEmpty() ? $transS->t($p, "operationUnsuccessfull") : $transS->t($p, "operationPartlyDone")), $message);
+			$this->getWigiiExecutor()->openAsMessage($exec->getIdAnswer(), 350, ($filteredElementPAList->isEmpty() ? $transS->t($p, "operationUnsuccessfull") : $transS->t($p, "operationPartlyDone")), $message);
 		} else {
-			$this->getWigiiExecutor()->openAsMessage($exec->getIdAnswer(), 350, $transS->t($p, "operationDoneSuccessfully"), $originalElementPAList->count()." ".$transS->t($p, "elementsUpdated"), null, "Ok", null, null, "done");
+			$this->getWigiiExecutor()->openAsMessage($exec->getIdAnswer(), 350, ($filteredElementPAList->isEmpty() ? $transS->t($p, "operationUnsuccessfull") : ($nbBlockedElements>0?$transS->t($p, "operationPartlyDone"):$transS->t($p, "operationDoneSuccessfully"))), 
+					$filteredElementPAList->count()." ".$transS->t($p, "elementsUpdated").($nbBlockedElements>0?" (".$nbBlockedElements." ".$transS->t($p, "blockedElementsIgnored").")":""), null, "Ok", null, null, ($nbBlockedElements>0||$filteredElementPAList->isEmpty()?"warning":"done"));
 		}
 
 		$exec->invalidCache($p, 'elementDialog');

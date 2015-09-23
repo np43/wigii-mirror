@@ -241,9 +241,13 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		return $this->doGetGroupForConfig($principal, $crtGroupP, true);
 	}
 	/**
-	 * given a groupP finds the closest group (in the hierarchy) with a configuration file. If no group with config is find return null;
+	 * Given a group finds the closest group (in the hierarchy) having a configuration file. 
+	 * If no group with config is found then returns null.
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param GroupP|Group $crtGroupP the group or groupP from which to check if a configuration file is available.
+	 * @return int|Group returns found Group with configuration file or 0 if not found.
 	 */
-	protected function isConfigGroupAvailableForGroup($principal, $crtGroupP){
+	public function isConfigGroupAvailableForGroup($principal, $crtGroupP){
 		return $this->doGetGroupForConfig($principal, $crtGroupP, false);
 	}
 	protected function doGetGroupForConfig($principal, $crtGroupP, $returnRootGroupIfNull){

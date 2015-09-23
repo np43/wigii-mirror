@@ -107,20 +107,90 @@ class WigiiBPL
 		return $this->wigiiNamespaceAS;
 	}
 	
+	private $authS;
+	public function setAuthenticationService($authenticationService)
+	{
+		$this->authS = $authenticationService;
+	}
+	protected function getAuthenticationService()
+	{
+		// autowired
+		if(!isset($this->authS))
+		{
+			$this->authS = ServiceProvider::getAuthenticationService();
+		}
+		return $this->authS;
+	}
+	
 	private $configS;
 	public function setConfigService($configService)
 	{
 		$this->configS = $configService;
 	}
-	protected function getConfigService()
+	public function getConfigService()
 	{
 		// autowired
 		if(!isset($this->configS))
 		{
-			$this->configS = ServiceProvider::getConfigService();
+			$this->configS = $this->getConfigurationContextInstance($this->getAuthenticationService()->getMainPrincipal());
 		}
 		return $this->configS;
 	}
+	
+	private $wigiiExecutor;
+	public function setWigiiExecutor($wigiiExecutor)
+	{
+		$this->wigiiExecutor = $wigiiExecutor;
+	}
+	/**
+	 * Returns a reference to the WigiiExecutor.
+	 * If in CLI context, then returns a WigiiExecutor stub on which only stateless methods are available and the getConfigurationContext() method.
+	 * @return WigiiExecutor
+	 */
+	private function getWigiiExecutor() {
+		if(!isset($this->wigiiExecutor)) {
+			$this->wigiiExecutor = WigiiBPLWigiiExecutorStub::createInstance($this);
+		}
+		return $this->wigiiExecutor;
+	}	
+	
+	/**
+	 * Gets a new initialized ConfigurationContext instance.
+	 * @param Principal $principal authenticated user performing the operation
+	 * @return ConfigurationContextImpl an initialized ConfigurationContext
+	 */
+	protected function getConfigurationContextInstance($principal) {
+		$returnValue = $this->createConfigurationContextInstance();
+		$moduleAccess = $principal->getModuleAccess();
+		if (!empty($moduleAccess)) {
+			foreach ($moduleAccess as $module) {
+				if ($module->isAdminModule()) continue;
+		
+				//autoloads the groupList
+				$returnValue->getGroupPList($principal, $module);
+			}		
+		}
+		return $returnValue;
+	}
+	protected function createConfigurationContextInstance() {
+		return ConfigurationContextSubElementImpl::createInstance();
+	}
+	
+	private $dflowS;
+	public function setDataFlowService($dataFlowService)
+	{
+		$this->dflowS = $dataFlowService;
+	}
+	protected function getDataFlowService()
+	{
+		// autowired
+		if(!isset($this->dflowS))
+		{
+			$this->dflowS = ServiceProvider::getDataFlowService();
+		}
+		return $this->dflowS;
+	}
+	
 	
 	// System principal management
 	
@@ -850,6 +920,135 @@ class WigiiBPL
 		return $returnValue;
 	}
 	
+	/**
+	 * Copies a given element to a specified folder (real copy, not sharing).
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementCopyTo business process needs the following parameters to run :
+	 * - element: Element. The filled element to be copied. All the fields in the FieldList will be copied,
+	 * - groupId: Int. The group id in which to copy the element. If the group has another Module than the Element, then a matching on FieldName and DataType is done.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 */
+	public function elementCopyTo($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementCopyTo", $principal);
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			
+			$element = $parameter->getValue('element');
+			if(is_null($element)) throw new WigiiBPLException('element cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$groupId = $parameter->getValue('groupId');
+			if(is_null($groupId)) throw new WigiiBPLException('groupId cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			
+			$this->getDataFlowService()->processDumpableObject($principal, 
+					$this->buildCopyElementDataFlowConnector($element, $this->buildConfigSelectorForGroup($principal, $groupId)), 
+					dfasl(
+						dfas('ElementDFA',
+							'setMode', '1',
+							'setGroupId', $groupId
+						)
+					));
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("elementCopyTo", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementCopyTo", $principal);
+	}
+	
+	
+	// Object builders
+	
+	/**
+	 * Returns a ConfigSelector for the given group. 
+	 * Checks if there is a group config in the group hierarchy and returns the closest one.
+	 * If no group config is available, then returns a ConfigSelector centered on the given group.
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param int|Group|GroupP $group group ID or group instance or GroupP instance for which to create a ConfigSelector.
+	 * @return ConfigSelector
+	 */
+	public function buildConfigSelectorForGroup($principal, $group) {
+		if(!isset($group)) throw new WigiiBPLException('group cannot be null, should be a valid group ID or a group instance', WigiiBPLException::INVALID_ARGUMENT);
+		if(!is_object($group)) {
+			$group = $this->getGroupAdminService()->getGroupWithoutDetail($principal, $group);
+		}
+		$cc = $this->getConfigService();
+		if($cc instanceof ConfigurationContextImpl) {
+			$parentGroup = $cc->isConfigGroupAvailableForGroup($principal, $group);
+			if(is_object($parentGroup)) $group = $parentGroup;
+		}
+		return ConfigSelector::createInstanceForGroupConfig(lxEq(fs('id'),$group->getId()));
+	}
+	
+	/**
+	 * Returns a GroupBasedWigiiApiClient centered on the given ConfigSelector.
+	 * @param Principal $principal authenticated user performing the operation. 
+	 * If principal has adaptive WigiiNamespace then binds to specified WigiiNamespace if needed.
+	 * @param ConfigSelector $configSelector a ConfigSelector specifying the Group or WigiiNamespace/Module which should be used to select the configuration
+	 * @return GroupBasedWigiiApiClient centered on the given Group.
+	 */
+	public function buildGroupBasedWigiiApiClient($principal, $configSelector) {
+		if(!isset($principal)) throw new WigiiBPLException('principal is mandatory', WigiiBPLException::INVALID_ARGUMENT);
+		
+		$returnValue = null;
+		if(isset($configSelector)) {
+			// a wigiiNamespace has been specified --> adapts the Principal if needed
+			$confWigiiNamespace = $configSelector->getWigiiNamespaceName();
+			if(isset($confWigiiNamespace)) $confWigiiNamespace = $this->getWigiiNamespaceAdminService()->getWigiiNamespace($principal, $confWigiiNamespace);
+			if(isset($confWigiiNamespace) && $principal->hasAdaptiveWigiiNamespace()) {
+				$principal->bindToWigiiNamespace($confWigiiNamespace);
+			}
+			// a groupLogExp has been specified --> creates a GroupBasedWigiiApiClient centered on theses groups
+			$groupExp = $configSelector->getGroupLogExp();
+			if(isset($groupExp)) {
+				$returnValue = ServiceProvider::getGroupBasedWigiiApiClient($principal, $groupExp);
+				$groupList = $returnValue->getGroupList();
+				// gets wigiiNamespace
+				$initialized = false; $firstWigiiNamespace = null;
+				$oneWigiiNamespace = true;
+				foreach($groupList->getListIterator() as $group)
+				{
+					$wigiiNamespace = $group->getWigiiNamespace();
+					if($initialized)
+					{
+						// checks wigiiNamespace unicity
+						if($wigiiNamespace !== $firstWigiiNamespace) $oneWigiiNamespace = false;
+					}
+					else
+					{
+						$firstWigiiNamespace = $wigiiNamespace;
+						$initialized = true;
+					}
+				}
+				// adapts wigii namespace if needed
+				if(is_null($confWigiiNamespace) && $oneWigiiNamespace && $principal->hasAdaptiveWigiiNamespace()) {
+					$principal->bindToWigiiNamespace($firstWigiiNamespace);
+				}
+			}
+		}
+		
+		if(!isset($returnValue)) $returnValue = ServiceProvider::getGroupBasedWigiiApiClient($principal, null);
+		return $returnValue;
+	}
+	
+	/**
+	 * Builds a copy of a given Element which can be dumped into a DataFlow.
+	 * @param Element $element element on which to do an in memory copy.
+	 * @param ConfigSelector $configSelector an optional ConfigSelector used to choose the right configuration of the copied Element.
+	 * If ConfigSelector points to a different module than the source element, then a matching is done of the fieldName and DataType.
+	 * @return DataFlowDumpable
+	 */
+	public function buildCopyElementDataFlowConnector($element, $configSelector=null) {
+		$returnValue = ServiceProvider::getExclusiveAccessObject('WigiiBPLCopyElementDataFlowConnector');
+		$returnValue->setElement($element);
+		$returnValue->setConfigSelector($configSelector);
+		$returnValue->setWigiiExecutor($this->getWigiiExecutor());
+		if($element instanceof FuncExpParameter) $element->registerSetterMethod('setElement', $returnValue);
+		if($configSelector instanceof FuncExpParameter) $configSelector->registerSetterMethod('setConfigSelector', $returnValue);
+		return $returnValue;
+	}
+	
 	// Object arrays builders
 	
 	/**
@@ -914,5 +1113,188 @@ class WigiiBPL
 		return $returnValue;
 	}
 }
-
-
+/**
+ * A WigiiExecutor stub to enable the reuse of stateless methods and the getConfigurationContext method.
+ * Created by CWE on 16.09.2015
+ */
+class WigiiBPLWigiiExecutorStub extends WigiiExecutor {
+	/**
+	 * @var WigiiBPL
+	 */
+	private $wigiiBPL;
+	
+	// Object lifecycle
+	
+	/**
+	 * @param WigiiBPL $wigiiBPL a reference to the current WigiiBPL object
+	 */
+	public static function createInstance($wigiiBPL) {
+		$returnValue = new self();
+		$returnValue->wigiiBPL = $wigiiBPL;
+		return $returnValue;
+	}
+	
+	// WigiiExecutor stub
+	
+	public function getConfigurationContext() {
+		return $this->wigiiBPL->getConfigService();
+	}
+}
+/**
+ * Copies an existing Element and pushes it into a DataFlow
+ * Created by CWE on 17.09.2015
+ */
+class WigiiBPLCopyElementDataFlowConnector implements DataFlowDumpable {
+	private $_debugLogger;
+	private $lockedForUse = true;
+	
+	// Object lifecycle
+	
+	public function reset() {
+		$this->freeMemory();
+		$this->lockedForUse = true;
+	}
+	public function freeMemory() {
+		unset($this->wigiiExecutor);
+		unset($this->element);
+		unset($this->configSelector);
+		$this->lockedForUse = false;
+	}
+	
+	public function isLockedForUse() {
+		return $this->lockedForUse;
+	}
+	
+	public static function createInstance($wigiiExecutor, $element, $configSelector=null) {
+		$returnValue = new self();
+		$returnValue->reset();
+		$returnValue->setWigiiExecutor($wigiiExecutor);
+		$returnValue->setElement($element);
+		if(isset($configSelector)) $returnValue->setConfigSelector($configSelector);
+		return $returnValue;
+	}	
+	
+	// Dependency injection
+	
+	private function debugLogger()
+	{
+		if(!isset($this->_debugLogger))
+		{
+			$this->_debugLogger = DebugLogger::getInstance("WigiiBPLCopyElementDataFlowConnector");
+		}
+		return $this->_debugLogger;
+	}
+	
+	// Configuration
+	
+	private $wigiiExecutor;
+	public function setWigiiExecutor($wigiiExecutor) {
+		$this->wigiiExecutor = $wigiiExecutor;
+	}
+	
+	private $element;
+	public function setElement($element) {
+		$this->element = $element;
+	}
+	
+	private $configSelector;
+	public function setConfigSelector($configSelector) {
+		$this->configSelector = $configSelector;
+	}	
+	
+	// DataFlowDumpable implementation
+	
+	public function dumpIntoDataFlow($dataFlowService, $dataFlowContext) {		
+		if(!isset($this->wigiiExecutor)) throw new DataFlowServiceException("wigiiExecutor must be set.", DataFlowServiceException::CONFIGURATION_ERROR);
+		if(!isset($this->element)) return;
+		
+		$principal = $dataFlowContext->getPrincipal();
+	
+		// create WigiiAPIClient centered on config selector
+		$apiClient = ServiceProvider::getWigiiBPL()->buildGroupBasedWigiiApiClient($principal, $this->configSelector);
+		$configS = $apiClient->getConfigService();
+		$exec = ServiceProvider::getExecutionService();
+		
+		// module is module defined by ConfigSelector or module of source Element
+		$module = $apiClient->getModule();
+		if(!isset($module) && isset($this->configSelector) && $this->configSelector->getModuleName()!=Module::EMPTY_MODULE_NAME) {
+			$module = ServiceProvider::getModuleAdminService()->getModule($principal, $this->configSelector->getModuleName());
+		}
+		if(!isset($module)) $module = $this->element->getModule();
+		
+		// creates new Element
+		$newElement = $this->wigiiExecutor->createElementForForm($principal, $module, null);
+		
+		// sets configuration
+		$newFL = $newElement->getFieldList();
+		$newFormBag = $newElement->getWigiiBag();
+		//$this->debugLogger()->write("fills new element field list");
+		$configS->getFields($principal, $module, null, $newFL);
+		//if($newFL->isEmpty()) throw new DataFlowServiceException("new field list cannot be null", DataFlowServiceException::INVALID_STATE);
+		// copies Element content to new Element
+		$fsl = FieldSelectorListArrayImpl::createInstance(true,false);
+		$fl = $this->element->getFieldList();
+		if(isset($fl) && !$fl->isEmpty()) {
+			$flWithSubfields = FieldWithSelectedSubfieldsListArrayImpl::createInstance($newFL);
+			//$this->debugLogger()->logBeginOperation("copy element into new element");
+			foreach($flWithSubfields->getListIterator() as $fieldWithSubfields) {
+				$field = $fieldWithSubfields->getField();
+				$dt = $field->getDataType();
+				$fieldName = $field->getFieldName();
+				// checks that fieldName exists in source element
+				$srcField = $fl->doesFieldExist($fieldName);							
+				if(isset($srcField) && isset($dt)) {
+					$srcDt = $srcField->getDataType();
+					// checks DataType matching
+					if(!isset($srcDt) || $srcDt->getDataTypeName() != $dt->getDataTypeName()) throw new WigiiBPLException("Data type of field '$fieldName' differs between source and copy. Source config has '".$srcDt->getDataTypeName()."', config of copied element has '".$dt->getDataTypeName()."'", WigiiBPLException::CONFIGURATION_ERROR);
+					// do not copy content of hidden fields with clearOnCopy=1
+					$srcXml = $srcField->getXml();
+					if(!($srcXml['hidden']=='1' && $srcXml['clearOnCopy']=='1')) {
+						// copies content to new Element
+						foreach($fieldWithSubfields->getSelectedSubfieldsIterator() as $subFieldName) {
+							$value = $this->element->getFieldValue($fieldName, $subFieldName);
+							$this->debugLogger()->write($fieldName.".".$subFieldName."=".(is_object($value)?get_class($value):$value));
+							$newElement->setFieldValue($value, $fieldName, $subFieldName);
+							// records FieldSelector in fsl
+							$fsl->addFieldSelector($fieldName, $subFieldName);
+						}
+					}
+				}
+			}
+			//$this->debugLogger()->logEndOperation("copy element into new element");
+		}
+		
+		// initializes Element state on copy
+		$elementPolicyEvaluator = $this->wigiiExecutor->getElementPolicyEvaluator($principal, $module);
+		if(isset($elementPolicyEvaluator)) $elementPolicyEvaluator->initializeElementStateOnCopy($principal, $newElement);
+			
+		// empties clearOnCopy fields, empties files, copies html linked images, initialize default values.
+		$form = CopyElementFormExecutor::createInstance($this->wigiiExecutor, $newElement, null, null);
+		$form->initializeDefaultValues($principal, $exec);
+		
+		// evaluates calculated fields
+		$evaluatorClassName = (string)$configS->getParameter($principal, $module, "Element_evaluator");
+		$elementEvaluator = ServiceProvider::getElementEvaluator($principal, $evaluatorClassName);
+		$elementEvaluator->setFormExecutor($form);
+		$elementEvaluator->evaluateElement($principal, $newElement);
+		if($newFormBag->hasErrors()) {
+			throw new WigiiBPLException("Errors while evaluating calculated fields.\n".$newFormBag->getErrorsAsString(), WigiiBPLException::INVALID_STATE);
+		}
+			
+		// updates Element state on save
+		if(isset($elementPolicyEvaluator)) {
+			$elementPolicyEvaluator->setFormExecutor($form);
+			$elementPolicyEvaluator->setExecutionService($exec);
+			$elementPolicyEvaluator->updateElementStateOnSave($principal, $newElement);
+			if($newFormBag->hasErrors()) {
+				throw new WigiiBPLException("Errors while updating element state after copy.\n".$newFormBag->getErrorsAsString(), WigiiBPLException::INVALID_STATE);
+			}
+		}
+		
+		// pushes the new element into the dataflow
+		$dataFlowContext->setAttribute('GroupBasedWigiiApiClient', $apiClient, true);
+		$dataFlowContext->setAttribute('FieldSelectorList', $fsl, true);
+		//$this->debugLogger()->write("copied element:".json_encode($newElement->toStdClass()));
+		$dataFlowService->processDataChunk($newElement, $dataFlowContext);		
+	}
+}

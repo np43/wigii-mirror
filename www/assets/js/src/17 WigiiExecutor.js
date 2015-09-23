@@ -48,6 +48,11 @@ function object2Array(obj){
 	return r;
 }
 
+// prepends #ctrWigiiNamespace/crtModule/ to url. 
+function prependCrtWigiiNamespaceAndModule2Url(url) {
+	return '#'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/'+url;
+}
+
 //add the function icontains which use the contains insensitive.
 $.expr[':'].icontains = function(obj, index, meta, stack){ return (obj.textContent || obj.innerText || jQuery(obj).text() || '').toLowerCase().indexOf(meta[3].toLowerCase()) >= 0; };
 

@@ -418,6 +418,156 @@ abstract class Record extends DbEntityInstance
 
 		return $returnValue;
 	}
+	
+	/**
+	 * Exports a portion of the record as a matrix.
+	 * @param array $columns an array of strings giving the columns prefix to be used
+	 * @param int $startIndex the row index from which to export
+	 * @param int $stopIndex the row index until which to export
+	 * @param ValueList $valueList the value list to be filled with the matrix rows
+	 * @example Consider the record with values :
+	 * ProjectCode_1: P1, Location_1: L1, Key_1: P1L1
+	 * ProjectCode_2: P2, Location_2: L2, Key_2: P2L2
+	 * ProjectCode_3: P3, Location_3: L3, Key_3: P3L3
+	 * exportMatrix(array('ProjectCode_', 'Location_', 'Key_'), 1, 3) 
+	 * will return an array of StdClass [{ProjectCode_ : {value : P1, ...}, Location_ : {value : L1, ...}, Key_ : {value : P1L1, ...}}, {ProjectCode_ : {value : P2, ...}, Location_ : {value : L2, ...}, Key_ : {value : P2L2, ...}}, {ProjectCode_ : {value : P3, ...}, Location_ : {value : L3, ...}, Key_ : {value : P3L3, ...}}] 
+	 * @return array|int if valueList is defined, then returns the number of objects added, 
+	 * else returns an array containing the added objects
+	 */
+	public function exportMatrix($columns, $startIndex, $stopIndex, $valueList=null) {
+		if(empty($columns) || !is_array($columns)) throw new RecordException('columns should be a non-empty array of strings specifying the columns of the matrix to be exported', RecordException::INVALID_ARGUMENT);
+		$fillValueList = (isset($valueList));
+		if($fillValueList) $returnValue = 0; 
+		else $returnValue = array();
+
+		// extracts each (non empty) row
+		$fieldList = $this->getFieldList();
+		for($i = $startIndex; $i <= $stopIndex; $i++) {
+			$emptyRow = true;
+			$row = array();
+			// extracts each column of row
+			foreach($columns as $col) {
+				$fieldName = $col.$i;
+				$fieldWithSelectedSubfields = FieldWithSelectedSubfields::createInstance($fieldList->getField($fieldName));
+				$fieldWithSelectedSubfields->selectAllsubfields();
+				$dtXml = $fieldWithSelectedSubfields->getField()->getDataType();
+				if(isset($dtXml)) $dtXml = $dtXml->getXml();				
+				$fieldValue = array();				
+				// extracts each subfields
+				foreach($fieldWithSelectedSubfields->getSelectedSubfieldsIterator() as $subFieldName) {
+					$subFieldValue = $this->getFieldValue($fieldName, $subFieldName);
+					// checks if row has at least one non hidden subfield which is filled.
+					if(!empty($subFieldValue) && $dtXml->{$subFieldName}['type'] != 'hidden') $emptyRow = false;
+					$fieldValue[$subFieldName] = $subFieldValue;
+				}
+				$row[$col] = (object)$fieldValue;
+			}								
+			// add matrix row to matrix
+			if(!$emptyRow) {
+				$row = (object)$row;
+				if($fillValueList) {
+					$valueList->addValue($row);
+					$returnValue++;
+				}
+				else {
+					$returnValue[] = $row;
+				}
+			}
+		}
+		
+		return $returnValue;
+	}	
+	
+	/**
+	 * Updates a matrix portion of a record
+	 * @param array $columns an array of strings giving the columns prefix to be used
+	 * @param int $startIndex the row index from which to update
+	 * @param int $stopIndex the row index until which to update
+	 * @param ObjectList|array $objectList the matrix rows as an ObjectList or an array of StdClass
+	 * @example Consider the matrix $m as an array or an ObjectList of StdClass
+	 * $m = [{ProjectCode_ : {value : P1, ...}, Location_ : {value : L1, ...}, Key_ : {value : P1L1, ...}}, {ProjectCode_ : {value : P2, ...}, Location_ : {value : L2, ...}, Key_ : {value : P2L2, ...}}, {ProjectCode_ : {value : P3, ...}, Location_ : {value : L3, ...}, Key_ : {value : P3L3, ...}}]
+	 * updateMatrix(array('ProjectCode_', 'Location_', 'Key_'), 1, 3, $m)
+	 * will update the WigiiBag by calling
+	 * $this->setFieldValue(P1, ProjectCode_1);
+	 * $this->setFieldValue(L1, Location_1);
+	 * $this->setFieldValue(P1L1, Key_1);
+	 * $this->setFieldValue(P2, ProjectCode_2);
+	 * $this->setFieldValue(L2, Location_2);
+	 * $this->setFieldValue(P2L2, Key2);
+	 * $this->setFieldValue(P3, ProjectCode_3);
+	 * $this->setFieldValue(L3, Location_3);
+	 * $this->setFieldValue(P3L3, Key_3);
+	 * @return int the number of updated rows
+	 */
+	public function updateMatrix($columns, $startIndex, $stopIndex, $objectList) {
+		if($objectList instanceOf ObjectList) $rows = $objectList->getListIterator();
+		elseif(is_array($objectList)) $rows = $objectList;
+		else throw new RecordException('objectList should be an ObjectList or an array containing the matrix rows as StdClasses', RecordException::INVALID_ARGUMENT);
+		if(empty($columns) || !is_array($columns)) throw new RecordException('columns should be a non-empty array of strings specifying the columns of the matrix taken to update the record', RecordException::INVALID_ARGUMENT);
+		
+		$returnValue = 0;
+		// updates each row
+		if(!empty($rows)) {
+			$fieldList = $this->getFieldList();
+			$i = $startIndex;
+			foreach($rows as $row) {
+				// updates row only between start and stop index range
+				if($i <= $stopIndex) {
+					// updates each field
+					foreach($columns as $col) {
+						$fieldName = $col.$i;
+						$fieldWithSelectedSubfields = FieldWithSelectedSubfields::createInstance($fieldList->getField($fieldName));
+						$fieldWithSelectedSubfields->selectAllsubfields();
+						// updates each subfield
+						$fieldValue = $row->{$col};
+						foreach($fieldWithSelectedSubfields->getSelectedSubfieldsIterator() as $subFieldName) {
+							if(isset($fieldValue)) $subFieldValue = $fieldValue->{$subFieldName};
+							else $subFieldValue = null;
+							$this->setFieldValue($subFieldValue, $fieldName, $subFieldName);
+						}
+					}
+					$i++;
+					$returnValue++;
+				}
+				else break;
+			}
+			// updates missing rows as blank lines
+			while($i <= $stopIndex) {
+				// updates each field
+				foreach($columns as $col) {
+					$fieldName = $col.$i;
+					$fieldWithSelectedSubfields = FieldWithSelectedSubfields::createInstance($fieldList->getField($fieldName));
+					$fieldWithSelectedSubfields->selectAllsubfields();
+					// updates each subfield
+					foreach($fieldWithSelectedSubfields->getSelectedSubfieldsIterator() as $subFieldName) {
+						$this->setFieldValue(null, $fieldName, $subFieldName);
+					}
+				}
+				$i++;
+			}
+		}
+		return $returnValue;
+	}
+	
+	/**
+	 * Converts this record (or a portion of it) into a PHP StdClass of the form StdClass {fieldName : subfieldName, ...}
+	 * @param FieldSelectorList $fieldSelectorList an optional FieldSelectorList which can be used to select the fields that will be dumped in the StdClass.
+	 * If not specified, then all the Fields of the record are dumped.
+	 * @return stdClass
+	 */
+	public function toStdClass($fieldSelectorList=null) {
+		$returnValue = array();
+		$fieldWithSelectedSubfieldsList = FieldWithSelectedSubfieldsListArrayImpl::createInstance($this->getFieldList(), $fieldSelectorList);
+		foreach($fieldWithSelectedSubfieldsList->getListIterator() as $fieldWithSelectedSubfields) {
+			$fieldName = $fieldWithSelectedSubfields->getField()->getFieldName();
+			$fieldValue = array();
+			foreach($fieldWithSelectedSubfields->getSelectedSubfieldsIterator() as $subFieldName) {
+				$fieldValue[$subFieldName] = $this->getFieldValue($fieldName, $subFieldName);
+			}
+			$returnValue[$fieldName] = (object)$fieldValue;
+		}
+		return (object)$returnValue;
+	}
 }
 
 

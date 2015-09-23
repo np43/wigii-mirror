@@ -946,6 +946,7 @@ class ListContext extends ListFilter {
 		 * pre traitement to help finding telephone numbers
 		 */
 		$search = array (" ", "\t", "-", ".", "/", "\n", "\r", "\0", "\x0B");
+		/*
 		preg_match_all('/([\d|\s|\.|\/\-]{7,})/', $tempTextSearch, $matches);
 		foreach ($matches[0] as $key => $value) {
 			  $tempTab = str_replace($search, "", $value);
@@ -953,7 +954,15 @@ class ListContext extends ListFilter {
 			  $tempTab = implode("%", $tempTab);
 			  $tempTextSearch = str_replace($value, $tempTab, $tempTextSearch);
 		}
-
+		*/
+		preg_match_all('/(\d+([\.|\s|\/|\-]\d+){3,})/', $tempTextSearch, $matches);
+		foreach ($matches[0] as $key => $value) {
+			// replaces separators by '%'	
+			$tempTab = str_replace($search, "%", $value);
+			// removes leading zeros
+			$tempTab = preg_replace('/0+([1,2,3,4,5,6,7,8,9]\d+)/', '${1}', $tempTab);
+			$tempTextSearch = str_replace($value, $tempTab, $tempTextSearch);			
+		}
 		$expId = TechnicalServiceProvider::getSearchBarOrLogExpParser()->createLogExpOnCriteria($fslId, implode(" ", $filterOnId));
 		$exp = null;
 		//sql full text search
@@ -985,7 +994,6 @@ class ListContext extends ListFilter {
 //		}
 		//sql like filter (no use of sql fullText index)
 		$exp = TechnicalServiceProvider::getSearchBarLogExpParser()->createLogExpOnCriteria($fsl, $tempTextSearch);
-
 
 		if($exp!=null && $expId != null){
 			$tempExp = LogExp::createAndExp();

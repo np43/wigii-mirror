@@ -122,6 +122,26 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 	public function getErrors(){
 		return $this->errors;
 	}
+	public function getErrorsAsString() {
+		$returnValue = '';
+		if(!empty($this->errors)) {
+			foreach($this->errors as $fieldName => $error) {
+				if($returnValue != '') $returnValue .= "\n";
+				$returnValue .= '* '.$fieldName;
+				$errorField = '';
+				$error = preg_split('/\<br.*?\/\>/', $error);
+				if(!empty($error)) {
+					$returnValue .= "\n";
+					foreach($error as $er) {
+						if($errorField != '') $errorField .= "\n";
+						$errorField .= '  - '.$er;
+					}
+					$returnValue .= $errorField;
+				}				
+			}
+		}
+		return $returnValue;
+	}
 	public function resetErrors(){
 		unset($this->errors);
 	}

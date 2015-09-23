@@ -1768,7 +1768,106 @@ order by isParent DESC
 		return "select ".$this->getSqlColumnsForGroup('G', $this->getFieldSelectorListForGroupWithoutDetail())
 				." from Groups as G where $whereClause order by G.wigiiNamespace, G.groupname";
 	}
+	
+	public function getSelectedGroupsWithChildrenWithoutDetail($principal, $parentGroupSelectionLogExp, $groupList, $childrenGroupFilterLogExp=null, $groupFilterLogExp=null) 
+	{
+		$this->executionSink()->publishStartOperation("getSelectedGroupsWithChildrenWithoutDetail", $principal);
+		$groupMapper = null;
+		try
+		{
+			if(is_null($groupList)) throw new GroupAdminServiceException('groupList cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
 
+			// checks authorization
+			$this->assertPrincipalAuthorizedForGetSelectedGroupsWithChildrenWithoutDetail($principal);
+
+			// gets groups
+			$groupMapper = $this->getGroupListMapper($principal, $groupList, false);
+			$this->getMySqlFacade()->selectAll($principal,
+					$this->getSqlForGetSelectedGroupsWithChildrenWithoutDetail($parentGroupSelectionLogExp, $childrenGroupFilterLogExp, $groupFilterLogExp),
+					$this->getDbAdminService()->getDbConnectionSettings($principal),
+					$groupMapper);
+			$returnValue = $groupMapper->count();
+			$groupMapper->freeMemory();
+		}
+		catch (GroupAdminServiceException $gaE){
+			if(isset($groupMapper)) $groupMapper->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("getSelectedGroupsWithChildrenWithoutDetail", $gaE, $principal);
+			throw $gaE;
+		}
+		catch (AuthorizationServiceException $asE){
+			if(isset($groupMapper)) $groupMapper->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("getSelectedGroupsWithChildrenWithoutDetail", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			if(isset($groupMapper)) $groupMapper->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("getSelectedGroupsWithChildrenWithoutDetail", $e, $principal);
+			throw new GroupAdminServiceException('',GroupAdminServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("getSelectedGroupsWithChildrenWithoutDetail", $principal);
+		return $returnValue;
+	}
+	protected function assertPrincipalAuthorizedForGetSelectedGroupsWithChildrenWithoutDetail($principal)
+	{
+		// checks general authorization
+		$this->getAuthorizationService()->assertPrincipalAuthorized($principal, "GroupAdminService", "getSelectedGroupsWithChildrenWithoutDetail");
+	}
+	protected function getSqlForGetSelectedGroupsWithChildrenWithoutDetail($parentGroupSelectionLogExp, $childrenGroupFilterLogExp=null, $groupFilterLogExp=null)
+	{
+		if(is_null($parentGroupSelectionLogExp)) throw new GroupAdminServiceException("parentGroupSelectionLogExp LogExp cannot be null", GroupAdminServiceException::INVALID_ARGUMENT);		
+		
+		/* design
+		 select G.* from Groups as G
+		 inner join (
+		 select sG.id_group from (
+		 -- select parent groups
+		 select p1G.id_group from Groups as p1G
+		 where p1G...
+		 union
+		 -- select children groups
+		 select cG.id_group from Groups as p2G
+		 inner join Groups_Groups GG on GG.id_group_owner = p2G.id_group
+		 inner join Groups as cG on GG.id_group = cG.id_group
+		 where p2G...
+		 and cG...
+		 group by cG.id_group
+		 ) as sG
+		 group by sG.id_group
+		 ) as sG2 on sG2.id_group = G.id_group
+		*/
+		
+		// select parent groups
+		$parentGroupSelectionLogExp = $parentGroupSelectionLogExp->reduceNegation(true);
+		$sqlParentGroups = "select p1G.id_group from Groups as p1G where ".$this->getSqlWhereClauseForSelectGroups($parentGroupSelectionLogExp, 'p1G');
+		
+		// select children groups
+		$sqlChildrenGroups =  "select cG.id_group from Groups as p2G "
+				."inner join Groups_Groups GG on GG.id_group_owner = p2G.id_group "
+				."inner join Groups as cG on GG.id_group = cG.id_group "
+				."where ".$this->getSqlWhereClauseForSelectGroups($parentGroupSelectionLogExp, 'p2G');
+		// children filtering
+		if(isset($childrenGroupFilterLogExp)) {
+			$childrenGroupFilterLogExp = $childrenGroupFilterLogExp->reduceNegation(true);
+			$sqlChildrenGroups .= " and ".$this->getSqlWhereClauseForSelectGroups($childrenGroupFilterLogExp, 'cG');
+		}
+		// children remove id duplicates
+		$sqlChildrenGroups .= " group by cG.id_group";
+		
+		// global filter on resulting list
+		if(isset($groupFilterLogExp)) {
+			$groupFilterLogExp = $groupFilterLogExp->reduceNegation(true);
+			$globalFilter = " where ".$this->getSqlWhereClauseForSelectGroups($groupFilterLogExp, 'G');
+		}
+		else $globalFilter = '';
+		
+		return "select ".$this->getSqlColumnsForGroup('G', $this->getFieldSelectorListForGroupWithoutDetail())." from Groups as G "
+			."inner join ("
+			."select sG.id_group from (".$sqlParentGroups." union ".$sqlChildrenGroups.") as sG group by sG.id_group "
+			.") as sG2 on sG2.id_group = G.id_group "
+			.$globalFilter." order by G.wigiiNamespace, G.groupname";
+	}
+	
 	public function getSelectedGroups($principal, $listFilter, $groupPList)
 	{
 		$this->executionSink()->publishStartOperation("getSelectedGroups", $principal);

@@ -35,9 +35,9 @@ if(!$this->isForNotification()){
 			} else {
 				$this->put('<div class="" style="margin-top:'.($name ? "0" : "4").'px;">');
 			}
-		} else {
+		} /*else {
 			$this->put('<div class="" style="float:left;">'); //margin-top:'.($name ? "8" : "12").'px;font-size:16px;">');
-		}
+		}*/
 	}
 }
 
@@ -56,7 +56,7 @@ if(!$this->isForNotification()){
 			$this->put('<br /><a href="'.$value.'" target="_blank" style="text-decoration:none;"><font style="font-size:10px;font-style:italic;">('.$value.')</font></a>');
 		}
 	}
-	if($target !="_video"){
+	if($target !="_video" && $fieldXml["bigLabel"]=="1"){
 		$this->put('</div>');
 	}
 }

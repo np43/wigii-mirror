@@ -156,6 +156,21 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $this->authS;
 	}
 	
+	private $gAS;
+	public function setGroupAdminService($groupAdminService)
+	{
+		$this->gAS = $groupAdminService;
+	}
+	protected function getGroupAdminService()
+	{
+		// autowired
+		if(!isset($this->gAS))
+		{
+			$this->gAS = ServiceProvider::getGroupAdminService();
+		}
+		return $this->gAS;
+	}
+	
 	// FieldSelector builder
 
 	/**
@@ -281,6 +296,21 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			($nArgs > 1 ? $this->evaluateArg($args[1]) : null));
 	}
 
+	/**
+	 * Creates a ConfigSelector returning the closest group configuration of the given group in the hierarchy of groups.
+	 * If no group configuration exists, then returns a ConfigSelector pointing on the given group.
+	 * FuncExp signature : <code>cs_g(groupId)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) groupId: the group ID from which to fetch a configuration group
+	 * @return ConfigSelector a ConfigSelector instance
+	 */
+	public function cs_g($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The cs_g function takes or one argument the group ID', FuncExpEvalException::INVALID_ARGUMENT);
+		$groupId = $this->evaluateArg($args[0]);
+		return ServiceProvider::getWigiiBPL()->buildConfigSelectorForGroup($this->getPrincipal(), $groupId);
+	}
+	
 	// CalculatedFieldSelector builder
 
 	/**
@@ -762,6 +792,74 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $this->getFuncExpBuilder()->groupList($this->evaluateArg($args[0]),
 				($nArgs > 1 ? $this->evaluateArg($args[1]) : false));
 	}
+	
+	// Group builder
+	
+	/**
+	 * Selects a group given its path and returns its ID. Creates all missing groups in the path.
+	 * FuncExp signature : <code>group(startPoint, groupName1, groupName2, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) startPoint: String. Selects the group from which to start the navigation. Can be "." (current folder), ".." (parent folder of current folder), group ID.
+	 * - Arg(1..n) groupNameI: String. The group name to which to navigate from the previous point.
+	 * @example The call of group("..","..","2015","August") will return the ID of the group ../../2015/August starting from current selected group.
+	 * The call of group(12345,"A") will select and/or create the group A under the group with ID 12345, and returns its ID.
+	 * The call of group(".") will returns the ID of the current selected group.
+	 * The call of group(".", "A") will select and/or create the group A under the current group and return its ID.
+	 * @return int selected group ID.
+	 * @throws GroupAdminServiceException if start point is not accessible or if group cannot be created.
+	 */
+	public function group($args) {
+		$this->debugLogger()->logBeginOperation('group');
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The group function takes at least one argument which is starting group ID or "." or ".."', FuncExpEvalException::INVALID_ARGUMENT);
+		$groupId = $this->evaluateArg($args[0]);
+		
+		// retrieves starting point group
+		$gAS = $this->getGroupAdminService();
+		$p = $this->getPrincipal();
+		// current group		
+		if($groupId == '.') {
+			$group = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'group'));
+		}
+		// parent group
+		elseif($groupId == '..') {
+			$group = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'group'));
+			$groupId = $group->getGroupParentId();
+			if(is_null($groupId)) throw new GroupAdminServiceException('current group is a root group, cannot retrieve parent group', GroupAdminServiceException::INVALID_ARGUMENT);
+			$group = $gAS->getGroupWithoutDetail($p, $groupId);
+			if(is_null($group)) throw new GroupAdminServiceException('group '.$groupId.' does not exist into database', GroupAdminServiceException::INVALID_ARGUMENT);
+		}
+		// specific group
+		else {
+			$group = $gAS->getGroupWithoutDetail($p, $groupId);
+			if(is_null($group)) throw new GroupAdminServiceException('group '.$groupId.' does not exist into database', GroupAdminServiceException::INVALID_ARGUMENT);
+		}
+		
+		// navigates through the group path and creates all missing groups
+		$groupCache = array($groupId => $group);
+		for($i = 1; $i < $nArgs; $i++) {
+			$groupId = $this->evaluateArg($args[$i]);
+			// navigates back
+			if($groupId == '..') {
+				$groupId = $group->getGroupParentId();
+				if(is_null($groupId)) throw new GroupAdminServiceException("group '".$group->getGroupName()."' is a root group, cannot retrieve parent group", GroupAdminServiceException::INVALID_ARGUMENT);
+				$group = $groupCache[$groupId];
+				if(!isset($group)) {
+					$group = $gAS->getGroupWithoutDetail($p, $groupId);
+					if(is_null($group)) throw new GroupAdminServiceException('group '.$groupId.' does not exist into database', GroupAdminServiceException::INVALID_ARGUMENT);
+					$groupCache[$groupId] = $group;
+				}
+			}
+			// navigates down by name
+			elseif($groupId != '.') {
+				$group = $gAS->getOrCreateSubGroupByName($p, $group->getId(), $groupId);
+				$group = $group->getDbEntity();
+				$groupCache[$group->getId()] = $group;
+			} 
+		}
+		$this->debugLogger()->logEndOperation('group');
+		return $group->getId();
+	}
 
 	// Configuration builder
 
@@ -932,7 +1030,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 				dfasl(
 						dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", fx('cfgAttribut',
 								fs('value'),
-								fx('newMap', 'idGroup', fs('idGroup'), 'email', fs('email'), 'checked', fx('ctlIf', fs('checked'), '1', '0')),
+								fx('newMap', 
+										'idGroup', fs('idGroup'), 
+										'email', fs('email'), 
+										'checked', fx('ctlIf', fs('checked'), '1', '0'),
+										'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')
+								),
 								fs('label'))),
 						dfas("FilterDuplicatesAndSortDFA",
 								"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
@@ -945,6 +1048,181 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $returnValue;
 	}
 
+	/**
+	 * Selects the attributes of a dimension, returns a SimpleXmlElement compatible with attribute expressions,
+	 * which is navigable using the Wigii find functionality.<br/>
+	 * FuncExp signature : <code>cfgAttrFindableDimension(selector, elementPList, keyField, attrLogExp = null, sortOrder = 3, filterWithUserRights=false)</code><br/>
+	 *  Where arguments are :
+	 * - Arg(0) selector: String|Int|LogExp. The dimension selector. Can be a group id, a group name or a group log exp.
+	 * - Arg(1) elementPList: ElementPListDataFlowConnector. Defines the list of elements in which to search for the element related to value of the drop-down. Use the elementPList func exp to construct this object.
+	 * - Arg(2) keyField: String|FieldSelector. The name of the field in the linked element on whic to match the drop-down value. Can also be a FieldSelector.
+	 * - Arg(3) attrLogExp: LogExp. An optional LogExp used to filter the list of attributes (for instance filtering some specific values, see module Dimensions for details about the available fields)
+	 * - Arg(4) sortOrder: Int. One of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label. (by default is ascending by label)
+	 * - Arg(5) filterWithUserRights: Boolean. If true, then uses current principal to fetch the dimension else uses the root principal. (By default uses the root principal).
+	 *
+	 * Examples: in a configuration file AuditFindings create an attribut:
+	 * <auditNumber type="Attributs"><label>Audit number</label>
+	 *     <attributeExp funcExp='cfgAttrDimension("Audit number", elementPList(lxInGR(lxEq(fs("id"),"1234"))), "auditNumber")'/>
+	 * </auditNumber>
+	 *
+	 * which builds an hyperlink to Audits below root folder 1234, having auditNumber field matching.
+	 * 
+	 *  @return SimpleXMLElement
+	 */
+	public function cfgAttrFindableDimension($args) {
+		$this->debugLogger()->logBeginOperation('cfgAttrFindableDimension');
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1 || empty($args[0])) throw new FuncExpEvalException('The cfgAttrFindableDimension function takes at least one argument which is the dimension selector. Can be a group id, a group name or a group log exp.', FuncExpEvalException::INVALID_ARGUMENT);
+		$fxParser = TechnicalServiceProvider::getFieldSelectorFuncExpParser();
+		$cacheKey = $fxParser->funcExpToString($args[0]);
+		$selector = $this->evaluateArg($args[0]);
+		if(empty($selector)) throw new FuncExpEvalException('The cfgAttrFindableDimension function takes at least one argument which is the dimension selector. Can be a group id, a group name or a group log exp.', FuncExpEvalException::INVALID_ARGUMENT);
+
+		if($nArgs > 1) {
+			$elementPListFx = $fxParser->funcExpToString($args[1]);
+			$cacheKey .= ','.$elementPListFx;
+		}
+		else {
+			$elementPListFx = null;
+			$cacheKey .= ',NULL';
+		}
+		
+		if($nArgs > 2) {
+			$keyField = $this->evaluateArg($args[2]);
+			if($keyField instanceof FieldSelector) $keyField = $keyField->getFieldName();			
+		}
+		
+		if($nArgs > 3 && !empty($args[3])) {
+			$cacheKey .= ','.$fxParser->funcExpToString($args[3]);
+			$attrLogExp = $this->evaluateArg($args[3]);
+		}
+		else {
+			$cacheKey .= ',NULL';
+			$attrLogExp = null;
+		}
+		if($nArgs > 4) {
+			$sortOrder = $this->evaluateArg($args[4]);
+			if($sortOrder == 0) $sortOrder = 0;
+			elseif($sortOrder == 1) $sortOrder = 1;
+			elseif($sortOrder == 2) $sortOrder = 2;
+			elseif($sortOrder == 3) $sortOrder = 3;
+			elseif($sortOrder == 4) $sortOrder = 4;
+			else throw new FuncExpEvalException("sortOrder should be one of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label.", FuncExpEvalException::INVALID_ARGUMENT);
+		}
+		else $sortOrder = 3;
+
+		if($nArgs > 5) $filterWithUserRights = $this->evaluateArg($args[5]);
+		else $filterWithUserRights = false;
+
+		// gets principal
+		if($filterWithUserRights) $p = $this->getPrincipal();
+		else $p = $this->getRootPrincipal();
+
+		// gets setup wigii namespace and binds to it
+		$setupNS =  $this->getWigiiNamespaceAdminService()->getSetupWigiiNamespace($p);
+		$origNS = $p->getWigiiNamespace();
+		$p->bindToWigiiNamespace($setupNS);
+		$cacheKey .= ','.$p->getUsername();
+
+		// builds dimension selector
+		if(!($selector instanceof LogExp)) {
+			if(is_numeric($selector)) $selector = lxEq(fs('id'), $selector);
+			else $selector = lxEq(fs('groupname'), $selector);
+		}
+		$selector = lxAnd(lxEq(fs('module'), 'Dimensions'), lxEq(fs('wigiiNamespace'), $setupNS->getWigiiNamespaceName()), $selector);
+
+		// builds fskl
+		switch($sortOrder) {
+			case 0:
+				$fskl = fskl(fsk('__element', 'id', true));
+				$sortOrder = 0;
+				break;
+			case 1:
+				$fskl = fskl(fsk('value', null, true));
+				$sortOrder = 0;
+				break;
+			case 2:
+				$fskl = fskl(fsk('value', null, false));
+				$sortOrder = 0;
+				break;
+			case 3:
+				$fskl = null;
+				$sortOrder = 1;
+				break;
+			case 4:
+				$fskl = null;
+				$sortOrder = 2;
+				break;
+		}
+
+		// builds list filter
+		$fsl = fsl(fs('value', 'value'), fs('idGroup', 'value'), fs('email', 'value'), fs('checked', 'value'), fs('label', 'value'));
+		if(isset($attrLogExp) || isset($fskl)) $lf = lf($fsl, $attrLogExp, $fskl);
+		else $lf = lf($fsl);
+
+		$this->debugLogger()->write("cfgAttrFindableDimension cache key = $cacheKey");
+		$returnValue = $this->getDataFlowService()->processDataSource($p,
+				elementPList(lxInGR($selector), $lf),
+				dfasl(
+						dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", fx('cfgAttribut',
+								fs('value'),
+								fx('newMap', 
+										'idGroup', fs('idGroup'), 
+										'email', fs('email'), 
+										'checked', fx('ctlIf', fs('checked'), '1', '0'),
+										'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')
+								),
+								fs('label'))),
+						dfas("FilterDuplicatesAndSortDFA",
+								"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
+								"setObjectSortByMethod", CallableObject::createInstance('cfgAttributObjectSortyByMethod', $this),
+								"setSortOrder", $sortOrder
+						),
+						dfas("CallbackDFA", 
+								'setProcessDataChunkCallback', CallableObject::createInstance('cfgAttrFindableDimension_LinkBackMethod', $this),
+								'initializeContext', array('url'=>"find/", 'query'=>base64url_encode($elementPListFx), 'keyField'=>$keyField)
+						),
+						dfas("CfgAttribut2XmlDFA")
+				), true, null, 'cfgAttrDimension('.md5($cacheKey).')');
+		$p->bindToWigiiNamespace($origNS);
+		$this->debugLogger()->logEndOperation('cfgAttrFindableDimension');
+		return $returnValue;
+	}
+	
+	/**
+	 * cfgAttrFindableDimension callback to setup hyperlink in drop-down
+	 * See CallbackDFA.
+	 */
+	public function cfgAttrFindableDimension_LinkBackMethod($data, $callbackDFA) {
+		$url = $callbackDFA->getValueInContext('url');
+		if(!empty($url)) {
+			$query = $callbackDFA->getValueInContext('query');
+			$keyField = $callbackDFA->getValueInContext('keyField');
+			$businessKey = 'lxEq(fs("'.$keyField.'"),"'.$data->value.'")';
+			$businessKey = base64url_encode($businessKey);
+			
+			$url .= $query.'/'.$businessKey;		
+				
+			$onclick = "$(this).attr('href', prependCrtWigiiNamespaceAndModule2Url('".$url."'));return true;";
+			$url = '';
+			
+			$labels = $data->label;
+			if(empty($labels)) {
+				$data->label = '<a href="'.$url.'" target="_blank" onclick="'.$onclick.'">'.$data->value.'</a>';
+			}
+			elseif(is_array($labels)) {			
+				foreach($labels as $lang => &$label) {
+					$label =  '<a href="'.$url.'" target="_blank" onclick="'.$onclick.'">'.(empty($label)?$data->value:$label).'</a>';
+				}
+				$data->label = $labels;
+			}
+			else {
+				$data->label = '<a href="'.$url.'" target="_blank" onclick="'.$onclick.'">'.$data->label.'</a>';
+			}
+		}
+		$callbackDFA->writeResultToOutput($data);
+	}
+	
 	/**
 	 * Selects a group tree and returns a SimpleXmlElement compatible with attribute expressions.<br/>
 	 * FuncExp signature : <code>cfgAttrGroupTree(module=null, wigiiNamespace=null, groupLogExp=null)</code><br/>
@@ -1033,12 +1311,20 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		if(!empty($data->label)) {
 			if(is_array($data->label)) {
 				$l = $data->label[$this->getTranslationService()->getLanguage()];
-				if(empty($l)) return $data->value;
-				else return $l;
+				if(empty($l)) $returnValue = $data->value;
+				else $returnValue = $l;
 			}
-			else return $data->label;
+			else $returnValue = $data->label;
 		}
-		else return $data->value;
+		else $returnValue = $data->value;
+		
+		// puts disabled options at the end
+		if(!empty($data->attributes) && $data->attributes['disabled']=='1') {
+			return 'Z'.$returnValue;
+		}
+		else {
+			return 'A'.$returnValue;
+		}
 	}
 
 	// WigiiBPLParameter builder

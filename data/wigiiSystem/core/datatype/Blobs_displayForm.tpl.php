@@ -67,13 +67,13 @@ if($fieldXml["mediumToolbarHtmlArea"]=="1") $this->put('mediumToolbarHtmlArea ')
 if($fieldXml["activateHtmlArea"]=="1") $this->put('activateHtmlArea ');
 if((string)$fieldXml["wordlimit"]>0) $this->put('wordlimit wordlimit_'.(string)$fieldXml["wordlimit"].' ');
 if((string)$fieldXml["isJournal"]=="1") $this->put('isJournal ');
-if($fieldXml["height"]!=null) $this->put('difH ');
+if((string)$fieldXml["height"]!=null && (string)$fieldXml["height"] != "0") $this->put('difH ');
 $this->put('" ');
 if($disabled) $this->put(' disabled="disabled" ');
 if($readonly) $this->put(' disabled="disabled" ');
 if($fieldXml["noWrap"]=="1") $this->put(' wrap="off" ');
 $this->put(' style="'.$valueWidth);
-if($fieldXml["height"]!=null) $this->put(' height:'.$fieldXml["height"].'px; ');
+if((string)$fieldXml["height"]!=null && (string)$fieldXml["height"] != "0") $this->put(' height:'.$fieldXml["height"].'px; ');
 if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
 $this->put('" >');
 //$this->put(str_replace('<', '&lt;', str_replace('>', '&gt;', $this->formatValueFromRecord($fieldName, $subFieldName, $this->getRecord()))));

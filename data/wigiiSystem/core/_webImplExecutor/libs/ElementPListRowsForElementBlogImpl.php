@@ -459,24 +459,24 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 			$class .= " ".(string)$fieldXml["class"]." ";
 			$class .= " ".(string)$xmlHeader["class"]." ";
 			$idField = $rowId."__".$fieldName;
-			$rm->put('<div id="'.$idField.'" class="field '.$class.'" style="'.$style.'" >');
+			$rm->put('<div id="'.$idField.'" class="field '.$class.'" style="width:100%; '.$style.'" >');
 
 			//display label
-			if($dataType!=null && $fieldXml["noLabel"]!="1"){
+			if((($xmlHeader != null && count($xmlHeader->children()) > 0) ||
+				$header->isElementAttributeSelector()) && $xmlHeader["noLabel"]!="1") {
+				$rm->put('<div class="label" >');
+				$rm->displayHeaderLabel($header, $fieldXml, $xmlHeader);
+				$rm->put('</div>');
+			} elseif($dataType!=null && $fieldXml["noLabel"]!="1" && $xmlHeader["noLabel"]!="1"){
 				$style = "";
-				$rm->put('<div class="label" style="'.$style.'" >');
+				$rm->put('<div class="label" style="'.($fieldXml["isInLine"]=="1" ? "float:none;" : "").$style.'" >');
 				if($dataType!= null && ($dataType->getDataTypeName()=="Files" || $dataType->getDataTypeName()=="Urls")){
 					$rm->displayLabel($fieldName, null, null, false);
 				} else {
 					$rm->displayLabel($fieldName);
 				}
 				$rm->put('</div>');
-			} elseif($header->isElementAttributeSelector()){
-				$rm->put('<div class="label" >');
-				$rm->displayHeaderLabel($header, $fieldXml, $xmlHeader);
-				$rm->put('</div>');
 			}
-
 			//display value
 			$style = "";
 			$class = "";
@@ -553,7 +553,13 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		}
 
 		if(!$this->doOnlyRowsContent){
+			$blogViewXml = $this->getWigiiExecutor()->getConfigurationContext()->ma($p, $this->getExec()->getCrtModule(), Activity::createInstance("blogView"));
+			$nbOfColumns = ($blogViewXml["nbOfColumns"]<>"" ? $blogViewXml["nbOfColumns"] : 2);
+			
 			?></div><?
+			if($this->nb%$nbOfColumns==0){
+				?><div class="clear"></div><?
+			}
 		}
 
 		flush();

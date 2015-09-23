@@ -34,6 +34,14 @@ form .addC span {
 form select.filled, input.filled, textarea.filled {
 	border:2px solid #f00;
 }
+form span.select2.filled {
+	border: 2px solid #f00;
+    border-radius: 4px;	
+}
+form select.filled + span.select2 {
+	border: 2px solid #f00;
+    border-radius: 4px;	
+}
 
 
 

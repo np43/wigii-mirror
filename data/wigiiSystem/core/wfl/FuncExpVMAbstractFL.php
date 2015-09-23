@@ -86,6 +86,12 @@ abstract class FuncExpVMAbstractFL
 	protected function evaluateArg($arg) {return $this->getFuncExpVM()->evaluateFuncExp($arg, $this);}
 	
 	/**
+	 * Evaluates a FuncExp and returns its value
+	 * @param $funcExp an instance of a FuncExp
+	 */
+	protected function evaluateFuncExp($funcExp) {return $this->getFuncExpVM()->evaluateFuncExp($funcExp, $this);}
+	
+	/**
 	 * Evaluates a FieldSelector and returns its value.
 	 * If the field selector doesn't point to any declared variable or field in parent evaluator,
 	 * then returns the given default value (null by default).

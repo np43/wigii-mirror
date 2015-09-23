@@ -853,6 +853,7 @@ moveInTrashBin:Sent to \: :Envoyé(s) dans \: :
 trashbinGroupName:zz. Trashbin:zz. Corbeille::::
 trashBinGroupOperationImpossible:#ThisGroup# is the trashbin, therefore the operation cannot complete.:#ThisGroup# est la corbeille, par conséquent l'opération ne peut pas se terminer.::::
 blockedElementsOperationImpossible:blocked items found, therefore the operation cannot complete.:éléments bloqués, par conséquent l'opération ne peut pas se terminer.::::
+blockedElementsIgnored:blocked items which were ignored.:éléments bloqués qui ont été ignorés.::::
 moduleEditorRemoveNamespace:Delete a namespace:Effacer un espace de nom:
 moduleEditorRemoveNamespace_help:Open a wizard to help you deleting a namespace.:Ouvre un wizard pour effacer un espace de nom.::::
 moduleEditorRemoveNamespaceExplanation:YOU ARE ABOUT TO DELETE A COMPLETE NAMESPACE!<br /><br />This operation is NOT REVERSIBLE.<br /><br />All users, all roles, all folders, and all items created in this namespace WILL BE DELETED.<br />Sole items linked to other namespace would remain.:VOUS ALLEZ EFFACER UN ESPACE DE NOM COMPLET!<br /><br />Cette opération EST IRREVERSIBLE!<br /><br />Tous les utilisateurs, tous les rôles, tous #groups#, ainsi que TOUS #elements# créés dans cette espace de nom SERONT EFFACES!<br />Seul les données liées à des #-groups# d'un autre espace de nom seront conservés.::::

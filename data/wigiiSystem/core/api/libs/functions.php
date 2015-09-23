@@ -627,7 +627,13 @@ function str2array($str, $level=1) {
   }
   return $rest;
 }
-
+/**
+ * Converts a FieldSelector FuncExp to a String
+ * @param FuncExp $fx
+ */
+function fx2str($fx) {
+	return TechnicalServiceProvider::getFieldSelectorFuncExpParser()->funcExpToString($fx);
+}
 /**
  * @param info: result of pathinfo
  * @param indexFilename: string
@@ -886,6 +892,14 @@ function getExternalCookieConnectionValue($separator, $username, $custom, $expir
 		$result = strRot(base64_encode(base64_encode($result)), $rotationKey);
 	}
 	return $result;
+}
+
+function base64url_encode($data) {
+	return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+
+function base64url_decode($data) {
+	return base64_decode(str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT));
 }
 
 // FuncExp builder shortcuts
@@ -1479,6 +1493,17 @@ function elementP($elementId, $fieldSelectorList=null, $configSelector=null) {
  */
 function newElement($groupId, $linkSelector=null) {
 	return TechnicalServiceProvider::getFuncExpBuilder()->newElement($groupId, $linkSelector);
+}
+
+/**
+ * Builds a copy of a given Element which can be dumped into a DataFlow.
+ * @param Element $element element on which to do an in memory copy.
+ * @param ConfigSelector $configSelector an optional ConfigSelector used to choose the right configuration of the copied Element.
+ * If ConfigSelector points to a different module than the source element, then a matching is done of the fieldName and DataType.
+ * @return DataFlowDumpable
+ */
+function copyElement($element, $configSelector=null) {
+	return ServiceProvider::getWigiiBPL()->buildCopyElementDataFlowConnector($element, $configSelector);
 }
 
 /**

@@ -142,7 +142,8 @@ class ElementPListRowsForPreview implements ElementPList, DataFlowActivity {
 		$elementId = $elementP->getId();
 		$this->elementIds[$elementId] = $elementId;
 		$this->nb++;
-
+		$trm->setRecord($elementP->getElement());
+		
 		$this->beginElement($elementP);
 		$class = null; //not used here
 		foreach($this->getFsl()->getListIterator() as $fs) {

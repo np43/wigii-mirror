@@ -6,7 +6,7 @@
 	<parameters deletedSubElementsLinkNamePrefix="__deleted_"
 		Field_dynamicAttributeList="require,
 			expand,
-			readOnly,
+			readonly,
 			disabled,
 			hidden,
 			readonlyInPublic,

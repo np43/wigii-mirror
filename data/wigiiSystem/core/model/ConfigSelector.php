@@ -81,4 +81,20 @@ class ConfigSelector extends Model
 			$this->setGroupLogExp(null);
 		}
 	}
+	
+	/**
+	 * Converts this ConfigSelector to its FuncExp equivalent
+	 * @return FuncExp
+	 */
+	public function toFx() {
+		if(isset($this->wigiiNamespaceName)) {
+			$returnValue = fx('cs', $this->wigiiNamespaceName, $this->moduleName);
+		}
+		else {
+			$lxFxBuilder = TechnicalServiceProvider::getFieldSelectorLogExpFuncExpBuilder();
+			$returnValue = fx('cs', $lxFxBuilder->logExp2funcExp($this->groupLogExp));
+			$lxFxBuilder->freeMemory();
+		}
+		return $returnValue;
+	}
 }
