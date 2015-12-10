@@ -19,8 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* wigii ExecutionService implementation which integrates api use from internet
+/**
+ * ExecutionService specialization which integrates http GET, COOKIES, JS code push.
  * Created by LWR on 21 july 09
+ * Modified by CWE on 01.12.2015 to support JS notifications
  */
 class ExecutionServiceWebImpl extends ExecutionServiceImpl
 {
@@ -183,17 +185,25 @@ $otherJsCode
 		echo ExecutionServiceImpl::answerRequestSeparator;
 	}
 	/**
-	 * in the web implementation we allow the executionService to manage
-	 * JSCode frome everywhere
+	 * Pushes some JS code to the browser.
+	 * This method can be called from anywhere.
 	 */
 	public function addJsCode($code){
-		//$this->executionSink()->addJsCode($code, $this->getIdAnswer());
 		$this->getSystemConsoleService()->addJsCode($code, $this->getIdAnswer());
 	}
-
-//	public function getJsCode(){
-//		$this->getSystemConsoleService()->getJSCode();
-//	}
+	/**
+	 * Pushes some JS notification to the browser.
+	 * @param String $target notification target. One of searchBar,elementDialog.
+	 * @param String $type notification type. One of help,info,warning,error,notif.
+	 * @param String $url notification callback url to get notification content.
+	 * @param WigiiBPLParameter $options an optional map of options to be passed to the WigiiApi JS client.
+	 * example: addJsNotif("searchBar","help","User Guide/Filemanager/help/item/12345/integratedFile")
+	 * will add a (?) icon in the searchBar toolbox, displaying a help popup with the html content of the 12345 element of the User Guide.
+	 * Some options could be "width","height","top","left","title",... see WigiiApi.js Popup class for more detail.
+	 */
+	public function addJsNotif($target,$type,$url,$options=null){
+		$this->getSystemConsoleService()->addJsNotif($target, $type, $url, $options);
+	}
 
 	//action can have more parameters with /
 	public function getCurrentUpdateJsCode($p, $idAnswer, $idLookup, $action, $checkAnyOpenItem=false, $informIfFoundInCache=false){
@@ -354,7 +364,15 @@ $otherJsCode
 		}
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++."end ExecutionService flushMessages"] = microtime(true);
 	}
-
+	public function flushJsNotif() {
+		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++."start ExecutionService flushJsNotif"] = microtime(true);
+		$this->executionSink()->publishStartOperation("flushJsNotif");
+		if($this->getSystemConsoleService()->isJsNotifPending()){
+			$this->getSystemConsoleService()->flushJSNotif();
+		}
+		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++."end ExecutionService flushJsNotif"] = microtime(true);
+		$this->executionSink()->publishEndOperation("flushJsNotif");
+	}
 	public function end(){
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++."start ExecutionService end"] = microtime(true);
 
@@ -362,6 +380,8 @@ $otherJsCode
 
 		$this->flushJsCode();
 
+		$this->flushJsNotif();
+		
 		$this->flushMessages();
 	}
 

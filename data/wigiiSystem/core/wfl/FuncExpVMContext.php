@@ -97,16 +97,14 @@ class FuncExpVMContext
 						$this->functions[$funcName] = $module;
 						return $module;
 					}					
-				}
-				
+				}				
 			}
-			// 4. marks funcName as not present in local loaded modules and delegates search to parent
-			if(!isset($this->functions)) $this->functions = array();
-			$this->functions[$funcName] = false;
-			if(isset($this->parentContext)) return $this->parentContext->getModuleForFuncName($funcName);
-			else return null;
 		}
-		return null;		
+		// 4. marks funcName as not present in local loaded modules and delegates search to parent
+		if(!isset($this->functions)) $this->functions = array();
+		$this->functions[$funcName] = false;
+		if(isset($this->parentContext)) return $this->parentContext->getModuleForFuncName($funcName);
+		else return null;
 	}
 	
 	/**
@@ -151,7 +149,18 @@ class FuncExpVMContext
 				if(is_array($returnValue)) {
 					$returnValue = $returnValue[$subfieldName];
 				}
-				else $returnValue = null;
+				elseif(is_object($returnValue)) {
+					$returnValue = $returnValue->{$subfieldName};					
+				}
+				elseif($subfieldName != 'value') $returnValue = null;
+			}
+			else {
+				if(is_array($returnValue) && array_key_exists('value', $returnValue)) {
+					$returnValue = $returnValue['value'];
+				}
+				elseif(is_object($returnValue) && property_exists($returnValue, 'value')) {
+					$returnValue = $returnValue->{'value'};
+				}				
 			}
 			return $returnValue;
 		}

@@ -1096,7 +1096,7 @@ class ConfigServiceCoreImpl implements ConfigService
 			// 7. configFolderPath/moduleName_config.xml
 			if($sModuleName != '')
 			{
-				$returnValue[] = $this->getConfigFolderPath().$moduleName.'_config.xml';
+				$returnValue[] = $this->getConfigFolderPath().$sModuleName.'_config.xml';
 			}
 			// 8. configFolderPath/config.xml
 			else
@@ -1154,19 +1154,16 @@ class ConfigServiceCoreImpl implements ConfigService
 			elseif($sWigiiNamespaceName == '' && $sModuleName != '' && $sGroupName == '' && $sUsername == '')
 			{
 				$returnValue[] = $this->getConfigFolderPath().$sClientPath.$sModuleName.'_config.xml';
-				//$returnValue[] = $this->getConfigFolderPath().$sClientPath.'_'.$sModuleName.'_config.xml';
 			}
 			// 5.1 configFolderPath/clientName/wigiiNamespaceName_config.xml
 			elseif($sWigiiNamespaceName != '' && $sModuleName == '' && $sGroupName == '' && $sUsername == '')
 			{
 				$returnValue[] = $this->getConfigFolderPath().$sClientPath.$sWigiiNamespaceName.'_config.xml';
-				//$returnValue[] = $this->getConfigFolderPath().$sClientPath.'_'.$sModuleName.'_config.xml';
 			}
 			// 6. configFolderPath/clientName/config.xml
 			elseif($sWigiiNamespaceName == '' && $sModuleName == '' && $sGroupName == '' && $sUsername == '')
 			{
 				$returnValue[] = $this->getConfigFolderPath().$sClientPath.'config.xml';
-				//$returnValue[] = $this->getConfigFolderPath().$sClientPath.'_config.xml';
 			}
 			else
 			{
@@ -3678,6 +3675,9 @@ class ConfigServiceCoreImpl implements ConfigService
 				if($this->isConfigFileAvailable($filename))
 				{
 					$xmlConfig = $this->readConfigFile($filename);
+					// if loading a namespace config file (wigiiNamespace_config.xml), then checks that it is not a module config file
+					// --> the file should only contain parameters and activities, no <fields> section.
+					if(empty($moduleName) && !empty($wigiiNamespaceName) && $xmlConfig->xpath('fields')) return false;
 					$returnValue = true;
 					// xml config contains an add section or a delete section then
 					// - first loads parent dependency

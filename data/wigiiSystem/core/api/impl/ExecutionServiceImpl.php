@@ -19,12 +19,11 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 21 juil. 09
- * Craeted by LWR
+/**
+ * ExecutionService implementation which supports the Wigii communication protocol
+ * Created on 21 juil. 09 by LWR
  */
-
-class ExecutionServiceImpl implements ExecutionService{
+class ExecutionServiceImpl implements ExecutionService {
 
 	const requestSeparator = "/__/";
 	const paramSeparator = "/";
@@ -304,7 +303,7 @@ class ExecutionServiceImpl implements ExecutionService{
 	}
 
 	/**
-	 * process the url to make it array of requests, and add it to the remaingin request.
+	 * process the url to make it array of requests, and add it to the remaining request.
 	 * @return return the array of request which was defined in this url.
 	 */
 	public function addRequests($url){
@@ -355,8 +354,7 @@ class ExecutionServiceImpl implements ExecutionService{
 	 * set the crt's attributes to the state of the next request.
 	 * if there was a request then everything is loaded and it returns true.
 	 * if there was no more request then false is returned and the crt's are empty
-	 * if current context is empty, then load new context
-	 * @
+	 * if current context is empty, then load new context	 
 	 */
 	private $requestCounter = 0;
 	public function loadNextRequest($wigiiExecutor){
@@ -386,8 +384,8 @@ class ExecutionServiceImpl implements ExecutionService{
 			//if new context, then select appropriate calculated role
 			//else bind last role id used in context
 			if(!$this->getCrtContext()){
-				//prevent incrementing contextIds on download
-				if($this->getCrtAction()!="download") $this->loadNewContext();
+				//prevent incrementing contextIds on download or light client
+				if($this->getCrtAction()!="download" && $this->getCrtAction()!="c") $this->loadNewContext();
 				if($p->getRoleListener()) $roleId = $p->getRoleListener()->getCalculatedRoleId($this->getCrtWigiiNamespace()->getWigiiNamespaceUrl());
 				if($roleId && $p->getUserId()!=$roleId){
 					$p = ServiceProvider :: getAuthenticationService()->changeToRole($p, $roleId);

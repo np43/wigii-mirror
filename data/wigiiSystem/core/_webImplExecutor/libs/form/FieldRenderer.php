@@ -19,11 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 3 july 2013
- * by LWR
+/**
+ * Base class for Detail and Form renderers
+ * Created on 3 july 2013 by LWR
  */
-
 class FieldRenderer extends Model {
 
 	private $fieldGroupHasError = array();
@@ -253,7 +252,6 @@ class FieldRenderer extends Model {
 		$this->fieldValueWidth[$fieldGroupName] = $totalWidth-$labelWidth-$this->getFieldOffset();
 		$this->fieldIsInLineWidth[$fieldGroupName] = $totalWidth-$this->getFieldOffset();
 	}
-
 }
 
 

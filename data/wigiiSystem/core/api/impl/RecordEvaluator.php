@@ -104,10 +104,10 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Postcondition: after calling this method, the evaluator is locked,
 	 * do not forget to call freeMemory when finished using it.
 	 * @param Principal $principal the principal for which the evaluation is done
-	 * @param Record $record a record instance defining the context of evaluation
+	 * @param Record $record a record instance defining the context of evaluation. Can be null, if we are only interested in FuncExp.
 	 */
 	public function setContext($principal, $record) {
-		if(is_null($record)) throw new RecordException("record cannot be null", RecordException::INVALID_ARGUMENT);
+		//if(is_null($record)) throw new RecordException("record cannot be null", RecordException::INVALID_ARGUMENT);
 		if(is_null($principal)) throw new RecordException("principal cannot be null", RecordException::INVALID_ARGUMENT);
 		if($this->lockedForEvaluation) throw new RecordException('the record evaluator is already in use', RecordException::INVALID_STATE);
 		$this->lockedForEvaluation = true;
@@ -363,6 +363,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 */
 	protected function getCurrentFieldValue($subFieldName = null)
 	{
+		if(is_null($this->record)) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
 		return $this->record->getFieldValue($this->currentField->getFieldName(), $subFieldName);
 	}
 
@@ -371,6 +372,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 */
 	protected function updateCurrentFieldSubFieldValue($subFieldName, $newValue)
 	{
+		if(is_null($this->record)) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
 		$this->record->setFieldValue($newValue, $this->currentField->getFieldName(), $subFieldName);
 	}
 
@@ -380,6 +382,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	protected function getFieldValue($fieldSelector)
 	{
 		if(is_null($fieldSelector)) throw new RecordException("fieldSelector cannot be null", RecordException::INVALID_ARGUMENT);
+		if(is_null($this->record)) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
 		return $this->record->getFieldValue($fieldSelector->getFieldName(), $fieldSelector->getSubFieldName());
 	}
 
@@ -388,6 +391,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 */
 	protected function setFieldValue($fieldSelector, $value) {
 		if(is_null($fieldSelector)) throw new RecordException("fieldSelector cannot be null", RecordException::INVALID_ARGUMENT);
+		if(is_null($this->record)) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
 		$this->record->setFieldValue($value, $fieldSelector->getFieldName(), $fieldSelector->getSubFieldName());
 	}
 
@@ -1106,6 +1110,9 @@ class RecordEvaluator implements FuncExpEvaluator
 		if(!$this->evaluateArg($args[1])) {
 			// if not true, then shows an error message
 			$message = $this->evaluateArg($args[2]);
+			// gets an eventual translation of the message
+			if(!empty($message)) $message = $this->getTrm()->t($message);				
+			
 			$form = $this->getFormExecutor();
 			if(isset($form)) {
 				$form->addErrorToField($message, $this->getCurrentField()->getFieldName());
@@ -1124,6 +1131,31 @@ class RecordEvaluator implements FuncExpEvaluator
 		$form = $this->getFormExecutor();
 		if(isset($form) && $form->hasError()) return false;
 		else return true;
+	}
+	
+	/**
+	 * Adds an error message to a field in the record.
+	 * FuncExp signature : <code>ctlAddErrorToField(fieldName, errorMessage)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: String. The name of the field to which to add an error message
+	 * - Arg(1) errorMessage: String. Evaluates to a String that will be displayed as an error message. The message is automatically translated if needed.	 
+	 */
+	public function ctlAddError($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new RecordException('ctlAddError func exp takes two arguments: the fieldName to which to add the error, and the errorMessage to display.', RecordException::INVALID_ARGUMENT);
+		
+		$fieldName = $this->evaluateArg($args[0]);
+		if(!$this->getRecord()->getFieldList()->doesFieldExist($fieldName)) throw new RecordException("fieldName '".$fieldName."' is not a valid field in the record", RecordException::INVALID_ARGUMENT);
+
+		$errorMessage = $this->evaluateArg($args[1]);
+		// gets an eventual translation of the message
+		if(!empty($errorMessage)) $errorMessage = $this->getTrm()->t($errorMessage);
+		
+		$form = $this->getFormExecutor();
+		if(isset($form)) {
+			$form->addErrorToField($errorMessage, $fieldName);
+		}
+		else throw new FuncExpEvalException($errorMessage, FuncExpEvalException::ASSERTION_FAILED);
 	}
 	
 	/**
@@ -1353,7 +1385,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		if(!empty($rows)) {
 			$dfS = ServiceProvider::getDataFlowService();
 			// opens
-			$dfctx = $dfS->startStream($this->getPrincipal(), $dafsl);
+			$dfctx = $dfS->startStream($this->getPrincipal(), $dfasl);
 			// initialises context
 			$dfctx->setAttribute('matrix', $matrix);
 			// runs data flow

@@ -1556,4 +1556,32 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		fclose($file);
 	}
 	
+	/**
+	 * Returns the complete http url to access the Wigii web site root
+	 * FuncExp signature : <code>sysSiteRootUrl(area=null|'forFile'|'forClient')</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) area: String. The site area type needed to be accessed.
+	 * If 'forFile' then gives root url to access static content,
+	 * elseif 'forClient' then gives root url to access to current CLIENT static content
+	 * if null then gives access to site root. 
+	 * @return String
+	 */
+	public function sysSiteRootUrl($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) $area = $this->evaluateArg($args[0]);
+		else $area = '';
+		$returnValue = '';
+		switch($area) {
+			case 'forFile': 
+				if(defined("SITE_ROOT_forFileUrl")) $returnValue=SITE_ROOT_forFileUrl;
+				break;
+			case 'forClient':
+				if(defined("SITE_ROOT_forFileUrl")) $returnValue=SITE_ROOT_forFileUrl;
+				if(defined("CLIENT_WEB_URL")) $returnValue.=CLIENT_WEB_URL;
+				break;
+			default:
+				if(defined("SITE_ROOT")) $returnValue=SITE_ROOT;
+		}	
+		return $returnValue;
+	}	
 }

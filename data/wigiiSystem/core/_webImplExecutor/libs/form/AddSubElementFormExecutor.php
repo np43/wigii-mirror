@@ -64,6 +64,12 @@ class AddSubElementFormExecutor extends AddElementFormExecutor {
 		}
 	}
 
+	protected function getWigiiHelpExpression($p,$exec) {
+		$config = $this->getWigiiExecutor()->getConfigurationContext();
+		$helpExp = (string)$config->getParameter($p, $this->getRecord()->getModule(), "WigiiHelp_onAdd");
+		return $helpExp;
+	}
+	
 	public function initializeDefaultValues($p, $exec) {
 		parent::initializeDefaultValues($p, $exec);
 		// recenters configuration on sub element if needed

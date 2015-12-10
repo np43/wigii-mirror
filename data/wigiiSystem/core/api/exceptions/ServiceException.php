@@ -37,6 +37,10 @@ class ServiceException extends Exception
 	 */
 	const FORBIDDEN = 403;
 	/**
+	 * not found, http equivalent
+	 */
+	const NOT_FOUND = 404;
+	/**
 	 * default error
 	 */
 	const UNKNOWN_ERROR = 1000;

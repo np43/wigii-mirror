@@ -1407,6 +1407,7 @@ where $username";
 		$principalId = $principal->getUserId();
 		if(is_null($principalId)) throw new UserAdminServiceException('principal attached user can not be null', UserAdminServiceException::INVALID_ARGUMENT);
 		$sqlB = $this->getSqlWhereClauseBuilderForSelectUsers('U');
+		/* CWE 2015.10.07: optimize SQL query
 		$id_user_owner = $sqlB->formatBinExp('UU.id_user_owner', '=', $principalId, MySqlQueryBuilder::SQLTYPE_INT);
 		$isOwner = $sqlB->formatBinExp('UU.isOwner', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN); //add by LWR
 		$isInPrincipalWigiiNamespace = $sqlB->formatBinExp('U.wigiiNamespace', '=', $principal->getWigiiNamespace()->getWigiiNamespaceName(), MySqlQueryBuilder::SQLTYPE_VARCHAR); //add by LWR
@@ -1432,6 +1433,42 @@ WHERE (
 	".($principal->isReadAllUsersInWigiiNamespace() ? " or $isInPrincipalWigiiNamespace " : "")."
 	".($principal->isWigiiNamespaceCreator() ? " or 1 " : "")."
 )".$userLogExp." GROUP BY U.id_user ".$orderByClause;
+		*/
+		
+		// adds where clause
+		if(!is_null($userLogExp))
+		{
+			// reduces logExp and clones it.
+			$userLogExp = $userLogExp->reduceNegation(true);
+			$userLogExp = $sqlB->buildWhereClause($userLogExp);
+			if(!is_null($userLogExp) && $userLogExp != '') $userLogExp = " where ".$userLogExp;
+		}
+		else $userLogExp = '';
+		// order by clause
+		if(!is_null($userSortingKeyList))
+		{
+			$sqlB->convertFieldSortingKeyListToOrderByClause($userSortingKeyList);
+			$orderByClause = ' '.$sqlB->getOrderByClause();
+		} else $orderByClause='';
+		
+		$sql = "SELECT ".$this->getSqlColumnsForUser('U').", 1 as isOwner from Users as U ";
+		// if not wigiiNamespaceCreator then sees only users owned by the principal or all all from users from namespace
+		if(!$principal->isWigiiNamespaceCreator()) {
+			$sql .= " inner join (";
+			// users owned by principal
+			$id_user_owner = $sqlB->formatBinExp('U1.id_user_owner', '=', $principalId, MySqlQueryBuilder::SQLTYPE_INT);
+			$isOwner = $sqlB->formatBinExp('U1.isOwner', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN);
+			$sql .= "select distinct U1.id_user from Users_Users as U1 where $id_user_owner and $isOwner";			
+			// all users from namespace
+			if($principal->isReadAllUsersInWigiiNamespace()) {
+				$sql .= " union distinct ";
+				$isInPrincipalWigiiNamespace = $sqlB->formatBinExp('U2.wigiiNamespace', '=', $principal->getWigiiNamespace()->getWigiiNamespaceName(), MySqlQueryBuilder::SQLTYPE_VARCHAR);
+				$sql .= "select U2.id_user from Users as U2 where $isInPrincipalWigiiNamespace";
+			}
+			$sql .= ") as Up on Up.id_user = U.id_user ";
+		}
+		$sql .= $userLogExp.$orderByClause;
+		return $sql;
 	}
 
 	public function getAllUsersFromSystem($principal, $userPList, $listFilter=null)
@@ -2509,6 +2546,7 @@ WHERE
 		$principalId = $principal->getUserId();
 		if(is_null($principalId)) throw new UserAdminServiceException('principal attached user can not be null', UserAdminServiceException::INVALID_ARGUMENT);
 		$sqlB = $this->getSqlWhereClauseBuilderForSelectUsers('U');
+		/*
 		$id_user_owner = $sqlB->formatBinExp('UU.id_user_owner', '=', $principalId, MySqlQueryBuilder::SQLTYPE_INT);
 		$hasRole = $sqlB->formatBinExp('UU.hasRole', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN);
 		$isRole = $sqlB->formatBinExp('U.isRole', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN);
@@ -2543,7 +2581,44 @@ where (
 		)
 	)
 )".$userLogExp." GROUP BY U.id_user ".$orderByClause;
-
+		*/
+						
+		// adds where clause
+		if(!is_null($userLogExp))
+		{
+			// reduces logExp and clones it.
+			$userLogExp = $userLogExp->reduceNegation(true);
+			$userLogExp = $sqlB->buildWhereClause($userLogExp);
+			if(!is_null($userLogExp) && $userLogExp != '') $userLogExp = " and ".$userLogExp;
+		}
+		else $userLogExp = '';
+		// order by clause
+		if(!is_null($userSortingKeyList))
+		{
+			$sqlB->convertFieldSortingKeyListToOrderByClause($userSortingKeyList);
+			$orderByClause = ' '.$sqlB->getOrderByClause();
+		} else $orderByClause='';
+		
+		$sql = "SELECT ".$this->getSqlColumnsForUser('U')." from Users as U ";
+		// if not wigiiNamespaceCreator then sees only users owned by the principal or all all from users from namespace
+		if(!$principal->isWigiiNamespaceCreator()) {
+			$sql .= " inner join (";
+			// users owned by principal
+			$id_user_owner = $sqlB->formatBinExp('U1.id_user_owner', '=', $principalId, MySqlQueryBuilder::SQLTYPE_INT);
+			$isOwner = $sqlB->formatBinExp('U1.isOwner', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN);			
+			$sql .= "select distinct U1.id_user from Users_Users as U1 where $id_user_owner and $isOwner";
+			// all users from namespace
+			if($principal->isReadAllUsersInWigiiNamespace()) {				
+				$sql .= " union distinct ";
+				$isInPrincipalWigiiNamespace = $sqlB->formatBinExp('U2.wigiiNamespace', '=', $principal->getWigiiNamespace()->getWigiiNamespaceName(), MySqlQueryBuilder::SQLTYPE_VARCHAR);
+				$isRole = $sqlB->formatBinExp('U2.isRole', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN);
+				$sql .= "select U2.id_user from Users as U2 where $isRole and $isInPrincipalWigiiNamespace";
+			}
+			$sql .= ") as Up on Up.id_user = U.id_user ";
+		}
+		$isRole = $sqlB->formatBinExp('U.isRole', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN);
+		$sql .= " where $isRole ".$userLogExp.$orderByClause;
+		return $sql;
 	}
 
 	public function getAllUserRoles($principal, $userId, $roleList, $listFilter=null)

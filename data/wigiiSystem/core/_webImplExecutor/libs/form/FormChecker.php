@@ -19,11 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 1 sept. 09
- * by LWR
+/**
+ * Checks a posted Form and fills the Record WigiiBag.
+ * Created on 1 sept. 09 by LWR
  */
-
 class FormChecker implements FieldListVisitor {
 
 	private $formExecutor;
@@ -134,10 +133,12 @@ class FormChecker implements FieldListVisitor {
 		$recBag = $ff->getRecord()->getWigiiBag();
 		$isRequire = ($fieldParams["require"]=="1" && !$isPublicPrincipal ||
 					$isPublicPrincipal && $fieldParams["requireInPublic"]=="1" ||
-					$isPublicPrincipal && $fieldParams["require"]=="1" && $fieldParams["requireInPublic"]!="0" ||
-					//ignore requireIfField on autoSave
-					($get["autoSaveFieldId"]==null && $fieldParams["requireIfField"]!="" && $recBag->isFilled((string)$fieldParams["requireIfField"]))
+					$isPublicPrincipal && $fieldParams["require"]=="1" && $fieldParams["requireInPublic"]!="0"					
 					);
+		// resolves requireIfField attribute
+		if(!$isRequire && $get["autoSaveFieldId"]==null && $fieldParams["requireIfField"]!="") {
+			$isRequire = $this->resolveRequireIfField($p, $exec, (string)$fieldParams["requireIfField"]);
+		}
 		if($fieldParams["readonlyInPublic"]=="1" && $isPublicPrincipal){
 			$recBag->setReadonly(true, $fieldName);
 		}
@@ -270,7 +271,7 @@ class FormChecker implements FieldListVisitor {
 			if($isRequire && (($dataTypeName == "Booleans" && !$recBag->getValue(null, $dataTypeName, $fieldName)) || ($dataTypeName!="Files" && $recBag->subFieldIsRequiredAndNotFilled($dataTypeName, $fieldName, $subFieldParams)))){
 				$errorText = $transS->h($p, "compulsory_field");
 				//ignore dependencies of requireIfField when autosaving
-				if($get["autoSaveFieldId"]==null && $fieldParams["requireIfField"]!=""){
+				if($get["autoSaveFieldId"]==null && $fieldParams["requireIfField"]!="" && $ff->getRecord()->getFieldList()->doesFieldExist((string)$fieldParams["requireIfField"])){
 					$errorText .= " ".$transS->h($p, "compulsory_whenField");
 					$tempIfField = $ff->getRecord()->getFieldList()->getField((string)$fieldParams["requireIfField"]);
 					$errorText .= " ".$transS->h($p, $tempIfField->getFieldName(), $tempIfField->getXml());
@@ -425,6 +426,44 @@ class FormChecker implements FieldListVisitor {
 		} catch (Exception $e){
 			$ff->addErrorToField($transS->h($p, $e->getMessage()), $fieldName);
 		}
+	}
+	
+	/**
+	 * Resolves requireIfField expression and returns true if required else false.
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current ExecutionService instance
+	 * @param String $requireIfFieldExp a field name which should be filled or a String FuncExp which should evaluate to a boolean.
+	 * @return boolean true if field is required else false. 
+	 */
+	protected function resolveRequireIfField($p, $exec, $requireIfFieldExp) {
+		if($requireIfFieldExp == '') return false;		
+		// parses the value into a funcExp
+		try {
+			$requireIfFieldExp = str2fx($requireIfFieldExp);
+		}
+		catch(StringTokenizerException $ste) {
+			// if syntax error, then assumes it is a fieldName, and therefore creates a FieldSelector
+			if($ste->getCode() != StringTokenizerException::SYNTAX_ERROR) throw $ste;
+			$requireIfFieldExp = fs($requireIfFieldExp);
+		}		
+		// executes the func exp
+		if($requireIfFieldExp instanceof FuncExp) {
+			$fxEval = $this->getFormExecutor()->getFuncExpEval($p, $exec);
+			$requireIfFieldExp = $fxEval->evaluateFuncExp($requireIfFieldExp, $this);
+			if(method_exists($fxEval, 'freeMemory')) $fxEval->freeMemory();
+		}
+		// if result is a FieldSelector then checks that Field is filled
+		if($requireIfFieldExp instanceof FieldSelector) {
+			$returnValue = $this->getFormExecutor()->getRecord()->getWigiiBag()->isFilled($requireIfFieldExp->getFieldName());
+		} 		
+		// if result is a log exp, then solves it against the record
+		elseif($requireIfFieldExp instanceof LogExp) {
+			$returnValue = TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($this->getFormExecutor()->getRecord(), $requireIfFieldExp);
+		}
+		// converts result to boolean
+		else $returnValue = ($requireIfFieldExp == true);
+
+		return $returnValue;
 	}
 }
 

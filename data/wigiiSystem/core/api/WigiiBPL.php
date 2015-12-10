@@ -191,6 +191,20 @@ class WigiiBPL
 		return $this->dflowS;
 	}
 	
+	private $eltS;
+	public function setElementService($elementService)
+	{
+		$this->eltS = $elementService;
+	}
+	protected function getElementService()
+	{
+		// autowired
+		if(!isset($this->eltS))
+		{
+			$this->eltS = ServiceProvider::getElementService();
+		}
+		return $this->eltS;
+	}
 	
 	// System principal management
 	
@@ -957,6 +971,58 @@ class WigiiBPL
 		$this->executionSink()->publishEndOperation("elementCopyTo", $principal);
 	}
 	
+	/**
+	 * Fetches an Element into the database. All fields are fetched and element is ready to be displayed.
+	 * For fetching only part of the element, use the ElementService or ElementP data flow connector.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementFetch business process needs the following parameters to run :
+	 * - elementId: Int. The ID of the element to fetch,
+	 * - wigiiNamespace: WigiiNamespace|String. The WigiiNamespace in which to fetch the element
+	 * - module: Module|String. The Module of the Element.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return ElementP the element filled from the database with Principal rights calculation.
+	 */
+	public function elementFetch($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementFetch", $principal);
+		$returnValue = null;
+		$crtNamespace = null; $changedNamespace = false;
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+				
+			$elementId = $parameter->getValue('elementId');
+			if(is_null($elementId)) throw new WigiiBPLException('elementId cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			
+			$wigiiNamespace = $parameter->getValue('wigiiNamespace');
+			// if no wigiiNamespace, then takes the Principal current namespace
+			if(is_null($wigiiNamespace)) $wigiiNamespace = $principal->getWigiiNamespace();			
+			if(!($wigiiNamespace instanceof WigiiNamespace)) $wigiiNamespace = $this->getWigiiNamespaceAdminService()->getWigiiNamespace($principal, $wigiiNamespace);
+
+			// adapts principal namespace to element namespace
+			$crtNamespace = $principal->getWigiiNamespace();
+			$changedNamespace = $principal->bindToWigiiNamespace($wigiiNamespace);
+			
+			$module = $parameter->getValue('module');
+			if(is_null($module)) throw new WigiiBPLException('module cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			if(!($module instanceof Module)) $module = $this->getModuleAdminService()->getModule($principal, $module);
+						
+			// creates empty element
+			$element = $this->getWigiiExecutor()->createElementForForm($principal, $module, $elementId);
+			// fills element
+			$returnValue = $this->getElementService()->fillElement($principal, $element);	
+
+			if($changedNamespace) $principal->bindToWigiiNamespace($crtNamespace);
+		}
+		catch(Exception $e) {
+			if($changedNamespace && isset($crtNamespace)) $principal->bindToWigiiNamespace($crtNamespace);
+			$this->executionSink()->publishEndOperationOnError("elementFetch", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementFetch", $principal);
+		return $returnValue;
+	}
 	
 	// Object builders
 	
@@ -1047,6 +1113,16 @@ class WigiiBPL
 		if($element instanceof FuncExpParameter) $element->registerSetterMethod('setElement', $returnValue);
 		if($configSelector instanceof FuncExpParameter) $configSelector->registerSetterMethod('setConfigSelector', $returnValue);
 		return $returnValue;
+	}
+	
+	/**
+	 * Creates a new empty Element, with default values initialized, ready to be displayed as a form.
+	 * @param Principal $principal current principal
+	 * @param ConfigSelector $configSelector the ConfigSelector specifying the configuration of the new Element.
+	 * @return Element the instanciated Element (not yet saved into the database).
+	 */
+	public function buildNewElement($principal, $configSelector) {
+		WigiiBPLException::throwNotImplemented();
 	}
 	
 	// Object arrays builders

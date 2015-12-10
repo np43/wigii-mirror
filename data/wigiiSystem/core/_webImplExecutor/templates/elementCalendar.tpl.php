@@ -26,6 +26,7 @@
 $this->executionSink()->publishStartOperation("TEMPLATE elementCalendar.tpl.php");
 
 if(!isset($groupAS)) $groupAS = ServiceProvider::getGroupAdminService();
+if(!isset($sessAS)) $sessAS = ServiceProvider::getSessionAdminService();
 if(!isset($elS)) $elS = ServiceProvider::getElementService();
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
@@ -87,6 +88,11 @@ if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1
 if(!$url){ //display list only if no url
 
 ?><div class="toolBar"><?
+
+	//reload if search bar is reloaded
+	$lastConfigKey = $sessAS->getData($this, "elementListLastConfigKey");
+	$currentConfigKey = $this->getCurrentConfigContextKey($p, $exec);
+	$sessAS->storeData($this, "elementListLastConfigKey", $currentConfigKey);
 
 	//no sortBy or groupBy for this view
 	$exec->addJsCode("$('#searchBar .toolbarBox .sortBy, #searchBar .toolbarBox .groupBy').hide();");
@@ -161,6 +167,9 @@ if(!$url){ //display list only if no url
 	} else {
 		$exec->addJsCode("$('#searchBar .toolbarBox .addNewElement').removeClass('Green').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
 	}
+	
+	//refreshes module help icon if config changed
+	if($lastConfigKey!=$currentConfigKey) $this->refreshModuleHelpAnchor($p,$exec);
 
 ?></div></div><?
 ?><div class="clear"></div><?

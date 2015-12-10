@@ -19,11 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 30 june 2010
- * by LWR
+/**
+ * FormExecutor stub, used to call Form logic without any rendering or actOnCheckedRecord.
+ * Created on 30 june 2010 by LWR
  */
-
 class BasicFormExecutor extends FormExecutor {
 
 	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl){
@@ -41,7 +40,7 @@ class BasicFormExecutor extends FormExecutor {
 	{
 		if(!isset($this->_debugLogger))
 		{
-			$this->_debugLogger = DebugLogger::getInstance("FormExecutor");
+			$this->_debugLogger = DebugLogger::getInstance("BasicFormExecutor");
 		}
 		return $this->_debugLogger;
 	}
@@ -49,7 +48,7 @@ class BasicFormExecutor extends FormExecutor {
 	{
 		if(!isset($this->_executionSink))
 		{
-			$this->_executionSink = ExecutionSink::getInstance("FormExecutor");
+			$this->_executionSink = ExecutionSink::getInstance("BasicFormExecutor");
 		}
 		return $this->_executionSink;
 	}

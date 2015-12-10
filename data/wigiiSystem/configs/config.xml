@@ -35,6 +35,9 @@
 			searchable,
 			persistCookie,
 			formExp,
+			jsCodeExp,
+			jsCodeInDetailExp,
+			jsCodeInFormExp,			
 			prefixFilter"
 		Field_enableDynamicAttributes="1"
 	/>
@@ -423,7 +426,10 @@
 
 	<filters>
 		<fields>
-			<limitFilterInGroup type="Attributs"><attribute></attribute></limitFilterInGroup>
+			<groupFilterInGroup groupStart="1" expand="1" noLabel="1"/>
+				<limitFilterInGroup type="MultipleAttributs"><attribute></attribute></limitFilterInGroup>
+				<excludeGroups type="MultipleAttributs"><attribute></attribute></excludeGroups>
+			<groupFilterInGroup groupEnd="1"/>
 			<!-- <freetext needTranslation="1">filterSelectEplanation</freetext> -->
 			<filters_Attributs0 type="MultipleAttributs" hidden="1"/>
 			<filters_Attributs1 type="MultipleAttributs" hidden="1"/>

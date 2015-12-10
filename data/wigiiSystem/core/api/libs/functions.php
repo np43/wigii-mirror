@@ -1448,6 +1448,31 @@ function array2df($arr) {
 }
 
 /**
+ * Matches an input array with a pattern and binds any given ValueObject on both sides.
+ * @param Array $input input array
+ * @param Array $pattern pattern
+ * This function supports variable number of arguments, that means that
+ * instead of providing an array with the arguments, you can pass the arguments
+ * in a comma separated list as a normal function call.
+ * example: $funcExpBuilder->arrayMatch(array("item","12345","edit"), "item", $x, "edit") is equivalent
+ * to $funcExpBuilder->arrayMatch(array("item","12345","edit"), array("item", $x, "edit"))
+ * @example $x = ValueObject::createInstance(); $y = ValueObject::createInstance();
+ * $funcExpBuilder->arrayMatch(array("item","12345",$y), "item", $x, "edit") will return true 
+ * and $x->getValue() will return "12345" and $y->getValue() will return "edit".
+ * - If one array is longer than the other and that the smallest array has a ValueObject as last item, 
+ * then it will has its value bound to the tail of the longest array.
+ *  $funcExpBuilder->arrayMatch(array("item","12345","edit"), "item", $x) will return true and $x->getValue() will returny array("12345","edit");
+ *  - If two variables are on both sides, then the non null value will be bound to the variable with a null value, if both are non null, then matching is true if values are equal. 
+ * @return Boolean true if input array matched pattern
+ */
+function arrayMatch($input,$pattern) {
+	$nArgs = func_num_args();
+	if($nArgs > 2) $_pattern = array_slice(func_get_args(),1);
+	else $_pattern = $pattern;
+	return TechnicalServiceProvider::getFuncExpBuilder()->arrayMatch($input,$_pattern);
+}
+
+/**
  * Constructs a ListFilter
  * @param FieldSelectorList $fieldSelectorList optional field selector list
  * @param LogExp $fieldSelectorLogExp an optional log exp to filter the list

@@ -145,8 +145,11 @@ if($disabled) $this->put(' disabled ');
 if($readonly) $this->put(' disabled ');
 $this->put('class="');
 if($readonly) $this->put('removeDisableOnSubmit ');
-if((string)$fieldXml["chosen"]=="1") $this->put('chosen ');
-if((string)$fieldXml["flex"]=="1") $this->put('flex ');
+$chosen = (string)$fieldXml["chosen"]=="1";
+if($chosen) $this->put('chosen ');
+$flex = (string)$fieldXml["flex"]=="1";
+if($flex) $this->put('flex ');
+$flex = $flex || $chosen;
 if((string)$fieldXml["allowNewValues"]=="1") $this->put('allowNewValues ');
 $this->put('"');
 $this->put(' style="'.$valueWidth);
@@ -167,7 +170,13 @@ if(!empty($sameAsField)) {
 			$existingKeys[(string)$attribute] = (string)$attribute;
 		}
 		if($existingKeys[$val] == null) {
-			$htmlOption = "'".'<option selected="selected" value="'.$val.'" title="'.$transS->t($p, $val).'" >'.(strlen($transS->t($p, $val))>64 ? str_replace(" ", "&nbsp;", substr($transS->t($p, $val), 0, 61))."..." : str_replace(" ", "&nbsp;", $transS->t($p, $val))).'</option>'."'";
+			$labelForTitle = $transS->t($p, $val);
+			$label = $labelForTitle;
+			if(!$flex && strlen($label)>64) {
+				$label = substr($label, 0, 61)."...";
+			}
+			$label = str_replace(" ", "&nbsp;", $label);
+			$htmlOption = "'".'<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>'."'";
 			$this->addJsCode('$("#'.$inputId.'").append('.$htmlOption.')');
 		}		
 	}
@@ -175,8 +184,9 @@ if(!empty($sameAsField)) {
 else {
 	$valExistsInOption = false;
 	//define the options:
+	$html2text = new Html2text();
 	foreach($fieldXml->attribute as $attribute_key => $attribute){
-		if($attribute == "none" && (string)$fieldXml["flex"]=="1"){
+		if($attribute == "none" && $flex){
 			$this->put('<option '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="" title="" ></option>');
 			continue;
 		}
@@ -198,25 +208,33 @@ else {
 			$tempDisabled = true;
 		}
 	
-		// cleans up the html
-		$html2text = new Html2text();
+		// cleans up the html		
 		$html2text->html2text($label);
 		$label = $html2text->get_text();
-		$html2text->clear();
-		unset($html2text);
+		$html2text->clear();		
 	
 		if($attribute["optGroupStart"]=="1"){
 			$this->put('<optgroup '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' label="'.$label.'" >');
 		} else if($attribute["optGroupEnd"]=="1"){
 			$this->put('</optgroup>');
 		} else {
-			//a disable option cannot be selected
-			//limit attribute options to 64 chars
-			$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.$selected.' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" title="'.$label.'" >'.(strlen($label)>64 ? str_replace(" ", "&nbsp;", substr($label, 0, 61))."..." : str_replace(" ", "&nbsp;", $label)).'</option>');
+			$labelForTitle = $label;
+			if(!$flex && strlen($label)>64) {
+				$label = substr($label, 0, 61)."...";
+			}
+			$label = str_replace(" ", "&nbsp;", $label);
+			$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.$selected.' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" title="'.$labelForTitle.'" >'.$label.'</option>');
 		}
 	}
+	unset($html2text);
 	if($fieldXml["allowNewValues"]=="1" && !$valExistsInOption){
-		$this->put('<option selected="selected" value="'.$val.'" title="'.$transS->t($p, $val).'" >'.(strlen($transS->t($p, $val))>64 ? str_replace(" ", "&nbsp;", substr($transS->t($p, $val), 0, 61))."..." : str_replace(" ", "&nbsp;", $transS->t($p, $val))).'</option>');
+		$labelForTitle = $transS->t($p, $val);
+		$label = $labelForTitle;
+		if(!$flex && strlen($label)>64) {
+			$label = substr($label, 0, 61)."...";
+		}
+		$label = str_replace(" ", "&nbsp;", $label);
+		$this->put('<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>');
 	}
 }
 $this->put('</'.$inputNode.'>');

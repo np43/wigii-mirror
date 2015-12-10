@@ -19,12 +19,11 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 15 sept. 09
- * by LWR
+/**
+ * Abstract FormExecutor class, parent class of all Form controllers present in the Wigii WebImpl.
+ * Created on 15 sept. 09 by LWR
  */
-
-abstract class FormExecutor extends Model implements RecordStructureFactory, TRMProducer{
+abstract class FormExecutor extends Model implements RecordStructureFactory, TRMProducer {
 
 	private $detailRenderer;
 	private $formChecker;
@@ -856,11 +855,17 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 				$configS->getFields($p, $rec->getModule(), $rec->getActivity(), $rec->getFieldList());
 				//eput($rec->getFieldList()->getListIterator());
 			}
-			if($this->getState() != "start"){
-				// Resolves any field dynamic attributes
-				if($configS->getParameter($p, $rec->getModule(), "Field_enableDynamicAttributes") == "1") {
-					$this->resolveFieldDynamicAttributes($p, $exec);
-				}
+			
+			//initialize default values only on add (record id = 0) or on activities
+			if($rec->getId()==0 && $rec->getFieldList()->getListIterator()){
+				$this->initializeDefaultValues($p, $exec);
+			}
+			// Resolves any field dynamic attributes
+			if($configS->getParameter($p, $rec->getModule(), "Field_enableDynamicAttributes") == "1") {
+				$this->resolveFieldDynamicAttributes($p, $exec);
+			}
+			
+			if($this->getState() != "start"){				
 				// Checks the form
 				$this->CheckForm($p, $exec);
 
@@ -884,18 +889,9 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 						return;
 					}
 				}
-			} else {
-				//initialize default values only on add (record id = 0) or on activities
-				if($rec->getId()==0 && $rec->getFieldList()->getListIterator()){
-					$this->initializeDefaultValues($p, $exec);
-				}
-				// Resolves any field dynamic attributes
-				if($configS->getParameter($p, $rec->getModule(), "Field_enableDynamicAttributes") == "1") {
-					$this->resolveFieldDynamicAttributes($p, $exec);
-				}
 			}
 			$this->doRenderForm($p, $exec);
-
+			$this->bindJsServices($p, $exec);
 		}
 		catch(Exception $e) {
 			$this->executionSink()->publishEndOperationOnError("ResolveForm", $e, $p);
@@ -1113,9 +1109,54 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 	}
 	
 	/**
+	 * Binds all required JS services to the form beeing displayed.
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 */
+	public function bindJsServices($p,$exec) {
+		// binds standard Wigii JS services
+		$formId = $this->getFormId();		
+		$config = $this->getWigiiExecutor()->getConfigurationContext();
+		$rec = $this->getRecord();
+		if($rec instanceof Element) $module = $rec->getModule();
+		else $module = $exec->getCrtModule();
+		$userModule = isset($module) && $module->isUserModule();
+		
+		// adds JS code after show exp		
+		if(!$this->isForPrint() && !$this->isForExternalAccess() && !$this->isForNotification() && $userModule) {
+			$jsCodeAfterShowExp = (string)$config->getParameter($p, $module, "jsCodeAfterShowExp");
+			if(!empty($jsCodeAfterShowExp)) {
+				// parses FuncExp
+				$jsCodeAfterShowExp = str2fx($jsCodeAfterShowExp);
+				// executes the func exp
+				if($jsCodeAfterShowExp instanceof FuncExp) {
+					$fxEval = $this->getFuncExpEval($p, $exec);
+					try {
+						$jsCodeAfterShowExp = $fxEval->evaluateFuncExp($jsCodeAfterShowExp,$this);
+					}
+					catch(Exception $e) {
+						if(isset($fxEval)) $fxEval->freeMemory();
+						throw $e;
+					}
+					if(isset($fxEval)) $fxEval->freeMemory();
+					
+					if($jsCodeAfterShowExp != '') {
+						$jsCodeAfterShowExp = str_replace('$$idForm$$',$formId,$jsCodeAfterShowExp);
+						$this->debugLogger()->write('jsCodeAfterShowExp = '.$jsCodeAfterShowExp);
+						$exec->addJsCode($jsCodeAfterShowExp);
+					}
+				}
+			}
+		}
+		
+		// HelpService on Fields (not in print, not in external access, not in notification)
+		if(!$this->isForPrint() && !$this->isForExternalAccess() && !$this->isForNotification()) $exec->addJsCode("$('#$formId .wigiiHelp').wigii('bindHelpService');");
+	}
+	
+	/**
 	 * @return FuncExpEvaluator returns a configured FuncExpEvaluator ready to be used to executes func exp
 	 */
-	protected function getFuncExpEval($p, $exec) {
+	public function getFuncExpEval($p, $exec) {
 		$returnValue = $this->getWigiiExecutor()->getFuncExpEvaluator($p, $exec, $this->getRecord());
 		// injects a reference to the current FormExecutor
 		$returnValue->getParentFuncExpEvaluator()->setFormExecutor($this);

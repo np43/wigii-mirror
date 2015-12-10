@@ -19,11 +19,11 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
+/**
+ * Main HTML renderer helper class. Helps rendering Element Form and Detail, using Element XML configuration.
  * Created on 3 dec. 09 by LWR
- * updated on 23 march 10 by LWR
+ * Updated on 23 march 10 by LWR
  */
-
 class TemplateRecordManager extends Model {
 
 	private $enableOutput;
@@ -198,7 +198,7 @@ class TemplateRecordManager extends Model {
 	 * @param Record $rec record for which to get an FuncExpEvaluator
 	 * @return FuncExpEvaluator
 	 */
-	protected function getFuncExpEvaluator($p, $rec) {
+	public function getFuncExpEvaluator($p, $rec) {
 		if(!isset($rec)) throw new ServiceProviderException('record cannot be null', ServiceProviderException::INVALID_ARGUMENT);
 		// gets RecordEvaluator
 		if($rec instanceof Element) $evaluatorClassName = (string)$this->getConfigService()->getParameter($p, $rec->getModule(), "Element_evaluator");

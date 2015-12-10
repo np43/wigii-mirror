@@ -19,13 +19,30 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 3 déc. 09
- * by LWR
+/**
+ * Renders a Record as a Form (edit view).
+ * Created on 3 déc. 09 by LWR
  */
-
 class FormRenderer extends FieldRenderer implements FieldListVisitor {
-
+	private $_debugLogger;
+	private $_executionSink;
+	private function debugLogger()
+	{
+		if(!isset($this->_debugLogger))
+		{
+			$this->_debugLogger = DebugLogger::getInstance("FormRenderer");
+		}
+		return $this->_debugLogger;
+	}
+	private function executionSink()
+	{
+		if(!isset($this->_executionSink))
+		{
+			$this->_executionSink = ExecutionSink::getInstance("FormRenderer");
+		}
+		return $this->_executionSink;
+	}
+	
 	private $formExecutor;
 	protected function setFormExecutor($formExecutor){ $this->formExecutor = $formExecutor; }
 	public function getFormExecutor(){ return $this->formExecutor; }
@@ -55,6 +72,24 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 	}
 	public function setP($p){ $this->p = $p; return $this; }
 
+	private $funcExpEvaluator;
+	/**
+	 * Returns a configured FuncExpEvaluator that can be used to evaluate FuncExps during Field rendering.
+	 * @return FuncExpEvaluator
+	 * @throws FieldRendererException::CONFIGURATION_ERROR in TemplateRecordManager is not injected properly
+	 */
+	protected function getFuncExpEval() {
+		if(!isset($this->funcExpEvaluator)) {
+			$trm = $this->getTemplateRecordManager();
+			if(!isset($trm)) throw new FieldRendererException('TemplateRecordManager has not be injected properly into the FormRenderer',FieldRendererException::CONFIGURATION_ERROR);
+			$this->funcExpEvaluator = $trm->getFuncExpEvaluator($this->getP(),$trm->getRecord());
+		}
+		return $this->funcExpEvaluator;
+	}
+	protected function freeFuncExpEval() {
+		if(isset($this->funcExpEvaluator) && method_exists($this->funcExpEvaluator, 'freeMemory')) $this->funcExpEvaluator->freeMemory();
+	}
+	
 	public static function createInstance($formExecutor, $formId, $templateRecordManager, $totalWidth=null, $labelWidth = null, $visibleLanguage=null){
 		$r = new self();
 		$r->setFormExecutor($formExecutor);
@@ -81,7 +116,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 	private $crtEditGroup = null; //will contain the name of the current EditGroup of field if defined.
 	private $editGroupTab = array(); //will contain the li's prepared for the tabs, the li's are displayed on closing EditGroup
 	private $firstTabInEditGroupWithContent = false; //will contains the index of the first tab with content in the editGroup
-
+	private $fxEval; //a FuncExpEvaluator instance that can be used 
 	private $first = null;
 	protected function isFirst(){
 		$this->first = true;
@@ -95,6 +130,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 
 		$fieldXml = $field->getXml();
 		$fieldName = $field->getFieldName();
+		$dataTypeName = ($dataType!=null?$dataType->getDataTypeName():null);
 		$rm = $this->getTemplateRecordManager();
 
 		//if field is hidden, or onlyInDetail, or not in Public and principal is public -> skip it
@@ -151,24 +187,24 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		//prefill default values
 //		if($_POST["action"]==null && $rm->getRecord()->getId()==0 && $dataType!=null){
 //			//principal email
-//			if($dataType->getDataTypeName()=="Emails" && $fieldXml["autoFillWithPrincipalEmail"] && !$rm->getRecord()->getFieldValue($fieldName)){
+//			if($dataTypeName=="Emails" && $fieldXml["autoFillWithPrincipalEmail"] && !$rm->getRecord()->getFieldValue($fieldName)){
 //				$rm->getRecord()->setFieldValue($this->getP()->getValueInGeneralContext("email"), $fieldName);
 //				$isFilled = $this->getP()->getValueInGeneralContext("email")!=null;
 //			}
 //			//Attributs or MultipleAttributs with checked="1" is prefilled in _displayForm.tpl.php
-//			if($dataType->getDataTypeName()=="Attributs"){
+//			if($dataTypeName=="Attributs"){
 //				$isFilled = $fieldXml->xpath("*[@checked='1']") || !$fieldXml->xpath("attribute[text()='none']");
 //			}
-//			if($dataType->getDataTypeName()=="MultipleAttributs"){
+//			if($dataTypeName=="MultipleAttributs"){
 //				$isFilled = $fieldXml->xpath("*[@checked='1']");
 //			}
 //		}
 		if($dataType!=null){
 			$isFilled = $rm->getRecord()->getWigiiBag()->isFilled($fieldName);
 			$isCollapse =
-				$dataType->getDataTypeName()!="Files" &&
-				$dataType->getDataTypeName()!="Links" &&
-				$dataType->getDataTypeName()!="Booleans" &&
+				$dataTypeName!="Files" &&
+				$dataTypeName!="Links" &&
+				$dataTypeName!="Booleans" &&
 				!$isFilled &&
 				$fieldXml["isJournal"]!="1" &&
 				$fieldXml["displayOnRightSide"]!="1" &&
@@ -216,8 +252,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		//field management
 
 		//a group is filled if there is error inside or if there is mandatory fields
-		if(	($dataType && $dataType->getDataTypeName()!="Booleans" && $isFilled) ||
-			($dataType && $dataType->getDataTypeName()=="Booleans" && $rm->getRecord()->getFieldValue($field->getFieldName(), "value")) ||
+		if(	($dataType && $dataTypeName!="Booleans" && $isFilled) ||
+			($dataType && $dataTypeName=="Booleans" && $rm->getRecord()->getFieldValue($field->getFieldName(), "value")) ||
 			$rm->getRecord()->getWigiiBag()->hasError($fieldName) ||
 			$isRequire
 			){
@@ -242,8 +278,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if($fieldXml["noMargin"]=="1"){
 			$style .= "margin-right:0px;";
 		}
-		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.$help.' >');
-		if($field->getDataType()!=null){
+		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.$help.($dataType!=null?' data-wigii-datatype="'.$dataTypeName.'"':'').' >');
+		if($dataType!=null){
 			$additionalInformations = $rm->getAdditionalinInformation($fieldName);
 			if($additionalInformations) $rm->put('<div class="addinfo ui-corner-all SBIB">'.$additionalInformations.'</div>');
 		}
@@ -256,8 +292,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if($dataType!=null && $fieldXml["noLabel"]!="1"){
 			//display label on full width if field dispay more than one subfield
 			$countSubFields = count($dataType->getXml()->xpath("*[@type!='hidden']")); //count only none hidden sub fields
-			if(	($dataType->getDataTypeName()=="Urls" && $fieldXml["onlyUrl"] =="1") ||
-				($dataType->getDataTypeName()=="TimeRanges" && $fieldXml["onlyDate"] =="1")
+			if(	($dataTypeName=="Urls" && $fieldXml["onlyUrl"] =="1") ||
+				($dataTypeName=="TimeRanges" && $fieldXml["onlyDate"] =="1")
 				){
 				$countSubFields = 1;
 			}
@@ -284,14 +320,14 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 				else $checked = null;
 				$multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheck").'\');" onmouseout="hideHelp();" ';
 				$rm->put('<span class="checkField M" style="padding:5px 0px 1px 0px;"><input id="'.$this->getFormId().'_'.$fieldName.'_check" type="checkbox" name="'.$fieldName.'_check" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /></span> ');
-				if(	($dataType->getDataTypeName() == "Emails" && $fieldXml["isMultiple"]=="1") ||
-					($dataType->getDataTypeName() == "Addresses") ||
-					($dataType->getDataTypeName() == "Blobs") ||
-					($dataType->getDataTypeName() == "Floats") ||
-					($dataType->getDataTypeName() == "Links") ||
-					($dataType->getDataTypeName() == "Numerics") ||
-					($dataType->getDataTypeName() == "Texts") ||
-					$dataType->getDataTypeName() == "MultipleAttributs"){
+				if(	($dataTypeName == "Emails" && $fieldXml["isMultiple"]=="1") ||
+					($dataTypeName == "Addresses") ||
+					($dataTypeName == "Blobs") ||
+					($dataTypeName == "Floats") ||
+					($dataTypeName == "Links") ||
+					($dataTypeName == "Numerics") ||
+					($dataTypeName == "Texts") ||
+					$dataTypeName == "MultipleAttributs"){
 					$checked = $rm->getRecord()->getWigiiBag()->isMultipleAddOnlyChecked($fieldName);
 					//by default check this checkbox
 					if($_POST["action"]==null) $checked = true;
@@ -310,7 +346,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 				$rm->put('* ');
 			}
 //			$rm->put('<label>');
-			if($dataType->getDataTypeName() == "Files" && $fieldXml["displayPreviewOnly"]=="1"){
+			if($dataTypeName == "Files" && $fieldXml["displayPreviewOnly"]=="1"){
 				//dispaly picture in form
 				$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage(), true);
 			} else {
@@ -318,7 +354,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			}
 //			$rm->put('</label>');
 			//add a "+add" button
-			if($dataType->getDataTypeName() == "Blobs" && $fieldXml["isJournal"]=="1"){
+			if($dataTypeName == "Blobs" && $fieldXml["isJournal"]=="1"){
 				$textAreaId = $this->getFormId()."_".$fieldName."_value_textarea";
 				//readonly is added in Blobs_displayForm on the textarea field.
 				if($fieldXml["protectExistingEntries"]=="1"){
@@ -338,7 +374,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 				$rm->put('<div class="addC d" style="');
 				$rm->put('width:'.($this->getValueWidth()).'px;');
 				$rm->put('"><span>+</span> <u>');
-				$rm->put($rm->t("cickToAdd".$dataType->getDataTypeName()."Content"));
+				$rm->put($rm->t("cickToAdd".$dataTypeName."Content"));
 				$rm->put('</u></div>');
 			}
 		}
@@ -364,12 +400,23 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		$rm->displayForm($this->getFormId(), $fieldName, $valueWidth, $this->getLabelWidth(), $this->getVisibleLanguage());
 		$rm->put('</div>');
 
+		// adds any dynamically generated hidden divs
+		if((string)$fieldXml["divExp"]!=null) $this->resolveDivExp((string)$fieldXml["divExp"]);
+		if((string)$fieldXml["divInFormExp"]!=null) $this->resolveDivExp((string)$fieldXml["divInFormExp"]);
+		
 		//add any JsCode if defined:
 		if((string)$fieldXml["jsCode"]!=null){
 			$this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getFormId(), (string)$fieldXml["jsCode"]));
 		}
 		if((string)$fieldXml["jsCodeInForm"]!=null){
 			$this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getFormId(), (string)$fieldXml["jsCodeInForm"]));
+		}
+		//add any dynamically generated JsCode if defined:
+		if((string)$fieldXml["jsCodeExp"]!=null){
+			$this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getFormId(), (string)$fieldXml["jsCodeExp"]));
+		}
+		if((string)$fieldXml["jsCodeInFormExp"]!=null){
+			$this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getFormId(), (string)$fieldXml["jsCodeInFormExp"]));
 		}
 
 		//close the field div
@@ -381,9 +428,35 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 	}
 
 	public function finish(){
-		//nothing special to do
+		$this->freeFuncExpEval();
 	}
-
+	
+	protected function resolveDivExp($divExp) {
+		if(empty($divExp)) return;
+		//$this->debugLogger()->logBeginOperation('resolveDivExp');
+		$divExp = str2fx($divExp);
+		if($divExp) {
+			$evalFx = $this->getFuncExpEval();
+			$divArray = $evalFx->evaluateFuncExp($divExp,$this);
+			if(is_array($divArray)) {
+				$rm = $this->getTemplateRecordManager();
+				foreach($divArray as $className=>$htmlContent) {
+					// extracts html attributes
+					$htmlAttributes = '';
+					if(is_array($htmlContent)) {
+						foreach($htmlContent as $attrName=>$attrVal) {
+							if($attrName!='content') $htmlAttributes .= ' '.$attrName.'="'.$attrVal.'"';
+						}
+						$htmlContent=$htmlContent['content'];
+					}
+					$rm->put('<div class="'.$className.'" style="display:none"'.$htmlAttributes.'>');
+					$rm->put($htmlContent);
+					$rm->put('</div>');
+				}
+			}
+		}
+		//$this->debugLogger()->logEndOperation('resolveDivExp');
+	}
 }
 
 

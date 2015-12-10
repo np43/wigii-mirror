@@ -19,9 +19,9 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 2 nov. 09
- * by LWR
+/**
+ * Created on 2 nov. 09 by LWR
+ * Enhanced by CWE on 09.10.2015 to constraint search space with a list of included/excluded groups.
  */
 
 class ListContext extends ListFilter {
@@ -38,7 +38,9 @@ class ListContext extends ListFilter {
 	const TextGroupSearchField = "__textGroupSearch";
 	const DefaultTextGroupSearchField = "__defaultTextGroupSearch";
 	const ReverseSelectSearchField = "__reverseSelectSearch";
-
+	const LimitFilterInGroupSearchField = "limitFilterInGroup";
+	const ExcludeGroupsSearchField = "excludeGroups";
+	
 	const listView = "list";
 	const listViewTemplate = "elementList.tpl.php";
 	const calendarView = "calendar";
@@ -212,8 +214,8 @@ class ListContext extends ListFilter {
 			$this->setGroupLogExp($logExp);
 		}
 		//eput($this->getFieldSelectorLogExp()->displayDebug());
-	}
-
+	}	
+	
 	/**********************************************
 	 * CrtSelectedItem / MultipleSelection part
 	 * ********************************************
@@ -818,7 +820,15 @@ class ListContext extends ListFilter {
 //		}
 //		$this->searchBar = $post; //serialize($post);
 //	}
-	public function setSearchBar($p, $wigiiExecutor, $post){
+	/**
+	 * Sets the search bar from the POST or a computed array.
+	 * @param Principal $p the current principal
+	 * @param WigiiExecutor $wigiiExecutor
+	 * @param Array $post http POST array or a PHP array
+	 * @param GroupPListTreeArrayImpl $groupPTreeArrayImpl an optional GroupTree used to build the calculatedGroupIdsForSearch.
+	 * @throws ListContextException
+	 */
+	public function setSearchBar($p, $wigiiExecutor, $post, $groupPTreeArrayImpl=null){
 
 		$this->searchBar = array();
 		//the post injections controles are already done in the FiltersFormExecutor
@@ -839,14 +849,15 @@ class ListContext extends ListFilter {
 		}
 
 //		$this->setSearchBarWithoutCalculationOffLogExp($post);
-
+		
 		//reset the LogExp before adding them the search criterias
 		$this->setFieldSelectorLogExp(null);
 		try { $this->addLogExpOnTextSearch($p, $wigiiExecutor); }
 		catch (StringTokenizerException $e) { throw new ListContextException($e->getMessage(), ListContextException::INVALID_TextFilter); }
 		try { $this->addLogExpOnTextAdvancedSearch($p, $wigiiExecutor); }
 		catch (StringTokenizerException $e) { throw new ListContextException($e->getMessage(), ListContextException::INVALID_TextAdvancedFilter); }
-		$this->addLogExpOnSelectSearch($wigiiExecutor);
+		$this->addLogExpOnSelectSearch($wigiiExecutor);		
+		$this->calculateGroupTreeForSearch($p, $wigiiExecutor, $groupPTreeArrayImpl);
 		$this->addLogExpOnGroupFilterSearch();
 		//add the textGroupSearch text after
 		try { $this->addLogExpOnTextGroupSearch($p, $wigiiExecutor); }
@@ -1178,8 +1189,12 @@ class ListContext extends ListFilter {
 		return $this->groupFilterLogExp;
 	}
 
-	protected function addLogExpOnGroupFilterSearch(){
-		$exp = LogExp::createAndExp();
+	/**
+	 * Recalculates Group LogExp based on filter criterias.
+	 * @param int $desiredGroupId if set, will narrow the search space to this group ID, instead of GroupList.
+	 * @param boolean $includeChildrenForDesiredGroup defines if children group of desired group should be selected or not, true by default, ignored if desiredGroupId is not set.
+	 */
+	public function addLogExpOnGroupFilterSearch($desiredGroupId=null, $includeChildrenForDesiredGroup=true){
 		$parser = TechnicalServiceProvider::getFieldSelectorLogExpParser();
 
 		//add groupList logExp;
@@ -1188,27 +1203,215 @@ class ListContext extends ListFilter {
 			return;
 		}
 
-
-		$groupLogExp = array();
-		foreach($this->getGroupPList()->getListIterator() as $groupP){
-			$groupLogExp[] = $groupP->getId();
+		$includeChildren = !$desiredGroupId && $this->doesGroupListIncludeChildren() || $desiredGroupId && $includeChildrenForDesiredGroup;
+		
+		// if a calculated group tree exists for search, then takes this one
+		$groupLogExp = $this->getCalculatedGroupTreeForSearch();
+		if(!empty($groupLogExp)) {
+			// builds group tree as a tree of stdClass
+			$groupTree = array();
+			foreach($groupLogExp as $groupId => $parentGroupId) {
+				// gets or creates current group node
+				$node = $groupTree[$groupId];
+				if(!isset($node)) {
+					$node = array('id'=>$groupId, 'id_group_parent'=>$parentGroupId, 'children'=>array());
+					$node = (object)$node;
+					$groupTree[$groupId] = $node;
+				}
+				else {
+					$node->id_group_parent = $parentGroupId;
+				}
+				// adds current group node to parent node (if not root)
+				if(isset($parentGroupId)) {
+					$parentNode = $groupTree[$parentGroupId];
+					if(!isset($parentNode)) {
+						$parentNode = array('id'=>$parentGroupId, 'id_group_parent'=>null, 'children'=>array());
+						$parentNode = (object)$parentNode;
+						$groupTree[$parentGroupId] = $parentNode;
+					}
+					$parentNode->children[$groupId] = $node;
+				}
+			}
+			// removes parent which are not in search space
+			$groupTree = array_intersect_key($groupTree, $groupLogExp);
+			
+			/*
+			 * foreach selected groups
+			 * 	if group is in search space
+			 * 		if includeChildren then implode group tree from selected group
+			 * 		else take selected group
+			 *	else
+			 *		takes search space AND (includeChildren ? INGR(selected group) : ING(selected group))
+			 */
+			if($desiredGroupId) {
+				$group = $groupTree[$desiredGroupId];
+				// narrows search space to desired group
+				if(isset($group)) {
+					if($includeChildren) {
+						$groupLogExp = array('groupIds'=>array());
+						$groupLogExp = (object)$groupLogExp;
+						$this->implodeGroupTree($group, $groupLogExp);
+						$groupLogExp = $groupLogExp->groupIds;						
+					}
+					else $groupLogExp = array($desiredGroupId => $desiredGroupId);
+					$groupLogExp = implode(",", $groupLogExp);
+					$groupLogExp = "ING(id IN (".$groupLogExp."))";
+				}
+				// intersects search space with desired group
+				else {
+					$groupLogExp = array_keys($groupLogExp);
+					$groupLogExp = implode(",", $groupLogExp);
+					$groupLogExp = "ING(id IN (".$groupLogExp."))";
+					if($includeChildren) {
+						$desiredGroupExp = "INGR(id IN (".$desiredGroupId."))";
+					}
+					else {
+						$desiredGroupExp = "ING(id IN (".$desiredGroupId."))";
+					}
+					$groupLogExp = $desiredGroupExp." AND ".$groupLogExp;
+				}
+			}	
+			// else intersects with selected group
+			elseif($this->getGroupPList()->count() == 1) {
+				$group = $this->getGroupPList()->getListIterator();
+				$group = reset($group);
+				$groupId = $group->getId();				
+				$group = $groupTree[$groupId];
+				// narrows search space to selected group
+				if(isset($group)) {
+					if($includeChildren) {
+						$groupLogExp = array('groupIds'=>array());
+						$groupLogExp = (object)$groupLogExp;
+						$this->implodeGroupTree($group, $groupLogExp);
+						$groupLogExp = $groupLogExp->groupIds;
+					}
+					else $groupLogExp = array($groupId => $groupId);
+					$groupLogExp = implode(",", $groupLogExp);
+					$groupLogExp = "ING(id IN (".$groupLogExp."))";
+				}
+				// intersects search space with selected group
+				else {
+					$groupLogExp = array_keys($groupLogExp);
+					$groupLogExp = implode(",", $groupLogExp);
+					$groupLogExp = "ING(id IN (".$groupLogExp."))";
+					if($includeChildren) {
+						$desiredGroupExp = "INGR(id IN (".$groupId."))";
+					}
+					else {
+						$desiredGroupExp = "ING(id IN (".$groupId."))";
+					}
+					$groupLogExp = $desiredGroupExp." AND ".$groupLogExp;
+				}
+			}
+			// else 
+			else {
+				// takes only search space
+				if($includeChildren) {
+					$groupLogExp = array_keys($groupLogExp);
+					$groupLogExp = implode(",", $groupLogExp);
+					$groupLogExp = "ING(id IN (".$groupLogExp."))";
+				}
+				// intersects search space with group list
+				else {
+					//throw new ListContextException("Cannot select ".$this->getGroupPList()->count()." groups without children", ListContextException::UNSUPPORTED_OPERATION);
+					$desiredGroupExp = array();
+					$narrowLogExp = array('groupIds'=>array());
+					$narrowLogExp = (object)$narrowLogExp;
+					foreach($this->getGroupPList()->getListIterator() as $groupP) {
+						$groupId = $groupP->getId();
+						$group = $groupTree[$groupId];
+						// narrows search space to selected group
+						if(isset($group) && isset($narrowLogExp)) {
+							$narrowLogExp->groupIds[$groupId] = $groupId;
+						}
+						// stops narrowing space and intersects whole search space with selected group
+						else $narrowLogExp = null;
+						$desiredGroupExp[$groupId] = $groupId;
+					}
+					
+					// if narrowed search space exists, takes this one
+					if(isset($narrowLogExp)) {
+						$groupLogExp = implode(",", $narrowLogExp->groupIds);
+						$groupLogExp = "ING(id IN (".$groupLogExp."))";
+					}
+					// else intersects whole search space with group list
+					else {
+						$desiredGroupExp = implode(",", $desiredGroupExp);
+						$desiredGroupExp = "ING(id IN (".$desiredGroupExp."))";
+							
+						$groupLogExp = array_keys($groupLogExp);
+						$groupLogExp = implode(",", $groupLogExp);
+						$groupLogExp = "ING(id IN (".$groupLogExp."))";
+						$groupLogExp = $groupLogExp." AND ".$desiredGroupExp;
+					}
+				}
+			}
+			/*	
+			else {
+				$desiredGroupExp = array();
+				$narrowLogExp = array('groupIds'=>array());
+				$narrowLogExp = (object)$narrowLogExp;
+				foreach($this->getGroupPList()->getListIterator() as $groupP) {
+					$groupId = $groupP->getId();
+					$group = $groupTree[$groupId];
+					// narrows search space to selected group
+					if(isset($group) && isset($narrowLogExp)) {
+						if($includeChildren) $this->implodeGroupTree($group, $narrowLogExp);
+						else $narrowLogExp->groupIds[$groupId] = $groupId;
+					}
+					// stops narrowing space and intersects whole search space with selected group
+					else $narrowLogExp = null;
+					$desiredGroupExp[$groupId] = $groupId;
+				}
+				
+				// if narrowed search space exists, takes this one
+				if(isset($narrowLogExp)) {
+					$groupLogExp = implode(",", $narrowLogExp->groupIds);
+					$groupLogExp = "ING(id IN (".$groupLogExp."))";
+				}
+				// else intersects whole search space with group list
+				else {					
+					$desiredGroupExp = implode(",", $desiredGroupExp);
+					if($includeChildren){
+						$desiredGroupExp = "INGR(id IN (".$desiredGroupExp."))";
+					} else {
+						$desiredGroupExp = "ING(id IN (".$desiredGroupExp."))";
+					}
+					
+					$groupLogExp = array_keys($groupLogExp);
+					$groupLogExp = implode(",", $groupLogExp);
+					$groupLogExp = "ING(id IN (".$groupLogExp."))";
+					$groupLogExp = $groupLogExp." AND ".$desiredGroupExp;
+				}							
+			}
+			*/		
 		}
-		$groupLogExp = implode(",", $groupLogExp);
-		if($this->doesGroupListIncludeChildren()){
-			$groupLogExp = "INGR(id IN (".$groupLogExp."))";
-		} else {
-			$groupLogExp = "ING(id IN (".$groupLogExp."))";
+		// else uses the GroupPList
+		else {			
+			if($desiredGroupId) {
+				$groupLogExp = array($desiredGroupId => $desiredGroupId);
+			}
+			else {
+				$groupLogExp = array();
+				foreach($this->getGroupPList()->getListIterator() as $groupP){
+					$groupLogExp[] = $groupP->getId();
+				}
+			}
+			$groupLogExp = implode(",", $groupLogExp);			
+			if($includeChildren){
+				$groupLogExp = "INGR(id IN (".$groupLogExp."))";
+			} else {
+				$groupLogExp = "ING(id IN (".$groupLogExp."))";
+			}
 		}
-////		eput($temp);
-//		$exp->addOperand($parser->createLogExpFromString($temp));
-
+		
 		//add groupFilter
 		if($this->getSelectGroupFilterFields() != null){
 			$groupFilterText = array();
 			foreach($this->getSelectGroupFilterFields() as $selectGroupFilterField=>$groupLogExpList){
 				$value = $this->getSelectSearchField($selectGroupFilterField);
 				if($value == null) continue;
-//				eput($value." ".$crtGroupLogExp);
+				//fput($value." ".$crtGroupLogExp);
 				if(is_array($value)){
 					$temp = array();
 					foreach($value as $val){
@@ -1226,6 +1429,7 @@ class ListContext extends ListFilter {
 				}
 			}
 			$groupFilterText = implode(" AND ", $groupFilterText);
+			//fput($groupFilterText);
 			if($groupFilterText) $this->setGroupFilterLogExp($parser->createLogExpFromString($groupFilterText));
 			else $this->setGroupFilterLogExp(null);
 		}
@@ -1234,7 +1438,24 @@ class ListContext extends ListFilter {
 		if($this->getGroupFilterLogExp()) $this->addGroupLogExp($this->getGroupFilterLogExp()->reduceNegation(true));
 		if($this->getLogExpOnTextGroupSearch()) $this->addGroupLogExp($this->getLogExpOnTextGroupSearch()->reduceNegation(true));
 	}
-
+	/**
+	 * Implodes a Group tree starting from a group and appends the result into a list of IDs stored into a StdClass
+	 * @param StdClass $group a StdClass instance representing a group {id,id_group_parent,children:Array of Groups as StdClass}
+	 * @param StdClass $groupList a given StdClass instance {groupIds:Array(groupId=>groupId)} where to store the flattened tree
+	 */
+	private function implodeGroupTree($group, $groupList) {
+		if(!isset($groupList)) return;
+		if(isset($group)) {
+			$groupList->groupIds[$group->id] = $group->id;
+			if(!empty($group->children)) {
+				foreach($group->children as $c) {
+					$this->implodeGroupTree($c, $groupList);
+				}
+			}
+		}
+	}
+	
+	
 	public function getSearchBar(){
 		return $this->searchBar;
 	}
@@ -1275,6 +1496,15 @@ class ListContext extends ListFilter {
 		if(!isset($this->searchBar)) return null;
 		return $this->searchBar[$selectSearchField];
 	}
+	public function getLimitFilterInGroupForSearch() {
+		if(!isset($this->searchBar)) return null;
+		return $this->searchBar[ListContext::LimitFilterInGroupSearchField];
+	}
+	public function getExcludeGroupsInSearch() {
+		if(!isset($this->searchBar)) return null;
+		return $this->searchBar[ListContext::ExcludeGroupsSearchField];
+	}
+	
 	private $selectSearchFields;
 	public function getSelectSearchFields(){
 		return $this->selectSearchFields;
@@ -1308,6 +1538,66 @@ class ListContext extends ListFilter {
 		$this->selectGroupFilterFields = null;
 	}
 
+	private $calculatedGroupTreeForSearch;
+	/**
+	 * @return Array an array(groupId=>parentGroupId)
+	 */
+	public function getCalculatedGroupTreeForSearch() {return $this->calculatedGroupTreeForSearch;}
+	public function hasCalculatedGroupTreeForSearch() {return !empty($this->calculatedGroupTreeForSearch);}
+	/**
+	 * @param Array $groupTree array(groupId=>parentGroupId)
+	 */
+	public function setCalculatedGroupTreeForSearch($groupTree) {
+		$this->calculatedGroupTreeForSearch = $groupTree;
+	}	
+	/**
+	 * @param Array $groupTree array(groupId=>parentGroupId)
+	 */
+	public function addCalculatedGroupTreeForSearch($groupTree) {
+		if(empty($this->calculatedGroupTreeForSearch)) $this->calculatedGroupTreeForSearch = array();
+		if(!empty($groupTree)) {
+			foreach($groupTree as $groupId=>$parentGroupId) {
+				$this->calculatedGroupTreeForSearch[$groupId] = $parentGroupId;
+			}
+		}
+	}
+	public function resetCalculatedGroupTreeForSearch() {
+		$this->calculatedGroupTreeForSearch = null;
+	}
+	
+	/**
+	 * Calculates the group tree that should be used as a search space.
+	 * @param Principal $p the current principal
+	 * @param WigiiExecutor $wigiiExecutor
+	 * @param GroupPListTreeArrayImpl $groupPTreeArrayImpl the optional global tree view on which to search and reduces it by using the getLimitFilterInGroupForSearch and getExcludeGroupsInSearch.
+	 * @return Array the calculated group tree as an array(groupId=>parentGroupId).
+	 */
+	protected function calculateGroupTreeForSearch($p, $wigiiExecutor, $groupPTreeArrayImpl=null) {
+		$includeGroups = $this->getLimitFilterInGroupForSearch();
+		$excludeGroups = $this->getExcludeGroupsInSearch();
+		
+		if(empty($includeGroups) && empty($excludeGroups)) return $this->getCalculatedGroupTreeForSearch();
+		
+		// calculates global space if needed
+		if(!isset($groupPTreeArrayImpl)) {
+			$groupPTreeArrayImpl = GroupPListTreeArrayImpl :: createInstance();
+			$groupAS = ServiceProvider::getGroupAdminService();
+			// extracts module
+			$groupList = $this->getGroupPList();
+			if(!$groupList->isEmpty()) {
+				$groupP = reset($groupList->getListIterator());
+				$module = $groupP->getGroup()->getModule();
+			}
+			else $module = ServiceProvider::getExecutionService()->getCrtModule();
+			$groupAS->getAllGroups($p, $module, $groupPTreeArrayImpl, $groupAS->getListFilterForSelectGroupWithoutDetail());
+		}		
+		
+		// reduce search tree
+		$treeReduction = LCGroupIdsForSearchTreeVisitor::createInstance($includeGroups, $excludeGroups);
+		$groupPTreeArrayImpl->visitInDepth($treeReduction);
+		$this->setCalculatedGroupTreeForSearch($treeReduction->getGroupTree());
+	}
+	
 	/**********************************/
 
 
@@ -1325,14 +1615,15 @@ class ListContext extends ListFilter {
 		//Field logique expression
 		$this->resetMultipleSelection();
 		$this->addItemsToMultipleSelection($listContext->getMultipleSelection(true),
-			$this->getMultipleEnableElementStates(), $this->getMultipleElementStates());
+		$this->getMultipleEnableElementStates(), $this->getMultipleElementStates());
 		$this->setFieldSelectorLogExp($listContext->getFieldSelectorLogExp());
 		//GroupPList
-		//setGroupPList need to have the groupFilterText or the TextGroupSearch to make a correct calculation
+		//setGroupPList need to have the groupFilterText, the TextGroupSearch and calculatedGroupIdsForSearch to make a correct calculation
 		$this->setGroupFilterLogExp($listContext->getGroupFilterLogExp());
 		$this->setLogExpOnTextGroupSearch($listContext->getLogExpOnTextGroupSearch());
+		$this->setCalculatedGroupTreeForSearch($listContext->getCalculatedGroupTreeForSearch());
 		$this->setGroupPList($listContext->getGroupPList(), $listContext->doesGroupListIncludeChildren());
-//		//GroupLogExp
+		//GroupLogExp
 		//$this->setGroupLogExp($listContext->getGroupLogExp());
 		$this->matchSortingCriteria($listContext);
 	}
@@ -1345,10 +1636,103 @@ class ListContext extends ListFilter {
 		$this->resetMultipleSelection();
 		$this->setFieldSortingKeyList(null);
 		$this->setFieldSelectorLogExp(null);
+		$this->setCalculatedGroupTreeForSearch(null);
 		$this->setGroupPList(null);
 		//$this->setGroupLogExp(null);
 		$this->setSearchBar($p, $wigiiExecutor, null);
 	}
 }
 
+/**
+ * ListContext GroupIdsForSearchTreeVisitor
+ * Created by CWE on 02.10.2015
+ */
+class LCGroupIdsForSearchTreeVisitor implements TreeInDepthVisitor {
+	private $groupTree;
+	private $recording;
+	private $startedId;
+	
+	// Object lifecycle
+	
+	public static function createInstance($includeGroups, $excludeGroups)  {
+		$returnValue = new self();
+		$returnValue->reset();
+		$returnValue->setIncludeGroups($includeGroups);
+		$returnValue->setExcludeGroups($excludeGroups);
+		return $returnValue;
+	}
+	
+	public function reset() {
+		$this->freeMemory();
+		$this->groupTree = array();
+		$this->recording = true; // by default records all groups
+		$this->startedId = null; // by default records all groups
+	}
+	public function freeMemory() {
+		unset($this->groupTree);
+		unset($this->includeGroups);
+		unset($this->excludeGroups);
+	}
+	
+	// Configuration
+	
+	private $includeGroups;
+	public function setIncludeGroups($groupIds) {
+		$this->includeGroups = array();
+		if(!empty($groupIds)) {
+			// checks and filters
+			foreach($groupIds as $groupId) {
+				if($groupId != 0) $this->includeGroups[$groupId] = $groupId;
+			}
+			if(!empty($this->includeGroups)) {
+				$this->recording = false; // prevents recording until include group is visited				
+			}
+		}
+	}
+	private $excludeGroups;
+	public function setExcludeGroups($groupIds) {
+		$this->excludeGroups = array();
+		if(!empty($groupIds)) {
+			// checks and filters
+			foreach($groupIds as $groupId) {
+				if($groupId != 0) $this->excludeGroups[$groupId] = $groupId;
+			}
+		}		
+	}
+	
+	// Implementation
+	
+	/**
+	 * @return Array the group tree as an array(groupId=>parentGroupId)
+	 */
+	public function getGroupTree() {
+		return $this->groupTree;
+	}
+	
+	// TreeInDepthVisitor implementation
+	
+	public function actOnTreeNode($object, $depth, $numberOfChildren) {
+		$groupId = $object->getId();		
+		// on same level : include has priority on exclude
+		if($this->excludeGroups[$groupId] && !$this->includeGroups[$groupId]) return false;
+		// starts recording if include group is reached
+		if(!$this->recording && $this->includeGroups[$groupId]) {
+			$this->recording = true;
+			$this->startedId = $groupId;
+		}
+		if($this->recording) {
+			$this->groupTree[$groupId] = $object->getDbEntity()->getGroupParentId();
+		}
+		return true;
+	}	
+	public function actAfterTreeNode($object, $depth, $visitedAllChildren) {
+		$groupId = $object->getId();
+		//stops recording if start point is reached again
+		if($this->recording && $this->startedId == $groupId) {
+			$this->recording = false;
+			$this->startedId = null;
+		}
+		return true;
+	}
+}
 

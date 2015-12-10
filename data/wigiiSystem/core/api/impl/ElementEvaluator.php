@@ -103,7 +103,9 @@ class ElementEvaluator extends RecordEvaluator
 		if(is_null($fieldSelector)) throw new RecordException("fieldSelector cannot be null", RecordException::INVALID_ARGUMENT);
 		if($fieldSelector->isElementAttributeSelector())
 		{
-			return $this->getElement()->getAttribute($fieldSelector);
+			$element = $this->getElement();
+			if(is_null($element)) throw new RecordException("no Element has been attached to ElementEvaluator", RecordException::INVALID_STATE);
+			return $element->getAttribute($fieldSelector);
 		}
 		else return parent::getFieldValue($fieldSelector);
 	}
@@ -456,6 +458,19 @@ class ElementEvaluator extends RecordEvaluator
 	}
 	
 	/**
+	 * Returns the old element as currently into the database.
+	 * FuncExp signature : <code>getOldElement()</code><br/>
+	 * @return Element the old element or null if not current flow is not ELEMENT_FLOW_EDIT
+	 */
+	public function getOldElement($args) {
+		$flowContext = $this->getCurrentFlowName();
+		if($flowContext == ElementEvaluator::ELEMENT_FLOW_EDIT) {
+			return $this->getFormExecutor()->fetchOldRecord($this->getPrincipal(), ServiceProvider::getExecutionService(), $this->getElement()->getId());
+		}
+		else return null;
+	}
+	
+	/**
 	 * Sets the matrix as an Element dynamic attribute for later use (for instance in other func exp calls).
 	 * FuncExp signature: <code>setMatrix(elementAttributeName, matrix)</code><br/>
 	 * Where arguments are :
@@ -637,7 +652,28 @@ class ElementEvaluator extends RecordEvaluator
 	public function ctlCurrentFlow($args) {
 		return $this->getCurrentFlowName();
 	}
-		
+
+	
+	/**
+	 * Checks if a field has changed in the WigiiBag.
+	 * FuncExp signature : <code>ctlFieldHasChanged(fieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: String|FieldSelector. The name of the field or a FieldSelector for which to check if the field has changed in the WigiiBag
+	 * @return boolean true if field has changed, else false. If current flow is not 'element-edit' always return false.
+	 */
+	public function ctlFieldHasChanged($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new RecordException('ctlFieldHasChanged takes one argument which is the field name or a field selector', RecordException::INVALID_ARGUMENT);
+		$fieldName = $args[0];
+		if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+		else $fieldName = $this->evaluateArg($fieldName);
+		if(empty($fieldName)) throw new RecordException('fieldName cannot be null', RecordException::INVALID_ARGUMENT);
+		if($this->getCurrentFlowName() == ElementEvaluator::ELEMENT_FLOW_EDIT) {
+			return $this->getElement()->getWigiiBag()->isChanged($fieldName);
+		}
+		else return false;
+	}
+	
 	/**
 	 * Refreshes the group panel around a given group. If no group is given, then takes the current group.
 	 * FuncExp signature : <code>ctlRefreshGroupPanel(group=null)</code><br/>

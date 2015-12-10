@@ -1203,4 +1203,85 @@ class FuncExpBuilder {
 		else $returnValue =  $this->getDataFlowService()->processObjectList($principal, $dataFlowDumpable, $dataFlowActivitySelectorList);		
 		return $returnValue;		
 	}
+	
+	/**
+	 * Matches an input array with a pattern and binds any given ValueObject on both sides.
+	 * @param Array $input input array
+	 * @param Array $pattern pattern
+	 * This function supports variable number of arguments, that means that
+	 * instead of providing an array with the arguments, you can pass the arguments
+	 * in a comma separated list as a normal function call.
+	 * example: $funcExpBuilder->arrayMatch(array("item","12345","edit"), "item", $x, "edit") is equivalent
+	 * to $funcExpBuilder->arrayMatch(array("item","12345","edit"), array("item", $x, "edit"))
+	 * @example $x = ValueObject::createInstance(); $y = ValueObject::createInstance();
+	 * $funcExpBuilder->arrayMatch(array("item","12345",$y), "item", $x, "edit") will return true 
+	 * and $x->getValue() will return "12345" and $y->getValue() will return "edit".
+	 * - If one array is longer than the other and that the smallest array has a ValueObject as last item, 
+	 * then it will has its value bound to the tail of the longest array.
+	 *  $funcExpBuilder->arrayMatch(array("item","12345","edit"), "item", $x) will return true and $x->getValue() will returny array("12345","edit");
+	 *  - If two variables are on both sides, then the non null value will be bound to the variable with a null value, if both are non null, then matching is true if values are equal. 
+	 * @return Boolean true if input array matched pattern
+	 */
+	public function arrayMatch($input,$pattern) {
+		// aligns left and right arguments
+		$nArgs = func_num_args();
+		if($nArgs>2) {
+			$pattern = array_slice(func_get_args(),1);
+		}
+		else {
+			if(empty($pattern)) $pattern = array();
+			elseif(!is_array($pattern)) $pattern = array($pattern);
+		}
+		if(empty($input)) $input = array();
+		elseif(!is_array($input)) $input = array();
+		
+		// pattern match the two arrays
+		$i=0;
+		$n = count($input);
+		$m = count($pattern);		
+		$k=$n;if($m<$k)$k=$m;
+		$touchedVars = array();
+		while($i<$k) {
+			// variable detection
+			$leftVar = ($input[$i] instanceof ValueObject);
+			$rightVar = ($pattern[$i] instanceof ValueObject);
+			$leftVal = ($leftVar?$input[$i]->getValue():$input[$i]);
+			$rightVal = ($rightVar?$pattern[$i]->getValue():$pattern[$i]);
+			$leftVar = $leftVar && ($leftVal===null);
+			$rightVar = $rightVar && ($rightVal===null);			
+			// tail detection
+			if($i==$k-1 && $n!=$m) {
+				// left variable takes right tail
+				if($leftVar && $n<$m && $input[$i]->supportsArray()) $input[$i]->setValue(array_slice($pattern,$i));
+				// right variable takes left tail
+				elseif($rightVar && $n>$m && $pattern[$i]->supportsArray()) $pattern[$i]->setValue(array_slice($input,$i));	
+				// else no tail grabbing then does not match
+				else {
+					// resets any touched variables
+					foreach($touchedVars as $var) {
+						$var->reset();
+					}
+					return false;			
+				}
+			}
+			// variable instantiation and value matching
+			elseif($leftVar && !$rightVar) {
+				$input[$i]->setValue($rightVal);
+				$touchedVars[] = $input[$i];
+			}
+			elseif(!$leftVar && $rightVar) {
+				$pattern[$i]->setValue($leftVal);
+				$touchedVars[] = $pattern[$i];
+			}
+			elseif(!$leftVar && !$rightVar && $leftVal!=$rightVal) {
+				// resets any touched variables
+				foreach($touchedVars as $var) {
+					$var->reset();
+				}
+				return false;
+			}
+			$i++;; 
+		}
+		return true;		
+	}
 }

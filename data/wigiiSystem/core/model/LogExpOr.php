@@ -61,16 +61,30 @@ class LogExpOr extends LogExp
 			$returnValue = LogExp::createOrExp();
 			foreach($this->operands as $logExp)
 			{
-				$returnValue->addOperand($logExp->reduceNegation($clone));
+				$logExp = $logExp->reduceNegation($clone);
+				if($logExp instanceof LogExpOr) {
+					foreach($logExp->operands as $logExp2) {
+						$returnValue->addOperand($logExp2);
+					}
+				}
+				else $returnValue->addOperand($logExp);
 			}
 			return $returnValue;
 		}
 		else
 		{
-			foreach($this->operands as $key => $logExp)
+			$returnValue = array();
+			foreach($this->operands as $logExp)
 			{
-				$this->operands[$key] = $logExp->reduceNegation($clone);
+				$logExp = $logExp->reduceNegation($clone);
+				if($logExp instanceof LogExpOr) {
+					foreach($logExp->operands as $logExp2) {
+						$returnValue[] = $logExp2;
+					}
+				}
+				else $returnValue[] = $logExp;
 			}
+			$this->operands = $returnValue;
 			return $this;
 		}
 	}

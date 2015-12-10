@@ -36,17 +36,21 @@ if($lc->getGroupPList() == null || $lc->getGroupPList()->isEmpty()){
 }
 $selectedGroupIds = $lc->getGroupPList()->getIds();
 
+//the parameter 1 can contain additional info, if coming from groupSelectorPanel: as selectGroupAndChildren, or selectGroup
+if($exec->getCrtParameters(1)=="selectGroupAndChildren") $groupSelectorPanelParam = "selectGroupAndChildren";
+elseif($exec->getCrtParameters(1)=="selectGroup") $groupSelectorPanelParam = "selectGroup";
+// in case of filtering (search), if param is not passed on the URL, then takes ListContext->doesGroupListIncludeChildren
+elseif($lc->doesGroupListIncludeChildren()) $groupSelectorPanelParam = "selectGroupAndChildren";
+else $groupSelectorPanelParam = "selectGroup";
+
 if($exec->getIdAnswer()!='moduleView' && $exec->getIsUpdating()){ //!$exec->getIsUpdating()){
-	//the dicision is made that when we select multiple groups, that means we select the group_0
+	//the decision is made that when we select multiple groups, that means we select the group_0
 	//so the cache is about the group_0
-	//the paramter 1 can contain additional info, if comming from groupSelectorPanel: as selectGroupAndChildren, or selectGroup
-	//$exec->addJsCode($exec->getCurrentUpdateJsCode($p, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/".($exec->getCrtParameters(1)=="selectGroupAndChildren" || $lc->getSearchBar() ? "selectGroupAndChildren" : "selectGroup")."/".(count($selectedGroupIds)>1 ? "0" : implode(",",$selectedGroupIds))));
-	$exec->addRequests("moduleView/". $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/groupSelectorPanel/".($exec->getCrtParameters(1)=="selectGroupAndChildren" || $lc->getSearchBar() ? "selectGroupAndChildren" : "selectGroup")."/".(count($selectedGroupIds)>1 ? "0" : implode(",",$selectedGroupIds)));
+	$exec->addRequests("moduleView/". $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/groupSelectorPanel/".$groupSelectorPanelParam."/".(count($selectedGroupIds)>1 ? "0" : implode(",",$selectedGroupIds)));
 } else {
 
 	if($configS->getParameter($p, null, "preventFolderContentCaching") !="1"){
-		//the parameter 1 can contain additional info, if coming from groupSelectorPanel: as selectGroupAndChildren, or selectGroup
-		$cachekey = $exec->cacheAnswer($p, ($exec->getIdAnswer() ? $exec->getIdAnswer() : 'moduleView'), 'groupSelectorPanel', "groupSelectorPanel/".($exec->getCrtParameters(1)=="selectGroupAndChildren" ? "selectGroupAndChildren" : "selectGroup")."/".(count($selectedGroupIds)>1 ? "0" : implode(",",$selectedGroupIds)));
+		$cachekey = $exec->cacheAnswer($p, ($exec->getIdAnswer() ? $exec->getIdAnswer() : 'moduleView'), 'groupSelectorPanel', "groupSelectorPanel/".$groupSelectorPanelParam."/".(count($selectedGroupIds)>1 ? "0" : implode(",",$selectedGroupIds)));
 		// informs navigation cache of module view cache key
 		$exec->addJsCode("setModuleViewKeyCacheForNavigate('".$cachekey."')");
 	}

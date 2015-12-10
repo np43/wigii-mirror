@@ -499,6 +499,88 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 	}
 
+	/**
+	 * FuncExp DataFlow Activity : Adds an error message to a matrix field if a certain condition on the matrix row is true.
+	 * This function should be used in the context of the visitMatrix func exp.<br/>
+	 * FuncExp signature: <code>matrixField_addError(row, dfa, col, errorMessageExp)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) row: stdClass. A matrix row as given by the visitMatrix func exp.
+	 * - Arg(1) dfa: FuncExpDFA. A reference to the underlying DataFlowActivity instance.
+	 * - Arg(2) col: String. The name of the column in the matrix (or equivalently the field in the row) on which to add the error
+	 * - Arg(3) errorMessageExp: FuncExp|String|FieldSelector. The expression (as a FuncExp, string constant or FieldSelector) which
+	 * will be evaluated in the context of a matrix row and that will return an error message (or nothing) to add to the field row.
+	 * @example consider a matrix $m having the columns Key_, Fund_ and Percentage_, we'd like to :
+	 * 1. attach an error rule on Fund_ field :
+	 *	if Key_ is not null then
+	 *		if Fund_ is null then return "Fund should be filled"
+	 *	end if
+	 * 2. attach an error rule on Percentage_ field :
+	 * 	if Key_ is not null then
+	 *		if Percentage_ is null then return "Percentage should be filled"
+	 *		else if !(0 <= Percentage_ <= 100) then return "Percentage should be between 0 and 100"
+	 *	end if
+	 *
+	 * write : visitMatrix($m, dfaslfx(
+	 *	 matrixField_addError("FundCode_", ctlIf(isNotNull(Key_), ctlIf(isNull(FundCode_), "Fund should be filled"))),
+	 *	 matrixField_addError("Percentage_", ctlIf(isNotNull(Key_), ctlIf(isNull(Percentage_), "Percentage should be filled", ctlIf(logNot(logAnd(smeq("0",Percentage_), smeq(Percentage_, "100"))), "Percentage should be between 0 and 100"))))
+	 * ))
+	 */
+	public function matrixField_addError($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 4) throw new FuncExpEvalException('matrixField_addError DataFlowActivity takes at least two arguments: the col to which to add the error and the errorMessageExp function expression which evaluates the error message', FuncExpEvalException::INVALID_ARGUMENT);
+		$dfa = $args[1];
+		if(!($dfa instanceof FuncExpDFA)) throw new FuncExpEvalException('matrixField_addError FuncExp can only be evaluated into a DataFlow context. For instance in context of the visitMatrix func exp.', FuncExpEvalException::INVALID_STATE);
+		
+		// gets error decision tree and error field
+		if($dfa->isStartStream() || $dfa->isSingleData()) {			
+			$errorMessageExp = $args[3];
+			$errorCol = $this->evaluateArg($args[2]);
+			if($dfa->isStartStream()) {
+				$dfa->setValueInContext('errorMessageExp', $errorMessageExp);
+				$dfa->setValueInContext('errorCol', $errorCol);
+			}
+		}
+		elseif($dfa->isRunning()) {
+			$errorMessageExp = $dfa->getValueInContext('errorMessageExp');
+			$errorCol = $dfa->getValueInContext('errorCol');
+		}
+		
+		if($dfa->isRunning() || $dfa->isSingleData()) {
+			// gets matrix and row		
+			$matrix = $dfa->getDataFlowContext()->getAttribute('matrix');
+			if(!isset($matrix)) throw new FuncExpEvalException('matrix has not been set into the DataFlowContext', FuncExpEvalException::INVALID_STATE);
+			$row = $this->evaluateArg($args[0]);		
+	
+			if(!empty($row)) {
+				if(!is_object($row)) throw new FuncExpEvalException('row is not a stdClass instance', FuncExpEvalException::INVALID_ARGUMENT);
+				
+				// opens new context
+				$ctx = $this->getFuncExpVMServiceProvider()->getFuncExpVMContext(true);
+				// copies content of row into local variables
+				foreach($row as $col=>$val) {
+					$ctx->setVariable(fs($col), $val);
+				}
+				// evaluates error message				
+				$errorMessage = $this->evaluateArg($errorMessageExp);
+				// adds error message to row
+				if(!empty($errorMessage)) {
+					$colVal = $row->{$errorCol};
+					if(!is_object($colVal)) {
+						$colVal = array('value'=>$colVal);
+						$colVal = (object)$colVal;
+						$row->{$errorCol} = $colVal;
+					}
+					$errors = $colVal->{'errors'};
+					if(!isset($errors)) $errors = array();
+					$errors[] = $errorMessage;
+					$colVal->{'errors'} = $errors;
+					$matrix->{'hasRowsInError'} = true;
+				}
+			}		
+			if(!$dfa->getDataFlowContext()->isCurrentStepTheLastStep()) return $row;
+		}
+	}
+	
 	// Object constructors
 
 	/**
@@ -1049,6 +1131,11 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 		else $strict = false;
 		if($strict) return is_null($value);
+		elseif(is_array($value)) {
+			if(empty($value)) return true;
+			elseif(count($value)==1 && $value['']==='') return true;
+			else return false;
+		}
 		else return empty($value);
 	}
 	/**
@@ -1068,7 +1155,12 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 		else $strict = false;
 		if($strict) return isset($value);
-		else return !empty($value);
+		elseif(is_array($value)) {
+			if(empty($value)) return false;
+			elseif(count($value)==1 && $value['']==='') return false;
+			else return true;
+		}
+		else return !empty($value);		
 	}
 	
 	/**
@@ -1423,7 +1515,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		if($multiplier <= 0) throw new FuncExpEvalException("The multiplier must be a postive integer", FuncExpEvalException::INVALID_ARGUMENT);
 		return str_repeat("\t", $multiplier);
 	}
-
+	
 	/**
 	 * Returns a double quote character
 	 * @return string
@@ -1432,6 +1524,115 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		return '"';
 	}
 	
+	/**
+	 * Returns an hash tag character
+	 * @return string
+	 */
+	public function txtHashTag($args) {
+		return '#';
+	}
+	
+	/**
+	 * Creates an html open tag
+	 * FuncExp signature : <code>htmlStartTag(tagName,key1,value1,key2,value2,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) tagName: String. The name of the html tag, for example "div" or "p"
+	 * - Arg(1,3,5,...) keyI: String. An html attribute name, for example "class"
+	 * - Arg(2,4,6,...) valueI: String. An html attribute value, for example "ui-dialog"	
+	 * @return String
+	 */
+	public function htmlStartTag($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException("htmlStartTag func exp takes at least one argument which is the html tagName", FuncExpEvalException::INVALID_ARGUMENT);
+		$tagName = $this->evaluateArg($args[0]);
+		if(empty($tagName)) throw new FuncExpEvalException("htmlStartTag func exp takes at least one argument which is the html tagName", FuncExpEvalException::INVALID_ARGUMENT);
+		$returnValue = '<'.$tagName;
+		if($nArgs>1) {
+			$i = 1;
+			$key = null;
+			$value = null;
+			while($i<$nArgs) {
+				$key = $this->evaluateArg($args[$i]);
+				if(empty($key)) throw new FuncExpEvalException("html attribute cannot be null", FuncExpEvalException::INVALID_ARGUMENT);
+				$i++;
+				if($i<$nArgs) {
+					$value = $this->evaluateArg($args[$i]);
+					$i++;
+				}
+				else $value = '';
+				$returnValue .= ' '.$key.'="'.$value.'"';
+			}
+		}
+		$returnValue .= '>';
+		return $returnValue;
+	}
+	/**
+	 * Creates an html close tag
+	 * FuncExp signature : <code>htmlEndTag(tagName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) tagName: String. The name of the html tag, for example "div" or "p"
+	 * @return String
+	 */
+	public function htmlEndTag($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException("htmlStartTag func exp takes at least one argument which is the html tagName", FuncExpEvalException::INVALID_ARGUMENT);
+		$tagName = $this->evaluateArg($args[0]);
+		if(empty($tagName)) throw new FuncExpEvalException("htmlStartTag func exp takes at least one argument which is the html tagName", FuncExpEvalException::INVALID_ARGUMENT);
+		return '</'.$tagName.'>';
+	}
+	
+	/**
+	 * Returns an html nbsp entity repeated n times
+	 * FuncExp signature : <code>htmlNbsp(multiplier)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) multiplier : optional argument. Evaluates to a positive integer which indicates the number of time
+	 * the nbsp html entity must be repeated. Default is one time.
+	 */
+	public function htmlNbsp($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) $multiplier = 1;
+		else $multiplier = $this->evaluateArg($args[0]);
+		if($multiplier <= 0) throw new FuncExpEvalException("The multiplier must be a postive integer", FuncExpEvalException::INVALID_ARGUMENT);
+		return str_repeat("&nbsp;", $multiplier);
+	}
+	
+	/**
+	 * Returns an html quot entity
+	 * @return string
+	 */
+	public function htmlQuot($args) {
+		return '&quot;';
+	}
+	/**
+	 * Returns an html apos entity
+	 * @return string
+	 */
+	public function htmlApos($args) {
+		return '&apos;';
+	}
+	/**
+	 * Returns an html lt entity
+	 * @return string
+	 */
+	public function htmlLt($args) {
+		return '&lt;';
+	}
+	/**
+	 * Returns an html gt entity
+	 * @return string
+	 */
+	public function htmlGt($args) {
+		return '&gt;';
+	}
+	
+	/**
+	 * Returns an html document headeer
+	 * @return String
+	 */
+	public function htmlHeader($args) {
+		return '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
+	} 
+		
 	/**
 	 * Returns a string representing a date in a Wigii compatible format (Y-m-d H:i:s).
 	 * For general formatting use the func exp date (defined in PhpStdFL).
@@ -1526,6 +1727,24 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 			}
 		}
 		return $result;
+	}
+	
+	/**
+	 * Prepends a prefix to some content only if content is not null.
+	 * FuncExp signature: <code>prepend(prefix,str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) prefix: Evaluates to a string.
+	 * - Arg(1) str: Evaluates to a string.
+	 * @return String if(str is not empty) returns prefix.str else return ''
+	 */
+	public function prepend($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) $prefix = $this->evaluateArg($args[0]);
+		else $prefix = '';
+		if($nArgs>1) $str = $this->evaluateArg($args[1]);
+		else $str = '';
+		if(!empty($str)) return $prefix.$str;
+		else return '';
 	}
 	
 	/**

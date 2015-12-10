@@ -19,11 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 23 oct. 09
- * by LWR
+/**
+ * Created on 23 oct. 09 by LWR
+ * @deprecated since Wigii 4.*
  */
-
 class SelectSearchBarFieldList implements FieldList {
 
 	private $wigiiNamespace;

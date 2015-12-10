@@ -20,6 +20,7 @@
  */
 
 /**
+ * Main FieldList implementation used by all Forms in Wigii WebImpl
  * Created on 17 sept. 09 by LWR
  * Modified by CWE on 02.12.2014 to add dynamic attributes index
  */

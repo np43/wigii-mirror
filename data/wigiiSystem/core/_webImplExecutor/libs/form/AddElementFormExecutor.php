@@ -89,6 +89,12 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 		$transS = ServiceProvider::getTranslationService();
 		return $transS->t($p, "addElement");
 	}
+	
+	protected function getWigiiHelpExpression($p,$exec) {
+		$config = $this->getWigiiExecutor()->getConfigurationContext();		
+		$helpExp = (string)$config->getParameter($p, $exec->getCrtModule(), "WigiiHelp_onAdd");
+		return $helpExp;
+	}
 
 	protected function actOnCheckedRecord($p, $exec) {
 		$elS = ServiceProvider::getElementService();

@@ -20,11 +20,11 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 24 juil. 09
- * by LWR
+/**
+ * SystemConsoleService base implementation
+ * Created on 24 juil. 09 by LWR
+ * Modified by CWE on 01.12.2015 to support JS notifications
  */
-
 class SystemConsoleServiceImpl implements SystemConsoleService {
 	private $_debugLogger;
 	private $_executionSink;
@@ -55,7 +55,8 @@ class SystemConsoleServiceImpl implements SystemConsoleService {
 	protected $typeList; //will contain the list of the different type message
 	//JSCode management
 	protected $JSCode;
-
+	protected $JSNotif;
+	
 	private $lastTime; //has the last time, to be able to manage the diff between operations
 	private $operationsStackTime; //at each START OPERATION the time is pushed. On each END Operation the stack is poped
 	private $operationsStackName; //at each START OPERATION the operation name is pushed. On each END Operation the stack is poped
@@ -149,5 +150,31 @@ class SystemConsoleServiceImpl implements SystemConsoleService {
 	}
 	public function flushJSCode() {
 		throw new SystemConsoleServiceException("Flush JSCode in the SystemConsoleService can not be done, because need of an implementation. Use Web Impl for i.e.", SystemConsoleServiceException :: UNSUPPORTED_OPERATION);
+	}
+	
+	public function addJsNotif($target,$type,$url,$options=null) {
+		if(!isset($this->JSNotif)) $this->JSNotif = array();
+		if(empty($url)) throw new SystemConsoleServiceException('notification callback url cannot be null');
+		if(!isset($target)) $target = 'searchBar';
+		if(!isset($type)) $type = 'info';
+		
+		// creates JS notification object
+		$jsNotif = array();
+		// fills existing options
+		if(isset($options) && !$options->isEmpty()) {
+			foreach($options->getIterator() as $k=>$v) {
+				$jsNotif[$k]=$v;
+			}			
+		}
+		// adds required values
+		$jsNotif['target'] = $target;
+		$jsNotif['type'] = $type;
+		$jsNotif['url'] = $url;
+		// stores the object in the buffer
+		$this->JSNotif[] = (object)$jsNotif;
+	}
+	
+	public function flushJSNotif() {
+		throw new SystemConsoleServiceException("Flush JSNotif in the SystemConsoleService can not be done, because need of an implementation. Use Web Impl for i.e.", SystemConsoleServiceException :: UNSUPPORTED_OPERATION);
 	}
 }

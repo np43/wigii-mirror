@@ -19,11 +19,11 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 24 juil. 09
- * by LWR
+/**
+ * SystemConsoleService web implementation
+ * Created on 24 juil. 09 by LWR
+ * Modified by CWE on 01.12.2015 to support JS notifications
  */
-
 class SystemConsoleServiceWebImpl extends SystemConsoleServiceImpl {
 
 	private $_debugLogger;
@@ -250,6 +250,45 @@ $("#systemConsole .messages").append("<div><div class='message' ><?=$message;?><
 		}
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++."end SystemConsoleService flushJSCodeForRequest $requestId"] = microtime(true);
 		$this->executionSink()->publishEndOperation("flushJSCodeForRequest");
+	}
+	
+	public function isJsNotifPending(){
+		if($this->JSNotif==null) return false;
+		return true;
+	}
+	public function getJsNotifIterator(){
+		if(!isset($this->JSNotif)) return array();
+		return $this->JSNotif;
+	}
+	public function flushJSNotif() {
+		$this->executionSink()->publishStartOperation("flushJSNotif");
+		if(isset($this->JSNotif))
+		{
+			$exec = ServiceProvider::getExecutionService();			
+			// if updating, then creates one request-answer per JS notif
+			if($exec->getIsUpdating()) {					
+				$transport = (object)array('notification'=>null);
+				foreach($this->JSNotif as $jsNotif) {
+					echo ExecutionServiceImpl :: answerRequestSeparator;
+					echo 'Wigii_HelpService';
+					echo ExecutionServiceImpl :: answerParamSeparator; 
+					echo 'json';
+					echo ExecutionServiceImpl :: answerParamSeparator;
+					$transport->notification = $jsNotif;
+					echo json_encode($transport);
+				}
+			}
+			// else returns an array with all JS notif
+			else {
+				$transport = array();
+				foreach($this->JSNotif as $jsNotif) {
+					$transport[] = (object)array('notification'=>$jsNotif);
+				}
+				echo json_encode($transport);
+			}
+			unset($this->JSNotif);
+		}
+		$this->executionSink()->publishEndOperation("flushJSNotif");
 	}
 
 }

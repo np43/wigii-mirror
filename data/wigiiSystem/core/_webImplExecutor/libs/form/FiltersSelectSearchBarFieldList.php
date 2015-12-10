@@ -90,7 +90,11 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 				if((string)$option == "none") continue;
 				$attrNb++;
 				$groupLogExpList[(string)$option] = (string)$option["groupLogExp"];
-				$attribute .= '<attribute>'.(string)$option.'<label>'.$transS->t($p, (string)$option, $option).'</label></attribute>';
+				if($option["checked"] == '1') {
+					$checked = ' checked="1"';
+				}
+				else $checked = '';
+				$attribute .= '<attribute'.$checked.'>'.(string)$option.'<label>'.$transS->t($p, (string)$option, $option).'</label></attribute>';
 			}
 			$this->getListContext()->addSelectGroupFilterField($fieldName, $groupLogExpList);
 		} else if($fieldXml["type"] == "groupByFieldListAndElementInfo"){

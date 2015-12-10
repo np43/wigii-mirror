@@ -111,7 +111,9 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 	if($readonly) $this->put(' disabled ');
 	$this->put('class="');
 	if($readonly) $this->put('removeDisableOnSubmit ');
-	if((string)$fieldXml["chosen"]=="1") $this->put('chosen ');
+	$chosen = (string)$fieldXml["chosen"]=="1";
+	if($chosen) $this->put('chosen ');
+	
 	if((string)$fieldXml["allowNewValues"]=="1") $this->put('allowNewValues ');
 	$this->put('"');
 	if((string)$fieldXml["size"]!="") $this->put(' size="'.(string)$fieldXml["size"].'" ');
@@ -142,7 +144,13 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 			}
 			foreach($val as $k) {
 				if($existingKeys[$k] == null) {
-					$htmlOption = "'".'<option selected="selected" value="'.$k.'" title="'.$transS->t($p, $k).'" >'.(strlen($transS->t($p, $k))>64 ? str_replace(" ", "&nbsp;", substr($transS->t($p, $k), 0, 61))."..." : str_replace(" ", "&nbsp;", $transS->t($p, $k))).'</option>'."'";
+					$labelForTitle = $transS->t($p, $k);
+					$label = $labelForTitle;
+					if(!$chosen && strlen($label)>64) {
+						$label = substr($label, 0, 61)."...";
+					}
+					$label = str_replace(" ", "&nbsp;", $label);
+					$htmlOption = "'".'<option selected="selected" value="'.$k.'" title="'.$labelForTitle.'" >'.$label.'</option>'."'";
 					$this->addJsCode('$("#'.$inputId.'").append('.$htmlOption.')');
 				}	
 			}		
@@ -150,6 +158,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 	}
 	else {
 		//define the options:
+		$html2text = new Html2text();
 		foreach($fieldXml->attribute as $attribute_key => $attribute){
 			// filters dropdown using prefix filter
 			if($filterDropDown && $attribute != "none" && strpos((string)$attribute, $prefixFilter)!==0) continue;
@@ -164,22 +173,25 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 			}
 			
 			// cleans up the html
-			$html2text = new Html2text();
 			$html2text->html2text($label);
 			$label = $html2text->get_text();
 			$html2text->clear();
-			unset($html2text);
 			
 			if($attribute["optGroupStart"]=="1"){
 				$this->put('<optgroup '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' label="'.$label.'" >');
 			} else if($attribute["optGroupEnd"]=="1"){
 				$this->put('</optgroup>');
 			} else {
-				//limit attribute options to 120 chars
-				$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" '.$selected.' title="'.$label.'" >'.(strlen($label)>64 ? str_replace(" ", "&nbsp;", substr($label, 0, 61))."..." : str_replace(" ", "&nbsp;", $label)).'</option>');
+				$labelForTitle = $label;
+				if(!$chosen && strlen($label)>64) {
+					$label = substr($label, 0, 61)."...";
+				}
+				$label = str_replace(" ", "&nbsp;", $label);
+				$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" '.$selected.' title="'.$labelForTitle.'" >'.$label.'</option>');
 			}
 		}
 	}
+	unset($html2text);
 	$this->put('</'.$inputNode.'>');
 
 	//ici il ne faut pas metre la condition if disable car s'il est disable il peut très bien se faire

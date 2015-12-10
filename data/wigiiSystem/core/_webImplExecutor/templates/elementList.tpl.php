@@ -95,7 +95,7 @@ if(!$url){ //display list only if no url
 ?><div class="toolBar"><?
 	//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar"] = microtime(true);
 	$this->executionSink()->log("start searchBar toolbar");
-	//reload if search bar is realooded
+	//reload if search bar is reloaded
 	$lastConfigKey = $sessAS->getData($this, "elementListLastConfigKey");
 	$currentConfigKey = $this->getCurrentConfigContextKey($p, $exec);
 	$sessAS->storeData($this, "elementListLastConfigKey", $currentConfigKey);
@@ -414,7 +414,8 @@ if(!$url){ //display list only if no url
 			" });" .
 			" ");
 	}
-
+	//refreshes module help icon if config changed
+	if($lastConfigKey!=$currentConfigKey) $this->refreshModuleHelpAnchor($p,$exec);
 
 ?></div><?
 

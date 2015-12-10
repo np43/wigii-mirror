@@ -39,8 +39,10 @@ if(!isset($lc)) $lc = $lc = $this->getListContext($p, $exec->getCrtWigiiNamespac
 
 ?><div class="toolbarBox"><?
 
-	//when the searchBar is reloaded, then clera the last
+	//when the searchBar is reloaded, then clear the last
 	$sessAS->clearData($this, "elementListLastConfigKey");
+	// module help button
+	$this->includeModuleHelpAnchor($p,$exec);
 	// list refresh button
 	?><div class="refresh H"><?=$transS->t($p, "refresh");?></div><?
 	//in some views, the sortBy and groupBy are not relevant. In this case there are hidden
@@ -62,6 +64,7 @@ if(!isset($lc)) $lc = $lc = $this->getListContext($p, $exec->getCrtWigiiNamespac
 $exec->addJsCode("setListenersToFilters(); setFiltersButton(".($lc->getSearchBar() ? 'true' : 'false').");");
 // adds refresh js code
 $exec->addJsCode('$("#searchBar div.toolbarBox div.refresh").click(function(){invalidCache("moduleView"); invalidCache("elementDialog"); update("moduleView/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/display/moduleView");});');
-
+// bind Wigii HelpService to moduleHelp
+$exec->addJsCode('$("#searchBar div.toolbarBox div.moduleHelp .wigiiHelp").wigii("bindHelpService");');
 
 

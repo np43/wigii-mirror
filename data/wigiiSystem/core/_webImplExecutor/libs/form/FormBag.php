@@ -20,10 +20,10 @@
  */
 
 /**
+ * Main WigiiBag implementation used by all Forms in Wigii WebImpl.
  * Created by LWR on 1 sept. 09
  * Modified by CWE  on 27 mai 2014 to implement BulkLoadableWigiiBag
  */
-
 class FormBag extends Model implements BulkLoadableWigiiBag {
 
 	private $_debugLogger;

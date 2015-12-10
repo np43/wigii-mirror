@@ -44,14 +44,22 @@ class SelectOptionForGroupTreeRenderer implements TreeInDepthVisitor {
 	}
 	protected function getCurrentWigiiNamespaceName(){ return $this->currentWigiiNamespace; }
 	
+	private $showFullPathInLabel;
+	private $path;
+	public function setShowFullPathInLabel($boolean) {
+		$this->showFullPathInLabel = $boolean;
+	}
+	public function getShowFullPathInLabel() {return $this->showFullPathInLabel;}
+	
 	private $result;
 	public function getResult(){ return $this->result; }
 	
 	public static function createInstance($currentWigiiNamespaceName=null, $disabledOnRightsLesThan="w", $groupToDisableWithChildren = null){
 		$r = new self();
+		$r->reset();
 		$r->setDisabledOnRightsLesThan($disabledOnRightsLesThan);
 		$r->setGroupToDisableWithChildren($groupToDisableWithChildren);
-		$r->setCurrentWigiiNamespaceName($currentWigiiNamespaceName);
+		$r->setCurrentWigiiNamespaceName($currentWigiiNamespaceName);		
 		return $r;
 	}
 	
@@ -62,6 +70,7 @@ class SelectOptionForGroupTreeRenderer implements TreeInDepthVisitor {
 	
 	public function freeMemory(){
 		unset($this->result);
+		unset($this->path);
 	}
 	
 	private $disableChildren = null;
@@ -94,8 +103,19 @@ class SelectOptionForGroupTreeRenderer implements TreeInDepthVisitor {
 //				}
 //			}
 //		}
-		$this->result .= str_repeat("|   ", $depth);
-		$this->result .= str_replace(array("&", '\\', "<", ">"), array("/", "/", "-", "-"), ($this->getCurrentWigiiNamespaceName()!=$object->getGroup()->getWigiiNamespace()->getWigiiNamespaceName() && $object->getGroup()->getWigiiNamespace()->getWigiiNamespaceName() ? $object->getGroup()->getWigiiNamespace()->getWigiiNamespaceName()." : " : "").$object->getGroup()->getGroupname()).'</label></attribute>';
+
+		$groupName = str_replace(array("&", '\\', "<", ">"), array("/", "/", "-", "-"), ($this->getCurrentWigiiNamespaceName()!=$object->getGroup()->getWigiiNamespace()->getWigiiNamespaceName() && $object->getGroup()->getWigiiNamespace()->getWigiiNamespaceName() ? $object->getGroup()->getWigiiNamespace()->getWigiiNamespaceName()." : " : "").$object->getGroup()->getGroupname());
+		if($this->showFullPathInLabel) {
+			if(!isset($this->path)) $this->path = array();
+			if($depth > 0) $pathIndicator = implode(" / ", $this->path).' / ';
+			$this->path[] = $groupName;
+			$groupName = $groupName;
+		}
+		else {
+			$pathIndicator = str_repeat("|   ", $depth);
+		}
+		$this->result .= $pathIndicator;
+		$this->result .= $groupName.'</label></attribute>';
 		return true;
 	}
 	
@@ -109,6 +129,7 @@ class SelectOptionForGroupTreeRenderer implements TreeInDepthVisitor {
 		if($this->disableChildren === $object->getId()){
 			$this->disableChildren = null;
 		}
+		if($this->showFullPathInLabel) array_pop($this->path);
 		return true;
 	}
 }

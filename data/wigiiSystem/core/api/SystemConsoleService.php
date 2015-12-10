@@ -19,14 +19,12 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 24 juil. 09
- * by LWR
- */
-
 /**
- * the System console will collecte all the information of the debugLogger, the executionSink and the addJsCode...
- * this service is only available in the webImpl
+ * The System Console gathers information of the DebugLogger and ExecutionSink and pushes them to the browser.
+ * It also buffers JS code and notifications added during one request lifecycle and flushes them back to browser on demand.
+ * This service is only available in the Web implementation.
+ * Created on 24 juil. 09 by LWR
+ * Modified by CWE on 01.12.2015 to add JS notifications buffering
  */
 interface SystemConsoleService {
 	
@@ -48,8 +46,24 @@ interface SystemConsoleService {
 	/**
 	 * this will publish all JSCode
 	 */
-	public function flushJsCode();
+	public function flushJSCode();
 	
+	/**
+	 * Stores a Js notification in the SystemConsole waiting to be sent to the client
+	 * @param String $target notification target. One of searchBar,elementDialog.
+	 * @param String $type notification type. One of help,info,warning,error,notif.
+	 * @param String $url notification callback url to get notification content.
+	 * @param WigiiBPLParameter $options an optional map of options to be passed to the WigiiApi JS client.
+	 * example: addJsNotif("searchBar","help","User Guide/Filemanager/help/item/12345/integratedFile")
+	 * will add a (?) icon in the searchBar toolbox, displaying a help popup with the html content of the 12345 element of the User Guide.
+	 * Some options could be "width","height","top","left","title",... see WigiiApi.js Popup class for more detail.
+	 */
+	public function addJsNotif($target,$type,$url,$options=null);
+	
+	/**
+	 * Flushes the pending Js notifications to the WigiiApi Js client.
+	 */
+	public function flushJSNotif();
 }
 
 

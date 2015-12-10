@@ -35,6 +35,12 @@ class GroupP extends Model implements DbEntity
 		return $returnValue;
 	}
 	
+	public static function createReadInstance($group) {
+		$returnValue = self::createInstance($group);
+		$returnValue->setRights(PrincipalRights::createInstance());
+		return $returnValue;
+	}
+	
 	/**
 	 * DbEntity implementation
 	 */

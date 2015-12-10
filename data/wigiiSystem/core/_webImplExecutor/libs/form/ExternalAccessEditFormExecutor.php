@@ -313,8 +313,12 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 
 		$element = $this->getRecord();
 		$state = $this->getState();
-		$backUrl = $this->getBackUrl($p, $exec);
 		$subR = $this->getGroupSubscriptionRecord();
+		if($subR) {
+			$backUrl = $subR->getFieldValue("subscriptionReturnUrl", "url");
+			if(empty($backUrl)) $backUrl = $this->getBackUrl($p, $exec);
+		}
+		else $backUrl = $this->getBackUrl($p, $exec);
 
 //20/11/2014 put back the unlock on unload and add a code to prevent the unload if clicking on a link or the download current file button
 		//if the browser close without saving the element is unlocked

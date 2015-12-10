@@ -50,7 +50,17 @@ class FiltersFormExecutor extends FormExecutor {
 	private $isSimpleFilters; //in this case the context is reset to filter in all root folders and subfolders + count data in each folder
 	public function setIsSimpleFilters($var){ $this->isSimpleFilters = $var; }
 	protected function isSimpleFilters(){ return $this->isSimpleFilters; }
-
+	private $filterFormGroupTree;
+	/**
+	 * Injects the GroupPTree used in the limitFilterInGroup and excludeGroups drop-down.
+	 * This GroupPTree is used to calculate the resulting group IDs for search depending on the include/exclude groups constraints.
+	 * @param GroupPListTreeArrayImpl $groupPTreeArrayImpl
+	 */
+	public function setFilterFormGroupTree($groupPTreeArrayImpl) {
+		$this->filterFormGroupTree = $groupPTreeArrayImpl;
+	}
+	protected function getFilterFormGroupTree() {return $this->filterFormGroupTree;}
+	
 	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
@@ -73,55 +83,15 @@ class FiltersFormExecutor extends FormExecutor {
 			$exec->addRequests("filtersDialog/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/removeFilters/");
 			return;
 		}
-		if($this->isSimpleFilters()){
-			if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") != "0"){
-				$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
-				if($trashBinGroup){
-					//prevent searching in trashBinGroup except if current group is trashBinGroup
-					if(reset($this->getListContext()->getGroupPList()->getListIterator())->getId() == $trashBinGroup){
-						$this->getListContext()->setGroupPList($this->getListContext()->getGroupPList(), true);
-					} else {
-						$groupPListWithoutTrash = GroupPListArrayImpl::createInstance();
-						foreach($configS->getRootGroupsInModule($p, $exec->getCrtModule())->getListIterator() as $groupP){
-							if($groupP->getId()==$trashBinGroup) continue;
-							$groupPListWithoutTrash->addGroupP($groupP);
-						}
-						$this->getListContext()->setGroupPList($groupPListWithoutTrash, true);
-					}
-				} else {
-					$this->getListContext()->setGroupPList($configS->getRootGroupsInModule($p, $exec->getCrtModule()), true);
-				}
-			} else {
-				$this->getListContext()->setGroupPList($this->getListContext()->getGroupPList(), true);
-			}
-			//$this->getWigiiExecutor()->getConfigurationContext()->setGroupPList($p, $exec->getCrtModule(), $configS->getRootGroupsInModule($p, $exec->getCrtModule()), true);
+		
+		// CWE 2015.11.24: trashbin exclusion and folder space constraints are defined in ListContext::getExcludeGroupsInSearch and ListContext::getLimitFilterInGroupForSearch
+		// and managed by the WigiiExecutor / filters action.
+		if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") != "0"){
+			$this->getListContext()->setGroupPList($configS->getRootGroupsInModule($p, $exec->getCrtModule()), true);
 		} else {
-			//define context to what is defined in the advanced search
-			if($rec->getFieldValue("limitFilterInGroup")==null){
-				if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") != "0"){					
-					$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
-					if($trashBinGroup){
-						//prevent searching in trashBinGroup except if current group is trashBinGroup
-						if(reset($this->getListContext()->getGroupPList()->getListIterator())->getId() == $trashBinGroup){
-							$this->getListContext()->setGroupPList($this->getListContext()->getGroupPList(), true);
-						} else {
-							$groupPListWithoutTrash = GroupPListArrayImpl::createInstance();
-							foreach($configS->getRootGroupsInModule($p, $exec->getCrtModule())->getListIterator() as $groupP){
-								if($groupP->getId()==$trashBinGroup) continue;
-								$groupPListWithoutTrash->addGroupP($groupP);
-							}
-							$this->getListContext()->setGroupPList($groupPListWithoutTrash, true);
-						}
-					} else {
-						$this->getListContext()->setGroupPList($configS->getRootGroupsInModule($p, $exec->getCrtModule()), true);
-					}
-				} else {
-					$this->getListContext()->setGroupPList($this->getListContext()->getGroupPList(), true);					
-				}
-			} else {
-				$this->getListContext()->setGroupPList($configS->getGroupPList($p, $exec->getCrtModule(), $rec->getFieldValue("limitFilterInGroup"), true), true);
-			}
+			$this->getListContext()->setGroupPList($this->getListContext()->getGroupPList(), true);
 		}
+		
 		//change the config context to the new context
 		$configS->setGroupPList($p, $exec->getCrtModule(), $this->getListContext()->getGroupPList(), true);
 
@@ -144,7 +114,7 @@ class FiltersFormExecutor extends FormExecutor {
 	protected function doSpecificCheck($p, $exec){
 		$lc = $this->getListContext();
 		try {
-			$lc->setSearchBar($p, $this->getWigiiExecutor(), $_POST);
+			$lc->setSearchBar($p, $this->getWigiiExecutor(), $_POST, $this->getFilterFormGroupTree());
 		} catch (ListContextException $e) {
 			//echo $e->getMessage();
 			$transS = ServiceProvider :: getTranslationService();

@@ -921,6 +921,7 @@ sendRefByEmail:Send a direct link to #thisElement# by email.:Envoyer un lien dir
 sendRefByEmailObject:Link to #anElement#:Lien vers #anElement#:::::::::
 sendRefByEmailText:Direct link to #element#\::Lien direct vers #element#\::::::::::
 rootGroup:Root #group#:#Group# racine:::::::::
+allGroups:All #groups#:Tous les #groups#:::::::::
 shareElement:Share:Partager:::::::::
 shareElements:Organize:Organiser:::::::::
 transferElements:Share:Partager:::::::::
@@ -1584,7 +1585,8 @@ advancedFilterHelp_Emails_externalAccessEndDate:End date for possible external a
 
 
 __textSearch:Filter #elements# to match those words:Filtrer #elements# contenant ces mots:
-limitFilterInGroup:Filter in #-group#:Filtrer dans #group#:
+limitFilterInGroup:Filter in #-groups#:Filtrer dans #groups#:
+excludeGroups:Exclude #-groups#:Exclure #groups#:
 advancedFilters:Advance filtering:Filtre avancé:
 advancedFiltersButtonText:advanced:avancé:
 __reverseSelectSearch:By ticking a box you will reverse the result of the corresponding filter above.:En cochant une case, vous inversez le résultat du filtre correspondant ci-dessus.:

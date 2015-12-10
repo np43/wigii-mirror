@@ -152,7 +152,7 @@ function showCoverPage(){
 function hideCoverPage(){
 	$('#moduleView .portal').hide();
 	$('#searchBar .toolbarBox .toggleCoverPage span').text(coverPage_toggleList_titleWebsite).parent().show();
-	$('#searchBar .toolbarBox div:not(.toggleCoverPage,.addNewElement,.cm,.disabledR)').show();
+	$('#searchBar .toolbarBox div:not(.toggleCoverPage,.addNewElement,.cm,.disabledR,.ui-dialog)').show();
 	$('#moduleView .dataZone').show();
 	resize_elementList();
 }
@@ -855,10 +855,10 @@ function setListnerForGroupDragAndDrop(id, draggableSelector, dropableSelector, 
 							//droping elements
 							setVis("busyDiv", true);
 							$.post(
-								"UPDATE/"+crtContextId+"/__/confirmationDialog/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/element/setGroupsContainingElements/multiple",
+								"UPDATE/"+crtContextId+"/__/confirmationDialog/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/element/setGroupsContainingElements/multiple/drag",
 								{
 									'changeToSelected': myThisDroppable.attr('id').split('_')[1],
-									'changeToUnselected' : $(id+' li.selected').attr('id').split('_')[1]
+									'changeToUnselected' : ($(id+' li.selected').attr('id')?$(id+' li.selected').attr('id').split('_')[1]:'all')
 								},
 								parseUpdateResult
 							);
@@ -867,10 +867,10 @@ function setListnerForGroupDragAndDrop(id, draggableSelector, dropableSelector, 
 							//droping an element
 							setVis("busyDiv", true);
 							$.post(
-								"UPDATE/"+crtContextId+"/__/confirmationDialog/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/element/setGroupsContainingElement/"+myUiDraggable.attr('id').split('_')[1],
+								"UPDATE/"+crtContextId+"/__/confirmationDialog/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/element/setGroupsContainingElement/"+myUiDraggable.attr('id').split('_')[1]+"/drag",
 								{
 									'actual': myThisDroppable.attr('id').split('_')[1],
-									'original' : $(id+' li.selected').attr('id').split('_')[1]
+									'original' : ($(id+' li.selected').attr('id')?$(id+' li.selected').attr('id').split('_')[1]:'all')
 								},
 								parseUpdateResult
 							);
@@ -885,7 +885,7 @@ function setListnerForGroupDragAndDrop(id, draggableSelector, dropableSelector, 
 							//droping elements
 							setVis("busyDiv", true);
 							$.post(
-								"UPDATE/"+crtContextId+"/__/confirmationDialog/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/element/setGroupsContainingElements/multiple",
+								"UPDATE/"+crtContextId+"/__/confirmationDialog/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/element/setGroupsContainingElements/multiple/drag",
 								{
 									'changeToSelected': myThisDroppable.attr('id').split('_')[1],
 									'changeToUnselected' : ''
@@ -897,10 +897,10 @@ function setListnerForGroupDragAndDrop(id, draggableSelector, dropableSelector, 
 							//droping an element
 							setVis("busyDiv", true);
 							$.post(
-								"UPDATE/"+crtContextId+"/__/confirmationDialog/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/element/setGroupsContainingElement/"+myUiDraggable.attr('id').split('_')[1],
+								"UPDATE/"+crtContextId+"/__/confirmationDialog/"+crtWigiiNamespaceUrl+"/"+crtModuleName+"/element/setGroupsContainingElement/"+myUiDraggable.attr('id').split('_')[1]+"/drag",
 								{
-									'actual': $(id+' li.selected').attr('id').split('_')[1]+','+myThisDroppable.attr('id').split('_')[1],
-									'original' : $(id+' li.selected').attr('id').split('_')[1]
+									'actual': myThisDroppable.attr('id').split('_')[1],
+									'original' : ''
 								},
 								parseUpdateResult
 							);
@@ -1881,7 +1881,7 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 	});
 }
 
-function hrefWithSiteroot2js(domIdToCheck, targetDomId){
+function hrefWithSiteroot2js(domIdToCheck, targetDomId){	
 	$('#'+domIdToCheck+' a[href^="'+SITE_ROOT+'"]').each(function(){
 		$(this).click(function(){
 			if($(this).attr('target') != '_blank'){

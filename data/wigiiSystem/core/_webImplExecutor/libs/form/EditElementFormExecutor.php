@@ -80,7 +80,16 @@ class EditElementFormExecutor extends FormExecutor {
 	}
 
 	private $oldRecord;
-	protected function fetchOldRecord($p, $exec, $id){
+	/**
+	 * Fetches old record from the DB in order to :
+	 * - update Files and Emails hidden fields
+	 * - enable FuncExp on element save to have access to old record.
+	 * @param Principal $p current principal editing the element
+	 * @param ExecutionService $exec current ExecutionService
+	 * @param int $id the ID of the element beeing edited
+	 * @return Element the old element as currently in the database.
+	 */
+	public function fetchOldRecord($p, $exec, $id){
 		if(!isset($this->oldRecord) || $this->oldRecord->getId()!=$id){
 			$bag = FormBag::createInstance();
 			$ffl = FormFieldList::createInstance($bag);
@@ -277,6 +286,74 @@ class EditElementFormExecutor extends FormExecutor {
 			}
 			$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_deleteDraft\" href=\"javascript:update(\\'confirmationDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/delete/".$this->getRecord()->getId()."/$idAnswer\\', false, {action:\\'persistAndSkipNotify\\'});"."\">".$transS->t($p, "deleteDraft")."</a>');");
 		}
+	}
+	
+	/**
+	 * Binds Wigii HelpService on Element add or edit.
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 */
+	protected function bindWigiiHelpService($p,$exec) {		
+		// doesn't support mainDiv.
+		if($exec->getIdAnswer() == 'mainDiv' || !$this->isDialog()) return;
+		$helpExp = $this->getWigiiHelpExpression($p, $exec);
+		if(empty($helpExp)) return;
+		
+		// resolves help expression		
+		// parses the value into a funcExp
+		try {
+			$helpExp = str2fx($helpExp);
+		}
+		catch(StringTokenizerException $ste) {
+			// if syntax error, then keeps the helpExp as is because it is a constant.
+			if($ste->getCode() != StringTokenizerException::SYNTAX_ERROR) throw $ste;
+		}
+		// executes the func exp
+		if($helpExp instanceof FuncExp) {
+			$fxEval = $this->getFuncExpEval($p, $exec);
+			try {
+				$helpExp = $fxEval->evaluateFuncExp($helpExp,$this);
+			}
+			catch(Exception $e) {
+				if(isset($fxEval)) $fxEval->freeMemory();
+				throw $e;
+			}
+			if(isset($fxEval)) $fxEval->freeMemory();
+		}
+		// creates help anchor configuration
+		if(empty($helpExp)) return;
+		elseif(is_string($helpExp)) $helpExp = array('content'=>$helpExp);
+		elseif(!is_array($helpExp)) throw new FormExecutorException("invalid configuration parameter WigiiHelp_onAdd or WigiiHelp_onEdit in module ".$exec->getCrtModule()->getModuleName(),FormExecutorException::CONFIGURATION_ERROR);		
+		$helpUrl = null;
+		$helpOptions = null;
+		foreach($helpExp as $attr=>$val) {
+			if($attr=='content') $helpUrl = $val;
+			else {
+				if(!isset($helpOptions)) $helpOptions = TechnicalServiceProvider::createWigiiBPLParameterInstance();
+				$helpOptions->setValue(str_replace('data-popup-', '', $attr), $val);
+			}
+		}
+		// adds a JS notification with help url
+		$exec->addJsNotif('elementDialog','help',$helpUrl,$helpOptions);
+	}
+	/**
+	 * Gets a WigiiHelp expression attached to module configuration file.
+	 * Looks for configuration parameters WigiiHelp_onAdd or WigiiHelp_onEdit
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 */
+	protected function getWigiiHelpExpression($p,$exec) {
+		$config = $this->getWigiiExecutor()->getConfigurationContext();		
+		if($this->getRecord()->isSubElement()) $module = $this->getRecord()->getModule();
+		else $module = $exec->getCrtModule();
+		$helpExp = null;
+		if($exec->getCrtParameters(2) == 'autoadd') {
+			$helpExp = (string)$config->getParameter($p, $module, "WigiiHelp_onAdd");
+		}
+		else {
+			$helpExp = (string)$config->getParameter($p, $module, "WigiiHelp_onEdit");
+		}		
+		return $helpExp;
 	}
 	
 	protected function actOnCheckedRecord($p, $exec) {
@@ -634,7 +711,8 @@ class EditElementFormExecutor extends FormExecutor {
 		//add Js code for elementStatus (this needs to be done once the dialog is opned, other wise positions are incorrect)
 		if($this->elementStatusJsCode!=null) $exec->addJsCode($this->elementStatusJsCode);
 
-		if($state!="addMessageToNotification"){ //disable autoSave on add message to notification
+		//disable autoSave on add message to notification
+		if($state!="addMessageToNotification"){ 
 			$this->addAutoSaveJSCode($p, $exec);
 			$changedAutoSaveField = $_POST["changedAutoSaveField"];
 			//if there is some posted changedAutoSaveField
@@ -646,6 +724,11 @@ class EditElementFormExecutor extends FormExecutor {
 				}
 				$exec->addJsCode($changedAutoSaveFieldJsCode);
 			}
+		}
+		
+		//adds WigiiHelp icon in dialog title
+		if($state!="addMessageToNotification"){
+			$this->bindWigiiHelpService($p, $exec);
 		}
 	}
 }

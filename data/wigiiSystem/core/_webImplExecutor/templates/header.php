@@ -19,9 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 23 juil. 09
- * by LWR
+/**
+ * Main Wigii page structure
+ * Created on 23 juil. 09 by LWR
+ * Modified by CWE on November 23rd 2015: added initialization of Wigii JS client and support of Wigii Light Client.
  */
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start header.php"] = microtime(true);
 $this->executionSink()->publishStartOperation("TEMPLATE header.php");
@@ -53,7 +54,7 @@ if($exec->getCrtAction()=="element"){
 <?
 if(defined("PREVENT_INDEXING") && PREVENT_INDEXING){
 ?>
-<meta name="robots" content="none,noindex" />
+<meta name="robots" content="noindex" />
 <?
 }
 ?>
@@ -152,7 +153,7 @@ DIALOG_doYouWantToMoveThisFolderUnderParent = '<?=$transS->h($p, "doYouWantToMov
 DIALOG_doYouWantToMoveOrKeepInBoth = '<?=$transS->h($p, "doYouWantToMoveOrKeepInBoth");?>';
 DIALOG_move = '<?=$transS->h($p, "move");?>';
 DIALOG_keepInBoth = '<?=$transS->h($p, "keepInBoth");?>';
-
+wigii().initContext();
 <?
 //Browser detection, at each refresh, the browser and window height is refreshed
 ?>
@@ -162,6 +163,32 @@ else if(jQuery.browser.mozilla) browserName = "mozilla";
 else if(jQuery.browser.safari) browserName = "safari";
 else browserName = "other";
 <?
+
+// Wigii light client
+if($exec->getCrtAction()=="c") {
+?>
+</script>
+<?
+if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".js")){
+?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js" ></script><?
+}
+if(file_exists(CLIENT_WEB_PATH."CKTemplates.js.php")){
+?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js.php" ></script><?
+} else if(file_exists(CLIENT_WEB_PATH."CKTemplates.js")){
+?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js" ></script><?
+}
+flush();
+$companyColor = $configS->getParameter($p, null, "companyColor");
+$rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
+if(!$companyColor) $rCompanyColor = "#3E4552";
+if(!$rCompanyColor) $rCompanyColor = "#fff";
+?>
+<div id="mainDiv">
+<?
+}
+
+// Wigii default client
+else {
 //translation of v3 url type to v4
 ?>
 lookupForItem = window.location.href.match(/\/do\/\D*\/(\D*)\/(\D*)\/element\/detail\/([0-9]+)/);
@@ -336,6 +363,6 @@ $('#systemConsole').css('display','none').resizable({handles:'e,w',stop:function
 <div id="updateRequests"></div>
 <div id="mainDiv">
 <?
-
+}
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end header.php"] = microtime(true);
 $this->executionSink()->publishEndOperation("TEMPLATE header.php");

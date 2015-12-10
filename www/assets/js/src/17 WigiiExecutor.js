@@ -221,6 +221,7 @@ function invalidModuleViewCache(){
 
 __cache = new Object();
 __cacheJS = new Object();
+__cacheKeep = new Object();
 //checkAnyOpenItem checks that in the whole dom there is no form.
 //other wise the check is done only within the id
 function updateThroughCache(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCache, noOpenItemCheck){
@@ -339,11 +340,24 @@ function invalidCache(id, lookupPath, isRecursif){
 		__cacheJS[id] = new Object();
 	}
 	if(lookupPath){
-		__cache[id][lookupPath] = null;
-		__cacheJS[id][lookupPath] = null;
+		if(!__cacheKeep[lookupPath]) {
+			__cache[id][lookupPath] = null;
+			__cacheJS[id][lookupPath] = null;
+		}
 	} else {
-		__cache[id] = null;
-		__cacheJS[id] = null;
+		var c = __cache[id];
+		var newC = new Object();
+		for(var cId in c) {
+			if(__cacheKeep[cId]) newC[cId] = c[cId];			
+		}
+		__cache[id] = newC;
+		
+		c = __cacheJS[id];
+		newC = new Object();
+		for(var cId in c) {
+			if(__cacheKeep[cId]) newC[cId] = c[cId];			
+		}
+		__cacheJS[id] = newC;
 	}
 
 	if(!isRecursif){
@@ -362,7 +376,12 @@ function invalidCache(id, lookupPath, isRecursif){
 		}
 	}
 }
-
+function keepInCache(id) {
+	__cacheKeep[id] = id;
+}
+function clearKeepInCache() {
+	__cacheKeep = new Object();
+}
 var crtNavigateCacheKey = null;
 function setModuleViewKeyCacheForNavigate(key) {
 	setJSCache('navigationCache', crtNavigateCacheKey, key);
@@ -478,7 +497,9 @@ function parseUpdateResult(tabReq, textStatus){
 
 	//setVis("busyDiv", false);
 	$("#formProgressBar").hide();
-
+	// Wigii 4.324 R1790: transfers parseUpdateResult algorithm to wigii() JS client.
+	wigii().parseUpdateResult(tabReq,textStatus);
+	/*
 	tabReq = tabReq.split(EXEC_answerRequestSeparator);
 
 	var tabLength = tabReq.length;
@@ -496,10 +517,14 @@ function parseUpdateResult(tabReq, textStatus){
 						tempCode = null;
 					}
 					if(request[1] == "foundInCache") {
-						if(lookupPaths["foundInCache"]) setJSCache(lookupPaths["foundInCache"][1], lookupPaths["foundInCache"][0], tempCode);
+						if(lookupPaths["foundInCache"]) {
+							setJSCache(lookupPaths["foundInCache"][1], lookupPaths["foundInCache"][0], tempCode);
+							keepInCache(lookupPaths["foundInCache"][0]);
+						}
 					}
 					else {
 						setJSCache(request[1], lookupPaths[request[1]], tempCode);
+						keepInCache(lookupPaths[request[1]]);
 					}
 				} else {
 					tempCode = decHTML(request[1]);
@@ -550,6 +575,7 @@ function parseUpdateResult(tabReq, textStatus){
 							}
 						} else {
 							setCache(request[0], request[1], request[2]);
+							keepInCache(request[1]);
 							lookupPaths[request[0]] = request[1];
 						}
 					} else {
@@ -565,6 +591,8 @@ function parseUpdateResult(tabReq, textStatus){
 			}
 		}
 	}
+	clearKeepInCache();
+	*/
 	setVis("busyDiv", false);
 }
 

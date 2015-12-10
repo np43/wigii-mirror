@@ -19,13 +19,30 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 3 déc. 09
- * by LWR
+/**
+ * Renders a Record for detail view (read).
+ * Created on 3 déc. 09 by LWR
  */
-
 class DetailRenderer extends FieldRenderer implements FieldListVisitor {
-
+	private $_debugLogger;
+	private $_executionSink;
+	private function debugLogger()
+	{
+		if(!isset($this->_debugLogger))
+		{
+			$this->_debugLogger = DebugLogger::getInstance("DetailRenderer");
+		}
+		return $this->_debugLogger;
+	}
+	private function executionSink()
+	{
+		if(!isset($this->_executionSink))
+		{
+			$this->_executionSink = ExecutionSink::getInstance("DetailRenderer");
+		}
+		return $this->_executionSink;
+	}
+	
 	private $templateRecordManager;
 	protected function setTemplateRecordManager($templateRecordManager){ $this->templateRecordManager = $templateRecordManager; }
 	protected function getTemplateRecordManager(){ return $this->templateRecordManager; }
@@ -54,6 +71,24 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 	}
 	public function setP($p){ $this->p = $p; return $this; }
 
+	private $funcExpEvaluator;
+	/**
+	 * Returns a configured FuncExpEvaluator that can be used to evaluate FuncExps during Field rendering.
+	 * @return FuncExpEvaluator
+	 * @throws FieldRendererException::CONFIGURATION_ERROR in TemplateRecordManager is not injected properly
+	 */
+	protected function getFuncExpEval() {
+		if(!isset($this->funcExpEvaluator)) {
+			$trm = $this->getTemplateRecordManager();
+			if(!isset($trm)) throw new FieldRendererException('TemplateRecordManager has not be injected properly into the FormRenderer',FieldRendererException::CONFIGURATION_ERROR);
+			$this->funcExpEvaluator = $trm->getFuncExpEvaluator($this->getP(),$trm->getRecord());
+		}
+		return $this->funcExpEvaluator;
+	}
+	protected function freeFuncExpEval() {
+		if(isset($this->funcExpEvaluator) && method_exists($this->funcExpEvaluator, 'freeMemory')) $this->funcExpEvaluator->freeMemory();
+	}
+	
 	public static function createInstance($detailId, $templateRecordManager, $totalWidth=null, $labelWidth = null, $visibleLanguage=null){
 		$r = new DetailRenderer();
 		$r->setTemplateRecordManager($templateRecordManager);
@@ -86,6 +121,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 	public function actOnField($field, $dataType){
 		$fieldXml = $field->getXml();
 		$fieldName = $field->getFieldName();
+		$dataTypeName = ($dataType!=null?$dataType->getDataTypeName():null);
 		$rm = $this->getTemplateRecordManager();
 		$p = $this->getP();
 		if($p!=null){
@@ -102,21 +138,21 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 
 		//if no value then do not display, except:
 		//if proof status is Deleted -> show the email field
-		if($dataType!= null && $dataType->getDataTypeName()=="Emails" && $rm->getRecord()->getFieldValue($field->getFieldName(), "proofStatus")==Emails::PROOF_STATUS_DELETED){
+		if($dataTypeName=="Emails" && $rm->getRecord()->getFieldValue($field->getFieldName(), "proofStatus")==Emails::PROOF_STATUS_DELETED){
 			//display the delete sign with unsubscribe info
 		//do an exception for Blobs with isJournal to make the +add button available
-		} else if($dataType!= null && $dataType->getDataTypeName()=="Blobs" && $fieldXml["isJournal"]=="1"){
+		} else if($dataTypeName=="Blobs" && $fieldXml["isJournal"]=="1"){
 			//display the label
 		//always display Links if record is writable
-		} else if($dataType!= null && $dataType->getDataTypeName()=="Links"){
+		} else if($dataTypeName=="Links"){
 			//display the label
 		//always display field if displayEvenIfEmpty
 		} else if($fieldXml["displayEvenIfEmpty"]=="1"){
 			//display the label
 		//prevent empty booleans to be displayed
-		} else if($dataType!= null && $dataType->getDataTypeName()=="Booleans" && $rm->getRecord()->getFieldValue($field->getFieldName(), "value")==false){
+		} else if($dataTypeName=="Booleans" && $rm->getRecord()->getFieldValue($field->getFieldName(), "value")==false){
 			return;
-		} else if($field->getDataType()!= null && !$rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName())){
+		} else if($dataType!= null && !$rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName())){
 			return;
 		}
 
@@ -125,9 +161,8 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		if($fieldXml["allowOnReadOnly"]=="1") $fieldClass .=" allowOnReadOnly ";
 		if($rm->getRecord() instanceof Element && $rm->getRecord()->isState_blocked()) $fieldClass .= " readOnly ";
 		$isTitle = ($fieldXml["displayAsTitle1"]=="1" || $fieldXml["displayAsTitle2"]=="1" || $fieldXml["displayAsTitle3"]=="1");
-		if($isTitle && $field->getDataType()!= null){
-			$dtName = $field->getDataType()->getDataTypeName();
-			if($dtName == "Files" || $dtName == "Urls" || $dtName == "Addresses" || $dtName == "Blobs" || $dtName == "Texts"){
+		if($isTitle && $dataType!= null){
+			if($dataTypeName == "Files" || $dataTypeName == "Urls" || $dataTypeName == "Addresses" || $dataTypeName == "Blobs" || $dataTypeName == "Texts"){
 				$isTitle = false;
 			}
 		}
@@ -140,7 +175,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			//we need to take the getCrtFieldGroup as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique
 			$crtFieldGroupId = $this->getDetailId()."__".$this->getCrtFieldGroup();
 			//check if data in group
-			if($this->isCrtFieldGroupFilled()){
+			if($this->isCrtFieldGroupFilled() || $fieldXml["displayEvenIfEmpty"]=="1"){
 				$rm->addJsCode("" .
 						"$('#".$crtFieldGroupId.">.label').css('cursor','pointer').click(function(){ " .
 						"if($('#".$crtFieldGroupId."_group:visible').length){ " .
@@ -169,7 +204,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		/**
 		 * Exception for Integrated html files with displayContentInDetail
 		 */
-		if($dataType && $dataType->getDataTypeName()=="Files" && $fieldXml["htmlArea"]=="1" && $fieldXml["displayContentInDetail"]=="1"){
+		if($dataType && $dataTypeName=="Files" && $fieldXml["htmlArea"]=="1" && $fieldXml["displayContentInDetail"]=="1"){
 			$rm->displayValue($fieldName, $this->getIsInLineWidth(), $this->getVisibleLanguage());
 			if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
 				$this->updateWidthOnLeaveField($fieldName, $fieldXml);
@@ -179,16 +214,16 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 
 		//field management
 
-		//if we render this area that means fieldGroup is filled
-		$this->setCrtFieldGroupIsFilled();
+		//if we render this area that means fieldGroup is filled (freetexts don't count as filling group)
+		if($dataType && $rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName())) $this->setCrtFieldGroupIsFilled();
 
 		//open field div
 		$style = "width:".$this->getTotalWidth()."px;";
 		if($fieldXml["noMargin"]=="1"){
 			$style .= "margin-right:0px;";
 		}
-		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" >');
-		if($field->getDataType()!=null){
+		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.($dataType!=null?'data-wigii-datatype="'.$dataTypeName.'"':'').' >');
+		if($dataType!=null){
 			$additionalInformations = $rm->getAdditionalinInformation($fieldName);
 			if($additionalInformations) $rm->put('<div class="addinfo ui-corner-all SBIB">'.$additionalInformations.'</div>');
 		}
@@ -197,13 +232,13 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		if($dataType!=null && $fieldXml["noLabel"]!="1"){
 			//20 is the label padding
 			$noPadding = "";
-			if($dataType->getDataTypeName()=="Files"){
+			if($dataTypeName=="Files"){
 				if($fieldXml["displayPreviewOnly"]=="1"){
 					$labelWidth = $this->getIsInLineWidth()-20;
 				} else {
 					$labelWidth = min($this->getLabelWidth()-20, 100-20);
 				}
-			} else if($dataType->getDataTypeName()=="Urls" && $fieldXml["bigLabel"]=="1"){
+			} else if($dataTypeName=="Urls" && $fieldXml["bigLabel"]=="1"){
 				$labelWidth = min($this->getLabelWidth()-20, 100-20);
 			} else if(($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1"){
 				$labelWidth = $this->getIsInLineWidth();
@@ -212,7 +247,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 				$labelWidth = $this->getLabelWidth()-20;
 			}
 			$style = "width:".$labelWidth."px;$noPadding";
-			if($dataType->getDataTypeName()=="Files"){
+			if($dataTypeName=="Files"){
 				$style .= "text-align:center;";
 			}
 			$rm->put('<div class="label" style="'.$style.'" >');
@@ -221,13 +256,13 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		}
 
 		//display value
-		if($dataType && ($dataType->getDataTypeName()=="Files")){
+		if($dataType && ($dataTypeName=="Files")){
 			if($fieldXml["displayPreviewOnly"]=="1"){
 				$valueWidth = $this->getIsInLineWidth();
 			} else {
 				$valueWidth = $this->getIsInLineWidth()-($labelWidth+20);
 			}
-		} else if($dataType && ($dataType->getDataTypeName()=="Urls" && $fieldXml["bigLabel"]=="1")){
+		} else if($dataType && ($dataTypeName=="Urls" && $fieldXml["bigLabel"]=="1")){
 			$valueWidth = $this->getIsInLineWidth()-($labelWidth+20);
 		} else if((($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1") || $dataType==null || $fieldXml["noLabel"] =="1"){
 			$valueWidth = $this->getIsInLineWidth();
@@ -237,11 +272,11 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		$style = "width:".$valueWidth."px;";
 		$class = "";
 		if($dataType!=null){
-			if($dataType->getDataTypeName() == "Blobs" ||
-				$dataType->getDataTypeName() == "Texts"){
+			if($dataTypeName == "Blobs" ||
+				$dataTypeName == "Texts"){
 				$class .= " text ";
 			}
-			if($dataType->getDataTypeName() == "Files"){
+			if($dataTypeName == "Files"){
 				$class .= " file ";
 			}
 			$class = "value ".$class;
@@ -254,14 +289,14 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			}
 		}
 		//for print we don't limit the width to prevent hidding some information
-		if($rm->isForPrint() && $dataType!= null && ($dataType->getDataTypeName()=="Blobs" || ($dataType->getDataTypeName()=="Files" && $fieldXml["htmlArea"] && $fieldXml["displayContentInDetail"]))){
+		if($rm->isForPrint() && $dataType!= null && ($dataTypeName=="Blobs" || ($dataTypeName=="Files" && $fieldXml["htmlArea"] && $fieldXml["displayContentInDetail"]))){
 			$style = preg_replace('/width:(.*)px/', "", $style);
 			$valueWidth =null;
 		}
 		$rm->put('<div class="'.$class.'" style="'.$style.'" >');
-		if($dataType!= null && $dataType->getDataTypeName()!="Links" &&
+		if($dataType!= null && $dataTypeName!="Links" &&
 			!$rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName()) &&
-			!($dataType->getDataTypeName()=="Emails" && $rm->getRecord()->getFieldValue($field->getFieldName(), "proofStatus")==Emails::PROOF_STATUS_DELETED)
+			!($dataTypeName=="Emails" && $rm->getRecord()->getFieldValue($field->getFieldName(), "proofStatus")==Emails::PROOF_STATUS_DELETED)
 			){
 			$rm->displayEvenIfEmpty($fieldName, $valueWidth, $this->getVisibleLanguage());
 		} else {
@@ -270,25 +305,40 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		$rm->put('</div>');
 
 		// for Links datatype: if element is not writable, then hides the 'Add' button
-		if($dataType && $dataType->getDataTypeName()=="Links") {
+		if($dataType && $dataTypeName=="Links") {
 			if(!$this->getRecordIsWritable()){
 				//$this->addJsCodeAfterShow("$('#".$this->getDetailId()." .addNewSubElement').removeClass('Green').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
 				$this->addJsCodeAfterShow("$('#".$this->getDetailId()."').find('.addNewSubElement, td.edit, td.delete, td.restore').removeClass('Green edit delete restore').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
 			}
 		}
 
+		// adds any dynamically generated hidden divs
+		if((string)$fieldXml["divExp"]!=null) $this->resolveDivExp((string)$fieldXml["divExp"]);
+		if((string)$fieldXml["divInDetailExp"]!=null) $this->resolveDivExp((string)$fieldXml["divInDetailExp"]);
+		
 		//add any JsCode if defined:
 		if((string)$fieldXml["jsCode"]!=null){
 			$this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCode"]));
 		}
 		if((string)$fieldXml["jsCodeInDetail"]!=null){
 			$jsCode = str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCodeInDetail"]);
-			if($dataType && ($dataType->getDataTypeName()=="Attributs")) {
+			if($dataType && ($dataTypeName=="Attributs")) {
 				$jsCode = str_replace('$$attrValue$$', $rm->getRecord()->getFieldValue($field->getFieldName()), $jsCode);
 			}
 			$this->addJsCodeAfterShow($jsCode);
 		}
-
+		//add any dynamically generated JsCode if defined:
+		if((string)$fieldXml["jsCodeExp"]!=null){
+			$this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCodeExp"]));
+		}
+		if((string)$fieldXml["jsCodeInDetailExp"]!=null){
+			$jsCode = str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCodeInDetailExp"]);
+			if($dataType && ($dataTypeName=="Attributs")) {
+				$jsCode = str_replace('$$attrValue$$', $rm->getRecord()->getFieldValue($field->getFieldName()), $jsCode);
+			}
+			$this->addJsCodeAfterShow($jsCode);
+		}
+		
 		//close the field div
 		$rm->put('</div>');
 
@@ -302,8 +352,35 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		$this->setRecordIsWritable(null);
 		//reset the previewCrtHeight for next use
 		$rm->addJsCode("previewCrtHeight = 10;");
+		$this->freeFuncExpEval();
 	}
 
+	protected function resolveDivExp($divExp) {
+		if(empty($divExp)) return;
+		//$this->debugLogger()->logBeginOperation('resolveDivExp');
+		$divExp = str2fx($divExp);
+		if($divExp) {
+			$evalFx = $this->getFuncExpEval();
+			$divArray = $evalFx->evaluateFuncExp($divExp,$this);
+			if(is_array($divArray)) {
+				$rm = $this->getTemplateRecordManager();
+				foreach($divArray as $className=>$htmlContent) {
+					// extracts html attributes
+					$htmlAttributes = '';
+					if(is_array($htmlContent)) {
+						foreach($htmlContent as $attrName=>$attrVal) {
+							if($attrName!='content') $htmlAttributes .= ' '.$attrName.'="'.$attrVal.'"';
+						}
+						$htmlContent=$htmlContent['content'];
+					}
+					$rm->put('<div class="'.$className.'" style="display:none"'.$htmlAttributes.'>');
+					$rm->put($htmlContent);
+					$rm->put('</div>');
+				}
+			}
+		}
+		//$this->debugLogger()->logEndOperation('resolveDivExp');
+	}
 }
 
 

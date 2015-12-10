@@ -19,14 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 24 juil. 09
- * by LWR
- */
-
 /**
- * this service allows you to manage a stack of request and go through those request
- * by loading the context of this request in this execution service
+ * This service manages a queue of http requests following the Wigii communication protocol.
+ * It allows to iterate through the requests and load the request context in some public accessors.
+ * Created on 24 juil. 09 by LWR
  */
 interface ExecutionService {
 

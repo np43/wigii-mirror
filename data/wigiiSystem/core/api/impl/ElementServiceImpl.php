@@ -5746,7 +5746,7 @@ where $subElementId and EE.linkType = 'subitem' order by EE.id_elements_elements
 		$pRightsOnRoot = $rootElementP->getRights();
 		//check read rights on root element
 		if($pRightsOnRoot == null){
-			$autoS->fail($principal, 'has no right to get sub elements of element '.$rootElementP->getId());
+			$this->getAuthorizationService()->fail($principal, 'has no right to get sub elements of element '.$rootElementP->getId());
 		}
 		return $pRightsOnRoot;
 	}
