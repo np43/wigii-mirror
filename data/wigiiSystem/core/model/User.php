@@ -22,8 +22,6 @@
 /* A wigii User
  * Created by CWE on 31 mai 09
  */
-if(!defined('USERNAME_minLength')) define('USERNAME_minLength', 3);
-if(!defined('USERNAME_maxLength')) define('USERNAME_maxLength', 64);
 class User extends WigiiNamespaceEntity implements SysInformation
 {
 	private $username;
@@ -130,6 +128,9 @@ class User extends WigiiNamespaceEntity implements SysInformation
 
 	public function setUsername($var)
 	{
+		// trim username
+		$var = trim($var);
+		
 		$tempUsername = array();
 		$allow = '[_a-z0-9-]';
 		//var2 is var without the @domain.xx if exist)
@@ -139,7 +140,9 @@ class User extends WigiiNamespaceEntity implements SysInformation
 			$var2 = $var;
 		}
 		unset($tempUsername);
-		ArgValidator::assertNoSpecialCharsString("username $var is invalid. Only alphanumeric characters and _.- are allowed. Min length:".USERNAME_minLength." Max lenght:".USERNAME_maxLength,$var2,
+		if(!defined('USERNAME_minLength')) define('USERNAME_minLength', 3);
+		if(!defined('USERNAME_maxLength')) define('USERNAME_maxLength', 64);
+		ArgValidator::assertNoSpecialCharsString("username $var is invalid. Only alphanumeric characters and _.- are allowed. Min length:".USERNAME_minLength." Max length:".USERNAME_maxLength,$var2,
 			USERNAME_minLength, USERNAME_maxLength, false, UserAdminServiceException::INVALID_USERNAME);
 		$this->username = $this->formatValue($var);
 	}

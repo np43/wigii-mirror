@@ -1,0 +1,108 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- 
+/**
+ *  This file is part of Wigii.
+ *
+ *  Wigii is free software: you can redistribute it and\/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
+ *  
+ *  @copyright  Copyright (c) 2015 Wigii 		 https://github.com/wigii/wigii    http://www.wigii.org/system/
+ *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ */
+-->
+<head>
+<meta name="Copyright" content="Wigii" />
+<meta name="License" content="GNU GPL 3.0" />
+<meta name="Generator" content="Wigii" />
+<meta name="Description" content="Wigii is a web based system allowing management of any kind of data (contact, document, calendar, and any custom types). Find out project page on: http://code.google.com/p/wigii/" />
+<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+<meta content="width=device-width, minimum-scale=1, maximum-scale=1" name="viewport" />
+<title>Wigii Fx Client</title>
+<script src="http://localhost/portfolio/assets/js/wigii_1803.js" type="text/javascript"></script>
+<link media="all" type="text/css" href="http://localhost/portfolio/assets/css/wigii_1803.css" rel="stylesheet">
+<link media="all" type="text/css" href="http://localhost/portfolio/assets/css/theme.css.php" rel="stylesheet">
+<style>
+body {
+	padding:0px;
+	margin:0px;
+	font-family:Arial;
+}
+#mainDiv {
+	margin: 20px;
+}
+</style>
+</head>
+<body>
+<script type="text/javascript">
+/**
+ * Wigii Fx client plugin
+ * Created by CWE on January 7th 2016
+ * 
+ * @param wigiiFacade wigii the Wigii JS client facade function (defined in /assets/js/wigii_XXXX.js)
+ * @param JQuery $ depends on JQuery 1.8.x
+ */
+(function(wigii,$,SITE_ROOT) {
+	var wigiiApi = wigii();
+	if(!wigiiApi.SITE_ROOT) wigiiApi.SITE_ROOT = SITE_ROOT;
+	
+	/**
+	 * Wigii Fx Client class
+	 */
+	var WigiiFxClient = function() {
+		var wigiiFxC = this;
+		wigiiFxC.className = 'WigiiFxClient';
+		wigiiFxC.ctxKey = wigiiApi.ctxKey+'_'+wigiiFxC.className;
+		
+		/**
+		 * Runs a FuncExp on server side and shows the result.
+		 * The FuncExp is given by the user into a TextArea
+		 *@param String selector JQuery selector path to the text area containing the FuncExp
+		 */
+		wigiiFxC.userRun = function(selector) {
+			if(selector) wigiiFxC.run($(selector).val());
+		};
+		/**
+		 * Runs a FuncExp on server side and shows the result
+		 *@param String exp the FuncExp in a String format
+		 */
+		wigiiFxC.run = function(exp) {
+			if(!exp) return;
+			try {
+				var query = wigiiApi.SITE_ROOT+'NoWigiiNamespace/NoModule/fx/'+$.base64EncodeUrl(exp);				
+				var iframe = '<iframe src="'+query+'" style="width:1200px;height:800px;"></iframe>';
+				// opens a popup with an iframe requesting the query
+				wigiiApi.getHelpService().showFloatingHelp($('#mainDiv'),undefined,iframe,
+				{localContent:true, position:'center',width:1230,height:850});
+			}
+			catch(e) {wigiiApi.publishException(e);}
+		};
+		
+		
+	};
+	// registers the WigiiFxClient plugin into the Wigii JS client
+	if(!wigiiApi['getFxC']) wigiiApi.getFxC = function() {
+		if(!wigiiApi['wigiiFxClientInstance']) {
+			wigiiApi.wigiiFxClientInstance = new WigiiFxClient();
+		}
+		return wigiiApi.wigiiFxClientInstance;
+	};	
+})(wigii,jQuery,"http://localhost/portfolio/")
+</script>
+<div id="mainDiv">
+	<p>Enter the FuncExp and press on the run button</p>
+	<textarea id="fxInput" style="width:300px;height:200px"></textarea>
+	<button id="fxRun" type="button" onclick="wigii().getFxC().userRun('#fxInput')">Run</button>
+</div>
+</body>
+</html>

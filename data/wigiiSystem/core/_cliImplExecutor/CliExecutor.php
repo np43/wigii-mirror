@@ -19,14 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 19 march 2013
- * by CWE
- */
-
 /**
- * this class is the main service which will do the glue between the CLI and the API
- * it interprets the semantic of the command line interpreter
+ * This class is the main service which will link the CLI and the API.
+ * It interprets the semantic of the command line interpreter.
+ * Created on 19 march 2013 by CWE
  */
 class CliExecutor {	
 	// singleton implementation
@@ -147,6 +143,7 @@ class CliExecutor {
 	}
 	/**
 	 * Returns the current principal executing the command line
+	 * @return Principal 
 	 */
 	public function getCurrentPrincipal() {
 		return $this->principal;

@@ -222,4 +222,68 @@ class WplToolbox
 		}
 		return $returnValue;
 	}
+	
+	/**
+	 * Serializes a given stdClass or array into an xml string
+	 * @param Principal current principal executing the process
+	 * @param String $rootNodeName the root node name of the resulting xml
+	 * @param StdClass|Array $stdClass the stdClass instance or array to serialize
+	 * @return String
+	 */
+	public function stdClass2Xml($principal,$rootNodeName,$stdClass) {
+		if(is_null($stdClass)) $stdClass = array();
+		if(is_array($stdClass)) $stdClass = (object)$stdClass;
+		return $this->getDataFlowService()->processDumpableObject($principal, array2df($stdClass), dfasl(
+			dfas('WplXmlWriterDFA', 'setRootElementName', $rootNodeName, 'setEntityType', WplXmlWriterDFA::ENTITY_TYPE_STDCLASS),
+			dfas('StringBufferDFA')
+		));
+	}
+	
+	/**
+	 * Serializes a given WplObjectList into an xml string
+	 * @param Principal $principal current principal executing the process
+	 * @param String $rootNodeName the root node name of the resulting xml
+	 * @param WplObjectList $wplObjectList the WplObjectList instance to serialize
+	 * @return String
+	 */
+	public function wplObjectList2Xml($principal,$rootNodeName,$wplObjectList) {
+		if(empty($rootNodeName)) throw new DataFlowServiceException('rootNodeName cannot be null',DataFlowServiceException::INVALID_ARGUMENT);
+		$returnValue = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'."\n";
+		$returnValue .= '<'.$rootNodeName.'>'."\n";
+		if(isset($wplObjectList) && !$wplObjectList->isEmpty()) {
+			$nodeName = $wplObjectList->getWplObjectName();
+			foreach($wplObjectList->getListIterator() as $obj) {
+				// serializes object to xml
+				if($obj instanceof stdClass || is_array($obj)) {
+					$nodeXml = $this->stdClass2Xml($principal, $nodeName, $obj);
+				}
+				elseif($obj instanceof WplObjectList) {
+					$nodeXml = $this->wplObjectList2Xml($principal, $nodeName, $obj);
+				}
+				elseif($obj instanceof Element || $obj instanceof ElementP || $obj instanceof Record) {
+					$obj = $obj->getDbEntity();
+					$nodeXml = $this->record2xml($principal, $obj->getFieldList(), $obj->getWigiiBag(), false, null, $obj->getId());
+				}
+				elseif(isset($obj)) throw new DataFlowServiceException((is_object($obj)?"objects of class '".get_class($obj)."' cannot be serialized to xml using wplObjectList2Xml method":'scalar data cannot be serialized to xml using wplObjectList2Xml method'), DataFlowServiceException::INVALID_ARGUMENT);
+				else $nodeXml = '';
+				// removes xml header if present
+				if(!empty($nodeXml)) {
+					$nodeXml = preg_replace('/\<\?xml.*?\?\>\s/', '',$nodeXml);
+				}
+				$returnValue .= $nodeXml;
+			}
+		}
+		$returnValue .= '</'.$rootNodeName.'>';
+		return $returnValue;
+	}
+	
+	/**
+	 * Creates a new empty instance of a WplObjectList
+	 * @param String $wplObjectName optional naming of the object stored into the list
+	 * @return WplObjectList
+	 */
+	public function createWplObjectList($wplObjectName=null) {
+		//$this->debugLogger()->write("creating WplObjectList instance for ".$wplObjectName);
+		return WplObjectList::createInstance($wplObjectName);
+	}
 }

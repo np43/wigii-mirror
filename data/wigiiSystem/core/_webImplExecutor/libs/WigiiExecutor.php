@@ -71,6 +71,20 @@ class WigiiExecutor extends WigiiCoreExecutor {
 		return $returnValue;
 	}
 	
+	// Specialization
+	
+	protected function shouldByPassHeader($action) {
+		switch ($action) {
+			case 'fx': return true;
+			default: return parent::shouldByPassHeader($action);
+		}
+	}
+	protected function shouldByPassFooter($action) {
+		switch ($action) {
+			case 'fx': return true;
+			default: return parent::shouldByPassFooter($action);
+		}
+	}
 	
 	// WebExecutor provider
 	
@@ -82,6 +96,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 			switch($action) {
 				case "c": $returnValue = 'LightClientFormExecutor'; break;
 				case "help": $returnValue = 'HelpServiceFormExecutor'; break;
+				case "fx": $returnValue = 'FxWebServiceFormExecutor'; break;
 				default: $returnValue = null;
 			}
 		}

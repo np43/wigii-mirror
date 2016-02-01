@@ -171,6 +171,36 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $this->gAS;
 	}
 	
+	private $userAS;
+	public function setUserAdminService($userAdminService)
+	{
+		$this->userAS = $userAdminService;
+	}
+	protected function getUserAdminService()
+	{
+		// autowired
+		if(!isset($this->userAS))
+		{
+			$this->userAS = ServiceProvider::getUserAdminService();
+		}
+		return $this->userAS;
+	}
+	
+	private $eltS;
+	public function setElementService($elementService)
+	{
+		$this->eltS = $elementService;
+	}
+	protected function getElementService()
+	{
+		// autowired
+		if(!isset($this->eltS))
+		{
+			$this->eltS = ServiceProvider::getElementService();
+		}
+		return $this->eltS;
+	}
+	
 	// FieldSelector builder
 
 	/**
@@ -306,7 +336,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 */
 	public function cs_g($args) {
 		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs < 1) throw new FuncExpEvalException('The cs_g function takes or one argument the group ID', FuncExpEvalException::INVALID_ARGUMENT);
+		if($nArgs < 1) throw new FuncExpEvalException('The cs_g function takes one argument the group ID', FuncExpEvalException::INVALID_ARGUMENT);
 		$groupId = $this->evaluateArg($args[0]);
 		return ServiceProvider::getWigiiBPL()->buildConfigSelectorForGroup($this->getPrincipal(), $groupId);
 	}
@@ -1025,25 +1055,31 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		else $lf = lf($fsl);
 
 		$this->debugLogger()->write("cfgAttrDimension cache key = $cacheKey");
-		$returnValue = $this->getDataFlowService()->processDataSource($p,
-				elementPList(lxInGR($selector), $lf),
-				dfasl(
-						dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", fx('cfgAttribut',
-								fs('value'),
-								fx('newMap', 
-										'idGroup', fs('idGroup'), 
-										'email', fs('email'), 
-										'checked', fx('ctlIf', fs('checked'), '1', '0'),
-										'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')
-								),
-								fs('label'))),
-						dfas("FilterDuplicatesAndSortDFA",
-								"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
-								"setObjectSortByMethod", CallableObject::createInstance('cfgAttributObjectSortyByMethod', $this),
-								"setSortOrder", $sortOrder
-						),
-						dfas("CfgAttribut2XmlDFA")
-				), true, null, 'cfgAttrDimension('.md5($cacheKey).')');
+		try {
+			$returnValue = $this->getDataFlowService()->processDataSource($p,
+					elementPList(lxInGR($selector), $lf),
+					dfasl(
+							dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", fx('cfgAttribut',
+									fs('value'),
+									fx('newMap', 
+											'idGroup', fs('idGroup'), 
+											'email', fs('email'), 
+											'checked', fx('ctlIf', fs('checked'), '1', '0'),
+											'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')
+									),
+									fs('label'))),
+							dfas("FilterDuplicatesAndSortDFA",
+									"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
+									"setObjectSortByMethod", CallableObject::createInstance('cfgAttributObjectSortyByMethod', $this),
+									"setSortOrder", $sortOrder
+							),
+							dfas("CfgAttribut2XmlDFA")
+					), true, null, 'cfgAttrDimension('.md5($cacheKey).')');
+		}
+		catch(Exception $e) {
+			$message="Problem when retrieving dimension ".$fxParser->funcExpToString($args[0]).".\nCheck that dimension exist in ". $setupNS->getWigiiNamespaceName()." namespace.\n[technical error is: ".$e->getCode().' '.$e->getMessage()."]";
+			throw new FuncExpEvalException($message,FuncExpEvalException::CONFIGURATION_ERROR);
+		}
 		$p->bindToWigiiNamespace($origNS);
 		return $returnValue;
 	}
@@ -1161,29 +1197,35 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		else $lf = lf($fsl);
 
 		$this->debugLogger()->write("cfgAttrFindableDimension cache key = $cacheKey");
-		$returnValue = $this->getDataFlowService()->processDataSource($p,
-				elementPList(lxInGR($selector), $lf),
-				dfasl(
-						dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", fx('cfgAttribut',
-								fs('value'),
-								fx('newMap', 
-										'idGroup', fs('idGroup'), 
-										'email', fs('email'), 
-										'checked', fx('ctlIf', fs('checked'), '1', '0'),
-										'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')
-								),
-								fs('label'))),
-						dfas("FilterDuplicatesAndSortDFA",
-								"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
-								"setObjectSortByMethod", CallableObject::createInstance('cfgAttributObjectSortyByMethod', $this),
-								"setSortOrder", $sortOrder
-						),
-						dfas("CallbackDFA", 
-								'setProcessDataChunkCallback', CallableObject::createInstance('cfgAttrFindableDimension_LinkBackMethod', $this),
-								'initializeContext', array('url'=>"find/", 'query'=>base64url_encode($elementPListFx), 'keyField'=>$keyField)
-						),
-						dfas("CfgAttribut2XmlDFA")
-				), true, null, 'cfgAttrDimension('.md5($cacheKey).')');
+		try {
+			$returnValue = $this->getDataFlowService()->processDataSource($p,
+					elementPList(lxInGR($selector), $lf),
+					dfasl(
+							dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", fx('cfgAttribut',
+									fs('value'),
+									fx('newMap', 
+											'idGroup', fs('idGroup'), 
+											'email', fs('email'), 
+											'checked', fx('ctlIf', fs('checked'), '1', '0'),
+											'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')
+									),
+									fs('label'))),
+							dfas("FilterDuplicatesAndSortDFA",
+									"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
+									"setObjectSortByMethod", CallableObject::createInstance('cfgAttributObjectSortyByMethod', $this),
+									"setSortOrder", $sortOrder
+							),
+							dfas("CallbackDFA", 
+									'setProcessDataChunkCallback', CallableObject::createInstance('cfgAttrFindableDimension_LinkBackMethod', $this),
+									'initializeContext', array('url'=>"find/", 'query'=>base64url_encode($elementPListFx), 'keyField'=>$keyField)
+							),
+							dfas("CfgAttribut2XmlDFA")
+					), true, null, 'cfgAttrDimension('.md5($cacheKey).')');
+		}
+		catch(Exception $e) {
+			$message="Problem when retrieving dimension ".$fxParser->funcExpToString($args[0]).".\nCheck that dimension exist in ". $setupNS->getWigiiNamespaceName()." namespace.\n[technical error is: ".$e->getCode().' '.$e->getMessage()."]";
+			throw new FuncExpEvalException($message,FuncExpEvalException::CONFIGURATION_ERROR);
+		}
 		$p->bindToWigiiNamespace($origNS);
 		$this->debugLogger()->logEndOperation('cfgAttrFindableDimension');
 		return $returnValue;
@@ -1453,6 +1495,40 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $element->getAttribute($fse);
 	}
 	
+	// Selectors
+	
+	/**
+	 * Counts the number of elements matching a FieldSelector LogExp into a given search space
+	 * FuncExp signature : <code>countElements(logExp=null,groupId=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) logExp: LogExp. Evaluates to FieldSelector LogExp used to filter the Elements to count.
+	 * - Arg(1) groupId: Int. The ID of the Group from which to search for Elements (includes group and subgroups). If not defined, takes current group.	 
+	 * @return Int the number of matching elements or 0 if none.
+	 */
+	public function countElements($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$logExp=null;
+		if($nArgs>0) $logExp=$this->evaluateArg($args[0]);
+		if($nArgs>1) $groupId=$this->evaluateArg($args[1]);
+		else $groupId = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'id'));
+		
+		$returnValue = $this->getElementService()->countSelectedElementsInGroups($this->getPrincipal(), lxInGR(lxEq(fs('id'),$groupId)), (isset($logExp)?lf(null,$logExp):null));
+		if($returnValue>0) return $returnValue;
+		else return 0;
+	}
+	
+	/**
+	 * Checks if some elements matching a FieldSelector LogExp into a given search space exist
+	 * FuncExp signature : <code>elementExists(logExp=null,groupId=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) logExp: LogExp. Evaluates to FieldSelector LogExp used to filter the Elements to check for existance.
+	 * - Arg(1) groupId: Int. The ID of the Group from which to search for Elements (includes group and subgroups). If not defined, takes current group.
+	 * @return Boolean true if at least one element matches the criterias, else false.
+	 */
+	public function elementExists($args) {
+		return ($this->evaluateFuncExp(fx('countElements',$args),$this)>0);
+	}
+	
 	// Wigii Administration
 	
 	/**
@@ -1584,4 +1660,64 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		}	
 		return $returnValue;
 	}	
+	
+	/**
+	 * Logs into the system given a username and password. 
+	 * If username changes, then first logouts and then login with new user. 
+	 * FuncExp signature : <code>sysLogin(username,password)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) username: String. The name of the user login in
+	 * - Arg(1) password: String. The user password to check against for authentication (full password).
+	 * Postcondition: if login is successful then FuncExpVM principal is changed.
+	 * @return boolean true if user has successfully logged in, false if user was already logged in and no change, exception if login is not successful.
+	 * @throws AuthenticationException in case of login error.
+	 */
+	public function sysLogin($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<2) throw new FuncExpEvalException('sysLogin takes two arguments: the username and the password', FuncExpEvalException::INVALID_ARGUMENT);
+		$username = $this->evaluateArg($args[0]);
+		$password = $this->evaluateArg($args[1]);
+		if(empty($username)) throw new FuncExpEvalException('username cannot be null', FuncExpEvalException::INVALID_ARGUMENT);
+		$currentPrincipal = $this->getPrincipal();
+		// if username changes, then logout-login 
+		if($currentPrincipal->getRealUsername() != $username) {
+			$authS = $this->getAuthenticationService();
+			// logout only if not MinimalPrincipal
+			if(!$authS->isMainPrincipalMinimal()) $authS->logout();
+			// login
+			$currentPrincipal = $authS->login($username, $password, $currentPrincipal->getWigiiNamespace()->getClient()->getClientName());
+			// password expiration check
+			if ($currentPrincipal->passwordExpired()) {
+				if ($currentPrincipal->canModifyRealUserPassword()) {
+					throw new AuthenticationServiceException($currentPrincipal->getUserlabel() . " password is expired.", AuthenticationServiceException :: EXPIRED_PASSWORD);
+				} else {
+					throw new AuthenticationServiceException($currentPrincipal->getUserlabel() . " user is expired.", AuthenticationServiceException :: EXPIRED_PRINCIPAL);
+				}
+			}
+			// calculates merged roles
+			$this->getUserAdminService()->calculateAllMergedRoles($currentPrincipal);
+			// refetches all roles
+			$currentPrincipal->refetchAllRoles();
+			// changes FuncExpVM principal
+			$this->getFuncExpVM()->setPrincipal($currentPrincipal);
+			return true;
+		}
+		else return false;
+	}
+	
+	/**
+	 * Logs out from the system.
+	 * FuncExp signature : <code>sysLogout()</code>
+	 * @return boolean true if logout is successful, false if no user was currently logged in, exception if logout is not successful.
+	 */
+	public function sysLogout($args) {
+		$authS = $this->getAuthenticationService();
+		if(!$authS->isMainPrincipalMinimal()) {
+			$authS->logout();
+			// changes FuncExpVM principal
+			$this->getFuncExpVM()->setPrincipal($authS->getMainPrincipal());
+			return true;
+		}
+		else return false;
+	}
 }

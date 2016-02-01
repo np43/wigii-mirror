@@ -213,9 +213,14 @@ function wigii_autoload($class_name) {
 				$filename = ADDONS_PATH."CampaignMonitor/$class_name.php";
 				$ok = file_exists($filename);
 			}
-			// addon: Geometry
+			// addon: Cresus
 			if (!$ok) {
-				$filename = ADDONS_PATH."Geometry/$class_name.php";
+				$filename = ADDONS_PATH."Cresus/$class_name.php";
+				$ok = file_exists($filename);
+			}
+			// addon: Excel
+			if (!$ok) {
+				$filename = ADDONS_PATH."Excel/$class_name.php";
 				$ok = file_exists($filename);
 			}
 		}

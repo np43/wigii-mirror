@@ -75,7 +75,7 @@ class Module extends Model
 		return $this->moduleName == Module::HELP_MODULE;
 	}
 	public function isUserModule(){
-		return !($this->isAdminModule() || $this->isHelpModule() || $this->isHelpModule());
+		return !($this->isAdminModule() || $this->isHomeModule() || $this->isHelpModule() || $this->moduleName==self::EMPTY_MODULE_NAME);
 	}
 }
 

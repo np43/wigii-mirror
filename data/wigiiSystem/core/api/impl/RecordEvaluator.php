@@ -302,7 +302,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		// if isset FuncExp VM and caller is not himself,
 		// then delegates evaluation to FuncExp VM
 		if(isset($this->funcExpVM) && $this->funcExpVM !== $caller) return $this->funcExpVM->evaluateFuncExp($funcExp);
-		elseif(is_null($caller) && isset($this->callingFuncExpEvaluator)) return $this->callingFuncExpEvaluator->evaluateFuncExp($funcExp);
+		elseif(is_null($caller) && isset($this->callingFuncExpEvaluator) && $this->callingFuncExpEvaluator!==$this) return $this->callingFuncExpEvaluator->evaluateFuncExp($funcExp);
 		else {
 			if($caller instanceof FuncExpEvaluator) $this->callingFuncExpEvaluator = $caller;
 			if($funcExp instanceof FuncExp) {
@@ -929,6 +929,11 @@ class RecordEvaluator implements FuncExpEvaluator
 		}
 		else $strict = false;
 		if($strict) return is_null($value);
+		elseif(is_array($value)) {
+			if(empty($value)) return true;
+			elseif(count($value)==1 && $value['']==='') return true;
+			else return false;
+		}
 		else return empty($value);
 	}
 	/**
@@ -948,7 +953,12 @@ class RecordEvaluator implements FuncExpEvaluator
 		}
 		else $strict = false;
 		if($strict) return isset($value);
-		else return !empty($value);
+		elseif(is_array($value)) {
+			if(empty($value)) return false;
+			elseif(count($value)==1 && $value['']==='') return false;
+			else return true;
+		}
+		else return !empty($value);	
 	}
 	
 	/**

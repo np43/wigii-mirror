@@ -959,6 +959,49 @@ class Principal extends Model
 	}
 
 	/**
+	 * Binds this principal to a role with the highest rights he has to access this element.
+	 * If no matching role is found, then current role is not changed.
+	 * @param Int $elementId the ID of the element to bind to
+	 * @param Module $module the element module if known
+	 * @return true if bind is successful else false
+	 */
+	public function bindToElement($elementId,$module=null) {
+		$roleId = $this->getRoleForElement($elementId,$module);
+		if($roleId) return $this->bindToRole($roleId);
+	}
+	/**
+	 * Returns the role the principal should use to access this element or null if no matching role	 
+	 * @param Int $elementId the ID of the element access
+	 * @param Module $module the element module if known
+	 * @return Int role ID or null if no matching
+	 */
+	public function getRoleForElement($elementId,$module=null) {
+		if(!isset($elementId)) throw new ServiceException('elementId cannot be null', ServiceException::INVALID_ARGUMENT);
+		return ServiceProvider::getWigiiBPL()->adminGetPrincipalRoleForDirectAccess($this, $this, wigiiBPLParam('directAccessType','element','directAccessId',$elementId,'module',$module));
+	}
+	/**
+	 * Binds this principal to a role with the highest rights he has to access this group.
+	 * If no matching role is found, then current role is not changed.
+	 * @param Int $groupId the ID of the group to bind to
+	 * @param Module $module the group module if known
+	 * @return true if bind is successful else false
+	 */
+	public function bindToGroup($groupId,$module=null) {
+		$roleId = $this->getRoleForGroup($groupId,$module);
+		if($roleId) return $this->bindToRole($roleId);
+	}
+	/**
+	 * Returns the role the principal should use to access this element or null if no matching role
+	 * @param Int $elementId the ID of the element access
+	 * @param Module $module the group module if known
+	 * @return Int role ID or null if no matching
+	 */
+	public function getRoleForGroup($groupId,$module=null) {
+		if(!isset($groupId)) throw new ServiceException('groupId cannot be null', ServiceException::INVALID_ARGUMENT);
+		return ServiceProvider::getWigiiBPL()->adminGetPrincipalRoleForDirectAccess($this, $this, wigiiBPLParam('directAccessType','group','directAccessId',$groupId,'module',$module));
+	}
+	
+	/**
 	 * Links a user list to this principal which will receive every loaded role
 	 * @param UserList $userList a user list or null to detach any existing listener
 	 */

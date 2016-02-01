@@ -2054,7 +2054,7 @@ invalidCompleteCache();
 	 * @return StdClass a stdClass instance of the form :
 	 * {context: calls getExecutionContext(), exception:{class: exception class, message: error message, code: exception code}}
 	 */
-	protected function convertServiceExceptionToJson($p,$exec,$exception) {
+	public function convertServiceExceptionToJson($p,$exec,$exception) {
 		if(!isset($exception)) return null;
 		if($exception instanceof ServiceException) $exception = $exception->getWigiiRootException();		
 		$returnValue = array();
@@ -2075,7 +2075,7 @@ invalidCompleteCache();
 	 *  realUsername: real user name, username: role name, principalNamespace: principal current namespace,
 	 *  version: Wigii system version label}
 	 */
-	protected function getExecutionContext($p,$exec) {
+	public function getExecutionContext($p,$exec) {
 		if(!isset($p) || !isset($exec)) throw new ServiceException("principal and execution service cannot be null", ServiceException::INVALID_ARGUMENT);
 		$returnValue = array();
 		$returnValue['request'] = $exec->getCrtRequest();
@@ -3403,12 +3403,14 @@ invalidCompleteCache();
 						}
 						if($ase->getCode() == AuthenticationServiceException :: EXPIRED_PASSWORD){
 							$_POST["action"] = null; //this is to prevent checking changeOwnPassword form on first display
+							$exec->cleanRemainingRequest();
 							if ($exec->getIsUpdating()) {
-								//display a dialog box with the login form
-								$exec->cleanRemainingRequest();
 								$exec->addRequests("changePasswordDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/changePassword");
 							} else {
-								$exec->addRequests($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/changePassword");
+								//CWE 14.01.2016: in case of expired password, then shows changePassword dialog once Home/start is called by JS instead of directly on first request,
+								//this to avoid having a double change password dialog which shows up (one in mainDiv and the other in changePassword dialog),
+								//leading to messy refresh when the user clicks on the OK button.
+								//$exec->addRequests($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/changePassword");
 							}
 						} elseif ($ase->getCode() == AuthenticationServiceException :: FORBIDDEN_PUBLIC_USER) {
 							// logout from public
@@ -10348,13 +10350,16 @@ onUpdateErrorCounter = 0;
 						$roleId = $typeId;
 						break;
 					case "folder":
+						// finds the best matching role for this group
+						$roleId = $p->getRoleForGroup($typeId);
+						break;
 					case "item":
+						// finds the best matching role for this element
+						$roleId = $p->getRoleForElement($typeId);
+						break; 
 					case "":
-						//find the first calculated role of this wigiiNamespace
+						// find the first calculated role of this wigiiNamespace
 						$roleId = $p->getRoleListener()->getCalculatedRoleId($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl());
-						if(!$roleId && !$p->isUserPublic()){
-							$exec->addJsCode("alert('".$transS->h($p, "noRoleFoundForWigiiNamespace").": ".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl().". ".$transS->h($p, "noRoleFoundForWigiiNamespaceExplanation")."');");
-						}
 						break;
 					default: //when in admin, we reload the last user
 						$roleId = $p->getUserId();
@@ -10364,10 +10369,12 @@ onUpdateErrorCounter = 0;
 						throw new AuthenticationServiceException('public access forbidden', AuthenticationServiceException::FORBIDDEN_PUBLIC_USER);
 					}
 					else {
+						$exec->addJsCode("alert('".$transS->h($p, "noRoleFoundForWigiiNamespace").": ".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl().". ".$transS->h($p, "noRoleFoundForWigiiNamespaceExplanation")."');");
 						$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/":'').WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
 					}
 					break;
 				}
+
 
 				// if navigating out of the Setup namespace, then clears the configuration from the session and shared data
 				if($nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() == $fromWigiiNamespace &&

@@ -24,8 +24,6 @@
  * Accessible only if Principal has read access on this User
  * Created by CWE on 29 août 09
  */
-if(!defined('PASSWORD_minLength')) define ('PASSWORD_minLength', 3);
-if(!defined('PASSWORD_maxLength')) define ('PASSWORD_maxLength', 32);
 class UserDetail extends Model
 {
 	private $userlabel; //username with additional info, like prefixed by wigiiNamespace if different than the current wigiiNamespace
@@ -438,6 +436,8 @@ class UserDetail extends Model
 	 */
 	public function setClearPassword($var)
 	{
+		if(!defined('PASSWORD_minLength')) define ('PASSWORD_minLength', 3);
+		if(!defined('PASSWORD_maxLength')) define ('PASSWORD_maxLength', 32);
 		ArgValidator::assertBoundedString('password length must be between '.PASSWORD_minLength.' and '.PASSWORD_maxLength,
 											$var, PASSWORD_minLength, PASSWORD_maxLength, UserAdminServiceException::INVALID_PASSWORD);
 		$md5 = md5($var);

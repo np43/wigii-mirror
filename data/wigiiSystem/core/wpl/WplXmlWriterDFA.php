@@ -95,6 +95,7 @@ class WplXmlWriterDFA implements DataFlowActivity
 	const ENTITY_TYPE_RECORD = 0;
 	const ENTITY_TYPE_ELEMENT = 1;
 	const ENTITY_TYPE_ELEMENT_LIST = 2;
+	const ENTITY_TYPE_STDCLASS = 3;
 	private $entityType = self::ENTITY_TYPE_RECORD;
 
 	public function setEntityType($entityType) {
@@ -102,9 +103,10 @@ class WplXmlWriterDFA implements DataFlowActivity
 			case self::ENTITY_TYPE_RECORD:
 			case self::ENTITY_TYPE_ELEMENT:
 			case self::ENTITY_TYPE_ELEMENT_LIST:
+			case self::ENTITY_TYPE_STDCLASS:
 				$this->entityType = $entityType;
 				break;
-			default: throw new DataFlowServiceException("invalid entity type. Should be one of WplXmlWriterDFA::ENTITY_TYPE_RECORD, WplXmlWriterDFA::ENTITY_TYPE_ELEMENT or WplXmlWriterDFA::ENTITY_TYPE_ELEMENT_LIST", DataFlowServiceException::INVALID_ARGUMENT);
+			default: throw new DataFlowServiceException("invalid entity type. Should be one of WplXmlWriterDFA::ENTITY_TYPE_RECORD, WplXmlWriterDFA::ENTITY_TYPE_ELEMENT, WplXmlWriterDFA::ENTITY_TYPE_ELEMENT_LIST or WplXmlWriterDFA::ENTITY_TYPE_STDCLASS", DataFlowServiceException::INVALID_ARGUMENT);
 		}
 	}
 
@@ -162,6 +164,14 @@ class WplXmlWriterDFA implements DataFlowActivity
 		$this->writeConfig = $writeConfig;
 	}
 		
+	private $rootElementName;
+	/**
+	 * Sets the name of the xml root element in case of serializing a stdClass or array.
+	 * @param String $rootElementName
+	 */
+	public function setRootElementName($rootElementName) {
+		$this->rootElementName = $rootElementName;
+	}
 
 	// stream data event handling
 
@@ -175,6 +185,7 @@ class WplXmlWriterDFA implements DataFlowActivity
 				}
 				$this->writeStartOfFields($wigiiXmlWriter);
 				break;
+			case self::ENTITY_TYPE_STDCLASS: break;
 			default: 
 				ServiceException::throwNotImplemented();
 		}
@@ -184,6 +195,10 @@ class WplXmlWriterDFA implements DataFlowActivity
 			case self::ENTITY_TYPE_RECORD:
 				$this->writeField($this->getWigiiXmlWriterDFAOF($dataFlowContext),
 					$data, $this->wigiiBag, $this->recordId);
+				break;
+			case self::ENTITY_TYPE_STDCLASS:
+				$wigiiXmlWriter = $this->getWigiiXmlWriterDFAOF($dataFlowContext);
+				$this->writeStdClass($wigiiXmlWriter, ($this->rootElementName?$this->rootElementName:'stdClass'), $data);
 				break;
 			default: 
 				ServiceException::throwNotImplemented();
@@ -196,6 +211,7 @@ class WplXmlWriterDFA implements DataFlowActivity
 				$this->writeEndOfFields($wigiiXmlWriter);
 				$this->writeEndOfRecord($wigiiXmlWriter);
 				break;
+			case self::ENTITY_TYPE_STDCLASS: break;
 			default: 
 				ServiceException::throwNotImplemented();
 		}
@@ -214,6 +230,10 @@ class WplXmlWriterDFA implements DataFlowActivity
 			case self::ENTITY_TYPE_RECORD:
 				$wigiiXmlWriter = $this->getWigiiXmlWriterDFAOF($dataFlowContext);					
 				$this->writeRecord($wigiiXmlWriter, $data, $this->writeConfig, $this->fieldSelectorList);
+				break;
+			case self::ENTITY_TYPE_STDCLASS:
+				$wigiiXmlWriter = $this->getWigiiXmlWriterDFAOF($dataFlowContext);
+				$this->writeStdClass($wigiiXmlWriter, ($this->rootElementName?$this->rootElementName:'stdClass'), $data);
 				break;
 			default: 
 				ServiceException::throwNotImplemented();
@@ -270,8 +290,10 @@ class WplXmlWriterDFA implements DataFlowActivity
 	protected function writeField($wigiiXmlWriter, $fieldWithSelectedSubfields, $wigiiBag, $recordId) {
 		if(is_null($fieldWithSelectedSubfields)) throw new DataFlowServiceException("fieldWithSelectedSubfields cannot be null", DataFlowServiceException::INVALID_ARGUMENT);
 		if(is_null($wigiiBag)) throw new DataFlowServiceException("wigii bag cannot be null", DataFlowServiceException::INVALID_ARGUMENT);
-		$field = $fieldWithSelectedSubfields->getField();		
-		$x = $field->getDataType()->getXml();
+		$field = $fieldWithSelectedSubfields->getField();
+		$dt = $field->getDataType();
+		if(!$dt) return;		
+		$x = $dt->getXml();
 		
 		$wigiiXmlWriter->writeStartElement('field', 'name', $field->getFieldName());
 		foreach($fieldWithSelectedSubfields->getSelectedSubfieldsIterator() as $subFieldName) {
@@ -341,6 +363,22 @@ class WplXmlWriterDFA implements DataFlowActivity
 	}
 	
 	protected function writeEndOfRecord($wigiiXmlWriter) {
+		$wigiiXmlWriter->writeEndElement();
+	}
+	/**
+	 * Writes a StdClass instance or an Array to XML. 
+	 * @param WigiiXmlWriterDFAOF $wigiiXmlWriter the open WigiiXmlWriterDFAOF to use
+	 * @param String $rootNodeName the name of the root xml element containing the data of the stdClass or array
+	 * @param StdClass|Array $stdClass the stdClass instance or array to serialize to XML
+	 */
+	protected function writeStdClass($wigiiXmlWriter,$rootNodeName,$stdClass) {
+		$wigiiXmlWriter->writeStartElement($rootNodeName);
+		if(!empty($stdClass)) {
+			foreach($stdClass as $k=>$v) {
+				if(is_array($v) || $v instanceof StdClass) $this->writeStdClass($wigiiXmlWriter, $k, $v);
+				else $wigiiXmlWriter->writeTextElement($k,$v);
+			}
+		}
 		$wigiiXmlWriter->writeEndElement();
 	}
 }

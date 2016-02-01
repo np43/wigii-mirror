@@ -106,7 +106,7 @@ class ExceptionSinkWebImpl extends ExceptionSink
 			fput($errMsg."\n\n--TRACE--:".$this->getTraceRecursive($exception));
 		}
 		
-		$this->getExecutionService()->addJsCode("alert('An exception occurs. The operation is aborted.\\nSorry for the inconvenience.\\n\\n".str_replace(array("'", "//", "\n"), array("\'", "\\/\\/", "\\n"), $errMsg)."');");
+		$this->getExecutionService()->addJsCode("alert('A technical error has occured.\\n\\nSorry for the inconvenience.\\n\\nPlease contact your administrator with the following description:\\n".str_replace(array("'", "//", "\n"), array("\'", "\\/\\/", "\\n"), $errMsg)."');");
 		
 		if($this->getSystemConsoleEnabled()){
 			$this->getSystemConsoleService()->storeMessage("Exception", "", $moreDetail);

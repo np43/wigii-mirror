@@ -935,6 +935,166 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Calculates the best matching role ID the principal should use to direct access the requested element or group.
+	 * Returns null if principal has no roles matching the requested ID.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter A WigiiBPLParameter instance with the following parameters :
+	 * - directAccessType: String. One of 'element' or 'group'. Specifies the type of direct access: by element ID or group ID.
+	 * - directAccessId: Int. The element ID or group ID to which the principal needs to access.
+	 * - module: Module|String. The Element or Group module if known
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return Int the role ID that should be used to best access the requested item or null if no match.
+	 */
+	public function adminGetPrincipalRoleForDirectAccess($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("adminGetPrincipalRoleForDirectAccess", $principal);
+		$returnValue=null;
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+				
+			$directAccessType = $parameter->getValue('directAccessType');
+			if($directAccessType!='element' && $directAccessType!='group') throw new WigiiBPLException("directAccessType can only by one of 'element' or 'group'", WigiiBPLException::INVALID_ARGUMENT);
+			$directAccessId = $parameter->getValue('directAccessId');
+			if(is_null($directAccessId)) throw new WigiiBPLException('directAccessId cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			$module = $parameter->getValue('module');
+			
+			$rootP = $this->getRootPrincipal();
+			if(isset($module) && !($module instanceof Module)) $this->getModuleAdminService()->getModule($rootP, $module);
+			
+			// builds the list of groups for which to calculate access rights
+			// in case of accessing directly an element
+			if($directAccessType=='element') {
+				$wigiiNamespaces = $this->elementGetWigiiNamespaceArray($principal, $this, wigiiBPLParam('elementId',$directAccessId,'module',$module));
+				$groups=array();
+				if(!empty($wigiiNamespaces)) {
+					foreach($wigiiNamespaces as $sharings) {
+						$groups=array_merge($groups,$sharings);
+					}
+				}
+			}
+			// in case of accessing directly a group
+			else {
+				$groups=array($directAccessId=>$directAccessId);
+			}
+			
+			// calculates the rights for each group and keeps the WigiiNamespace which has the highest access rights
+			if(!empty($groups)) {
+				$parameter = wigiiBPLParam();
+				$returnValue=null;
+				$highestRight=null;
+				foreach($groups as $groupId) {
+					$parameter->setValue('group', $groupId);
+					$wigiiNamespaces = $this->adminGetPrincipalRightsOnGroup($principal, $this, $parameter);
+					// extracts highest right
+					if(!empty($wigiiNamespaces)) {
+						foreach($wigiiNamespaces as $wigiiNamespace=>$right) {
+							if(!isset($highestRight) || ($highestRight<$right)) {
+								$highestRight = $right;
+								$returnValue=$wigiiNamespace;
+							}
+						}
+					}
+				}
+				
+				// if found a matching WigiiNamespace then extracts the associated calculated roleId
+				// using the attached RoleListener if defined
+				$roleList = $principal->getRoleListener();
+				if(($roleList instanceof UserListForNavigationBarImpl) && !$roleList->isEmpty()) {
+					$returnValue = $roleList->getCalculatedRoleId($this->getWigiiNamespaceAdminService()->getWigiiNamespace($rootP, $returnValue)->getWigiiNamespaceUrl());
+				}
+				// else by switching to the namespace and back again.
+				else {
+					$currentWigiiNamespace = $principal->getWigiiNamespace();
+					$principal->bindToWigiiNamespace($returnValue);
+					$returnValue=$principal->getUserId();
+					$principal->bindToWigiiNamespace($currentWigiiNamespace);
+				}
+			}
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("adminGetPrincipalRoleForDirectAccess", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("adminGetPrincipalRoleForDirectAccess", $principal);
+		return $returnValue;
+	}
+	
+	/**
+	 * Fills an array with the rights a principal has on a group by WigiiNamespace
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter A WigiiBPLParameter instance with the following parameters :
+	 * - group: Int|Group|GroupP. The group Id or group object for which to get the PrincipalRights distribution per WigiiNamespace
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return Array an array of the form Array(wigiiNamespaceName=>x|w|s|r), 
+	 * WigiiNamespaces with no access to group are not present in the returned array.
+	 */
+	public function adminGetPrincipalRightsOnGroup($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("adminGetPrincipalRightsOnGroup", $principal);
+		$returnValue = null;
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+								
+			$group = $parameter->getValue('group');
+			if(is_null($group)) throw new WigiiBPLException('group cannot be null. It should be an existing group or group ID', WigiiBPLException::INVALID_ARGUMENT);
+			if($group instanceof GroupP) $group = $group->getDbEntity();
+			
+			$rootP = $this->getRootPrincipal();
+			
+			// fetches group if needed
+			if(!($group instanceof Group)) {
+				$group = $this->getGroupAdminService()->getGroupWithoutDetail($rootP, $group);
+				if(is_null($group)) return array(); // group does not exist in db, returns no rights.
+			}
+			
+			// checks if Principal role list is already filled into memory
+			$roleList = $principal->getRoleListener();
+			$refetchAllRoles = !(($roleList instanceof UserListForNavigationBarImpl) && !$roleList->isEmpty());
+			unset($roleList);
+			 
+			// gets Principal accessible WigiiNamespaces and Modules
+			$wigiiNamespaces = $this->adminGetPrincipalNamespacesAndModules($principal, $this, wigiiBPLParam('refetchRoles',$refetchAllRoles));
+			
+			// calculates dynamic access rights of principal for all accessible WigiiNamespace matching Module
+			$returnValue = array();
+			if(!empty($wigiiNamespaces)) {
+				$gAS = $this->getGroupAdminService();
+				$groupModule = $group->getModule()->getModuleName();
+				$groupId = $group->getId();
+				$groupFsl = fsl(fs('id'));
+				$currentWigiiNamespace = $principal->getWigiiNamespace();
+				foreach($wigiiNamespaces as $wigiiNamespace=>$modules) {
+					// restricts on specific group Module
+					if($modules[$groupModule]) {
+						// binds to each wigiiNamespace
+						$principal->bindToWigiiNamespace($wigiiNamespace);
+						// calculates principal rights on group 
+						$groupP = $gAS->getGroup($principal,$groupId,$groupFsl);
+						// if defined, stores rights in array as a letter x|w|s|r
+						if(isset($groupP)) {
+							$rights = $groupP->getRights();
+							if(isset($rights)) {
+								 $returnValue[$wigiiNamespace] = $rights->getLetter();
+							}
+						}
+					}
+				}
+				$principal->bindToWigiiNamespace($currentWigiiNamespace);
+			}
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("adminGetPrincipalRightsOnGroup", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("adminGetPrincipalRightsOnGroup", $principal);
+		return $returnValue;
+	}
+	
+	/**
 	 * Copies a given element to a specified folder (real copy, not sharing).
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @param Object $caller the object calling the Wigii business process.
@@ -1022,6 +1182,154 @@ class WigiiBPL
 		}
 		$this->executionSink()->publishEndOperation("elementFetch", $principal);
 		return $returnValue;
+	}	
+	
+	/**
+	 * Fetches an Element into the database given a business unique ID.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementFetchByKey business process needs the following parameters to run :
+	 * - keyField: String. The name of the Field in the Element acting as a business key,
+	 * - keyValue: String. The value of the business key used to select the element.
+	 * - groupId: Int. The search space in which to look for the element.
+	 * - fsl: FieldSelectorList. Optional FieldSelectorList instance specifying the Fields to be fetched.
+	 * - resultCount: Int. Output parameter. Holds the number of matching elements in this search space for this key. 
+	 * Normally should be 1, but in case of doubles, can be greater than one.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return ElementP the element filled from the database with Principal rights calculation.
+	 */
+	public function elementFetchByKey($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementFetchByKey", $principal);
+		$returnValue = null;
+		$crtNamespace = null; $hasAdaptiveWigiiNamespace = null;
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+				
+			$keyField = $parameter->getValue('keyField');
+			if(empty($keyField)) throw new WigiiBPLException('keyField cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$keyValue = $parameter->getValue('keyValue');
+			if(empty($keyValue)) throw new WigiiBPLException('keyValuecannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$groupId = $parameter->getValue('groupId');
+			if(empty($groupId)) throw new WigiiBPLException('groupId cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$fsl = $parameter->getValue('fsl');
+			
+			$hasAdaptiveWigiiNamespace = $principal->hasAdaptiveWigiiNamespace();
+			if(!$hasAdaptiveWigiiNamespace) {
+				$crtNamespace = $principal->getWigiiNamespace();
+				$principal->setAdaptiveWigiiNamespace(true);
+			}
+			$lf = lf($fsl,lxEq(fs($keyField),$keyValue),null,1,1);
+			$returnValue = $this->getDataFlowService()->processDumpableObject($principal, elementPList(lxInGR(lxEq(fs('id'),$groupId)),$lf), dfasl(dfas("NullDFA")));
+			$parameter->setValue('resultCount', $lf->getTotalNumberOfObjects());
+			
+			if(isset($crtNamespace)) {
+				$principal->bindToWigiiNamespace($crtNamespace);
+				if(!$hasAdaptiveWigiiNamespace) $principal->setAdaptiveWigiiNamespace(false);
+			}
+		}
+		catch(Exception $e) {
+			if(isset($crtNamespace)) {
+				$principal->bindToWigiiNamespace($crtNamespace);
+				if(!$hasAdaptiveWigiiNamespace) $principal->setAdaptiveWigiiNamespace(false);
+			}
+			$this->executionSink()->publishEndOperationOnError("elementFetchByKey", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementFetchByKey", $principal);
+		return $returnValue;
+	}
+	
+	/**
+	 * Fills an array with all WigiiNamespaces and Groups containing the given element 
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementFetch business process needs the following parameters to run :
+	 * - elementId: Int. The ID of the element to fetch,
+	 * - module: Module|String. The Module of the Element (if known).
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return Array an array of the form [WigiiNamespaceName=>array[group ids]], null if element does not exist in the database.
+	 */
+	public function elementGetWigiiNamespaceArray($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementGetWigiiNamespaceArray", $principal);
+		$returnValue = null;
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+		
+			$rootP = $this->getRootPrincipal();
+			
+			$elementId = $parameter->getValue('elementId');
+			if(is_null($elementId)) throw new WigiiBPLException('elementId cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$module = $parameter->getValue('module');
+			if(isset($module) && !($module instanceof Module)) $this->getModuleAdminService()->getModule($rootP, $module);	
+			
+			// creates element for which to fetch the containing groups
+			if($module instanceof Module) {
+				$element = Element::createInstance($module, null, null, array('id'=>$elementId));				
+			}
+			else {
+				$element = Element::createInstance(null, FieldListArrayImpl::createInstance(), WigiiBagBaseImpl::createInstance(), array('id'=>$elementId));
+				$this->getElementService()->fillElement($rootP, $element, fsl(fs_e('module')));
+			}
+			// gets all groups containing element
+			$groupPList = GroupPListArrayImpl::createInstance();
+			if($this->getElementService()->getAllGroupsContainingElement($rootP, $element, $groupPList)>0) {
+				$returnValue=array();
+				foreach($groupPList->getListIterator() as $groupP) {
+					$group = $groupP->getDbEntity();
+					$wigiiNamespaceName = $group->getWigiiNamespace()->getWigiiNamespaceName();
+					$groups = $returnValue[$wigiiNamespaceName];
+					if(!isset($groups)) $groups=array();
+					$groups[$group->getId()] = $group->getId();
+					$returnValue[$wigiiNamespaceName] = $groups;
+				}
+			}
+		}
+		catch(Exception $e) {
+			if($changedNamespace && isset($crtNamespace)) $principal->bindToWigiiNamespace($crtNamespace);
+			$this->executionSink()->publishEndOperationOnError("elementGetWigiiNamespaceArray", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementGetWigiiNamespaceArray", $principal);
+		return $returnValue;
+	}
+	
+	/**
+	 * Adds some dynamic attributes to an existing Element. The added attributes are all Mutable and Replaceable.
+	 * If a DynamicAttribute already exists under the given name, it will be replaced. An exception could occur if the old dynamic attribute is not replaceable.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementSetDynamicAttributes business process needs the following parameters to run :
+	 * - element: Element. The element to which to add Dynamic Attributes
+	 * - attributes: WigiiBPLParameter. The map of dynamic attributes to add to the element. Key is the dynamic attribute name, Value is the value of the dynamic attribute.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return Element the element to which dynamic attributes where added
+	 */
+	public function elementSetDynamicAttributes($principal, $caller, $parameter, $executionSink=null) {
+		if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+		if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			
+		$element = $parameter->getValue('element');
+		if(!($element instanceof Element)) throw new WigiiBPLException('element should be a non null instance of Element', WigiiBPLException::INVALID_PARAMETER);
+		$attributes = $parameter->getValue('attributes');
+		if(!($attributes instanceof WigiiBPLParameter)) throw new WigiiBPLException('attributes should be a non null instance of WigiiBPLParameter', WigiiBPLException::INVALID_PARAMETER);
+		
+		// adds the dynamic attributes to the element
+		if(!$attributes->isEmpty()) {
+			foreach($attributes->getIterator() as $name=>$value) {
+				$da = $element->getDynamicAttribute($name);
+				if(!isset($da)) {
+					$da = ElementDynAttrMutableValueImpl::createInstance();
+					$element->setDynamicAttribute($name, $da);
+				}
+				$da->setValue($value);
+			}
+		}
+		return $element;
 	}
 	
 	// Object builders
@@ -1125,6 +1433,39 @@ class WigiiBPL
 		WigiiBPLException::throwNotImplemented();
 	}
 	
+	/**
+	 * Gets a matrix out of the Record as a StdClass instance
+	 * @param Record $record a record containing some fields in a matrix style col1_1, col2_1, col3_1, ..., col1_n, col2_n, col3_n
+	 * @param Array $columns an array with the names of the column to extract for example col1_, col2_, col3_
+	 * @param Int $fromRow The start index from which to extract the matrix rows.
+	 * @param Int $toRow The stop index to which to extract the matrix rows.
+	 * @return StdClass a StdClass instance of the form {rows : array(StdClass as row), index : null, errors : null}
+	 * @example With a module configuration containing the fields ProjectCode_1, Location_1, ProjectCode_2, Location_2, ProjectCode_3, Location_3 and data
+	 * ProjectCode_1 = P1, Location_1 = L1,
+	 * ProjectCode_2 = P2, Location_2 = L2,
+	 * ProjectCode_3 = P3, Location_3 = L3
+	 * The call of buildMatrixFromRecord(record, array("ProjectCode_", "Location_"),1,3)
+	 * will return an stdClass instance of the form 
+	 * {rows => array(
+	 * 		{ProjectCode_ => {value=>P1, other data type subfields...}, Location_ => {value => L1, other data type subfields...}}
+	 * 		{ProjectCode_ => {value=>P2, other data type subfields...}, Location_ => {value => L2, other data type subfields...}}
+	 * 		{ProjectCode_ => {value=>P3, other data type subfields...}, Location_ => {value => L3, other data type subfields...}}
+	 * 	), 
+	 * 	index => null, 
+	 * 	errors => null
+	 * }
+	 */
+	public function buildMatrixFromRecord($record,$columns,$fromRow,$toRow) {
+		if(!isset($record)) throw new WigiiBPLException('record cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+		$returnValue = array(
+				'rows'=>$record->exportMatrix($columns, $fromRow, $toRow), 
+				'index'=>null, 
+				'errors'=>null
+		);
+		$returnValue = (object)$returnValue;
+		return $returnValue;
+	}
+	
 	// Object arrays builders
 	
 	/**
@@ -1193,7 +1534,7 @@ class WigiiBPL
  * A WigiiExecutor stub to enable the reuse of stateless methods and the getConfigurationContext method.
  * Created by CWE on 16.09.2015
  */
-class WigiiBPLWigiiExecutorStub extends WigiiExecutor {
+class WigiiBPLWigiiExecutorStub extends WigiiCoreExecutor {
 	/**
 	 * @var WigiiBPL
 	 */

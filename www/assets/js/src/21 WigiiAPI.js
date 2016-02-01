@@ -240,6 +240,17 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		var wigiiApi = this;
 		wigiiApi.instantiationTime = (new Date()).getTime();
 		wigiiApi.ctxKey = 'Wigii_'+wigiiApi.instantiationTime;
+		/**
+		 * Object which holds inner private mutable state variables.
+		 */
+		wigiiApi.context = {};
+		
+		// Configuration
+		
+		wigiiApi.holdJsCodeAnswers = function(bool) {
+			if(bool===undefined) return wigiiApi.context.holdJsCodeAnswers;
+			else wigiiApi.context.holdJsCodeAnswers = bool;
+		};
 		
 		// Error codes
 		
@@ -305,6 +316,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 */
 			OPERATION_CANCELED: 1010,
 			
+			
+			// ListException (error code range from 3100 to 3199)
+			
+			OUT_OF_BOUND: 3100,
+			ALREADY_EXISTS: 3101,
+			DOES_NOT_EXIST: 3102,
 			
 			// FuncExpEvalException (error code range from 4600 to 4699)
 			
@@ -445,11 +462,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						self.isVisible = true;
 						// reset default position and dimension if resetOnShow
 						if(self.resetOnShow && self.defaultOptions) {
-							self.window().css('top',self.defaultOptions.top)
-							.css('left',self.defaultOptions.left)
-							.css('width',self.defaultOptions.width)
-							.css('height',self.defaultOptions.height)
-							.resize();
+							var w = self.window();
+							w.css('top',self.defaultOptions.top).css('left',self.defaultOptions.left);
+							if(self.defaultOptions.width && self.defaultOptions.height) {
+								w.css('height',self.defaultOptions.height+10).css('width',self.defaultOptions.width).resize();
+							}; 
 							self.body().scrollTop(0).scrollLeft(0);
 						}
 						// notifies all event subscribers
@@ -531,6 +548,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			self.html = function(htmlString) {
 				var b = self.body();
 				if(b) b.html(htmlString);
+				// records default width and height if not yet calculated
+				if(self.defaultOptions && !self.defaultOptions.width && !self.defaultOptions.height) {
+					var w = self.window();
+					self.defaultOptions.width = w.width();
+					self.defaultOptions.height = w.height();
+				}
 			};
 			/**
 			 * Returns the DIV jQuery selector containing the pop-up window
@@ -547,13 +570,18 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(self['popupElt']) return $(self.popupElt).find('div.popupBody');
 			};
 			
-			var popupSelector = (options['id']?'#'+options.id:(options['classId']?'.'+options.classId:'#popup_'+wigiiApi.instantiationTime));
-			var title = options['title'] || (options['resizable']?'&nbsp;':undefined);
+			var insertIntoAnchor = anchor.is('body')||(options['domInsertionMode']=='append');
+			// if insertIntoAnchor then an ID should exist, generates one if needed.
+			if(insertIntoAnchor && !options['id'] && !options['classId']) {
+				options['id'] = 'popup_'+(new Date()).getTime();
+			}
+			
+			var popupSelector = (options['id']?'#'+options.id:(options['classId']?'.'+options.classId:undefined));
+			var title = options['title'];
 			var width = options['width'] || Math.round($(window).width()/3);
 			var height = options['height'] || Math.round($(window).height()/3);
 			var top = options['top'] ||  Math.max(0,($(window).height()-height)/2);
 			var left = options['left'] || Math.max(0,($(window).width()-width)/2);
-			
 			
 			// if displays relative to anchor
 			var popupPosition = 'fixed';
@@ -571,36 +599,57 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			
 			var popupHtml = '<div';
 			if(options['id']) popupHtml+=' id="'+options['id']+'"';
-			popupHtml += ' class="'+(options['classId']&&!options['id']?options['classId']:'')+' SBB ui-corner-all ui-dialog"';
-			popupHtml += ' style="cursor:default;z-index:999;position:'+popupPosition+';background-color:#fff;top:'+top+'px;left:'+left+'px;padding:5px;width:'+width+'px;height:'+height+'px;display:none;float:none;"';
+			popupHtml += ' class="'+(options['classId']&&!options['id']?options['classId']:'')+' ui-corner-all ui-widget ui-dialog SBIB"';
+			popupHtml += ' style="cursor:default;z-index:998;position:'+popupPosition+';background-color:#fff;border-style:solid;border-width:1px;top:'+top+'px;left:'+left+'px;padding:5px;width:'+width+'px;max-height:'+height+'px;display:none;float:none;"';
 			popupHtml +='>';
-			if(title) popupHtml +='<div class="popupTitle" style="'+(options['resizable']?'cursor:move;':'')+'float:left;font-style:normal;font-weight:normal;font-size:small;padding-left:0;padding-right:0;padding-top:5px;padding-bottom:5px;margin:0;color:black;height:14px;width:'+(width-60)+'px" >'+title+'</div>';
-			if(options['closeable']) popupHtml += '<div class="exit SBB" style="cursor:pointer;width:15px;height:17px;float:right;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>';
+			if(title) popupHtml +='<div class="popupTitle ui-corner-all ui-widget-header" style="'+(options['resizable']?'cursor:move;':'')+'float:left;font-style:normal;font-weight:bold;font-size:small;text-align:left;padding-left:13px;padding-right:0;padding-top:5px;padding-bottom:5px;margin:0;color:black;height:14px;width:'+(width-15)+'px" >'+title+'</div>';
+			else popupHtml +='<div class="popupTitle emptyTitle ui-corner-all" style="'+(options['resizable']?'cursor:move;':'')+'float:left;z-index:999;position:absolute;right:4px;top:-10px;font-style:normal;font-weight:bold;font-size:small;text-align:left;padding-left:13px;padding-right:0;padding-top:5px;padding-bottom:5px;margin:0;color:black;height:14px;width:'+(width-10)+'px" >&nbsp;</div>';
+			//if(options['closeable']) popupHtml += '<div class="exit ui-corner-all SBIB" style="z-index:999;position:absolute;right:-8px;top:-8px;cursor:pointer;width:15px;height:17px;float:right;background-color:#fff;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>';			
+			if(options['closeable']) {
+				if(title) popupHtml += '<div class="exit ui-corner-all" style="z-index:999;position:absolute;right:10px;top:7px;cursor:pointer;width:15px;height:17px;float:right;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>'; 
+				else popupHtml += '<div class="exit ui-corner-all SBIB" style="z-index:999;position:absolute;right:-2px;top:-3px;cursor:pointer;width:15px;height:17px;float:right;background-color:#fff;border-style:solid;border-width:1px;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>';
+			}
 			popupHtml +='<div class="clear"></div>';
-			popupHtml +='<div class="popupBody" style="cursor:normal;float:left;font-weight:normal;font-style:normal;font-size:small;padding:0;margin:0;color:black;overflow-y:auto;height:'+(height-28)+'px;width:'+(width-5)+'px;"><br/></div></div>';
+			popupHtml +='<div class="popupBody" style="z-index:998;cursor:normal;float:left;font-weight:normal;font-style:normal;font-size:small;text-align:left;padding:0;margin:0;margin-top:1px;color:black;overflow-y:auto;height:auto;max-height:'+(height-28)+'px;width:'+(width-5)+'px;"><br/></div></div>';
 						
-			// if body
-			if(anchor.is('body')) {
+			// if insert into anchor
+			if(insertIntoAnchor) {
 				anchor.find(popupSelector).remove();
 				anchor.append(popupHtml);
 				self.popupElt = anchor.find(popupSelector);
 			}
-			// else if page element
+			// else appends to anchor
 			else {
-				anchor.parent().find(popupSelector).remove();
+				if(popupSelector) anchor.parent().find(popupSelector).remove();
 				anchor.after(popupHtml);
 				self.popupElt = anchor.next();
 			}	
 			// saves position and dimension options if resetOnShow
 			if(options['resetOnShow']) {
-				self.defaultOptions = {top:top,left:left,width:width,height:height};
+				self.defaultOptions = {top:top,left:left};
+				// only records size if popup is not resizable, 
+				// because otherwise height is dynamically calculated by the browser when showing.
+				if(!options['resizable']) {
+					self.defaultOptions.width = width;
+					self.defaultOptions.height = height;
+				}
 				self.resetOnShow=true;
 			}
 			// resizable and draggable
 			if(options['resizable']) {
 				self.popupElt.draggable({handle:'.popupTitle'}).resizable().resize(function(){
-					$(this).find('div.popupBody').width($(this).width()-5).height($(this).height()-$(this).find('div.popupTitle').height()-15);
-					$(this).find('div.popupTitle').width($(this).width()-60);
+					$(this).css('min-width','0').css('min-height','0').css('max-width','none').css('max-height','none');
+					var body = $(this).find('div.popupBody');
+					body.css('min-width','0').css('min-height','0').css('max-width','none').css('max-height','none').width($(this).width()-5);
+					var title = $(this).find('div.popupTitle');
+					if(title.hasClass('emptyTitle')) {
+						title.width($(this).width()-10);
+						body.height($(this).height()-8);
+					}
+					else {
+						title.width($(this).width()-15);
+						body.height($(this).height()-28);
+					}
 				});				
 			}			
 			// close event handler			
@@ -667,6 +716,17 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						var anchorOffset = anchor.offset();
 						var scrollLeft = $(window).scrollLeft();
 						var scrollTop = $(window).scrollTop();
+						// takes max available window height if position is S,SE or SW, 1/3 window height if position is center.
+						switch(options.position) {
+						case 'SE':
+						case 'S':
+						case 'SW':							
+							options.height = Math.max(options.height, $(window).height()-(anchorOffset.top-scrollTop)-options.offset-15);
+							break;
+						case 'center':
+							options.height = Math.max(options.height,Math.floor($(window).height()/2));	
+							break;
+						}
 						wigiiApi.positionBox({pageX:anchorOffset.left,pageY:anchorOffset.top}, options, options);
 						// make position relative to anchor
 						options.top = options.top+scrollTop-anchorOffset.top;
@@ -676,7 +736,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					else {
 						options.relativeToAnchor=false;
 					}
-					// popup creation
+					// popup creation					
 					context.popup = wigiiApi.createPopUpInstance(anchor,options);
 					if(options.localContent) {
 						context.popup.html(content);
@@ -709,12 +769,51 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			
 			/**
 			 * Shows a floating help popup displayed on the mouse event coordinates.
+			 * @param jQuery container jQuery selector on the element which will contain the help popup
 			 * @param jQuery.Event mouseEvent mouse event (click,mousedown, ...)
 			 * @param String content the help content (local content or remote url)
 			 * @param options the help and popup options
 			 */
-			self.showFloatingHelp = function(mouseEvent,content,options) {
-				wigiiApi.throwNotImplemented();
+			self.showFloatingHelp = function(container,mouseEvent,content,options) {
+				if(!container) container = $('body');
+				if(!options) options = {};
+				if(!options['type']) options.type = 'help';
+				if(!options['width']) options.width=400;
+				if(!options['height']) options.height=400;
+				if(!options['position'] && !options.top && !options.left) options.position='SE';
+				if(!options['offset'] && !options.top && !options.left) options.offset=0;
+				options.removeOnClose=true; // removes popup when it is closed.
+				options.domInsertionMode = 'append'; // inserts popup in the container
+				// popup positioning
+				if(!options.top && !options.left) {
+					// takes max available window height if position is S,SE or SW, 1/3 window height if position is center.
+					switch(options.position) {
+					case 'SE':
+					case 'S':
+					case 'SW':	
+						if(mouseEvent) options.height = Math.max(options.height, $(window).height()-(mouseEvent.pageY-$(window).scrollTop())-options.offset-15);
+						else options.height = Math.max(options.height,Math.floor($(window).height()/2));
+						break;
+					case 'center':
+						options.height = Math.max(options.height,Math.floor($(window).height()/2));	
+						break;
+					}				
+					wigiiApi.positionBox(mouseEvent,options,options);
+				}
+				// popup creation
+				context = {};
+				context.popup = wigiiApi.createPopUpInstance(container,options);
+				if(options.localContent) {
+					context.popup.html(content);
+				}
+				else {
+					$.ajax({url:wigiiApi.buildUpdateUrl(content),
+						cache:false,
+						success:wigiiApi.buildUpdateCallback(context)
+					});
+				}
+				// shows popup
+				context.popup.show();
 			};
 			
 			/**
@@ -773,8 +872,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(helpSpan) {
 					// ajusts neighbor width to allow displaying help span					
 					if(neighbor) {
-						neighbor.width(neighbor.width()-25);
+						var w = neighbor.width();
+						if(w>=75) neighbor.width(w-25);
+						neighbor.find('div').each(function(){
+							var e = $(this);
+							w = e.width();
+							if(w>=75) e.width(w-25);
+						});
 					}
+					// inserts popup after helpSpan
+					options.domInsertionMode = 'after';
 					// adds click event handler
 					helpSpan.off().click(function(event){
 						var e = $(this);						
@@ -920,7 +1027,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			/**
 			 * Iterates through the list of elements
 			 * @param iterator the iterator performing some actions
-			 * @param Function actions an function grouping the actions to be done using the iterator. 
+			 * @param Function actions a function grouping the actions to be done using the iterator. 
 			 */
 			self.iterate = function(iterator,actions) {
 				if($.type(actions) === 'function' && self.list) {
@@ -1281,6 +1388,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
 			
 			self.buffer = '';
+			self.jsBuffer = [];
 			
 			/**
 			 * Returns built html string
@@ -1290,17 +1398,29 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				return self.buffer;
 			};
 			/**
+			 * Executes all the JS code stored into the buffer
+			 * @return HtmlBuilder for chaining
+			 */
+			self.runJsCode = function() {
+				for(var i=0;i<self.jsBuffer.length;i++) {
+					var jsCode = self.jsBuffer[i];
+					if($.isFunction(jsCode)) jsCode();
+				}
+				return self;
+			};
+			/**
 			 * Resets the html builder to an empty buffer
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.reset = function() {
 				self.buffer = '';
+				self.jsBuffer = [];
 				return self;
 			};
 			/**
 			 * Appends a string to current buffer
 			 * @param String str the string to put into the buffer
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.put = function(str) {
 				if(str) self.buffer += str;
@@ -1309,7 +1429,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			/**
 			 * Implodes some arguments with a separator and adds the string to the given buffer
 			 * @param String sep the separator to be added between each arguments
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.implode = function(sep) {
 				if(arguments.length>1) {
@@ -1331,7 +1451,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * Prepends a prefix to some content only if content is not null.
 			 * @param String prefix the string prefix
 			 * @param String str the content to put into the buffer prefixed if not null
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.prepend = function(prefix,str) {
 				if(str) self.buffer += prefix+str;
@@ -1339,7 +1459,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Repeats an nbsp entity several times
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putNbsp = function(multiplier) {
 				if(!multipler) multiplier=1;
@@ -1350,7 +1470,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Puts a double quote entity in the buffer
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putQuot = function() {
 				self.buffer += '&quot;';
@@ -1358,7 +1478,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Puts an Amp entity in the buffer
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putAmp = function() {
 				self.buffer += '&amp;';
@@ -1366,7 +1486,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Puts a Lt entity in the buffer
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putLt = function() {
 				self.buffer += '&lt;';
@@ -1374,7 +1494,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Puts a Gt entity in the buffer
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putGt = function() {
 				self.buffer += '&gt;';
@@ -1382,7 +1502,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Puts an Apos entity in the buffer
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putApos = function() {
 				self.buffer += '&apos;';
@@ -1390,7 +1510,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Puts an HashTag character in the buffer
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putHashTag = function() {
 				self.buffer += '#';
@@ -1403,7 +1523,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * @param String value an html attribute value, for example "ui-dialog"
 			 * This function supports a variable number of arguments, 
 			 * meaning that you can pass as many key,value as you need to set all html attributes.
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putStartTag = function(tagName) {
 				if(!tagName) throw wigiiApi.createServiceException('putStartTag takes a non null tagName', wigiiApi.errorCodes.INVALID_ARGUMENT);
@@ -1429,7 +1549,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			/**
 			 * Creates an html close tag
 			 * @param String tagName the name of the html tag to close, for example "div" or "p"
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putEndTag = function(tagName) {
 				if(!tagName) throw wigiiApi.createServiceException('putEndTag takes a non null tagName', wigiiApi.errorCodes.INVALID_ARGUMENT);
@@ -1438,10 +1558,40 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Creates an html document header 
-			 * @return Object returns current HtmlBuilder for chaining
+			 * @return HtmlBuilder for chaining
 			 */
 			self.putHtmlHeader = function() {
 				self.buffer += '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
+				return self;
+			};
+			/**
+			 * Puts some JS code into the buffer waiting for execution
+			 * @param Function|String actions the JS code to be executed. (a function with no arguments or a valid js code string).
+			 * @returns HtmlBuilder for chaining
+			 */
+			self.putJsCode = function(actions) {
+				var actionType = $.type(actions);
+				if(actionType==='function') {
+					self.jsBuffer.push(actionType);
+				}
+				else if(actionType==='string') {
+					self.jsBuffer.push(function(){eval(actions);});
+				}
+				return self;
+			};
+			/**
+			 * Adds the content of the given HtmlBuilder to the current HtmlBuilder
+			 * @param HtmlBuilder htmlBuilder the HtmlBuilder instance from which to get the html string and waiting js code.
+			 */
+			self.putHtmlBuilder = function(htmlBuilder) {
+				if(htmlBuilder) {
+					// adds html
+					self.put(htmlBuilder.html());
+					// adds js code
+					for(var i=0;i<htmlBuilder.jsBuffer.length;i++) {
+						self.putJsCode(htmlBuilder.jsBuffer[i]);
+					}
+				}
 				return self;
 			};
 		};
@@ -1539,7 +1689,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							opts = options(e); content = opts.content;
 						}
 						else {
-							opts = options; content = (contentFx?opts.content(e):opts.content);
+							content = (contentFx?options.content(e):options.content);
+							// clones the options
+							opts = {};
+							for(var attr in options) {
+								opts[attr] = options[attr];
+							}
 						}			
 						//self.debugLogger.write("index:"+i+", optionsFx:"+optionsFx+", contentFx:"+contentFx+", options:"+JSON.stringify(options));
 						if(content) {
@@ -1682,6 +1837,216 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 		};
 		
+		/**
+		 * A Wigii Field
+		 * 
+		 * @param String fieldName the name of the field
+		 * @param String dataType the Wigii DataType name of the field
+		 * @param String label a label for the end user (already translated)
+		 * @param Object attributes optional map of attributes
+		 */
+		wigiiApi.Field = function(fieldName,dataType,label,attributes) {
+			var self = this;
+			self.className = 'Field';
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;	
+			
+			self.context = {
+				'fieldName':fieldName,
+				'dataType':dataType,
+				'label':label,
+				'attributes':attributes
+			};
+			
+			self.fieldName = function(){return self.context.fieldName;};
+			self.dataType = function(){return self.context.dataType;};
+			self.label = function(label) {
+				if(label===undefined) return self.context.label;
+				else self.context.label = label;
+			};
+			self.attribute = function(name,value) {
+				if(!name) throw wigiiApi.createServiceException('attribute name cannot be null', wigiiApi.errorCodes.INVALID_ARGUMENT);
+				if(!self.context.attributes) self.context.attributes = {};
+				if(value===undefined) return self.context.attributes[name];
+				else self.context.attributes[name] = value;
+			};
+		};
+		
+		/**
+		 * A Wigii FieldList
+		 */
+		wigiiApi.FieldList = function() {
+			var self = this;
+			self.className = 'FieldList';
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
+			
+			self.context = {
+				'indexByName':{},
+				'indexByPos':[]
+			};
+			
+			/**
+			 * Adds a field to the FieldList
+			 * @param Field field the field to add to the list
+			 * @return FieldList for chaining
+			 * @throws ServiceException::ALREADY_EXISTS if a field which same name is already in the list.
+			 */
+			self.addField = function(field) {
+				if(!field) throw wigiiApi.createServiceException('field cannot be null', wigiiApi.errorCodes.INVALID_ARGUMENT);
+				var fieldName = field.fieldName();
+				if(self.doesFieldExist(fieldName)) wigiiApi.createServiceException("field '"+fieldName+"' already exists in the list", wigiiApi.errorCodes.ALREADY_EXISTS);
+				self.context.indexByName[fieldName] = field;
+				self.context.indexByPos.push(fieldName);
+			};
+			/**
+			 * Checks if a Field with the given name exists in the list
+			 * @param String fieldName the field name to check
+			 * @return Field return Field if exists in the list else undefined
+			 */
+			self.doesFieldExist = function(fieldName) {
+				if(!fieldName) return undefined;
+				return self.context.indexByName[fieldName];
+			};
+			/**
+			 * Return the Field in the list given its name.
+			 * @param String fieldName the name of the field to retrieve
+			 * @return Field the field
+			 * @throws ServiceException::DOES_NOT_EXIST if no Field with this name exist in the list
+			 */
+			self.getField = function(fieldName) {
+				if(!fieldName) throw wigiiApi.createServiceException('fieldName cannot be null', wigiiApi.errorCodes.INVALID_ARGUMENTfield.fieldName());
+				var returnValue = self.context.indexByName[fieldName];
+				if(!returnValue) throw wigiiApi.createServiceException("field '"+fieldName+"' does not exist in the list", wigiiApi.errorCodes.DOES_NOT_EXIST);
+				return returnValue;
+			};
+			/**
+			 * @return Boolean true if list is empty, else false
+			 */
+			self.isEmpty = function() {
+				return (self.context.indexByPos.length==0);
+			};
+			/**
+			 * @return Int the number of elements in the list, 0 if empty.
+			 */
+			self.count = function() {
+				return self.context.indexByPos.length;
+			};
+			/**
+			 * Iterates other the list and calls the given callback function
+			 * @param Function callback function of the form callback(index,Field) where index=0..count-1.
+			 */
+			self.each = function(callback) {
+				if(!$.isFunction(callback)) throw wigiiApi.createServiceException('callback should be a function of the form callback(index,Field)', wigiiApi.errorCodes.INVALID_ARGUMENT);
+				var indexByPos = self.context.indexByPos;
+				var indexByName = self.context.indexByName;
+				for(var i=0;i<indexByPos.length;i++) {
+					callback(i,indexByName[indexByPos[i]]);
+				}
+			};
+		};
+		
+		/**
+		 * Wigii Bag
+		 */
+		wigiiApi.WigiiBag = function() {
+			var self = this;
+			self.className = 'WigiiBag';
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
+			
+			self.context = {
+				'bag':{}
+			};
+			
+			/**
+			 * Returns the value of the field given its name and optional subFieldName
+			 * @param fieldName the name of the Field
+			 * @param subFieldName the name of the subfield. If undefined, assumes 'value' subField.
+			 * @return Scalar the field value or undefined if field has no value.
+			 */
+			self.getValue = function(fieldName,subFieldName) {
+				if(!fieldName) throw wigiiApi.createServiceException('fieldName cannot be null', wigiiApi.errorCodes.INVALID_ARGUMENT);				
+				var fieldValue = self.context.bag[fieldName];
+				if(fieldValue) {
+					if(!subFieldName) subFieldName = 'value';
+					return fieldValue[subFieldName];
+				}
+				else return undefined;
+			};
+			/**
+			 * Stores the value in the WigiiBag. Replaces any existing value for this fieldName and subFieldName
+			 * @param Scalar value the value to store in the WigiiBag
+			 * @param fieldName the name of the Field
+			 * @param subFieldName the name of the subField. If undefined, assumes 'value' subField.
+			 */
+			self.setValue = function(value,fieldName,subFieldName) {
+				if(!fieldName) throw wigiiApi.createServiceException('fieldName cannot be null', wigiiApi.errorCodes.INVALID_ARGUMENT);
+				var fieldValue = self.context.bag[fieldName];
+				if(!fieldValue) {
+					fieldValue = {};
+					self.context.bag[fieldName] = fieldValue;
+				}
+				if(!subFieldName) subFieldName = 'value';
+				fieldValue[subFieldName] = value;
+			};
+		};
+		
+		/**
+		 * A Wigii Record
+		 * @param FieldList fieldList optional predefined FieldList of the Record.
+		 * @param WigiiBag wigiiBag optional predefined WigiiBag of the Record.
+		 */
+		wigiiApi.Record = function(fieldList,wigiiBag) {
+			var self = this;
+			self.className = 'Record';
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
+			
+			self.context = {
+				'fieldList':fieldList||wigiiApi.createFieldListInstance(),
+				'wigiiBag':wigiiBag||wigiiApi.createWigiiBagInstance()
+			};
+			
+			/**
+			 * @return FieldList
+			 */
+			self.fieldList = function() {return self.context.fieldList;};
+			/**			
+			 * @return WigiiBag
+			 */
+			self.wigiiBag = function() {return self.context.wigiiBag;};
+			
+			/**
+			 * Creates a new Field in the Record and adds it at the end of the list
+			 * @param String fieldName the name of the field
+			 * @param String dataType the Wigii DataType name of the field
+			 * @param String label a label for the end user (already translated)
+			 * @param Object attributes optional map of attributes
+			 * @return Record for chaining
+			 */
+			self.createField = function(fieldName,dataType,label,attributes) {
+				var field = wigiiApi.createFieldInstance(fieldName, dataType, label, attributes);
+				self.fieldList().addField(field);
+				return self;
+			};
+			/**
+			 * Returns the value of the Field in the Record
+			 * @param String fieldName the name of the field
+			 * @param String subFieldName the name of the subfield. If undefined, assumes 'value' subfield.
+			 * @return Scalar the field value or undefined if field does not exist.
+			 */
+			self.getFieldValue = function(fieldName,subFieldName) {
+				return self.wigiiBag().getValue(fieldName,subFieldName);
+			};
+			/**
+			 * Sets the value of a Field in the Record
+			 * @param Scalar value the field value to store into the Record
+			 * @param String fieldName the name of the Field
+			 * @param subFieldName the name of the subfield. If undefined, assumes 'value' subfield.
+			 * @return Record for chaining
+			 */
+			self.setFieldValue = function(value,fieldName,subFieldName) {
+				self.wigiiBag().setValue(value,fieldName,subFieldName);
+				return self;
+			};
+		};
 		
 		// ServiceProvider
 		
@@ -1765,6 +2130,30 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		wigiiApi.createFormEventInstance = function(eventName,formId,fieldId,fieldName) {
 			return new wigiiApi.FormEvent(eventName,formId,fieldId,fieldName);
 		};
+		/**
+		 * Creates a Field instance
+		 */
+		wigiiApi.createFieldInstance = function(fieldName,dataType,label,attributes) {
+			return new wigiiApi.Field(fieldName,dataType,label,attributes);
+		};
+		/**
+		 * Creates a FieldList instance
+		 */
+		wigiiApi.createFieldListInstance = function() {
+			return new wigiiApi.FieldList();
+		};
+		/**
+		 * Creates a WigiiBag instance
+		 */
+		wigiiApi.createWigiiBagInstance = function() {
+			return new wigiiApi.WigiiBag();
+		};
+		/**
+		 * Creates a Record instance
+		 */
+		wigiiApi.createRecordInstance = function(fieldList,wigiiBag) {
+			return new wigiiApi.Record(fieldList,wigiiBag);
+		};
 		
 		// Wigii client
 					
@@ -1774,6 +2163,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.log = function(message) {			
 			wigiiApiConsole().log("INFO WigiiApi : "+message);
+		};
+		/**
+		 * Clears the WigiiAPI log console
+		 */
+		wigiiApi.clearLog = function() {
+			wigiiApiConsole().clear();
 		};
 		/**
 		 * Returns WigiiApi DebugLogger instance
@@ -1849,7 +2244,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							}
 						}
 						// executes javascript
-						eval(tempCode);
+						if(!wigiiApi.holdJsCodeAnswers()) eval(tempCode);
+						else wigiiApi.log(tempCode);
 					} 
 					// Alert answer
 					else if (request[0] == "Alert"){
@@ -2100,8 +2496,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			if(!positionOptions) positionOptions = {};			
 			// if no mouseEvent then takes window center
 			if(!mouseEvent) {
-				screenTop = $(window).height()/2;
-				screenLeft = $(window).width()/2;	
+				screenTop = Math.floor($(window).height()/2);
+				screenLeft = Math.floor($(window).width()/2);	
 				if(!positionOptions.position) positionOptions.position = 'center';
 			}
 			// else takes mouse position
@@ -2157,8 +2553,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				boxTop = Math.min(boxTop,$(window).height()-boxOptions.height-15);
 				boxLeft = Math.min(boxLeft,$(window).width()-boxOptions.width-15);
 			}
-			boxOptions.left = boxLeft;
-			boxOptions.top = boxTop;
+			boxOptions.left = Math.ceil(boxLeft);
+			boxOptions.top = Math.ceil(boxTop);
 			return boxOptions;
 		};
 		// Link with WigiiExecutor.js

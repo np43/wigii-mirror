@@ -240,6 +240,17 @@ function simplexml_replaceNodeWithChildren($node1, $node2ChildrenParent) {
 	$parent->removeChild($node1);
 	return simplexml_import_dom($parent);
 }
+function simplexml_addAttribute($parent, $name, $value = '') {
+	$node1 = dom_import_simplexml($parent);
+	$node1->setAttribute($name, $value);
+	return simplexml_import_dom($node1);
+}
+function simplexml_removeNode($node) {
+	$child = dom_import_simplexml($node);
+	$parent = $child->parentNode;
+	return $parent->removeChild($child);
+}
+
 /**
  * Check qu'un string ne contient pas de caractère spéciaux et qu'il a une longueur correcte
  * accepte les espaces les - et les _ et les . @
@@ -260,19 +271,6 @@ function checkNoSpecialCharsString($string, $minChars, $maxChars, $acceptAccent 
 function stripAccents($string){
 	return strtr($string, array("'"=>"-","é"=>"e", "è"=>"e", "ë"=>"e", "ê"=>"e", "à"=>"a", "á"=>"a", "â"=>"a", "ä"=>"a", "ó"=>"o", "ò"=>"o", "ô"=>"o", "ö"=>"o", "ú"=>"u", "ù"=>"u", "û"=>"u", "ü"=>"u", "í"=>"i", "ì"=>"i", "ï"=>"i", "î"=>"i", "É"=>"E", "È"=>"E", "Ë"=>"E", "Ê"=>"E", "Á"=>"A", "À"=>"A", "Ä"=>"A", "Â"=>"A", "Ó"=>"O", "Ò"=>"O", "Ö"=>"O", "Ô"=>"O", "Ú"=>"U", "Ù"=>"U", "Ü"=>"U", "Û"=>"U", "Í"=>"I", "Ì"=>"I", "Î"=>"I", "Ï"=>"I", "ñ"=>"n", "Ñ"=>"N", "õ"=>"o", "Õ"=>"O"));
 }
-
-function simplexml_addAttribute($parent, $name, $value = '') {
-	$node1 = dom_import_simplexml($parent);
-	$node1->setAttribute($name, $value);
-	return simplexml_import_dom($node1);
-}
-
-function simplexml_removeNode($node) {
-	$child = dom_import_simplexml($node);
-	$parent = $child->parentNode;
-	return $parent->removeChild($child);
-}
-
 /**
  * convert a string like 134.5.67.78
  * in 134005067078
@@ -1589,6 +1587,20 @@ function cfgAttribut($value, $attributes=null, $label=null) {
  */
 function cfgAttributeExp($funcExp) {
 	return TechnicalServiceProvider::getFuncExpBuilder()->cfgAttributeExp($funcExp);
+}
+
+/**
+ * Creates a WigiiBPLParameter based on a list of pairs (key, value) or other WigiiBPLParameter instances.
+ * @param $args a list of arguments of the form wigiiBPLParam(k1,v1,k2,v2,p1,k3,v3,p2,p3,...) where
+ * - ki,vi: pairs of (key, value) where key ki evaluates to a string and value to any value used as a parameter,
+ * - pi: if pi evaluates to a WigiiBPLParameter instance, then adds its content
+ * @return WigiiBPLParameter
+ */
+function wigiiBPLParam($args=null) {
+	$nArgs = func_num_args();
+	if($nArgs>1) $_args = func_get_args();			
+	else $_args=$args;	
+	return TechnicalServiceProvider::getFuncExpBuilder()->wigiiBPLParam($_args);
 }
 
 /**

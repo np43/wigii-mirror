@@ -21,7 +21,7 @@
 
 /**
  * An object wrapper around a value
- * Created by CWE on 10 janvier 10
+ * Created by CWE on 10 decembre 15
  */
 class ValueObject
 {

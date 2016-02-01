@@ -125,40 +125,50 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 					//default: $cacheLevel = self::CACHE_LEVEL_SESSION;
 					default: $cacheLevel = self::CACHE_LEVEL_PUBLIC;
 				}
-				// evaluates func exp
-				if(!empty($funcExp)) {
-					//$this->debugLogger()->write($funcExp);
-					$funcExp = str2fx($funcExp);
-					// looks in cache if we have already something
-					$cacheKey = md5(TechnicalServiceProvider::getFieldSelectorFuncExpParser()->funcExpToString($funcExp));
-					$result = $this->getCachedAttributes($cacheKey, $cacheLevel);
-					// else evaluates the func exp
-					if(!isset($result)) {
-						$cacheResult = true;
-						$result = $this->evaluateFuncExp($funcExp);
+				try {
+					// evaluates func exp
+					if(!empty($funcExp)) {
+						//$this->debugLogger()->write($funcExp);
+						$funcExp = str2fx($funcExp);
+						// looks in cache if we have already something
+						$cacheKey = md5(TechnicalServiceProvider::getFieldSelectorFuncExpParser()->funcExpToString($funcExp));
+						$result = $this->getCachedAttributes($cacheKey, $cacheLevel);
+						// else evaluates the func exp
+						if(!isset($result)) {
+							$cacheResult = true;
+							$result = $this->evaluateFuncExp($funcExp);
+						}
+						else $cacheResult = false;
+	
 					}
-					else $cacheResult = false;
-
+					else $result = null;
+					// if result is a DataFlowSelector, then executes the data flow.
+					if($result instanceof DataFlowSelector) {
+						// ensures that CfgAttribut2XmlDFA exists at the end.
+						$result->getDataFlowActivitySelectorList()->addDataFlowActivitySelector('CfgAttribut2XmlDFA');
+						// executes the flow
+						$result = $this->getDataFlowService()->processDataFlowSelector($principal, $result);
+					}
+					// else if result is a SimpleXmlElement instance then stores it
+					elseif($result instanceof SimpleXMLElement) {
+						/* nothing todo */
+					}
+					// else if result is a String, then assumes it is xml and parses it into a SimpleXmlElement
+					elseif(is_string($result)) {
+						$result = simplexml_load_string($result);
+					}
+					// else returns without any modifications
+					else $result = null;
 				}
-				else $result = null;
-				// if result is a DataFlowSelector, then executes the data flow.
-				if($result instanceof DataFlowSelector) {
-					// ensures that CfgAttribut2XmlDFA exists at the end.
-					$result->getDataFlowActivitySelectorList()->addDataFlowActivitySelector('CfgAttribut2XmlDFA');
-					// executes the flow
-					$result = $this->getDataFlowService()->processDataFlowSelector($principal, $result);
+				catch(Exception $e) {
+					$message="Configuration error";
+					if(!empty($lp) && $lp['moduleName']) $message.=" in module '".$lp['moduleName']."'";
+					$fieldXml = dom_import_simplexml($attributeExp);					
+					if($fieldXml) $fieldXml = $fieldXml->parentNode;
+					if($fieldXml->nodeName) $message.=" field '".$fieldXml->nodeName."' : \n";
+					$message.=$e->getMessage().' ('.$e->getCode().')';
+					throw new ConfigServiceException($message,ConfigServiceException::CONFIGURATION_ERROR);
 				}
-				// else if result is a SimpleXmlElement instance then stores it
-				elseif($result instanceof SimpleXMLElement) {
-					/* nothing todo */
-				}
-				// else if result is a String, then assumes it is xml and parses it into a SimpleXmlElement
-				elseif(is_string($result)) {
-					$result = simplexml_load_string($result);
-				}
-				// else returns without any modifications
-				else $result = null;
-
 				// replaces the attributeExp node with the result if set.
 				if(isset($result)) {
 					// puts result in cache

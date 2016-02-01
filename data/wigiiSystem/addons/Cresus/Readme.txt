@@ -1,0 +1,1 @@
+﻿A Wigii plugin which includes a Cresus file parser to extract the Cresus functions and import them as documentation into a Wigii Namespace.

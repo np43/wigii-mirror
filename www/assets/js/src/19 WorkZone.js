@@ -1934,7 +1934,9 @@ function setListenerToNavigateMenu(){
 	$('#navigateMenu li').click(function(e){ //:not(.with-ul)
 		if($(this).hasClass('with-ul')){
 			//if click directly on the top link of the navigation bar selec the first possible option
-			$('ul li:first a', this).click(e);
+			if(!$(this).hasClass('selected') && $('ul li:first a', this).length){
+				$('ul li:first a', this).click();
+			}
 		} else {
 			$.cookie('wigii_anchor', $('a', this).attr('href'),  { path: '/' });
 			if(e.ctrlKey){

@@ -252,7 +252,7 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 			}
 
 			$allDay = $element->getFieldValue($fMap["period"], "isAllDay");
-			if($allDay == null) $allDay = "false";
+			if($allDay == null || $allDay == 0) $allDay = "false";
 			else $allDay = "true";
 		}
 		if($fMap["date"]){

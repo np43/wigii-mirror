@@ -1140,6 +1140,53 @@ class FuncExpBuilder {
 		return (object)array('funcExp' => $funcExp);
 	}
 	
+	// Wigii BPL Builder
+	
+	/**
+	 * Creates a WigiiBPLParameter based on a list of pairs (key, value) or other WigiiBPLParameter instances.
+	 * @param $args a list of arguments of the form wigiiBPLParam(k1,v1,k2,v2,p1,k3,v3,p2,p3,...) where
+	 * - ki,vi: pairs of (key, value) where key ki evaluates to a string and value to any value used as a parameter,
+	 * - pi: if pi evaluates to a WigiiBPLParameter instance, then adds its content
+	 * @return WigiiBPLParameter
+	 */
+	public function wigiiBPLParam($args=null) {
+		$nArgs = func_num_args();
+		if($nArgs>1) {
+			$_args = func_get_args();			
+		}
+		elseif($nArgs==1) {
+			if(isset($args)) {
+				if(!is_array($args)) throw new FuncExpEvalException('args should be an array or a list of parameters', FuncExpEvalException::INVALID_ARGUMENT);
+				$_args = $args;
+				$nArgs=count($_args);
+			} else $nArgs=0;
+		}
+		$returnValue = TechnicalServiceProvider::createWigiiBPLParameterInstance();		
+		if($nArgs > 0) {
+			$i = 0;
+			while($i < $nArgs) {
+				$k = $_args[$i];
+				// if we have an instance of a WigiiBPLParameter, then adds it to existing one
+				if($k instanceof WigiiBPLParameter) {
+					$returnValue->addWigiiBPLParameter($k);
+				}
+				// else evaluates value and sets (key, value) pair
+				else {
+					$i++;
+					if($i < $nArgs) {
+						$v = $_args[$i];
+						$returnValue->setValue($k, $v);
+					}
+					else {
+						$returnValue->setValue($k, null);
+					}
+				}
+				$i++;
+			}
+		}
+		return $returnValue;
+	}
+	
 	// Selectors
 	
 	/**
