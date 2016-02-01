@@ -223,6 +223,11 @@ function wigii_autoload($class_name) {
 				$filename = ADDONS_PATH."Excel/$class_name.php";
 				$ok = file_exists($filename);
 			}
+			// addon: Geometry
+			if (!$ok) {
+				$filename = ADDONS_PATH."Geometry/$class_name.php";
+				$ok = file_exists($filename);
+			}
 		}
 		// end wigii Addons
 		////////////////////
