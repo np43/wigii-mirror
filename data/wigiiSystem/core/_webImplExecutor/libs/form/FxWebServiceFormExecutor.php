@@ -127,6 +127,8 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 			header($_SERVER["SERVER_PROTOCOL"]." 500 Internal Error"); 
 			header("Content-Type: text/xml; charset=UTF-8");
 			echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e));
+			// signals fatal error to monitoring system
+			ServiceProvider::getClientAdminService()->signalFatalError($e);
 		}
 	}
 

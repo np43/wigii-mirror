@@ -19,11 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 19 nov. 09
- * by LWR
+/**
+ * Wigii user flow and functional events
+ * Created on 19 nov. 09 by LWR
  */
-
 interface WigiiEvents {
 
 	/**

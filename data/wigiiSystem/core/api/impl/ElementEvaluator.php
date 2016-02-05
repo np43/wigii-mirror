@@ -634,10 +634,88 @@ class ElementEvaluator extends RecordEvaluator
 			if($silent) return null;
 			else {
 				if(!isset($flowContext)) $flowContext = $this->getCurrentFlowName();
-				throw new ServiceException("Not able to evaluate current group in flow '".$flowContext."'", ServiceException::UNSUPPORTED_OPERATION);
+				throw new ServiceException("Not able to evaluate current group in flow '".$flowContext."'", ServiceException::INVALID_STATE);
 			}
 		}
 		else {
+			if($returnAttribute == 'group') return $returnValue;
+			else return $returnValue->getAttribute($returnAttribute);
+		}
+	}
+	
+	/**
+	 * Returns the first matching parent group name, ID or object given a name, array of names or drop-down xml configuration 
+	 * FuncExp signature : <code>cfgParentGroup(name, returnAttribute=groupname|id|group, silent=false)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) name: String|Array|SimpleXmlElement the name or possible names of the group to search for in the parent hierarchy. If name is not defined, returns the direct parent group.
+	 * - Arg(1) returnAttribute: String. The name of the group attribute to return. Defaults to groupname. If 'group' then returns Group object.
+	 * - Arg(2) silent: Boolean. If true, then if parent group cannot be retrieved, then no Exception is thrown, but null is returned instead, else Exception is thrown as usual. Defaults to silent (true).	 
+	 * @return String|Int|Group
+	 * @throws ServiceException INVALID_STATE if Wigii is not capable to return a current selected group name in the calling context.
+	 */
+	public function cfgParentGroup($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) $name=$this->evaluateArg($args[0]);
+		else $name=null;
+		if($nArgs>1) $returnAttribute=$this->evaluateArg($args[1]);
+		else $returnAttribute='groupname';
+		if($nArgs>2) $silent=$this->evaluateArg($args[2]);
+		else $silent=true;
+		
+		// gets starting point		
+		$group = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'group', true),$this);
+		// if no group returns null
+		if(!isset($group)) {
+			if($silent) return null;
+			else {
+				if(!isset($flowContext)) $flowContext = $this->getCurrentFlowName();
+				throw new ServiceException("Not able to evaluate current group in flow '".$flowContext."'", ServiceException::INVALID_STATE);
+			}
+		}
+
+		// creates matching array
+		$matches=array();
+		if(is_array($name)) {
+			$matches = array_combine($name, $name);
+		}
+		elseif($name instanceof SimpleXMLElement) {
+			foreach($name->attribute as $attribute_key => $attribute){
+				$val = (string)$attribute;
+				$matches[$val]=$val;
+			}
+		}
+		elseif(!empty($name)) {
+			$matches=array($name,$name);
+		}		
+		
+		$gAS = ServiceProvider::getGroupAdminService();
+		$p = $this->getPrincipal();
+		$parentId = $group->getGroupParentId();
+		$returnValue=null;
+		// if no matching, only returns first parent
+		if(empty($matches)) {
+			if($parentId) $returnValue = $gAS->getGroupWithoutDetail($p, $parentId);
+		}
+		// else goes up the hierarchy
+		else {
+			while($parentId) {
+				$group = $gAS->getGroupWithoutDetail($p, $parentId);
+				if(isset($group)) {				
+					// checks for group name matching
+					if($matches[$group->getGroupName()]) {
+						$returnValue = $group;
+						break;
+					}
+					$parentId = $group->getGroupParentId();
+				}
+				elseif(!$silent) {
+					if(!isset($flowContext)) $flowContext = $this->getCurrentFlowName();
+					throw new ServiceException("Not able to evaluate parent group in flow '".$flowContext."'", ServiceException::INVALID_STATE);
+				}
+				else $parentId=null;
+			}		
+		}
+		if(isset($returnValue)) {	
 			if($returnAttribute == 'group') return $returnValue;
 			else return $returnValue->getAttribute($returnAttribute);
 		}

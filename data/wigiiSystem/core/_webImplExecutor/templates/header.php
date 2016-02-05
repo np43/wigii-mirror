@@ -247,10 +247,7 @@ else {
 reqOnHash = null;
 <? } ?>
 $.cookie('wigii_anchor', crtHash,  { path: '/' });
-if(reqOnHash != null){
-	self.location = "<?=(HTTPS_ON ? "https" : "http" );?>://<?=$_SERVER['HTTP_HOST']?><?=$_SERVER['REQUEST_URI']?>"+crtHash;
-	setTimeout(function(){update(reqOnHash);}, 500);
-}
+if(reqOnHash != null) self.location = "<?=(HTTPS_ON ? "https" : "http" );?>://<?=$_SERVER['HTTP_HOST']?><?=$_SERVER['REQUEST_URI']?>"+crtHash;
 update('<?=EMPTY_ANSWER_ID_URL; ?>/<?=WigiiNamespace::EMPTY_NAMESPACE_URL; ?>/<?=Module::EMPTY_MODULE_URL; ?>/setBrowser/'+browserName+'/'+version);
 
 }

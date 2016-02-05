@@ -19,7 +19,8 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* Exception sink core technical service
+/**
+ * Exception sink core technical service
  * Created by CWE on 3 juin 09
  */
 class ExceptionSink

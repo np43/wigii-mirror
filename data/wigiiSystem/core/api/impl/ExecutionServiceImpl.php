@@ -375,7 +375,7 @@ class ExecutionServiceImpl implements ExecutionService {
 			$crtRequest = array_shift($this->remainingRequests);
 			$i = 0;
 			if($this->getIsUpdating()) $this->setIdAnswer($crtRequest[$i++]);
-			$this->setCrtWigiiNamespace($this->getWigiiNamespaceAdminService()->getWigiiNamespaceForClient($p, $crtRequest[$i++], $p->getWigiiNamespace()->getClient()));
+			$this->setCrtWigiiNamespace($this->getWigiiNamespaceAdminService()->getWigiiNamespaceForClient($p, str_replace('%20',' ',$crtRequest[$i++]), $p->getWigiiNamespace()->getClient()));
 			$this->setCrtModule($this->getModuleAdminService()->getModule($p, $crtRequest[$i++]));
 			$this->setCrtAction($crtRequest[$i++]);
 			$this->setCrtParameters(array_slice($crtRequest, $i++));

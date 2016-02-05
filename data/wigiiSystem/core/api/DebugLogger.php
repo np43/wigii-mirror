@@ -19,7 +19,8 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* Debugger core technical service
+/**
+ * Debugger core technical service
  * Created by CWE on 3 juin 09
  */
 class DebugLogger

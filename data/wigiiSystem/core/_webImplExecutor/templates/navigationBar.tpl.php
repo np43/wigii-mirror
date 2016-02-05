@@ -80,6 +80,7 @@ include(TEMPLATE_PATH . "navigationUserMenu.tpl.php");
 
 		$roleId = $p->getUserId();
 		$crtWigiiNamespace = $p->getWigiiNamespace()->getWigiiNamespaceUrl();
+		$crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
 		$moduleReorder = reorderTabBasedOnKeyPriority($modules, (string)$config->getParameter($p, null, "prioritizeModuleInHomePage"), true);
 		foreach($moduleReorder as $moduleName=>$module){
 			?><li<?=($roleId == $p->getUserId() && $p->getValueInRoleContext("lastWorkingModule") == $moduleName ? ' class="selected" ': '');?>><?
@@ -96,6 +97,7 @@ include(TEMPLATE_PATH . "navigationUserMenu.tpl.php");
 	} else {
 
 		$crtWigiiNamespace = $defaultWigiiNamespace;
+		$crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
 		if($roleList->getDefaultWigiiNamespaceModules()){
 			$moduleReorder = reorderTabBasedOnKeyPriority($roleList->getDefaultWigiiNamespaceModules(), (string)$config->getParameter($p, null, "prioritizeModuleInHomePage"), true);
 			foreach($moduleReorder as $module=>$roleId){
@@ -113,6 +115,7 @@ include(TEMPLATE_PATH . "navigationUserMenu.tpl.php");
 		if($roleList->getOtherWigiiNamespaces()){
 			$wigiiNamespaceReorder = reorderTabBasedOnKeyPriority($roleList->getOtherWigiiNamespaces(), (string)$config->getParameter($p, null, "prioritizeWigiiNamespaceInHomePage"), true);
 			foreach($wigiiNamespaceReorder as $crtWigiiNamespace=>$subMenu){
+				$crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
 				if($subMenu){
 					$moduleReorder = reorderTabBasedOnKeyPriority($subMenu, (string)$config->getParameter($p, null, "prioritizeModuleInHomePage"), true);
 					if(count($moduleReorder)==1){

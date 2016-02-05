@@ -19,7 +19,8 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* wigii ClientAdminService implementation
+/**
+ * Wigii ClientAdminService implementation
  * Created by CWE on 12 juin 09
  */
 class ClientAdminServiceImpl implements ClientAdminService
@@ -689,6 +690,120 @@ class ClientAdminServiceImpl implements ClientAdminService
 		$this->clientCache[$clientName] = $client;
 		$this->debugLogger()->write("stores client $clientName");
 	}
+	
+	// Wigii monitoring functions
+	
+	private $monitoringSwitches;
+	
+	public function configureMonitoring($config) {
+		if(isset($config)) $config->configure($this);
+	}
+	/**
+	 * Checks if a given monitoring option is enabled 
+	 * @param String $option monitoring option name
+	 * @return boolean returns true if this monitoring option is enabled, else false
+	 */
+	protected function isMonitoringEnabled($option) {
+		if(!isset($this->monitoringSwitches)) return false;
+		else return $this->monitoringSwitches[$option];
+	}
+	public function monitorFatalError($enabled) {
+		if(!isset($this->monitoringSwitches)) $this->monitoringSwitches=array();
+		$this->monitoringSwitches['monitorFatalError']=$enabled;
+	}
+	
+	/**
+	 * Gathers Execution context information and returns an object or a string
+	 * @param WigiiBPLParameter $options a set of options conditionning the set of information gathered regarding the current execution context :
+	 * - outputFormat: one of 'string','stdClass'. Defaults to string.
+	 * @return string|stdClass an object (or its serialized version) containing the following entries :
+	 * - date : event date in YYYY-mm-dd hh:mm:ss:u format  
+	 * - realUsername : real user name
+	 * - username : role name
+	 * - principalNamespace : principal current namespace
+	 */
+	public function gatherExecutionContextInfo($options=null) {
+		if(!isset($options)) $options=wigiiBPLParam();
+		if(!$options->getValue('outputFormat')) $options->setValue('outputFormat', 'string');
+				
+		$returnValue=array();
+		// gathers execution context info
+		$returnValue['date']=udate('Y-m-d H:i:s:u');
+		// gathers principal info
+		$p=ServiceProvider::getAuthenticationService()->getMainPrincipal();
+		$returnValue['realUsername'] = $p->getRealUsername();
+		$returnValue['username'] = $p->getUsername();
+		$returnValue['principalNamespace'] = $p->getWigiiNamespace()->getWigiiNamespaceUrl();
+		// serializes output
+		if($options->getValue('outputFormat')=='string') {
+			$s="EXECUTION CONTEXT:\n\n";
+			foreach($returnValue as $k=>$v) {
+				$s.=$k.': '.$v."\n";
+			}
+			$returnValue=$s;
+		}
+		// converts output to object
+		else $returnValue=(object)$returnValue;
+		return $returnValue;
+	}
+	/**
+	 * Gathers Exception information and returns an object or a string 
+	 * @param Exception|String $exception exception for which to gather some information or fatal error message
+	 * @param WigiiBPLParameter $options a set of options conditionning the set of information gathered regarding the exception :
+	 * - outputFormat: one of 'string','stdClass'. Defaults to string.
+	 * - showStackTrace: Boolean. If true, records the stack trace. Defaults to true.
+	 * @return string|stdClass an object (or its serialized version) containing the following entries :
+	 * - name : Exception name 
+	 * - message : error message
+	 * - code : error code as defined in /wigiiSystem/core/api/exceptions/errorcodes.xml
+	 * - stackTrace : Exception stack trace String
+	 */
+	public function gatherExceptionInfo($exception,$options=null) {
+		if(!isset($options)) $options=wigiiBPLParam();
+		if(!$options->getValue('outputFormat')) $options->setValue('outputFormat', 'string');
+		if($options->getValue('showStackTrace')!==false) $options->setValue('showStackTrace', true);
+		
+		$returnValue=array();		
+		// gathers exception info
+		if($exception instanceof ServiceException) $exception=$exception->getWigiiRootException();
+		if($exception instanceof Exception) {
+			$returnValue['name'] = get_class($exception);
+			$returnValue['message'] = $exception->getMessage();
+			$returnValue['code'] = $exception->getCode();
+			if($options->getValue('showStackTrace')) {
+				$returnValue['stackTrace'] = $exception->getTraceAsString();
+			}
+		}
+		elseif(is_string($exception)) {
+			$returnValue['name'] = 'PHP ERROR';
+			$returnValue['message'] = $exception;
+		}
+		// serializes output
+		if($options->getValue('outputFormat')=='string') {
+			$s="EXCEPTION:\n\n";
+			foreach($returnValue as $k=>$v) {
+				$s.=$k.': '.$v."\n";
+			}
+			$returnValue=$s;
+		}
+		// converts output to object
+		else $returnValue=(object)$returnValue;
+		return $returnValue;
+	}
+	
+	// Wigii signals
+	
+	public function signalFatalError($exception) {
+		if($this->isMonitoringEnabled('monitorFatalError')) {
+			try {
+				$exec = $this->executionSink();
+				if(isset($exec)) $exec->log("FATAL ERROR SIGNALED:\n".
+					$this->gatherExecutionContextInfo()."\n".
+					$this->gatherExceptionInfo($exception));
+			}
+			catch(Exception $e) {/* silent to avoid loops */}
+		}
+	}	
 }
 
 

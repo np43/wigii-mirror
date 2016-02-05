@@ -1169,6 +1169,32 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 	
 	/**
+	 * Returns the XML configuration of a Field in the Record
+	 * FuncExp signature : <code>cfgFieldXml(fieldName, attribute=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: String|FieldSelector. The name of the field for which to get the XML configuration.
+	 * - Arg(1) attribute: String. Optional xml attribute name. If set, then returns the value of the xml attribute in the configuration.
+	 * @return SimpleXMLElement|String if no attribute is specified, then returns the XML configuration node of the Field, else returns the value of the specified attribute.
+	 */
+	public function cfgFieldXml($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<1) throw new RecordException('cfgFieldXml func exp takes at least one argument: the fieldName for which to extract the XML configuratoin node.', RecordException::INVALID_ARGUMENT);
+		$fieldName = $args[0];
+		if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+		else $fieldName = $this->evaluateArg($fieldName);
+				
+		$attribute = null;
+		if($nArgs>1) $attribute=$this->evaluateArg($args[1]);
+		
+		$returnValue = $this->getRecord()->getFieldList()->getField($fieldName);
+		if(isset($returnValue)) $returnValue=$returnValue->getXml();
+		if(isset($returnValue) && isset($attribute)) {
+			$returnValue = (string)$returnValue[$attribute];
+		}
+		return $returnValue;
+	}
+	
+	/**
 	 * Updates a value in the wigii bag, given one or several field selectors
 	 * Last argument is the value to be set, all previous arguments should evaluate to field selectors.
 	 * Example: setVal(f1, f2.name, f3.city, "unknown")

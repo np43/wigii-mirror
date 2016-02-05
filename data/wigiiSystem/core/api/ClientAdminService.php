@@ -23,6 +23,7 @@
  * Wigii client administration service
  * Created by CWE on 12 juin 09
  * Modified by CWE on 23 mars 14 to add Wigii Setup functions
+ * Modified by CWE on 05.02.2016 to add Wigii Monitoring functions
  */
 interface ClientAdminService
 {
@@ -94,6 +95,30 @@ interface ClientAdminService
 	 */
 	public function syncCfgFields($principal, $groupId, $fileName=null,
 		$checkDeletedFields=1, $markNewFieldsAsImportant=true);
+	
+	
+	// Wigii monitoring configuration
+	
+	/**
+	 * Configures the monitoring of this Wigii Client
+	 * @param ObjectConfigurator $config a map of configuration options
+	 */
+	public function configureMonitoring($config);
+	
+	/**
+	 * @param boolean $enabled if true, then turns on monitoring of Fatal Errors for this Client
+	*/
+	public function monitorFatalError($enabled);
+	
+	// Wigii signals
+	
+	/**
+	 * Entry point to signal a Fatal Exception or Error to the monitoring system.
+	 * This should be called normally in the ExceptionSink class or in any other top level piece of code which handles Fatal errors.
+	 * This function does NOT communicate with the end user. It should be used ONLY to signal a fatal error to the monitoring system,
+	 * communication with the end user should be done through the ExceptionSink or handeld by the caller himself.
+	 * @param Exception|String $exception exception or fatal error string
+	 * @return null This function is silent, does not return any value and doesn't throw any exceptions.
+	*/
+	public function signalFatalError($exception);
 }
-
-

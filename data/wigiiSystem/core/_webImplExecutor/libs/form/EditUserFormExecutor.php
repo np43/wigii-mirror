@@ -83,6 +83,8 @@ class EditUserFormExecutor extends FormExecutor {
 			if($userEditRec->getFieldValue("passwordHasBeenEdited")){
 				try{
 					$user->getDetail()->setClearPassword($userEditRec->getFieldValue("password"));
+					// CWE 03.02.2016: on reset password, resets nb of failed logins
+					$user->getDetail()->setInfo_nbFailedLogin(0);
 				} catch(ServiceException $e){
 					$this->addErrorToField($transS->h($p, "invalidPassword"), "password");
 				}
@@ -169,6 +171,8 @@ class EditUserFormExecutor extends FormExecutor {
 		//if the passwordLife == "reset" reset the passworDate to today
 		if($userEditRec->getFieldValue("$passwordLifeFieldName") === "reset"){
 			$user->getDetail()->setPasswordDate(time());
+			// CWE 03.02.2016: on reset password, resets nb of failed logins
+			$user->getDetail()->setInfo_nbFailedLogin(0);
 		}
 
 		$user->getDetail()->setPasswordLife($userEditRec->getFieldValue("$passwordLifeFieldName"));
@@ -232,6 +236,11 @@ class EditUserFormExecutor extends FormExecutor {
 
 		$userEditRec = $this->getRecord();
 
+		// CWE 03.02.2016 adds 
+		if($userEditRec->getFieldValue("passwordHasBeenEdited") || ($userEditRec->getFieldValue("$passwordLifeFieldName") === "reset")) {
+			$fsl->addFieldSelector('info_nbFailedLogin');
+		}
+		
 		try{
 			$userAS->persistUser($p, $user, $fsl);
 			$exec->addJsCode(" adminUser_crtSelectedUser = '".$user->getId()."'; ");

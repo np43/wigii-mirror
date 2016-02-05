@@ -19,7 +19,8 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* wigii configuration service
+/**
+ * Wigii configuration service
  * Created by CWE on 2 juin 09
  */
 interface ConfigService

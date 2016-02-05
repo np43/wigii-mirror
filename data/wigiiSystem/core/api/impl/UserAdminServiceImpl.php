@@ -710,13 +710,21 @@ class UserAdminServiceImpl implements UserAdminService
 				case 'sys_lockId':
 				case 'info_lastLogin':
 				case 'info_nbLogin':
-				case 'info_lastFailedLogin':
-				case 'info_nbFailedLogin':
+				case 'info_lastFailedLogin':									
 				case 'info_lastLogout':
 				case 'info_lastSessionContext':
 				//case 'info_resetSessionContext': this needs to be updated
 					$doPersist=false;
 					break;
+				case 'info_nbFailedLogin':
+					// if password changed then resets info_nbFailedLogin
+					if(isset($origUser) && ( 
+						($origUser->getAttribute(fs('password'))!=$user->getAttribute('password')) ||
+						($origUser->getAttribute(fs('passwordDate'))!=$user->getAttribute('passwordDate'))
+						)) {
+						$doPersist=true;
+					}
+					else $doPersist=false;
 			}
 			if($doPersist)
 			{

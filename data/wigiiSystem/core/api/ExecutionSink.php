@@ -19,7 +19,8 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* Execution flow sink core technical service
+/**
+ * Execution flow sink core technical service
  * Created by CWE on 3 juin 09
  */
 class ExecutionSink

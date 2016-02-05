@@ -19,7 +19,8 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* ExceptionSink implementation which integrates with wigii web site
+/**
+ * ExceptionSink implementation which integrates with wigii web site
  * Created by CWE on 8 juin 09
  */
 class ExceptionSinkWebImpl extends ExceptionSink
@@ -111,6 +112,9 @@ class ExceptionSinkWebImpl extends ExceptionSink
 		if($this->getSystemConsoleEnabled()){
 			$this->getSystemConsoleService()->storeMessage("Exception", "", $moreDetail);
 		}
+		
+		// signals fatal error to monitoring system
+		ServiceProvider::getClientAdminService()->signalFatalError($exception);
 	}
 }
 

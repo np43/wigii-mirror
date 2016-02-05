@@ -47,7 +47,7 @@ if($exec->getIdAnswer()!="workZone"){
 	if(!$defaultWigiiNamespace){
 		$defaultWigiiNamespace = $realUser->getWigiiNamespace()->getWigiiNamespaceUrl();
 	}
-
+	$defaultWigiiNamespace=str_replace('%20', ' ', $defaultWigiiNamespace);
 
 	$xmlFeedPath = (string)$config->getParameter($p, null, "tabsContentUrlForHomePage");
 	$xmlFeed = $xmlFeedPath;
@@ -157,6 +157,7 @@ if($exec->getIdAnswer()!="workZone"){
 			?><ul id="homePageWigiiNamespaceMenu"><?
 			$wigiiNamespaceReorder = reorderTabBasedOnKeyPriority($roleList->getOtherWigiiNamespaces(), (string)$config->getParameter($p, null, "prioritizeWigiiNamespaceInHomePage"), true);
 			foreach($wigiiNamespaceReorder as $crtWigiiNamespace=>$subMenu){
+				$crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
 				$customImage = $transS->t($p, "homePage_".$crtWigiiNamespace);
 				if($customImage == "homePage_".$crtWigiiNamespace) $customImage = null;
 				if($subMenu){

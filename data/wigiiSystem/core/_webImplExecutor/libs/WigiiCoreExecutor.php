@@ -92,8 +92,12 @@ class WigiiCoreExecutor {
 		if(file_exists($cwd."www")) chdir($cwd."www");
 		else if(file_exists($cwd."web")) chdir($cwd."web");
 		if($error !== NULL && ($error["type"]==E_ERROR || $error["type"]==E_PARSE || $error["type"]==E_USER_ERROR || $error["type"]==E_RECOVERABLE_ERROR)) {
-			$this->executionSink()->log($error["type"].": ".$error["message"]." in ".$error["file"]." on line ".$error["line"]);
+			$errorLabel=array(E_ERROR=>'Fatal Error',E_PARSE=>'Parse Error',E_USER_ERROR=>'User Error',E_RECOVERABLE_ERROR=>'Recoverable Error');
+			$errorMessage=$errorLabel[$error["type"]].": ".$error["message"]." in ".$error["file"]." on line ".$error["line"];
+			$this->executionSink()->log($errorMessage);
 			//no backtrace is available in shutdown context. //$this->executionSink()->log(alert(debug_backtrace()));
+			// signals fatal error to monitoring system
+			ServiceProvider::getClientAdminService()->signalFatalError($errorMessage);			
 		}
 		ServiceProvider::getSystemConsoleService()->logMessageInFile();
 	}
@@ -5910,6 +5914,9 @@ onUpdateErrorCounter = 0;
 
 				break;
 			case "moduleEditorCalc" :
+				// CWE 03.02.2016: FUNCTION IS DEPRECATED. too risky to launch recalculation of all fields without knowing which elements are currently selected.
+				// Prefer a more controlled approach through multiple selection or batch.
+				throw new ServiceException('This functionality is no more supported. Use multiple modify instead.', ServiceException::DEPRECATED);
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -6154,8 +6161,11 @@ onUpdateErrorCounter = 0;
 					$form->setIsDialog(true);
 				} else {
 					$form->setIsDialog(false);
-				}
-
+				}				
+				
+				// CWE 03.02.2016 shows captcha if already posted to be able to check value
+				if(array_key_exists('captcha_code', $_POST)) $form->setProtectWithCaptcha(true);
+				
 				$state = "start";
 				if ($_POST["action"] != null)
 					$state = addslashes($_POST["action"]);
@@ -10308,6 +10318,9 @@ onUpdateErrorCounter = 0;
 				$mAS = ServiceProvider :: getModuleAdminService();
 				$sessAS = ServiceProvider::getSessionAdminService();
 				$nAS = ServiceProvider::getWigiiNamespaceAdminService();
+				$configS = $this->getConfigurationContext();
+				
+				// checks for login
 				if ($authS->isMainPrincipalMinimal()){
 					// tries to log as public
 					if(!$authS->autoLoginAsPublic()) {
@@ -10327,16 +10340,9 @@ onUpdateErrorCounter = 0;
 					break;
 				}
 
-				$configS = $this->getConfigurationContext();
-
-				//			fput($exec->getCrtRequest());
-
+				// Extracts navigation parameters				
 				$type = $exec->getCrtParameters(0);
-				$typeId = $exec->getCrtParameters(1);
-				if($type == "user"){
-				} else {
-					$roleId = $p->getUserId();
-				}
+				$typeId = $exec->getCrtParameters(1);				
 				$fromRole = $exec->getCrtParameters(2);
 				if(!$fromRole) $fromRole = $p->getUserId();
 				$fromWigiiNamespace = $exec->getCrtParameters(3);
@@ -10344,7 +10350,9 @@ onUpdateErrorCounter = 0;
 				$fromModule = $exec->getCrtParameters(4);
 				if(!$fromModule) $fromModule = $p->getValueInRoleContext("lastModule");
 				$toWorkingModule = $exec->getCrtParameters(5); //available only if crtModule is Admin
-
+				$originalUserId = $p->getUserId();
+				
+				// Calculates best matching role
 				switch($type){
 					case "user":
 						$roleId = $typeId;
@@ -10357,13 +10365,15 @@ onUpdateErrorCounter = 0;
 						// finds the best matching role for this element
 						$roleId = $p->getRoleForElement($typeId);
 						break; 
-					case "":
+					default:
 						// find the first calculated role of this wigiiNamespace
-						$roleId = $p->getRoleListener()->getCalculatedRoleId($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl());
-						break;
-					default: //when in admin, we reload the last user
-						$roleId = $p->getUserId();
+						$roleList=$p->getRoleListener();
+						if(($roleList instanceof UserListForNavigationBarImpl) && !$roleList->isEmpty()) {
+							$roleId = $roleList->getCalculatedRoleId($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl());
+						}
+						else $roleId=$p->getUserId();						
 				}
+				// Stops if not matching role
 				if(!$roleId) {
 					if($p->isRealUserPublic()) {
 						throw new AuthenticationServiceException('public access forbidden', AuthenticationServiceException::FORBIDDEN_PUBLIC_USER);
@@ -10375,31 +10385,29 @@ onUpdateErrorCounter = 0;
 					break;
 				}
 
-
-				// if navigating out of the Setup namespace, then clears the configuration from the session and shared data
+				// If navigating out of the Setup namespace, then clears the configuration from the session and shared data
 				if($nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() == $fromWigiiNamespace &&
 					$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() != $fromWigiiNamespace) {
 					$this->clearConfig(true);
 				}
-
-				$this->throwEvent()->navigate(PWithUserIdWithWigiiNamespaceNameWithModuleName :: createInstance($p, $roleId, $fromWigiiNamespace . "->" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceName(), $fromModule . "->" . $exec->getCrtModule()->getModuleName()));
-
-				$originalUserId = $p->getUserId();
-
+				// If navigating out of the Admin module, then clears the configuration from the session
 				if ($fromModule == Module :: ADMIN_MODULE && !$exec->getCrtModule()->isAdminModule()){
-					// if navigating out of the Admin module, then clears the configuration from the session
 					$this->clearConfig();
 					$userAS->calculateAllMergedRoles($p);
 					$this->storeAdminAndCalculatedRoleIdsInSession($p);
 				}
+				
+				// Notifies the navigate event.
+				$this->throwEvent()->navigate(PWithUserIdWithWigiiNamespaceNameWithModuleName :: createInstance($p, $roleId, $fromWigiiNamespace . "->" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceName(), $fromModule . "->" . $exec->getCrtModule()->getModuleName()));
 
+				// Switches role
 				if ($roleId && $originalUserId != $roleId) {
 					$p = $authS->changeToRole($p, $roleId);
 				}
 
-				// navigate cache key depends on destination role id.
+				// Prepares navigation cache
 				if($type == "user" && !$exec->wasFoundInJSCache()) {
-					// caches user navigation
+					// caches user navigation (navigate cache key depends on destination role id.)
 					$cacheKey = $exec->cacheCrtAnswer($p, 'userNavigate');
 					$exec->addJsCode("setCurrentNavigateCacheKey('".$cacheKey."')");
 					// updates group panel and module view through cache
@@ -10413,7 +10421,7 @@ onUpdateErrorCounter = 0;
 						"}else{update(url, true);}}, 100);}");
 				}
 
-				//in admin context, reset folder filters when changing tabs, or reset all filters if switching admin role
+				// In admin context, reset folder filters when changing tabs, or reset all filters if switching admin role
 				if($exec->getCrtModule()->isAdminModule()){
 					//if change of administrator then reset all context;
 					$ac = $this->getAdminContext($p);
@@ -10428,9 +10436,11 @@ onUpdateErrorCounter = 0;
 					}
 				}
 
+				// Checks module access	and calculates module to which navigate and workingModule in case of Admin										
 				$lastModule = $exec->getCrtModule()->getModuleName();
-
-				if($lastModule && !$p->getmoduleAccess($lastModule)){
+				$workingModule = null;
+				// if lastModule is not null and p has no access to module then error
+				if($lastModule && $lastModule != Module::HOME_MODULE && !$p->getModuleAccess($lastModule)) {
 					if($p->isRealUserPublic()) {
 						throw new AuthenticationServiceException('public access forbidden', AuthenticationServiceException::FORBIDDEN_PUBLIC_USER);
 					} else {
@@ -10438,112 +10448,79 @@ onUpdateErrorCounter = 0;
 						$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/":'').WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
 					}
 					break;
-				}
+				}	
+				// if lastModule is null then gives first accessible module or Home if only Admin rights.
+				if(!$lastModule) {
+					$lastModule=$p->getFirstNoneAdminAccessibleModule();
+					if(!$lastModule) $lastModule=Module::HOME_MODULE;					
+				}							
+				// if lastModule is not null and p has access to module 
+				if($lastModule != Module::HOME_MODULE) {
+					// gets Module object
+					$lastModule = $p->getModuleAccess($lastModule);					
+					
+					// if navigating in or to Admin: calculates workingModule
+					if ($lastModule->isAdminModule()) {
+						
+						// if going to admin in same namespace, keeps current module
+						if ($fromWigiiNamespace == $p->getWigiiNamespace()->getWigiiNamespaceUrl() && $toWorkingModule == null) $toWorkingModule = $fromModule;
+						// if going to admin in other namespace retrieves last working module
+						else if ($toWorkingModule == null) $toWorkingModule = $p->getValueInRoleContext("lastWorkingModule");
 
-				if($lastModule == Module::HOME_MODULE || $lastModule == null){
-					$lastModule = $mAS->getHomeModule($p);
-				} else {
-					//if the defined module is not accessible, then take the last one or the first none admin one
-					//this case can happen when the user close admin console from a working module where there is no groups.
-					//if this case happen because the user have an obselete navigation menu (rights has changed during his session) this will
-					//only produce that it keeps himself on the same place.
-					if ($lastModule == null || !$p->getModuleAccess($lastModule)) {
-						//				fput("crt module is empty");
-						$lastModule = $p->getValueInRoleContext("lastModule");
-						if ($lastModule == null) {
-							//					fput("no last module");
-							//take first none admin if calculated
-							if ($p->getAttachedUser()->isCalculatedRole()) {
-								$lastModule = $p->getFirstNoneAdminAccessibleModule();
-								//						fput("take first none admin accessible module");
-								//						fput($lastModule);
-							} else {
-								//						fput("take admin module");
-								//else take admin
-								$lastModule = Module :: ADMIN_MODULE;
-							}
-						}
-					}
-					if (!$p->getModuleAccess($lastModule)) {
-						$errorText = null;
-						//				$errorText = put($p->getUserlabel());
-						//				$errorText .= put($lastModule);
-						//				$errorText .= "\n".put($p->getModuleAccess());
-						//close the NoAnswer part and open a messageDialog
-						//				fput($p->getModuleAccess());
-						if ($exec->getIsUpdating()) {
-							echo ExecutionServiceImpl :: answerRequestSeparator;
-							echo "confirmationDialog";
-							echo ExecutionServiceImpl :: answerParamSeparator;
-						}
-						//logout
-						$this->openAsMessage("confirmationDialog", 350, $transS->t($p, "roleAccessIsChanged"), $errorText, $this->getJsCodeBeforeLogout($p) ." logout();", $transS->t($p, "ok"));
-						$authS->logout();
-						break;
-					}
-					if (is_string($lastModule))
-						$lastModule = $p->getModuleAccess($lastModule);
-					if (!$p->getAttachedUser()->isCalculatedRole()) {
-						if ($fromWigiiNamespace == $p->getWigiiNamespace()->getWigiiNamespaceUrl() && $toWorkingModule == null)
-							$toWorkingModule = $fromModule;
-						else
-							if ($toWorkingModule == null)
-								$toWorkingModule = $p->getValueInRoleContext("lastWorkingModule");
-
+						// checks admin working module access
 						if ($toWorkingModule) {
 							$workingModule = $p->getModuleAccess($toWorkingModule);
 						}
 						if (!$workingModule || $workingModule->isAdminModule()) {
 							$workingModule = $p->getFirstNoneAdminAccessibleModule();
 						}
+						
+						// Persists admin working module in context
 						$this->getAdminContext($p)->setWorkingModule($workingModule);
 						$p->setValueInRoleContext("lastWorkingModule", $workingModule->getModuleName());
-
-						//				fput("working module: ".$workingModule->getModuleName());
-						$lastModule = $mAS->getAdminModule($p);
-					} else {
-						if ($lastModule->isAdminModule()) {
-							$lastModule = $p->getFirstNoneAdminAccessibleModule();
-							//				fput("last module of calculated role was Admin. -> switch to first none admin module: ".$lastModule->getModuleName());
-						}
+					} 
+					// if p is bound to a namespace, then forces a non Admin module
+					else if ($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole() && $lastModule->isAdminModule()) {
+						$lastModule = $p->getFirstNoneAdminAccessibleModule();
 					}
-
-					//			fput("final last module: ".$lastModule->getModuleName());
+					// Persists lastModule in context
 					$p->setValueInRoleContext("lastModule", $lastModule->getModuleName());
-
-					//stores lastRoleId + session context
+					// Persists principal context in DB
 					$this->persistMainPrincipalSessionContext($p, $exec);
-					//			fput("navigationBar/".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$lastModule->getModuleUrl()."/display/navigationBar/");
-					//			fput("searchBar/".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$lastModule->getModuleUrl()."/display/searchBar/");
-					//			fput("workZone/".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$lastModule->getModuleUrl()."/display/workZone/");
-
 				}
-
-				// breaks html generation if found in cache
+				else $lastModule=$mAS->getHomeModule($p);
+							
+				// Breaks html generation if found in cache
 				if($type == "user" && $exec->wasFoundInJSCache()) {
-					// displays workzone structure
-					//$this->includeTemplateWorkZone($p, $exec);
 					break;
 				}
 
+				// Navigation code
 				$additionalJsCode = null;
+				// Direct url access navigation 
 				if (!$exec->getIsUpdating() || $exec->getIdAnswer() == "mainDiv") {
 					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type=="item" || $type=="folder" ? $type."/".$typeId : "all"));
-				} else if ($type=="item" || $type=="folder" || $type==null){
+				}
+				// Full screen update 
+				else if ($type=="item" || $type=="folder" || $type==null){
 					//this code is needed to simulate the click made on the element it self.
 					//href$= is to limit ie7 bugs making sometimes local links with the full path
 					$additionalJsCode = "" .
 							"$('#navigateMenu .selected').removeClass('selected');" .
 							'$("#navigateMenu a[href$=\'#"+crtWigiiNamespaceUrl.replace(" ", "%20")+"/"+crtModuleName+"\']").addClass("selected");' .
 							"";
-					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type ? $type."/".$typeId : "all"));
-				} else {
-
+					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type ? $type."/".$typeId : "all"));					
+				} 
+				// Navigation bar user navigation
+				else {
+					// Enters Admin console
 					if ($lastModule->isAdminModule()) {
 						//load the navigation bar
 						$exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
 						$exec->addRequests(($exec->getIsUpdating() ? "workZone/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/adminWorkZone/");
-					} else {
+					} 
+					// Navigates through User modules and namespaces or goes out of Admin 
+					else {
 						//load the workZone. This include:
 						// 	- the search bar
 						//	- the group selector pannel
@@ -10553,6 +10530,7 @@ onUpdateErrorCounter = 0;
 					}
 				}
 
+				// JS to adjust GUI on client side
 				$exec->addJsCode("
 closeStandardsDialogs();
 crtRoleId = '" . $roleId . "';

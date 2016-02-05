@@ -66,7 +66,7 @@ class WigiiNamespace extends Model
 		if($this->wigiiNamespaceName == null) {
 			return self::EMPTY_NAMESPACE_URL;
 		}
-		return $this->wigiiNamespaceName;
+		return str_replace(' ', '%20', $this->wigiiNamespaceName);
 	}
 	
 }

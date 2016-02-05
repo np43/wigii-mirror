@@ -1406,7 +1406,7 @@ invalidUsernameOnPop3Server:The username is not existing on the pop3 server:Le n
 pop3ServerConnectionProblem:Connection with pop3 server failed. Please try again.:Erreur dans la connection avec le serveur pop3. Veuillez réessayer.:::::::::
 invalidUsername:Unknown user:Utilisateur inconnu:::::::::
 forbiddenUser:Forbidden user:Utilisateur interdit:::::::::
-toManyLoginFailure:Please wait. Too many login failed.:Veuillez attendre. Trop de tentatives infructeuses de login.:::::::::
+toManyLoginFailure:Please wait. Too many login failed. Try again in 10min:Veuillez attendre. Trop de tentatives infructeuses de login. Essayez à nouveau dans 10min.:::::::::
 noModuleAccess:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />No access is defined for this role:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />Aucun accès n'est définit pour ce rôle:::::::::
 noModuleAccessDefined:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />No access (role) is defined for this user:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />Aucun accès (rôle) n'est définit pour cet utilisateur:::::::::
 passwordExpired:Your password expired. Please change it.:Votre mot-de-passe a expiré. Veuillez le modifier.:::::::::

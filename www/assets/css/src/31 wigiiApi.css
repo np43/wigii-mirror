@@ -35,6 +35,16 @@ div.field div.file div.ui-resizable-handle {
 /**************************************
 * HelpService
 **************************************/
+/*
+div.moduleHelp a.HelpService.helpAnchor {
+	background:url('../../images/icones/22x22/iconhelp22x22.png') no-repeat;
+	margin-left:3px;
+	padding-left:1px;
+	padding-right:1px;
+	padding-bottom:1px;
+	cursor:pointer;
+}
+*/
 a.HelpService.helpAnchor {
 	background:url('../../images/gui/iconhelp16x16.png') no-repeat;
 	margin-left:3px;

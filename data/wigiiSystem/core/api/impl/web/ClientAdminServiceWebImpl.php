@@ -19,7 +19,8 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* wigii ClientAdminService implementation which integrates with wigii web site
+/**
+ * wigii ClientAdminService implementation which integrates with wigii web site
  * Created by CWE on 10 janvier 10
  */
 class ClientAdminServiceWebImpl extends ClientAdminServiceImpl
@@ -72,6 +73,93 @@ class ClientAdminServiceWebImpl extends ClientAdminServiceImpl
 			throw new ClientAdminServiceException('',ClientAdminServiceException::WRAPPING, $e);
 		}
 		$this->executionSink()->publishEndOperation("getDefaultClient");
+		return $returnValue;
+	}
+	
+	// Wigii monitoring functions
+	
+	/**
+	 * Gathers Execution context information and returns an object or a string
+	 * @param WigiiBPLParameter $options a set of options conditionning the set of information gathered regarding the current execution context :
+	 * - outputFormat: one of 'string','stdClass'. Defaults to string.
+	 * @return string|stdClass an object (or its serialized version) containing the following entries :
+	 * - date : event date in YYYY-mm-dd hh:mm:ss:u format
+	 * - request: sub-url
+	 * - wigiiNamespace: current namespace
+	 * - module: current module
+	 * - action: current action
+	 * - realUsername : real user name
+	 * - username : role name
+	 * - principalNamespace : principal current namespace
+	 * - version: Wigii system version label
+	 */
+	public function gatherExecutionContextInfo($options=null) {
+		if(!isset($options)) $options=wigiiBPLParam();
+		if(!$options->getValue('outputFormat')) $options->setValue('outputFormat', 'string');
+		$returnValue=parent::gatherExecutionContextInfo(wigiiBPLParam('outputFormat','stdClass'));
+		// gathers execution context info
+		$exec = ServiceProvider::getExecutionService();
+		$returnValue->{'request'} = $exec->getCrtRequest();
+		$returnValue->{'wigiiNamespace'} = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
+		$returnValue->{'module'} = $exec->getCrtModule()->getModuleUrl();
+		$returnValue->{'action'} = $exec->getCrtAction();
+		$returnValue->{'version'} = VERSION_LABEL;
+		// serializes output
+		if($options->getValue('outputFormat')=='string') {
+			$s="EXECUTION CONTEXT:\n\n";
+			foreach($returnValue as $k=>$v) {
+				$s.=$k.': '.$v."\n";
+			}
+			$returnValue=$s;
+		}
+		return $returnValue;
+	}	
+	
+	// Wigii signals
+		
+	public function signalFatalError($exception) {
+		if($this->isMonitoringEnabled('monitorFatalError')) {
+			try {
+				$this->getFatalErrorsLogger()->info($this->gatherExecutionContextInfo()."\n".
+													$this->gatherExceptionInfo($exception));
+			}
+			catch(Exception $e) {/* silent to avoid loops */}
+		}
+	}
+	private $fatalErrorsLogger;
+	/**
+	 * Opens a specialized Apache Logger to dump fatal errors signals.	 
+	 * @return Logger level INFO 
+	 */
+	protected function getFatalErrorsLogger() {
+		if(!isset($this->fatalErrorsLogger)) {
+			$this->fatalErrorsLogger = Logger::getLogger('ClientAdminServiceImpl_FatalErrors');			
+			$appender=$this->fatalErrorsLogger->getAppender('ClientErrors');
+			if(!isset($appender)) {
+				$appender=$this->createFatalErrorsAppender();
+				$this->fatalErrorsLogger->addAppender($appender);
+			}
+			$this->fatalErrorsLogger->setAdditivity(false);
+			$this->fatalErrorsLogger->setLevel(LoggerLevel::getLevelInfo());			
+		}
+		return $this->fatalErrorsLogger;
+	}
+	/**
+	 * Opens a rolling file in LOG_PATH/errors/Client_errors.log
+	 * @return LoggerAppender
+	 */
+	protected function createFatalErrorsAppender() {
+		$returnValue=new LoggerAppenderRollingFile('ClientErrors');
+		// configures rolling file
+		$returnValue->setFile(dirname($_SERVER["SCRIPT_FILENAME"]).'/'.LOG_PATH.'errors/'.CLIENT_NAME.'_errors.log');
+		$returnValue->setMaxBackupIndex(5);
+		$returnValue->setMaxFileSize('2MB');
+		// configures layout
+		$layout=new LoggerLayoutPattern();
+		$layout->setConversionPattern('-----------------------------------------------------%newline%newline%message%newline%newline-----------------------------------------------------%newline');
+		$layout->activateOptions();
+		$returnValue->setLayout($layout);
+		$returnValue->activateOptions();
 		return $returnValue;
 	}
 }

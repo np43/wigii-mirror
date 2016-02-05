@@ -210,7 +210,9 @@ class LoginFormExecutor extends FormExecutor {
 				$exec->addJsCode("" .
 					"$('#loginForm').width('100%');" .
 					"$('#login_form').width(".$this->getTotalWidth().");" .
-					"$('#loginForm .label, #loginForm a, #loginForm .fieldError').css('color', '$rCompanyColor');" .
+					//CWE 03.02.2016: keep errors in red instead of rCompanyColor "$('#loginForm .label, #loginForm a, #loginForm .fieldError').css('color', '$rCompanyColor');" .
+					"$('#loginForm .label, #loginForm a').css('color', '$rCompanyColor');" .
+					"$('#loginForm .fieldError').css('font-weight','bold').css('color','$rCompanyColor').css('border-width','2px').css('border-bottom-style','solid').css('border-color', 'red');" .
 					"");
 			}
 
