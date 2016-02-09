@@ -41,6 +41,7 @@ if($parentWidth != null){
 //defining readOnly or disabled
 $readonly = $this->getRecord()->getWigiiBag()->isReadonly($fieldName);
 $disabled = $this->getRecord()->getWigiiBag()->isDisabled($fieldName);
+$isPublicPrincipal = ServiceProvider::getAuthorizationService()->isPublicPrincipal($this->getP());
 
 // getting prefixFilter if defined
 $prefixFilter = (string)$fieldXml['prefixFilter'];
@@ -69,6 +70,8 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 
 		// filters dropdown using prefix filter
 		if($filterDropDown && strpos((string)$attribute, $prefixFilter)!==0) continue;
+		// CWE 09.02.2016: in public: filters disabled options
+		if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
 		
 		//the radioButton is before the text of the option
 		//the width of the checkbox is valueWidth / useMultipleColumn if defined
@@ -193,6 +196,8 @@ else {
 		
 		// filters dropdown using prefix filter
 		if($filterDropDown && $attribute != "none" && strpos((string)$attribute, $prefixFilter)!==0) continue;
+		// CWE 09.02.2016: in public: filters disabled options
+		if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
 		
 		if(!$valExistsInOption) $valExistsInOption = $val == (string)$attribute;
 		if(($val == (string)$attribute)){

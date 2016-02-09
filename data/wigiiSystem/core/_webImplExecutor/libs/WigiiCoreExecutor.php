@@ -10451,7 +10451,7 @@ onUpdateErrorCounter = 0;
 				}	
 				// if lastModule is null then gives first accessible module or Home if only Admin rights.
 				if(!$lastModule) {
-					$lastModule=$p->getFirstNoneAdminAccessibleModule();
+					if($p->getWigiiNamespace()->getWigiiNamespaceName()!=WigiiNamespace::EMPTY_NAMESPACE_NAME) $lastModule=$p->getFirstNoneAdminAccessibleModule();
 					if(!$lastModule) $lastModule=Module::HOME_MODULE;					
 				}							
 				// if lastModule is not null and p has access to module 
