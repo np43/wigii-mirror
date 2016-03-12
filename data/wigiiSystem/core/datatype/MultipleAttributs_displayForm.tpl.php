@@ -19,9 +19,9 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 4 déc. 09
- * by LWR
+/**
+ * Created on 4 déc. 09 by LWR
+ * Modified by CWE on 25.02.2016 to display a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
  */
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 
@@ -133,21 +133,27 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 	if(!empty($sameAsField)) {
 		$sameAsFieldId = $formId.'_'.$sameAsField.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
 		$this->addJsCode('$("#'.$inputId.'").html($("#'.$sameAsFieldId.' option").clone()).find("option[selected]").prop("selected", false);');
+		
+		$existingKeys = array();
+		foreach($fieldXml->attribute as $attribute_key => $attribute){
+			$existingKeys[(string)$attribute] = (string)$attribute;
+		}
+		
+		$missingValues=array();
 		$s = ''; $first=true;		
 		foreach($val as $k) {
 			if($first) $first = false;
 			else $s .= ', ';
-			$s .= 'option[value='."'$k'".']';			
+			$s .= 'option[value='."'$k'".']';
+			if($existingKeys[$k] == null && $k) $missingValues[$k]=$k;
 		}
 		$this->addJsCode('$("#'.$inputId.'").'.'find("'.$s.'").prop("selected", "selected");');
-		// checks for eventual new values
-		if($fieldXml["allowNewValues"]=="1"){
-			$existingKeys = array();
-			foreach($fieldXml->attribute as $attribute_key => $attribute){
-				$existingKeys[(string)$attribute] = (string)$attribute;
-			}
-			foreach($val as $k) {
-				if($existingKeys[$k] == null) {
+
+		if(!empty($missingValues)) {
+			$currentFlow = $this->evalfx(fx('ctlCurrentFlow'));
+			// Adds non matching value as a new value if allowed
+			if($fieldXml["allowNewValues"]=="1"){
+				foreach($missingValues as $k) {
 					$labelForTitle = $transS->t($p, $k);
 					$label = $labelForTitle;
 					if(!$chosen && strlen($label)>64) {
@@ -156,19 +162,37 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 					$label = str_replace(" ", "&nbsp;", $label);
 					$htmlOption = "'".'<option selected="selected" value="'.$k.'" title="'.$labelForTitle.'" >'.$label.'</option>'."'";
 					$this->addJsCode('$("#'.$inputId.'").append('.$htmlOption.')');
-				}	
-			}		
-		}
+				}
+			}
+			// CWE 25.02.2016: displays a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
+			elseif(!$isPublicPrincipal && ($currentFlow == ElementEvaluator::ELEMENT_FLOW_COPY || $currentFlow == ElementEvaluator::ELEMENT_FLOW_EDIT)) {
+				$deprecatedMessage='';
+				foreach($missingValues as $k) {
+					if($deprecatedMessage) $deprecatedMessage.=', ';
+					$deprecatedMessage.="&apos;".$k."&apos;";
+				}
+				$deprecatedMessage=str_replace('$value$',$deprecatedMessage,$transS->t($p,'removeDeprecatedValues'));
+				$this->addJsCode(
+						"$('#".$formId.'__'.$fieldName." div.value').wigii('bindHelpService',{
+							width:250,height:80,
+							type:'warning',
+							localContent:true,
+							content:'".$deprecatedMessage."'
+						});");
+			}
+		}		
 	}
 	else {
 		//define the options:
 		$html2text = new Html2text();
-		foreach($fieldXml->attribute as $attribute_key => $attribute){
+		$existingKeys = array();
+		foreach($fieldXml->attribute as $attribute_key => $attribute){			
 			// filters dropdown using prefix filter
 			if($filterDropDown && $attribute != "none" && strpos((string)$attribute, $prefixFilter)!==0) continue;
 			// CWE 09.02.2016: in public: filters disabled options
 			if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
 			
+			$existingKeys[(string)$attribute] = (string)$attribute;
 			if(($val != null && array_search((string)$attribute, $val) !== false)) $selected = ' selected="selected" ';
 			else $selected = "";
 			$label = $this->getRecord()->getRedirectedFieldLabel($this->getP(), $fieldName, $attribute);
@@ -196,10 +220,48 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 				$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" '.$selected.' title="'.$labelForTitle.'" >'.$label.'</option>');
 			}
 		}
+		
+		// computes the missing values
+		$missingValues=array();
+		foreach($val as $k) {
+			if($existingKeys[$k] == null && $k) $missingValues[$k]=$k;
+		}
+		
+		if(!empty($missingValues)) {
+			$currentFlow = $this->evalfx(fx('ctlCurrentFlow'));
+			// Adds non matching value as a new value if allowed
+			if($fieldXml["allowNewValues"]=="1"){
+				foreach($missingValues as $k) {
+					$labelForTitle = $transS->t($p, $k);
+					$label = $labelForTitle;
+					if(!$chosen && strlen($label)>64) {
+						$label = substr($label, 0, 61)."...";
+					}
+					$label = str_replace(" ", "&nbsp;", $label);
+					$this->put('<option selected="selected" value="'.$k.'" title="'.$labelForTitle.'" >'.$label.'</option>');
+				}
+			}
+			// CWE 25.02.2016: displays a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
+			elseif(!$isPublicPrincipal && ($currentFlow == ElementEvaluator::ELEMENT_FLOW_COPY || $currentFlow == ElementEvaluator::ELEMENT_FLOW_EDIT)) {
+				$deprecatedMessage='';
+				foreach($missingValues as $k) {
+					if($deprecatedMessage) $deprecatedMessage.=', ';
+					$deprecatedMessage.="&apos;".$k."&apos;";
+				}
+				$deprecatedMessage=str_replace('$value$',$deprecatedMessage,$transS->t($p,'removeDeprecatedValues'));
+				$this->addJsCode(
+						"$('#".$formId.'__'.$fieldName." div.value').wigii('bindHelpService',{
+							width:250,height:80,
+							type:'warning',
+							localContent:true,
+							content:'".$deprecatedMessage."'
+						});");
+			}
+		}
 	}
 	unset($html2text);
 	$this->put('</'.$inputNode.'>');
-
+		
 	//ici il ne faut pas metre la condition if disable car s'il est disable il peut très bien se faire
 	//enable par un autre checkbox. Donc il faut que le code js soit présent...
 	if(!$readonly) {

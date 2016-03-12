@@ -856,12 +856,13 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 				//eput($rec->getFieldList()->getListIterator());
 			}
 			
-			//initialize default values only on add (record id = 0) or on activities
+			//initialize default values only on add (record id = 0) or on activities			
 			if($rec->getId()==0 && $rec->getFieldList()->getListIterator()){
 				$this->initializeDefaultValues($p, $exec);
 			}
 			// Resolves any field dynamic attributes
-			if($configS->getParameter($p, $rec->getModule(), "Field_enableDynamicAttributes") == "1") {
+			//CWE 09.03.2016: prevent dynamic parameters on Multiple			
+			if(!$this->isMultiple() && $configS->getParameter($p, $rec->getModule(), "Field_enableDynamicAttributes") == "1") {
 				$this->resolveFieldDynamicAttributes($p, $exec);
 			}
 			
@@ -953,28 +954,31 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 				/***************
 				 * defaultExp
 				 ***************/
-				try {
-					$defaultExp = $this->getDefaultExpFromField($field);
-					// if we have a default expression
-					if(!empty($defaultExp)) {
-						// parses it into a funcExp
-						try {
-							$defaultExp = str2fx($defaultExp);
+				//CWE 09.03.2016: prevent default values on multiple
+				if(!$this->isMultiple()) {
+					try {
+						$defaultExp = $this->getDefaultExpFromField($field);
+						// if we have a default expression
+						if(!empty($defaultExp)) {
+							// parses it into a funcExp
+							try {
+								$defaultExp = str2fx($defaultExp);
+							}
+							catch(StringTokenizerException $ste) {
+								// if syntax error, then keeps the defaultExp as is
+								// or we have a real syntax error, that then will be corrected by the user
+								// or it is not a funcExp but a constant, in that case keeps the value.
+								if($ste->getCode() != StringTokenizerException::SYNTAX_ERROR) throw $ste;
+							}
+							// executes the func exp
+							$defaultVal = $fxEval->evaluateFuncExp($defaultExp, $this);
+							// sets the default value if not empty
+							if(!empty($defaultVal)) $this->processFieldDefaultValue($field, $defaultVal);
 						}
-						catch(StringTokenizerException $ste) {
-							// if syntax error, then keeps the defaultExp as is
-							// or we have a real syntax error, that then will be corrected by the user
-							// or it is not a funcExp but a constant, in that case keeps the value.
-							if($ste->getCode() != StringTokenizerException::SYNTAX_ERROR) throw $ste;
-						}
-						// executes the func exp
-						$defaultVal = $fxEval->evaluateFuncExp($defaultExp, $this);
-						// sets the default value if not empty
-						if(!empty($defaultVal)) $this->processFieldDefaultValue($field, $defaultVal);
 					}
-				}
-				catch(Exception $e) {
-					if($this->debugLogger()->isEnabled()) $this->debugLogger()->write("Exception while executing default expression '".$this->getDefaultExpFromField($field)."' attached to field '".$field->getFieldName()."': ".$e);
+					catch(Exception $e) {
+						if($this->debugLogger()->isEnabled()) $this->debugLogger()->write("Exception while executing default expression '".$this->getDefaultExpFromField($field)."' attached to field '".$field->getFieldName()."': ".$e);
+					}
 				}
 			}
 		}

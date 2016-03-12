@@ -170,7 +170,22 @@ class ModuleAdminServiceImpl implements ModuleAdminService
 		$this->executionSink()->publishEndOperation("getHomeModule", $principal);
 		return $returnValue;
 	}
-
+	public function getDimensionsModule($principal)
+	{
+		$this->executionSink()->publishStartOperation("getDimensionsModule", $principal);
+		try
+		{
+			$returnValue = $this->doGetModule($principal, Module::DIMENSIONS_MODULE);
+		}
+		catch(Exception $e)
+		{
+			$this->executionSink()->publishEndOperationOnError("getDimensionsModule", $e, $principal);
+			throw new ModuleAdminServiceException('',ModuleAdminServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("getDimensionsModule", $principal);
+		return $returnValue;
+	}
+	
 	public function getModuleFromSelectedGroups($principal, $groupLogExp)
 	{
 		$this->executionSink()->publishStartOperation("getModuleFromSelectedGroups", $principal);

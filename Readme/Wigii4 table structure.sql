@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `Blobs` (
   `id_Blob` int(11) NOT NULL AUTO_INCREMENT,
   `id_element` int(11) DEFAULT NULL,
   `field` varchar(32) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `value` text COLLATE utf8_unicode_ci,
+  `value` mediumtext COLLATE utf8_unicode_ci,
   `sys_creationUser` int(10) unsigned DEFAULT NULL,
   `sys_creationUsername` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
   `sys_creationDate` int(10) unsigned DEFAULT NULL,

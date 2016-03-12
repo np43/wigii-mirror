@@ -40,6 +40,7 @@ $this->put($this->t($fieldName, $fieldXml));
 //add a "+add" button
 if($fieldXml["isJournal"]=="1" && !$this->isForNotification() && !$this->isForPrint()){
 	$fieldId = $this->getDetailRenderer()->getDetailId()."__".$fieldName;
+	// CWE 10.02.2016: if element is blocked enables to add comments if allowOnReadOnly
 	if(!($this->getRecord() instanceof Element && $this->getRecord()->isState_blocked()) || $fieldXml["allowOnReadOnly"]=="1"){
 		if($this->isForExternalAccess()){
 			$code = $exec->getCrtParameters(0);

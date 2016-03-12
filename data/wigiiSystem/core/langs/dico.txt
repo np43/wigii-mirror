@@ -422,9 +422,9 @@ inGroupSubscriptions:Choose #group#:Choisissez #group#:::::::::
 
 Addresses_city:City:Ville:::::::::
 Addresses_country:Country:Pays:::::::::
-Addresses_state:State / County:Etats / Canton:::::::::
+Addresses_state:State / Country:Etat / Canton:::::::::
 Addresses_street:Street:Rue:::::::::
-Addresses_zip_code:Zip code / Post code:NPA / Code postal:::::::::
+Addresses_zip_code:Zip code / Postal code:NPA / Code postal:::::::::
 Admin:Admin:Admin:::::::::
 CSVPretty:CSV (formatted):CSV (formaté):::::::::
 CSVRaw:CSV (raw data):CSV (données brut):::::::::
@@ -552,6 +552,8 @@ company:Company:Entreprise:::::::::
 compulsory_field:Mandatory field:Champ obligatoire:::::::::
 compulsory_whenField:when:lorsque:::::::::
 compulsory_isFilled:is filled:est rempli:::::::::
+removeDeprecatedValue:Existing value $value$ is not present in the list, it will be removed:La valeur existante $value$ n&apos;est pas dans la liste, elle sera effacée:::::::::
+removeDeprecatedValues:The existing values $value$ are deprecated and will be removed:Les valeurs existantes $value$ sont obsolètes et seront effacées:::::::::
 confNewPassword:Confirm new password:Confirmer le mot-de-passe:::::::::
 date:Date:Date:::::::::
 defaultChildrenAreAttachedToParents:By default, children will be attached to the current parent #group#.:Par défaut, les enfants seront attachés au #-group# parent.:::::::::
@@ -1143,6 +1145,7 @@ invalidDate:Invalid date:Date invalide:::::::
 invalidEmail:Invalid email address:Adresse email invalide:::::::
 invalidEmails:One of the email address is invalid:Une des adresse email est invalide:::::::
 invalidNumber:Invalid number:Nombre invalide:::::::
+exceedBlobsLimit:Text is too long, please reduce it of $$chars$$ characters. (Actual size is $$size$$, max allowed size is $$allowed$$):Le texte est trop long et doit être raccourci de $$chars$$ caractères. (La taille actuelle est $$size$$, la taille maximum autorisée est $$allowed$$):::::::
 emailForEditEmailAlertNeedsToBeValidOrNull:Please make sure you've typed a valid email address.:Veuillez vérifier que vous avez bien entré une adresse email valide.:::::::
 
 roleAccess:Role access:Accès aux rôles:::::::

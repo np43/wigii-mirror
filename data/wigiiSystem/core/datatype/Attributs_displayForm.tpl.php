@@ -19,9 +19,9 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 4 déc. 09
- * by LWR
+/**
+ * Created on 4 déc. 09 by LWR
+ * Modified by CWE on 25.02.2016 to display a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
  */
 
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
@@ -166,13 +166,14 @@ if(!empty($sameAsField)) {
 	$sameAsFieldId = $formId.'_'.$sameAsField.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
 	$this->addJsCode('$("#'.$inputId.'").html($("#'.$sameAsFieldId.' option").clone()).find("option[selected]").prop("selected", false);');
 	$this->addJsCode('$("#'.$inputId.'").'.'find("option[value='."'$val'".']").prop("selected", "selected");');
-	// checks for an eventual new value
-	if($fieldXml["allowNewValues"]=="1"){
-		$existingKeys = array();
-		foreach($fieldXml->attribute as $attribute_key => $attribute){
-			$existingKeys[(string)$attribute] = (string)$attribute;
-		}
-		if($existingKeys[$val] == null) {
+	
+	$existingKeys = array();
+	foreach($fieldXml->attribute as $attribute_key => $attribute){
+		$existingKeys[(string)$attribute] = (string)$attribute;
+	}
+	if($existingKeys[$val] == null) {
+		// Adds non matching value as a new value if allowed
+		if($fieldXml["allowNewValues"]=="1"){
 			$labelForTitle = $transS->t($p, $val);
 			$label = $labelForTitle;
 			if(!$flex && strlen($label)>64) {
@@ -181,8 +182,22 @@ if(!empty($sameAsField)) {
 			$label = str_replace(" ", "&nbsp;", $label);
 			$htmlOption = "'".'<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>'."'";
 			$this->addJsCode('$("#'.$inputId.'").append('.$htmlOption.')');
-		}		
-	}
+		}
+		// CWE 25.02.2016: displays a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
+		elseif($val && !$isPublicPrincipal) {
+			$currentFlow = $this->evalfx(fx('ctlCurrentFlow'));
+			if($currentFlow == ElementEvaluator::ELEMENT_FLOW_COPY || $currentFlow == ElementEvaluator::ELEMENT_FLOW_EDIT) {
+				$deprecatedMessage=str_replace('$value$',"&apos;".$val."&apos;",$transS->t($p,'removeDeprecatedValue'));
+				$this->addJsCode(
+						"$('#".$formId.'__'.$fieldName." div.value').wigii('bindHelpService',{
+					width:250,height:80,
+					type:'warning',
+					localContent:true,
+					content:'".$deprecatedMessage."'
+				});");
+			}
+		}
+	}		
 }
 else {
 	$valExistsInOption = false;
@@ -232,6 +247,7 @@ else {
 		}
 	}
 	unset($html2text);
+	// Adds non matching value as a new value if allowed
 	if($fieldXml["allowNewValues"]=="1" && !$valExistsInOption){
 		$labelForTitle = $transS->t($p, $val);
 		$label = $labelForTitle;
@@ -240,6 +256,20 @@ else {
 		}
 		$label = str_replace(" ", "&nbsp;", $label);
 		$this->put('<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>');
+	}
+	// CWE 25.02.2016: displays a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
+	elseif(!$valExistsInOption && $val && !$isPublicPrincipal) {
+		$currentFlow = $this->evalfx(fx('ctlCurrentFlow'));
+		if($currentFlow == ElementEvaluator::ELEMENT_FLOW_COPY || $currentFlow == ElementEvaluator::ELEMENT_FLOW_EDIT) {
+			$deprecatedMessage=str_replace('$value$',"&apos;".$val."&apos;",$transS->t($p,'removeDeprecatedValue'));
+			$this->addJsCode(
+			"$('#".$formId.'__'.$fieldName." div.value').wigii('bindHelpService',{
+				width:250,height:80,
+				type:'warning',
+				localContent:true,
+				content:'".$deprecatedMessage."'
+			});");
+		}
 	}
 }
 $this->put('</'.$inputNode.'>');

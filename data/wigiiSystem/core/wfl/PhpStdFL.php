@@ -58,32 +58,18 @@ class PhpStdFL extends FuncExpVMAbstractFL
 	}
 
 	/**
-	 * Explodes a string given a separator
-	 * FuncExp signature : <code>explode(sep,str,index=null)</code><br/>
-	 * Where arguments are :
-	 * - Arg(0) sep: String. The separator against which to explode the string
-	 * - Arg(1) str: String. The string to be exploded
-	 * - Arg(2) index: int. If specified, then returns the value found at this index in array resulting from the explode. If not specified, returns the whole array.
-	 * @return Array|String	
+	 * explode. See http://www.php.net/explode	
 	 */
 	public function explode($args) {
 		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs < 1) throw new FuncExpEvalException("args should have at least one value which is the separator", FuncExpEvalException::INVALID_ARGUMENT);
-		if($nArgs < 2) throw new FuncExpEvalException("args should have at least one value to explode", FuncExpEvalException::INVALID_ARGUMENT);
+		if($nArgs<2) throw new FuncExpEvalException('explode function takes at least two arguments which are the separator and the string to explode', FuncExpEvalException::INVALID_ARGUMENT);
 		$sep = $this->evaluateArg($args[0]);
 		$str = $this->evaluateArg($args[1]);
-		$returnValue = explode($sep, $str);
-		$nValues = count($returnValue);
-		if($nArgs > 2) {
-			if($nValues <= 0) $returnValue = '';
-			else {
-				$index = (int)$this->evaluateArg($args[2]);
-				if($index < 0) $index = 0;
-				elseif($index > ($nValues-1)) $index = ($nValues-1);
-				$returnValue = $returnValue[$index];
-			}
-		}
-		return $returnValue;
+		if($nArgs>2) $limit=$this->evaluateArg($args[2]);
+		else $limit=null;		
+		
+		if(isset($limit)) return explode($sep,$str,$limit);
+		else return explode($sep,$str);
 	}
 	/**
 	 * Explodes a string given a separator and returns the value specified by the index
@@ -91,13 +77,49 @@ class PhpStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) sep: String. The separator against which to explode the string
 	 * - Arg(1) str: String. The string to be exploded
-	 * - Arg(2) index: int. Returns the value found at this index in array resulting from the explode. If index is out of range, returns empty string.
+	 * - Arg(2) index: int. Returns the value found at this index in array resulting from the explode. If index is higher that last value, returns last value. By default returns first value.
 	 * @return String
 	 */
 	public function getExplodedValue($args) {
 		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs<3) $args[]=0;
-		return $this->explode($args);
+		if($nArgs<2) throw new FuncExpEvalException('getExplodedValue function takes at least two arguments which are the separator and the string to explode', FuncExpEvalException::INVALID_ARGUMENT);
+		$sep = $this->evaluateArg($args[0]);
+		$str = $this->evaluateArg($args[1]);
+		if($nArgs>2) $index=$this->evaluateArg($args[2]);
+		else $index=0;		
+		
+		$returnValue = explode($sep, $str);
+		if($returnValue) $nValues = count($returnValue);
+		else $nValues=0;
+		
+		if($nValues<=0) $returnValue='';
+		elseif($index > $nValues-1) $returnValue=$returnValue[$nValues-1];
+		elseif($index<=0) $returnValue=$returnValue[0];
+		else $returnValue=$returnValue[$index];
+				
+		return $returnValue;
+	}
+	/**
+	 * Explodes a string given a separator until a given limit and returns the non exploded tail
+	 * FuncExp signature : <code>getExplodedTail(sep,str,limit)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) sep: String. The separator against which to explode the string
+	 * - Arg(1) str: String. The string to be exploded
+	 * - Arg(2) limit: int. The number of parts in which to split the string. Example: 2 means a head and a tail, 3 means h1,h2,tail. See explode function for more details.
+	 * @example calling getExplodedTail(sep,str,5) is equivalent to call explode(sep,str,5)[4]
+	 * @return String
+	 */
+	public function getExplodedTail($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<3) throw new FuncExpEvalException('getExplodedTail function takes three arguments which are the separator, the string to explode and the number of parts', FuncExpEvalException::INVALID_ARGUMENT);
+		$sep = $this->evaluateArg($args[0]);
+		$str = $this->evaluateArg($args[1]);
+		$limit=$this->evaluateArg($args[2]);		
+	
+		$returnValue = explode($sep, $str, $limit);
+		if(empty($returnValue)) $returnValue='';
+		else $returnValue = end($returnValue);
+		return $returnValue;
 	}
 	/**
 	 * in_array. See http://www.php.net/in_array
@@ -109,5 +131,18 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		$arr = $this->evaluateArg($args[1]);
 		if(is_array($arr)) return in_array($value,$arr);
 		else return false;
+	}
+	/**
+	 * substr. See http://www.php.net/substr
+	 */
+	public function substr($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException("substr function takes at least two parameters, the string and the index from which to extract the sub sting", FuncExpEvalException::INVALID_ARGUMENT);
+		$str = $this->evaluateArg($args[0]);
+		$index = $this->evaluateArg($args[1]);
+		if($nArgs>2) $length=$this->evaluateArg($args[2]);
+		else $length=null;
+		if(isset($length)) return substr($str, $index, $length);
+		else return substr($str, $index);
 	}
 }

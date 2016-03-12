@@ -422,8 +422,8 @@ abstract class Record extends DbEntityInstance
 	/**
 	 * Exports a portion of the record as a matrix.
 	 * @param array $columns an array of strings giving the columns prefix to be used
-	 * @param int $startIndex the row index from which to export
-	 * @param int $stopIndex the row index until which to export
+	 * @param int $startIndex the row index from which to export. If not specified, then starts with 1
+	 * @param int $stopIndex the row index until which to export. If not specified, then exports all the found rows.
 	 * @param ValueList $valueList the value list to be filled with the matrix rows
 	 * @example Consider the record with values :
 	 * ProjectCode_1: P1, Location_1: L1, Key_1: P1L1
@@ -434,20 +434,30 @@ abstract class Record extends DbEntityInstance
 	 * @return array|int if valueList is defined, then returns the number of objects added, 
 	 * else returns an array containing the added objects
 	 */
-	public function exportMatrix($columns, $startIndex, $stopIndex, $valueList=null) {
+	public function exportMatrix($columns, $startIndex=null, $stopIndex=null, $valueList=null) {
 		if(empty($columns) || !is_array($columns)) throw new RecordException('columns should be a non-empty array of strings specifying the columns of the matrix to be exported', RecordException::INVALID_ARGUMENT);
 		$fillValueList = (isset($valueList));
 		if($fillValueList) $returnValue = 0; 
 		else $returnValue = array();
-
-		// extracts each (non empty) row
+		
+		if($startIndex===null) $startIndex=1;				
 		$fieldList = $this->getFieldList();
+		if($stopIndex===null) {
+			$stopIndex=(int)($fieldList->count()/count($columns));
+			$detectLastRow=true;
+		}
+		else $detectLastRow=false;
+		
+		// extracts each (non empty) row
 		for($i = $startIndex; $i <= $stopIndex; $i++) {
 			$emptyRow = true;
+			$firstCol=true;
 			$row = array();
 			// extracts each column of row
 			foreach($columns as $col) {
 				$fieldName = $col.$i;
+				// stops on last row if stopIndex was not specified
+				if($firstCol && $detectLastRow && !$fieldList->doesFieldExist($fieldName) && $i>$startIndex) break 2;
 				$fieldWithSelectedSubfields = FieldWithSelectedSubfields::createInstance($fieldList->getField($fieldName));
 				$fieldWithSelectedSubfields->selectAllsubfields();
 				$dtXml = $fieldWithSelectedSubfields->getField()->getDataType();
@@ -461,7 +471,9 @@ abstract class Record extends DbEntityInstance
 					$fieldValue[$subFieldName] = $subFieldValue;
 				}
 				$row[$col] = (object)$fieldValue;
-			}								
+				$firstCol=false;
+			}	
+										
 			// add matrix row to matrix
 			if(!$emptyRow) {
 				$row = (object)$row;

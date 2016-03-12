@@ -201,6 +201,33 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $this->eltS;
 	}
 	
+	private $sessionAS;
+	public function setSessionAdminService($sessionAdminService){
+		$this->sessionAS = $sessionAdminService;
+	}
+	protected function getSessionAdminService(){
+		// autowired
+		if(!isset($this->sessionAS)){
+			$this->sessionAS = ServiceProvider::getSessionAdminService();
+		}
+		return $this->sessionAS;
+	}
+	
+	private $configS;
+	public function setConfigService($configService)
+	{
+		$this->configS = $configService;
+	}
+	protected function getConfigService()
+	{
+		// autowired
+		if(!isset($this->configS))
+		{
+			$this->configS = ServiceProvider::getConfigService();
+		}
+		return $this->configS;
+	}
+	
 	// FieldSelector builder
 
 	/**
@@ -507,6 +534,37 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}
 
 	/**
+	 * Constructs a LogExp to check if a FieldSelector is null
+	 *@return LogExp
+	 */
+	public function lxIsNull($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The lxIsNull function takes one argument which is the FieldSelector to check for nullity', FuncExpEvalException::INVALID_ARGUMENT);
+		return $this->getFuncExpBuilder()->lxEq($this->evaluateArg($args[0]),null);
+	}
+	/**
+	 * Constructs a LogExp to check if a FieldSelector is not null
+	 *@return LogExp
+	 */
+	public function lxIsNotNull($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The lxIsNotNull function takes one argument which is the FieldSelector to check for not nullity', FuncExpEvalException::INVALID_ARGUMENT);
+		return $this->getFuncExpBuilder()->lxNotEq($this->evaluateArg($args[0]),null);
+	}
+	/**
+	 * Constructs a LogExp to check that a FieldSelector is not null and not equal to a given value
+	 */
+	public function lxNotNullAndNotEq($args) {
+		return $this->getFuncExpBuilder()->lxAnd($this->lxIsNotNull($args),$this->lxNotEq($args));
+	}
+	/**
+	 * Constructs a LogExp to check that a FieldSelector is null or equal to a given value
+	 */
+	public function lxNullOrEq($args) {
+		return $this->getFuncExpBuilder()->lxOr($this->lxIsNull($args),$this->lxEq($args));
+	}
+	
+	/**
 	 * Constructs a logical SMALLER expression on the two arguments
 	 * See method 'lxSm' in FuncExpBuilder class.
 	 * FuncExp signature : <code>lxSm(arg1, arg2)</code><br/>
@@ -660,6 +718,31 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $this->getFuncExpBuilder()->lxNotInGR($this->evaluateArg($args[0]));
 	}
 
+	/**
+	 * Constructs a logical expression to select a range of months given a length and a start date.
+	 * The logical expression combines a Year FieldSelector and a Month FieldSelector in order to select the range correctly.
+	 * See method 'lxMonthRange' in FuncExpBuilder class.
+	 * FuncExp signature : <code>lxMonthRange(yearFs,monthFs,length,startDate=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) yearFs: FieldSelector. FieldSelector used to select the Year of the Element. Should point to a four digit Strings or Attributs field.
+	 * - Arg(1) monthFs: FieldSelector. FieldSelector used to select the Month of the Element. Should point to a two digit Strings or Attributs field of the form '01','02',...'12'.
+	 * - Arg(2) length: Int. The range length in months. For intance 6 for six months in future, -6 for six month in past.
+	 * - Arg(3) startDate: Int. An optional timestamp from which to start calculating the month range. Defaults to now.
+	 * @return LogExp the LogExp to select the month range based on the year and month field selectors
+	 */
+	public function lxMonthRange($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 3) throw new FuncExpEvalException('The lxMonthRange function takes at least 3 arguments: yearFs, monthFs and length', FuncExpEvalException::INVALID_ARGUMENT);
+		if($args[0] instanceof FieldSelector) $yearFs=$args[0];
+		else $yearFs=$this->evaluateArg($args[0]);		
+		if($args[1] instanceof FieldSelector) $monthFs=$args[1];
+		else $monthFs=$this->evaluateArg($args[1]);
+		
+		return $this->getFuncExpBuilder()->lxMonthRange($yearFs, $monthFs, 
+			$this->evaluateArg($args[2]),
+			($nArgs>3 ? $this->evaluateArg($args[3]):null));
+	}
+	
 	/**
 	 * Parses a String in a LogExp
 	 * See method 'str2lx' in FuncExpBuilder class.
@@ -1023,7 +1106,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			if(is_numeric($selector)) $selector = lxEq(fs('id'), $selector);
 			else $selector = lxEq(fs('groupname'), $selector);
 		}
-		$selector = lxAnd(lxEq(fs('module'), 'Dimensions'), lxEq(fs('wigiiNamespace'), $setupNS->getWigiiNamespaceName()), $selector);
+		$selector = lxAnd(lxEq(fs('module'), Module::DIMENSIONS_MODULE), lxEq(fs('wigiiNamespace'), $setupNS->getWigiiNamespaceName()), $selector);
 
 		// builds fskl
 		switch($sortOrder) {
@@ -1069,8 +1152,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 									),
 									fs('label'))),
 							dfas("FilterDuplicatesAndSortDFA",
-									"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
-									"setObjectSortByMethod", CallableObject::createInstance('cfgAttributObjectSortyByMethod', $this),
+									"setObjectClass", 'cfgAttribut',
 									"setSortOrder", $sortOrder
 							),
 							dfas("CfgAttribut2XmlDFA")
@@ -1165,7 +1247,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			if(is_numeric($selector)) $selector = lxEq(fs('id'), $selector);
 			else $selector = lxEq(fs('groupname'), $selector);
 		}
-		$selector = lxAnd(lxEq(fs('module'), 'Dimensions'), lxEq(fs('wigiiNamespace'), $setupNS->getWigiiNamespaceName()), $selector);
+		$selector = lxAnd(lxEq(fs('module'), Module::DIMENSIONS_MODULE), lxEq(fs('wigiiNamespace'), $setupNS->getWigiiNamespaceName()), $selector);
 
 		// builds fskl
 		switch($sortOrder) {
@@ -1211,8 +1293,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 									),
 									fs('label'))),
 							dfas("FilterDuplicatesAndSortDFA",
-									"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
-									"setObjectSortByMethod", CallableObject::createInstance('cfgAttributObjectSortyByMethod', $this),
+									"setObjectClass", 'cfgAttribut',
 									"setSortOrder", $sortOrder
 							),
 							dfas("CallbackDFA", 
@@ -1325,8 +1406,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			dfasl(
 				dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", $fxCfgAttribut),
 				dfas("FilterDuplicatesAndSortDFA",
-					"setObjectSelectorMethod", CallableObject::createInstance('cfgAttributObjectSelectorMethod', $this),
-					"setObjectSortByMethod", CallableObject::createInstance('cfgAttributObjectSortyByMethod', $this),
+					"setObjectClass", 'cfgAttribut',
 					"setSortOrder", $sortOrder
 				),
 				dfas("CfgAttribut2XmlDFA")
@@ -1337,37 +1417,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			$p->setAdaptiveWigiiNamespace(false);
 		}
 		return $returnValue;
-	}
-	/**
-	 * FilterDuplicatesAndSortDFA objectSelectorMethod for cfgAttribut flow
-	 * @param stdClass $data an stdClass of the form {value, attributes, label}
-	 */
-	public function cfgAttributObjectSelectorMethod($data) {
-		return $data->value;
-	}
-	/**
-	 * FilterDuplicatesAndSortDFA objectSortByMethod for cfgAttribut flow
-	 * @param stdClass $data an stdClass of the form {value, attributes, label}
-	 */
-	public function cfgAttributObjectSortyByMethod($data) {
-		if(!empty($data->label)) {
-			if(is_array($data->label)) {
-				$l = $data->label[$this->getTranslationService()->getLanguage()];
-				if(empty($l)) $returnValue = $data->value;
-				else $returnValue = $l;
-			}
-			else $returnValue = $data->label;
-		}
-		else $returnValue = $data->value;
-		
-		// puts disabled options at the end
-		if(!empty($data->attributes) && $data->attributes['disabled']=='1') {
-			return 'Z'.$returnValue;
-		}
-		else {
-			return 'A'.$returnValue;
-		}
-	}
+	}	
 
 	// WigiiBPLParameter builder
 	
@@ -1594,6 +1644,60 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			return $authS->isPublicAccessEnabledForClient($this->getPrincipal()->getWigiiNamespace()->getClient()->getClientName());
 		}
 		else return false;
+	}
+	
+	// Control Flow
+	
+	/**
+	 * Clears session or calculated cache given the cache type and an option cache key.
+	 * FuncExp signature : <code>clearCache(type,key)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) type: String. The type of cache to be cleared. One of :
+	 *   'config': clears the user session config cache
+	 *   'sharedData': clears the DB shared data cache (e.g. calculated drop-downs or calculated config)
+	 *   'role': clears user calculated roles. Postcondition: principal is bound back to real user.
+	 *   'cfgAttributeExp': clears one specific calculated drop-down
+	 * - Arg(1) key: String|FuncExp. Optional cache key name if supported by the cache type.
+	 * If cache type is 'cfgAttributeExp', then the key is mandatory and has to be the AttributeExp FuncExp used to populate the drop-down.
+	 */
+	public function ctlClearCache($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException('The ctlClearCache takes at least one argument which is the cache type', FuncExpEvalException::INVALID_ARGUMENT);
+		$type=$this->evaluateArg($args[0]);
+		switch($type) {
+			case 'config':
+				$configS = $this->getConfigService();
+				if(method_exists($configS, 'clearSessionData')) $configS->clearSessionData();
+				ServiceProvider::clearSessionDataOfSubElementConfigService();
+				break;
+			case 'sharedData':
+				$configS = $this->getConfigService();
+				if(method_exists($configS, 'clearSessionData')) $configS->clearSessionData();
+				ServiceProvider::clearSessionDataOfSubElementConfigService();
+				$this->getSessionAdminService()->clearAllSharedData();
+				break;
+			case 'role':
+				$configS = $this->getConfigService();
+				$userAS = $this->getUserAdminService();
+				if(method_exists($configS, 'clearSessionData')) $configS->clearSessionData();
+				ServiceProvider::clearSessionDataOfSubElementConfigService();
+				$p=$this->getPrincipal();
+				$userAS->calculateAllMergedRoles($p);
+				$defaultWigiiNamespace = (string)$this->getConfigService()->getParameter($p, null, "defaultWigiiNamespace");
+				if(!$defaultWigiiNamespace) $defaultWigiiNamespace = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+				$p->refetchAllRoles($userAS->getListFilterForNavigationBar(), UserListForNavigationBarImpl::createInstance($defaultWigiiNamespace));
+				break;
+			case 'cfgAttributeExp':
+				if($nArgs<2) throw new FuncExpEvalException("If cache type is 'cfgAttributeExp' then cache is mandatory and should be the AttributeExp FuncExp used to populate the drop-down.", FuncExpEvalException::INVALID_ARGUMENT);
+				if($args[1] instanceof FuncExp) $key=fx2str($args[1]);
+				else $key=$this->evaluateArg($args[1]);
+				$this->debugLogger()->write('ctlClearCache cfgAttributeExp '.$key);
+				$key = "AttributeExpConfigController_".md5($key);
+				$this->debugLogger()->write($key);
+				$this->getSessionAdminService()->clearDataKey($key);
+				break;
+			default: throw new FuncExpEvalException((empty($type)?'Cache type cannot be null.':"Cache type '".$type."' is not supported. Cache type should be one of 'session','config','sharedData','role' or 'cfgAttributeExp'"), FuncExpEvalException::INVALID_ARGUMENT);
+		}
 	}
 	
 	// System functions

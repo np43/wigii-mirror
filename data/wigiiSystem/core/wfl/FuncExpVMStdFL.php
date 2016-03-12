@@ -608,6 +608,39 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	}
 
 	/**
+	 * Evaluates a FuncExp and returns its result<br/>
+	 * FuncExp signature : <code>evalfx(f,modules)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) f: a func exp or a field selector. If the FuncExp generates another FuncExp then returns the result of the generated FuncExp.
+	 * - Arg(1..n) modules: An array of Module names or a comma separated list of Module names to load into the FuncExpVM before evaluating the FuncExp 
+	 * @return Any the result of the FuncExp
+	 */
+	public function evalfx($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException('evalfx takes at least one argument which is the FuncExp to evaluate', FuncExpEvalException::INVALID_ARGUMENT);		
+		// loads the modules into the VM if provided
+		if($nArgs>1) {
+			$sp=$this->getFuncExpVMServiceProvider();
+			// extracts the module names
+			$modules=$this->evaluateArg($args[1]);
+			if(!is_array($modules)) $modules=array($modules);
+			for($i=2;$i<$nArgs;$i++) {
+				$m=$this->evaluateArg($args[$i]);
+				$modules[]=$m;
+			}
+			// loads a new context in VM
+			$sp->getFuncExpVMContext(true);
+			// loads the modules
+			$sp->useModules($modules);			
+		}
+		// executes the FuncExp
+		$returnValue=$this->evaluateFuncExp($args[0]);
+		// if result is a FuncExp then evaluates it again
+		if(($returnValue instanceof FuncExp) || ($returnValue instanceof FieldSelector)) $returnValue=$this->evaluateArg($returnValue);
+		return $returnValue;
+	}
+	
+	/**
 	 * Converts a string to a FuncExp
 	 * See method 'str2fx' in FuncExpBuilder class.
 	 * FuncExp signature : <code>str2fx(str)</code><br/>
@@ -1017,6 +1050,32 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 		return true;
 	}
+	/**
+	 * Returns true if not all arguments are equal
+	 * A synonym to not(equal) FuncExp
+	 */
+	public function neq($args) {
+		return !$this->eq($args);
+	}
+	/**
+	 * Returns true if first argument is null or equal to second
+	 */
+	public function nullOrEq($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<2) throw new RecordException('nullOrEq takes two arguments for equality comparison', RecordException::INVALID_ARGUMENT);
+		if($this->evaluateFuncExp(fx('isNull',$args[0]))) return true;
+		else return $this->eq($args);
+	}
+	/**
+	 * Returns true if first argument is not null and not equal to second
+	 */
+	public function notNullAndNotEq($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<2) throw new RecordException('notNullAndNotEq takes two arguments for equality comparison', RecordException::INVALID_ARGUMENT);
+		if($this->evaluateFuncExp(fx('isNull',$args[0]))) return false;
+		else return $this->neq($args);
+	}
+	
 
 	/**
 	 * Returns true if first argument is smaller than all next arguments.
@@ -1212,6 +1271,45 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		else return null;
 	}
 
+	/**
+	 * Evaluates a sequence of actions only if a condition is true.
+	 * This func exp is a synonym to the<code>ctlSeqIf</code> function.
+	 * FuncExp signature: <code>ctlCondSeq(condition, action1, action2, action3, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) condidition: FuncExp | FieldSelector | LogExp. The condition to test if evaluates to true. Can be a FuncExp or a FieldSelector or a LogExp on data stored into the underlying Record.
+	 * - Arg(1..n) actionI: If condition is true, then evaluates in sequence each action. Returns the result of the last action.
+	 * @return Any the result of the last action if condition is true, else null.
+	 */
+	public function ctlCondSeq($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		$returnValue=null;
+		if($nArgs>0) {
+			// gets condition
+			$cond=$this->evaluateArg($args[0]);
+			// if a LogExp then evaluates against underlying Record
+			if($cond instanceof LogExp) $cond=$this->evaluateFuncExp(fx('evallx',$cond));
+			// if condition is true, then evaluates each action in the sequence and returns last result
+			if($cond) {
+				for($i=1;$i<$nArgs;$i++) {
+					$returnValue=$this->evaluateArg($args[$i]);
+				}
+			}			
+		}
+		return $returnValue;
+	}
+	/**
+	 * Evaluates a sequence of actions only if a condition is true.
+	 * This func exp is a synonym to the<code>ctlCondSeq</code> function.
+	 * FuncExp signature: <code>ctlSeqIf(condition, action1, action2, action3, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) condidition: FuncExp | FieldSelector | LogExp. The condition to test if evaluates to true. Can be a FuncExp or a FieldSelector or a LogExp on data stored into the underlying Record.
+	 * - Arg(1..n) actionI: If condition is true, then evaluates in sequence each action. Returns the result of the last action.
+	 * @return Any the result of the last action if condition is true, else null.
+	 */
+	public function ctlSeqIf($args) {
+		return $this->ctlCondSeq($args);
+	}
+	
 	/**
 	 * Evaluates first argument, if true, then evaluates second argument and returns the result,
 	 * else evaluates the third argument and returns the result.
@@ -1467,6 +1565,34 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 	}
 
+	/**
+	 * Runs a Decision Tree described as a list of conditional rules which calculates the decision result.
+	 * FuncExp signature : <code>ctlDecisionTree(rule1,rule2,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0..n) ruleI: FuncExp. A list of FuncExp which conditionally calculates the decision result.
+	 * The decision tree executes in sequence each of the given ruleI and stops after the first one returning a non null value. The first non null value is the decision result.
+	 * To conditionally calculate a result, use ctlIf as ruleI.	 
+	 * @example ctlDecisionTree(
+	 * 				ctlIf(logAnd(eq(logState,"Edition"), eq(Form_Complete, "Submitted")),"Submitted"),
+					ctlIf(logAnd(eq(logState,"Submitted"), eq(Review_Complete, "Approved")), "Approved"),
+					ctlIf(logAnd(eq(logState,"Approved"), eq(Form_Complete, "Finalized")), "Finalized")
+				)
+	 * @return Any returns the decision value or null if none.
+	 */
+	public function ctlDecisionTree($args) {
+		$nArgs=$this->getNumberOfArgs($args);		
+		if($nArgs>0) {
+			$returnValue=null;
+			for($i=0;$i<$nArgs;$i++) {
+				$returnValue=$this->evaluateArg($args[$i]);
+				// returns calculated result if not null
+				if(isset($returnValue)) break;
+			}
+			return $returnValue;
+		}
+		else return null;
+	}
+	
 	/**
 	 * Evaluates first argument, if true, then evaluates all next arguments in sequence,
 	 * and this as long as first argument evaluates to true

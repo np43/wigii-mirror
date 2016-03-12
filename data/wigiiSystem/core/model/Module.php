@@ -19,31 +19,24 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* A wigii module
+/**
+ * A wigii module
  * Created by CWE on 31 mai 09
  */
 class Module extends Model
 {
 	private $moduleName;
-//	private $toolbar;
 	const EMPTY_MODULE_URL = "NoModule";
 	const EMPTY_MODULE_NAME = "";
 	const ADMIN_MODULE = "Admin";
 	const HOME_MODULE = "Home";
 	const HELP_MODULE = "Help";
+	const DIMENSIONS_MODULE = "Dimensions";
 
 	public static function createInstance()
 	{
 		return new Module();
 	}
-	
-//	public function setToolbar($var){
-//		$this->toolbar = $var;
-//	}
-//	public function getToolbar($key = null){
-//		if(isset($key)) return $this->toolbar[$key];
-//		return $this->toolbar;
-//	}
 	
 	public function getModuleName()
 	{
@@ -73,6 +66,9 @@ class Module extends Model
 	}
 	public function isHelpModule(){
 		return $this->moduleName == Module::HELP_MODULE;
+	}
+	public function isDimensionsModule(){
+		return $this->moduleName == Module::DIMENSIONS_MODULE;
 	}
 	public function isUserModule(){
 		return !($this->isAdminModule() || $this->isHomeModule() || $this->isHelpModule() || $this->moduleName==self::EMPTY_MODULE_NAME);

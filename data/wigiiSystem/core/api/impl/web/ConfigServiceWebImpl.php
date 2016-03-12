@@ -19,7 +19,8 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* wigii ConfigService implementation which integrates with wigii web site
+/** 
+ * Wigii ConfigService implementation which integrates with wigii web site
  * Created by CWE on 3 octobre 2009
  */
 class ConfigServiceWebImpl extends ConfigServiceImpl

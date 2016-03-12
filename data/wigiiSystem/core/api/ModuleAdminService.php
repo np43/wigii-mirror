@@ -19,22 +19,41 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/* wigii modules administration service
+/**
+ * Wigii modules administration service
  * Created by CWE on 13 juin 09
  */
 interface ModuleAdminService
 {
 	/**
 	 * Returns an instance of the Admin module
-	 * principal: authenticated user performing the operation
-	 * throws ModuleAdminServiceException if an error occurs
+	 * @param Principal $principal authenticated user performing the operation
+	 * @throws ModuleAdminServiceException if an error occurs
+	 * @return Module
 	 */
 	public function getAdminModule($principal);
 
 	/**
+	 * Returns an instance of the Home module
+	 * @param Principal $principal authenticated user performing the operation
+	 * @throws ModuleAdminServiceException if an error occurs
+	 * @return Module
+	 */
+	public function getHomeModule($principal);
+	
+	/**
+	 * Returns an instance of the Dimensions module
+	 * @param Principal $principal authenticated user performing the operation
+	 * @throws ModuleAdminServiceException if an error occurs
+	 * @return Module
+	 */
+	public function getDimensionsModule($principal);
+	
+	/**
 	 * Returns the module with the specified name
-	 * principal: authenticated user performing the operation
-	 * throws ModuleAdminServiceException if an error occurs
+	 * @param Principal $principal authenticated user performing the operation
+	 * @throws ModuleAdminServiceException if an error occurs
+	 * @return Module
 	 */
 	public function getModule($principal, $moduleName);
 

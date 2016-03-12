@@ -349,7 +349,7 @@ class EmailingFormExecutor extends FormExecutor {
 				if($fEmailXml["isDefaultForEmailing"]=="1"){
 					$isDefaultForEmailling = $emailFieldname;
 				}
-				$options .= $transS->t($p, $emailFieldname, $fEmailXml);
+				$options .= str_replace(array("'",'&'),array("&apos;","&amp;"),$transS->t($p, $emailFieldname, $fEmailXml));				
 				$options .= '</option>';
 				$table .= ", $emailFieldname : '".implode(", ", array_keys($emails))."'";
 			}

@@ -19,14 +19,10 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 22 Dec 2009
- * by LWR
- */
-
 /**
  * The ConfigurationContext have all base method of the ConfigurationService. Each method without the group option.
  * The ConfigurationContext will be able to choose between a group method or a standard one.
+ * Created on 22 Dec 2009 by LWR
  */
 interface ConfigurationContext extends ConfigService {
 

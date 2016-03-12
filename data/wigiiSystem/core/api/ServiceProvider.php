@@ -745,6 +745,8 @@ class ServiceProvider
 		}
 		// sets parent evaluator and principal
 		if(isset($parentEvaluator)) $returnValue->setParentFuncExpEvaluator($parentEvaluator);
+		// sets reference to FuncExpVM if parent evaluator is a RecordEvaluator
+		if($parentEvaluator instanceof RecordEvaluator) $parentEvaluator->setFuncExpVM($returnValue);
 		$returnValue->setPrincipal($principal);
 		return $returnValue;
 	}

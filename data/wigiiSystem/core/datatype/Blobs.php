@@ -31,7 +31,14 @@ class Blobs extends DataTypeInstance {
 	* automatiquement, si le type de donnée évolue, il faut aussi modifier cette méthode
 	*/
 	public function checkValues($p, $elementId, $wigiiBag, $field){
-		//pas de contrôle particulier?
+		$val=$wigiiBag->getValue($elementId, 'Blobs', $field->getFieldName());		
+		if($val) {
+			$size = strlen($val);			
+			$allowed = 512*1024; /* CWE 11.03.2016: limits the Blobs size to 512Ko to keep CKEditor running smoothly. Blobs SQL limit is MediumText: 16Mo.*/
+			if($size>$allowed) {
+				throw new RecordException(str_replace(array('$$chars$$', '$$size$$','$$allowed$$'), array($size-$allowed, $size,$allowed), ServiceProvider::getTranslationService()->t($p,'exceedBlobsLimit')), RecordException::INVALID_ARGUMENT);
+			}
+		}
 	}
 }
 

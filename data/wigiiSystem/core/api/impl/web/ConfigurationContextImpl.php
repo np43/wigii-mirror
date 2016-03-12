@@ -19,23 +19,20 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 22 Dec 2009
- * by LWR
- *
+/**
  * The ConfigurationContext is there to interface the configuration service. The aim is to give the good configuration
  * depending on the current selected group in the GUI. The setGroupList is the key method to indicate what is the current
  * state in the GUI regarding the group selection.
- * If all groups are selected, then the general wigiiNamespace config is always choosed.
- * If one specific group is choosed, then we look to the possible specific config of the group.
+ * If all groups are selected, then the general wigiiNamespace config is always chosen.
+ * If one specific group is chosen, then we look to the possible specific config of the group.
  * 	- 	here there is one more subtility. Instead of just looking for a config for the current group, we look
  * 		for specific config on the parent groups as well if not found.
  * 	-	be aware than even if the config is took from a parent group, a config in a add/delete style will always refer to
  * 		a more general config. That means you cannot create a specific config on a top group, and then play
  * 		with add/delete on subgroups and think that the config on subgroup will add or delete things on the parent
  * 		config.
+ * Created on 22 Dec 2009 by LWR
  */
-
 class ConfigurationContextImpl extends Model implements ConfigurationContext, Serializable {
 
 	private $_debugLogger;

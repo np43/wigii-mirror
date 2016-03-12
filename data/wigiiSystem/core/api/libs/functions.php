@@ -1305,10 +1305,24 @@ function lxNotInG($lx) {return TechnicalServiceProvider::getFuncExpBuilder()->lx
 function lxNotInGR($lx) {return TechnicalServiceProvider::getFuncExpBuilder()->lxNotInGR($lx);}
 
 /**
+ * Constructs a logical expression to select a range of months given a length and a start date.
+ * The logical expression combines a Year FieldSelector and a Month FieldSelector in order to select the range correctly.
+ * @param FieldSelector $yearFs FieldSelector used to select the Year of the Element. Should point to a four digit Strings or Attributs field.
+ * @param FieldSelector $monthFs FieldSelector used to select the Month of the Element. Should point to a two digit Strings or Attributs field of the form '01','02',...'12'.
+ * @param Int $length the range length in months. For intance 6 for six months in future, -6 for six month in past.
+ * @param Int $startDate an optional timestamp from which to start calculating the month range. Defaults to now.
+ * @return LogExp the LogExp to select the month range based on the year and month field selectors
+ */
+function lxMonthRange($yearFs,$monthFs,$length,$startDate=null) {return TechnicalServiceProvider::getFuncExpBuilder()->lxMonthRange($yearFs, $monthFs, $length, $startDate);}
+
+/**
  * Parses a String in a LogExp
  */
 function str2lx($str) {return TechnicalServiceProvider::getFuncExpBuilder()->str2lx($str);}
-
+/**
+ * Converts a LogExp to a String
+ */
+function lx2str($lx) {return TechnicalServiceProvider::getFieldSelectorLogExpParser()->logExpToString($lx);}
 /**
  * Converts a String representation of a LogExp into a semantically equivalent string representation of a FuncExp
  * This function can be used to store LogExp into FuncExp language format.

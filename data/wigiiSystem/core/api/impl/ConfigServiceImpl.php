@@ -29,9 +29,7 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 	private $_debugLogger;
 	private $_executionSink;
 	private $authS;
-	private $analyzedXmlLps;
-	private $dumpConfigEnabled=false;
-	private $dumpPath;
+	private $analyzedXmlLps;	
 	
 	// Object lifecycle
 	
@@ -182,34 +180,6 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 		return $this->getCoreConfigService()->getFieldSelectorFuncExpParser();
 	}
 	
-	/**
-	 * Enables or not the dumping of all dynamically generated XML configuration files in folder LOG_PATH/ConfigService.
-	 * The dumped configuration file name is WigiiClient_WigiiNamespace_Module_Timestamp.xml
-	 * At the beginining of the file, it contains an xml comment with some info about the context in which this dynamically generated XML file occured.
-	 * This feature is used for debugging runtime configuration issues.
-	 * This feature is disabled by default, can be activated in config.php by calling ServiceProvider::getConfigService()->setDumpConfig(true);
-	 */
-	public function setDumpConfig($enabled) {
-		$this->dumpConfigEnabled=$enabled;
-	}
-	protected function getDumpConfig() {
-		return $this->dumpConfigEnabled;
-	}
-	/**
-	 * Defines the path on disk where to dump the configuration files.
-	 * @param String $path should point to an existing path on disk
-	 */
-	public function setDumpPath($path) {
-		$this->dumpPath=$path;
-	}
-	protected function getDumpPath() {
-		if(!isset($this->dumpPath)) {
-			$this->dumpPath=dirname($_SERVER["SCRIPT_FILENAME"])."/".LOG_PATH.'ConfigService/';
-			// checks the existence of dump path, if not creates directory.
-			if(!file_exists($this->dumpPath)) @mkdir($this->dumpPath,0777,true);			
-		}
-		return $this->dumpPath;
-	}
 	// Configuration
 	
 	/**
@@ -490,6 +460,7 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 				$this->loadFields($lookupPath, $xmlConfig);
 				$returnValue = parent::getLoadedField($lookupPath, $asXml);
 			}
+			//else $returnValue = | $this->getCoreConfigService()->getLoadedField($lookupPath, $asXml);
 			else $returnValue = $this->getCoreConfigService()->getLoadedField($lookupPath, $asXml);
 		}
 		$this->debugLogger()->logEndOperation('getLoadedField');
@@ -569,9 +540,7 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 		
 		// checks that xml is not already loaded
 		$xml = parent::getLoadedXml($lpParamAndXml);
-		if(isset($xml)) {
-			// dumps XML config if enabled
-			if($this->getDumpConfig()) $this->dumpConfig($xml, wigiiBPLParam('client',$sClientName,'wigiiNamespace',$sWigiiNamespaceName,'module',$sModuleName,'group',$sGroupName,'lpField',$lpField,'loadAllUnset',true));
+		if(isset($xml)) {			
 			// loads all unset Objects
 			return $this->loadAllUnset($lpParamAndXml, $lpField, $xml);
 		}				
@@ -585,10 +554,11 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 		if(!$coreCS->isLoadingOnlyParameters() && ($returnValue || !$alreadyAnalyzed) && isset($this->configControllers)) {			
 			// gets loaded xml
 			$this->debugLogger()->write('gets loaded xml');
-			$xml = $coreCS->getLoadedXml($lpParamAndXml);
+			$xml = $coreCS->getLoadedXml($lpParamAndXml);			
 			if(isset($xml)) {
 				$this->debugLogger()->write('analyses loaded xml');
-				
+				// dumps core XML config if enabled
+				if($this->getDumpConfig()) $this->dumpConfig($xml, wigiiBPLParam('client',$sClientName,'wigiiNamespace',$sWigiiNamespaceName,'module',$sModuleName,'group',$sGroupName,'lpField',$lpField,'loadCoreConfig',true));
 				$xml = CSXmlEditionContext::getInstance($xml, $this);
 				$principal = (isset($this->principal) ? $this->principal: $this->getAuthenticationService()->getMainPrincipal());
 				$getWritableNodeCallback = CallableObject::createInstance('getWritableXml', $xml);
@@ -616,7 +586,7 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 				if($modifiedXml) {					
 					$readableXml = $xml->getReadableXml();
 					// dumps XML config if enabled
-					if($this->getDumpConfig()) $this->dumpConfig($readableXml, wigiiBPLParam('client',$sClientName,'wigiiNamespace',$sWigiiNamespaceName,'module',$sModuleName,'group',$sGroupName,'lpField',$lpField,'loadAllUnset',false, 'principal',$principal));
+					if($this->getDumpConfig()) $this->dumpConfig($readableXml, wigiiBPLParam('client',$sClientName,'wigiiNamespace',$sWigiiNamespaceName,'module',$sModuleName,'group',$sGroupName,'lpField',$lpField, 'principal',$principal));
 					// loads all Objects
 					$this->loadAll($lpParamAndXml, $lpField, $readableXml, false);
 				}
@@ -628,64 +598,7 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 		}
 		//$this->debugLogger()->logEndOperation("loadConfig");
 		return $returnValue;
-	}
-	/**
-	 * Dumps the given XML into a file located in dumpPath
-	 * @param SimpleXMLElement $xml xml configuration to dump into a file
-	 * @param WigiiBPLParameter $info contextual information :
-	 * - lpField: Configuration Lookup Path
-	 * - loadAllUnset: boolean. If true, means that XML was already into memory, but some parts where not mapped to objects (this occurs when loading Activities or Fields after loading Parameters).
-	 * If false, then it means that it is a fresh loading of the XML file from disk.
-	 * - principal: Principal. Current principal if known.
-	 */
-	protected function dumpConfig($xml,$info) {
-		$this->debugLogger()->logBeginOperation('dumpConfig');
-		if(!isset($xml)) return;
-		if(!isset($info)) $info=wigiiBPLParam();
-		$p = $info->getValue('principal');
-		if(!isset($p)) $p=$this->getAuthenticationService()->getMainPrincipal();
-		$exec = ServiceProvider::getExecutionService();
-		
-		// dumps only fresh files
-		if($info->getValue('loadAllUnset')) {
-			$this->debugLogger()->write('xml already into memory, not dumped');
-			$this->debugLogger()->logEndOperation('dumpConfig');
-			return;
-		}
-		
-		// prepares contextual info
-		$contextInfo="<!-- ConfigService XML dump ".date('Y-m-d h:i:s')."\n";
-		$contextInfo.='request: '.$exec->getCrtRequest()."\n";
-		$contextInfo.='wigiiNamespace: '.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."\n";
-		$contextInfo.='module: '.$exec->getCrtModule()->getModuleUrl()."\n";
-		$contextInfo.='action: '.$exec->getCrtAction()."\n";
-		$contextInfo.='principalNamespace: '.$p->getWigiiNamespace()->getWigiiNamespaceUrl()."\n";
-		$contextInfo.='configLP: '.$info->getValue('lpField')."\n";
-		$contextInfo.='alreadyInMemory: '.$info->getValue('loadAllUnset')."\n";		
-		$contextInfo.="-->\n";
-		$xml=$xml->asXML();
-		$xml=preg_replace('/(\<\?xml.*?\?\>)/', '\\1'."\n".$contextInfo,$xml);
-		// writes to file
-		$fileName='';
-		$s=$info->getValue('client');
-		if($s) $fileName.=$s;
-		$s=$info->getValue('wigiiNamespace');
-		if($s) $fileName.=($fileName?'_':'').$s;
-		$s=$info->getValue('module');
-		if($s) $fileName.=($fileName?'_':'').$s;
-		$s=$info->getValue('group');
-		if($s) $fileName.=($fileName?'_':'').$s;
-		$fileName.=($fileName?'_':'').udate('Ymdhisu');
-		$fileName.='.xml';
-		
-		$f=@fopen($this->getDumpPath().$fileName,'w');
-		if($f) {
-			if(@fwrite($f,$xml)) $this->debugLogger()->write('dumped xml');
-			@fclose($f);
-		}
-		else $this->debugLogger()->write('could not dump xml to '.$this->getDumpPath().$fileName);
-		$this->debugLogger()->logEndOperation('dumpConfig');
-	}
+	}	
 	
 	protected function loadDatatypeConfig($datatype)
 	{

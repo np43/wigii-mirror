@@ -15,13 +15,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
  *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
+ *  @author     http://www.wigii.org/system      Wigii.org 
+ *  @link       http://www.wigii-system.net      https://github.com/wigii/wigii   Source Code
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @since      2006,2016
  */
 
-/*
- * Created on 15 oct. 09
- * by LWR
+/**
+ * Created on 15 oct. 09 by LWR
  */
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start footerBar.tpl.php"] = microtime(true);
 $this->executionSink()->publishStartOperation("TEMPLATE footerBar.tpl.php");
@@ -36,14 +37,14 @@ $postponeTimer = 1000*60*15; //"15min";
 
 	if(false){ //with full html explaning what this is
 	?><span id="wigiiVersionLabel"  UNSELECTABLE="on" style=" -moz-user-select: none; -khtml-user-select: none; unselectable:on; user-select: none; " ondblclick="update('<?=EMPTY_ANSWER_ID_URL;?>/<?=WigiiNamespace::EMPTY_NAMESPACE_URL;?>/<?=Module::EMPTY_MODULE_URL;?>/toggleSysConsole', function(){ $('#systemConsole').toggle(); });" ><?
-		echo '<a target="_blank" href="http://www.wigii.org/system">'.VERSION_LABEL.'</a>';
+		echo '<a target="_blank" href="http://www.wigii-system.net">'.VERSION_LABEL.'</a>';
 		//echo ", ".$exec->getBrowserName()." ".$exec->getBrowserVersion();
 	?></span><?
 	?><span id="cronJobs" style="margin-left:10px;"><?
 		?><label class="label"><?=$transS->t($p, "cronJobs");?>&nbsp;(<span id="cronJobsStart" class="H" style="padding:2px 2px 2px 2px; "><?=$transS->t($p, "cronJobsStartButton");?></span>)<span id="cronJobsCursor"> - </span></label><label id="cronJobsNb" class="cronJobsNb" style="margin-right:5px;">0</label>(<label id="cronJobsStop" class="H" style="padding:2px 2px 2px 2px;"><?=$transS->t($p, "cronJobsStop");?><span></span></label>)<?
 	} else {
 	?><span id="wigiiVersionLabel" UNSELECTABLE="on" style=" -moz-user-select: none; -khtml-user-select: none; unselectable:on; user-select: none; " ondblclick="update('<?=EMPTY_ANSWER_ID_URL;?>/<?=WigiiNamespace::EMPTY_NAMESPACE_URL;?>/<?=Module::EMPTY_MODULE_URL;?>/toggleSysConsole', function(){ $('#systemConsole').toggle(); });" ><?
-		echo '<a target="_blank" href="http://www.wigii.org/system">'.VERSION_LABEL.'</a> -D- ';
+		echo '<a target="_blank" href="http://www.wigii-system.net">'.VERSION_LABEL.'</a> -D- ';
 		//echo ", ".$exec->getBrowserName()." ".$exec->getBrowserVersion();
 	?></span><?
 

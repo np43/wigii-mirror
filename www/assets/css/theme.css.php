@@ -201,11 +201,14 @@ div.field.jointV div.value{
 	margin:0px;
 	padding:0px 0px;
 }
+div.field.jointV div.label{ 
+	padding-top:0px; padding-bottom:0px;
+	margin:0px;
+}
 div.field.jointH {
 	margin:0px;
 	padding:0px 0px;
 }
-
 /* displayOnRightSide replacement */
 div.fieldGroupRight{
 	margin-left:10px;

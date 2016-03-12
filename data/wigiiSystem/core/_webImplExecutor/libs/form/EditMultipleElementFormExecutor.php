@@ -85,6 +85,14 @@ class EditMultipleElementFormExecutor extends EditElementFormExecutor implements
 	}
 
 	private $fslForUpdate;
+	/**
+	 * @return FieldSelectorList returns current FieldSelectorList that will be used to update the record in the DB. 
+	 * Can be modified by a FuncExp to add dependencies to be saved.
+	 */
+	public function getFieldSelectorListForUpdate() {
+		return $this->fslForUpdate;
+	}
+	
 	protected function doSpecificCheck($p, $exec){
 
 		if($this->getState() == "persistAndNotify"){

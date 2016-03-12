@@ -657,7 +657,8 @@ class NotificationService implements MultiplexedEvent {
 				$fsl->setSelectedLanguages(array ($this->getTranslationService()->getLanguage() => $this->getTranslationService()->getLanguage()));
 				$this->getConfigService()->getFields($p, $rec->getModule(), Activity :: createInstance("listView"), $fsl);
 				$elementListText .= '</p><p></p>';
-				$elementListText .= $this->getTranslationService()->t($p, "#Element#:");
+				$this->getTranslationService()->setSubExecutionModule($rec->getModule());
+				$elementListText .= $this->getTranslationService()->t($p, "#Element#:");				
 				$elementListText .= '<br />';
 				if($eventName=="delete") $elementListText .= $this->getButtonViewElement($p, $rec, '<u style="font-weight:normal;">'.$rec->getId()."</u>")."  ";
 				$elementListText .= $this->getElementView($p, $rec, $trm, $fsl);

@@ -979,20 +979,30 @@ class WigiiBPL
 				$groups=array($directAccessId=>$directAccessId);
 			}
 			
-			// calculates the rights for each group and keeps the WigiiNamespace which has the highest access rights
+			// calculates the rights for each group and keeps the WigiiNamespace which :
+			// 1. is equal to current http request namespace,
+			// 2. has the highest access rights
 			if(!empty($groups)) {
 				$parameter = wigiiBPLParam();
 				$returnValue=null;
 				$highestRight=null;
 				foreach($groups as $groupId) {
 					$parameter->setValue('group', $groupId);
-					$wigiiNamespaces = $this->adminGetPrincipalRightsOnGroup($principal, $this, $parameter);
-					// extracts highest right
+					$wigiiNamespaces = $this->adminGetPrincipalRightsOnGroup($principal, $this, $parameter);					
 					if(!empty($wigiiNamespaces)) {
-						foreach($wigiiNamespaces as $wigiiNamespace=>$right) {
-							if(!isset($highestRight) || ($highestRight<$right)) {
-								$highestRight = $right;
-								$returnValue=$wigiiNamespace;
+						// checks if current http request namespace is accessible, if true, returns this one
+						$wigiiNamespace= ServiceProvider::getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceName();
+						if($wigiiNamespaces[$wigiiNamespace]) {
+							$returnValue=$wigiiNamespace;							
+							break;						
+						}
+						// else extracts the namespace with highest right
+						else {
+							foreach($wigiiNamespaces as $wigiiNamespace=>$right) {
+								if(!isset($highestRight) || ($highestRight<$right)) {
+									$highestRight = $right;
+									$returnValue=$wigiiNamespace;
+								}
 							}
 						}
 					}
@@ -1266,14 +1276,17 @@ class WigiiBPL
 			$module = $parameter->getValue('module');
 			if(isset($module) && !($module instanceof Module)) $this->getModuleAdminService()->getModule($rootP, $module);	
 			
-			// creates element for which to fetch the containing groups
-			if($module instanceof Module) {
-				$element = Element::createInstance($module, null, null, array('id'=>$elementId));				
+			// fetches element for which to fetch the containing groups
+			// checks module and if sub-element
+			$element = Element::createInstance(null, FieldListArrayImpl::createInstance(), WigiiBagBaseImpl::createInstance(), array('id'=>$elementId));
+			$this->getElementService()->fillElement($rootP, $element, fsl(fs_e('module'),fs_e('id_element_parent')));
+			
+			// if sub element, then retrieves root element
+			if($element->isSubElement()) {
+				$rootLs = $element->getSubElementPathFromRoot()->getFirstLinkSelector();
+				$element = Element::createInstance($this->getModuleAdminService()->getModule($rootP, $rootLs->getModuleName()), null, null, array('id'=>$rootLs->getOwnerElementId()));
 			}
-			else {
-				$element = Element::createInstance(null, FieldListArrayImpl::createInstance(), WigiiBagBaseImpl::createInstance(), array('id'=>$elementId));
-				$this->getElementService()->fillElement($rootP, $element, fsl(fs_e('module')));
-			}
+
 			// gets all groups containing element
 			$groupPList = GroupPListArrayImpl::createInstance();
 			if($this->getElementService()->getAllGroupsContainingElement($rootP, $element, $groupPList)>0) {

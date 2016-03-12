@@ -158,8 +158,11 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 
 		$idField = $this->getDetailId()."__".$fieldName;
 		$fieldClass = (string)$fieldXml["class"];
+		// CWE 10.02.2016: if element is blocked, enables add comments if allowOnReadOnly
 		if($fieldXml["allowOnReadOnly"]=="1") $fieldClass .=" allowOnReadOnly ";
-		if($rm->getRecord() instanceof Element && $rm->getRecord()->isState_blocked()) $fieldClass .= " readOnly ";
+		if($rm->getRecord() instanceof Element && $rm->getRecord()->isState_blocked()) {
+			$fieldClass .= " readOnly ";
+		}
 		$isTitle = ($fieldXml["displayAsTitle1"]=="1" || $fieldXml["displayAsTitle2"]=="1" || $fieldXml["displayAsTitle3"]=="1");
 		if($isTitle && $dataType!= null){
 			if($dataTypeName == "Files" || $dataTypeName == "Urls" || $dataTypeName == "Addresses" || $dataTypeName == "Blobs" || $dataTypeName == "Texts"){

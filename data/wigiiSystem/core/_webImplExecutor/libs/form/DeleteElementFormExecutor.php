@@ -137,6 +137,11 @@ class DeleteElementFormExecutor extends EditElementFormExecutor {
 		$elementId = $element->getId();
 		$fileFields = $this->getFileFields();
 
+		// if principal deleting the Elements owns the Lock on the Element then first unlocks it to not keep any lock on a unshared or deleted element
+		if($element->isState_locked() && $element->getSys_user() == $p->getRealUserId()) {
+			$elS->setState_locked($p, $element->getId(), false);
+		}
+		
 		if(!$element->isSubElement()) {
 			$trashBinGroupId = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
 			$moveInTrash = false;

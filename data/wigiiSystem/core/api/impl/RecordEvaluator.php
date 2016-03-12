@@ -134,6 +134,14 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $this->funcExpVMClassName;
 	}
 
+	/**
+	 * Injects a FuncExp VM to use.
+	 * @param FuncExpVM $funcExpVM
+	 */
+	public function setFuncExpVM($funcExpVM) {
+		$this->funcExpVM=$funcExpVM;
+	}
+	
 	private function debugLogger()
 	{
 		if(!isset($this->_debugLogger))
@@ -817,6 +825,34 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 
 	/**
+	 * Returns true if not all arguments are equal
+	 * A synonym to not(equal) FuncExp
+	 */
+	public function neq($args) {
+		return !$this->eq($args);
+	}
+	
+	/**
+	 * Returns true if first argument is null or equal to second
+	 */
+	public function nullOrEq($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<2) throw new RecordException('nullOrEq takes two arguments for equality comparison', RecordException::INVALID_ARGUMENT);
+		if($this->evaluateFuncExp(fx('isNull',$args[0]))) return true;
+		else return $this->eq($args);
+	}
+	/**
+	 * Returns true if first argument is not null and not equal to second
+	 */
+	public function notNullAndNotEq($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<2) throw new RecordException('notNullAndNotEq takes two arguments for equality comparison', RecordException::INVALID_ARGUMENT);
+		if($this->evaluateFuncExp(fx('isNull',$args[0]))) return false;
+		else return $this->neq($args);
+	}
+	
+	
+	/**
 	 * Returns true if first argument is smaller than all next arguments.
 	 * A synonym to sm FuncExp
 	 */
@@ -1147,14 +1183,15 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Adds an error message to a field in the record.
 	 * FuncExp signature : <code>ctlAddErrorToField(fieldName, errorMessage)</code><br/>
 	 * Where arguments are :
-	 * - Arg(0) fieldName: String. The name of the field to which to add an error message
+	 * - Arg(0) fieldName: String|FieldSelector. The name of the field to which to add an error message
 	 * - Arg(1) errorMessage: String. Evaluates to a String that will be displayed as an error message. The message is automatically translated if needed.	 
 	 */
 	public function ctlAddError($args) {
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 2) throw new RecordException('ctlAddError func exp takes two arguments: the fieldName to which to add the error, and the errorMessage to display.', RecordException::INVALID_ARGUMENT);
 		
-		$fieldName = $this->evaluateArg($args[0]);
+		if($args[0] instanceof FieldSelector) $fieldName=$args[0]->getFieldName();
+		else $fieldName = $this->evaluateArg($args[0]);
 		if(!$this->getRecord()->getFieldList()->doesFieldExist($fieldName)) throw new RecordException("fieldName '".$fieldName."' is not a valid field in the record", RecordException::INVALID_ARGUMENT);
 
 		$errorMessage = $this->evaluateArg($args[1]);
@@ -1166,6 +1203,46 @@ class RecordEvaluator implements FuncExpEvaluator
 			$form->addErrorToField($errorMessage, $fieldName);
 		}
 		else throw new FuncExpEvalException($errorMessage, FuncExpEvalException::ASSERTION_FAILED);
+	}
+	
+	/**
+	 * Runs a step into a given state machine. The state machine is described as a Field holding the actual state and a list of conditional actions and new state calculations.
+	 * FuncExp signature : <code>ctlStateMachine(stateField, newStateFx1, newStateFx2)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) stateField: String|FieldSelector. The name of the field or FieldSelector holding the state of the state machine. (Can be of type Strings,Numerics or Attributs).
+	 * - Arg(1..n) newStateFxI: FuncExp. A list of FuncExp which conditionally calculates the new state. 
+	 * The state machine executes in sequence each of the given newStateFxI and stops after the first one returning a non null value. The first non null value is the calculated new state. 
+	 * To conditionally calculate a new state, use ctlCondSeq or ctlSeqIf or ctlIf as newStateFxI.
+	 * To execute some actions on a transition as well as calculating new state, put all the actions into a sequence and put the new state calculation as the last step.
+	 * @example ctlStateMachine(logState,
+					ctlSeqIf(logAnd(eq(logState,"Edition"), eq(Form_Complete, "Submitted")),"Submitted"),
+					ctlSeqIf(logAnd(eq(logState,"Submitted"), eq(Review_Complete, "Approved")), "Approved"),
+					ctlSeqIf(logAnd(eq(logState,"Approved"), eq(Form_Complete, "Finalized")), action1(), action2(), "Finalized")
+				)
+	 * @return Boolean returns true if state has changed, else false.
+	 */
+	public function ctlStateMachine($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException('ctlStateMachine takes at least one argument which is the state field', FuncExpEvalException::INVALID_ARGUMENT);
+		// gets state FieldSelector
+		$stateField=$args[0];
+		if(!($stateField instanceof FieldSelector)) $stateField=fs($this->evaluateArg($args[0]));
+		// evaluates each transition
+		$returnValue=false;
+		if($nArgs>1) {
+			$newState=null;
+			for($i=1;$i<$nArgs;$i++) {
+				$newState=$this->evaluateArg($args[$i]);
+				// breaks if newState is calculated
+				if(isset($newState)) break;
+			}
+			// if new state is calculated and changed then updates it
+			if(isset($newState) && $newState != $this->getFieldValue($stateField)) {
+				$this->setFieldValue($stateField, $newState);
+				$returnValue=true;
+			}		
+		}
+		return $returnValue;
 	}
 	
 	/**
@@ -1204,6 +1281,14 @@ class RecordEvaluator implements FuncExpEvaluator
 	public function setVal($args) {
 		$n = $this->getNumberOfArgs($args);
 		if($n < 2) throw new RecordException("For setVal, the number of arguments should be at least 2", RecordException::INVALID_ARGUMENT);
+				
+		// if multiple edit then adds FieldSelector to FieldSelectorList for persistence
+		$isMultiple=($this->getFormExecutor() instanceof EditMultipleElementFormExecutor);
+		if($isMultiple) {
+			$fsl=$this->getFormExecutor()->getFieldSelectorListForUpdate();
+		}
+		else $fsl=null;
+		
 		// evaluates value
 		$val = $this->evaluateArg($args[$n-1]);
 		// updates each values
@@ -1214,6 +1299,8 @@ class RecordEvaluator implements FuncExpEvaluator
 				if(!($fs instanceof FieldSelector)) throw new RecordException("argument $i does not evaluate to a FieldSelector", RecordException::INVALID_ARGUMENT);
 			}
 			$this->setFieldValue($fs, $val);
+			
+			if($isMultiple && !$fsl->containsFieldSelector($fs->getFieldName(), $fs->getSubFieldName())) $fsl->addFieldSelectorInstance($fs);
 		}
 		return $val;
 	}
@@ -1283,6 +1370,26 @@ class RecordEvaluator implements FuncExpEvaluator
 		$v = json_encode($v);
 		if(!$v) throw new RecordException("could not create a JSON string based on the input", RecordException::INVALID_ARGUMENT);
 		return $v;
+	}
+	
+	/**
+	 * Evaluates a LogExp against the Record and returns its result<br/>
+	 * FuncExp signature : <code>evallx(logExp)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) logExp: Evaluates to a LogExp which is the solved against the Record field values.	 
+	 * @return Boolean the result of the evaluation of the LogExp
+	 */
+	public function evallx($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException('evallx takes at least one argument which is the LogExp to evaluate', FuncExpEvalException::INVALID_ARGUMENT);
+		$lx=$this->evaluateArg($args[0]);
+		// if value is a log exp, then solves it against the record
+		if($lx instanceof LogExp) {
+			$lx = TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($this->getRecord(), $lx);
+		}
+		// returns result
+		if($lx) return true;
+		else return false;
 	}
 	
 	// Record matrix functions

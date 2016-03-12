@@ -19,9 +19,9 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 3 déc. 09
- * by LWR
+/**
+ * Created on 3 déc. 09 by LWR
+ * Modified on 25.02.2016 by CWE to always display MultipleAttribut codes not present in drop-down
  */
 class MultipleAttributs extends DataTypeInstance {
 
@@ -80,10 +80,16 @@ class MultipleAttributs extends DataTypeInstance {
 				$existingKeys[$sAttr] = $sAttr;
 			}
 			// adds non existing values in array if allowNewValues
+			// CWE 25.02.2016: always display code if value is not present in drop-down
+			/*
 			if($fieldXml["allowNewValues"]=="1"){
 				foreach($value as $v) {
 					if($existingKeys[$v] == null) $translated[] = $transS->t($p, $v);
 				}
+			}
+			*/
+			foreach($value as $v) {
+				if($existingKeys[$v] == null) $translated[] = $transS->t($p, $v);
 			}
 			if($returnArray) return $translated;
 			if(!$fieldXml["useMultipleColumn"] || $fieldXml["useMultipleColumn"]=="1"){

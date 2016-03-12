@@ -281,7 +281,7 @@ class ClientAdminServiceImpl implements ClientAdminService
 		}
 		else {
 			$isGroupId = false;
-			$module = $this->getModuleAdminService()->getModule($principal, 'Dimensions');
+			$module = $this->getModuleAdminService()->getDimensionsModule($principal);
 			$wigiiNamespace = $this->getWigiiNamespaceAdminService()->getSetupWigiiNamespace($principal);
 				
 			$groupLogExp = lxAnd(

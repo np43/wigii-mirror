@@ -17,7 +17,7 @@
  *  
  *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
- 
+ */ 
 
 /**
  * Config Service core implementation, intented to be subclassed or used internally.
@@ -52,7 +52,9 @@ class ConfigServiceCoreImpl implements ConfigService
 	private $undefinedParametersCache;	
 	private $undefinedActivitiesCache;
 	private $parametersSessionCache;
-
+	private $dumpConfigEnabled=false;
+	private $dumpPath;
+	
 	/**
 	 * map (module(client(wigiiNamespace(group(user)))))=> map name=>value
 	 */
@@ -492,6 +494,35 @@ class ConfigServiceCoreImpl implements ConfigService
 		return $this->readOnlyParametersFromSession;
 	}
 	
+	/**
+	 * Enables or not the dumping of all dynamically generated XML configuration files in folder LOG_PATH/ConfigService.
+	 * The dumped configuration file name is WigiiClient_WigiiNamespace_Module_Timestamp.xml
+	 * At the beginining of the file, it contains an xml comment with some info about the context in which this dynamically generated XML file occured.
+	 * This feature is used for debugging runtime configuration issues.
+	 * This feature is disabled by default, can be activated in config.php by calling ServiceProvider::getConfigService()->setDumpConfig(true);
+	 */
+	public function setDumpConfig($enabled) {
+		$this->dumpConfigEnabled=$enabled;
+	}
+	protected function getDumpConfig() {
+		return $this->dumpConfigEnabled;
+	}
+	/**
+	 * Defines the path on disk where to dump the configuration files.
+	 * @param String $path should point to an existing path on disk
+	 */
+	public function setDumpPath($path) {
+		$this->dumpPath=$path;
+	}
+	protected function getDumpPath() {
+		if(!isset($this->dumpPath)) {
+			$this->dumpPath=dirname($_SERVER["SCRIPT_FILENAME"])."/".LOG_PATH.'ConfigService/';
+			// checks the existence of dump path, if not creates directory.
+			if(!file_exists($this->dumpPath)) @mkdir($this->dumpPath,0777,true);
+		}
+		return $this->dumpPath;
+	}
+	
 	// Service implementation
 	
 
@@ -781,11 +812,45 @@ class ConfigServiceCoreImpl implements ConfigService
 
 		//this happens if we try to get a config where nothing is defined
 		if(!isset($farray)) throw new ConfigServiceException("No fields defined for: $moduleName, $clientName, $wigiiNamespaceName, $groupName, $username, $activityName",ConfigServiceException::INVALID_ARGUMENT);
-
-		foreach($farray as $f)
-		{
-			$fieldList->addField($f);
-			$returnValue++;
+			
+		try {
+			foreach($farray as $f)
+			{		
+				$fieldList->addField($f);
+				$returnValue++;
+			}				
+		}
+		catch(Exception $e) {
+			if($e->getCode()!=ServiceException::OPERATION_CANCELED) {	
+				// CWE 03.03.2016: signals duplicate field error to monitoring system
+				$message='FieldList addField error on field #'.($returnValue+1).' : ('.$e->getCode().') '.$e->getMessage().".\n";
+				$first=true;
+				$message.='FieldList is: ';
+				foreach($farray as $f) {
+					if($first) $first=false;
+					else $message.= ', ';
+					$message.= $f->getFieldName();
+				}
+				$message.= "\n";
+				$xml=$this->lookupFields($moduleName, $clientName, $wigiiNamespaceName, $groupName, $username, $activityName, true);
+				
+				$sGroupName = (is_null($groupName)?'':$groupName);
+				$sModuleName = (is_null($moduleName) ? '':$moduleName);
+				$sClientName = (is_null($clientName) ? '':$clientName);
+				$sWigiiNamespaceName = (is_null($wigiiNamespaceName) ? '':$wigiiNamespaceName);
+				$sUsername = (is_null($username) ? '':$username);
+				$sActivityName = (is_null($activityName)?'':$activityName);
+				$lp='('.$sModuleName.'('.$sClientName.'('.$sWigiiNamespaceName.'('.$sGroupName.'('.$sUsername.'('.$sActivityName.'))))))';
+							
+				if(isset($xml)) {
+					$info=wigiiBPLParam('client',$sClientName,'wigiiNamespace',$sWigiiNamespaceName,'module',$sModuleName,'group',$sGroupName,'lpField',$lp);
+					$this->dumpConfig($xml, $info);
+					$message.="XML for $lp is in file ".$info->getValue('xmlFileName');				
+				}
+				else $message.= "no XML for $lp";
+				ServiceProvider::getClientAdminService()->signalFatalError(new ConfigServiceException($message,ConfigServiceException::CONFIGURATION_ERROR));
+			}
+			throw $e;			
 		}
 		return $returnValue;
 	}
@@ -3686,14 +3751,28 @@ class ConfigServiceCoreImpl implements ConfigService
 					$xmlDeletes = $xmlConfig->xpath('deletes');
 					if($xmlAdds || $xmlDeletes)
 					{
+						// loads parent xml
 						$parentlp = $this->loadParentConfig($moduleName, $clientName, $wigiiNamespaceName, $groupName, $username, $activityName);
-						if($xmlAdds)
-						{
-							$this->addConfigElements($xmlAdds[0], $parentlp, $lpParamAndXml, $lpField);
-						}
-						if($xmlDeletes)
-						{
-							$this->deleteConfigElements($xmlDeletes[0], $parentlp, $lpParamAndXml, $lpField);
+						// gets parent xml
+						$this->debugLogger()->write('looks up xml parent');
+						$xmlConfig = $this->lookupXml($parentlp['moduleName'],$parentlp['clientName'],$parentlp['wigiiNamespaceName'],$parentlp['groupName'],$parentlp['username']);
+						if(isset($xmlConfig)) {
+							// clones parent xml
+							$this->debugLogger()->write('clones xml parent');
+							$xmlConfig = $this->cloneConfigXmlNode($xmlConfig);
+	
+							// executes adds
+							if($xmlAdds)
+							{
+								$this->addConfigElements($xmlAdds[0], $xmlConfig);
+							}
+							// executes deletes
+							if($xmlDeletes)
+							{
+								$this->deleteConfigElements($xmlDeletes[0], $xmlConfig);
+							}
+							// loads updated configuration
+							$this->loadAll($lpParamAndXml, $lpField, $xmlConfig);
 						}
 					}
 					// else loads configuration
@@ -3718,6 +3797,74 @@ class ConfigServiceCoreImpl implements ConfigService
 		return $returnValue;
 	}
 
+	/**
+	 * Dumps the given XML into a file located in dumpPath
+	 * @param SimpleXMLElement $xml xml configuration to dump into a file
+	 * @param WigiiBPLParameter $info contextual information :
+	 * - lpField: Configuration Lookup Path
+	 * - loadAllUnset: boolean. If true, means that XML was already into memory, but some parts where not mapped to objects (this occurs when loading Activities or Fields after loading Parameters).
+	 * If false, then it means that it is a fresh loading of the XML file from disk.
+	 * - loadCoreConfig: boolean. If true, means that XML was loaded from Core ConfigService before beeing analyzed
+	 * - principal: Principal. Current principal if known.
+	 */
+	protected function dumpConfig($xml,$info) {
+		$this->debugLogger()->logBeginOperation('dumpConfig');
+		if(!isset($xml)) return;
+		if(!isset($info)) $info=wigiiBPLParam();
+		$p = $info->getValue('principal');
+		if(!isset($p)) $p=$this->getAuthenticationService()->getMainPrincipal();
+		$exec = ServiceProvider::getExecutionService();
+	
+		// dumps only fresh files
+		if($info->getValue('loadAllUnset')) {
+			$this->debugLogger()->write('xml already into memory, not dumped');
+			$this->debugLogger()->logEndOperation('dumpConfig');
+			return;
+		}
+	
+		// prepares contextual info
+		$contextInfo="<!-- ConfigService XML dump ".date('Y-m-d h:i:s')."\n";
+		$contextInfo.='request: '.$exec->getCrtRequest()."\n";
+		$contextInfo.='wigiiNamespace: '.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."\n";
+		$contextInfo.='module: '.$exec->getCrtModule()->getModuleUrl()."\n";
+		$contextInfo.='action: '.$exec->getCrtAction()."\n";
+		$contextInfo.='principalNamespace: '.$p->getWigiiNamespace()->getWigiiNamespaceUrl()."\n";
+		$contextInfo.='configLP: '.$info->getValue('lpField')."\n";
+		$contextInfo.='alreadyInMemory: '.$info->getValue('loadAllUnset')."\n";
+		$contextInfo.='core config: '.$info->getValue('loadCoreConfig')."\n";
+		$contextInfo.="-->\n";
+		$xml=$xml->asXML();
+		if(!preg_match('/(\<\?xml.*?\?\>)/', $xml)) $xml=$contextInfo."\n".$xml;
+		else $xml=preg_replace('/(\<\?xml.*?\?\>)/', '\\1'."\n".$contextInfo,$xml);
+		// writes to file
+		$fileName='';
+		$s=$info->getValue('client');
+		if($s) $fileName.=$s;
+		$s=$info->getValue('wigiiNamespace');
+		if($s) $fileName.=($fileName?'_':'').$s;
+		$s=$info->getValue('module');
+		if($s) $fileName.=($fileName?'_':'').$s;
+		$s=$info->getValue('group');
+		if($s) $fileName.=($fileName?'_':'').$s;
+		$fileName.=($fileName?'_':'').udate('Ymdhisu');
+		$fileName.='.xml';
+	
+		$filePath=$this->getDumpPath().$fileName;
+		$f=@fopen($filePath,'w');
+		if($f) {
+			if(@fwrite($f,$xml)) {
+				$this->debugLogger()->write('dumped xml');
+				$info->setValue('xmlFileName', $fileName);
+			}
+			@fclose($f);
+			$old = umask(0000);
+			@chmod($filePath, 0666);
+			umask($old);
+		}
+		else $this->debugLogger()->write('could not dump xml to '.$filePath);
+		$this->debugLogger()->logEndOperation('dumpConfig');
+	}
+	
 	/**
 	 * returns true if something has been loaded, else false.
 	 */
@@ -3769,31 +3916,14 @@ class ConfigServiceCoreImpl implements ConfigService
 		return $returnValue;
 	}
 
-	private function addConfigElements($xmlAdds, $parentXmlLookupPath, $xmlLookupPath, $fieldsLookupPath)
+	private function addConfigElements($xmlAdds, $xmlConfig)
 	{
 		$this->debugLogger()->logBeginOperation('addConfigElements');
 		if(!isset($xmlAdds)) return;
-		$cloneIfNeeded = true;
-		foreach($xmlAdds->item as $i=>$item){
-			// first checks if we need to clone parent before doing some modifications
-			if($cloneIfNeeded)
-			{
-				$this->debugLogger()->write('checks for existing current config');
-				$xml = $this->getLoadedXml($xmlLookupPath);
-				if(!isset($xml))
-				{
-					$this->debugLogger()->write('looks up xml parent');
-					$xmlParent = $this->lookupXml($parentXmlLookupPath['moduleName'],
-							$parentXmlLookupPath['clientName'],
-							$parentXmlLookupPath['wigiiNamespaceName'],
-							$parentXmlLookupPath['groupName'],
-							$parentXmlLookupPath['username']);
-					if(!isset($xmlParent)) return;
-					$this->debugLogger()->write('clones xml parent');
-					$xml = $this->cloneConfigXmlNode($xmlParent);
-				}
-				$cloneIfNeeded = false;
-			}
+		if(!isset($xmlConfig)) return;
+		
+		$xml=$xmlConfig;
+		foreach($xmlAdds->item as $i=>$item){		
 			if((string)$item["createNode"]!=null){
 				eval('simplexml_addChild($xml->'.$item["parent"].',"'.$item["createNode"].'", "'.$item["value"].'");');
 			} elseif ((string)$item["createAtt"]!=null){
@@ -3809,50 +3939,21 @@ class ConfigServiceCoreImpl implements ConfigService
 			} else {
 				eval('return $xml->'.$item["node"].' = "'.$item["value"].'";');
 			}
-		}
-		$this->debugLogger()->write('added xml elements');
-		if(isset($xml))
-		{
-			$this->loadAll($xmlLookupPath, $fieldsLookupPath, $xml);
-		}
-		unset($xml);
+		}		
 		$this->debugLogger()->logEndOperation('addConfigElements');
 	}
-	private function deleteConfigElements($xmlDeletes, $parentXmlLookupPath, $xmlLookupPath, $fieldsLookupPath)
+	private function deleteConfigElements($xmlDeletes, $xmlConfig)
 	{
 		$this->debugLogger()->logBeginOperation('deleteConfigElements');
 		if(!isset($xmlDeletes)) return;
-		$cloneIfNeeded = true;
-		foreach($xmlDeletes->item as $i=>$item){
-			// first checks if we need to clone parent before doing some modifications
-			if($cloneIfNeeded)
-			{
-				$this->debugLogger()->write('checks for existing current config');
-				$xml = $this->getLoadedXml($xmlLookupPath);
-				if(!isset($xml))
-				{
-					$this->debugLogger()->write('looks up xml parent');
-					$xmlParent = $this->lookupXml($parentXmlLookupPath['moduleName'],
-							$parentXmlLookupPath['clientName'],
-							$parentXmlLookupPath['wigiiNamespaceName'],
-							$parentXmlLookupPath['groupName'],
-							$parentXmlLookupPath['username']);
-					if(!isset($xmlParent)) return;
-					$this->debugLogger()->write('clones xml parent');
-					$xml = $this->cloneConfigXmlNode($xmlParent);
-				}
-				$cloneIfNeeded = false;
-			}
+		if(!isset($xmlConfig)) return;
+
+		$xml=$xmlConfig;
+		foreach($xmlDeletes->item as $i=>$item){			
 			eval('simplexml_removeNode($xml->'.$item["node"].');');
-		}
-		$this->debugLogger()->write('deleted xml elements');
-		if(isset($xml))
-		{
-			$this->loadAll($xmlLookupPath, $fieldsLookupPath, $xml);
-		}
-		unset($xml);
+		}		
 		$this->debugLogger()->logEndOperation('deleteConfigElements');
-	}
+	}	
 
 	/**
 	 * Loads parent config recursively following this path :
@@ -4553,13 +4654,13 @@ class ConfigServiceCoreImpl implements ConfigService
 		}
 		if($x)
 		{
-			$farray = array();
+			$farray = array(); $singleCount=0;
+			$fdistrib=array(); $doubleCount=0;
 			foreach($x[0]->children() as $fxml)
 			{
 				$f = Field::createInstance();
 				$f->setXml($fxml);
-				$f->setFieldName($fxml->getName());
-				$farray[] = $f;
+				$f->setFieldName($fxml->getName());				
 
 				// sets datatype
 				$dtName = (string)$fxml["type"];
@@ -4567,15 +4668,84 @@ class ConfigServiceCoreImpl implements ConfigService
 
 				$dt = $this->getDataType($dtName);
 				$f->setDataType($dt);
-
+				
+				// if datatype exists, then records field distribution to detect doubles or SimpleXMLElement memory mix up
+				$count=0;
+				if(isset($dt)) {
+					$count=$fdistrib[$f->getFieldName()];
+					$count++;
+					$fdistrib[$f->getFieldName()]=$count;
+					// if a double entry exists, start recording a double sequence
+					if($count>1) $doubleCount++;
+				}
+				// does not record any double fields (except for free texts)
+				if($count<2) $farray[] = $f;
+				$singleCount++;
+								
 				// sets funcExp is exists
 				$funcExp = (string)$fxml["funcExp"];
 				if($funcExp != '')
 				{
 					$funcExp = $this->getFieldSelectorFuncExpParser()->createFuncExpFromString($funcExp);
 					$f->setFuncExp($funcExp);
+				}							
+			}
+			// CWE 03.03.2016 signals duplicate field error to monitoring system
+			if($doubleCount > 0) {								
+				// compares the number of children given by the count method to the actual count of fields
+				// if differs then suspects a memory error and compensates it by sending back only the cleaned up array, 
+				// else throws a ConfigurationServiceException field already exists.
+				$showError=($x[0]->count()==$singleCount);				
+				
+				$lpContext=$this->splitLp($lookupPath);
+				// if showError then throws an exception
+				if($showError) {
+					if($doubleCount>1) $message="The fields '";
+					else $message="The field '";
+					$first=true;
+					foreach($fdistrib as $fieldName=>$count) {
+						if($count>1) {
+							if($first) $first=false;
+							else $message.= ', ';
+							$message.= $fieldName;
+						}
+					}
+					if($doubleCount>1) $message.= "' are defined twice in config for ".$lpContext['moduleName'];
+					else $message.= "' is defined twice in config for ".$lpContext['moduleName'];
+					if($lpContext['activityName'] || $lpContext['wigiiNamespaceName'] || $lpContext['groupName']) {
+						$first=true;
+						$message.= ' (';
+						if($lpContext['activityName']) {
+							$first=false;
+							$message.='activity: '.$lpContext['activityName'];
+						}
+						if($lpContext['wigiiNamespaceName']) {
+							if($first) $first=false;
+							else $message.= ', ';
+							$message.='namespace: '.$lpContext['wigiiNamespaceName'];
+						}
+						if($lpContext['groupName']) {
+							if($first) $first=false;
+							else $message.= ', ';
+							$message.='group: '.$lpContext['groupName'];
+						}
+						$message.= ')';
+					}
+					throw new ConfigServiceException($message, ConfigServiceException::CONFIGURATION_ERROR);
+				}
+				// else only signals the error to the monitoring system
+				else {
+					$message="Compensates duplicate fields error in ConfigService. Found $doubleCount duplicated fields against a total of ".count($fdistrib)." fields.";
+					if(isset($x[0])) {
+						$info=wigiiBPLParam('client',$lpContext['clientName'],'wigiiNamespace',$lpContext['wigiiNamespaceName'],'module',$lpContext['moduleName'],'group',$lpContext['groupName'],'lpField',$lookupPath);
+						$this->dumpConfig($x[0], $info);
+						$message.=" Dumped XML for $lookupPath is in file ".$info->getValue('xmlFileName');
+					}
+					else $message.= " No dumped XML for $lookupPath";
+					ServiceProvider::getClientAdminService()->signalFatalError(new ConfigServiceException($message,ConfigServiceException::CONFIGURATION_ERROR));
 				}
 			}
+			
 			// stores xml node
 			$this->fields[$lookupPath][0] = $x[0];
 			// stores array of fields

@@ -41,10 +41,33 @@ class FilterDuplicatesAndSortDFA implements DataFlowActivity
 	public function freeMemory() {
 		unset($this->objectSelectorMethod);
 		unset($this->objectSortByMethod);
+		unset($this->objectClass);
 		unset($this->objectDistribution);
 		unset($this->objectDistributionCallback);
 		unset($this->dataBuffer);
 		unset($this->sortBuffer);	
+	}
+	
+	// Dependency injection
+	
+	private $translationService;
+	/**
+	 * Injects a TranslationService to be used by this library
+	 * @param TranslationService $translationService
+	 */
+	public function setTranslationService($translationService){
+		$this->translationService = $translationService;
+	}
+	/**
+	 * Gets the injected TranslationService
+	 * @return TranslationService
+	 */
+	protected function getTranslationService(){
+		//autowired
+		if(!isset($this->translationService)){
+			$this->translationService = ServiceProvider::getTranslationService();
+		}
+		return $this->translationService;
 	}
 	
 	// configuration
@@ -79,6 +102,36 @@ class FilterDuplicatesAndSortDFA implements DataFlowActivity
 		$this->objectSortByMethod = CallableObject::createInstance($method, $obj);
 	}
 	
+	private $objectClass; 
+	/**
+	 * Informs the DataFlowActivity of the class of the Objects that are going to be filtered and sorted.
+	 * This is used to preconfigure duplicate filtering and sorting methods depending of the nature of the StdClass instance.
+	 * @param String $className the nature of the StdClass instance
+	 */
+	public function setObjectClass($className) {
+		$this->objectClass=$className;
+	}
+	/**
+	 * Returns a default object selector callback given the object class or null if no standard configuration exists.
+	 * @param String $className the nature of the StdClass instance
+	 * @return CallableObject the callback instance to be used to build a logical key on the object to filter duplicates
+	 */
+	protected function getDefaultObjectSelectorMethod($className) {
+		switch($className) {
+			case 'cfgAttribut': return CallableObject::createInstance('cfgAttributObjectSelectorMethod',$this);			
+		}
+	}
+	/**
+	 * Returns a default object sortby callback given the object class or null if no standard configuration exists.
+	 * @param String $className the nature of the StdClass instance
+	 * @return CallableObject the callback instance to be used to build a logical key on the object to sort the objects in the flow.
+	 */
+	protected function getDefaultObjectSortyByMethod($className) {
+		switch($className) {
+			case 'cfgAttribut': return CallableObject::createInstance('cfgAttributObjectSortyByMethod',$this);
+		}
+	}
+	
 	private $objectDistributionCallback;
 	/**
 	 * Configures a callback to get the object distribution in the flow.
@@ -100,8 +153,12 @@ class FilterDuplicatesAndSortDFA implements DataFlowActivity
 	
 	// stream data event handling
 	
-	public function startOfStream($dataFlowContext) {		
-		$this->objectDistribution = array();
+	public function startOfStream($dataFlowContext) {
+		if(isset($this->objectClass)) {
+			if(!isset($this->objectSelectorMethod)) $this->objectSelectorMethod=$this->getDefaultObjectSelectorMethod($this->objectClass);
+			if(!isset($this->objectSortByMethod)) $this->objectSortByMethod=$this->getDefaultObjectSortyByMethod($this->objectClass);	
+		}				
+		$this->objectDistribution = array();		
 		if($this->sortOrder < 0 || $this->sortOrder > 2) throw new DataFlowServiceException('sortOrder can be only one of 0=no sorting, 1=ascending, 2=descending', DataFlowServiceException::CONFIGURATION_ERROR);
 		if($this->sortOrder > 0) {
 			$this->dataBuffer = array();
@@ -189,4 +246,38 @@ class FilterDuplicatesAndSortDFA implements DataFlowActivity
 		if(is_scalar($data)) return $data;
 		else throw new DataFlowServiceException('can only filter duplicated values, does not support objects. To filter objects, configure the setObjectSelectorMethod', DataFlowServiceException::UNSUPPORTED_OPERATION);
 	}
+	
+	// class specific filter and sort methods
+	
+	/**
+	 * FilterDuplicatesAndSortDFA objectSelectorMethod for cfgAttribut flow
+	 * @param stdClass $data an stdClass of the form {value, attributes, label}
+	 */
+	public function cfgAttributObjectSelectorMethod($data) {
+		return $data->value;
+	}
+	/**
+	 * FilterDuplicatesAndSortDFA objectSortByMethod for cfgAttribut flow
+	 * @param stdClass $data an stdClass of the form {value, attributes, label}
+	 */
+	public function cfgAttributObjectSortyByMethod($data) {
+		if(!empty($data->label)) {
+			if(is_array($data->label)) {
+				$l = $data->label[$this->getTranslationService()->getLanguage()];
+				if(empty($l)) $returnValue = $data->value;
+				else $returnValue = $l;
+			}
+			else $returnValue = $data->label;
+		}
+		else $returnValue = $data->value;
+	
+		// puts disabled options at the end
+		if(!empty($data->attributes) && $data->attributes['disabled']=='1') {
+			return 'Z'.$returnValue;
+		}
+		else {
+			return 'A'.$returnValue;
+		}
+	}
+	
 }

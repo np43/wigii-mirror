@@ -19,9 +19,9 @@
  *  @license    http://www.gnu.org/licenses/     GNU General Public License
  */
 
-/*
- * Created on 3 déc. 09
- * by LWR
+/**
+ * Created on 3 déc. 09 by LWR
+ * Modified on 25.02.2016 by CWE to always display Attribut code if not present in drop-down
  */
 class Attributs extends DataTypeInstance {
 
@@ -74,9 +74,13 @@ class Attributs extends DataTypeInstance {
 			return $transS->t($p, $value, $attr);
 		}
 		//arrive here only if attribute is not found
+		// CWE 25.02.2016: always display code if value is not present in drop-down
+		/*
 		if($fieldXml["allowNewValues"]=="1"){
 			return $transS->t($p, $value);
 		}
+		*/
+		return $transS->t($p, $value);
 	}
 }
 

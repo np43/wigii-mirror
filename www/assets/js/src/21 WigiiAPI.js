@@ -860,6 +860,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					container.append(helpSpan);
 					helpSpan = container.find('a.'+ctxKey);
 					neighbor = helpSpan.prev();
+					if(neighbor.is('a')) neighbor = helpSpan.prevUntil('div,span,select').last().prev();
 					break;
 				case 'after':
 					container.after(helpSpan);
@@ -874,7 +875,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					if(neighbor) {
 						var w = neighbor.width();
 						if(w>=75) neighbor.width(w-25);
-						neighbor.find('div').each(function(){
+						neighbor.children('div,span,select').each(function(){
 							var e = $(this);
 							w = e.width();
 							if(w>=75) e.width(w-25);

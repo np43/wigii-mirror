@@ -83,7 +83,7 @@ class SameAsFieldConfigController implements ConfigController
 				// if not in cache, then looks for sourceField in same field list of current field (this is not to take the field from another activity)
 				if(is_null($sourceField)) {
 					$sourceField = $field->xpath('../'.$sameAsField);
-					if($sourceField === false) throw new ConfigServiceException("Non-existing sameAsField='".$sameAsField."' attached to field ".$field->getName());
+					if(!$sourceField) throw new ConfigServiceException("Non-existing sameAsField='".$sameAsField."' attached to field ".$field->getName());
 					$sourceField = $sourceField[0];
 					$fieldCache[$sameAsField] = $sourceField;
 				}

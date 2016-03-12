@@ -843,7 +843,6 @@ class WigiiCoreExecutor {
 		$this->clearConfigurationContext();
 		$this->clearConfig();
 		$this->clearDico();
-		//$this->clearSessionData(); //do not clear the entire session data, as all the other clear method is actually already removing what is needed to be removed
 		$this->executionSink()->publishEndOperation("clearWigiiContext");
 	}
 	public function storeWigiiContextInP($p, $exec) {
@@ -2384,9 +2383,11 @@ invalidCompleteCache();
 		try {
 			//lock is done in updateElement
 			//if allowOnReadOnly then use the RootPrincipal to do the job
+			// CWE 10.02.2016: allows adding comments on blocked element if allowOnReadOnly
 			$fieldXml = $element->getFieldList()->getField($fieldName)->getXml();
-			if($fieldXml["isJournal"]!="1") throw new ServiceException("you must set isJournal attribut to field ".$fieldName, ServiceException::FORBIDDEN);
-			if($fieldXml["allowOnReadOnly"]=="1" && !$elementP->getRights()->canWriteElement()){
+			if($fieldXml["isJournal"]!="1") throw new ServiceException("you must set isJournal attribut to field ".$fieldName, ServiceException::FORBIDDEN);			
+			if((!$elementP->getRights()->canWriteElement() || $element->isState_blocked() || $elementP->isParentElementState_blocked()) 
+				&& $fieldXml["allowOnReadOnly"]=="1") {
 				$elS->updateElement($this->getPublicPrincipal(), $element, $fsl);
 			} else {
 				if($element->isState_blocked() || $elementP->isParentElementState_blocked()) throw new ServiceException("blockedElementsOperationImpossible", ServiceException::FORBIDDEN);
@@ -7651,7 +7652,7 @@ onUpdateErrorCounter = 0;
 						header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 						header("Last-Modified: " . gmdate("D, d M Y H:i:s") . "GMT");
 						header('Content-type: ' . typeMime(".zip"));
-						header('Content-Disposition: attachment; filename="config.zip"');
+						header('Content-Disposition: attachment; filename="'.CLIENT_NAME.date('_Ymd_His_').'config.zip"');
 
 						$filename = TEMPORARYUPLOADEDFILE_path . $p->getExecutionId() . "moduleEditorZip" . $p->getMicroTime() . ".zip";
 						$zip = new ZipArchive();
@@ -9047,7 +9048,19 @@ onUpdateErrorCounter = 0;
 				$elementId = $exec->getCrtParameters(1);
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 
-				if ($elementId != "multiple" && ($exec->getCrtParameters(0) == "detail" || $exec->getCrtParameters(0) == "print" || $exec->getCrtParameters(0) == "manageEmail" || $exec->getCrtParameters(0) == "addJournalItem" || $exec->getCrtParameters(0) == "edit" || $exec->getCrtParameters(0) == "copy" || $exec->getCrtParameters(0) == "lockAndModify" || $exec->getCrtParameters(0) == "checkInAndModify" || $exec->getCrtParameters(0) == "checkinFile" || $exec->getCrtParameters(0) == "delete" || $exec->getCrtParameters(0) == "toggleElementGroupSharing" || $exec->getCrtParameters(0) == "setGroupsContainingElement" || $exec->getCrtParameters(0) == "restore")) {
+				if ($elementId != "multiple" && ($exec->getCrtParameters(0) == "detail" || 
+						$exec->getCrtParameters(0) == "print" || 
+						$exec->getCrtParameters(0) == "manageEmail" || 
+						$exec->getCrtParameters(0) == "addJournalItem" || 
+						$exec->getCrtParameters(0) == "edit" || 
+						$exec->getCrtParameters(0) == "copy" || 
+						$exec->getCrtParameters(0) == "lockAndModify" || 
+						$exec->getCrtParameters(0) == "checkInAndModify" || 
+						$exec->getCrtParameters(0) == "checkinFile" || 
+						$exec->getCrtParameters(0) == "delete" || 
+						$exec->getCrtParameters(0) == "toggleElementGroupSharing" || 
+						$exec->getCrtParameters(0) == "setGroupsContainingElement" || 
+						$exec->getCrtParameters(0) == "restore")) {
 					//create the element and fills it with data
 					try {
 						$element = $this->createElementForForm($p, $exec->getCrtModule(), $elementId);
@@ -9100,39 +9113,19 @@ onUpdateErrorCounter = 0;
 					if ($exec->getCrtParameters(0) == "detail") {
 						$elS->unLock($p, DbEntityInstance :: createInstance($elementId));
 					}
-
-					//add content on Files with htmlArea, for detail, or edit
-// 					if ($exec->getCrtParameters(0) == "detail" || $exec->getCrtParameters(0) == "print" || $exec->getCrtParameters(0) == "edit" || $exec->getCrtParameters(0) == "copy" || $exec->getCrtParameters(0) == "lockAndModify" || $exec->getCrtParameters(0) == "checkInAndModify" || $exec->getCrtParameters(0) == "checkinFile") {
-// 						$htmlAreaFileFields = $this->doesCrtModuleHasHtmlAreaFiles($exec->getCrtModule());
-// 						$fsl = FieldSelectorListArrayImpl :: createInstance();
-// 						if ($htmlAreaFileFields) {
-// 							foreach ($htmlAreaFileFields as $fieldXml) {
-// 								$fsl->addFieldSelector($fieldXml->getName(), "content");
-// 								//							eput($fieldXml->getName());
-// 							}
-// 						}
-// 						if (!$fsl->isEmpty()) {
-// 							$formFieldList = $element->getFieldList();
-// 							$element->setFieldList(FieldListArrayImpl :: createInstance());
-// 							$elS->fillElement($p, $element, $fsl);
-// 							$element->setFieldList($formFieldList);
-// 						}
-// 					}
+					
 					//add element to the current selected element in list context
-					$this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList")->setCrtSelecteditem($elementId);
+					$this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList")->setCrtSelectedItem($elementId);
 
 					//on delete we need the file fields to do file management
 					if ($exec->getCrtParameters(0) == "delete") {
 						$fileFields = $configS->mf($p, $element->getModule())->xpath("*[@type='Files'] | *[@type='Blobs' and @htmlArea='1'] | *[@type='Texts' and @htmlArea='1']");
-					} else
-						$fileFields = null;
-
-				} else
-					if ($elementId == "multiple" && (
+					} else $fileFields = null;
+					
+				} else if ($elementId == "multiple" && (
 							($exec->getCrtParameters(0) == "delete" && $_POST["action"]!=null) ||
 							($exec->getCrtParameters(0) == "edit" && $_POST["action"]!=null) ||
 							($exec->getCrtParameters(0) == "transfer" && $_POST["action"]!=null) ||
-//							$exec->getCrtParameters(0) == "getGroupsContainingElements" ||
 							$exec->getCrtParameters(0) == "setGroupsContainingElements")) {
 
 						$mlc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "multipleElementList");
@@ -9149,33 +9142,34 @@ onUpdateErrorCounter = 0;
 						}
 						//create and fill an ElementPAdvancedList with the current multiple selection
 						$mlc->resetFetchCriteria($p, $this);
-						//for multiple operation we just take a preview of the elements, the preview is the listView activity
+						//for multiple operation other than edit, we just take a preview of the elements, the preview is the listView activity
 						$fsl = FieldSelectorListForActivity :: createInstance(false, false);
 						$fslForView = FieldSelectorListForActivity :: createInstance(false, false);
 						$configS->getFields($p, $exec->getCrtModule(), Activity :: createInstance("listView"), $fsl);
 						//add to the ElementPAList the fieldSelector which contains the values to display
 						$fslForView->mergeFieldSelectorList($fsl);
 						$fslForView->setSelectedLanguages(array ($transS->getLanguage() => $transS->getLanguage()));
+												
 						// creates the element list and records if all or at least one element is blocked.
 						$elementPAList = ElementPAdvancedListArrayImpl :: createInstance('state_blocked', $fslForView);
 
-						//add fieldSelector for more needed information
+						//add fieldSelector subfields for more needed information
 						$fieldList = FormFieldList :: createInstance(null);
 						$configS->getFields($p, $exec->getCrtModule(), null, $fieldList);
 						$fileFields = null;
-
 						foreach ($fieldList->getListIterator() as $field) {
-							if ($field->getDataType() != null)
-								$dataTypeName = $field->getDataType()->getDataTypeName();
-							else
-								continue;
+							if ($field->getDataType() != null) $dataTypeName = $field->getDataType()->getDataTypeName();
+							else continue;							
 							$fieldXml = $field->getXml();
-							$fieldName = $fieldXml->getName();
-							if (//for multiple check purpose
-							 	($exec->getCrtParameters(0) == "edit" && $_POST[$fieldName . "_check"] === "on") || //for email notification purpose
+							$fieldName = $field->getFieldName();
+							
+							if (/* if multiple edit always takes all the fields to ensure correct recalculation of the element (and not only the modified ones) */
+								($exec->getCrtParameters(0) == "edit" /*&& $_POST[$fieldName . "_check"] === "on"*/) || 
+							 	/* for email notification purpose, takes fields having an email set */
 								$dataTypeName == "Booleans" && isset ($fieldXml["email"]) ||
 								($dataTypeName == "Attributs" && $fieldXml->xpath("child::attribute[@email]")) ||
-								($dataTypeName == "MultipleAttributs" && $fieldXml->xpath("child::attribute[@email]"))) {
+								($dataTypeName == "MultipleAttributs" && $fieldXml->xpath("child::attribute[@email]"))
+								) {
 								//if the fieldSelector is already defined with a subfield
 								//then remove the fieldSelector and add this general one
 								//if the fieldSelector is already defined with a subfield
@@ -9185,8 +9179,8 @@ onUpdateErrorCounter = 0;
 								}
 								$fsl->addFieldSelector($fieldName);
 							}
-							//for autocalculated fields, always add them, to keep data integrity
-							if ($field->isCalculated()) {
+							//always take all the calculated on fetch fields to keep data integrity. For these fields, then also takes the dependencies.
+							if ($field->shouldCalculateOnFetch()) {
 								$fsl->addFieldSelector($fieldName);
 								$field->getFuncExpDependencies($fsl);
 							}
@@ -9228,9 +9222,7 @@ onUpdateErrorCounter = 0;
 						$mlc->setGroupByFieldSelectorList($fsl);
 						$mlc->setSortByFieldSelectorList($fsl);
 						$mlc->setGroupBy('reset'); $mlc->setSortedBy('reset');
-
 						$nbRows = $elS->getSelectedElements($p, $lc->getMultipleSelection(), $elementPAList, $mlc);
-
 						// multiple operation needs to have no element blocked
 						if($elementPAList->atLeastOneHasSpecificAttribut()) throw new AuthorizationServiceException("multiple operation is not authorized on blocked elements.", AuthorizationServiceException::FORBIDDEN);
 					}
@@ -10296,9 +10288,10 @@ onUpdateErrorCounter = 0;
 				$this->throwEvent()->navigate(PWithUserIdWithWigiiNamespaceNameWithModuleName :: createInstance($p, $p->getRealUserId(), $exec->getCrtWigiiNamespace()->getWigiiNamespaceName(), $exec->getCrtModule()->getModuleName()));
 
 				//if request is found in cache, does nothing,
-				// except if coming from Setup namespace, in that case, clears config
+				// except if coming from Setup namespace or Dimensions module, in that case, clears config
 				if ($exec->wasFoundInJSCache()){
-					if($nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() == $exec->getCrtParameters(0)) {
+					if($nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() == $exec->getCrtParameters(0) ||
+						Module::DIMENSIONS_MODULE == $exec->getCrtParameters(1)) {
 						$this->clearConfig(true);
 					}
 					break;
@@ -10385,14 +10378,20 @@ onUpdateErrorCounter = 0;
 					break;
 				}
 
-				// If navigating out of the Setup namespace, then clears the configuration from the session and shared data
+				// If navigating out of the Setup namespace or
+				// navigating out of Dimensions module in a namespace different from Setup, 
+				// then clears the configuration from the session and shared data
 				if($nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() == $fromWigiiNamespace &&
-					$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() != $fromWigiiNamespace) {
+					$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() != $fromWigiiNamespace ||
+					$fromModule == Module::DIMENSIONS_MODULE && $nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() != $fromWigiiNamespace) {
 					$this->clearConfig(true);
 				}
 				// If navigating out of the Admin module, then clears the configuration from the session
 				if ($fromModule == Module :: ADMIN_MODULE && !$exec->getCrtModule()->isAdminModule()){
+					// CWE 11.03.2016: clears configuration context to reload properly group configs and dico if changed.
+					$this->clearConfigurationContext();
 					$this->clearConfig();
+					$this->clearDico();
 					$userAS->calculateAllMergedRoles($p);
 					$this->storeAdminAndCalculatedRoleIdsInSession($p);
 				}

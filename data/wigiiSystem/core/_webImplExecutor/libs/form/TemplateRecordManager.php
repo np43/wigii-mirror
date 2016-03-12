@@ -207,13 +207,33 @@ class TemplateRecordManager extends Model {
 		$evaluator = ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
 		// injects the context
 		$evaluator->setContext($p, $rec);
+		$formExec = $this->getFormRenderer();
+		if(isset($formExec)) $formExec = $formExec->getFormExecutor();
+		if(isset($formExec)) $evaluator->setFormExecutor($formExec);
 		// gets vm
 		$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
 		$returnValue->setFreeParentEvaluatorOnFreeMemory(true);
 		//$this->debugLogger()->write("instanciated FuncExpEvaluator of class ".get_class($returnValue));
 		return $returnValue;
 	}
-	
+	/**
+	 * Evaluates a FuncExp in the context of the Principal and Record attached to the TRM.
+	 * @param FuncExp|FieldSelector $fx the FuncExp to evaluate
+	 * @return Any the FuncExp result
+	 */
+	public function evalfx($fx) {
+		$fxEval=$this->getFuncExpEvaluator($this->getP(), $this->getRecord());
+		$returnValue=null;
+		try {
+			$returnValue = $fxEval->evaluateFuncExp($fx);
+			$fxEval->freeMemory();
+		}
+		catch(Exception $e) {
+			$fxEval->freeMemory();
+			throw $e;
+		}
+		return $returnValue;
+	}
 	public static function createInstance($isForNotification = false, $isForPrint=false, $isForExternalAccess=false, $isForListView=false, $isForPreviewList=false, $isOutputEnabled = true){
 		$r = new TemplateRecordManager();
 		$r->reset(null, $isForNotification, $isForPrint, $isForExternalAccess, $isForListView, $isForPreviewList, $isOutputEnabled);

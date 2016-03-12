@@ -574,6 +574,8 @@ class Element extends Record implements SysInformation
 			case "value":
 			case "": return $this; break;
 			case "element_parent": return $this->getParentElement(); break;
+			case "element_pathFromRoot": return $this->getSubElementPathFromRoot(); break;
+			case "id_element_root": return $this->getElementRootId(); break;
 			case "element_info": return $this->getElementInfo(); break;
 			// not a standard attribute name (can be a dynamic attribute or not supported)
 			default: 
@@ -624,6 +626,8 @@ class Element extends Record implements SysInformation
 			case "sys_lockId": return $this->setSys_lockId($value); break;
 			// in memory fields (not persisted in db)
 			case "element_parent": return $this->setParentElement($value); break;
+			case "element_pathFromRoot": return $this->setSubElementPathFromRoot($value); break;
+			case "id_element_root": throw new ServiceException("ERROR, cannot set id_element_root alone. Set element_pathFromRoot instead.", ServiceException::UNSUPPORTED_OPERATION);
 			case "element_info": return $this->setElementInfo($value); break;
 			// not a standard attribute name (can be a dynamic attribute or not supported)
 			default: 
@@ -667,6 +671,33 @@ class Element extends Record implements SysInformation
 	public function setParentElement($element) {
 		if(isset($element) && $element->getId() != $this->getElementParentId()) throw new RecordException("parent element id does not match", RecordException::INVALID_ARGUMENT);
 		$this->parentElement = $element; 
+	}
+	
+	private $subElementPathFromRoot;
+	/**
+	 * Returns the sub element path from root element
+	 * @return LinkSelectorList or null if element is not a sub element
+	 */
+	public function getSubElementPathFromRoot() {
+		if(!isset($this->subElementPathFromRoot) && $this->isSubElement()) {
+			$this->getElementLazyLoader()->fetchSubElementPathFromRoot($this);
+		}
+		return $this->subElementPathFromRoot;
+	}
+	/**
+	 * Sets the path from root element to this sub element
+	 * @param LinkSelectorList $pathFromRoot
+	 */
+	public function setSubElementPathFromRoot($pathFromRoot) {
+		if(isset($pathFromRoot) && $pathFromRoot->getLastLinkSelector()->getOwnerElementId() != $this->getElementParentId()) throw new RecordException("parent element id does not match", RecordException::INVALID_ARGUMENT);
+		$this->subElementPathFromRoot=$pathFromRoot;
+	}
+	/**
+	 * If sub element, then returns the root element ID else returns current ID.
+	 */
+	public function getElementRootId() {
+		if($this->isSubElement()) return $this->getSubElementPathFromRoot()->getFirstLinkSelector()->getOwnerElementId();
+		else return $this->getId();
 	}
 	
 	// Soft links
@@ -898,11 +929,11 @@ class Element extends Record implements SysInformation
 	}
 }
 /**
- * A class which loads on demand linked elements (parent of subelement or soft links)
+ * A class which loads on demand information linked to the element (parent of subelement or soft links)
  * Created by CWE on 19.08.2014
- *
  */
 class ElementLazyLoader {
+
 	// configuration
 	
 	private $principal;
@@ -956,6 +987,16 @@ class ElementLazyLoader {
 	
 	public function fetchLinkedElement($fieldName, $element) {
 		RecordException::throwNotImplemented();
+	}
+	
+	/**
+	 * @param Element $subElement element that should be a subelement
+	 */
+	public function fetchSubElementPathFromRoot($subElement) {
+		$pathFromRoot=LinkSelectorListArrayImpl::createInstance();
+		if($this->getElementService()->getSubElementPathFromRoot($this->getPrincipal(), $subElement->getId(), $pathFromRoot)) {
+			$subElement->setSubElementPathFromRoot($pathFromRoot);
+		}
 	}
 	
 	protected function createElementInstance() {
