@@ -337,6 +337,12 @@ adds for making work the navBar
 	text-decoration:none;
 }
 
+/* overflow on submenu */
+#userMenu ul li ul {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 #navigationBar {
 	-moz-user-select: none;
 	-khtml-user-select: none;

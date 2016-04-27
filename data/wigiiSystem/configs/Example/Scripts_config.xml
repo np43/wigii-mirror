@@ -1,0 +1,143 @@
+<?xml version='1.0' standalone='yes'?>
+<scripts>
+
+	<parameters
+
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+
+		Notification_enable="1"
+		Notification_enableOnSharing="1"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="0"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="0"
+		Notification_includeSenderInNotification="0"
+		Notification_includeOtherNamespaceInUpdateOrSetState="0"
+		Notification_hideElementView="0"
+		Notificatin_hideAccessButton="0"
+
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableCreationSysDate="0"
+		ExcelExport_enableId="0"
+
+		Element_enableLockedStatus="0"
+		Element_enableImportant1Status="1"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="1"
+		Element_enableDeprecatedStatus="1"
+		Element_enableApprovedStatus="0"
+		Element_enableDissmissedStatus="0"
+		Element_enableFinalizedStatus="0"
+		Element_enableBlockedStatus="1"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="0"
+		Element_viewInfo="1"
+		Element_viewId="0"
+		Element_evaluator="CustomizedElementEvaluator"
+
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_selectAllGroupsOnSearch="1"
+		Group_enableDynamicConfig="1"
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		nbOfLevelToExpandOnInit="2"
+
+		autoSave="0"
+
+		elementTotalWidth="1000"
+		elementLabelWidth="150"
+
+		reloadDetailAfterModify="1"
+		useGoogleServiceToPreviewOfficeDocuments="0"
+
+		trashBinGroup=""
+		/>
+
+	<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+
+	<Notification>
+		<template path="Notification.php" inClientFolder="1" />
+	</Notification>
+
+	<fields >
+		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="640"  />
+			<name excelExport="auto" type="Strings" require="1" expand="1" ><label_l01>Name</label_l01><label_l02>Nom</label_l02></name>
+			<description excelExport="auto" type="Blobs" require="0" htmlArea="1" activateHtmlArea="1" mediumToolbarHtmlArea="1" isInLine="1" forceCollapse="1" height="300"><label_l01>Description</label_l01><label_l02>Description</label_l02></description>
+			<script excelExport="auto" type="Blobs" require="0" isInLine="1" htmlArea="0" noWrap="1" height="400" expand="1" forceNotification="1" displayContentInNotification="1"
+				funcExp='ctlIgnoreReturnValue(ctlCondSeq(logOr(ctlFieldHasChanged(script),logIn(ctlCurrentFlow(),"element-add","element-copy")),										
+					setVal(scriptHistory.name, name),
+					setVal(scriptHistory.date,txtDate()),
+					setVal(scriptHistory.user,sysUser()),
+					setVal(scriptHistory.username,sysUsername()),
+					setVal(scriptHistory.type,".html"),
+					setVal(scriptHistory.html,txtExt2Mime(".html")),
+					setVal(scriptHistory.textContent,concat(htmlStartTag("textarea","style","width:600px;height:400px"),script,htmlEndTag("textarea"))),
+					setVal(scriptHistory.size,strlen(scriptHistory.textContent))
+				))'
+			><label_l01>Script</label_l01><label_l02>Script</label_l02></script>
+			<scriptFuncExp excelExport="none" type="Booleans" labelWidth="250" clearOnCopy="1" onlyInForm="1"								
+				funcExp='ctlIf(scriptFuncExp,ctlSeq(
+					setVal(scriptStatus,"Running -"),
+					ctlIf(isNotNull(script),setFile(result,sysLogExec(evalfx(str2fx(script)),output,"1"),"name",concat(name,"_",date("Y.m.d_H.i.s")))),
+					setVal(scriptStatus,concat(scriptStatus,ctlIf(ctlCheckNoError()," Done.", " Error."))),
+					logFalse()
+				 ))'>
+				<label_l01><b>Tick the box to execute the script</b></label_l01><label_l02><b>Cochez la case pour exécuter le script</b></label_l02>
+			</scriptFuncExp>
+			<scriptStatus excelExport="none" type="Strings" hidden="1" clearOnCopy="1" funcExp='ctlIgnoreReturnValue(ctlIf(logAnd(isNotNull(scriptStatus),eq(ctlCurrentFlow(),"multiple-edit")),ctlAddComment(comments,concat("batch changed ", cfgFieldLabel(scriptStatus)," to: ", scriptStatus))))'><label_l01>script status</label_l01><label_l02>le statut du script</label_l02></scriptStatus>
+			<lastScriptStatus excelExport="none" type="Strings" hidden="1" clearOnCopy="1" funcExp='ctlIf(isNotNull(scriptStatus),concat(txtDate(), " ", sysUsername(), " : ", scriptStatus),ctlIgnoreReturnValue())'><label_l01>Last execution</label_l01><label_l02>Dernière exécution </label_l02></lastScriptStatus>
+			<output excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="0" noWrap="1" labelWidth="250" clearOnCopy="1" funcExp='ctlIgnoreReturnValue()'><label_l01>Execution Log</label_l01><label_l02>Log d&apos;exécution</label_l02></output>
+			<result excelExport="none" type="Files" require="0" onlyInDetail="1" enableForDownloading="1"><label_l01>Result</label_l01><label_l02>Résultat</label_l02></result>
+			<groupScriptHistory groupStart="1" noFieldset="1" expand="0"><label_l01>Script changes history</label_l01><label_l02>Historique du code du script</label_l02></groupScriptHistory>
+				<scriptHistory excelExport="none" type="Files" require="0" keepHistory="10" htmlArea="1" readonly="1" onlyInForm="1" isInLine="1" noLabel="1" clearOnCopy="1"></scriptHistory>
+			<groupScriptHistory groupEnd="1" noFieldset="1" forceCollapse="1" expand="0"/>
+		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
+
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" labelWidth="100" totalWidth="300" class="fieldGroupRight" />
+			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="0" height="450" funcExp='trackHistory(scriptStatus)' clearOnCopy="1"><label_l01>Execution Comments</label_l01><label_l02>Journal d&apos;exécution</label_l02></comments>
+			<integratedFile excelExport="none" type="Files" require="0" keepHistory="8" htmlArea="1" ><label_l01>Write some instructions</label_l01><label_l02>Ecrire des instructions</label_l02></integratedFile>
+			<file excelExport="none" type="Files" require="0" keepHistory="8" ><label_l01>or upload a documentation file</label_l01><label_l02>ou ajouter un fichier de documentation</label_l02></file>		
+		<groupRight groupEnd="1" expand="1" noFieldset="1" />		
+		<onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='ctlIgnoreReturnValue(setVal(scriptStatus,NULL))'/>
+	</fields>
+
+	<selectSearchBar>
+		<fields>
+			<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
+			<e2 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e2>
+		</fields>
+	</selectSearchBar>
+
+	<listView isDefaultView="1">
+		<fields>
+			<c1 isDefaultSortingKey="1" field="name" width="200" defaultSorted=" ASC "/>
+			<c2 field="description" width="350" />
+			<c3 field="lastScriptStatus" width="350"/>
+			<e1 elementAttribut="sys_date" width="120" defaultSorted=" DESC " />
+			<e2 elementAttribut="sys_username" width="140"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
+		</fields>
+	</listView>
+</scripts>

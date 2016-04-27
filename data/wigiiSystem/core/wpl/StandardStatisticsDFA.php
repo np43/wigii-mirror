@@ -1,31 +1,35 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *  
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *  
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *  
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
  * A set of standard statistics on a flow of numbers:
  * COUNT, SUM, PRODUCT, MEAN, MEDIAN, MAX, MIN, STDDEV, VAR. 
  * Created by CWE on 28 August 2014
+ * Modified by CWE on 22 April 2016 to support flows of stdClasses or Elements
  */
 class StandardStatisticsDFA implements DataFlowActivity
 {
+	private $_debugLogger;
 	private $statEnabled;
 	private $buffer;
 	private $stats; 
@@ -41,6 +45,19 @@ class StandardStatisticsDFA implements DataFlowActivity
 		unset($this->statEnabled);
 		unset($this->buffer);
 		unset($this->stats);
+		unset($this->fieldName);
+		unset($this->resultHolder);
+	}
+	
+	// dependency injection
+	
+	private function debugLogger()
+	{
+		if(!isset($this->_debugLogger))
+		{
+			$this->_debugLogger = DebugLogger::getInstance("StandardStatisticsDFA");
+		}
+		return $this->_debugLogger;
 	}
 	
 	// configuration
@@ -108,6 +125,24 @@ class StandardStatisticsDFA implements DataFlowActivity
 		$this->statEnabled['var'] = true;
 	}
 	
+	private $fieldName;
+	/**
+	 * Sets the name of the field on which to do the statistics in case of a flow of stdClasses or Elements.
+	 * @param String $fieldName should be a valid Field in the stdClass or Element
+	 */
+	public function setFieldName($fieldName) {
+		$this->fieldName = $fieldName;
+	}
+	
+	private $resultHolder;
+	/**
+	 * Sets a box to get the statistics back to caller at the end instead of pushing them down the flow.
+	 * @param ValueObject $box
+	 */
+	public function setResultHolder($box) {
+		$this->resultHolder = $box;
+	}
+	
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
@@ -119,6 +154,17 @@ class StandardStatisticsDFA implements DataFlowActivity
 		}
 	}
 	public function processDataChunk($data, $dataFlowContext) {
+		// if result holder is set, then pushes down data in the flow, else holds it here
+		if(isset($this->resultHolder)) $dataFlowContext->writeResultToOutput($data, $this);
+		
+		// extract the number from the flow
+		if(isset($this->fieldName) && is_object($data)) {
+			// flow of Elements
+			if($data instanceof Record) $data = $data->getFieldValue($this->fieldName);
+			elseif($data instanceof ElementP) $data = $data->getDbEntity()->getFieldValue($this->fieldName);
+			else $data = $data->{$this->fieldName};		
+		}
+		// computes the statistics
 		if($this->statEnabled['count'] ||
 			$this->statEnabled['mean'] ||
 			$this->statEnabled['var'] ||
@@ -183,11 +229,15 @@ class StandardStatisticsDFA implements DataFlowActivity
 				if($this->statEnabled['var']) $this->stats['var'] = $v;
 			}
 		}
-		if(!empty($this->stats)) {
-			if(count($this->statEnabled) > 1) {
-				$dataFlowContext->writeResultToOutput((object)$this->stats, $this);
+		if(!empty($this->stats)) {		
+			if(count($this->statEnabled) > 1) $result = (object)$this->stats;
+			else $result = $this->stats[key($this->statEnabled)];
+			// if result holder then updates it with result			
+			if(isset($this->resultHolder)) {
+				$this->resultHolder->setValue($result);
 			}
-			else $dataFlowContext->writeResultToOutput($this->stats[reset($this->statEnabled)], $this);
+			// else pushes result to flow				
+			else $dataFlowContext->writeResultToOutput($result, $this);
 		}
 	}
 	

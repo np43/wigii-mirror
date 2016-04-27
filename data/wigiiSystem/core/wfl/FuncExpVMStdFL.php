@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -649,7 +651,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	public function str2fx($args) {
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('The str2fx function takes one argument', FuncExpEvalException::INVALID_ARGUMENT);
-		return $this->getFuncExpBuilder()->str2fx($this->evaluateArg($args[0]));
+		return $this->getFuncExpBuilder()->str2fx(stripslashes($this->evaluateArg($args[0])));
 	}
 
 	/**
@@ -971,7 +973,38 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		if(!$v) throw new FuncExpEvalException("could not create a JSON string based on the input", FuncExpEvalException::INVALID_ARGUMENT);
 		return $v;
 	}
-
+	
+	/**
+	 * Creates a new StdClass instance based on a list of pairs (key,value) or a given array.
+	 * @return StdClass the instanciated object or an empty object if no pairs (key,value) are given.
+	 */
+	public function newObject($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$returnValue=array();
+		if($nArgs==1) {
+			$v=$this->evaluateArg($args[0]);
+			if(!empty($v)) {
+				if(is_array($v)) $returnValue=$v;
+				else throw new FuncExpEvalException('newObject function takes a list of pairs (key,value) as arguments or an array (map)', FuncExpEvalException::INVALID_ARGUMENT);
+			}			
+		}
+		elseif($nArgs>1) {
+			$i=0;
+			while($i < $nArgs) {
+				$key = $this->evaluateArg($args[$i]);
+				if(!is_scalar($key)) throw new FuncExpEvalException("key at argument $i did not evaluate to a scalar", FuncExpEvalException::INVALID_ARGUMENT);
+				$i++;
+				if($i < $nArgs) {
+					$value = $this->evaluateArg($args[$i]);
+					$i++;
+					$returnValue[$key] = $value;
+				}
+				else $returnValue[$key] = null;
+			}
+		}
+		return (object)$returnValue;
+	}
+	
 	// Accessors
 
 	/**
@@ -1015,6 +1048,23 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 	}
 
+	/**
+	 * Returns the value of an attribute of an object.
+	 * If attribute is not given, returns the value of the 'value' attribute.
+	 * If object is an array, returns the array value stored under the given attribute taken as a key.
+	 * Else returns the object as is.<br/>
+	 * FuncExp signature is: <code>oVal(obj, attrName=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) obj: stdClass|Array. Evaluates to the object from which to extract an attribute
+	 * - Arg(1) attrName: string. Object attribute name or 'value' if not defined
+	 *  @return Any or null if attribute is not defined.
+	 */
+	public function oVal($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException("oVal function takes at least one argument which evaluates to an object or an array.", FuncExpEvalException::INVALID_ARGUMENT);
+		return TechnicalServiceProvider::getFuncExpBuilder()->oVal($this->evaluateArg($args[0]),($nArgs>1?$this->evaluateArg($args[1]):null));
+	}
+	
 	// Logic
 
 	/**
@@ -1253,6 +1303,26 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		if($this->getNumberOfArgs($args) < 1) throw new FuncExpEvalException("For logical NOT, the number of argument should be 1", FuncExpEvalException::INVALID_ARGUMENT);
 		return !$this->evaluateArg($args[0]);
 	}	
+	
+	/**
+	 * Returns true if first arguments has a value contained in the following list of arguments
+	 * FuncExp signature: <code>logIn(exp, val1, val2, val3, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) exp: FuncExp | FieldSelector. The expression which needs to be evaluated.
+	 * - Arg(1..n) valI: The values composing the list. Can be constants or expressions.
+	 * @return Boolean Returns true if exp evaluates to a value contained in the list val1,val2,val3,... else returns false.
+	 */
+	public function logIn($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<2) throw new FuncExpEvalException('logIn function takes at least two arguments, the expression to be evaluated and a value');
+		$val = $this->evaluateArg($args[0]);
+		$i=1;
+		while($i<$nArgs) {
+			if($this->evaluateArg($args[$i]) == $val) return true;
+			$i++;
+		}
+		return false;
+	}
 
 	// Control structures
 
@@ -1591,6 +1661,26 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 			return $returnValue;
 		}
 		else return null;
+	}
+	
+	/**
+	 * Filters a value against a list of non-desired contants. If value matches one of these constant, returns null, else returns the value itself.
+	 * FuncExp signature : <code>ctlFilterVal(val,filter1,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) val: Evaluates to the value to be returned
+	 * - Arg(1..n) filterI: Evaluates to the non-desired values.
+	 * @return Any if(val is equal to one of filterI) then returns null, else returns val.
+	 */ 
+	public function ctlFilterVal($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException('ctlFilterVal takes at least one argument which is the value to return', FuncExpEvalException::INVALID_ARGUMENT);
+		$val = $this->evaluateArg($args[0]);
+		// checks if val matches against filters
+		for($i=1;$i<$nArgs;$i++) {
+			$filter = $this->evaluateArg($args[$i]);
+			if($val == $filter) return null;
+		}
+		return $val;
 	}
 	
 	/**

@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /*
@@ -107,12 +109,15 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 						break;
 					case "Varchars":
 						if($fMap["subject"]==null) $fMap["subject"] = $fs->getFieldName();
+						else if($fMap["locationString"]==null && $fMap["locationAddress"]==null) $fMap["locationString"] = $fs->getFieldName();
+						else if($fMap["postLocation"]==null) $fMap["postLocation"] = $fs->getFieldName();
 						break;
 					case "Addresses":
 						if($fMap["locationAddress"]==null) $fMap["locationAddress"] = $fs->getFieldName();
 						break;
 					case "Dates":
-						if($fMap["date"]==null) $fMap["date"] = $fs->getFieldName();
+						if($fMap["startdate"]==null) $fMap["startdate"] = $fs->getFieldName();
+						else if($fMap["enddate"]==null) $fMap["enddate"] = $fs->getFieldName();
 						break;
 					case "TimeRanges":
 						if($fMap["period"]==null) $fMap["period"] = $fs->getFieldName();
@@ -141,11 +146,17 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 	 *  *********************************************
 		**** WARNING
 		**** the activity calendarView will be used as:
-		**** - first string field as Subject
+		**** - first Strings/Varchars field as Subject
 		**** - first Address field will be considered as Location
-		**** - if no Address field is found, then the second string field will be considered as Location
-		**** - first Blobs field will be considered as description
+		**** - if no Address field is found, then the second Strings/Varchars field will be considered as Location
+		**** - if no Address field is found, then the third Strings/Varchars field is the postlocation
+		**** - if there is an Address, the the second Strings/Varchars field is the postlocation
+		**** - first Blobs/Texts field will be considered as description
 		**** - first TimeRanges field will be considered as period
+		**** - if no TimeRanges the first Dates field will be considered as the start date
+		**** - the second Dates field will be considered as the end date
+		**** - if there is no second Dates then the event will be set to one full day if no time, or one hour if a time is set.
+		**** - the first Attributs/MultipleAttributs containing color codes will used to colorize the items
 		**** - any other field will be ignored
 		**********************************************
 	 */
@@ -255,8 +266,8 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 			if($allDay == null || $allDay == 0) $allDay = "false";
 			else $allDay = "true";
 		}
-		if($fMap["date"]){
-			$startDate = $element->getFieldValue($fMap["date"], "value");
+		if($fMap["startdate"]){
+			$startDate = $element->getFieldValue($fMap["startdate"], "value");
 			$d = $m = $y = $h = $i = $s = null;
 			Dates::fromString($startDate, $d, $m, $y, $h, $i, $s);
 			if(($h || $i || $s) && !($h==0 && $i==0 && $s==0)) $time = "$h:$i:$s";
@@ -270,6 +281,15 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 				//add one hour
 				$endDateInt = $startDateInt+3600;
 			}
+		}
+		//if enddate is defined update the calculated enddate to the real value
+		if($fMap["enddate"]){
+			$endDate = $element->getFieldValue($fMap["enddate"], "value");
+			$d = $m = $y = $h = $i = $s = null;
+			Dates::fromString($endDate, $d, $m, $y, $h, $i, $s);
+			if(($h || $i || $s) && !($h==0 && $i==0 && $s==0)) $time = "$h:$i:$s";
+			else $time = "";
+			$endDateInt = strtotime("$y/$m/$d $time");
 		}
 
 		//rendering the JSCode
@@ -294,10 +314,11 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 		}
 
 
-		//ajust time zone offset settings
-		$startDateInt = $startDateInt + $this->getTimeZoneOffset();
-		$endDateInt = $endDateInt + $this->getTimeZoneOffset();
-
+		//ajust time zone offset settings / handle correctly if only one date is set
+		if($startDateInt) $startDateInt = $startDateInt + $this->getTimeZoneOffset();
+		if($endDateInt) $endDateInt = $endDateInt + $this->getTimeZoneOffset();
+		if(!$startDateInt && $endDateInt) $startDateInt = $endDateInt;
+		if($startDateInt && !$endDateInt) $endDateInt = $startDateInt;
 
 		echo "{";
 		echo "id:'$elementId',";

@@ -53,6 +53,31 @@ a.HelpService.helpAnchor {
 	padding-bottom:1px;
 	cursor:pointer;
 }
+#searchBar a.HelpService.helpAnchor {
+	background:url('../../images/icones/22x22/iconhelp22x22.png') no-repeat;
+	margin-left:3px;
+	padding-left:22px;
+	padding-right:1px;
+	padding-bottom:6px;
+	cursor:pointer;
+	padding-top: 3px;
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+	/* IE10+ CSS styles go here */
+	#searchBar a.HelpService.helpAnchor {
+		position: relative;
+		top: 9px;
+	}
+	
+	.ui-dialog-titlebar a.HelpService.helpAnchor {
+		position: absolute;
+		top: 0px;
+		height: 16px;
+		width: 16px;
+		right: 16px;
+	}
+}
 a.HelpService.warningAnchor {
 	background:url('../../images/icones/tango/16x16/status/software-update-urgent.png') no-repeat;
 	margin-left:3px;

@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /*
@@ -105,45 +107,46 @@ if($fieldXml["htmlArea"]=="1"){
 $this->put('<div class="clear" style="margin-top:5px;"></div>');
 if($fieldXml["htmlArea"]=="1"){
 	//add the new online file button
-	$this->put('<div class="newOnLineFile" style="'.($textContent ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/new.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "newOnLineFile").'</div>');
+	if(!$disabled && !$readonly) $this->put('<div class="newOnLineFile" style="'.($textContent ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/new.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "newOnLineFile").'</div>');
 	//download current file
 	if($ssrc){
 		$this->put('<div class="downloadCurrentFile" onclick="download(\''.$src.'\');" style="'.(!$textContent ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/down.png\') no-repeat 0px 0px;cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;margin-top:3px;">'.$transS->t($p, "downloadCurrentFile").($fileVersion > 0 ? ' (v.'.$fileVersion.')' : '').'</div>');
 		$this->put('<div class="clear"></div>');
 	}
 	//add the update current on-line file button
-	$this->put('<div class="updateExistingOnLineFile" style="'.(!$textContent ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/new.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "updateExistingOnLineFile").'</div>');
-	if($fieldXml["require"]!="1"){
-		//add the remove on-line file button
-		$this->put('<div class="clear"></div>');
-		$this->put('<div class="removeExistingOnLineFile" style="'.(!$textContent ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/cancel.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "removeExistingOnLineFile").'</div>');
+	if(!$disabled && !$readonly) {
+		$this->put('<div class="updateExistingOnLineFile" style="'.(!$textContent ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/new.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "updateExistingOnLineFile").'</div>');
+		if($fieldXml["require"]!="1"){
+			//add the remove on-line file button
+			$this->put('<div class="clear"></div>');
+			$this->put('<div class="removeExistingOnLineFile" style="'.(!$textContent ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/cancel.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "removeExistingOnLineFile").'</div>');
+		}
+	
+		switch($transS->getLanguage()){
+			case "l02" : $lang = "fr"; break;
+			case "l01" :
+			default:
+				$lang = "en";
+		}
+		$ckTemplateFile = null;
+		$ckTemplateFile = CLIENT_WEB_PATH.$this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."_CKTemplates.js.php";
+		if(!file_exists($ckTemplateFile)){
+			$ckTemplateFile = CLIENT_WEB_PATH.$this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."_CKTemplates.js";
+		}
+		if(!file_exists($ckTemplateFile)){
+			$ckTemplateFile = CLIENT_WEB_PATH."CKTemplates.js.php";
+		}
+		if(!file_exists($ckTemplateFile)){
+			$ckTemplateFile = CLIENT_WEB_PATH."CKTemplates.js";
+		}
+		// if autosave does not put a cancel button
+		if($this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "autoSave")=="1"){
+			$cancel = "false";
+		}
+		else $cancel = "'".$transS->h($p, "cancel")."'";
+		//".$transS->h($p, "newDocument")." is removed since 14 may 2012, it is clearer to the user that there need to type here a name if it is not prefilled
+		$this->getExecutionService()->addJsCode("addJsCodeOnOnLineFileInput('#$textContentId', '#$inputNameId', '".$fieldXml["template"]."', ".$cancel.", '".$transS->h($p, "ok")."', '".str_replace("//", "\/\/",SITE_ROOT_forFileUrl)."', '', '$lang', ($(window).height()-210), '$ckTemplateFile');");
 	}
-
-	switch($transS->getLanguage()){
-		case "l02" : $lang = "fr"; break;
-		case "l01" :
-		default:
-			$lang = "en";
-	}
-	$ckTemplateFile = null;
-	$ckTemplateFile = CLIENT_WEB_PATH.$this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."_CKTemplates.js.php";
-	if(!file_exists($ckTemplateFile)){
-		$ckTemplateFile = CLIENT_WEB_PATH.$this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."_CKTemplates.js";
-	}
-	if(!file_exists($ckTemplateFile)){
-		$ckTemplateFile = CLIENT_WEB_PATH."CKTemplates.js.php";
-	}
-	if(!file_exists($ckTemplateFile)){
-		$ckTemplateFile = CLIENT_WEB_PATH."CKTemplates.js";
-	}
-	// if autosave does not put a cancel button
-	if($this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "autoSave")=="1"){
-		$cancel = "false";
-	}
-	else $cancel = "'".$transS->h($p, "cancel")."'";
-	//".$transS->h($p, "newDocument")." is removed since 14 may 2012, it is clearer to the user that there need to type here a name if it is not prefilled
-	$this->getExecutionService()->addJsCode("addJsCodeOnOnLineFileInput('#$textContentId', '#$inputNameId', '".$fieldXml["template"]."', ".$cancel.", '".$transS->h($p, "ok")."', '".str_replace("//", "\/\/",SITE_ROOT_forFileUrl)."', '', '$lang', ($(window).height()-210), '$ckTemplateFile');");
-
 } else {
 	if($activeJS){
 		//download current file
@@ -151,16 +154,18 @@ if($fieldXml["htmlArea"]=="1"){
 			$this->put('<div class="downloadCurrentFile" onclick="download(\''.$src.'\');" style="'.(!$path ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/down.png\') no-repeat 0px 0px;cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;margin-top:3px;">'.$transS->t($p, "downloadCurrentFile").($fileVersion > 0 ? ' (v.'.$fileVersion.')' : '').'</div>');
 			$this->put('<div class="clear"></div>');
 		}
-		//back to filename
-		$this->put('<div class="backToFilename" style="display:none;background:url(\''.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/go-previous.png\') no-repeat 0px 0px;cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;margin-top:3px;">'.$transS->t($p, "backToFilename").'</div>');
-		//add the update current file button
-		$this->put('<div class="updateCurrentFile" style="'.(!$path ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/new.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "updateExistingFile").'</div>');
-		if($fieldXml["require"]!="1"){
-			//add the remove file button
-			$this->put('<div class="clear"></div>');
-			$this->put('<div class="removeCurrentFile" style="'.(!$path ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/cancel.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "removeExistingFile").'</div>');
+		if(!$disabled && !$readonly) {
+			//back to filename
+			$this->put('<div class="backToFilename" style="display:none;background:url(\''.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/go-previous.png\') no-repeat 0px 0px;cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;margin-top:3px;">'.$transS->t($p, "backToFilename").'</div>');
+			//add the update current file button
+			$this->put('<div class="updateCurrentFile" style="'.(!$path ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/new.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "updateExistingFile").'</div>');
+			if($fieldXml["require"]!="1"){
+				//add the remove file button
+				$this->put('<div class="clear"></div>');
+				$this->put('<div class="removeCurrentFile" style="'.(!$path ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/18px/cancel.png\') no-repeat 0px 0px; cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;">'.$transS->t($p, "removeExistingFile").'</div>');
+			}
+			$this->getExecutionService()->addJsCode("addJsCodeOnFileInput('#$inputFileId', '#$inputNameId', '#$inputPathId', '".$transS->h($p, "clickToBrowseAndFindANewFile")."', '".str_replace("//", "\/\/",SITE_ROOT_forFileUrl)."');");
 		}
-		$this->getExecutionService()->addJsCode("addJsCodeOnFileInput('#$inputFileId', '#$inputNameId', '#$inputPathId', '".$transS->h($p, "clickToBrowseAndFindANewFile")."', '".str_replace("//", "\/\/",SITE_ROOT_forFileUrl)."');");
 	}
 }
 
@@ -181,7 +186,7 @@ if($fieldXml["keepHistory"]>0){
 			$histSrc = SITE_ROOT.$this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$this->getRecord()->getModule()->getModuleUrl()."/download/".$this->getRecord()->getId()."/".$fieldName."/previousVersion/".$fileDetails[0]."_".$fileDetails[1];
 			$this->put('<a href="javascript:download(\''.$histSrc.'\');" target="_self" style="text-decoration:none;" class="previousVersion"><span class="H grayFont" style="font-size:x-small;">'.$histName." ($histDate $histTime, ".$histUser[0].")</span></a><br />");
 		}
-		$exec->addJsCode("setListenerToPreviousVersions('$inputPathId', '".$this->h("areYouSureToDeleteVersion")."');");
+		if(!$disabled && !$readonly) $exec->addJsCode("setListenerToPreviousVersions('$inputPathId', '".$this->h("areYouSureToDeleteVersion")."');");
 	}
 }
 

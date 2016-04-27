@@ -1,21 +1,23 @@
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 //User filter
@@ -993,6 +995,13 @@ function adminModuleEditorDetailOnResize(){
 	//$('#adminModuleEditor_detail').width($(window).width()-$('#adminModuleEditor_list').outerWidth());
 }
 
+function adminModuleEditorListOnResize(){
+	if($("#adminModuleEditor_list").offset()) { //test if the adminModuleEditor_list was created
+		$("#adminModuleEditor_list").height($(window).height()-$("#adminModuleEditor_list").offset().top-$("#footerBar").outerHeight()-10); //10 = padding-top + padding-bottom
+		$("#adminModuleEditor_list").width($(window).width()-$("#adminModuleEditor_detail").width()-16); //16 = padding-left + padding-right + border-left-width +1 for IE
+	}
+}
+
 function setListenersToAdminGroup(){
 	//add click on keep notified
 	if($('#keepNotifyButton').length){
@@ -1065,6 +1074,7 @@ function setListenerToUserRoleAllocationFilter(){
 }
 
 $(window).resize(adminModuleEditorDetailOnResize);
+$(window).resize(adminModuleEditorListOnResize);
 $(window).resize(adminGroupOnResize);
 $(window).resize(adminUserDetailOnResize);
 

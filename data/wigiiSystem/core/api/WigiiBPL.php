@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *  
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *  
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *  
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /** 
@@ -1105,6 +1107,16 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Returns the current listContext
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @return ListContext
+	 */
+	public function getListContext($principal){
+		$exec = ServiceProvider::getExecutionService();
+		return $this->getListContext($principal, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+	}
+	
+	/**
 	 * Copies a given element to a specified folder (real copy, not sharing).
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @param Object $caller the object calling the Wigii business process.
@@ -1139,6 +1151,176 @@ class WigiiBPL
 			throw $e;
 		}
 		$this->executionSink()->publishEndOperation("elementCopyTo", $principal);
+	}
+	
+	/**
+	 * Moves the content of a field of type Files to another field of type Files
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementMoveFileField business process needs the following parameters to run :
+	 * - element: Element. The filled element containing the two fields of type Files
+	 * - fromField: String. The field name containing the File to move.
+	 * - toField: String. The field name to which to move the File.
+	 * - swap: Boolean. If true, then File contained in toField will go in fromField, else File contained in toField is deleted.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 */
+	public function elementMoveFileField($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementMoveFileField", $principal);
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+				
+			$element = $parameter->getValue('element');
+			if(is_null($element)) throw new WigiiBPLException('element cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$fromField = $parameter->getValue('fromField');
+			if(is_null($fromField)) throw new WigiiBPLException('fromField cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			if($fromField instanceof FieldSelector) $fromField = $fromField->getFieldName();
+			if(!($element->getFieldList()->getField($fromField)->getDataType() instanceof Files)) throw new WigiiBPLException('fromField should be of datatype Files', WigiiBPLException::INVALID_PARAMETER);			
+			
+			$toField = $parameter->getValue('toField');
+			if(is_null($toField)) throw new WigiiBPLException('toField cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			if($toField instanceof FieldSelector) $toField = $toField->getFieldName();
+			if(!($element->getFieldList()->getField($toField)->getDataType() instanceof Files)) throw new WigiiBPLException('toField should be of datatype Files', WigiiBPLException::INVALID_PARAMETER);
+			
+			$swap = $parameter->getValue('swap');
+			
+			// extracts files information
+			$files = $element->toStdClass(fsl(fs($fromField),fs($toField)));
+			
+			// moves files on disk
+			$fe = BasicFormExecutor::createInstance($this->getWigiiExecutor(), $element, null, null);
+			$exec = ServiceProvider::getExecutionService();
+			
+			
+			$fieldXml = $element->getFieldList()->getField($toField)->getXml();
+			$toFieldKeepHistory = ($fieldXml['keepHistory']>0);
+			$fieldXml = $element->getFieldList()->getField($fromField)->getXml();
+			$fromFieldKeepHistory = ($fieldXml['keepHistory']>0);
+			
+			// unlinks toField files history
+			$toDir = $fe->getHistoryDir($principal, $exec, $element, $toField);			
+			$ok = @rename($toDir, $toDir.'_old');
+			// renames fromField files history to toField files history
+			if($ok && $fromFieldKeepHistory) {
+				$fromDir = $fe->getHistoryDir($principal, $exec, $element, $fromField);
+				$ok = @rename($fromDir, $toDir);
+			}			
+			if($ok) {
+				// if swap renames toField files history to fromField files history
+				if($swap && $toFieldKeepHistory) {
+					if(!$fromDir) $fromDir=str_replace($toField, $fromField, $toDir);
+					@rename($toDir.'_old', $fromDir);
+				}
+				// deletes toField files history
+				else {
+					rrmdir($toDir.'_old',true);
+				}
+				// if no swap deletes toField file
+				if(!$swap) {
+					if (isImage($element->getFieldValue($toField, "mime"))) @unlink(FILES_PATH."tn_".$element->getFieldValue($toField, "path"));
+					@unlink(FILES_PATH.$element->getFieldValue($toField, "path"));
+				}
+			}
+			// else rollback
+			else @rename($toDir.'_old', $toDir);
+			
+			// changes Files values in element and saves to DB
+			if($ok) {
+				$fslForUpdate = FieldSelectorListArrayImpl::createInstance();
+				
+				// updates toField with values from fromField
+				foreach($files->{$fromField} as $subfield=>$val) {
+					$element->setFieldValue($val,$toField,$subfield);
+					$fslForUpdate->addFieldSelector($toField,$subfield);
+				}
+				// if swap, updates fromField with values from toField
+				if($swap) {
+					foreach($files->{$toField} as $subfield=>$val) {
+						$element->setFieldValue($val,$fromField,$subfield);
+						$fslForUpdate->addFieldSelector($fromField,$subfield);
+					}
+				}
+				// else clears fromField
+				else {
+					foreach($files->{$toField} as $subfield=>$val) {
+						$element->setFieldValue(null,$fromField,$subfield);
+						$fslForUpdate->addFieldSelector($fromField,$subfield);
+					}
+				}
+				
+				// saves to DB
+				$this->getElementService()->updateElement($principal, $element, $fslForUpdate);
+			}
+			else throw new WigiiBPLException("could not move File from field $fromField to field $toField", WigiiBPLException::FORBIDDEN);
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("elementMoveFileField", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementMoveFileField", $principal);
+	}
+	
+	/**
+	 * Persists a field of type Files from an Element, which content is currently stored into the TEMPORARYUPLOADEDFILE_path folder.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementPersistFileField business process needs the following parameters to run :
+	 * - element: Element. The filled element containing the field of type Files
+	 * - fieldName: String. The field name containing the File to persist.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 */
+	public function elementPersistFileField($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementPersistFileField", $principal);
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	
+			$element = $parameter->getValue('element');
+			if(is_null($element)) throw new WigiiBPLException('element cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$fieldName = $parameter->getValue('fieldName');
+			if(is_null($fieldName)) throw new WigiiBPLException('fieldName cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+			$field=$element->getFieldList()->getField($fieldName);
+			if(!($field->getDataType() instanceof Files)) throw new WigiiBPLException("field '$fieldName' should be of datatype Files", WigiiBPLException::INVALID_PARAMETER);
+							
+			$fe = BasicFormExecutor::createInstance($this->getWigiiExecutor(), $element, null, null);
+			$exec = ServiceProvider::getExecutionService();
+			$elS = $this->getElementService();
+			
+			$fslForUpdate = FieldSelectorListArrayImpl::createInstance();
+			$fslForUpdate->addFieldSelector($fieldName, "path");
+			$fslForUpdate->addFieldSelector($fieldName, "name");
+			$fslForUpdate->addFieldSelector($fieldName, "size");
+			$fslForUpdate->addFieldSelector($fieldName, "type");
+			$fslForUpdate->addFieldSelector($fieldName, "mime");
+			$fslForUpdate->addFieldSelector($fieldName, "date");
+			$fslForUpdate->addFieldSelector($fieldName, "user");
+			$fslForUpdate->addFieldSelector($fieldName, "username");
+			$fslForUpdate->addFieldSelector($fieldName, "version");
+			$fslForUpdate->addFieldSelector($fieldName, "thumbnail");
+			$fslForUpdate->addFieldSelector($fieldName, "content");
+			$fslForUpdate->addFieldSelector($fieldName, "textContent");
+									
+			// gets old File field information
+			$oldElement = $this->getWigiiExecutor()->createElementForForm($principal, $element->getModule(), $element->getId());
+			$oldElement = $elS->fillElement($principal, $oldElement,$fslForUpdate);
+			if(!isset($oldElement)) throw new WigiiBPLException('Element with ID '.$element->getId().' is not accessible to user '.$principal->getRealUsername().' or Element does not exist in database', WigiiBPLException::INVALID_PARAMETER);
+			$oldElement=$oldElement->getDbEntity();			
+			// moves temp file to wigii bag if needed
+			$storeFileInWigiiBag = ($this->getConfigService()->getParameter ($principal, null, "storeFileContentIntoDatabase" ) == "1");
+			if($storeFileInWigiiBag) $fe->moveTempFileToWigiiBag($element, $field);
+			// updates element into database
+			$elS->updateElement($principal, $element, $fslForUpdate);
+			// updates files on disk
+			$fe->updateFilesOnDiskForField($principal, $exec, $element, $field, $storeFileInWigiiBag, $oldElement);
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("elementPersistFileField", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementPersistFileField", $principal);
 	}
 	
 	/**
@@ -1343,6 +1525,129 @@ class WigiiBPL
 			}
 		}
 		return $element;
+	}
+	
+	/**
+	 * Fetches some posted data from HTTP POST request and builds an object based on the provided type
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter A WigiiBPLParameter instance with the following parameters :
+	 * - type: String. One of 'element','activity','json','xml','fx'
+	 * - currentObject: Element|ActivityRecord|StdClass|SimpleXmlElement. Current instanciated object that will be merged with posted data.
+	 * - configSelector: ConfigSelector. If type is element or activity, specifies where to fetch the Configuration.
+	 * - activity: Activity|String. If type is activity, then specifies the Activity for which to fetch the Configuration.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return Element|ActivityRecord|StdClass|SimpleXMLElement|FuncExp the instanciated object or null if nothing is posted
+	 */
+	public function dataFetchFromPost($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("dataFetchFromPost", $principal);
+		$returnValue = null;
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+		
+			$type = $parameter->getValue('type');
+			$currentObject = $parameter->getValue('currentObject');
+			
+			switch($type) {
+				case 'element': 
+					if(!isset($currentObject)) {
+						$currentObject=$this->buildNewElement($principal, $parameter->getValue('configSelector'));
+					}
+					$returnValue=$this->recordFetchFromPost($principal, $currentObject);
+					break;
+				case 'activity':
+					$configSelector=$parameter->getValue('configSelector');
+					WigiiBPLException::throwNotImplemented();
+					//$this->getWigiiExecutor()->createActivityRecordForForm($principal, $activity, $module)
+					break;
+				case 'json':
+					$returnValue=$this->objectFetchFromPost($principal, $currentObject);
+					break;
+				case 'xml':
+					$returnValue=$this->xmlFetchFromPost($principal);
+					break;
+				case 'fx':
+					$returnValue=$this->fxFetchFromPost($principal);
+					break;
+				default: throw new WigiiBPLException("type '$type' is not supported. Should be one of 'element','activity','json','xml' or 'fx'", WigiiBPLException::INVALID_ARGUMENT);
+			}
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("dataFetchFromPost", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("dataFetchFromPost", $principal);
+		return $returnValue;
+	}
+	/**
+	 * Fetches the record from the HTTP POST
+	 * @param Principal $principal current principal executing the request
+	 * @param Record $record posted data should be merged into the given Record
+	 * @return Record the filled record
+	 */
+	protected function recordFetchFromPost($principal,$record) {
+		WigiiBPLException::throwNotImplemented();
+	}
+	/**
+	 * Fetches a json object from the HTTP POST
+	 * @param Principal $principal current principal executing the request
+	 * @param StdClass $obj posted data should be merged into the given StdClass instance
+	 * @return StdClass the filled object
+	 */
+	protected function objectFetchFromPost($principal,$obj) {
+		$returnValue=null;
+		// gets post data
+		if($_SERVER['REQUEST_METHOD']=='POST') {
+			$data=trim(file_get_contents('php://input'));			
+			if($data) {
+				$returnValue=json_decode($data);
+				if(json_last_error()) throw new WigiiBPLException("invalid json data.\n".$data, WigiiBPLException::INVALID_PARAMETER);
+			}
+			// merges data with current obj
+			if($returnValue && $obj) {
+				foreach($returnValue as $f=>$v) {
+					$obj->{$f} = $v;
+				}
+				$returnValue=$obj;
+			}		
+			elseif($obj) $returnValue=$obj;
+		}
+		return $returnValue;
+	}
+	/**
+	 * Fetches some xml from the HTTP POST
+	 * @param Principal $principal current principal executing the request	 
+	 * @return SimpleXmlElement the instanciated XML data
+	 */
+	protected function xmlFetchFromPost($principal) {
+		$returnValue=null;
+		// gets post data
+		if($_SERVER['REQUEST_METHOD']=='POST') {
+			$data=trim(file_get_contents('php://input'));		
+			if($data) {
+				$returnValue=simplexml_load_string($data);			
+				if($returnValue===false) throw new WigiiBPLException("invalid xml data.\n".$data, WigiiBPLException::INVALID_PARAMETER);
+			}
+		}
+		return $returnValue;
+	}
+	/**
+	 * Fetches a FuncExp from the HTTP POST
+	 * @param Principal $principal current principal executing the request
+	 * @return FuncExp the instanciated FuncExp
+	 */
+	protected function fxFetchFromPost($principal) {
+		$returnValue=null;
+		// gets post data
+		if($_SERVER['REQUEST_METHOD']=='POST') {
+			$data=trim(file_get_contents('php://input'));
+			if($data) {
+				$returnValue=str2fx($data);				
+			}
+		}
+		return $returnValue;
 	}
 	
 	// Object builders

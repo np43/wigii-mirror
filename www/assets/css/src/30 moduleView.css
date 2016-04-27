@@ -298,6 +298,23 @@
 }
 
 /*********************************
+* Element Calendar fc-content
+*********************************/
+#moduleView .calendar{
+	overflow-x:auto;
+	overflow-y:scroll;
+}
+#moduleView .calendar div.fc-content{
+	overflow-x:hidden;
+}
+#moduleView .calendar div.fc-content div.fc-view{
+	overflow-x:hidden;
+}
+#moduleView .calendar div.fc-content div.fc-view div.fc-border-separate{
+	overflow-x:hidden;
+}
+
+/*********************************
 * Element List Blog View dataBlog
 *********************************/
 #moduleView .blog{

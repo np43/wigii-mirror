@@ -1,21 +1,23 @@
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 // helpers to embed javascript into xml documents without causing parsing errors due to reserved characters
@@ -460,6 +462,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					$(self.popupElt).show();
 					if(!self.isVisible) {
 						self.isVisible = true;
+						// if the popup is relative to anchor we add overflow for fix a display bug
+						if(self.isRelativeToAnchor) anchor.parent().css('overflow','visible');
 						// reset default position and dimension if resetOnShow
 						if(self.resetOnShow && self.defaultOptions) {
 							var w = self.window();
@@ -497,6 +501,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					$(self.popupElt).hide();
 					if(self.isVisible) {
 						self.isVisible=false;
+						// if the popup is relative to anchor we remove overflow for fix a display bug
+						if(self.isRelativeToAnchor) anchor.parent().css('overflow','');
 						// notifies all event subscribers
 						if(self.hideEventSubscribers) {
 							for(var i=0;i<self.hideEventSubscribers.length;i++) {
@@ -593,21 +599,22 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				top = top+(anchorOffset.top-parentOffset.top);
 				left = left+(anchorOffset.left-parentOffset.left);
 				// fixes anchor parent position
-				anchor.parent().css('position','relative').css('overflow','visible');
-				popupPosition='absolute';		
+				anchor.parent().css('position','relative').css('overflow','visible'); //.removeAttr('overflow');
+				popupPosition='absolute';
+				if(!self.isRelativeToAnchor) self.isRelativeToAnchor = true;
 			}
 			
 			var popupHtml = '<div';
 			if(options['id']) popupHtml+=' id="'+options['id']+'"';
 			popupHtml += ' class="'+(options['classId']&&!options['id']?options['classId']:'')+' ui-corner-all ui-widget ui-dialog SBIB"';
-			popupHtml += ' style="cursor:default;z-index:998;position:'+popupPosition+';background-color:#fff;border-style:solid;border-width:1px;top:'+top+'px;left:'+left+'px;padding:5px;width:'+width+'px;max-height:'+height+'px;display:none;float:none;"';
+			popupHtml += ' style="cursor:default;z-index:998;position:'+popupPosition+';background-color:#fff;border-style:solid;border-width:1px;top:'+top+'px;left:'+left+'px;padding:5px;width:'+width+'px;max-height:'+height+'px;display:none;float:none;border-color:black;"';
 			popupHtml +='>';
 			if(title) popupHtml +='<div class="popupTitle ui-corner-all ui-widget-header" style="'+(options['resizable']?'cursor:move;':'')+'float:left;font-style:normal;font-weight:bold;font-size:small;text-align:left;padding-left:13px;padding-right:0;padding-top:5px;padding-bottom:5px;margin:0;color:black;height:14px;width:'+(width-15)+'px" >'+title+'</div>';
 			else popupHtml +='<div class="popupTitle emptyTitle ui-corner-all" style="'+(options['resizable']?'cursor:move;':'')+'float:left;z-index:999;position:absolute;right:4px;top:-10px;font-style:normal;font-weight:bold;font-size:small;text-align:left;padding-left:13px;padding-right:0;padding-top:5px;padding-bottom:5px;margin:0;color:black;height:14px;width:'+(width-10)+'px" >&nbsp;</div>';
 			//if(options['closeable']) popupHtml += '<div class="exit ui-corner-all SBIB" style="z-index:999;position:absolute;right:-8px;top:-8px;cursor:pointer;width:15px;height:17px;float:right;background-color:#fff;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>';			
 			if(options['closeable']) {
 				if(title) popupHtml += '<div class="exit ui-corner-all" style="z-index:999;position:absolute;right:10px;top:7px;cursor:pointer;width:15px;height:17px;float:right;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>'; 
-				else popupHtml += '<div class="exit ui-corner-all SBIB" style="z-index:999;position:absolute;right:-2px;top:-3px;cursor:pointer;width:15px;height:17px;float:right;background-color:#fff;border-style:solid;border-width:1px;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>';
+				else popupHtml += '<div class="exit ui-corner-all SBIB" style="z-index:999;position:absolute;right:-2px;top:-3px;cursor:pointer;width:15px;height:17px;float:right;background-color:#fff;border-style:solid;border-width:1px;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0;border-color:black">x</div>';
 			}
 			popupHtml +='<div class="clear"></div>';
 			popupHtml +='<div class="popupBody" style="z-index:998;cursor:normal;float:left;font-weight:normal;font-style:normal;font-size:small;text-align:left;padding:0;margin:0;margin-top:1px;color:black;overflow-y:auto;height:auto;max-height:'+(height-28)+'px;width:'+(width-5)+'px;"><br/></div></div>';
@@ -750,6 +757,15 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					anchor.data(self.ctxKey,context);
 					// removes anchor on close if needed
 					if(options['removeOnClose']) context.popup.remove(function(){anchor.remove();});
+					// if type == 'help' we would have only one popup
+					if (options.type == 'help') {
+						fh = anchor.parents('div.field').first().wigii('FieldHelper');
+						if(fh.ctxKey) {
+							fh = fh.formHelper();
+							context.popup.show(fh.onHelpPopupShow);
+							context.popup.hide(fh.onHelpPopupHide);
+						}						
+					};
 				}
 				context.popup.show();
 			};
@@ -886,7 +902,6 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					// adds click event handler
 					helpSpan.off().click(function(event){
 						var e = $(this);						
-						// toggles help popup display
 						wigiiApi.getHelpService().toggleHelp(content,e,options);
 						event.stopPropagation();
 					});
@@ -1377,7 +1392,34 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					self.context.formEventSubscribers.push({eventHandler:eventHandler,options:options});
 				}
 				return self;
-			};			
+			};		
+			
+			/**
+			 * Check if an help popup is show, if a popup is display hide it and place the popup in context helpPopup 
+			 * @param Event popup 
+			 */
+			self.onHelpPopupShow = function(popup) {
+				// onHelpPopupShow(popup)
+				// if(self.context.helpPopup) self.context.helpPopup.hide(); self.context.helpPopup=popup;
+				if(self.context.helpPopup) {
+					self.context.helpPopup.hide();
+					if(self.context.helpPopup!==popup)
+						self.context.helpPopup=popup;
+				} else {
+					self.context.helpPopup=popup;
+				}
+			};
+			
+			/**
+			 * Check if the context helpPopup equal to popup event and unasign it
+			 * @param Event popup
+			 */
+			self.onHelpPopupHide = function(popup) {
+				// onHelpPopupHide(popup)
+				// if(self.context.helpPopup===popup) self.context.helpPopup=undefined;
+				if(self.context.helpPopup===popup) 
+					self.context.helpPopup=undefined;
+			};
 		};
 		
 		/**
@@ -2431,7 +2473,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			
 			return returnValue;
 		};			
-		
+		/**
+		 * Serializes an XML Dom object to string
+		 * @param XMLDocument xmlDom an XML DOM document as created by calling jQuery.parseXML
+		 * @return String XML serialized
+		 */
+		wigiiApi.xml2string = function(xmlDom) {
+			return (typeof XMLSerializer!=="undefined") ? 
+					(new window.XMLSerializer()).serializeToString(xmlDom) : 
+					xmlDom.xml;
+		};
 		/**
 		 * throws a ServiceException::NOT_IMPLEMENTED exception
 		 */

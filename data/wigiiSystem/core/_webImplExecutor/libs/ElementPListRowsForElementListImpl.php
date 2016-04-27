@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /*
@@ -382,11 +384,17 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 			if($xmlHeader["width"]=="0") continue;
 			if($xmlHeader["hidden"]=="1") continue;
 			$style = ' style="';
-			if($xmlHeader["width"]!="null"){
-				$style.='width:'.($xmlHeader["width"]+$this->totalPaddingInCol).'px; ';
+			//If the column have a custom session width, we get it
+			if($this->getListContext()->getListViewUIPref($xmlHeader['field'], 'width')!=null) {
+				$style.='width:'.($this->getListContext()->getListViewUIPref($xmlHeader['field'], 'width')+17).'px; ';
+			} else {
+				if($xmlHeader["width"]!="null"){
+					$style.='width:'.($xmlHeader["width"]+$this->totalPaddingInCol).'px; ';
+				}
 			}
 			$style .= '" ';
 			?><col<?=$style;?>></col><?
+			
 		}
 
 		?><tbody><?
@@ -594,14 +602,21 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 				$width = 0;
 				$class = "key_".$key;
 				$this->nbOfHeaders ++;
-				if($xmlHeader["width"]!="null"){
-					$width = (0+$xmlHeader["width"]);
+				//If the column have a custom session width, we get it
+				if($this->getListContext()->getListViewUIPref($xmlHeader['field'], 'width')!=null) {
+					$width = (0+$this->getListContext()->getListViewUIPref($xmlHeader['field'], 'width'));
 					//we calculate the total fixed width, we add the intern padding, + border
 					$this->totalWidth += $width+$this->totalPaddingInCol;
-				} else{
-					$width = 1; //in IE don't support no width, then this width will change after
-					$class .= " noWidth";
-					$this->nbNoWidth ++;
+				} else {
+					if($xmlHeader["width"]!="null"){
+						$width = (0+$xmlHeader["width"]);
+						//we calculate the total fixed width, we add the intern padding, + border
+						$this->totalWidth += $width+$this->totalPaddingInCol;
+					} else{
+						$width = 1; //in IE don't support no width, then this width will change after
+						$class .= " noWidth";
+						$this->nbNoWidth ++;
+					}
 				}
 
 				//SORTING
@@ -628,7 +643,6 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 						$class .= " DESC ";
 					}
 				}
-
 				?><div <?=($class ? 'class="'.$class.'" ' : '');?>style="width:<?=$width;?>px;"><?=$trm->getHtmlAndClean();?></div><?
 			}
 

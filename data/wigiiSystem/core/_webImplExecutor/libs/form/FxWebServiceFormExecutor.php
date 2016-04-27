@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -53,12 +55,19 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 	public function processAndEnds($p,$exec) {
 		$fxEval = null;
 		try {
-			// decodes FuncExp
-			$fx = $exec->getCrtParameters(0);
-			if(empty($fx)) throw new FormExecutorException('FuncExp cannot be empty', FormExecutorException::INVALID_ARGUMENT);
-			$fx = base64url_decode($fx);
-			// parses the FuncExp
-			$fx = str2fx($fx);		
+			// decodes FuncExp			
+			$fx = $exec->getCrtParameters(0);			
+			if(empty($fx)) {
+				// if no parameter then checks in POST data
+				$fx=ServiceProvider::getWigiiBPL()->dataFetchFromPost($p, $this, wigiiBPLParam('type','fx'));
+				if(is_null($fx)) throw new FormExecutorException('FuncExp cannot be empty', FormExecutorException::INVALID_ARGUMENT);
+			}
+			// decodes and parses FuncExp passed on URL
+			else {
+				$fx = base64url_decode($fx);
+				// parses the FuncExp
+				$fx = str2fx($fx);
+			}					
 			// tries to login with a login request if provided and needed
 			$authS = ServiceProvider::getAuthenticationService();
 			if($authS->isMainPrincipalMinimal()) {
@@ -125,11 +134,12 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 		catch(Exception $e) {
 			if(isset($fxEval) && method_exists($fxEval, 'freeMemory')) $fxEval->freeMemory();
 			header($_SERVER["SERVER_PROTOCOL"]." 500 Internal Error"); 
-			header("Content-Type: text/xml; charset=UTF-8");
+			header("Access-Control-Allow-Origin: *");
+			header("Content-Type: text/xml; charset=UTF-8");			
 			echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e));
 			// signals fatal error to monitoring system
 			ServiceProvider::getClientAdminService()->signalFatalError($e);
-		}
+		}		
 	}
 
 	/**
@@ -140,6 +150,8 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 	 * - Object : exception UNSUPPORTED_OPERATION
 	 */
 	protected function serializeFxResult($p, $exec, $result) {
+		$this->debugLogger()->logBeginOperation('serializeFxResult');
+		header("Access-Control-Allow-Origin: *");
 		if(is_scalar($result)) {
 			header("Content-Type: text/plain charset=UTF-8");
 			if($result===true) echo 1;
@@ -159,7 +171,8 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 			header("Content-Type: text/xml; charset=UTF-8");
 			echo TechnicalServiceProvider::getWplToolbox()->wplObjectList2Xml($p, 'wigiiFxAnswer', $result);
 		}
-		else throw new FormExecutorException("FuncExp result of class '".get_class($result)."' cannot be serialized", FormExecutorException::UNSUPPORTED_OPERATION);
+		else throw new FormExecutorException("FuncExp result of class '".get_class($result)."' cannot be serialized", FormExecutorException::UNSUPPORTED_OPERATION);		
+		$this->debugLogger()->logEndOperation('serializeFxResult');
 	}
 }
 

@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -1491,6 +1493,37 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $returnValue;
 	}
 	
+	// WplObjectList builder
+	
+	/**
+	 * Creates a WplObjectList based on a list of objects.
+	 * FuncExp signature : <code>wplObjectList(objectName, o1,o2,o3,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) objectName: String. the logical name of the Objects stored into the list (see WplObjectList for more details)
+	 * - Arg(i) oI: Record|Element|ElementP|StdClass|WplObjectList. The object to store into the list.
+	 * @return WplObjectList
+	 */
+	public function wplObjectList($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) {
+			$i=0;			
+			while($i<$nArgs) {
+				$o=$this->evaluateArg($args[$i]);
+				if($i==0) {
+					if(is_scalar($o)) $returnValue = TechnicalServiceProvider::getWplToolbox()->createWplObjectList($o);
+					else {
+						$returnValue = TechnicalServiceProvider::getWplToolbox()->createWplObjectList();
+						$returnValue->addWplObject($o);
+					}
+				}
+				else $returnValue->addWplObject($o);
+				$i++;
+			}
+		}
+		else $returnValue = TechnicalServiceProvider::getWplToolbox()->createWplObjectList();
+		return $returnValue;
+	}
+	
 	// Accessors
 
 	/**
@@ -1823,5 +1856,23 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			return true;
 		}
 		else return false;
+	}
+	
+	/**
+	 * Returns current user name (real user)
+	 * FuncExp signature : <code>sysUsername()</code>
+	 * @return String the name of the real user connected
+	 */
+	public function sysUsername($args) {
+		return $this->getPrincipal()->getRealUsername();
+	}
+	
+	/**
+	 * Returns current user id (real user)
+	 * FuncExp signature : <code>sysUser()</code>
+	 * @return String the ID of the real user connected
+	 */
+	public function sysUser($args) {
+		return $this->getPrincipal()->getRealUserId();
 	}
 }

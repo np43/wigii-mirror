@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -235,6 +237,34 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 	}
 
 	/**
+	 * convert 'lt;', 'gt;','#92;'  to 'lt_;','gt_;', '#92_;' for prevent convetion to <,>,\ by html_entity_decode fonction.
+	 * @param string $value the HTML text.
+	 * 
+	 * @return string
+	 * 	the HTML string encoded
+	 */
+	public function formatBracketsBeforeDecode($value){
+		$value = str_replace('lt;','lt_;',$value);
+		$value = str_replace('gt;','gt_;',$value);
+		$value = str_replace('#92;','#92_;',$value);
+		return $value;
+	}
+	/**
+	 * convert 'lt_;','gt_;', '#92_;' to 'lt;', 'gt;','#92;' after convertion by html_entity_decode to display correctly in the text.
+	 * @param string $value the HTML text.
+	 * 
+	 * @return string
+	 * 	the HTML string decoded
+	 */
+	public function formatBracketsAfterDecode($value){
+		$value = str_replace('lt_;','lt;',$value);
+		$value = str_replace('gt_;','gt;',$value);
+		$value = str_replace('#92_;','#92;',$value);
+		return $value;
+	}
+
+	
+	/**
 	 * WARNING, this method format the value of the $newValue!
 	 */
 	public function isNewValueEqual(&$newValue, $oldValue, $dataTypeName, $subFieldXml){
@@ -266,26 +296,45 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 			}
 		}
 		//eput($dataTypeName." ".$fieldName." ".$subFieldName."\n");
+		//declare regex into variable for use twice
+		$classRegEx = '#class=[\\\]?[\"]([\w\s-]*(elementDialog|elementDetail|value|label|addinfo|field)[\w\s-]*)([\\\]?)[\"]#iU';
+		$idRegEx = "#id=\"(elementDialog|detailElement_form.*|editElement_form.*|addElement_form.*)\"#iU";
 		//Global reformating depending on sqlType
 		if($subFieldXml["sqlType"]=="varchar" || $subFieldXml["sqlType"]=="text" || ($dataTypeName=="Files"&&$subFieldName=="textContent")){
 			//the texts are always slashed
 			if(is_array($oldValue)){
 				foreach($oldValue as $oldValKey=>$oldValSub){
-					$oldValue[$oldValKey] = addslashes(html_entity_decode($oldValSub, ENT_COMPAT, "UTF-8")); //preg_replace('/&quot;/', '"', $oldValSub));
+					$oldValSub = $this->formatBracketsBeforeDecode($oldValSub);
+					$oldValue[$oldValKey] = addslashes($this->formatBracketsAfterDecode(html_entity_decode($oldValSub, ENT_COMPAT, "UTF-8"))); //preg_replace('/&quot;/', '"', $oldValSub));
 					//in the case that the text was added from a copy paste
 					if($newValue[$oldValKey]!=null){ //if null, do nothing to prevent changing null in ""
-						$newValue[$oldValKey] = addslashes(html_entity_decode(stripslashes($newValue[$oldValKey]), ENT_COMPAT, "UTF-8")); //preg_replace('/&quot;/', '\"', $newValue[$oldValKey]);
+						$newValue[$oldValKey] = $this->formatBracketsBeforeDecode($newValue[$oldValKey]);
+						$newValue[$oldValKey] = addslashes($this->formatBracketsAfterDecode(html_entity_decode(stripslashes($newValue[$oldValKey]), ENT_COMPAT, "UTF-8"))); //preg_replace('/&quot;/', '\"', $newValue[$oldValKey]);
+						//delete id for elementDialog, detailElement_form*, editElement_form* and addElement_form*
+						$newValue = preg_replace($idRegEx,'', $newValue);
+						//remove class name in this list : elementDialog, elementDetail, value, label, addinfo, field
+						$newValue = preg_replace_callback($classRegEx, function ($matches) {
+							return 'class='.$matches[3].'"'.preg_replace("#\b(elementDialog|elementDetail|value|label|addinfo|field)\b#iU", '', $matches[1]).$matches[3].'"';
+						}, $newValue);
 					}
 				}
 			} else {
-				$oldValue = addslashes(html_entity_decode($oldValue, ENT_COMPAT, "UTF-8")); //preg_replace('/&quot;/', '"', $oldValue));
+				$oldValue = $this->formatBracketsBeforeDecode($oldValue);
+				$oldValue = addslashes($this->formatBracketsAfterDecode(html_entity_decode($oldValue, ENT_COMPAT, "UTF-8"))); //preg_replace('/&quot;/', '"', $oldValue));
 				//in the case that the text was added from a copy paste
 				if($newValue!=null){ //if null, do nothing to prevent changing null in ""
-					$newValue = addslashes(html_entity_decode(stripslashes($newValue), ENT_COMPAT, "UTF-8")); //preg_replace('/&quot;/', '\"', $newValue);
+					$newValue = $this->formatBracketsBeforeDecode($newValue);
+					$newValue = addslashes($this->formatBracketsAfterDecode(html_entity_decode(stripslashes($newValue), ENT_COMPAT, "UTF-8"))); //preg_replace('/&quot;/', '\"', $newValue);
+					//delete id for elementDialog, detailElement_form*, editElement_form* and addElement_form*
+					$newValue = preg_replace($idRegEx,'', $newValue);
+					//remove class name in this list : elementDialog, elementDetail, value, label, addinfo, field
+					$newValue = preg_replace_callback($classRegEx, function ($matches) {
+						return 'class='.$matches[3].'"'.preg_replace("#\b(elementDialog|elementDetail|value|label|addinfo|field)\b#iU", '', $matches[1]).$matches[3].'"';
+					}, $newValue);
 				}
 			}
-//			fput($oldValue);
-//			fput($newValue);
+//			fput('$oldValue : '.$oldValue);
+//			fput('$newValue : '.$newValue);
 //			if($dataTypeName=="Files"&&$subFieldName=="content"){
 //				fput($newValue);
 //				fput($oldValue);

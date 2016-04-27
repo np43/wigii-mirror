@@ -26,13 +26,15 @@
 	min-height:250px;
 	min-width:400px;
 	float:left;
-	margin-bottom:100px;
+	/*margin-bottom:100px;*/
 	padding:5px;
-	padding-bottom:45px; /* in chrome the margin-bottom is ignored if no items is bellow */
+	/*padding-bottom:45px;*/ /* in chrome the margin-bottom is ignored if no items is bellow */
 	border-top:none;
 	border-bottom:none;
 	border-right:none;
 	border-left-width:5px;
+	overflow-x: auto;
+    overflow-y: scroll;
 }
 #adminModuleEditor_list .configFile {
 	cursor:pointer;

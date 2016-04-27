@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -1710,7 +1712,8 @@ class WigiiCoreExecutor {
 	
 		if ($startDate != null && $endDate != null) {
 			//find first TimeRange field or Dates
-			foreach ($fieldList->getListIterator() as $field) {
+			foreach ($fsl->getListIterator() as $fs) {
+				$field = $fieldList->getField($fs->getFieldName());
 				if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "TimeRanges") {
 					$fsStartTime = FieldSelector :: createInstance($field->getFieldName(), "begTime");
 					$fsStartDate = FieldSelector :: createInstance($field->getFieldName(), "begDate");
@@ -1744,22 +1747,52 @@ class WigiiCoreExecutor {
 					}
 					break;
 				} else if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Dates") {
-					$fsDate = FieldSelector :: createInstance($field->getFieldName(), "value");
-					$dateExp = LogExp :: createAndExp();
-					$dateExp->addOperand(LogExp :: createSmallerExp($fsDate, $endDate));
-					$dateExp->addOperand(LogExp :: createGreaterEqExp($fsDate, $startDate));
-					$crtLogExp = $listContext->getFieldSelectorLogExp();
-					if (isset ($crtLogExp)) {
-						if ($crtLogExp instanceof LogExpAnd) {
-							$crtLogExp->addOperand($dateExp);
+					$fsDate2 = null;
+					foreach ($fsl->getListIterator() as $fs2) {
+						$field2 = $fieldList->getField($fs2->getFieldName());
+						if ($fs2 == $fs)continue;//skip if same field.
+						if ($field2->getDataType() && $field2->getDataType()->getDataTypeName() == "Dates") {
+							$fsDate2 = FieldSelector :: createInstance($field2->getFieldName(), "value");
+							break 1;
+						}
+					}
+					if($fsDate2) {
+						$fsDate1 = FieldSelector :: createInstance($field->getFieldName(), "value");
+						//we handle properly every case with two Dates fields even if one is not set.
+						$dateExp = lxOr(lxAnd(lxSm($fsDate1,$endDate), lxGrEq($fsDate2, $startDate)),
+								lxAnd(lxEq($fsDate1, null),lxSm($fsDate2,$endDate), lxGrEq($fsDate2, $startDate)),
+								lxAnd(lxEq($fsDate2, null),lxSm($fsDate1,$endDate), lxGrEq($fsDate1, $startDate)));
+						$crtLogExp = $listContext->getFieldSelectorLogExp();
+						if (isset ($crtLogExp)) {
+							if ($crtLogExp instanceof LogExpAnd) {
+								$crtLogExp->addOperand($dateExp);
+							} else {
+								$andExp = LogExp :: createAndExp();
+								$andExp->addOperand($crtLogExp);
+								$andExp->addOperand($dateExp);
+								$listContext->setFieldSelectorLogExp($andExp);
+							}
 						} else {
-							$andExp = LogExp :: createAndExp();
-							$andExp->addOperand($crtLogExp);
-							$andExp->addOperand($dateExp);
-							$listContext->setFieldSelectorLogExp($andExp);
+							$listContext->setFieldSelectorLogExp($dateExp);
 						}
 					} else {
-						$listContext->setFieldSelectorLogExp($dateExp);
+						$fsDate = FieldSelector :: createInstance($field->getFieldName(), "value");
+						$dateExp = LogExp :: createAndExp();
+						$dateExp->addOperand(LogExp :: createSmallerExp($fsDate, $endDate));
+						$dateExp->addOperand(LogExp :: createGreaterEqExp($fsDate, $startDate));
+						$crtLogExp = $listContext->getFieldSelectorLogExp();
+						if (isset ($crtLogExp)) {
+							if ($crtLogExp instanceof LogExpAnd) {
+								$crtLogExp->addOperand($dateExp);
+							} else {
+								$andExp = LogExp :: createAndExp();
+								$andExp->addOperand($crtLogExp);
+								$andExp->addOperand($dateExp);
+								$listContext->setFieldSelectorLogExp($andExp);
+							}
+						} else {
+							$listContext->setFieldSelectorLogExp($dateExp);
+						}
 					}
 					break;
 				}
@@ -6301,6 +6334,15 @@ onUpdateErrorCounter = 0;
 				$exec->addJsCode("invalidCache('moduleView');");
 				$exec->addRequests('moduleView/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView");
 
+				break;
+			case "saveListViewUIPref":
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (!isset ($configS)) $configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
+				
+				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+				$lc->setListViewUIPref($exec->getCrtParameters(0), $exec->getCrtParameters(1), $exec->getCrtParameters(2));
+				
+				$exec->invalidCache($p, 'moduleView');
 				break;
 			case "changeGroupByToFindDuplicates":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
@@ -10851,5 +10893,59 @@ document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->get
 					$exec->addJsCode("alert('Unknown request:\\n" . $exec->getCrtAction() . "');");
 				}
 		}
+	}
+	
+	/**
+	 * Binds all required JS services to the module view beeing displayed.
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 */
+	public function bindJsServicesOnModuleView($p,$exec) {
+		// binds standard Wigii JS services
+		$config = $this->getConfigurationContext();
+		$module = $exec->getCrtModule();
+		$userModule = isset($module) && $module->isUserModule();
+		$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+		// adds JS code after show exp
+		if($userModule) {
+			$activityName = '';
+			switch($lc->getCrtViewActivityName()){
+				case 'listView':
+					$activityName = 'jsCodeForListExp';
+					break;
+				case 'calendarView':
+					$activityName = 'jsCodeForCalendarExp';
+					break;
+				case 'blogView':
+					$activityName = 'jsCodeForBlogExp';
+					break;
+			}
+			$jsCodeAfterShowExp = (string)$config->getParameter($p, $module, $activityName);
+			
+			if(!empty($jsCodeAfterShowExp)) {
+				// parses FuncExp
+				$jsCodeAfterShowExp = str2fx($jsCodeAfterShowExp);
+				// executes the func exp
+				if($jsCodeAfterShowExp instanceof FuncExp) {
+					$fxEval = $this->getFuncExpEvaluator($p, $exec, null);
+					try {
+						$jsCodeAfterShowExp = $fxEval->evaluateFuncExp($jsCodeAfterShowExp,$this);
+					}
+					catch(Exception $e) {
+						if(isset($fxEval)) $fxEval->freeMemory();
+						throw $e;
+					}
+					if(isset($fxEval)) $fxEval->freeMemory();
+					$this->debugLogger()->write($jsCodeAfterShowExp);
+					if($jsCodeAfterShowExp != '') {
+						$this->debugLogger()->write('jsCodeAfterShowExp = '.$jsCodeAfterShowExp);
+						$exec->addJsCode($jsCodeAfterShowExp);
+					}
+				}
+			}
+		}
+	
+		// HelpService on Fields (not in print, not in external access, not in notification)
+		$exec->addJsCode("$('#moduleView .wigiiHelp').wigii('bindHelpService');");
 	}
 }

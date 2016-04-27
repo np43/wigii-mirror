@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -1206,6 +1208,75 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 	
 	/**
+	 * Adds a comment to a field of type Blobs 
+	 * FuncExp signature : <code>ctlAddComment(fieldName, comment)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: String|FieldSelector. The name of the field to which to add a comment. Should be of type Blobs.
+	 * - Arg(1) comment: String. Evaluates to a String that will added as a comment.
+	 */
+	public function ctlAddComment($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new RecordException('ctlAddComment func exp takes two arguments: the fieldName to which to add a comment, and the comment string.', RecordException::INVALID_ARGUMENT);
+		
+		if($args[0] instanceof FieldSelector) $fieldName=$args[0]->getFieldName();
+		else $fieldName = $this->evaluateArg($args[0]);
+		if(!$this->getRecord()->getFieldList()->doesFieldExist($fieldName)) throw new RecordException("fieldName '".$fieldName."' is not a valid field in the record", RecordException::INVALID_ARGUMENT);
+		
+		$comment = $this->evaluateArg($args[1]);
+		
+		$result="";
+		$fxml=$this->getRecord()->getFieldList()->getField($fieldName)->getXml();
+		$isHtmlArea = ($fxml["htmlArea"] == "1");
+		$isJournal = ($fxml["isJournal"] == "1");
+
+		$header = date("d.m.Y H:i")." ".$this->getPrincipal()->getRealUsername();
+
+		// removes html from comment if not an html area
+		if(!$isHtmlArea) {
+			$html2text = new Html2text();
+			$html2text->html2text($comment);
+			$comment = $html2text->get_text();
+			$html2text->clear();
+		}
+
+		if($isJournal) {
+			if($isHtmlArea) {
+				$result .= '<p style="color:#666;">&gt; ';
+				$result .= $header;
+				$result .= "</p>";
+				$result .= '<p>'.$comment.'</p>';
+				$result .= "<p>&nbsp;</p>";
+			}
+			else {
+				$result .= "> ";
+				$result .= $header;
+				$result .= "\n";
+				$result .= $comment."\n";
+				$result .= "\n";
+			}
+		}
+		else {
+			if($isHtmlArea) {
+				$result .= "<p>".$header.' '.$comment."</p>";
+				$result .= "<p>&nbsp;</p>";
+			}
+			else {
+				$result .= $header.' '.$comment."\n";
+				$result .= "\n";
+			}
+		}
+		
+		$result .= $this->getRecord()->getFieldValue($fieldName);
+		$this->getRecord()->setFieldValue($result, $fieldName);
+
+		// if multiple edit then adds FieldSelector to FieldSelectorList for persistence
+		if($this->getFormExecutor() instanceof EditMultipleElementFormExecutor) {
+			$fsl=$this->getFormExecutor()->getFieldSelectorListForUpdate();
+			if(!$fsl->containsFieldSelector($fieldName)) $fsl->addFieldSelector($fieldName);
+		}		
+	}
+	
+	/**
 	 * Runs a step into a given state machine. The state machine is described as a Field holding the actual state and a list of conditional actions and new state calculations.
 	 * FuncExp signature : <code>ctlStateMachine(stateField, newStateFx1, newStateFx2)</code><br/>
 	 * Where arguments are :
@@ -1246,6 +1317,25 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 	
 	/**
+	 * Returns the name of the flow the element is currently in.
+	 * FuncExp signature : <code>ctlCurrentFlow()</code><br/>
+	 * @return String one of 'element-add', 'element-edit', 'element-delete', 'element-copy', 'element-dataflow', 'multiple-add','multiple-edit', 'multiple-delete', 'multiple-copy', 'unspecified'
+	 * Returns 'unspecified' if the RecordEvaluator cannot determine in which flow it is currently operating.
+	 */
+	public function ctlCurrentFlow($args) {
+		return $this->getCurrentFlowName();
+	}
+
+	/**
+	 * @return String returns the name of the current flow in which this element is evaluated.
+	 * One of ELEMENT_FLOW_ADD, ELEMENT_FLOW_EDIT, ELEMENT_FLOW_DELETE, ELEMENT_FLOW_COPY, ELEMENT_FLOW_DATAFLOW, ELEMENT_FLOW_MULTIPLE_ADD, ELEMENT_FLOW_MULTIPLE_EDIT, ELEMENT_FLOW_MULTIPLE_DELETE, ELEMENT_FLOW_MULTIPLE_COPY, ELEMENT_FLOW_UNSPECIFIED
+	 * @return String 'unspecified'. Subclass ElementEvaluator implements the whole logic.
+	 */
+	protected function getCurrentFlowName() {
+		return ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+	}
+	
+	/**
 	 * Returns the XML configuration of a Field in the Record
 	 * FuncExp signature : <code>cfgFieldXml(fieldName, attribute=null)</code><br/>
 	 * Where arguments are :
@@ -1269,6 +1359,23 @@ class RecordEvaluator implements FuncExpEvaluator
 			$returnValue = (string)$returnValue[$attribute];
 		}
 		return $returnValue;
+	}
+	
+	/**
+	 * Returns the translated label of a Field in the Record
+	 * FuncExp signature : <code>cfgFieldLabel(fieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: String|FieldSelector. The name of the field for which to get the translated label.
+	 * @return String the field label
+	 */
+	public function cfgFieldLabel($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<1) throw new RecordException('cfgFieldLabel func exp takes one argument: the fieldName for which to get the translated label.', RecordException::INVALID_ARGUMENT);
+		$fieldName = $args[0];
+		if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+		else $fieldName = $this->evaluateArg($fieldName);
+	
+		return $this->getTrm()->t($fieldName, $this->getRecord()->getFieldList()->getField($fieldName)->getXml());
 	}
 	
 	/**
@@ -1304,6 +1411,101 @@ class RecordEvaluator implements FuncExpEvaluator
 		}
 		return $val;
 	}
+	
+	/**
+	 * Sets the content of a Field of type Files
+	 * FuncExp signature : <code>setFile(fieldName, content, subFieldName1, subFieldValue1, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: String|FieldSelector. The name of the field of type Files for which to set the content.
+	 * - Arg(1) content: Scalar|Array|StdClass|Element|ElementP|Record|WplObjectList|DataFlowSelector if content converts to a String then saves a text file, 
+	 * else object is serialized to xml (if compatible with the list of supported types).
+	 * - Arg(2,...) subFieldNameI,subFieldValueI: a list of Files subfield (name,date,username,user,type) and values to update File meta-data	
+	 */
+	public function setFile($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new RecordException("setFile function takes at least two arguments: field name and content", RecordException::INVALID_ARGUMENT);	
+		
+		// Extracts fieldname
+		$fieldName = $args[0];
+		if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+		else $fieldName = $this->evaluateArg($fieldName);
+		if(empty($fieldName)) throw new RecordException('fieldName cannot be null', RecordException::INVALID_ARGUMENT);
+		$field = $this->getRecord()->getFieldList()->getField($fieldName);
+		if(!($field->getDataType() instanceof Files)) throw new RecordException("field '$fieldName' should be of datatype Files", RecordException::INVALID_ARGUMENT);
+		
+		// Extracts files subfields
+		if($nArgs>2) {
+			$k=$this->evaluateArg($args[2]);
+			if(is_array($k)) $fileSubfields=$k;
+			elseif($nArgs>3) {
+				$i=3;
+				$fileSubfields=array();
+				while($i<$nArgs) {
+					// evaluates value
+					$v=$this->evaluateArg($args[$i]);
+					$i++;
+					// stores key/value in array
+					$fileSubfields[$k]=$v;
+					// evalues next key
+					if($i<$nArgs) {
+						$k=$this->evaluateArg($args[$i]);
+						$i++;
+					}
+				}
+			}
+			else $fileSubfields=null;
+		}
+		// generates content
+		$p=$this->getPrincipal();
+		$content = $this->evaluateArg($args[1]);
+		// if content is a DataFlowSelector then executes it
+		if($content instanceof DataFlowSelector) {
+			$content = ServiceProvider::getDataFlowService()->processDataFlowSelector($p, $content);
+		}
+		// if content is not empty, then serializes it
+		if(isset($content)) {
+			if(is_scalar($content)) {
+				$type='.txt';
+				if($content===true) $content = '1';
+				elseif($content===false) $content = '0';				
+			}
+			elseif(is_array($content)||$content instanceof stdClass) {
+				$type='.xml';
+				$content = TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, $fieldName, $content);
+			}
+			elseif($content instanceof Element || $content instanceof ElementP || $content instanceof Record) {
+				$content = $content->getDbEntity();
+				$type = '.xml';
+				$content = TechnicalServiceProvider::getWplToolbox()->record2xml($p, $content->getFieldList(), $content->getWigiiBag(), false, null, $content->getId());
+			}
+			elseif($content instanceof WplObjectList) {
+				$type = '.xml';
+				$content = TechnicalServiceProvider::getWplToolbox()->wplObjectList2Xml($p, $fieldName, $content);
+			}
+			else throw new RecordException("FuncExp result of class '".get_class($content)."' cannot be serialized", RecordException::UNSUPPORTED_OPERATION);
+			if(!$fileSubfields['type']) $fileSubfields['type'] = $type;
+		}
+		// if content is not empty, then saves it as a File
+		if(isset($content)) {
+			// element should be persisted straight away if current flow is element-data-flow or element-multiple-edit or unspecified
+			// in other cases file is only saved into temporary location and element updated into memory.
+			switch($this->getCurrentFlowName()) {
+				case ElementEvaluator::ELEMENT_FLOW_DATAFLOW:
+				case ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EDIT:
+				case ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED:
+					$persistElement=true;
+					break;
+				default: $persistElement=false;
+			}
+			// saves the file content into the element
+			ServiceProvider::getDataFlowService()->processString($p, $content, dfasl(
+				dfas('ElementFileOutputStreamDFA','setElement',$this->getRecord(),'setFieldName',$fieldName,
+					'setPersistElement', $persistElement,
+					'setFileSubfields', $fileSubfields
+				)
+			));
+		}
+	}	
 
 	/**
 	 * Creates an array containing all the evaluated arguments

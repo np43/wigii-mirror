@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *  
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *  
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *  
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -151,30 +153,33 @@ class ElementEvaluator extends RecordEvaluator
 	 * One of ELEMENT_FLOW_ADD, ELEMENT_FLOW_EDIT, ELEMENT_FLOW_DELETE, ELEMENT_FLOW_COPY, ELEMENT_FLOW_DATAFLOW, ELEMENT_FLOW_MULTIPLE_ADD, ELEMENT_FLOW_MULTIPLE_EDIT, ELEMENT_FLOW_MULTIPLE_DELETE, ELEMENT_FLOW_MULTIPLE_COPY, ELEMENT_FLOW_UNSPECIFIED
 	 */
 	protected function getCurrentFlowName() {
-		// checks element dynamic attribute 'ctlCurrentFlow' and returns its value if exists
-		$ctlCurrentFlow = $this->getElement()->getDynamicAttribute('ctlCurrentFlow');
-		if(isset($ctlCurrentFlow)) {
-			$returnValue = $ctlCurrentFlow->getValue();
-		}
-		// else calculates current flow name and stores it into the dynamic attribute 'ctlCurrentFlow'
-		else {
-			$formExec = $this->getFormExecutor();
-			if(isset($formExec)) {
-				if(is_a($formExec, 'EditMultipleElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EDIT;
-				elseif(is_a($formExec, 'DeleteMultipleElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_DELETE;
-				elseif(is_a($formExec, 'DeleteElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_DELETE;
-				elseif(is_a($formExec, 'CopyElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_COPY;
-				elseif(is_a($formExec, 'AddElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_ADD;
-				elseif(is_a($formExec, 'EditElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_EDIT;
-				else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+		$element = $this->getElement();
+		if($element instanceof Element) { 
+			// checks element dynamic attribute 'ctlCurrentFlow' and returns its value if exists
+			$ctlCurrentFlow = $element->getDynamicAttribute('ctlCurrentFlow');
+			if(isset($ctlCurrentFlow)) {
+				$returnValue = $ctlCurrentFlow->getValue();
 			}
-			elseif(!is_null($this->getDataFlowContext())) $returnValue = ElementEvaluator::ELEMENT_FLOW_DATAFLOW;
-			else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
-
-			$ctlCurrentFlow = ElementDynAttrFixedValueImpl::createInstance($returnValue);
-			$this->getElement()->setDynamicAttribute('ctlCurrentFlow', $ctlCurrentFlow, false);
+			// else calculates current flow name and stores it into the dynamic attribute 'ctlCurrentFlow'
+			else {
+				$formExec = $this->getFormExecutor();
+				if(isset($formExec)) {
+					if(is_a($formExec, 'EditMultipleElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EDIT;
+					elseif(is_a($formExec, 'DeleteMultipleElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_DELETE;
+					elseif(is_a($formExec, 'DeleteElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_DELETE;
+					elseif(is_a($formExec, 'CopyElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_COPY;
+					elseif(is_a($formExec, 'AddElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_ADD;
+					elseif(is_a($formExec, 'EditElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_EDIT;
+					else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+				}
+				elseif(!is_null($this->getDataFlowContext())) $returnValue = ElementEvaluator::ELEMENT_FLOW_DATAFLOW;
+				else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+	
+				$ctlCurrentFlow = ElementDynAttrFixedValueImpl::createInstance($returnValue);
+				$element->setDynamicAttribute('ctlCurrentFlow', $ctlCurrentFlow, false);
+			}
 		}
-		
+		else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
 		return $returnValue;
 	}
 	
@@ -720,17 +725,6 @@ class ElementEvaluator extends RecordEvaluator
 			else return $returnValue->getAttribute($returnAttribute);
 		}
 	}
-	
-	/**
-	 * Returns the name of the flow the element is currently in.
-	 * FuncExp signature : <code>ctlCurrentFlow()</code><br/>
-	 * @return String one of 'element-add', 'element-edit', 'element-delete', 'element-copy', 'element-dataflow', 'multiple-add','multiple-edit', 'multiple-delete', 'multiple-copy', 'unspecified'
-	 * Returns 'unspecified' if the ElementEvaluator cannot determine in which flow it is currently operating.
-	 */
-	public function ctlCurrentFlow($args) {
-		return $this->getCurrentFlowName();
-	}
-
 	
 	/**
 	 * Checks if a field has changed in the WigiiBag.

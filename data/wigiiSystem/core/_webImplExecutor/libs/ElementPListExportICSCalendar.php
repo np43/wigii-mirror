@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *  
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *  
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *  
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /*
@@ -78,7 +80,7 @@ class ElementPListExportICSCalendar extends ElementPListWebImplWithWigiiExecutor
 	}
 	
 	private $date;
-	public function setDate($date, $fieldName, $isTimeRanges){
+	public function setDate($date, $fieldName, $isTimeRanges, $endDateFieldName=null){
 		$d = explode("-",$date); 
 		$this->date = mktime(0,0,0,$d[1], $d[2], $d[0]); //from format Y-m-d
 		$dateExp = LogExp::createAndExp();
@@ -101,9 +103,17 @@ class ElementPListExportICSCalendar extends ElementPListWebImplWithWigiiExecutor
 		} else {
 			$fsDate= FieldSelector::createInstance($fieldName, "value");
 			if(!$this->getDateField()) $this->setDateField($fieldName);
-			//log exp on date must be done on timestamp to get good results
-			$dateExp->addOperand(LogExp::createSmallerExp($fsDate, $this->date+(365*24*3600)));
-			$dateExp->addOperand(LogExp::createGreaterEqExp($fsDate, $this->date));
+			if($endDateFieldName){
+				$fsEndDate= FieldSelector::createInstance($endDateFieldName, "value");
+				if(!$this->getEndDateField()) $this->setEndDateField($endDateFieldName);
+				$dateExp = lxOr(lxAnd(lxSm($fsDate,$this->date+(365*24*3600)), lxGrEq($fsEndDate, $this->date)),
+						lxAnd(lxEq($fsDate, null),lxSm($fsEndDate,$this->date+(365*24*3600)), lxGrEq($fsEndDate, $this->date)),
+						lxAnd(lxEq($fsEndDate, null),lxSm($fsDate,$this->date+(365*24*3600)), lxGrEq($fsDate, $this->date)));
+			} else {
+				//log exp on date must be done on timestamp to get good results
+				$dateExp->addOperand(LogExp::createSmallerExp($fsDate, $this->date+(365*24*3600)));
+				$dateExp->addOperand(LogExp::createGreaterEqExp($fsDate, $this->date));
+			}
 		}
 		
 		$crtLogExp = $this->getListContext()->getFieldSelectorLogExp();
@@ -129,6 +139,11 @@ class ElementPListExportICSCalendar extends ElementPListWebImplWithWigiiExecutor
 	private $dateFieldname;
 	protected function getDateField(){ return $this->dateFieldname; }
 	public function setDateField($fieldName){ $this->dateFieldname=$fieldName; }
+	
+	//if the calendar is linked to a end Dates field
+	private $endDateFieldname;
+	protected function getEndDateField(){ return $this->endDateFieldname; }
+	public function setEndDateField($fieldName){ $this->endDateFieldname=$fieldName; }
 	
 	//in the case the calendar match a TimeRanges field
 	private $periodFieldname;
@@ -187,13 +202,31 @@ class ElementPListExportICSCalendar extends ElementPListWebImplWithWigiiExecutor
 			if(($h || $i || $s) && !($h==0 && $i==0 && $s==0)) $time = "$h:$i:$s";
 			else $time = "";
 			if($time){
-				$this->put("DTSTART;TZID=Europe/Berlin:".$y.$m.$d."T".$h.$i.$s);
-				//default to one hour length if time
-				$this->put("DTEND;TZID=Europe/Berlin:".date("Ymd\THis", strtotime($y."-".$m."-".$d." ".$h.":".$i.":".$s)+3600));
+				$this->put("DTSTART;TZID=Europe/Berlin:".date("Ymd\THis", strtotime($y."-".$m."-".$d." ".$h.":".$i.":".$s)));
 			} else {
-				//default all day if no time
-				$this->put("DTSTART;VALUE=DATE:".$y.$m.$d);
-				$this->put("DTSTART;VALUE=DATE:".date("Ymd", strtotime($y."-".$m."-".$d)+24*3600));
+				$this->put("DTSTART;VALUE=DATE:".date("Ymd", strtotime($y."-".$m."-".$d)));
+			}
+			if($this->getEndDateField()){
+				$val2 = $elementP->getElement()->getFieldValue($this->getEndDateField(), "value");
+				$d2 = $m2 = $y2 = $h2 = $i2 = $s2 = null;
+				Dates::fromString($val2, $d2, $m2, $y2, $h2, $i2, $s2);
+				if(($h2 || $i2 || $s2) && !($h2==0 && $i2==0 && $s2==0)) $time2 = "$h2:$i2:$s2";
+				else $time2 = "";
+				if($time2){
+					//default to one hour length if time
+					$this->put("DTEND;TZID=Europe/Berlin:".date("Ymd\THis", strtotime($y2."-".$m2."-".$d2." ".$h2.":".$i2.":".$s2)+3600));
+				} else {
+					//default all day if no time
+					$this->put("DTEND;VALUE=DATE:".date("Ymd", strtotime($y2."-".$m2."-".$d2)+24*3600));
+				}
+			} else { //the case with no end date defined
+				if($time){
+					//default to one hour length if time
+					$this->put("DTEND;TZID=Europe/Berlin:".date("Ymd\THis", strtotime($y."-".$m."-".$d." ".$h.":".$i.":".$s)+3600));
+				} else {
+					//default all day if no time
+					$this->put("DTEND;VALUE=DATE:".date("Ymd", strtotime($y."-".$m."-".$d)+24*3600));
+				}
 			}
 		} else if($this->getPeriodField() && $elementP->getElement()->getFieldValue($this->getPeriodField(), "isAllDay")){
 			$this->put("DTSTART;VALUE=DATE:".date("Ymd", strtotime($elementP->getElement()->getFieldValue($this->getPeriodField(), "begDate"))));

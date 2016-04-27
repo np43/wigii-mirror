@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -560,7 +562,8 @@ class TemplateRecordManager extends Model {
 	 */
 	public function displayHeaderLabel($fieldSelector, $fieldXml=null, $xmlHeader=null, $forceDisplayElementState=false){
 		if($xmlHeader != null && count($xmlHeader->children()) > 0){
-			$this->put(str_replace(" ", "&nbsp;", $this->t($fieldSelector->getFieldName(), $xmlHeader)));
+			$label = str_replace(" ", "&nbsp;", $this->t($fieldSelector->getFieldName(), $xmlHeader));
+			$this->put(preg_replace("#<a&nbsp;class=\"(\w+)\"&nbsp;href=\"(\d+)\">&nbsp;</a>#i","<a class=\"$1\" href=\"$2\"> </a>", $label));
 		} else if($fieldSelector->isElementAttributeSelector()){
 			//if states, then by default no label
 			if(!$forceDisplayElementState && substr($fieldSelector->getSubFieldName(), 0, 6) == "state_"){
@@ -1498,10 +1501,12 @@ class TemplateRecordManager extends Model {
 	public function formatValueToPreventInjection($value){
 		//prevent any html or script injection
 		if(is_string($value)){
-			$value = stripslashes(htmlspecialchars($value, ENT_QUOTES, "UTF-8"));
+			$value = str_replace('&amp;#92;','\\' ,stripslashes(htmlspecialchars($value, ENT_QUOTES, "UTF-8")));
+			//$value = stripslashes(htmlspecialchars($value, ENT_QUOTES, "UTF-8"));
 		} else if(is_array($value)) {
 			foreach($value as $i=>$j){
-				$value[$i] = stripslashes(htmlspecialchars($j, ENT_QUOTES, "UTF-8"));
+				$value[$i] = str_replace('&amp;#92;','\\' ,stripslashes(htmlspecialchars($j, ENT_QUOTES, "UTF-8")));
+				//$value[$i] = stripslashes(htmlspecialchars($j, ENT_QUOTES, "UTF-8"));
 			}
 		} else if(is_bool($value) || is_numeric($value)){
 			//nothing to do
@@ -1529,7 +1534,8 @@ class TemplateRecordManager extends Model {
 		if($field!=null) $xml = $field->getXml();
 		else $xml = array();
 
-		if($xml["displayDBValue"]=="1"){
+		//the MultipleAttributs case is handled separately in the datatype method
+		if($xml["displayDBValue"]=="1" && $typename!="MultipleAttributs"){
 			return $value;
 		}
 
@@ -1619,17 +1625,21 @@ class TemplateRecordManager extends Model {
 						break;
 					case "proofStatus":
 						$image = null;
+						$displayNotConfirmIcon = (int)$this->getConfigService()->getParameter($this->getP(), $this->getRecord()->getModule(), 'displayNotConfirmedIcon')==1;
 						if($value == Emails::PROOF_STATUS_DELETED){
 							$image = '<img align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/status/dialog-error.png"';
-							$image .= ' title="'.$this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "proof")).'" ';
+							$image .= ' title="'.$this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "proof")).'" />';
 						} else if($value == Emails::PROOF_STATUS_VALIDATED){
 							$image = '<img align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/status/available.png"';
-							$image .= ' title="'.$this->t("emailIsValidated").'&#xA;'.$this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "proof")).'" ';
+							$image .= ' title="'.$this->t("emailIsValidated").'&#xA;'.$this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "proof")).'" />';
 						} else {
-							$image = '<img style="" align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/status/info.png"';
-							$image .= ' title="'.$this->t("emailIsNotValidated").'" ';
+							//vide sauf si displayNotConfirmedIcon=1
+ 							if($displayNotConfirmIcon) {
+								$image = '<img style="" align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/status/info.png"';
+								$image .= ' title="'.$this->t("emailIsNotValidated").'" />';
+							}
 						}
-						$image .= '/>';
+						//$image .= '/>';
 						return $image;
 						break;
 					case "externalAccessEndDate":
@@ -1649,9 +1659,9 @@ class TemplateRecordManager extends Model {
 						$externalAccessCode = $this->getRecord()->getFieldValue($fieldName, "externalCode");
 						$externalAccessLink = $this->getElementService()->getExternalAccessLinkFromCode($this->getP(), $this->getExecutionService()->getCrtWigiiNamespace(), $this->getExecutionService()->getCrtModule(), $externalAccessCode);
 
-						//public editable
+						//public editable, if it's on read only do not show
 						if($value == 2){
-							$image = '<img class="H" '.(!$this->isForNotification() && !$this->isForListView() && !$this->isForPreviewList() && !$this->isForExternalAccess() ? ' onclick="displayLink($(this).parent(), \''.str_replace("//", '\/\/', $externalAccessLink).'/edit/'.$this->getTranslationService()->getLanguage().'\'); event.stopPropagation();" ' : '').' align="absmiddle" src="'.SITE_ROOT_forFileUrl.'/images/icones/tango/22x22/emblems/globe-edit.png"';
+							$image = '<img class="H" '.(!$this->isForNotification() && !$this->isForListView() && !$this->isForPreviewList() && !$this->isForExternalAccess() && $this->getDetailRenderer()->getRecordIsWritable() ? ' onclick="displayLink($(this).parent(), \''.str_replace("//", '\/\/', $externalAccessLink).'/edit/'.$this->getTranslationService()->getLanguage().'\'); event.stopPropagation();" ' : '').' align="absmiddle" src="'.SITE_ROOT_forFileUrl.'/images/icones/tango/22x22/emblems/globe-edit.png"';
 							$image .= ' title="'.$this->t("thisElementCanBeEditedExternalyThroughACodedLink").($externalAccessEndDate ? '&#xA;'.$this->t("availableTill")." ".$externalAccessEndDate.'' : '').'" ';
 							$image .= '/>';
 							//$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_sendLink\" href=\"javascript:mailToFromLink(\\'".$idAnswer."\\', \\'".str_replace("//", '\/\/', $elS->getUrlForElement($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $element))."\\');\">".$transS->t($p, "sendLink")."</a>');");

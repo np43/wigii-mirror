@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -83,6 +85,9 @@ class ListContext extends ListFilter {
 	public function setCrtView($view){
 		$this->crtView = $view;
 	}
+	public function getCrtViewActivityName(){
+		return $this->getCrtView()."View";
+	}
 	private $viewsParam;
 	public function getCrtViewParams($param=null){
 		if(!isset($this->viewsParam)) return null;
@@ -94,6 +99,22 @@ class ListContext extends ListFilter {
 		if(!isset($this->viewsParam)) $this->viewParam = array();
 		if(!isset($this->viewsParam[$this->getCrtView()])) $this->viewsParam[$this->getCrtView()] = array();
 		$this->viewsParam[$this->getCrtView()][$param] = $value;
+	}
+	
+	//Get customer UI pref
+	public function getListViewUIPref($fieldName, $key) {
+		if(!isset($this->viewsParam)) return null;
+		if($this->viewsParam[$this->getCrtView()]==null) return null;
+		if($this->viewsParam[$this->getCrtView()][(string) $fieldName]==null) return null;
+		return $this->viewsParam[$this->getCrtView()][(string) $fieldName][$key];
+	}
+	
+	//Save customer UI pref like the new width of a colunm
+	public function setListViewUIPref($fieldName, $key, $value) {
+		if(!isset($this->viewsParam)) $this->viewParam = array();
+		if(!isset($this->viewsParam[$this->getCrtView()])) $this->viewsParam[$this->getCrtView()] = array();
+		if(!isset($this->viewsParam[$this->getCrtView()][$fieldName])) $this->viewsParam[$this->getCrtView()][$fieldName] = array();
+		$this->viewsParam[$this->getCrtView()][$fieldName][$key] = $value;
 	}
 
 	//return the list of possible views define in the config

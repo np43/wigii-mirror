@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /*
@@ -78,7 +80,7 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 			throw $ese;
 		}
 
-
+		$isDbValueSet = null;
 		$attribute = null;
 		$attrNb = 0;
 		if($fieldXml["type"] == "groupFilter"){
@@ -103,6 +105,7 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 			$elAttributName = (string)$fieldXml["elementAttribut"];
 			$elFieldName = (string)$fieldXml["field"];
 			$elSubFieldName = (string)$fieldXml["subField"];
+			$isDbValueSet = ($fieldXml["displayDBValue"] == '1');			
 			$fieldName = $fieldXml->getName();
 			if($elFieldName){
 				$elField = $configS->mf($p, $this->getModule())->xpath("$elFieldName");
@@ -143,7 +146,11 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 				foreach($elField->attribute as $option){
 					if((string)$option == "none") continue;
 					$attrNb++;
-					$attrLabel = $transS->t($p, (string)$option, $option);
+					if(!$isDbValueSet){
+						$attrLabel = $transS->t($p, (string)$option, $option);
+					}else{
+						$attrLabel = $option;
+					}
 					$html2text->html2text($attrLabel);
 					$attrLabel = $html2text->get_text();
 					$html2text->clear();
@@ -171,8 +178,17 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 			}
 			*/
 			// activate chosen drop downs in advanced search
-			$size='chosen="1"';
-			$filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="MultipleAttributs" expand="1" '.$size.'><label>'.$label.'</label>' . $attribute . '</'.$filterAttrI->getFieldName().'>'));
+			
+			if((string)$elField["useCheckboxes"]=="1" || (string)$elField["useRadioButtons"]=="1"){
+				// handle checkboxes as is 
+				$size = ($elField["useMultipleColumn"] < 3 ? $elField["useMultipleColumn"] : '3');
+				$filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="MultipleAttributs" expand="1" useCheckboxes="1" isInLine="1" chosen="1" useMultipleColumn="'.$size.'"><label>'.$label.'</label>' . $attribute . '</'.$filterAttrI->getFieldName().'>'));
+			} else {
+				// activate chosen drop downs in advanced search
+				$size='chosen="1"';
+				$filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="MultipleAttributs" expand="1" '.$size.'><label>'.$label.'</label>' . $attribute . '</'.$filterAttrI->getFieldName().'>'));	
+			}
+			// in the case of checkboxes we want them also in the search bar
 		} else if($elField["type"]=="Booleans"){
 			$filterAttrI->setDataType($configS->getDataType("Attributs"));
 			$filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="Attributs" useRadioButtons="1" useMultipleColumn="2" expand="1" ><label>'.$label.'</label><attribute>none</attribute><attribute>true<label>'.$transS->t($p, "checked").'</label></attribute><attribute>false<label>'.$transS->t($p, "unchecked").'</label></attribute></'.$filterAttrI->getFieldName().'>'));

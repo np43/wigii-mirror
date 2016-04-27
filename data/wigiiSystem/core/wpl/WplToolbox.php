@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -274,6 +276,96 @@ class WplToolbox
 			}
 		}
 		$returnValue .= '</'.$rootNodeName.'>';
+		return $returnValue;
+	}
+	
+	/**
+	 * Converts some simple xml to a stdClass or a list of simple stdClasses. 
+	 * Supports trees of simple objects.
+	 * @param SimpleXMLElement $xml
+	 * @return stdClass | WplObjectList | String  (can return a String in the case xml is a single leaf node)
+	 * @example Consider a SimpleXMLElement parsed from the xml string
+	 * <projectList>
+	 * 		<project>
+	 * 			<title>Project 1</title>
+	 *	 		<startDate>2016.04.22</startDate>
+	 * 			<endDate>2016.06.01</endDate>
+	 * 		</project>
+	 * 		<project>
+	 * 			<title>Project 2</title>
+	 *	 		<startDate>2016.06.02</startDate>
+	 * 			<endDate></endDate>
+	 * 		</project>
+	 * </projectList>
+	 * 
+	 * Will return a WplObjectList instance equivalent to the expression :
+	 * wplObjectList("project", 
+	 * 		newObject("title","Project 1","startDate","2016.04.22","endDate","2016.06.01"),
+	 * 		newObject("title","Project 2","startDate","2016.06.02","endDate",NULL),
+	 * )
+	 */
+	public function xml2object($xml) {
+		$returnValue = null;
+		if(isset($xml)) {
+			$nChildren = $xml->count();
+			// goes down the tree
+			if($nChildren > 0) {
+				$isList=false;
+				// if 2 and more children
+				// 		if the first two has same name, then it is a list
+				// 		else it is an object
+				$i=1; $name1 = null; $child1 = null;
+				foreach($xml->children() as $name => $child) {
+					if($i==1) {
+						$name1 = $name;
+						$child1 = $this->xml2object($child);
+					}
+					elseif($i==2) {
+						if($name == $name1) {
+							$returnValue = $this->createWplObjectList($name);
+							$isList=true;
+							// adds first object
+							$returnValue->addWplObject($child1);
+							// adds second object
+							$returnValue->addWplObject($this->xml2object($child));
+						}
+						else {
+							$returnValue = array();
+							$isList = false;
+							// adds first attribute
+							$returnValue[$name1] = $child1;
+							// adds second attribute
+							$returnValue[$name] = $this->xml2object($child);
+						}
+					}
+					else {
+						if($isList) $returnValue->addWplObject($this->xml2object($child));
+						else {
+							if(isset($returnValue[$name])) throw new DataFlowServiceException("cannot define two times attribute '$name' in object.", DataFlowServiceException::INVALID_ARGUMENT);
+							$returnValue[$name] = $this->xml2object($child);
+						}
+					}
+					$i++;
+				}
+				// if 1 child then
+				// 		if child is object then it is a list
+				// 		if child is leaf then it is an object
+				if($nChildren < 2) {
+					if(is_object($child1)) {
+						$returnValue = $this->createWplObjectList($name1);
+						$returnValue->addWplObject($child1);
+					}
+					else {
+						$returnValue = array($name1 => $child1);
+					}
+				}
+			}
+			// if leaf, then returns string content
+			else $returnValue = (string)$xml;
+			
+			// converts array to object
+			if(is_array($returnValue)) $returnValue = (object)$returnValue;
+		}		
 		return $returnValue;
 	}
 	

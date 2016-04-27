@@ -1,21 +1,23 @@
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 function resize_groupPanel(){
@@ -101,7 +103,7 @@ $(window).resize(resize_homePage);
 
 function resize_portal(){
 	if($('#moduleView .portal:visible').length > 0 && $('#moduleView .portal>.media').length > 0){
-		$('#searchBar .firstBox, #searchBar .toolbarBox').hide();
+		//$('#searchBar .firstBox, #searchBar .toolbarBox').hide();
 		$('#moduleView .portal').css('float', 'left');
 		fb = $('#footerBar');
 		tempResizePortalHeight = $(window).height()-$('#moduleView').position().top-$('#moduleView .toolBar').height()-$('#moduleView #indicators').height()-fb.outerHeight()-1;
@@ -109,8 +111,8 @@ function resize_portal(){
 		$('#moduleView .portal').width($(window).width()-$('#groupPanel').outerWidth()-4);
 		$('#moduleView .portal').css('overflow','hidden');
 		$('#moduleView .portal .media>iframe').attr('height', $('#moduleView .portal').height()).attr('width', $('#moduleView .portal').width());
-	} else {
-		$('#searchBar .firstBox, #searchBar .toolbarBox').show();
+	//} else {
+		//$('#searchBar .firstBox, #searchBar .toolbarBox').show();
 	}
 	resize_groupPanel();
 }
@@ -1215,7 +1217,7 @@ function setListenersToRows(listSelector, elSelector, folderSelector, cmSelector
 			} else {
 				w = Math.min(400, Math.max(200, $(this).width())); //take the width of the column min 200 max 400
 			}
-			showHelp(this, $(this).html(), 30, 'fromLeft', 500, w, 60000);
+			showHelp(this, $(this).html(), 30, 'fromLeft', 500, w, 60000, e);
 		})
 		.mouseleave(function(e){ hideHelp(); })
 		.click(function(e){
@@ -1462,7 +1464,64 @@ function setListenersToElementList(){
 		}
 		update('moduleView/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/changeSortByKey/'+fieldName+'/'+$(this).hasClass('ASC'));
 	});
-
+	
+	//make a global variable to store the rezise column
+	window.customHeaderSize = [];
+	//Add a rezise event on each column with classname begin by 'key_'
+	$('#moduleView .headerList>div[class^="key_"]').resizable({
+		handles: 'e',
+		create: function( event, ui ) {
+			// Initialize the resize
+            // Prefers an another cursor with two arrows
+            $(".ui-resizable-e").css("cursor","col-resize").click(function(event){
+            	//Stop the propagation of mouse click in sort column
+            	event.stopImmediatePropagation();
+            });
+        },
+		start: function(event, ui) {
+			// Loop into each header div to remove the noWidth class attribut
+			$('#moduleView .headerList>div').each(function( index ) {
+				  $(this).removeClass('noWidth');
+			});
+	    },
+		resize: function (event, ui){
+			var unitOfMeasure = 'px';
+			//retrieve the position of an element relative to its parent
+			var pos = $('#moduleView .headerList>div').index(this);
+			this.style.width = ui.size.width+'px';
+			//change the size of cols in colgroup
+			var colgroup = $('.dataList colgroup').children();
+			colgroup[pos].style.width = ui.size.width + 17 + unitOfMeasure; //add 17px beacause it's the différance of size
+	
+			//restore the other custom size, this function is to bypass bizarre behavior of jquery
+			var currentField = getFieldName(this);
+			if(window.customHeaderSize) {
+				for (var key in window.customHeaderSize) {
+					if(key != currentField) window.customHeaderSize[key].obj.style.width = window.customHeaderSize[key].width + unitOfMeasure;
+				}
+			}
+		},
+		stop: function(event, ui) {
+			//Store the custom size of column in variable
+			var fieldName = getFieldName(this);
+			window.customHeaderSize[fieldName] = {"obj": this, "width": ui.size.width};
+			this.style.width = ui.size.width;
+			update('NoAnswer/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/saveListViewUIPref/'+fieldName+'/width/'+ui.size.width);
+			//Invoke the methode of resizing window
+			resize_elementList();
+	    }
+	});
+	
+	//function to extract the field name
+	function getFieldName(header) {
+		var fieldName = header.className;
+		fieldName = fieldName.match('key_([^\ ]*)');
+		fieldName = fieldName[1].replace(/(value)|__element/i, '');
+		fieldName = fieldName.replace('(','').replace('(','');
+		fieldName = fieldName.replace(')','').replace(')','');
+		return fieldName;
+	}
+	
 	//set listeners to contextMenu
 	$('#moduleView .list>.cm').mouseleave(function(){
 		$('#moduleView .dataList tr').removeClass('over');
@@ -1480,7 +1539,7 @@ function setListenersToElementList(){
 		}
 		idItem = $('#moduleView .dataList tr.el.over').attr('id').split('_')[1];
 		if($(this).attr('id')=="cm_addElementInList"){
-			$('#moduleView .toolBar .addNewElement').click();
+			$('#searchBar .toolbarBox .addNewElement').click();
 			//update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/add/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
 			return true;
 		}
@@ -1610,7 +1669,7 @@ function setListenersToElementBlog(){
 		}
 		idItem = $('#moduleView .dataBlog div.el.over').attr('id').split('_')[1];
 		if($(this).attr('id')=="cm_addElementInList"){
-			$('#moduleView .toolBar .addNewElement').click();
+			$('#searchBar .toolbarBox .addNewElement').click();
 			//update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/add/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
 			return true;
 		}
@@ -1977,7 +2036,11 @@ function setListenerToNavigateMenu(){
 	;
 	$('#userName>ul>li').each(function(){
 		$(this)
-			.mouseenter(function(e){
+			.mouseenter(function(e){		
+				var height = $(window).height()-$(this).offset().top-$('#footerBar').outerHeight();
+				//$('#userMenu ul li ul').css('max-height',height+'px');
+				$(this).children().last().css('max-height',height+'px'); //relative path
+				
 				$('#userName>ul>li.subMenuHoverTemp').removeClass('subMenuHoverTemp');
 				$(this).addClass('subMenuHoverTemp');
 				clearTimeout(doShowUserSubMenuUserNameTimer);
@@ -2501,7 +2564,7 @@ function setListenersToCheckInOutFiles(elementDialogId, elementId, fieldId, fiel
 	}
 	$('#'+fieldId+'.field .value .checkOutIn').click(function(e){
 		$(this).after('<div class="SBB ui-corner-all" style="font-size:small;background-color:#fff;top:'+(parseInt($(this).position().top)+parseInt($(this).outerHeight())+8)+'px; left:'+$(this).position().left+'px; padding:5px; position:absolute;" ><div style="font-size:small;">'+checkTitleText+'</div><textarea style="width:300px;margin-top:5px; margin-bottom:5px;height:100px;" class=""></textarea><br /><input type="button" name="ok" value="'+okLabel+'" /><input type="button" name="cancel" value="'+cancelLabel+'" /></div>');
-		$(this).next().find('.elastic').autosize();
+		autosize($(this).next().find('.elastic'));
 		$(this).next().find('input:input:last').click(function(){
 			$(this).parent().hide().remove();
 		});
@@ -2820,7 +2883,10 @@ elementCalendar_contextMenuIdElement = null;
 lastResizeOrDragRevertFunction = null;
 lastModifiedEvent = null;
 function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMonth, crtDay){
-
+	
+	var cmSelector = '#moduleView .calendar>.cm';
+	var elSelector = '#moduleView .dataZone div.fc-event';
+	
 	$('#moduleView .calendar').fullCalendar({
 		defaultView: crtView,
 		year: crtYear,
@@ -2848,7 +2914,7 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 		},
 		lazyFetching: false,
 		ignoreTimezone: false,
-		height: $('#moduleView').height()-$('#moduleView .toolBar').height()-$('#moduleView #indicators').height(),
+		height: $('#moduleView').height() - parseInt($('#moduleView .calendar').css('margin-top'),10),
 		firstDay: 1,
 		editable: calendarIsEditable,
 		eventDragStart: function(event, jsEvent, ui, view){
@@ -2918,12 +2984,45 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 	    },
 		eventRender: function(event, element) {
 	        element.find('.fc-event-title').html(event.title);
+	        element.unbind('contextmenu');
+	        element.bind('contextmenu', function (e) { //FullCalendar right click properly handled
+	            if (e.which == 3) {
+					hideHelp();
+	            	$(this).closest(elSelector).addClass('over');
+	            	$('#moduleView .calendar .S').removeClass('S');
+	        		$('#moduleView .calendar div.over').addClass('S');
+	        		positionElementOnMouse($(cmSelector), e, 'fromRight', null, 5);
+	        		//show hide some buttons: Default values
+	        		elEnableState = $('0');
+	        		elState = $('0');
+	        		//saving the id of element clicked
+	        		if($(cmSelector + " > div.idSelect").length ){
+	        			$(cmSelector + " > div.idSelect").attr("id", event.id);
+	        		} else {
+	        			$(cmSelector).append('<div class="idSelect" id="'+event.id+'" style="display: none;"></div>');
+	        		}
+	        		if(event.editable == "false"){
+	        			$(cmSelector+' div.write').hide();
+	        		} else {
+	        			$(cmSelector+' div.write').show();
+	        		}
+	        		if($('#moduleView .toolBar .addNewElement.disabledBg').length>0){
+	        			$(cmSelector+' #cm_addElementInList').hide();
+	        		} else {
+	        			$(cmSelector+' #cm_addElementInList').show();
+	        		}
+	        		if(elState & 2) {
+	        			$(cmSelector+' #cm_edit').hide();
+	        			$(cmSelector+' #cm_delete').hide();
+	        			$(cmSelector+' #cm_organize').hide();
+	        		}
+	        		$(cmSelector).show();
+	        		e.stopPropagation();
+					return false;
+	            }
+	        });
 	    },
-//			eventRender: function(event, element) {
-//		        element.qtip({
-//		            content: event.description
-//		        });
-//		    },
+
 		loading: function(isLoading, view){
 			setVis('busyDiv', isLoading);
 		},
@@ -2932,6 +3031,9 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 			},
 		eventMouseover: function(calEvent, jsEvent, view){
 			elementCalendar_contextMenuIdElement = calEvent.id;
+			hideHelp();
+			//displaying description under mouse position
+			showHelp(this, calEvent.description, 30, "fromCenter", 200, 200, 5000, jsEvent);
 		}
 	});
 	if(groupUpId!==""){
@@ -2942,14 +3044,63 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 			e.stopPropagation();
 		});
 	}
-}
+	//Context menu
+	$(cmSelector).mouseleave(function(){
+		$(elSelector).removeClass('over');
+		$(this).hide();
+	});
+	$(cmSelector).click(function(){
+		$(elSelector).removeClass('over');
+		$(this).hide();
+	});
+	$(cmSelector + '>div').unbind();
+	$(cmSelector + '>div').click(function(e){
+		if($(this).attr('id')=="cm_exit") return true;
+		if($(this).attr('id')=="cm_open"){
+			$(elSelector+'.over').click();
+			return true;
+		}
+		//Recovering the id of element clicked
+		idItem = $(cmSelector + ' > div.idSelect').attr('id');
+		
+		if($(this).attr('id')=="cm_addElementInList"){
+			$('#searchBar .toolbarBox .addNewElement').click();
+			return true;
+		}
+		
+		if($(this).hasClass('unchecked')) {
+			checked = 1;
+			$(this).removeClass('unchecked').addClass('checked');
+		}
+		else if($(this).hasClass('checked')) {
+			checked = 0;
+			$(this).removeClass('checked').addClass('unchecked');
+		}
+		else checked = -1;
 
+		if($(this).attr('id')=="cm_edit"){
+			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/edit/'+idItem);
+			return true;
+		}
+		if($(this).attr('id')=="cm_delete"){
+			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/delete/'+idItem+'/elementDialog');
+			return true;
+		}
+		if($(this).attr('id')=="cm_copy"){
+			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/copy/'+idItem+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
+			return true;
+		}
+		if($(this).attr('id')=="cm_organize"){
+			openOrganizeDialog(idItem);
+			return true;
+		}
+		e.stopPropagation();
+	});
+}
 function resize_calendar(){
 	if($('#moduleView .calendar').length>0){
-		//changed on 30.03.2012, the calendar will auto reize a bit biger if necessary. So it is better to not resize the .calendar it self
-		//$('#moduleView .calendar').height($('#groupPanel>ul').height()+$('#groupPanel .T').height()-$('#moduleView .toolBar').outerHeight()-$('#moduleView #indicators').outerHeight()+20);
-		//$('#moduleView .calendar').fullCalendar('option', 'height', $('#moduleView .calendar').height());
-		$('#moduleView .calendar').fullCalendar('option', 'height', $('#groupPanel>ul').height()+$('#groupPanel .T').height()-$('#moduleView .toolBar').outerHeight()-$('#moduleView #indicators').outerHeight()+20);
+		$('#moduleView .calendar').height($('#groupPanel').height() - parseInt($('#moduleView .calendar').css('margin-top'),10));
+		$('#moduleView .calendar').fullCalendar('option', 'height', $('#moduleView .calendar').height());
 	}
 }
 function selectEvent_elementCalendar(){

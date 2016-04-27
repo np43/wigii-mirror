@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /*
@@ -127,6 +129,34 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 				$this->addErrorToField($transS->h($p, "invalidXml").$errorsToDisplay, "moduleEditorConfigField");
 			}
 		}
+		//check php syntax if php file:
+		/*
+		if($info['extension']=="php" && $rec->getFieldValue("moduleEditorConfigField")){
+			$returnValue = null;
+			$errorLevel = error_reporting(0);
+			try {
+				$returnValue = eval(stripslashes(str_replace('<?php', '', $rec->getFieldValue("moduleEditorConfigField"))));
+			}
+			catch(Exception $e) {
+				// adds any catched exception
+				if($e instanceof ServiceException) $e = $e->getWigiiRootException();
+				$errorMessage = "Exception while evaluating php code (".$e->getCode().") ".$e->getMessage().'<br/>';
+				$errorMessage .= str_replace("\n", '<br/>', str_replace('\\', '/', (string)$e));
+				$this->addErrorToField($errorMessage, "moduleEditorConfigField");
+			}
+			error_reporting($errorLevel);
+			// add any php error
+			if($returnValue === false && ( $phpError = error_get_last() )) {
+				$errorMessage = "PHP error while parsing php code (".$phpError['type'].") on line ".$phpError['line'].": ".$phpError['message'];
+				$this->addErrorToField($errorMessage, "moduleEditorConfigField");
+			}
+			// add any output (prevent saving the file if the script generated some output)
+			elseif($returnValue !== null) {
+				$errorMessage = "PHP code returned some output. Cannot save the file. Output: <br/>".put($returnValue);
+				$this->addErrorToField($errorMessage, "moduleEditorConfigField");
+			}
+		}
+		*/
 	}
 
 	protected function actOnCheckedRecord($p, $exec) {

@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /***
@@ -46,6 +48,13 @@ $exec->addJsCode("calendarIsEditable = ".strtolower(put($crtGroupIsWritable)).";
 
 $crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 $crtModule = $exec->getCrtModule()->getModuleUrl();
+
+//Hide searchbox when parameters is equal to
+if($configS->getParameter($p, $exec->getCrtModule(), "hide_searchBar") == "1"){
+	$exec->addJsCode("$('#searchBar > .firstBox, #searchBar > .toolbarBox').hide();");
+} else {
+	$exec->addJsCode("$('#searchBar > .firstBox, #searchBar > .toolbarBox').show();");
+}
 
 //add toolbar
 
@@ -170,6 +179,7 @@ if(!$url){ //display list only if no url
 	
 	//refreshes module help icon if config changed
 	if($lastConfigKey!=$currentConfigKey) $this->refreshModuleHelpAnchor($p,$exec);
+	$this->bindJsServicesOnModuleView($p,$exec);
 
 ?></div></div><?
 ?><div class="clear"></div><?
@@ -190,8 +200,18 @@ if($crtDate==null) $crtDate = "crtYear=".date("Y")."; crtMonth=".(date("n")-1)."
 $exec->addJsCode("$crtDate setListenersToCalendar('".($crtGroupP ? ($crtGroupP->getDbEntity()->getGroupParentId() ? $crtGroupP->getDbEntity()->getGroupParentId() : 0 ) : null)."', '".($crtGroupP ? $transS->h($p, "groupUp") : null)."', '$crtView', crtYear, crtMonth, crtDay);");
 
 ?><div class="dataZone calendar"><?
-	//no context menu for calendar view
-
+/**
+ * element List context menu
+ */
+?><div class="cm SBB"><?
+		?><div id="cm_exit" class="exit SBB">x</div><?
+		?><div id="cm_open" class="H fB"><?=$transS->t($p, "openElement");?></div><?
+		?><div id="cm_addElementInList" class="H fB"><?=$transS->t($p, "addElement");?></div><?
+		?><div id="cm_edit" class="write H fB"><?=$transS->t($p, "editElement");?>...</div><?
+		?><div id="cm_delete" class="write H fB"><?=$transS->t($p, "deleteElement");?>...</div><?
+		?><div id="cm_copy" class="write H fB"><?=$transS->t($p, "copyElement");?>...</div><?
+		?><div id="cm_organize" class="write H fB"><?=$transS->t($p, "organizeElement");?>...</div><?
+	?></div><?
 	//echo $table;
 ?></div><?
 

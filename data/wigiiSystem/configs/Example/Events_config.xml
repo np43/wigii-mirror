@@ -2,7 +2,7 @@
 <events>
 
 	<parameters
-	
+
 		FeedbackOnSystem_enable="1"
 		FeedbackOnElement_enable="1"
 
@@ -81,7 +81,7 @@
 
 	<fields >
 		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="500"  /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
-			
+
 			<subject excelExport="auto" type="Strings" require="1" displayAsTitle1="1"><label_l01>Subject</label_l01><label_l02>Sujet</label_l02></subject>
 			<period excelExport="50" type="TimeRanges" require="1" displayAsTitle2="1"><label_l01>When</label_l01><label_l02>Quand</label_l02></period>
 			<location excelExport="auto" type="Strings" require="0" displayAsTitle3="1" expand="1"><label_l01>Location</label_l01><label_l02>Location</label_l02></location>
@@ -99,7 +99,7 @@
 			</labels>
 			<description excelExport="0" type="Blobs" require="0" htmlArea="1" activateHtmlArea="1" isInLine="1" expand="1" />
 		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
-		
+
 		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="300" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
 			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1"><label_l01>Comments</label_l01><label_l02>Commentaires</label_l02></comments>
 			<groupFiles groupStart="1"><label_l01>Attach files</label_l01><label_l02>Attacher des fichiers</label_l02></groupFiles>
@@ -112,12 +112,12 @@
 				<flyer excelExport="none" type="Files" require="0" searchable="0" displayPreviewOnly="1"><label_l01>Flyer</label_l01><label_l02>Flyer</label_l02></flyer>
 			<groupFiles groupEnd="1"/>
 		<groupright groupEnd="1" expand="1" noFieldset="1" />
-		
+
 		<!-- calculated fields -->
 		<calculatedStart excelExport="none" type="Dates" hidden="1" require="0" includeTime="1" funcExp='implode(" ", period.begDate, period.begTime)'><label_l01>Begining</label_l01><label_l02>Début</label_l02></calculatedStart>
 		<attachments excelExport="none" type="Strings" require="0" hidden="1" htmlArea="1" funcExp='implode(" ", integratedFile.mime,file.mime,file2.mime,file3.mime,file4.mime,file5.mime,flyer.mime)' />
 		<attachmentsForExport excelExport="auto" type="Strings" require="0" hidden="1" funcExp='doOnNotNull("(@)", first(integratedFile.date,file.date,file2.date,file3.date,file4.date,file5.date,flyer.date))' />
-		
+
 	</fields>
 
 	<selectSearchBar>
@@ -146,6 +146,16 @@
 			</export>
 		</fields>
 	</exportMenu>
+	<!--
+	the following parameters can be filled in:
+	periodFieldname="..." or dateFieldname="..." [endDateFieldname="..."]
+	subjectFieldname="..."
+	locationFieldname="..."
+	postLocationFieldname="..."
+	labelFieldname="..."
+	descriptionFieldname="..."
+	organizerFieldname="..."
+	-->
 	<exportExcelCalendar>
 		<parameters
 			periodFieldname="period"
@@ -166,17 +176,26 @@
 		</fields>
 	</exportExcelCalendar>
 
-	<!-- *********************************************
-	**** WARNING
-	**** for module with calendar views, the fields:
-	**** in calendarView should be considered as:
-	**** - first string field as Subject
-	**** - an Address field will be considered as Location
-	**** - if no address field is found, then the second string field will be considered as Location
-	**** - first Blobs field will be considered as description
-	**** - first TimeRanges field will be considered as period
-	**** - any other field will be ignored
-	************************************************ -->
+	<!-- /**
+	 * Adds an element to the list
+	 * throws ListException::ALREADY_EXISTS if we try to put a second time the same element in the list
+	 *  *********************************************
+		**** WARNING
+		**** the activity calendarView will be used as:
+		**** - first Strings/Varchars field as Subject
+		**** - first Address field will be considered as Location
+		**** - if no Address field is found, then the second Strings/Varchars field will be considered as Location
+		**** - if no Address field is found, then the third Strings/Varchars field is the postlocation
+		**** - if there is an Address, the the second Strings/Varchars field is the postlocation
+		**** - first Blobs/Texts field will be considered as description
+		**** - first TimeRanges field will be considered as period
+		**** - if no TimeRanges the first Dates field will be considered as the start date
+		**** - the second Dates field will be considered as the end date
+		**** - if there is no second Dates then the event will be set to one full day if no time, or one hour if a time is set.
+		**** - the first Attributs/MultipleAttributs containing color codes will used to colorize the items
+		**** - any other field will be ignored
+		**********************************************
+	 */ -->
 	<calendarView isDefaultView="1">
 		<fields>
 			<c1 field="subject"/>

@@ -1,22 +1,24 @@
 <?php
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 /**
@@ -405,11 +407,11 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 			if(is_array($value)){
 				foreach($value as $tempKey=>$tempValue){
 					//important to do the check with null, to prevent transforming null in ""
-					if(!$magicQuotes && $get[$key][$tempKey]!=null) $get[$key][$tempKey] = addslashes($get[$key][$tempKey]);
+					if(!$magicQuotes && $get[$key][$tempKey]!=null) $get[$key][$tempKey] = addslashes(str_replace('\\', '&#92;',$get[$key][$tempKey]));
 				}
 			} else {
 				//important to do the check with null, to prevent transforming null in ""
-				if(!$magicQuotes && $get[$key]!=null) $get[$key] = addslashes($get[$key]);
+				if(!$magicQuotes && $get[$key]!=null) $get[$key] = addslashes(str_replace('\\', '&#92;', $get[$key]));
 			}
 		}
 	}
@@ -512,7 +514,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 						$fieldSelectorList->addFieldSelector($fieldName, "version");
 						$fieldSelectorList->addFieldSelector($fieldName, "textContent");
 						//no utf8 conversion needed, because the textContent is collate with utf8. if it was binary then conversion should occurs
-						$record->setFieldValue($record->getFieldValue($field->getFieldName(), "textContent"), $field->getFieldName(), "textContent");
+						$record->setFieldValue($record->getFieldValue($fieldName, "textContent"), $fieldName, "textContent");
 						continue;
 					}
 
@@ -574,46 +576,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 
 						//load the content in the wigiiBag if storeFileInWigiiBag
 						if($storeFileInWigiiBag){
-							$filePath = TEMPORARYUPLOADEDFILE_path.$fileName;
-							$fp = @fopen($filePath, 'rb');
-							if ($fp === false) throw new ServiceException("Error on opening the temporaryUploadedFile ".$filePath, ServiceException::FORBIDDEN);
-							//if (!file_exists($filePath)) throw new ServiceException("Error on opening the temporaryUploadedFile ".$filePath, ServiceException::FORBIDDEN);
-							else {
-		//						fput("move  $filePath in DB");
-								//$val = "LOAD_FILE('".dirname($_SERVER["SCRIPT_FILENAME"])."/".$filePath."')";
-								$val = addslashes(fread($fp, filesize($filePath)));
-		//						fput("fread: ".md5($val));
-								$record->setFieldValue($val, $fieldName, "content");
-								fclose($fp);
-
-								//if this is an image then create the thumbnail
-								if(isImage($record->getFieldValue($fieldName, "mime"))){
-									$fieldXml = $field->getXml();
-									$thumbFilePath = TEMPORARYUPLOADEDFILE_path."tn_".$fileName;
-									if($fieldXml["displayPreviewOnly"] == "1"){
-		//								fput("cutImage ".$thumbFilePath." as preview");
-										cutImage($filePath, $thumbFilePath, 150);
-									} else {
-		//								fput("cutImage ".$thumbFilePath." as thumbnail");
-										cutImage($filePath, $thumbFilePath, 80, 80);
-									}
-									//load the thumbnail in DB
-									$fp = @fopen($thumbFilePath, 'rb');
-									if ($fp !== false){ //can be the case if the original file is to big
-										$val = addslashes(fread($fp, filesize($thumbFilePath)));
-										fclose($fp);
-		//								fput("move  thumbnail $thumbFilePath in DB");
-										$record->setFieldValue($val, $fieldName, "thumbnail");
-										//know we can delete the thumbnail
-										if (!@unlink($thumbFilePath)) $this->executionSink()->log("Unable to delete the temporary thumb file:".$thumbFilePath." after loading his content in the database.");
-									}
-								} else {
-									$record->setFieldValue(null, $fieldName, "thumbnail");
-								}
-
-		//						fput("delete the temp file $filePath");
-								if (!@unlink($filePath)) $this->executionSink()->log("Unable to delete the temporary file:".$filePath." after loading his content in the database.");
-							}
+							$this->moveTempFileToWigiiBag($record, $field);
 						}
 					}
 				}
@@ -622,161 +585,230 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		
 		if(!$fieldSelectorList->isEmpty()) return $fieldSelectorList;
 		else return null;
+	}	
+	/**
+	 * Moves a temp file into the WigiiBag for one given Field into a Record
+	 * @param Record $record the record containing the file to move
+	 * @param Field $field the field of type Files
+	 */
+	public function moveTempFileToWigiiBag($record,$field) {
+		$fieldName = $field->getFieldName();
+		$fileName = $record->getFieldValue($fieldName, "path");
+		$filePath = TEMPORARYUPLOADEDFILE_path.$fileName;
+		$fp = @fopen($filePath, 'rb');
+		if ($fp === false) throw new ServiceException("Error on opening the temporaryUploadedFile ".$filePath, ServiceException::FORBIDDEN);
+		//if (!file_exists($filePath)) throw new ServiceException("Error on opening the temporaryUploadedFile ".$filePath, ServiceException::FORBIDDEN);
+		else {
+			//						fput("move  $filePath in DB");
+			//$val = "LOAD_FILE('".dirname($_SERVER["SCRIPT_FILENAME"])."/".$filePath."')";
+			$val = addslashes(fread($fp, filesize($filePath)));
+			//						fput("fread: ".md5($val));
+			$record->setFieldValue($val, $fieldName, "content");
+			fclose($fp);
+		
+			//if this is an image then create the thumbnail
+			if(isImage($record->getFieldValue($fieldName, "mime"))){
+				$fieldXml = $field->getXml();
+				$thumbFilePath = TEMPORARYUPLOADEDFILE_path."tn_".$fileName;
+				if($fieldXml["displayPreviewOnly"] == "1"){
+					//								fput("cutImage ".$thumbFilePath." as preview");
+					cutImage($filePath, $thumbFilePath, 150);
+				} else {
+					//								fput("cutImage ".$thumbFilePath." as thumbnail");
+					cutImage($filePath, $thumbFilePath, 80, 80);
+				}
+				//load the thumbnail in DB
+				$fp = @fopen($thumbFilePath, 'rb');
+				if ($fp !== false){ //can be the case if the original file is to big
+					$val = addslashes(fread($fp, filesize($thumbFilePath)));
+					fclose($fp);
+					//								fput("move  thumbnail $thumbFilePath in DB");
+					$record->setFieldValue($val, $fieldName, "thumbnail");
+					//know we can delete the thumbnail
+					if (!@unlink($thumbFilePath)) $this->executionSink()->log("Unable to delete the temporary thumb file:".$thumbFilePath." after loading his content in the database.");
+				}
+			} else {
+				$record->setFieldValue(null, $fieldName, "thumbnail");
+			}
+		
+			//						fput("delete the temp file $filePath");
+			if (!@unlink($filePath)) $this->executionSink()->log("Unable to delete the temporary file:".$filePath." after loading his content in the database.");
+		}
 	}
 	/**
-	 * $oldRecord is to check if there is changes in the Files fields
-	 * $isAfterInsert will make getFieldValueBeforeInsert to fetch the values
+	 * Updates the Files on disk for all Fields of type Files or Texts/Blobs with HTML.
+	 * @param Principal $p current principal executing the action	 
+	 * @param ExecutionService $exec current instance of ExecutionService
+	 * @param Record $record Record for which Files are beeing updated
+	 * @param Field $field field for which Files are beeing updated
+	 * @param boolean $storeFileInWigiiBag if true, then Files content are stored into the DB and not on the File system
+	 * @param Record $oldRecord old Record, as currently into the DB (is to check if there is changes in the Files fields)
+	 * @param Boolean $isAfterInsert should be true, if current Element has just been inserted into the DB and not yet reloaded (will make getFieldValueBeforeInsert to fetch the values)
 	 */
 	public function updateFilesOnDisk($p, $exec, $storeFileInWigiiBag, $oldRecord=null, $isAfterInsert=false){
 		$record = $this->getRecord();
 		$fieldListIterator = $this->getRecord()->getFieldList()->getListIterator();
 		if($fieldListIterator){
 			foreach($fieldListIterator as $field){
-				if($field->getDataType() != null && $field->getDataType()->getDataTypeName()=="Texts"){
-					$fieldXml = $field->getXml();
-					if($fieldXml["htmlArea"]=="1"){
-						if($oldRecord!=null){
-							//delete any CLIENT_WEB_PATH."imageForHtmlEditor/*.*" which are not in the new text
-							$oldMatch = array();
-							$multiLanguageValues = $oldRecord->getFieldValue($field->getFieldName());
-							if($multiLanguageValues) {
-								foreach($multiLanguageValues as $key=>$val){
-									$oldMatch[$key] = array();
-									preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $val, $oldMatch[$key]);
-								}
-							}
-							$newMatch = array();
-							$multiLanguageValues = $record->getFieldValue($field->getFieldName());
-							if($multiLanguageValues) {
-								foreach($multiLanguageValues as $key=>$val){
-									$newMatch[$key] = array();
-									preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $val, $newMatch[$key]);
-								}
-							}
+				$this->updateFilesOnDiskForField($p, $exec, $record, $field, $storeFileInWigiiBag, $oldRecord, $isAfterInsert, true);
+			}
+		}
+	}
 
-							foreach($oldMatch as $key=>$oldMat){
-								if($oldMat && $oldMat[0]){
-									foreach($oldMat[0] as $tempPath){
-										if(!$newMatch[$key][0] || false===array_search($tempPath, $newMatch[$key][0])){
-											@unlink($tempPath);
-										}
-									}
+	/**
+	 * Updates the Files on disk which are related to a given Field of type Files or Blobs with HTML.
+	 * @param Principal $p current principal executing the action	 
+	 * @param ExecutionService $exec current instance of ExecutionService
+	 * @param Record $record Record for which Files are beeing updated
+	 * @param Field $field field for which Files are beeing updated
+	 * @param boolean $storeFileInWigiiBag if true, then Files content are stored into the DB and not on the File system
+	 * @param Record $oldRecord old Record, as currently into the DB (is to check if there is changes in the Files fields)
+	 * @param Boolean $isAfterInsert should be true, if current Element has just been inserted into the DB and not yet reloaded (will make getFieldValueBeforeInsert to fetch the values)
+	 * @param Boolean $enableJsCode if true, then JS code is allowed to be sent back to client, defaults to false to use it in batch mode.
+	 */
+	public function updateFilesOnDiskForField($p, $exec, $record, $field, $storeFileInWigiiBag, $oldRecord=null, $isAfterInsert=false, $enableJsCode=false){
+		if($field->getDataType() != null && $field->getDataType()->getDataTypeName()=="Texts"){
+			$fieldXml = $field->getXml();
+			if($fieldXml["htmlArea"]=="1"){
+				if($oldRecord!=null){
+					//delete any CLIENT_WEB_PATH."imageForHtmlEditor/*.*" which are not in the new text
+					$oldMatch = array();
+					$multiLanguageValues = $oldRecord->getFieldValue($field->getFieldName());
+					if($multiLanguageValues) {
+						foreach($multiLanguageValues as $key=>$val){
+							$oldMatch[$key] = array();
+							preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $val, $oldMatch[$key]);
+						}
+					}
+					$newMatch = array();
+					$multiLanguageValues = $record->getFieldValue($field->getFieldName());
+					if($multiLanguageValues) {
+						foreach($multiLanguageValues as $key=>$val){
+							$newMatch[$key] = array();
+							preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $val, $newMatch[$key]);
+						}
+					}
+		
+					foreach($oldMatch as $key=>$oldMat){
+						if($oldMat && $oldMat[0]){
+							foreach($oldMat[0] as $tempPath){
+								if(!$newMatch[$key][0] || false===array_search($tempPath, $newMatch[$key][0])){
+									@unlink($tempPath);
 								}
 							}
 						}
-						continue;
 					}
 				}
-				if($field->getDataType() != null && $field->getDataType()->getDataTypeName()=="Blobs"){
-					$fieldXml = $field->getXml();
-					if($fieldXml["htmlArea"]=="1"){
-						if($oldRecord!=null){
-							//delete any CLIENT_WEB_PATH."imageForHtmlEditor/*.*" which are not in the new text
-							$oldMatch = array();
-							preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $oldRecord->getFieldValue($field->getFieldName(), "value"), $oldMatch);
-							$newMatch = array();
-							preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $record->getFieldValue($field->getFieldName(), "value"), $newMatch);
-							if($oldMatch && $oldMatch[0]){
-								foreach($oldMatch[0] as $tempPath){
-									if(!$newMatch[0] || false===array_search($tempPath, $newMatch[0])){
-										@unlink($tempPath);
-									}
-								}
+				return;
+			}
+		}
+		if($field->getDataType() != null && $field->getDataType()->getDataTypeName()=="Blobs"){
+			$fieldXml = $field->getXml();
+			if($fieldXml["htmlArea"]=="1"){
+				if($oldRecord!=null){
+					//delete any CLIENT_WEB_PATH."imageForHtmlEditor/*.*" which are not in the new text
+					$oldMatch = array();
+					preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $oldRecord->getFieldValue($field->getFieldName(), "value"), $oldMatch);
+					$newMatch = array();
+					preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $record->getFieldValue($field->getFieldName(), "value"), $newMatch);
+					if($oldMatch && $oldMatch[0]){
+						foreach($oldMatch[0] as $tempPath){
+							if(!$newMatch[0] || false===array_search($tempPath, $newMatch[0])){
+								@unlink($tempPath);
 							}
 						}
-						continue;
 					}
 				}
-				if($field->getDataType() != null && $field->getDataType()->getDataTypeName()=="Files"){
-					$fieldXml = $field->getXml();
-					$fieldName = $field->getFieldName();
-					if($fieldXml["htmlArea"]=="1"){
-						if($oldRecord!=null && $oldRecord->getFieldValue($fieldName, "size") && $oldRecord->getFieldValue($fieldName, "date") != $record->getFieldValue($fieldName, "date")){
-							if($fieldXml["keepHistory"]>0 && $exec->getCrtParameters($exec->getCrtAction() == 'externalAccess' ? 4 : 2) != 'blockHistory'){
-								$this->pushHtmlFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
-								$exec->addJsCode("actOnHistorizedHtmlFile('$fieldName');");
-								continue;
-							}
-
-							//delete any CLIENT_WEB_PATH."imageForHtmlEditor/*.*" which are not in the new text
-							$oldMatch = array();
-							preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $oldRecord->getFieldValue($field->getFieldName(), "textContent"), $oldMatch);
-							$newMatch = array();
-							preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $record->getFieldValue($field->getFieldName(), "textContent"), $newMatch);
-							if($oldMatch && $oldMatch[0]){
-								foreach($oldMatch[0] as $tempPath){
-									if(!$newMatch[0] || false===array_search($tempPath, $newMatch[0])){
-										@unlink($tempPath);
-									}
-								}
+				return;
+			}
+		}
+		if($field->getDataType() != null && $field->getDataType()->getDataTypeName()=="Files"){
+			$fieldXml = $field->getXml();
+			$fieldName = $field->getFieldName();
+			if($fieldXml["htmlArea"]=="1"){
+				if($oldRecord!=null && $oldRecord->getFieldValue($fieldName, "size") && $oldRecord->getFieldValue($fieldName, "date") != $record->getFieldValue($fieldName, "date")){
+					if($fieldXml["keepHistory"]>0 && $exec->getCrtParameters($exec->getCrtAction() == 'externalAccess' ? 4 : 2) != 'blockHistory'){
+						$this->pushHtmlFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
+						if($enableJsCode) $exec->addJsCode("actOnHistorizedHtmlFile('$fieldName');");
+						return;
+					}
+		
+					//delete any CLIENT_WEB_PATH."imageForHtmlEditor/*.*" which are not in the new text
+					$oldMatch = array();
+					preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $oldRecord->getFieldValue($field->getFieldName(), "textContent"), $oldMatch);
+					$newMatch = array();
+					preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $record->getFieldValue($field->getFieldName(), "textContent"), $newMatch);
+					if($oldMatch && $oldMatch[0]){
+						foreach($oldMatch[0] as $tempPath){
+							if(!$newMatch[0] || false===array_search($tempPath, $newMatch[0])){
+								@unlink($tempPath);
 							}
 						}
-						continue;
 					}
-
-
-					if($isAfterInsert) $fileName = $record->getFieldValueBeforeInsert($fieldName, "path");
-					else $fileName = $record->getFieldValue($fieldName, "path");
-					$oldFileName = ($oldRecord != null ? $oldRecord->getFieldValue($fieldName, "path") : null);
-
-	//				fput("field $fieldName is $fileName and was before $oldFileName");
-					//if the deleteFile is checked then delete the oldFile + thumbnail
-					//this work only if oldRecord is defined
-
-					if($fileName == null && $oldRecord!=null){
-	//					fput("toDelete checked: delete old file $fieldName:".$oldFileName);
-						if (isImage($oldRecord->getFieldValue($fieldName, "mime"))) @unlink(FILES_PATH."tn_".$oldFileName);
-						if($oldFileName && $fieldXml["keepHistory"]>0){
-							$this->pushFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
+				}
+				return;
+			}
+		
+		
+			if($isAfterInsert) $fileName = $record->getFieldValueBeforeInsert($fieldName, "path");
+			else $fileName = $record->getFieldValue($fieldName, "path");
+			$oldFileName = ($oldRecord != null ? $oldRecord->getFieldValue($fieldName, "path") : null);
+		
+			//				fput("field $fieldName is $fileName and was before $oldFileName");
+			//if the deleteFile is checked then delete the oldFile + thumbnail
+			//this work only if oldRecord is defined
+		
+			if($fileName == null && $oldRecord!=null){
+				//					fput("toDelete checked: delete old file $fieldName:".$oldFileName);
+				if (isImage($oldRecord->getFieldValue($fieldName, "mime"))) @unlink(FILES_PATH."tn_".$oldFileName);
+				if($oldFileName && $fieldXml["keepHistory"]>0){
+					$this->pushFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
+				} else {
+					@unlink(FILES_PATH.$oldFileName);
+				}
+			}
+			//else if new Element then either move the file in Client folder and create a thumb
+			//either delete the file and the old file
+			else if($fileName!=null &&
+					($oldFileName == null || $oldFileName!= $fileName)){
+		
+				$filePath = TEMPORARYUPLOADEDFILE_path.$fileName;
+		
+				if(!$storeFileInWigiiBag){
+					//						fput("move  $filePath in ".FILES_PATH.$fileName);
+					//move the tempFile into client folder
+					if(!rename($filePath, FILES_PATH.$fileName)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$filePath." in the Client folder:".FILES_PATH.$fileName, ServiceException::FORBIDDEN);
+		
+					//if this is an image then create the thumbnail
+					if($isAfterInsert) $mime = $record->getFieldValueBeforeInsert($fieldName, "mime");
+					else $mime = $record->getFieldValue($fieldName, "mime");
+					if(isImage($mime)){
+						$fieldXml = $field->getXml();
+						if($fieldXml["displayPreviewOnly"] == "1"){
+							//								fput("cutImage ".FILES_PATH.$fileName." as preview");
+							cutImage(FILES_PATH.$fileName, FILES_PATH."tn_".$fileName, 150);
 						} else {
-							@unlink(FILES_PATH.$oldFileName);
+							//								fput("cutImage ".FILES_PATH.$fileName." as thumbnail");
+							cutImage(FILES_PATH.$fileName, FILES_PATH."tn_".$fileName, 80, 80);
 						}
 					}
-					//else if new Element then either move the file in Client folder and create a thumb
-					//either delete the file and the old file
-					else if($fileName!=null &&
-						($oldFileName == null || $oldFileName!= $fileName)){
-
-						$filePath = TEMPORARYUPLOADEDFILE_path.$fileName;
-
-						if(!$storeFileInWigiiBag){
-	//						fput("move  $filePath in ".FILES_PATH.$fileName);
-							//move the tempFile into client folder
-							if(!rename($filePath, FILES_PATH.$fileName)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$filePath." in the Client folder:".FILES_PATH.$fileName, ServiceException::FORBIDDEN);
-
-							//if this is an image then create the thumbnail
-							if($isAfterInsert) $mime = $record->getFieldValueBeforeInsert($fieldName, "mime");
-							else $mime = $record->getFieldValue($fieldName, "mime");
-							if(isImage($mime)){
-								$fieldXml = $field->getXml();
-								if($fieldXml["displayPreviewOnly"] == "1"){
-	//								fput("cutImage ".FILES_PATH.$fileName." as preview");
-									cutImage(FILES_PATH.$fileName, FILES_PATH."tn_".$fileName, 150);
-								} else {
-	//								fput("cutImage ".FILES_PATH.$fileName." as thumbnail");
-									cutImage(FILES_PATH.$fileName, FILES_PATH."tn_".$fileName, 80, 80);
-								}
-							}
-						}
-
-	//					fput("delete old file $fieldName:".$oldFileName);
-						//delete old file if setted
-						if($oldFileName != null && isImage($oldRecord->getFieldValue($fieldName, "mime"))){
-							@unlink(FILES_PATH."tn_".$oldFileName);
-						}
-						if($oldFileName != null){
-							if($oldFileName && $fieldXml["keepHistory"]>0){
-								$this->pushFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
-							} else {
-								@unlink(FILES_PATH.$oldFileName);
-							}
-						}
+				}
+		
+				//					fput("delete old file $fieldName:".$oldFileName);
+				//delete old file if setted
+				if($oldFileName != null && isImage($oldRecord->getFieldValue($fieldName, "mime"))){
+					@unlink(FILES_PATH."tn_".$oldFileName);
+				}
+				if($oldFileName != null){
+					if($oldFileName && $fieldXml["keepHistory"]>0){
+						$this->pushFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
+					} else {
+						@unlink(FILES_PATH.$oldFileName);
 					}
 				}
 			}
 		}
 	}
-
 	public function pushHtmlFileToHistory($p, $exec, $keepHistory, $oldRecord, $fieldName){
 		$historyName = $this->getHistoryFilename($p, $exec, $oldRecord, $fieldName);
 		$dir = $this->cleanHistory($p, $exec, $keepHistory, $oldRecord, $fieldName);
@@ -785,7 +817,9 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 	public function pushFileToHistory($p, $exec, $keepHistory, $oldRecord, $fieldName){
 		$historyName = $this->getHistoryFilename($p, $exec, $oldRecord, $fieldName);
 		$dir = $this->cleanHistory($p, $exec, $keepHistory, $oldRecord, $fieldName);
-		if(!rename(FILES_PATH.$oldRecord->getFieldValue($fieldName, "path"), $dir.$historyName)) throw new ServiceException("Error on renaming old file ".$oldRecord->getFieldValue($fieldName, "path")." in ".$dir.$historyName." in folder:".FILES_PATH, ServiceException::FORBIDDEN);
+		// CWE 01.04.2016: keeps silent if old file does not exist anymore and cannot move it to history folder.
+		//if(!rename(FILES_PATH.$oldRecord->getFieldValue($fieldName, "path"), $dir.$historyName)) throw new ServiceException("Error on renaming old file ".$oldRecord->getFieldValue($fieldName, "path")." in ".$dir.$historyName." in folder:".FILES_PATH, ServiceException::FORBIDDEN);		
+		@rename(FILES_PATH.$oldRecord->getFieldValue($fieldName, "path"), $dir.$historyName);
 	}
 	public function cleanHistory($p, $exec, $keepHistory, $oldRecord, $fieldName){
 		$dir = $this->getHistoryDir($p, $exec, $oldRecord, $fieldName);

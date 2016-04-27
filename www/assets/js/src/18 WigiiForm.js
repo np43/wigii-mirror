@@ -1,21 +1,23 @@
 /**
  *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
  *
- *  Wigii is free software: you can redistribute it and\/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Wigii is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
- *
- *  @copyright  Copyright (c) 2012 Wigii 		 http://code.google.com/p/wigii/    http://www.wigii.ch
- *  @license    http://www.gnu.org/licenses/     GNU General Public License
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
 //timeout for external access
@@ -334,7 +336,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	if(jQuery.browser.msie && version < 9.0 && $('#workZone').length==0){
 		$(formId+' textarea:not(.noWrap):not(.noElastic)').css('height',50);
 	} else {
-		$(formId+' textarea:not(.noWrap):not(.noElastic)').css('max-height',450).css('min-height',30).autosize();
+		autosize($(formId+' textarea:not(.noWrap):not(.noElastic)').css('max-height',450).css('min-height',30));
 	}
 
 	$(formId+' textarea.noWrap').css('overflow','auto').tabby();
@@ -361,12 +363,18 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	
 	*/
 	
-	// flex or chosen class enables select2 plugin	
-	$(formId+' select.chosen:not(.allowNewValues)').select2();
-	$(formId+' select.flex:not(.allowNewValues)').select2();		
-	$(formId+' select.chosen.allowNewValues').select2({
-		tags:[]		
+	// flex or chosen class enables select2 plugin
+	$(formId+' select.chosen').each(function(i) {
+		var e = $(this);
+		if(e.attr("allowNewValues") == null){
+			e.attr("data-max-selection")?e.select2({maximumSelectionLength: e.attr("data-max-selection")}):e.select2();
+		} else {
+			e.attr("data-max-selection")?e.select2({tags:[], maximumSelectionLength: e.attr("data-max-selection")}):e.select2({tags:[]});
+		}	
 	});
+
+		
+	$(formId+' select.flex:not(.allowNewValues)').select2();		
 	$(formId+' select.flex.allowNewValues').select2({
 		tags:[]
 	});
@@ -414,6 +422,22 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	//add code for multiple select
 	$(formId+' select[multiple]:not([readonly]):not([disabled])').click(function(){ multipleSelectOnClick(this.id); }).each(function(){
 		multipleSelectVals[this.id] = $(this).val();
+	});
+	
+	//handle the data-max-selection on checkboxes
+	$( '*:input:checkbox[data-max-selection]' ).click(function( event ) {
+		var maxSelectionValue = event.target.dataset.maxSelection;
+		if(maxSelectionValue > 0) {
+			var valueDiv = $(event.target).parent().parent();
+			$(valueDiv).find('span[class="max-selection-alert"]').remove();
+			if($(valueDiv).find(':checkbox:checked').length >= maxSelectionValue) {
+				if ($(valueDiv).find(':checkbox:checked').length > maxSelectionValue) $(event.target).attr('checked', false);
+				$(valueDiv).find(':checkbox:not(:checked)').attr("disabled", true);
+				$(valueDiv).append('<span class="max-selection-alert" style="color:DarkGray">You can only select '+maxSelectionValue+' items</span>');
+			} else {
+				$(valueDiv).find(':checkbox:not(:checked)').attr("disabled", false);
+			}
+		}
 	});
 
 	//show Sysinfo on mouse over + CTRL
@@ -691,7 +715,7 @@ function setListenerToAddJournalItem(elementDialogId, recordId, fieldName, field
 			$(emb).parent().find('.elastic').ckeditor(function(){ }, options);
 
 		} else {
-			$(emb).parent().find('.elastic').css('max-height',450).css('min-height',30).autosize();
+			autosize($(emb).parent().find('.elastic').css('max-height',450).css('min-height',30));
 			if($(emb).parent().parent().find('.value textarea').hasClass('wordlimit')){ //in case of a form dialog
 				$(emb).parent().find('.elastic').wordlimit({ allowed: $(emb).parent().parent().find('.value textarea').attr('class').match(/ wordlimit_([0-9]*) /g)[0].replace(/ wordlimit_([0-9]*) /g, '$1') });
 			} else if($(emb).parent().parent().hasClass('wordlimit')){ //if from a detail dialog
