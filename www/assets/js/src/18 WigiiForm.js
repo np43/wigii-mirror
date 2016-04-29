@@ -168,7 +168,7 @@ function addJsCodeOnOnLineFileInput(textContentId, inputNameId, template, cancel
 				}
 			}
 		}
-		$('#elementPreview').html('<textarea style="width:'+($(window).width()-30)+'px;" id="elementPreview_textContent">'+$(textContentId).val()+'</textarea>');
+		$('#elementPreview').html('<textarea style="width:'+($(window).width()-30)+'px;" id="elementPreview_textContent">'+$(textContentId).val().replace(/&/g,'&amp;')+'</textarea>');
 
 		//activates link for scheduled autosave
 		crtActiveOnlineFileTextContentId = textContentId;
@@ -366,7 +366,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	// flex or chosen class enables select2 plugin
 	$(formId+' select.chosen').each(function(i) {
 		var e = $(this);
-		if(e.attr("allowNewValues") == null){
+		if(!e.hasClass("allowNewValues")){
 			e.attr("data-max-selection")?e.select2({maximumSelectionLength: e.attr("data-max-selection")}):e.select2();
 		} else {
 			e.attr("data-max-selection")?e.select2({tags:[], maximumSelectionLength: e.attr("data-max-selection")}):e.select2({tags:[]});

@@ -50,7 +50,8 @@ $mime = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($
 $user = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "user"));
 $username = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "username"));
 $date = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "date"));
-$textContent = $this->formatValueFromRecord($fieldName, "textContent", $this->getRecord());
+//$textContent = $this->formatValueFromRecord($fieldName, "textContent", $this->getRecord());
+$textContent = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "textContent"));
 $fileVersion = $this->getRecord()->getFieldValue($fieldName, "version");
 
 $inputNameId = $formId.'_'.$fieldName.'_name_text';
