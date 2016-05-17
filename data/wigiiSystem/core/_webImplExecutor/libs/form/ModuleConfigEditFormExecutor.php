@@ -174,7 +174,8 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 		}
 
 		if($rec->getFieldValue("moduleEditorConfigField") != null){
-			file_put_contents($this->getFilename(), stripslashes($rec->getFieldValue("moduleEditorConfigField")));
+			// CWE 17.05.2016: keeps raw backslashes in file
+			file_put_contents($this->getFilename(), str_replace('&#92;','\\',stripslashes($rec->getFieldValue("moduleEditorConfigField"))));
 		} else {
 			@unlink($this->getFilename());
 		}
