@@ -601,7 +601,7 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 //			$exl->getActiveSheet()->setCellValue(num2letter($c).$l, trim(strtr($value, array_flip(get_html_translation_table(HTML_ENTITIES, ENT_QUOTES)))));
 			if(!isset($this->html2text)) $this->html2text = new Html2text();
 			$this->html2text->html2text($value);
-			$exl->getActiveSheet()->setCellValue(num2letter($c).$l, trim(str_replace(array("	", "\n\n", " ", "   ", "  ", " \n"), array("", "\n", "", " ", " ", "\n"), $this->html2text->get_text())));
+			$exl->getActiveSheet()->setCellValue(num2letter($c).$l, trim(str_replace(array("	", "\n\n", " ", "   ", "  ", " \n"), array("", "\n", "", " ", " ", "\n"), htmlspecialchars_decode($this->html2text->get_text(), ENT_QUOTES))));
 			$this->html2text->clear();
 		}
 	}

@@ -237,6 +237,42 @@ class FuncExpBuilder {
 		return TechnicalServiceProvider::getFieldSelectorLogExpParser()->createFuncExpFromStringLogExp($str);
 	}	
 	
+	/**
+	 * Tries to convert any object to its FuncExp equivalent
+	 * Or the Object exposes a toFx() method, or the object can convert to a string, or it has a specific built in conversion mechanism,
+	 * or it is unsupported.
+	 * @param Any $obj
+	 * @return Scalar|FuncExp a FuncExp able to create back the Object or its scalar equivalent
+	 */
+	public function object2fx($obj) {
+		$returnValue = null;
+		if(empty($obj)) $returnValue = null;
+		elseif($obj === true) $returnValue = fx('logTrue');
+		elseif($obj === false) $returnValue = fx('logFalse');
+		elseif(is_scalar($obj)) $returnValue = (string)$obj;
+		elseif(is_array($obj)) {
+			$returnValue = fx('newMap');			
+			foreach($obj as $k => $v) {
+				$returnValue->addArgument($this->object2fx($k));
+				$returnValue->addArgument($this->object2fx($v));
+			}			
+		}
+		elseif($obj instanceof stdClass) {
+			$returnValue = fx('newObject');
+			foreach($obj as $k => $v) {
+				$returnValue->addArgument($this->object2fx($k));
+				$returnValue->addArgument($this->object2fx($v));
+			}
+		}
+		elseif($obj instanceof FieldSelectorList) $returnValue = $this->fsl2fx($obj);
+		elseif($obj instanceof FieldSortingKeyList) $returnValue = $this->fskl2fx($obj);
+		elseif($obj instanceof WigiiBPLParameter) $returnValue = $this->wigiiBPLParam2fx($obj);
+		elseif(method_exists($obj, 'toFx')) $returnValue = $obj->toFx();
+		elseif(method_exists($obj, '__toString')) $returnValue = (string)$obj;
+		else throw new FuncExpEvalException('cannot convert object of class '.get_class($obj).' to its FuncExp equivalent.', FuncExpEvalException::UNSUPPORTED_OPERATION);
+		return $returnValue;
+	}
+	
 	// FieldSelector builder
 	
 	/**
@@ -1210,6 +1246,23 @@ class FuncExpBuilder {
 				$i++;
 			}
 		}
+		return $returnValue;
+	}
+	
+	/**
+	 * Converts a WigiiBPLParameter instance to its FuncExp equivalent
+	 * @param WigiiBPLParameter $param
+	 * @return FuncExp
+	 */
+	public function wigiiBPLParam2fx($param) {
+		$returnValue = fx('wigiiBPLParam');
+		if(isset($param)) {
+			foreach($param->getIterator() as $k => $v) {
+				$returnValue->addArgument($this->object2fx($k));
+				$returnValue->addArgument($this->object2fx($v));
+			}
+		} 
+		else throw new FuncExpEvalException('param cannot be null', FuncExpEvalException::INVALID_ARGUMENT);
 		return $returnValue;
 	}
 	

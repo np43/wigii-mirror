@@ -265,7 +265,7 @@ class MapModel2ElementDFA implements DataFlowActivity
 			break;
 		}
 		// creates element FieldList and fills it with configuration given by grouplist
-		$fieldList = FieldListArrayImpl::createInstance();
+		$fieldList = FieldListArrayImpl::createInstance(true,true);
 		$this->getConfigService()->getGroupsFields($principal, $groupList, null, $fieldList);
 		// creates element instance
 		return Element::createInstance($module, $fieldList, WigiiBagBaseImpl::createInstance());				
@@ -280,7 +280,7 @@ class MapModel2ElementDFA implements DataFlowActivity
 	protected function createNewSubElement($principal, $subElementConfigService) {
 		$module = $subElementConfigService->getCurrentModule();
 		// creates element FieldList and fills it with the configuration of the sub element
-		$fieldList = FieldListArrayImpl::createInstance();
+		$fieldList = FieldListArrayImpl::createInstance(true,true);
 		$subElementConfigService->getFields($principal, $module, null, $fieldList);
 		// creates element instance
 		return Element::createInstance($module, $fieldList, WigiiBagBaseImpl::createInstance());				

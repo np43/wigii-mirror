@@ -29,6 +29,7 @@
 class NullDFA implements DataFlowActivity
 {
 	private $discardData;
+	private $attributes;
 	
 	// Object lifecycle
 		
@@ -36,7 +37,9 @@ class NullDFA implements DataFlowActivity
 		$this->freeMemory();	
 		$this->discardData = false;	
 	}	
-	public function freeMemory() {/*nothing to do*/}
+	public function freeMemory() {
+		unset($this->attributes);
+	}
 	
 	// configuration
 	
@@ -48,10 +51,34 @@ class NullDFA implements DataFlowActivity
 	public function setDiscardData($bool) {
 		$this->discardData = $bool;
 	}
+	/**
+	 * Injects into the DataFlowContext a pair (key,value) on startOfStream.
+	 * Any existing value under this key is replaced.
+	 * @param String $key attribute key
+	 * @param Any $val attribute value
+	 */
+	public function setAttributeInContext($key,$val) {
+		if(!isset($key)) throw new DataFlowServiceException('key cannot be null', DataFlowServiceException::INVALID_ARGUMENT);
+		if(!isset($this->attributes)) $this->attributes = array();
+		$this->attributes[$key] = $val;
+	}
+	/**
+	 * Injects into the DataFlowContext a set of pairs (key,value) on startOfStream.
+	 * Any existing value under same keys are replaced.
+	 * @param Array $arr an array of pairs (key,value)	 
+	 */
+	public function setAttributesInContext($arr) {
+		if(!is_array($arr)) throw new DataFlowServiceException('arr should be an array', DataFlowServiceException::INVALID_ARGUMENT);
+		if(!isset($this->attributes)) $this->attributes = array();
+		$this->attributes = array_merge($this->attributes, $arr);
+	}
 	
 	// stream data event handling
 	
-	public function startOfStream($dataFlowContext) {/* nothing to do */}
+	public function startOfStream($dataFlowContext) {
+		// initializes data flow context with injected attributes if any
+		if(isset($this->attributes)) $dataFlowContext->setAttributesFromArray($this->attributes);
+	}
 	public function processDataChunk($data, $dataFlowContext) {
 		if(!$this->discardData) $dataFlowContext->writeResultToOutput($data, $this);
 	}

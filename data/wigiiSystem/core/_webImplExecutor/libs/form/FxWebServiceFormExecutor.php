@@ -49,6 +49,20 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 		return $this->_executionSink;
 	}
 	
+	// Configuration
+	
+	private $isIntegrated = false;
+	/**
+	 * If true, then WebService response is integrated into a Wigii protocol response, else WebService response is a full http response with headers.
+	 * Defaults to false.
+	 */
+	public function setIsIntegrated($bool) {
+		$this->isIntegrated = $bool;
+	}
+	protected function getIsIntegrated() {
+		return $this->isIntegrated;
+	}
+	
 	// WebService implementation
 	
 	public function isMinimalPrincipalAuthorized() {return true;}
@@ -67,7 +81,8 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 				$fx = base64url_decode($fx);
 				// parses the FuncExp
 				$fx = str2fx($fx);
-			}					
+			}	
+			
 			// tries to login with a login request if provided and needed
 			$authS = ServiceProvider::getAuthenticationService();
 			if($authS->isMainPrincipalMinimal()) {
@@ -151,24 +166,32 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 	 */
 	protected function serializeFxResult($p, $exec, $result) {
 		$this->debugLogger()->logBeginOperation('serializeFxResult');
-		header("Access-Control-Allow-Origin: *");
+		
+		$isIntegrated = $this->getIsIntegrated();
+		if(!$isIntegrated) header("Access-Control-Allow-Origin: *");
+		else if ($exec->getIsUpdating()) {			
+			echo ExecutionServiceImpl :: answerRequestSeparator;
+			echo $exec->getIdAnswer();
+			echo ExecutionServiceImpl :: answerParamSeparator;
+		}
+		
 		if(is_scalar($result)) {
-			header("Content-Type: text/plain charset=UTF-8");
+			if(!$isIntegrated) header("Content-Type: text/plain charset=UTF-8");
 			if($result===true) echo 1;
 			elseif($result===false) echo 0;
 			else echo $result;
 		}
 		elseif(is_array($result)||$result instanceof stdClass) {
-			header("Content-Type: text/xml; charset=UTF-8");
+			if(!$isIntegrated) header("Content-Type: text/xml; charset=UTF-8");
 			echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxAnswer', $result);
 		}
 		elseif($result instanceof Element || $result instanceof ElementP || $result instanceof Record) {			
 			$result = $result->getDbEntity();
-			header("Content-Type: text/xml; charset=UTF-8");
+			if(!$isIntegrated) header("Content-Type: text/xml; charset=UTF-8");
 			echo TechnicalServiceProvider::getWplToolbox()->record2xml($p, $result->getFieldList(), $result->getWigiiBag(), false, null, $result->getId());
 		}
 		elseif($result instanceof WplObjectList) {
-			header("Content-Type: text/xml; charset=UTF-8");
+			if(!$isIntegrated) header("Content-Type: text/xml; charset=UTF-8");
 			echo TechnicalServiceProvider::getWplToolbox()->wplObjectList2Xml($p, 'wigiiFxAnswer', $result);
 		}
 		else throw new FormExecutorException("FuncExp result of class '".get_class($result)."' cannot be serialized", FormExecutorException::UNSUPPORTED_OPERATION);		

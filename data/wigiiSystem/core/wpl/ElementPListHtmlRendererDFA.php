@@ -30,6 +30,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 	protected $outputEnabled;
 	protected $redirectIfOneElement;
 	protected $redirectIfOneGroup;
+	protected $filterOnElements;
 	protected $listIsNavigable;
 	protected $generateHtml;
 	protected $wigiiNamespace;
@@ -45,6 +46,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 		$this->outputEnabled = false;
 		$this->redirectIfOneElement = false;
 		$this->redirectIfOneGroup = false;
+		$this->filterOnElements=false;
 		$this->listIsNavigable = true;
 		$this->nElements = 0;
 	}	
@@ -95,6 +97,13 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 	 */
 	public function setRedirectIfOneGroup($bool) {
 		$this->redirectIfOneGroup = $bool;
+	}
+	
+	/**
+	 * If true and list contains several elements then initializes advanced search on these elements
+	 */
+	public function setFilterOnElements($bool) {
+		$this->filterOnElements = $bool;
 	}
 	
 	public function setListIsNavigable($bool) {
@@ -190,18 +199,18 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 			$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "").$this->wigiiNamespace->getWigiiNamespaceUrl()."/".$this->lastElement->getModule()->getModuleUrl()."/navigate/item/".$this->lastElement->getId());
 		}
 		// redirects to group if one group
-		elseif($this->redirectIfOneGroup && isset($this->groupList) && $this->groupList->count() == 1) {
+		elseif($this->redirectIfOneGroup && !$this->filterOnElements && isset($this->groupList) && $this->groupList->count() == 1) {
 			$group = reset($this->groupList->getListIterator());
 			$group = $group->getDbEntity();
 			$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "").$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/navigate/folder/".$group->getId());
 		}
 		// redirects to advanced search if several elements and redirect is active
-		elseif($this->redirectIfOneElement || $this->redirectIfOneGroup) {			
+		elseif($this->redirectIfOneElement || $this->redirectIfOneGroup || $this->filterOnElements) {			
 			if($this->nElements > 0) {
 				// redirect to advance search.
 				$module = $this->lastElement->getModule();
 				//$exec->addRequests("workZone/" . $this->wigiiNamespace->getWigiiNamespaceUrl() . "/" . $module->getModuleUrl() . "/display/workZoneStructure/");
-				$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "").$this->wigiiNamespace->getWigiiNamespaceUrl() . "/" . $module->getModuleUrl() . "/navigate/folder/0");
+				$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "").$this->wigiiNamespace->getWigiiNamespaceUrl() . "/" . $module->getModuleUrl() . "/navigate");
 				$exec->addJsCode("$('#workZone #searchBar input:first').val('#".implode(" #", $this->elementIds)."');");
 				$exec->addJsCode('setTimeout(function(){$("#goForSearch").click();}, 500);');				
 			}

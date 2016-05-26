@@ -135,6 +135,20 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		else return false;
 	}
 	/**
+	 * array_slice. See http://www.php.net/array_slice
+	 */
+	public function array_slice($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException("array_slice function takes two parameters, the array and the offset", FuncExpEvalException::INVALID_ARGUMENT);
+		$arr = $this->evaluateArg($args[0]);
+		$offset = $this->evaluateArg($args[1]);
+		if($nArgs>2) $length=$this->evaluateArg($args[2]);
+		else $length=null;
+		if($nArgs>3) $preserve_keys=$this->evaluateArg($args[3]);
+		else $preserve_keys=false;
+		return array_slice($arr, $offset, $length, $preserve_keys);
+	}
+	/**
 	 * substr. See http://www.php.net/substr
 	 */
 	public function substr($args) {

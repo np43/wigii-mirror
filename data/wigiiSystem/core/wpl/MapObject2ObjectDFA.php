@@ -24,13 +24,15 @@
 /**
  * A data flow activity which maps PHP stdClass instances to other instance of PHP stdClass
  * Created by CWE on 02 mars 2014
+ * Modified by CWE on 13.05.2016 to add the ability of keeping and updating or cloning incoming data
  */
 class MapObject2ObjectDFA extends ObjectDFAWithFuncExpVM
 {			
 	// Object lifecycle
 		
 	public function reset() {
-		parent::reset();		
+		parent::reset();	
+		$this->creationOption = self::CREATION_OPTION_NEW;	
 	}	
 	public function freeMemory() {
 		unset($this->obj2ObjMap);
@@ -64,19 +66,50 @@ class MapObject2ObjectDFA extends ObjectDFAWithFuncExpVM
 		$this->obj2ObjMap = $map;
 	}		
 
+	const CREATION_OPTION_NEW = 0;
+	const CREATION_OPTION_CLONE = 1;
+	const CREATION_OPTION_UPDATE = 2;	
+	private $creationOption;
+	
+	/**
+	 * Sets the creation option: one of new, clone or update.
+	 * If new, then a new empty object is created which is initialized using the specified map,
+	 * If clone, then incoming object is first cloned then updated using the specified map,
+	 * If update, then incoming object is updated using the specified map.
+	 * Defaults to new object.
+	 * @param int $opt creation option, one of CREATION_OPTION_NEW, CREATION_OPTION_CLONE or CREATION_OPTION_UPDATE
+	 */
+	public function setCreationOption($opt) {
+		switch($opt) {
+			case self::CREATION_OPTION_NEW:
+			case self::CREATION_OPTION_CLONE:
+			case self::CREATION_OPTION_UPDATE:
+				$this->creationOption = $opt;
+				break;
+			default: throw new DataFlowServiceException('creation option should be one of CREATION_OPTION_NEW, CREATION_OPTION_CLONE or CREATION_OPTION_UPDATE', DataFlowServiceException::INVALID_ARGUMENT);	
+		}
+	}
+	
 	// object event handling
 				
 	protected function processObject($obj, $dataFlowContext) {
+		if($this->creationOption == self::CREATION_OPTION_CLONE) {
+			if($obj instanceof ElementP || $obj instanceof Element) $returnValue = (object)array(); /* do not clone the element but always creates new object */
+			else $returnValue = clone $obj;
+		}
+		elseif($this->creationOption == self::CREATION_OPTION_UPDATE) {
+			if($obj instanceof ElementP || $obj instanceof Element) $returnValue = (object)array(); /* do not keep the element but always creates new object */
+			else $returnValue = $obj;
+		}
+		else $returnValue = (object)array();
+		
 		// evaluates each object attribute
-		$returnValue = array();
 		if(isset($this->obj2ObjMap)) {
 			foreach($this->obj2ObjMap as $attr => $funcExp) {
-				$returnValue[$attr] = $this->evaluateFuncExp($funcExp);
+				$returnValue->{$attr} = $this->evaluateFuncExp($funcExp);
 			}
 		}
-		
-		// converts the return value to an instance of class stdClass
-		$returnValue = (object)$returnValue;
+				
 		// writes the output
 		$dataFlowContext->writeResultToOutput($returnValue, $this);
 	}

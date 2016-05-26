@@ -16,6 +16,7 @@
 			onlyInWrite,
 			onlyInPublic,
 			notInPublic,
+			displayEvenIfEmpty,
 			forceCollapse,
 			protectExistingEntries,
 			doNotPersist,
@@ -345,7 +346,7 @@
 	</groupHtmlContent>
 	<groupPortal>
 		<fields>
-			<url type="Urls" require="0" expand="1" onlyUrl="1" noCheck="1" />
+			<url type="Urls" require="0" expand="1" onlyUrl="1" noCheck="1" help="Enter a valid URL or a FuncExp generating a valid URL"/>
 			<groupExternalSystemConnection groupStart="1" ><label>Connect external systems</label></groupExternalSystemConnection>
 				<freetext>By setting a Cookie name, the system will create a cookie when you click on this folder in the following format:<br />username|custom|expiration|roles<br /><br />The | will be replaced with the defined separator.<br />The whole string will be encoded if the Encrypt checkbox is ticked.<br /><i>username</i>: username of the current user<br /><i>custom</i>: the content of the custom field<br /><i>expiration</i>: the date calculated by adding expiration value to the time when the user display the folder (yyyy-mm-dd hh:mm:ss)<br /><i>roles</i>: the list of the roles that the user has in this tab<br /></freetext>
 				<groupPortalCookieName type="Strings" require="0" expand="1" ><label>Cookie name</label></groupPortalCookieName>

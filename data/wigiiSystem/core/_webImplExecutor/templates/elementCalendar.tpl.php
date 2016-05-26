@@ -64,7 +64,7 @@ if($crtGroupP) $crtGroupP = $groupAS->getGroup($p, $crtGroupP->getId());
 
 /**
  * URL portal zone
- * 	if an portal is setted on the group, then display the content of the website
+ * if a portal is set on the group, then display the content of the website
  */
 $url = null;
 if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1"){
@@ -74,7 +74,9 @@ if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1
 			$portalRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupPortal"), $exec->getCrtModule());
 			$portalRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getDbEntity()->getDetail()->getPortal(), $portalRec->getActivity());
 			$url = $portalRec->getFieldValue("url", "url");
-			if($url != null){
+			// evaluates any given FuncExp 
+			$url = $this->evaluateConfigParameter($p,$exec,$url);
+			if(!empty($url)){
 				$cooKieName = $portalRec->getFieldValue("groupPortalCookieName");
 				if($portalRec->getFieldValue("groupPortalCookieIncludeRoles")){
 					$roleList = $p->getRoleListener()->getRolesPerWigiiNamespaceModule($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl(), $exec->getCrtModule()->getModuleUrl());
@@ -226,7 +228,18 @@ if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1
 	if($crtGroupP){
 		//we need to fetch the group details
 		//already done in the portal part
-		if($crtGroupP->getDbEntity()->getDetail()!=null){ //if detail = null, then do nothing
+		$groupPortalAction = $configS->getParameter($p, $exec->getCrtModule(), "Group_portalAction");
+		if(!empty($groupPortalAction)) {
+			// evaluates any FuncExp given as a groupPortalAction
+			$groupPortalAction = $this->evaluateConfigParameter($p,$exec,$groupPortalAction);
+			?><div id="groupPortalAction" class="portal" style="overflow:hidden; display:none; padding-left:10px; padding-right:10px;"><?
+				if($configS->getParameter($p, $exec->getCrtModule(), "Group_portalActionRefreshOnMultipleChange") != "1"){					
+					$groupPortalAction =  'groupPortalAction/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/".$groupPortalAction."/".$crtGroupP->getId();
+					$exec->addJsCode("update('".$groupPortalAction."');");					
+				}
+			//calcul de la hauteur plus redimensionnement
+			?></div><?
+		} else if($crtGroupP->getDbEntity()->getDetail()!=null){ //if detail = null, then do nothing
 			$htmlContentRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupHtmlContent"), $exec->getCrtModule());
 			$htmlContentRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getDbEntity()->getDetail()->getHtmlContent(), $htmlContentRec->getActivity());
 			$trmHtmlContent = $this->createTRM($htmlContentRec);
@@ -237,14 +250,16 @@ if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1
 					echo $htmlContent;
 				//calcul de la hauteur plus redimensionnement
 				?></div><?
-				$exec->addJsCode("" .
+			}
+		}
+		if($htmlContent != null || !empty($groupPortalAction)){
+			$exec->addJsCode("" .
 					"coverPage_toggleList_titleList = '".$transS->h($p, "viewElementsInPortal")."';" .
 					"coverPage_toggleList_titleWebsite = '".$transS->h($p, "viewPortalContent")."';" .
 					"coverPage_toggleList();" .
 					"if($('#searchBar .firstBox #removeFiltersButton.R').length==1) coverPage_toggleList();" .
 					"hrefWithSiteroot2js('moduleView>div.portal', 'elmentDialog');" .
 					"");
-			}
 		} else {
 			//remove and hide any previous cover page settings
 			$exec->addJsCode("removeCoverPageItems();");

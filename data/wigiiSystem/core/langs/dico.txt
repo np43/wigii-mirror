@@ -1374,7 +1374,7 @@ cronJobsStartButton:Start:Démarrer:::::::::
 
 addIndicatorMenuItem:Add a calculation indicator...:Ajouter un indicateur calculé...:
 addIndicator:Add an indicator:Ajouter un indicateur:::::::::
-closeIndicators:collapse:femer:::::::::
+closeIndicators:collapse:fermer:::::::::
 showIndicators:expand:afficher:::::::::
 
 addIndicatorForElements:Add an indicator for #elements#:Ajouter un indicateur pour #elements#::::::::
@@ -1383,7 +1383,7 @@ FUNC_COUNT:count:nb:::::::::
 FUNC_COUNT_DISTINCT:distinct:unique:::::::::
 FUNC_MAX:max:max:::::::::
 FUNC_MIN:min:min:::::::::
-FUNC_SUM:sum:som:::::::::
+FUNC_SUM:sum:somme:::::::::
 indicator_field:Choose field:Choisissez un champ:::::::::
 indicator_function:Choose function:Choisissez une fonction:::::::::
 indicator_label:Define a label (optional):Définissez un nom (optionel):::::::::

@@ -37,6 +37,8 @@ $elementId = $this->getRecord()->getId();
 if(!$this->isForNotification()){
 	$fieldId = $this->getDetailRenderer()->getDetailId()."__".$fieldName;
 }
+$readonly = $this->getRecord()->getWigiiBag()->isReadonly($fieldName);
+$disabled = $this->getRecord()->getWigiiBag()->isDisabled($fieldName);
 
 /******************
  * Preview only!!!!
@@ -290,7 +292,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 		}
 
 		//add the check-in/out button
-		if(!$this->isForExternalAccess() && $fieldXml["displayPreviewOnly"]!="1" && $this->getRecord() instanceof Element){
+		if(!$this->isForExternalAccess() && $fieldXml["displayPreviewOnly"]!="1" && $this->getRecord() instanceof Element && !$readonly && !$disabled){
 			if(!$this->getRecord()->isState_blocked()){
 				// 1) the element is not locked -> check-out button
 				$isCheckout = false;

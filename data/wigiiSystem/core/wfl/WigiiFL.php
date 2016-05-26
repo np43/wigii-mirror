@@ -1799,6 +1799,94 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}	
 	
 	/**
+	 * Returns current request parameter
+	 * FuncExp signature : <code>sysExecParameter(index)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) index: Int. The parameter index 0..n. 
+	 * @return String|Array if index is specified, returns the parameter value, else returns an array with all parameters.
+	 */
+	public function sysExecParameter($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) $index = $this->evaluateArg($args[0]);
+		return ServiceProvider::getExecutionService()->getCrtParameters($index);
+	}
+	
+	/**
+	 * Returns current WigiiNamespace URL
+	 * FuncExp signature : <code>sysCrtWigiiNamespace(returnAttribute=url|name|object)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) returnAttribute: String. The name of the attribute to return. If object returns the WigiiNamespace instance.
+	 * Defaults to url which returns the WigiiNamespace url.
+	 * @return String|WigiiNamespace the current WigiiNamespace attribute or object
+	 */
+	public function sysCrtWigiiNamespace($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs>0) $returnAttribute=$this->evaluateArg($args[0]);
+		else $returnAttribute='url';
+		
+		$currentWigiiNamespace = ServiceProvider::getExecutionService()->getCrtWigiiNamespace();
+		$returnValue = null;		
+		switch($returnAttribute) {
+			case 'url': 
+				if(isset($currentWigiiNamespace)) $returnValue = $currentWigiiNamespace->getWigiiNamespaceUrl();
+				else $returnValue = WigiiNamespace::EMPTY_NAMESPACE_URL;
+				break;
+			case 'name':
+				if(isset($currentWigiiNamespace)) $returnValue = $currentWigiiNamespace->getWigiiNamespaceName();
+				else $returnValue = WigiiNamespace::EMPTY_NAMESPACE_NAME;
+				break;
+			case 'object':
+				$returnValue = $currentWigiiNamespace;				
+				break;
+			default: throw new FuncExpEvalException("invalid return attribute '$returnAttribute', should be one of url, name or object", FuncExpEvalException::INVALID_ARGUMENT);
+		}
+		return $returnValue;
+	}
+	
+	/**
+	 * Returns current Module URL
+	 * FuncExp signature : <code>sysCrtModule(returnAttribute=url|name|object)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) returnAttribute: String. The name of the attribute to return. If object returns the Module instance.
+	 * Defaults to url which returns the Module url.
+	 * @return String|Module the current Module attribute or object
+	 */
+	public function sysCrtModule($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		if($nArgs>0) $returnAttribute=$this->evaluateArg($args[0]);
+		else $returnAttribute='url';
+		
+		$currentModule = ServiceProvider::getExecutionService()->getCrtModule();
+		$returnValue = null;		
+		switch($returnAttribute) {
+			case 'url': 
+				if(isset($currentModule)) $returnValue = $currentModule->getModuleUrl();
+				else $returnValue = Module::EMPTY_MODULE_URL;
+				break;
+			case 'name':
+				if(isset($currentModule)) $returnValue = $currentModule->getModuleName();
+				else $returnValue = Module::EMPTY_MODULE_NAME;
+				break;
+			case 'object':
+				$returnValue = $currentModule;				
+				break;
+			default: throw new FuncExpEvalException("invalid return attribute '$returnAttribute', should be one of url, name or object", FuncExpEvalException::INVALID_ARGUMENT);
+		}
+		return $returnValue;
+	}
+	
+	/**
+	 * Returns an array containing the IDs of the elements currently beeing selected
+	 * FuncExp signature : <code>sysMultipleSelection()</code><br/>
+	 * @return Array an array with the element IDs or an empty array if no multiple selection
+	 */
+	public function sysMultipleSelection($args) {
+		$lc = ServiceProvider::getWigiiBPL()->getListContext($this->getPrincipal());
+		if(isset($lc) && $lc->isMultipleSelection()) return $lc->getMultipleSelection();
+		else return array();
+	}
+	
+	/**
 	 * Logs into the system given a username and password. 
 	 * If username changes, then first logouts and then login with new user. 
 	 * FuncExp signature : <code>sysLogin(username,password)</code><br/>

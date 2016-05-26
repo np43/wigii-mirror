@@ -32,6 +32,7 @@ class ElementMatrixDFA extends ElementDFAWithFuncExpVM implements ValueList
 	// Object lifecycle
 		
 	public function reset() {
+		parent::reset();
 		$this->startIndex=null;
 		$this->stopIndex=null;		
 	}	
@@ -41,6 +42,7 @@ class ElementMatrixDFA extends ElementDFAWithFuncExpVM implements ValueList
 		unset($this->columns);
 		unset($this->calculatedColumns);
 		unset($this->dataFlowContext);
+		parent::freeMemory();
 	}
 	
 	// dependency injection

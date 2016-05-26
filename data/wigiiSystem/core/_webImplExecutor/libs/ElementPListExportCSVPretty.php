@@ -259,7 +259,7 @@ class ElementPListExportCSVPretty extends ElementPListWebImplWithWigiiExecutor i
 		
 		if(!isset($this->html2text)) $this->html2text = new Html2text();
 		$this->html2text->html2text($value);
-		$value = $this->html2text->get_text();
+		$value = htmlspecialchars_decode($this->html2text->get_text(), ENT_QUOTES);
 		$this->html2text->clear();
 		
 //		$value = formatToString($value);

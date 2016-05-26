@@ -180,7 +180,8 @@ class FieldSelectorFuncExpParser
 			elseif(is_array($funcExp) || ($funcExp instanceof stdClass)) {
 				if(empty($funcExp)) $returnValue = 'newList()';
 				else {
-					$returnValue = 'newMap(';
+					if($funcExp instanceof stdClass) $returnValue = 'newObject('; 
+					else $returnValue = 'newMap(';
 					$first = true;
 					foreach($funcExp as $k => $v) {
 						if($first) $first = false;

@@ -175,7 +175,7 @@ class FieldRenderer extends Model {
 		}
 
 		//define the useMultiplecolumn
-		if($useMultipleColumn){
+		if(($fieldGroupXml["groupStart"]=="1" || $fieldGroupXml["groupEnd"]=="1") && $useMultipleColumn){
 			//take in consideration the margin-right of 10 for each column except the last one
 			$totalWidth = floor(($totalWidth-(($useMultipleColumn-1)*10)) / $useMultipleColumn);
 		}

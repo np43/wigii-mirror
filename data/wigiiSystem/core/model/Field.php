@@ -141,7 +141,9 @@ class Field extends Model {
 	 * wigiiBag: the WigiiBag where to store the value
 	 */
 	public function setValue($value, $elementId, $wigiiBag, $subFieldName = null) {
-		$this->getDataType()->setFieldValue($value, $elementId, $wigiiBag, $this->getFieldName(), $subFieldName);
+		$dt = $this->getDataType();
+		if(isset($dt)) $this->getDataType()->setFieldValue($value, $elementId, $wigiiBag, $this->getFieldName(), $subFieldName);
+		else throw new ServiceException("cannot set a value on Field '".$this->getFieldName()."' which has no DataType (free text)", ServiceException::INVALID_ARGUMENT);
 	}
 
 	/**

@@ -1154,6 +1154,164 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Evaluates the calculated fields of an Element
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementEvalCalcFields business process needs the following parameters to run :
+	 * - element: Element. The filled element containing the Fields to be re-calculated
+	 * - fieldName: String|FieldSelector. Optional, one field name for which to recalculate the value.
+	 * - elementEvaluatorClassName: String. Optional, a specific ElementEvaluator class to use, 
+	 * if not defined takes ElementEvaluator linked to Element or current execution module.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 */
+	public function elementEvalCalcFields($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementEvalCalcFields", $principal);
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	
+			$element = $parameter->getValue('element');
+			if(is_null($element)) throw new WigiiBPLException('element cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			// gets field to re-calculate
+			$fieldName = $parameter->getValue('fieldName');
+			if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+			if(!empty($fieldName)) $field = $element->getFieldList()->getField($fieldName);
+			else $field = null;
+			// get RecordEvaluator instance
+			$exec = ServiceProvider::getExecutionService();
+			$elementEvaluatorClassName = $parameter->getValue('elementEvaluatorClassName');
+			if(empty($elementEvaluatorClassName)) {
+				if($element instanceof Element) $elementEvaluatorClassName = (string)$this->getConfigService()->getParameter($principal, $element->getModule(), "Element_evaluator");
+				if(empty($elementEvaluatorClassName)) $elementEvaluatorClassName = (string)$this->getConfigService()->getParameter($principal, $exec->getCrtModule(), "Element_evaluator");
+			}
+			$evaluator = ServiceProvider::getRecordEvaluator($principal, $elementEvaluatorClassName);
+			// evaluates calculated fields
+			$evaluator->evaluateRecord($principal, $element, $field);
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("elementEvalCalcFields", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementEvalCalcFields", $principal);
+	}
+	
+	/**
+	 * Given an Element extracts the values of a set of Fields, create an object for each value and dumps them into a given ValueList.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementExtractFieldSet business process needs the following parameters to run :
+	 * - element: Element. The filled element containing the Fields to be extracted
+	 * - fieldNamePrefix: String|Array. The prefix (or array of prefixes) used to select the Fields to be extracted.
+	 * - hierarchySep: String. Optional, a separator which is used to split matching Field names into several levels.
+	 * - valueList: ValueList. Optional, an open ValueList instance in which to dump the created objects	 
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return int|Array if ValueList is defined, then returns the number of created objects, else returns an array containing the extracted objects.
+	 * The extracted objects are StdClass instances of the form :
+	 * {
+	 * 	fieldName: complete FieldName
+	 *  if fieldNamePrefix or hierarchySep is defined, then
+	 *  	nbLevels: the number of hierarchical levels found in FieldName.
+	 *  	level_i (i=0..nbLevels-1): level_0 is FieldName prefix, level_1, ..., level_i are FieldName parts as splitted using hierarchySep.
+	 * }
+	 * @example Consider an Element with the Fields
+	 * <A1_1_1 type="Attributs"/> with value 2
+	 * <A1_1_2 type="Attributs"/> with value 5
+	 * <A1_1_3 type="Attributs"/> with value 1
+	 * <A1_2_1 type="Attributs"/> with value 9
+	 * <A1_2_2 type="Attributs"/> with value null
+	 * <A1_2_3 type="Attributs"/> with value 3
+	 * <A2_1_1 type="Attributs"/> with value 2
+	 * <A2_1_2 type="Attributs"/> with value 1
+	 * 
+	 * calling elementExtractFieldSet($principal,$me,wigiiBPLParam("element", $anElement, "fieldNamePrefix", array("A1","A2"), "hierarchySep", "_"))
+	 * 
+	 * will return an array of StdClasses [
+	 *  {fieldName: "A1_1_1", nbLevels: 3, level_0: "A1",level_1: 1, level_2: 1, value: 2},
+	 *  {fieldName: "A1_1_2", nbLevels: 3, level_0: "A1",level_1: 1, level_2: 2, value: 5},
+	 *  {fieldName: "A1_1_3", nbLevels: 3, level_0: "A1",level_1: 1, level_2: 3, value: 1},
+	 *  {fieldName: "A1_2_1", nbLevels: 3, level_0: "A1",level_1: 2, level_2: 1, value: 9},
+	 *  {fieldName: "A1_2_2", nbLevels: 3, level_0: "A1",level_1: 2, level_2: 2, value: null},
+	 *  {fieldName: "A1_2_3", nbLevels: 3, level_0: "A1",level_1: 2, level_2: 3, value: 3},
+	 *  {fieldName: "A2_1_1", nbLevels: 3, level_0: "A2",level_1: 1, level_2: 1, value: 2},
+	 *  {fieldName: "A2_1_2", nbLevels: 3, level_0: "A1",level_1: 1, level_2: 2, value: 1}
+	 * ]
+	 */
+	public function elementExtractFieldSet($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementEvalCalcFields", $principal);
+		$returnValue = null;
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	
+			$element = $parameter->getValue('element');
+			if(is_null($element)) throw new WigiiBPLException('element cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$fieldNamePrefix = $parameter->getValue('fieldNamePrefix');
+			if(empty($fieldNamePrefix)) $fieldNamePrefix = null;
+			elseif(!is_array($fieldNamePrefix)) $fieldNamePrefix = array($fieldNamePrefix);
+			$hierarchySep = $parameter->getValue('hierarchySep');
+			if(empty($hierarchySep)) $hierarchySep = null;
+			$valueList = $parameter->getValue('valueList');
+			if(!isset($valueList)) $returnValue = array();
+			else $returnValue = 0;
+			
+			$currentPrefix=null;
+			if(isset($fieldNamePrefix)) {
+				$nPrefix = count($fieldNamePrefix);
+				$iPrefix = 0;
+				$currentPrefix = $fieldNamePrefix[$iPrefix];
+			}
+			// goes through the FieldList
+			foreach($element->getFieldList()->getListIterator() as $field) {
+				$dt = $field->getDataType();
+				// only takes fields with a DataType having the value subfield
+				if($dt && !$dt->hasSubfields()) {
+					$fieldName = $field->getFieldName();					
+					// filters Field using prefix if defined
+					if(isset($currentPrefix)) {
+						$i=0;
+						// tests all possibles prefixes and stops on first matching						
+						while($i<$nPrefix && strpos($fieldName, $currentPrefix)!==0) {
+							$iPrefix++; if($iPrefix >= $nPrefix) $iPrefix = 0;
+							$currentPrefix = $fieldNamePrefix[$iPrefix];		
+							$i++;
+						}
+						// no match, skip field
+						if($i>=$nPrefix) continue;
+					}
+					if(isset($fieldName)) {
+						// splits according to hierarchySep if defined
+						if(isset($hierarchySep)) $levels = explode($hierarchySep, $fieldName);							
+						elseif(isset($currentPrefix)) $levels=array($currentPrefix);
+						else $levels=array($fieldName);
+						// builds object
+						$nbLevels = count($levels);						
+						$o = array('fieldName'=>$fieldName,'nbLevels'=>$nbLevels);
+						for($i=0;$i<$nbLevels;$i++) {
+							$o['level_'.$i] = $levels[$i];
+						}
+						$o['value'] = $element->getFieldValue($fieldName);
+						$o = (object)$o;
+						// stores object into output
+						if(isset($valueList)) {
+							$valueList->addValue($o);
+							$returnValue++;
+						}
+						else $returnValue[] = $o;
+					}
+				}				
+			}
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("elementExtractFieldSet", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementExtractFieldSet", $principal);
+		return $returnValue;
+	}
+	
+	/**
 	 * Moves the content of a field of type Files to another field of type Files
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @param Object $caller the object calling the Wigii business process.
@@ -1383,7 +1541,7 @@ class WigiiBPL
 	 * @param WigiiBPLParameter $parameter the elementFetchByKey business process needs the following parameters to run :
 	 * - keyField: String. The name of the Field in the Element acting as a business key,
 	 * - keyValue: String. The value of the business key used to select the element.
-	 * - groupId: Int. The search space in which to look for the element.
+	 * - groupId: Int|LogExp. The search space in which to look for the element.
 	 * - fsl: FieldSelectorList. Optional FieldSelectorList instance specifying the Fields to be fetched.
 	 * - resultCount: Int. Output parameter. Holds the number of matching elements in this search space for this key. 
 	 * Normally should be 1, but in case of doubles, can be greater than one.
@@ -1405,6 +1563,7 @@ class WigiiBPL
 			if(empty($keyValue)) throw new WigiiBPLException('keyValuecannot be null', WigiiBPLException::INVALID_PARAMETER);
 			$groupId = $parameter->getValue('groupId');
 			if(empty($groupId)) throw new WigiiBPLException('groupId cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			if(!($groupId instanceof LogExp)) $groupId = lxEq(fs('id'),$groupId);
 			$fsl = $parameter->getValue('fsl');
 			
 			$hasAdaptiveWigiiNamespace = $principal->hasAdaptiveWigiiNamespace();
@@ -1413,7 +1572,7 @@ class WigiiBPL
 				$principal->setAdaptiveWigiiNamespace(true);
 			}
 			$lf = lf($fsl,lxEq(fs($keyField),$keyValue),null,1,1);
-			$returnValue = $this->getDataFlowService()->processDumpableObject($principal, elementPList(lxInGR(lxEq(fs('id'),$groupId)),$lf), dfasl(dfas("NullDFA")));
+			$returnValue = $this->getDataFlowService()->processDumpableObject($principal, elementPList(lxInGR($groupId),$lf), dfasl(dfas("NullDFA")));
 			$parameter->setValue('resultCount', $lf->getTotalNumberOfObjects());
 			
 			if(isset($crtNamespace)) {

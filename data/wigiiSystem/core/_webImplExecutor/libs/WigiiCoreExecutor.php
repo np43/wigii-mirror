@@ -269,8 +269,80 @@ class WigiiCoreExecutor {
 		return $returnValue;
 	}
 	
+	/**
+	 * Evaluates a FuncExp in the context of the given Record.
+	 * @param Principal $p principal executing the request
+	 * @param ExecutionService $exec current ExecutionService instance
+	 * @param FuncExp $fx the FuncExp instance to evaluate
+	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	 * @return Any FuncExp result
+	 */
+	public function evaluateFuncExp($p,$exec,$fx,$rec=null) {
+		$fxEval = $this->getFuncExpEvaluator($p, $exec, $rec);
+		$returnValue = null;
+		try {
+			$returnValue = $fxEval->evaluateFuncExp($fx, $this);
+			$fxEval->freeMemory();
+		}
+		catch(Exception $e) {
+			$fxEval->freeMemory();
+			throw $e;
+		}
+		return $returnValue;
+	}
 	
-	
+	/**
+	 * Evaluates a Configuration Parameter which can be either a constant or a FuncExp.
+	 * @param Principal $p principal executing the request
+	 * @param ExecutionService $exec current ExecutionService instance
+	 * @param String $parameter the configuration parameter to evaluate
+	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	 * @return Any FuncExp result
+	 */
+	public function evaluateConfigParameter($p,$exec,$parameter,$rec=null) {
+		$parameter=(string)$parameter;
+		// checks that parameter is not already resolved
+		if(empty($parameter) || is_numeric($parameter)) return $parameter;
+		// parses the parameter into a funcExp
+		try {
+			$parameter = str2fx($parameter);
+		}
+		catch(StringTokenizerException $ste) {
+			// if syntax error, then keeps the parameter as is
+			// or we have a real syntax error, that then will be corrected by the user
+			// or it is not a funcExp but a constant, in that case keeps the parameter.
+			if($ste->getCode() != StringTokenizerException::SYNTAX_ERROR) throw $ste;
+		}
+		// executes the func exp
+		$parameter = $this->evaluateFuncExp($p, $exec, $parameter, $rec);
+		// if parameter is a log exp, then solves it against the record
+		if($parameter instanceof LogExp && isset($rec)) {
+			$parameter = TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($rec, $parameter);
+		}
+		// if parameter is a data flow, then executes it
+		elseif($parameter instanceof DataFlowSelector) {
+			// sets adaptative WigiiNamespace
+			$currentNamespace = $p->getWigiiNamespace();
+			$hasAdaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
+			$p->setAdaptiveWigiiNamespace(true);
+			
+			// executes data flow
+			$parameter = ServiceProvider::getDataFlowService()->processDataFlowSelector($p, $parameter);
+			
+			// switches back to original WigiiNamespace
+			if(!$hasAdaptiveWigiiNamespace) {
+				$p->setAdaptiveWigiiNamespace(false);
+				$p->bindToWigiiNamespace($currentNamespace);
+			}
+		}
+		// returns the resolved parameter
+		if(is_numeric($parameter)) return $parameter;
+		elseif(is_string($parameter) && !empty($parameter)) return $parameter;
+		else {
+			if($parameter) return "1";
+			else return "0";
+		}
+	}
 	
 	
 	// Object factories
@@ -3613,12 +3685,14 @@ invalidCompleteCache();
 	/**
 	 * Given an action, finds a WebExecutor class name which can handle it.
 	 * @param String $action ExecutionService action in the Wigii communication protocol.
-	 * @return String the name of a class implementing WebExecutor interface, or null if not found.
+	 * @return String|StdClass the name of a class implementing WebExecutor interface, or null if not found;
+	 * or a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options.
 	 */
 	protected function findWebExecutorForAction($action) {return null;}
 	/**
 	 * Runs the WebExecutor on the given http request
-	 * @param String $webExecClass the name of the WebExecutor implementation to instanciate and run.
+	 * @param String|StdClass $webExecClass the name of the WebExecutor implementation to instanciate and run, or
+	 * a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options.
 	 * @param ExecutionService $exec current ExecutionService
 	 * @throws AuthenticationServiceException if main principal is minimal.
 	 * @throws Exception any exception that occur during WebExecutor execution.
@@ -3626,8 +3700,18 @@ invalidCompleteCache();
 	protected function runWebExecutor($webExecClass,$exec) {
 		if(!isset($webExecClass)) return;
 		if(!isset($exec)) throw new ServiceException('ExecutionService cannot be null', ServiceException::INVALID_ARGUMENT);		
+		// checks if some configuration options are given
+		$options=null;
+		if(is_object($webExecClass)) {
+			$options = $webExecClass->options;
+			$webExecClass = $webExecClass->className;
+		}
 		// instantiates a configured WebExecutor
 		$webExec = ServiceProvider::createWigiiObject($webExecClass);
+		// sets dynamic configuration if provided
+		if(isset($options)) {
+			$options->configure($webExec);
+		}
 		// checks authorization
 		$authS = ServiceProvider :: getAuthenticationService();
 		if ($authS->isMainPrincipalMinimal() && !$webExec->isMinimalPrincipalAuthorized()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
@@ -10751,14 +10835,16 @@ document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->get
 				
 				$query = $exec->getCrtParameters(0);
 				$businessKey = $exec->getCrtParameters(1);
+				$filterOnElements = ($exec->getCrtParameters(2)=='filter');
+				
 				$strQuery = base64url_decode($query);
 				$strBusinessKey = base64url_decode($businessKey);								
 																
 				$query = str2fx($strQuery);
 				$businessKey = str2fx($strBusinessKey);
 				
-				// builds query object
-				$query = evalfx($p, $query);
+				// builds query object				
+				$query = $this->evaluateFuncExp($p, $exec, $query);
 				// separates source from dfasl
 				if($query instanceof DataFlowSelector) {
 					$source = $query->getSource();
@@ -10771,7 +10857,7 @@ document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->get
 				else throw new ServiceException('query '.$strQuery.' is not supported.', ServiceException::UNSUPPORTED_OPERATION);
 				
 				// builds business key selector
-				$businessKey = evalfx($p, $businessKey);
+				$businessKey = $this->evaluateFuncExp($p, $exec, $businessKey);
 				if(!($businessKey instanceof LogExp)) throw new ServiceException('businessKey selector '.$strBusinessKey.' is not a valid log exp.', ServiceException::INVALID_ARGUMENT);
 				
 				// injects businessKey selector in source
@@ -10806,6 +10892,7 @@ document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->get
 						'setOutputEnabled' => $outputEnabled,
 						'setRedirectIfOneElement' => !$outputEnabled,
 						'setRedirectIfOneGroup' => !$outputEnabled,
+						'setFilterOnElements' => !$outputEnabled && $filterOnElements,
 						'setListIsNavigable' => true,
 						'setWigiiExecutor' => $this
 					));

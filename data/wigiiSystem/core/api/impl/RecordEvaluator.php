@@ -694,19 +694,18 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 
 	/**
-	 * the args should be a date only
-	 * returns mm.dd --> this allow to sort or group based only on the birthday and not on the year
+	 * Given a date in format dd.mm.yyyy, returns mm.dd
+	 * This function allows to sort or group based only on the birthday and not on the year
 	 */
 	public function calculateBirthday($args){
-		if($this->getNumberOfArgs($args) != 1) throw new RecordException("args should have 1 date parameter");
+		if($this->getNumberOfArgs($args) < 1) throw new RecordException("calculateBirthday should have 1 date parameter");
 		$r = $this->evaluateArg($args[0]);
 		if($r == null) return null;
 		return substr($r, 3, 2).".".substr($r, 0, 2);
 	}
 
 	/**
-	 * firs arg: value if all further args are not null
-	 * if one of further args is null, then returns null
+	 * Returns evaluation of first arg if all other arguments evaluates to null, else returns null
 	 */
 	public function doOnNotNull($args){
 		if($this->getNumberOfArgs($args) < 2) throw new RecordException("args should have at least 2 parameters");
@@ -738,7 +737,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Returns null if division by zero
 	 */
 	public function percentage($args){
-		if($this->getNumberOfArgs($args) < 2) throw new RecordException("args should have at least 2 parameters", RecordException::INVALID_ARGUMENT);
+		if($this->getNumberOfArgs($args) < 2) throw new RecordException("percentage should have at least 2 parameters", RecordException::INVALID_ARGUMENT);
 		//if the evaluateArg is numeric it could have 1000 separators
 		$arg1 = str_replace("'", "", $this->evaluateArg($args[1]));
 		if($arg1!=0){
@@ -763,8 +762,6 @@ class RecordEvaluator implements FuncExpEvaluator
 		}
 		else return 0;
 	}
-
-
 	/**
 	 * Multiply the arguments, return 0 if no arg
 	 */
@@ -781,17 +778,29 @@ class RecordEvaluator implements FuncExpEvaluator
 		}
 		else return 0;
 	}
-
+	/**
+	 * Returns arg[0]/arg[1]
+	 * Returns NA if division by zero
+	 */
 	public function div($args){
-		if($this->getNumberOfArgs($args) > 0 && $this->getNumberOfArgs($args)<3) {
-			$a = $this->evaluateArg($args[0]);
-			$b = $this->evaluateArg($args[1]);
-			if($b==null) return "NA";
-			return $a / $b;
+		if($this->getNumberOfArgs($args) < 2) throw new RecordException("div should have at least 2 parameters", RecordException::INVALID_ARGUMENT);
+		//if the evaluateArg is numeric it could have 1000 separators
+		$arg1 = str_replace("'", "", $this->evaluateArg($args[1]));
+		if($arg1!=0){
+			return (str_replace("'", "", $this->evaluateArg($args[0]))/$arg1);
+		}
+		else return "NA";
+	}
+	/**
+	 * Returns -arg[0]
+	 */
+	public function minus($args) {
+		if($this->getNumberOfArgs($args)>0) {
+			return -($this->evaluateArg($args[0]));
 		}
 		else return 0;
 	}
-
+	
 	/**
 	 * Always returns true
 	 */

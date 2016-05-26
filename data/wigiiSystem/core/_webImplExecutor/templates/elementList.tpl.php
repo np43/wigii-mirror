@@ -66,7 +66,7 @@ if($configS->getParameter($p, $exec->getCrtModule(), "hide_searchBar") == "1"){
 
 /**
  * URL portal zone
- * 	if an portal is setted on the group, then display the content of the website
+ * if a portal is set on the group, then display the content of the website
  */
 $url = null;
 if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1"){
@@ -78,7 +78,9 @@ if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1
 			$portalRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupPortal"), $exec->getCrtModule());
 			$portalRec->getWigiiBag()->importFromSerializedArray($crtGroup->getGroup()->getDetail()->getPortal(), $portalRec->getActivity());
 			$url = $portalRec->getFieldValue("url", "url");
-			if($url != null){
+			// evaluates any given FuncExp 
+			$url = $this->evaluateConfigParameter($p,$exec,$url);
+			if(!empty($url)){
 				$cooKieName = $portalRec->getFieldValue("groupPortalCookieName");
 				if($portalRec->getFieldValue("groupPortalCookieIncludeRoles")){
 					$roleList = $p->getRoleListener()->getRolesPerWigiiNamespaceModule($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl(), $exec->getCrtModule()->getModuleUrl());
@@ -442,9 +444,12 @@ if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1
 		//already done in the portal part
 		$groupPortalAction = $configS->getParameter($p, $exec->getCrtModule(), "Group_portalAction");
 		if(!empty($groupPortalAction)) {
+			// evaluates any FuncExp given as a groupPortalAction
+			$groupPortalAction = $this->evaluateConfigParameter($p,$exec,$groupPortalAction);
 			?><div id="groupPortalAction" class="portal" style="overflow:hidden; display:none; padding-left:10px; padding-right:10px;"><?
-				if($configS->getParameter($p, $exec->getCrtModule(), "Group_portalActionRefreshOnMultipleChange") != "1"){
-					$exec->addRequests('groupPortalAction/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/".$groupPortalAction."/".$crtGroupP->getId());
+				if($configS->getParameter($p, $exec->getCrtModule(), "Group_portalActionRefreshOnMultipleChange") != "1"){					
+					$groupPortalAction =  'groupPortalAction/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/".$groupPortalAction."/".$crtGroupP->getId();
+					$exec->addJsCode("update('".$groupPortalAction."');");					
 				}
 			//calcul de la hauteur plus redimensionnement
 			?></div><?

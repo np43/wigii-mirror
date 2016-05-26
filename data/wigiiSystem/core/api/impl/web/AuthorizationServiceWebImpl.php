@@ -99,7 +99,7 @@ class AuthorizationServiceWebImpl extends AuthorizationServiceImpl {
 						if($this->isPublicPrincipal($principal)){
 							return PrincipalRights::createInstance(array("canWriteElement"=>true, "canShareElement"=>true));
 						} else {
-							$this->assertPrincipalHasAttachedUser($principal);
+							$this->assertPrincipalIsRootOrHasAttachedUser($principal);
 						}
 						return null; /* principal gets no special rights */
 					case "fillElementFromExternalCode":

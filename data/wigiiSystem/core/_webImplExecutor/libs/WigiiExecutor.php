@@ -78,12 +78,14 @@ class WigiiExecutor extends WigiiCoreExecutor {
 	protected function shouldByPassHeader($action) {
 		switch ($action) {
 			case 'fx': return true;
+			case 'infx': return false;
 			default: return parent::shouldByPassHeader($action);
 		}
 	}
 	protected function shouldByPassFooter($action) {
 		switch ($action) {
 			case 'fx': return true;
+			case 'infx': return false;
 			default: return parent::shouldByPassFooter($action);
 		}
 	}
@@ -99,6 +101,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 				case "c": $returnValue = 'LightClientFormExecutor'; break;
 				case "help": $returnValue = 'HelpServiceFormExecutor'; break;
 				case "fx": $returnValue = 'FxWebServiceFormExecutor'; break;
+				case "infx": $returnValue = (object)array('className'=>'FxWebServiceFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true))); break;
 				default: $returnValue = null;
 			}
 		}

@@ -641,7 +641,58 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		if(($returnValue instanceof FuncExp) || ($returnValue instanceof FieldSelector)) $returnValue=$this->evaluateArg($returnValue);
 		return $returnValue;
 	}
-	
+	/**
+	 * Replaces the Arguments into a given FuncExp by the ones provided in an array and returns the updated FuncExp. 
+	 * No evaluation is done. To also evaluate the FuncExp use the fxRemap FuncExp instead.<br/>
+	 * FuncExp signature : <code>fxReplaceArgs(f,args)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) f: FuncExp. An instanciated FuncExp. 
+	 * - Arg(1) args: Array. An array of arguments which will replace the existing arguments of the FuncExp (in same order). The arguments are not evaluated, just passed to the FuncExp.
+	 * @return FuncExp the updated FuncExp
+	 */
+	public function fxReplaceArgs($args) {
+		$nArgs=$this->getNumberOfArgs($args);
+		$returnValue = null;
+		if($nArgs>0 && ($args[0] instanceof FuncExp)) {
+			$returnValue = $args[0];
+			$newArgs=null;
+			if($nArgs==2) {
+				$newArgs = $this->evaluateFuncExp($args[1]);
+				if(!(is_array($newArgs))) $newArgs=array($newArgs);
+			}
+			elseif($args>2) {
+				$newArgs=array();
+				for($i=1;$i<$nArgs;$i++) {
+					$newArgs[] = $args[$i];
+				}
+			}
+			if(!empty($newArgs)) {
+				$oldArgs = $returnValue->getArguments();
+				if(!empty($oldArgs)) $oldArgs = $newArgs;
+				else {
+					$i=0;
+					foreach($newArgs as $arg)  {
+						$oldArgs[$i] = $arg;
+						$i++;
+					}					
+				}
+				$returnValue->setArguments($oldArgs);
+			}
+		}
+		return $returnValue;
+	}
+	/**
+	 * Remaps the Arguments into a given FuncExp by the ones provided in an array and evaluates the FuncExp. 
+	 * To not evaluate the FuncExp directly, use the fxReplaceArgs FuncExp instead.<br/>
+	 * FuncExp signature : <code>fxRemap(f,args)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) f: FuncExp. An instanciated FuncExp.
+	 * - Arg(1) args: Array. An array of arguments which will replace the existing arguments of the FuncExp (in same order).
+	 * @return Any the result of the FuncExp evaluation
+	 */
+	public function fxRemap($args) {
+		return $this->evaluateFuncExp($this->fxReplaceArgs($args));
+	}
 	/**
 	 * Converts a string to a FuncExp
 	 * See method 'str2fx' in FuncExpBuilder class.
@@ -670,6 +721,59 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		else return '';
 	}
 
+	/**
+	 * Returns a Base 64 Url representation of given FuncExp<br/>
+	 * FuncExp signature : <code>fx2base64url(f)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) f: a func exp or a field selector.
+	 * @return String the string representation of f encoded in Base 64 Url
+	 */
+	public function fx2base64url($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs > 0) {
+			if(!empty($args[0])) return base64url_encode($this->getFieldSelectorFuncExpParser()->funcExpToString($args[0]));
+			else return '';
+		}
+		else return '';
+	}
+	/**
+	 * Returns a Base 64 Url representation of given Object converted to its FuncExp equivalent<br/>
+	 * FuncExp signature : <code>obj2base64url(obj)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) obj: Any object
+	 * @return String the FuncExp representation of object encoded in Base 64 Url
+	 */
+	public function obj2base64url($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs > 0) {
+			$obj = $this->evaluateArg($args[0]);
+			$obj = $this->getFuncExpBuilder()->object2fx($obj);
+			if(!empty($obj)) return base64url_encode($this->getFieldSelectorFuncExpParser()->funcExpToString($obj));
+			else return '';
+		}
+		else return '';
+	}
+	/**
+	 * Returns a Base 64 Url representation of given Object converted to its FuncExp equivalent<br/>
+	 * FuncExp signature : <code>base64url2obj(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str: A serialized Object using the obj2base64url function
+	 * @return Any the deserialized object
+	 */
+	public function base64url2obj($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs > 0) {
+			$obj = $this->evaluateArg($args[0]);
+			if(!empty($obj)) {
+				$obj = base64url_decode($obj);
+				$obj = $this->getFieldSelectorFuncExpParser()->createFuncExpFromString($obj);
+				return $this->evaluateFuncExp($obj);
+			}			
+			else return null;
+		}
+		else return null;
+	}
+	
 	/**
 	 * Constructs a DataFlowActivitySelector instance that wraps a FuncExp.<br/>
 	 * FuncExp signature is: <code>dfasfx(funcExp)</code><br/>
@@ -1063,6 +1167,32 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException("oVal function takes at least one argument which evaluates to an object or an array.", FuncExpEvalException::INVALID_ARGUMENT);
 		return TechnicalServiceProvider::getFuncExpBuilder()->oVal($this->evaluateArg($args[0]),($nArgs>1?$this->evaluateArg($args[1]):null));
+	}
+	
+	/**
+	 * Calls a method on an object.<br/>
+	 * FuncExp signature is: <code>oVal(obj, methodName, arg1, arg2, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) obj: Object. Evaluates to the object on which to call the method
+	 * - Arg(1) methodName: String. The name of the method to call on the Object
+	 * - Arg(2..n) argI: Any. Method arguments
+	 *  @return Any the method return value
+	 */
+	public function oCall($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<2) throw new FuncExpEvalException('oCall takes at least two arguments which are the object and the method to be called on the object', FuncExpEvalException::INVALID_ARGUMENT);
+		$obj = $this->evaluateArg($args[0]);
+		if(!is_object($obj)) throw new FuncExpEvalException('oCall can only call methods on objects', FuncExpEvalException::INVALID_ARGUMENT);
+		$methodName = $this->evaluateArg($args[1]);
+		if(empty($methodName)) throw new FuncExpEvalException('method name canno be null', FuncExpEvalException::INVALID_ARGUMENT);
+		if(!method_exists($obj, $methodName)) throw new FuncExpEvalException("method '$methodName' does not exist on object of class ".get_class($obj), FuncExpEvalException::UNSUPPORTED_OPERATION);
+		$params = array();
+		if($nArgs>2) {
+			for($i=2;$i<$nArgs;$i++) {
+				$params[$i] = $this->evaluateArg($args[$i]);
+			}			
+		}
+		return call_user_func_array(array($obj,$methodName), $params);
 	}
 	
 	// Logic
