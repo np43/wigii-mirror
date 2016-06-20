@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <!-- 
  **
  *  This addon is proposed by Wigii.org.
@@ -24,14 +24,48 @@
 -->
 <html>
 <head>
-	<title>Natural Code Development Template</title>	
-	<meta name="Copyright" content="2016 Wigii.org" />
-	<meta name="License" content="GNU GPL 3.0" />
-	<meta name="Description" content="Wigii Natural Code Development starting template" />
-	<script src="https://code.jquery.com/jquery-1.8.2.min.js" integrity="sha256-9VTS8JJyxvcUR+v+RTLTsd0ZWbzmafmlzMmeZO9RFyk=" crossorigin="anonymous"></script>
-	<script src="./wigii-ncd.js" ></script>
+<title>Natural Code Development Template</title>	
+<meta name="Copyright" content="2016 Wigii.org" />
+<meta name="License" content="GNU GPL 3.0" />
+<meta name="Description" content="Wigii Natural Code Development starting template" />
+<meta charset="UTF-8"/>
+<script src="https://code.jquery.com/jquery-1.8.2.min.js" integrity="sha256-9VTS8JJyxvcUR+v+RTLTsd0ZWbzmafmlzMmeZO9RFyk=" crossorigin="anonymous"></script>
+<script src="./wigii-ncd.js" ></script>
+<style>
+	p.ncd {
+	}
+	span.ncd {
+		font-weight:bold;
+	}
+	p.ncd-error {
+		color:red;
+		font-weight:bold;
+	}
+</style>
 </head>
 <body>
+<script type="text/javascript">(function(){
+	var html = wigiiNcd().getHtmlEmitter();
+	// Export symbolic space
+	var put = html.put;
+	var startP = html.startP;
+	var endP = html.endP;
+	var startSpan = html.startSpan;
+	var endSpan = html.endSpan;
+	// HTML program
+	try {
+		for(var i=0;i<2;i++) {
+			startP();
+			put("hello ");
+			startSpan();put("Camille");endSpan();
+			put(" and ");
+			startSpan();put("Lionel");endSpan();
+			endP();
+		}
+		html.end();
+	}
+	catch(exc) {html.publishException(exc);}	
+})();</script>
 <p id="version"/>
 <script type="text/javascript">
 	$("#version").html("jQuery "+$.fn.jquery+" , wigii-ncd "+wigiiNcd().version());
