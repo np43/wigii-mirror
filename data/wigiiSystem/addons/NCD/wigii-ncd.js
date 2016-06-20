@@ -261,8 +261,8 @@
 			/**
 			 * Emits a <p> start tag
 			 */
-			self.startP = function(){
-				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('p','class',self.emittedClass()).html());
+			self.startP = function(cssClass){
+				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('p','class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
 			};
 			/**
 			 * Emits a </p> end tag
@@ -273,8 +273,8 @@
 			/**
 			 * Emits a <span> start tag
 			 */
-			self.startSpan = function(){
-				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('span','class',self.emittedClass()).html());
+			self.startSpan = function(cssClass){
+				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('span','class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
 			};
 			/**
 			 * Emits a </span> end tag
@@ -301,7 +301,7 @@
 			 * Ends current HTML emitting session and controls stack
 			 */
 			self.end = function() {
-				self.htmlTree.pop('');
+				output.append(self.htmlTree.pop(''));
 			};
 			/**
 			 * Publishes any catched exception
@@ -318,12 +318,15 @@
 			
 			self.htmlTree = wigiiNcd.createStringStackInstance();
 			// checks that start and end tags are equal
-			self.htmlTree.onPop(function(start,content,end) {
+			self.htmlTree.onPop(function(start,content,end) {				
 				if(!start && !end) return;
 				var i = end.indexOf('</');
 				var j = end.indexOf('>');
 				var endtag = end.substring(i+2,j).trim();
-				if(!endtag || start.indexOf(endtag)<0) throw wigiiNcd.createServiceException("invalid end tag '"+endtag+"' in context "+start+content.substr(0,64)+(content.length>64?'...':'')+end, wigiiNcd.errorCodes.SYNTAX_ERROR);
+				i = start.indexOf('<');
+				j = start.indexOf(' ');
+				var starttag = start.substring(i+1,j).trim();
+				if(endtag != starttag) throw wigiiNcd.createServiceException("invalid end tag '"+endtag+"' in context "+start+content.substr(0,64)+(content.length>64?'...':'')+end, wigiiNcd.errorCodes.SYNTAX_ERROR);
 			});
 		};
 		

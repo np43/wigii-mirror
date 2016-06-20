@@ -31,44 +31,106 @@
 <meta charset="UTF-8"/>
 <script src="https://code.jquery.com/jquery-1.8.2.min.js" integrity="sha256-9VTS8JJyxvcUR+v+RTLTsd0ZWbzmafmlzMmeZO9RFyk=" crossorigin="anonymous"></script>
 <script src="./wigii-ncd.js" ></script>
+<script src="https://resource.wigii.org/Development/Filemanager/getXmlFeed/215/a91c09b30a503efef943527931a6cc66/download/1697/file"></script>
 <style>
-	p.ncd {
-	}
-	span.ncd {
-		font-weight:bold;
-	}
-	p.ncd-error {
-		color:red;
-		font-weight:bold;
-	}
+html,body {		
+	font-family:Sans-serif;
+	font-size:10vmin;	
+	height:100%;
+	width:100%;	
+	margin:0;
+	padding:0;
+}
+p#title {
+	font-size:1.1em;
+	margin:0;
+	padding:0;
+}
+p#introduction {
+	font-size:0.7em;
+	margin:0;
+	padding:0;
+}
+p#footer {
+	font-size:0.3em;
+}
+button#run, button#reset {
+	font-size:0.5em;
+	margin:0.1em;
+	padding:0.05em;
+	border-radius:0.5em;
+	border-color:black;
+	cursor:pointer;
+}
+.ncd, .ncd-error{
+	font-size:5vmin;
+}
+textarea#userInput {
+	width:100%;
+	height:50%;
+	box-sizing:border-box;	
+	resize:none;
+	font-size:0.4em;
+	overflow:auto;
+	white-space:pre;
+}
+p.ncd, span.ncd {
+}
+span.ncd.b{
+	font-weight:bold;
+}
+span.ncd.i{
+	font-style:italic;
+}
+p.ncd-error {
+	color:red;
+	font-weight:bold;
+}
 </style>
 </head>
 <body>
+<p id="title">HTML Programming</p>
+<p id="introduction"></p>
+<textarea id="userInput">
+p();out("Welcome to the html programming course!");$p();
+p();
+	b();out("Enjoy learning");$b();out(" and ");
+	i();out("experimenting");$i();out(".");
+$p();
+</textarea>
+<button id="run">Test</button><button id="reset">Reset</button>
+<div id="programOutput"></div>
+<p id="footer"/>
 <script type="text/javascript">(function(){
-	var html = wigiiNcd().getHtmlEmitter();
+	var html = wigiiNcd().getHtmlEmitter("#programOutput");
+	var language = [];
+
 	// Export symbolic space
-	var put = html.put;
-	var startP = html.startP;
-	var endP = html.endP;
-	var startSpan = html.startSpan;
-	var endSpan = html.endSpan;
-	// HTML program
-	try {
-		for(var i=0;i<2;i++) {
-			startP();
-			put("hello ");
-			startSpan();put("Camille");endSpan();
-			put(" and ");
-			startSpan();put("Lionel");endSpan();
-			endP();
+	var out = html.put; language.push('out');
+	var p = html.startP; language.push('p');
+	var $p = html.endP; language.push('$p');
+	var b = function(){html.startSpan('b');}; language.push('b');
+	var $b = html.endSpan; language.push('$b');
+	var i = function(){html.startSpan('i');}; language.push('i');
+	var $i = html.endSpan; language.push('$i');
+	
+	// Advertise language to user
+	$("#introduction").html("Available functions are : "+language.join(", "));
+	// Event handling
+	$("#run").click(function() {
+		html.clearErrors();		
+		// HTML program
+		try {			
+			var program = $('#userInput').val();
+			if(program) eval(program);
+			html.end();
 		}
-		html.end();
-	}
-	catch(exc) {html.publishException(exc);}	
+		catch(exc) {html.publishException(exc);}
+	});
+	$("#reset").click(function(){html.reset();});
 })();</script>
-<p id="version"/>
 <script type="text/javascript">
-	$("#version").html("jQuery "+$.fn.jquery+" , wigii-ncd "+wigiiNcd().version());
+	$("#footer").html("jQuery "+$.fn.jquery+" , wigii-ncd "+wigiiNcd().version());
 </script>
 </body>
 </html>
