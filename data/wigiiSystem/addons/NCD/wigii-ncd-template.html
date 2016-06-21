@@ -54,25 +54,40 @@ p#introduction {
 p#footer {
 	font-size:0.3em;
 }
-button#run, button#reset {
-	font-size:0.5em;
-	margin:0.1em;
-	padding:0.05em;
-	border-radius:0.5em;
-	border-color:black;
-	cursor:pointer;
+div.container {
+	width:100%;
+	height:50%;
+	float:left;
+	box-sizing:border-box;	
+	font-size:0.4em;	
 }
-.ncd, .ncd-error{
-	font-size:5vmin;
+div.userInputZone {
+	width:75%;
+	height:100%;
+	float:left;
+	box-sizing:border-box;	
+	font-size:1em;
 }
 textarea#userInput {
 	width:100%;
-	height:50%;
+	height:100%;
 	box-sizing:border-box;	
 	resize:none;
-	font-size:0.4em;
+	font-size:1em;
 	overflow:auto;
-	white-space:pre;
+	white-space:pre;	
+}
+div#suggestionZone {
+	width:25%;
+	height:100%;
+	padding-left:0.1em;
+	float:left;
+	box-sizing:border-box;	
+	font-size:1em;
+	overflow-y:auto;
+}
+.ncd, .ncd-error{
+	font-size:5vmin;
 }
 p.ncd, span.ncd {
 }
@@ -81,6 +96,33 @@ span.ncd.b{
 }
 span.ncd.i{
 	font-style:italic;
+}
+p.ncd.tip {
+	margin:0.1em;
+	padding:0.05em;
+	border-style:solid;
+	border-radius:0.2em;
+	border-color:blue;
+	cursor:pointer;
+	float:left;
+}
+button.ncd {
+	font-size:0.5em;
+	margin:0.1em;
+	padding:0.05em;
+	border-style:solid;
+	border-radius:0.5em;
+	border-color:black;
+	cursor:pointer;
+}
+textarea.ncd {
+	width:50vmin;
+	height:50vmin;
+	box-sizing:border-box;	
+	resize:none;
+	font-size:1em;
+	overflow:auto;
+	white-space:pre;
 }
 p.ncd-error {
 	color:red;
@@ -91,43 +133,49 @@ p.ncd-error {
 <body>
 <p id="title">HTML Programming</p>
 <p id="introduction"></p>
+<div class="container">
+<div class="userInputZone">
 <textarea id="userInput">
 p();out("Welcome to the html programming course!");$p();
-p();
-	b();out("Enjoy learning");$b();out(" and ");
-	i();out("experimenting");$i();out(".");
-$p();
+p();b("Enjoy learning");out(" and ");i("experimenting");out(".");$p();
 </textarea>
-<button id="run">Test</button><button id="reset">Reset</button>
+</div>
+<div id="suggestionZone"></div>
+</div>
+<button id="run" class="ncd">Test</button><button id="reset" class="ncd">Reset</button>
 <div id="programOutput"></div>
 <p id="footer"/>
 <script type="text/javascript">(function(){
 	var html = wigiiNcd().getHtmlEmitter("#programOutput");
+	var tips = wigiiNcd().getHtmlEmitter("#suggestionZone");
 	var language = [];
 
 	// Export symbolic space
-	var out = html.put; language.push('out');
+	var out = function(str){html.startSpan();html.put(str);html.endSpan();}; language.push('out');
 	var p = html.startP; language.push('p');
-	var $p = html.endP; language.push('$p');
-	var b = function(){html.startSpan('b');}; language.push('b');
-	var $b = html.endSpan; language.push('$b');
-	var i = function(){html.startSpan('i');}; language.push('i');
-	var $i = html.endSpan; language.push('$i');
+	var $p = html.endP; language.push('$p');	
+	var t = html.put; language.push('t');
+	var b = function(str){html.startSpan('b');html.put(str);html.endSpan();}; language.push('b');
+	var i = function(str){html.startSpan('i');html.put(str);html.endSpan();}; language.push('i');
+	//var tip = function(str){tips.startP('tip');tips.put(str);tips.endP();};language.push('tip');
+	var button = html.putButton;language.push('button');
 	
 	// Advertise language to user
 	$("#introduction").html("Available functions are : "+language.join(", "));
 	// Event handling
+	$("#userInput").tabby();
 	$("#run").click(function() {
 		html.clearErrors();		
 		// HTML program
 		try {			
 			var program = $('#userInput').val();
 			if(program) eval(program);
+			tips.end();
 			html.end();
 		}
 		catch(exc) {html.publishException(exc);}
 	});
-	$("#reset").click(function(){html.reset();});
+	$("#reset").click(function(){tips.reset();html.reset();});
 })();</script>
 <script type="text/javascript">
 	$("#footer").html("jQuery "+$.fn.jquery+" , wigii-ncd "+wigiiNcd().version());
