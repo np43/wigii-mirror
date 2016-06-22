@@ -259,6 +259,18 @@
 				self.htmlTree.append(str);
 			};
 			/**
+			 * Emits a <h1> start tag
+			 */
+			self.startH1 = function(cssClass){
+				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('h1','class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
+			};
+			/**
+			 * Emits a </h1> end tag
+			 */
+			self.endH1 = function(){
+				output.append(self.htmlTree.pop('</h1>'));				
+			};
+			/**
 			 * Emits a <p> start tag
 			 */
 			self.startP = function(cssClass){

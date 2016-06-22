@@ -86,10 +86,25 @@ div#suggestionZone {
 	font-size:1em;
 	overflow-y:auto;
 }
+div#programOutput {
+	margin-top:0.1em;
+	margin-bottom:0.1em;
+}
 .ncd, .ncd-error{
 	font-size:5vmin;
 }
-p.ncd, span.ncd {
+p.ncd {
+	margin:0.1em;
+	padding:0;
+}
+span.ncd {
+}
+h1.ncd {
+	font-size:1.1em;
+	margin:0;
+	padding:0;
+	text-decoration:underline;
+	font-weight:normal;
 }
 span.ncd.b{
 	font-weight:bold;
@@ -136,8 +151,11 @@ p.ncd-error {
 <div class="container">
 <div class="userInputZone">
 <textarea id="userInput">
-p();out("Welcome to the html programming course!");$p();
+h1("Welcome!");
+p();out("to the html programming course!");$p();
 p();b("Enjoy learning");out(" and ");i("experimenting");out(".");$p();
+
+button("Try to click on me", function(){p();b("Bravo!");$p();});
 </textarea>
 </div>
 <div id="suggestionZone"></div>
@@ -152,9 +170,9 @@ p();b("Enjoy learning");out(" and ");i("experimenting");out(".");$p();
 
 	// Export symbolic space
 	var out = function(str){html.startSpan();html.put(str);html.endSpan();}; language.push('out');
-	var p = html.startP; language.push('p');
-	var $p = html.endP; language.push('$p');	
-	var t = html.put; language.push('t');
+	var h1 = function(str){html.startH1();html.put(str);html.endH1();}; language.push('h1');
+	var p = html.startP;language.push('p');
+	var $p = html.endP;language.push('$p');
 	var b = function(str){html.startSpan('b');html.put(str);html.endSpan();}; language.push('b');
 	var i = function(str){html.startSpan('i');html.put(str);html.endSpan();}; language.push('i');
 	//var tip = function(str){tips.startP('tip');tips.put(str);tips.endP();};language.push('tip');
