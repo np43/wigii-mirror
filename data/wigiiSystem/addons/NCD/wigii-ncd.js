@@ -295,6 +295,21 @@
 				output.append(self.htmlTree.pop('</span>'));				
 			};
 			/**
+			 * Emits a span with a given color for text and background.
+			 * If background color is given, then border color is equal to text color.
+			 */
+			self.startColor = function(color,backgroundColor,cssClass) {
+				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('span','class',self.emittedClass()+(cssClass?' '+cssClass:''),
+				'style', 'color:'+color+';'+(backgroundColor?'margin:0.05em;padding:0.03em 0.1em;border-style:solid;border-radius:0.2em;background-color:'+backgroundColor+';border-color:'+color+';':'')).html());
+			};
+			/**
+			 * Emits end of colored span
+			 */
+			self.endColor = function() {
+				output.append(self.htmlTree.pop('</span>'));	
+			};
+			
+			/**
 			 * Emits a button
 			 */
 			self.putButton = function(label, onClick){
@@ -316,7 +331,7 @@
 			 * Clears all errors from container
 			 */
 			self.clearErrors = function() {				
-				output.find('p.ncd-error').remove();
+				output.find('p.'+self.emittedClass()+'-error').remove();
 			};
 			/**
 			 * Ends current HTML emitting session and controls stack

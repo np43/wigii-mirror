@@ -94,7 +94,7 @@ div#programOutput {
 	font-size:5vmin;
 }
 p.ncd {
-	margin:0.1em;
+	margin:0.3em;
 	padding:0;
 }
 span.ncd {
@@ -153,9 +153,10 @@ p.ncd-error {
 <textarea id="userInput">
 h1("Welcome!");
 p();out("to the html programming course!");$p();
-p();b("Enjoy learning");out(" and ");i("experimenting");out(".");$p();
+p();color("blue");b("Enjoy learning");$color();out(" and ");color("red");i("experimenting");$color();out(".");$p();
 
-button("Try to click on me", function(){p();b("Bravo!");$p();});
+button("Try to click on me", function(){p();color("green");b("Bravo!");$color();$p();});
+
 </textarea>
 </div>
 <div id="suggestionZone"></div>
@@ -175,6 +176,8 @@ button("Try to click on me", function(){p();b("Bravo!");$p();});
 	var $p = html.endP;language.push('$p');
 	var b = function(str){html.startSpan('b');html.put(str);html.endSpan();}; language.push('b');
 	var i = function(str){html.startSpan('i');html.put(str);html.endSpan();}; language.push('i');
+	var color = html.startColor;language.push('color');
+	var $color = html.endColor;language.push('$color');
 	//var tip = function(str){tips.startP('tip');tips.put(str);tips.endP();};language.push('tip');
 	var button = html.putButton;language.push('button');
 	
