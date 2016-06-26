@@ -307,8 +307,7 @@
 			 */
 			self.endColor = function() {
 				output.append(self.htmlTree.pop('</span>'));	
-			};
-			
+			};			
 			/**
 			 * Emits a button
 			 */
@@ -318,7 +317,19 @@
 				var b = output.append(self.htmlTree.pop('</button>')).last();
 				if($.isFunction(onClick) && b) b.off().click(onClick);				
 			};
-						
+			/**
+			 * Creates and emits a Grid with the given number of rows and cols
+			 */
+			self.createGrid = function(nRows,nCols) {
+				return new wigiiNcd.Grid(self, nRows, nCols);
+			};
+			/**
+			 * Creates and emits a TextArea to capture user input
+			 */
+			self.createTextArea = function() {
+				return new wigiiNcd.TextArea(self);
+			};
+			
 			// Control functions
 			
 			/**
@@ -348,6 +359,12 @@
 				.implode(' : ',exception.name,exception.message.replace(/</g,'&lt;').replace(/>/g,'&gt;'))
 				.putEndTag('p');	
 				output.append(htmlb.html());
+			};
+			/**
+			 * Emits some well formed HTML (should be used to link other components)
+			 */
+			self.putHtml = function(html) {
+				output.append(html);
 			};
 			
 			// HTML tree check
@@ -591,6 +608,173 @@
 					}
 				}
 				return self;
+			};
+		};
+		
+		/**
+		 * NCD 2D fixed Grid
+		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the 2D Grid
+		 *@param int nRows number of rows in the Grid
+		 *@param int nCols number of columns in the Grid
+		 */
+		wigiiNcd.Grid = function(htmlEmitter, nRows,nCols) {
+			var self = this;
+			self.className = 'Grid';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className;
+			
+			self.context = {};
+			self.context.rows = [];
+			var htmlB = wigiiNcd.getHtmlBuilder();
+			htmlB.putStartTag('table','class',htmlEmitter.emittedClass());
+			for(var i=0;i<nRows;i++) {
+				htmlB.putStartTag('tr','class',htmlEmitter.emittedClass());
+				self.context.rows.push([]);
+				for(var j=0;j<nCols;j++) {
+					var id = i+"_"+j;
+					htmlB.putStartTag('td','class',htmlEmitter.emittedClass(),"id",id);
+					self.context.rows[i].push(new wigiiNcd.GridCell(self,i,j,id));					
+					htmlB.putNbsp(4);
+					htmlB.putEndTag('td');
+				}
+				htmlB.putEndTag('tr');
+			}
+			htmlB.putEndTag('table');
+			htmlEmitter.putHtml(htmlB.html());
+			
+			// Properties
+			
+			self.cell = function(x,y) {
+				if(x<0||x>=nRows) return undefined;
+				if(y<0||y>=nCols) return undefined;
+				return self.context.rows[x][y];
+			};
+			self.nRows = function() {return nRows;}
+			self.nCols = function() {return nCols;}
+		};
+		/**
+		 * NCD 2D fixed Grid cell
+		 *@param wigiiNcd.Grid grid reference to grid container in which lives the cell
+		 *@param int x row index from 0..Grid.nRows-1
+		 *@param int y col index from 0..Grid.nCols-1
+		 *@apram string id HTML ID of the cell element in the DOM.
+		 */
+		wigiiNcd.GridCell = function(grid, x,y, id) {
+			var self = this;
+			self.className = 'GridCell';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className;
+			
+			// Inner state
+			
+			self.context = {};
+			
+			// Properties
+			
+			self.text = function(txt) {
+				if(txt===undefined) return self.context.text;
+				else {
+					self.context.text = txt;
+					$("#"+id).html(txt);
+					return self;
+				}
+			};
+			self.color = function(c) {
+				if(c===undefined) return self.context.color;
+				else  {
+					self.context.color = c;
+					$("#"+id).css('background-color',c);
+					return self;
+				}
+			};
+			self.left = function(wrap) {
+				var neighbour = x-1;
+				if(neighbour<0) {
+					if(wrap) neighbour = grid.nCols-1;
+					else return undefined;
+				}
+				return grid.cell(neighbour,y);
+			};
+			self.right = function(wrap) {
+				var neighbour = x+1;
+				if(neighbour>=grid.nCols) {
+					if(wrap) neighbour = 0;
+					else return undefined;
+				}
+				return grid.cell(neighbour,y);
+			};
+			self.up = function(wrap) {
+				var neighbour = y-1;
+				if(neighbour<0) {
+					if(wrap) neighbour = grid.nRows-1;
+					else return undefined;
+				}
+				return grid.cell(x,neighbour);
+			};
+			self.down = function(wrap) {
+				var neighbour = y+1;
+				if(neighbour>=grid.nRows) {
+					if(wrap) neighbour = 0;
+					else return undefined;
+				}
+				return grid.cell(x,neighbour);
+			};
+			self.grid = function() {
+				return grid;
+			};
+			self.click = function(onClick) {
+				if($.isFunction(onClick)) $("#"+id).off('click').click(function(){onClick(self);});
+				else if(onClick===undefined) $("#"+id).click();
+				return self;
+			};
+		};
+		
+		/**		
+		 * NCD TextArea
+		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the text area component
+		 */
+		wigiiNcd.TextArea = function(htmlEmitter) {
+			var self = this;
+			self.className = 'TextArea';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+(new Date()).getTime();
+			
+			self.context = {};
+
+			var htmlB = wigiiNcd.getHtmlBuilder();
+			htmlB.putStartTag('textarea','class',htmlEmitter.emittedClass(), "id", self.ctxKey);		
+			htmlB.putEndTag('textarea');
+			htmlEmitter.putHtml(htmlB.html());
+			
+			// Properties
+			
+			/**
+			 * Sets or returns the text contained in this TextArea
+			 */
+			self.text = function(txt) {
+				if(txt===undefined) return self.context.text;
+				else {
+					self.context.text = txt;
+					$("#"+self.ctxKey).val(txt);
+				}
+			};
+			/**
+			 * Registers a oninput event handler
+			 */
+			self.onInput = function(onInput) {
+				if($.isFunction(onInput)) {
+					if(!self.context.onInputSubscribers) {
+						self.context.onInputSubscribers = [];
+						// registers oninput event handler on text area
+						$("#"+self.ctxKey).on('input', function(){self.onInput();})
+					}
+					self.context.onInputSubscribers.push(onInput);
+				}
+				else if(onInput===undefined) {
+					if(self.context.onInputSubscribers) {
+						for(var i=0;i<self.context.onInputSubscribers.length;i++) {
+							var eh = self.context.onInputSubscribers[i];
+							if($.isFunction(eh)) eh(self,$("#"+self.ctxKey).val());
+						}
+					}
+				}
 			};
 		};
 		

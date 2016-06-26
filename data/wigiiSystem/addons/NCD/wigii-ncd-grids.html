@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<!-- 
+ **
+ *  This addon is proposed by Wigii.org.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+ *
+-->
+<html>
+<head>
+<title>Natural Code Development Grids</title>	
+<meta name="Copyright" content="2016 Wigii.org" />
+<meta name="License" content="GNU GPL 3.0" />
+<meta name="Description" content="Wigii Natural Code Development Grids" />
+<meta charset="UTF-8"/>
+<script src="https://code.jquery.com/jquery-1.8.2.min.js" integrity="sha256-9VTS8JJyxvcUR+v+RTLTsd0ZWbzmafmlzMmeZO9RFyk=" crossorigin="anonymous"></script>
+<script src="./wigii-ncd.js" ></script>
+<script src="https://resource.wigii.org/Development/Filemanager/getXmlFeed/215/a91c09b30a503efef943527931a6cc66/download/1697/file"></script>
+<style>
+html,body {		
+	font-family:Sans-serif;
+	font-size:10vmin;	
+	height:100%;
+	width:100%;	
+	margin:0;
+	padding:0;
+}
+p#title {
+	font-size:1.1em;
+	margin:0;
+	padding:0;
+}
+p#introduction {
+	font-size:0.7em;
+	margin:0;
+	padding:0;
+}
+p#footer {
+	font-size:0.3em;
+}
+div.container {
+	width:100%;
+	height:50%;
+	float:left;
+	box-sizing:border-box;	
+	font-size:0.4em;	
+}
+div.userInputZone {
+	width:75%;
+	height:100%;
+	float:left;
+	box-sizing:border-box;	
+	font-size:1em;
+}
+textarea#userInput {
+	width:100%;
+	height:100%;
+	box-sizing:border-box;	
+	resize:none;
+	font-size:1em;
+	overflow:auto;
+	white-space:pre;	
+}
+div#suggestionZone {
+	width:25%;
+	height:100%;
+	padding-left:0.1em;
+	float:left;
+	box-sizing:border-box;	
+	font-size:1em;
+	overflow-y:auto;
+}
+div#programOutput {
+	margin-top:0.1em;
+	margin-bottom:0.1em;
+}
+.ncd, .ncd-error{
+	font-size:5vmin;
+}
+p.ncd {
+	margin:0.3em;
+	padding:0;
+}
+span.ncd {
+}
+h1.ncd {
+	font-size:1.1em;
+	margin:0.1em;
+	padding:0;
+	text-decoration:underline;
+	font-weight:normal;
+}
+span.ncd.b{
+	font-weight:bold;
+}
+span.ncd.i{
+	font-style:italic;
+}
+p.ncd.tip {
+	margin:0.1em;
+	padding:0.05em;
+	border-style:solid;
+	border-radius:0.2em;
+	border-color:blue;
+	cursor:pointer;
+	float:left;
+}
+button.ncd {
+	font-size:0.5em;
+	margin:0.1em;
+	padding:0.05em;
+	border-style:solid;
+	border-radius:0.5em;
+	border-color:black;
+	cursor:pointer;
+}
+textarea.ncd {
+	width:50vmin;
+	height:50vmin;
+	box-sizing:border-box;	
+	resize:none;
+	font-size:1em;
+	overflow:auto;
+	white-space:pre;
+}
+td.ncd {
+	font-size:1em;
+	margin:0.1em;
+	padding:0.05em;
+	text-align:center;
+	border-style:solid;	
+	border-color:black;
+	cursor:pointer;
+}
+p.ncd-error {
+	color:red;
+	font-weight:bold;
+}
+</style>
+</head>
+<body>
+<p id="title">HTML Grids Programming</p>
+<p id="introduction"></p>
+<div class="container">
+<div class="userInputZone">
+<textarea id="userInput">
+var n = 8;
+var colors = ["black","white"];
+var letters = ['A','B','C','D','E','F','G','H','I','J','K'];
+var cRow = 0;
+var g = grid(n,n);
+g.context.nClick=0;
+for(var i=0;i<g.nRows();i++) {
+	var cCol = cRow;
+	for(var j=0;j<g.nCols();j++) {		
+		g.cell(i,j).color(colors[cCol]).click(function(cell){			
+			cell.color("dodgerBlue");
+			cell.text(letters[(cell.grid().context.nClick++)%letters.length]);			
+		});
+		cCol = (cCol+1)%colors.length
+	}
+	cRow = (cRow + 1)%colors.length;
+}
+</textarea>
+</div>
+<div id="suggestionZone"></div>
+</div>
+<button id="run" class="ncd">Test</button><button id="reset" class="ncd">Reset</button>
+<div id="programOutput"></div>
+<p id="footer"/>
+<script type="text/javascript">(function(){
+	var html = wigiiNcd().getHtmlEmitter("#programOutput");
+	var tips = wigiiNcd().getHtmlEmitter("#suggestionZone");
+	var language = [];
+
+	// Export symbolic space
+	var grid = html.createGrid;language.push('grid');
+	
+	// Advertise language to user
+	$("#introduction").html("Available functions are : "+language.join(", "));
+	// Event handling
+	$("#userInput").tabby();
+	$("#run").click(function() {
+		html.clearErrors();		
+		// HTML program
+		try {			
+			var program = $('#userInput').val();
+			if(program) eval(program);
+			tips.end();
+			html.end();
+		}
+		catch(exc) {html.publishException(exc);}
+	});
+	$("#reset").click(function(){tips.reset();html.reset();});
+})();</script>
+<script type="text/javascript">
+	$("#footer").html("jQuery "+$.fn.jquery+" , wigii-ncd "+wigiiNcd().version());
+</script>
+</body>
+</html>
