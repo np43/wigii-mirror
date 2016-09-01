@@ -27,6 +27,7 @@
 			isDefaultForEmailing,
 			enableForNotification,
 			enableForDownloading,
+			enableBoxIntegration,
 			secret,
 			noDecimals,
 			noThousandSeparator,
@@ -169,30 +170,32 @@
 
 	<userEdit>
 		<fields>
-			<wigiiNamespace type="Strings" require="0" expand="1"/>
-			<username type="Strings" require="1" expand="1"/>
+			<wigiiNamespace type="Strings" require="0" expand="1" enableDynamicAttributes="1" readonly='logNot(getAttr(sysUser("principal"),"isWigiiNamespaceCreator"))'/>
+			<username type="Strings" require="1" expand="1" help="adminMultipleUsername"/>
+			<principalEmail type="Emails" expand="1" noAutofill="1"/>
 			<authenticationMethod type="Attributs" require="0" >
 				<attribute>usual</attribute>
 				<attribute>pop3</attribute>
 				<attribute>pop3SSL</attribute>
 			</authenticationMethod>
 			<authenticationServer type="Strings" expand="1"/>
-			<password type="Strings" secret="1" require="0" expand="1"/>
+			<password type="Strings" secret="1" require="0" expand="1" noAutofill="1"/>
 			<passwordHasBeenEdited type="Booleans" require="0" />
 			<canModifyOwnPassword type="Booleans" require="0" />
 			<passwordLife type="Strings" require="0" help="passworLife_help" expand="1"/>
 			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" height="100" expand="1"/>
 			<userAdminRights groupStart="1" />
-				<isWigiiNamespaceCreator type="Booleans" require="0" />
-				<isModuleEditor type="Booleans" require="0" />
-				<isReadAllUsersInWigiiNamespace type="Booleans" require="0" />
-				<isAdminCreator type="Booleans" require="0" />
-				<isUserCreator type="Booleans" require="0" />
-				<getReadAllGroupsInWigiiNamespace type="Booleans" require="0" />
-				<getRootGroupCreator type="Booleans" require="0" />
-				<getGroupCreator type="Booleans" require="0" />
+				<isWigiiNamespaceCreator type="Booleans" require="0" help="isWigiiNamespaceCreator_help"/>
+				<isModuleEditor type="Booleans" require="0" help="isModuleEditor_help"/>
+				<isReadAllUsersInWigiiNamespace type="Booleans" require="0" help="isReadAllUsersInWigiiNamespace_help"/>
+				<isUserCreator type="Booleans" require="0" help="isUserCreator_help"/>
+				<isAdminCreator type="Booleans" require="0" help="isAdminCreator_help"/>
+				<getReadAllGroupsInWigiiNamespace type="MultipleAttributs" useCheckboxes="1" require="0" help="getReadAllGroupsInWigiiNamespace_help"/>
+				<getRootGroupCreator type="MultipleAttributs" useCheckboxes="1" require="0" help="getRootGroupCreator_help"/>
+				<getGroupCreator type="MultipleAttributs" useCheckboxes="1" require="0" help="getGroupCreator_help" hidden="1"/>
 			<userAdminRights groupEnd="1" />
-			<moduleAccess type="Strings" require="0" isInLine="1" expand="1"/>
+			<moduleAccess type="Strings" require="0" isInLine="1" disabled="1" expand="1"/>
+			<addModuleAccess type="Strings" require="0" isInLine="1" expand="1" enableDynamicAttributes="1" hidden='logNot(getAttr(sysUser("principal"),"isWigiiNamespaceCreator"))'/>			
 		</fields>
 	</userEdit>
 
@@ -205,7 +208,7 @@
 
 	<roleEdit>
 		<fields>
-			<wigiiNamespace type="Strings" require="0" expand="1"/>
+			<wigiiNamespace type="Strings" require="0" expand="1" enableDynamicAttributes="1" readonly='logNot(getAttr(sysUser("principal"),"isWigiiNamespaceCreator"))'/>
 			<rolename type="Strings" require="1" expand="1"/>
 			<rolePasswordLife type="Strings" require="0" help="passworLife_help" expand="1"/>
 			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" height="100" expand="1"/>
@@ -219,16 +222,17 @@
 			<passwordHasBeenEdited type="Booleans" require="0" hidden="1" />
 			<canModifyOwnPassword type="Booleans" require="0"  hidden="1"/>
 			<userAdminRights groupStart="1" />
-				<isWigiiNamespaceCreator type="Booleans" require="0" />
-				<isModuleEditor type="Booleans" require="0" />
-				<isReadAllUsersInWigiiNamespace type="Booleans" require="0" />
-				<isAdminCreator type="Booleans" require="0" />
-				<isUserCreator type="Booleans" require="0" />
-				<getReadAllGroupsInWigiiNamespace type="Booleans" require="0" />
-				<getRootGroupCreator type="Booleans" require="0" />
-				<getGroupCreator type="Booleans" require="0" />
+				<isWigiiNamespaceCreator type="Booleans" require="0" help="isWigiiNamespaceCreator_help"/>
+				<isModuleEditor type="Booleans" require="0" help="isModuleEditor_help"/>
+				<isReadAllUsersInWigiiNamespace type="Booleans" require="0" help="isReadAllUsersInWigiiNamespace_help"/>
+				<isUserCreator type="Booleans" require="0" help="isUserCreator_help"/>
+				<isAdminCreator type="Booleans" require="0" help="isAdminCreator_help"/>
+				<getReadAllGroupsInWigiiNamespace type="MultipleAttributs" useCheckboxes="1" require="0" help="getReadAllGroupsInWigiiNamespace_help"/>
+				<getRootGroupCreator type="MultipleAttributs" useCheckboxes="1" require="0" help="getRootGroupCreator_help"/>
+				<getGroupCreator type="MultipleAttributs" useCheckboxes="1" require="0" help="getGroupCreator_help" hidden="1"/>
 			<userAdminRights groupEnd="1" />
-			<moduleAccess type="Strings" require="0" isInLine="1"/>
+			<moduleAccess type="Strings" require="0" isInLine="1" disabled="1" expand="1"/>
+			<addModuleAccess type="Strings" require="0" isInLine="1" expand="1" enableDynamicAttributes="1" hidden='logNot(getAttr(sysUser("principal"),"isWigiiNamespaceCreator"))'/>			
 		</fields>
 	</roleEdit>
 
@@ -244,6 +248,7 @@
 			<isRole type="Booleans" require="0" />
 			<wigiiNamespace htmlArea="1" type="Strings" require="0" />
 			<username type="Strings" require="1" />
+			<principalEmail type="Emails" expand="1"/>
 			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" />
 			<info_lastLogin type="Dates" require="0" />
 			<info_nbLogin htmlArea="1" type="Strings" require="0" />

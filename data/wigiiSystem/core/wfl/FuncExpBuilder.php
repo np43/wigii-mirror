@@ -1322,11 +1322,26 @@ class FuncExpBuilder {
 	 */
 	protected function doSel($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, $fxpMapping=null) {
 		// instantiates the parameters if any mapping is given
-		if(isset($fxpMapping)) $fxpMapping->instantiateParameters();		
-		// executes the data flow and returns the result
-		if($dataFlowDumpable instanceof DataFlowDumpable) $returnValue = $this->getDataFlowService()->processDumpableObject($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, false);
-		elseif($dataFlowDumpable instanceof InputDataFlow) $returnValue =  $this->getDataFlowService()->processInputDataFlow($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, false);
-		else $returnValue =  $this->getDataFlowService()->processObjectList($principal, $dataFlowDumpable, $dataFlowActivitySelectorList);		
+		if(isset($fxpMapping)) $fxpMapping->instantiateParameters();
+		// sets adaptative WigiiNamespace on the Principal
+		$currentNamespace = $principal->getWigiiNamespace();
+		$hasAdaptiveWigiiNamespace = $principal->hasAdaptiveWigiiNamespace();
+		$principal->setAdaptiveWigiiNamespace(true);	
+		try {	
+			// executes the data flow and returns the result
+			if($dataFlowDumpable instanceof DataFlowDumpable) $returnValue = $this->getDataFlowService()->processDumpableObject($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, false);
+			elseif($dataFlowDumpable instanceof InputDataFlow) $returnValue =  $this->getDataFlowService()->processInputDataFlow($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, false);
+			else $returnValue =  $this->getDataFlowService()->processObjectList($principal, $dataFlowDumpable, $dataFlowActivitySelectorList);
+		}
+		catch(Exception $e) {
+			// sets back current WigiiNamespace
+			if(!$hasAdaptiveWigiiNamespace) $principal->setAdaptiveWigiiNamespace(false);
+			$principal->bindToWigiiNamespace($currentNamespace);
+			throw $e;
+		}
+		// sets back current WigiiNamespace
+		if(!$hasAdaptiveWigiiNamespace) $principal->setAdaptiveWigiiNamespace(false);
+		$principal->bindToWigiiNamespace($currentNamespace);
 		return $returnValue;		
 	}
 	

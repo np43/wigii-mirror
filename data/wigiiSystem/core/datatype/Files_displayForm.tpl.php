@@ -21,12 +21,14 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 4 déc. 09
- * by LWR
+/**
+ * Created on 4 déc. 09 by LWR
+ * Modified by Medair on 21.07.2016 to integrate Box
  */
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
+
+$boxServiceFormExecutor = TechnicalServiceProvider::getBoxServiceFormExecutor();
 
 $fieldXml = $field->getXml();
 
@@ -58,9 +60,12 @@ $inputNameId = $formId.'_'.$fieldName.'_name_text';
 $inputFileId = $formId.'_'.$fieldName.'_file_file';
 $inputPathId = $formId.'_'.$fieldName.'_path_hidden';
 $textContentId = $formId.'_'.$fieldName.'_textContent_textarea';
+$inputBoxFileId =  $inputFileId.'_box';
 
 //display the type preview
 $this->put('<div class="filePreview" style="'.(!($path || $textContent)? "display:none;" : "").'float:left; background:url(\''.SITE_ROOT_forFileUrl.'images/preview/prev.26'.$type.'.png\') no-repeat 0px -1px; margin-right:4px;width:26px;height:26px;"></div>');
+
+$folderIdTag = (string)$fieldXml["boxFolderId"];
 
 //the name field
 $subFieldName = "name";
@@ -68,11 +73,27 @@ $inputName = $fieldName.'_'.$subFieldName;
 $this->put('<input id="'.$inputNameId.'" name="'.$inputName.'" ');
 if($disabled) $this->put(' disabled ');
 if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
-$this->put(' style="'.(!($path || $textContent) ? "display:none;" : "").'height:18px;float:left;'." width:".($parentWidth-5-40)."px; ");
+
+if($folderIdTag && $boxServiceFormExecutor->getShowWarningIfBoxUpload() && $boxServiceFormExecutor->isBoxEnabled()){
+	$this->put(' style="'.(!($path || $textContent) ? "display:none;" : "").'height:18px;float:left;'." width:".($parentWidth-5-40-10)."px; ");
+}else{
+	$this->put(' style="'.(!($path || $textContent) ? "display:none;" : "").'height:18px;float:left;'." width:".($parentWidth-5-40)."px; ");
+}
+
 if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
 $this->put('" value="');
 $this->put($this->formatValueFromRecord($fieldName, $subFieldName, $this->getRecord()));
 $this->put('" />');
+
+
+if($folderIdTag && $boxServiceFormExecutor->getShowWarningIfBoxUpload() && $boxServiceFormExecutor->isBoxEnabled()){
+	try{
+		$array = $boxServiceFormExecutor->getFolderNameFromFolderId($this->getP(), $folderIdTag);
+		$this->put('<img class="box Icon" style="cursor: pointer" title="'.$this->t("boxFileFolder").': '.$array[1].'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/status/software-update-urgent.png" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$array[0].'/'.$array[1].'\',\'_blank\');"/>');
+	}catch (Exception $e){
+		$this->put('<img class="box Icon" title="'.$this->t("boxFileFolder").': '.$array[1].'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/status/software-update-urgent.png"/>');
+	}
+}
 
 //the ssrc is used to download the current file
 $ssrc = null;
@@ -103,8 +124,34 @@ if($fieldXml["htmlArea"]=="1"){
 	$this->put(' style="float:left;'.($path && $activeJS ? "display:none;" : "").'width:'.($parentWidth-5).'px;" value="" />');
 }
 
+	
+	// Box File picker integration
+	$boxElement = $fieldXml["enableBoxIntegration"]; 
+	$boxGeneral = $this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "enableBoxIntegration");
+	if((($boxElement == "1") || ($boxGeneral == "1" && ($boxElement != "0"))) && ($fieldXml["htmlArea"]!="1") 
+		&& $this->getFormRenderer()->getBoxServiceFormExecutor()->isBoxEnabled()) {
 
+		$this->put('<input id="'.$inputBoxFileId.'" name="Box_file" class="ui-button-icon-box"');
+		$this->put(' type="button" ');
+		
+		if($disabled) $this->put(' disabled ');
+		if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
+		
+		$this->put('style="'.($path && $activeJS ? "display:none;" : "").'width:'.($parentWidth-5).'px;font-size:0.9em;" value="'.$transS->h($p, "boxChooseFile").'"/>');
+		$elem = $xml->clientId;
+	
+		//initializes the Box file picker
+		$this->getFormRenderer()->getBoxServiceFormExecutor()->initializeFilePicker($this->getP(),$exec);
+		
+		//if we are in a Box's case add the tag "data-wigii-service" with "box" value
+		if(strstr($path, "box://")){
+			$exec->addJsCode("domElementAddWigiiService('#".$formId."__".$fieldName."', 'box')");
+		}
+		
+		$this->getExecutionService()->addJsCode("boxChooseFile('#$inputBoxFileId', '#$inputFileId', '#$inputNameId', '#$inputPathId', '".str_replace("//", "\/\/",SITE_ROOT_forFileUrl)."');");
+	}
 
+	
 $this->put('<div class="clear" style="margin-top:5px;"></div>');
 if($fieldXml["htmlArea"]=="1"){
 	//add the new online file button
@@ -152,7 +199,7 @@ if($fieldXml["htmlArea"]=="1"){
 	if($activeJS){
 		//download current file
 		if($ssrc){
-			$this->put('<div class="downloadCurrentFile" onclick="download(\''.$src.'\');" style="'.(!$path ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/down.png\') no-repeat 0px 0px;cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;margin-top:3px;">'.$transS->t($p, "downloadCurrentFile").($fileVersion > 0 ? ' (v.'.$fileVersion.')' : '').'</div>');
+			$this->put('<div class="downloadCurrentFile" onclick="longDownload(\''.$src.'\',\''.$formId.'__'.$fieldName.'\');" style="'.(!$path ? "display:none;" : "").'background:url(\''.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/down.png\') no-repeat 0px 0px;cursor:pointer; float:left; text-decoration:underline;padding-top:2px;padding-left:22px;margin-top:3px;">'.$transS->t($p, "downloadCurrentFile").($fileVersion > 0 ? ' (v.'.$fileVersion.')' : '').'</div>');
 			$this->put('<div class="clear"></div>');
 		}
 		if(!$disabled && !$readonly) {

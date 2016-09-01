@@ -659,7 +659,7 @@ class UserAdminServiceImpl implements UserAdminService
 				case 'info_lastFailedLogin':
 				case 'info_nbFailedLogin':
 				case 'info_lastLogout':
-				case 'info_lastSessionContext':
+				//case 'info_lastSessionContext': CWE 2016.06.08: opens the persistance of user session context from Admin console (principal email and more)
 				//case 'info_resetSessionContext':
 					$doPersist=false;
 					break;
@@ -714,8 +714,8 @@ class UserAdminServiceImpl implements UserAdminService
 				case 'info_nbLogin':
 				case 'info_lastFailedLogin':									
 				case 'info_lastLogout':
-				case 'info_lastSessionContext':
 				//case 'info_resetSessionContext': this needs to be updated
+				//case 'info_lastSessionContext': CWE 2016.06.08: opens the persistance of user session context from Admin console (principal email and more)					
 					$doPersist=false;
 					break;
 				case 'info_nbFailedLogin':
@@ -727,6 +727,7 @@ class UserAdminServiceImpl implements UserAdminService
 						$doPersist=true;
 					}
 					else $doPersist=false;
+					break;
 			}
 			if($doPersist)
 			{

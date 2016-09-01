@@ -1,0 +1,108 @@
+<?xml version='1.0' standalone='yes'?>
+<moduleName>
+	<parameters
+
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+
+		Notification_enable="1"
+		Notification_enableOnSharing="1"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="1"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="0"
+		Notification_includeSenderInNotification="0"
+		Notification_includeOtherNamespaceInUpdateOrSetState="0"
+		Notification_hideElementView="0"
+		Notificatin_hideAccessButton="0"
+
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableCreationSysDate="0"
+		ExcelExport_enableId="0"
+
+		Element_enableLockedStatus="0"
+		Element_enableImportant1Status="1"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="0"
+		Element_enableDeprecatedStatus="1"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="0"
+		Element_viewInfo="1"
+		Element_viewId="0"
+		Element_evaluator="CustomizedElementEvaluator"
+
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_selectAllGroupsOnSearch="1"
+		Group_enableDynamicConfig="1"
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		nbOfLevelToExpandOnInit="2"
+
+		elementTotalWidth="660"
+		elementLabelWidth="200"
+
+		reloadDetailAfterModify="0"
+		useGoogleServiceToPreviewOfficeDocuments="0"
+
+		trashBinGroup=""
+		/>
+		
+		<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+				<feedback_email type="Emails" require="1" ignoreNotification="1" />
+				<feedback_for type="Attributs" require="1" >
+					<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				</feedback_for>
+				<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+				<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+			</fields>
+		</feedbackOnElement>
+		<feedbackOnSystem>
+			<template path="feedbackOnSystem.php" inClientFolder="1" />
+			<fields>
+				<feedback_email type="Emails" require="1" ignoreNotification="1" />
+				<feedback_for type="Attributs" require="1" >
+					<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				</feedback_for>
+				<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+				<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+			</fields>
+		</feedbackOnSystem>
+		
+		<Notification>
+			<template path="Notification.php" inClientFolder="1" />
+		</Notification>
+
+		<Emailing>
+			<template path="Emailing.php" inClientFolder="1" />
+		</Emailing>
+		
+		<fields>
+			<field1 type="Strings" require="0" expand="1" ><label_l01>Field 1</label_l01><label_l02>Champ 1</label_l02></field1>
+			<field2 type="Strings" require="0" expand="1" ><label_l01>Field 2</label_l01><label_l02>Champ 2</label_l02></field2>
+			<field3 type="Strings" require="0" expand="1" ><label_l01>Field 3</label_l01><label_l02>Champ 3</label_l02></field3>
+			<field4 type="Attributs" require="0" expand="1" useRadioButtons="1"><label_l01>Field 4</label_l01><label_l02>Champ 4</label_l02>
+				<attribute>yes<label_l01>Yes</label_l01><label_l02>Oui</label_l02></attribute>
+				<attribute>no<label_l01>No</label_l01><label_l02>Non</label_l02></attribute>
+			</field4>
+		</fields>
+		
+		<listView>
+			<fields>
+				<c1 field="field1" width="200" isDefaultSortingKey="1" />
+				<c2 field="field2" width="200" />
+				<c3 field="field3" width="200" />
+				<c6 elementAttribut="sys_date" width="75" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></c6>
+			</fields>
+		</listView>
+
+		<selectSearchBar>
+			<fields>
+				<c1 field="field4" />
+				<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
+				<e2 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e2>
+			</fields>
+		</selectSearchBar>
+</moduleName>

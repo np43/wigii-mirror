@@ -68,6 +68,8 @@ class WebServiceFormExecutor extends FormExecutor implements WebExecutor {
 	// WebExecutor implementation
 	
 	public function isMinimalPrincipalAuthorized() {return false;}
+	public function isPublicPrincipalAuthorized()  {return false;}
+	
 	public function processAndEnds($p,$exec) {
 		// by default handles standard element request
 		$this->processElementRequest($p, $exec);

@@ -61,7 +61,7 @@ if($fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification()){
  * Normal view
  ******************/
 } else {
-	if(!$this->getRecord()->getFieldValue($fieldName, "size")){
+	if(!$this->getRecord()->getFieldValue($fieldName, "size") && !(strstr($this->getRecord()->getFieldValue($fieldName, "path"), "box://"))){
 		$src = SITE_ROOT_forFileUrl."images/preview/preview.46.jpg";
 		$this->put('<img class="prev" style="width:'.min(46, $parentWidth-20).'px;" src="'.$src.'" />');
 	} else {

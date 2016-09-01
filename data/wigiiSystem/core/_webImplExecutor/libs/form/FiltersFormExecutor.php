@@ -326,10 +326,12 @@ addFieldMenuTimeout = null;" .
 });
 $('#filters_form___textAdvancedSearch_value_textarea').focus(function(){
 	if(!$('#addFieldMenu:visible').length){
-		positionElementOnDom($('#addFieldMenu'), $('#filters_form__advancedFilters_group'), 'right', 0, false, true);
-		$('#addFieldMenu').width(250).show();
+		positionElementOnDom($('#addFieldMenu'), $('#filtersDialog'), 'right', 0, false, true); /*$('#filters_form__advancedFilters_group')*/
+		$('#addFieldMenu').css({'height': $('#filtersDialog').parent().css('height'), 'width': '250px', 'overflow-y': 'auto'}).show();
 	}
 }).blur(function(){
+	/* IE and Chrome doubled the blur event, then test if the timer already exists. If so we suppress it. */
+	if(typeof(addFieldMenuTimeout)=='number') clearTimeout(addFieldMenuTimeout);
 	addFieldMenuTimeout = setTimeout(function(){ $('#addFieldMenu').hide(); }, 200);
 });
 $('#addFieldMenu div.grayFont,#addFieldMenu .searchField,#addFieldMenu .searchOptions').click(function(){
@@ -353,10 +355,14 @@ $('#addFieldMenu div:not(.grayFont, .searchField, .searchOptions, .handler)').cl
 addGroupOperatorMenuTimeout = null;
 $('#filters_form___textGroupSearch_value_text').focus(function(){
 	if(!$('#addGroupOperatorMenu:visible').length){
-		positionElementOnDom($('#addGroupOperatorMenu'), $('#filters_form__advancedFilters_group'), 'right', 120, false, true);
-		$('#addGroupOperatorMenu').width(250).show();
+		positionElementOnDom($('#addGroupOperatorMenu'), $('#filtersDialog'), 'right', 120, false, true);
+		/* correction for the top postition */ 
+		if($('#filtersDialog').height()!==undefined) $('#addGroupOperatorMenu').css('top', $('#filtersDialog').height()/3*2);
+		$('#addGroupOperatorMenu').css('width', 250).show();
 	}
 }).blur(function(){
+	/* IE and Chrome doubled the blur event, then test if the timer already exists. If so we suppress it. */
+	if(typeof(addGroupOperatorMenuTimeout)=='number') clearTimeout(addGroupOperatorMenuTimeout);
 	addGroupOperatorMenuTimeout = setTimeout(function(){ $('#addGroupOperatorMenu').hide(); }, 200);
 });
 $('#addGroupOperatorMenu div.grayFont,#addGroupOperatorMenu .searchField,#addGroupOperatorMenu .searchOptions').click(function(){
@@ -400,7 +406,8 @@ $('#filters_form select.chosen').on('select2:select', function(){
 }).on('select2:unselect', function(){ 
 	if(!$(this).select2('val')) $(this).removeClass('filled').find('~ span.select2').removeClass('filled');
 });
-				
+
+$('#filtersDialog').parent().append($('#addFieldMenu')).append($('#addGroupOperatorMenu'));				
 ");
 
 

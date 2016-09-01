@@ -12,6 +12,11 @@
 	border-right:none;
 }
 
+.MatrixCorner.BSB > div {
+	margin-top: 5px;
+	margin-left: 10px;
+}
+
 .Matrix .MatrixColHeaders {
 	float:left;
 	height:20px;
@@ -73,6 +78,7 @@
 	padding:0px;
 	border:none;
 	border-collapse:collapse;
+	height:22px;
 }
 .Matrix .MatrixItems table td div {
 	float:left;
@@ -93,7 +99,7 @@
 	white-space: normal;
 	border:none;
 	text-align:center;
-	padding-top:2px;
+	padding-top: 0;
 	padding-left:2px;
 	padding-right:2px;
 	overflow:hidden;
@@ -209,6 +215,9 @@
 	margin-right:2px;
 	padding-left:5px;
 	overflow:hidden;
+}
+div.userHeader {
+	height: 20px;
 }
 #adminUserUserMatrix.Matrix .MatrixItems table td div,
 #adminUserRoleMatrix.Matrix .MatrixItems table td div,

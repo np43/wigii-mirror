@@ -213,6 +213,8 @@ class EditElementFormExecutor extends FormExecutor {
 			if($exec->getIdAnswer()=="mainDiv" || $this->getWigiiExecutor()->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "reloadDetailAfterModify")=="1"){
 				//reload detail
 				$exec->addRequests($exec->getIdAnswer()."/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/detail/".$this->getRecord()->getId());
+				// Resets ConfigService in memory cache to recalculate correctly the dynamic attributes.
+				ServiceProvider::getConfigService()->freeMemory();
 			} else {
 				$exec->addJsCode("$('#groupPanel li>div.highlight').removeClass('highlight');");
 				$this->getWigiiExecutor()->operationSuccessfullMessage($exec->getIdAnswer(), 350, $transS->t($p, "operationDoneSuccessfully"), "", "done");

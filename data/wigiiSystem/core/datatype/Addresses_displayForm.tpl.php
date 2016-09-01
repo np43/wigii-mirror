@@ -44,6 +44,7 @@ $isRequire = 	$fieldXml["require"]=="1" && !$isPublicPrincipal ||
 				$isPublicPrincipal && $fieldXml["requireInPublic"]=="1" ||
 				$isPublicPrincipal && $fieldXml["require"]=="1" && $fieldXml["requireInPublic"]!="0";
 $isNotExpanded = !$isFilled && $fieldXml["expand"]!="1" && (!$isRequire || $fieldXml["expand"]=="0");
+$isNoAutofill = $fieldXml["noAutofill"]=="1";
 $inputId = $formId.'_'.$fieldName;
 
 //street
@@ -71,7 +72,7 @@ $inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.($inputType==null?$input
 $inputName = $fieldName.'_'.$subFieldName;
 $isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire, false, $isNoAutofill);
 $this->displayForm_1_TillClassDefinition();
 $this->displayForm_2_TillStyleDefinition($labelWidth, $valueWidth, $subFieldName, $readonly, $disabled);
 $this->displayForm_3a_CloseStyleBeginValueAsAttribute();
@@ -86,7 +87,7 @@ $inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.($inputType==null?$input
 $inputName = $fieldName.'_'.$subFieldName;
 $isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire, false, $isNoAutofill);
 $this->displayForm_1_TillClassDefinition();
 $this->displayForm_2_TillStyleDefinition($labelWidth, $valueWidth, $subFieldName, $readonly, $disabled);
 $this->displayForm_3a_CloseStyleBeginValueAsAttribute();
@@ -102,7 +103,7 @@ if ($fieldXml["noState"] !== null && $fieldXml["noState"] != "1"){
 	$inputName = $fieldName.'_'.$subFieldName;
 	$isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire, false, $isNoAutofill);
 	$this->displayForm_1_TillClassDefinition();
 	$this->displayForm_2_TillStyleDefinition($labelWidth, $valueWidth, $subFieldName, $readonly, $disabled);
 	$this->displayForm_3a_CloseStyleBeginValueAsAttribute();
@@ -119,7 +120,7 @@ if ($fieldXml["noCountry"] !== null && $fieldXml["noCountry"] != "1"){
 	$inputName = $fieldName.'_'.$subFieldName;
 	$isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire, false, $isNoAutofill);
 	$this->displayForm_1_TillClassDefinition();
 	$this->displayForm_2_TillStyleDefinition($labelWidth, $valueWidth, $subFieldName, $readonly, $disabled);
 	$this->displayForm_3a_CloseStyleBeginValueAsAttribute();

@@ -24,6 +24,7 @@
 /**
  * MySql database technical facade
  * Created by CWE on 23 juin 09
+ * Modified by Medair (ACA) on August 10th 2016 to use mysqli driver instead of deprecated mysql. 
  */
 class MySqlFacade
 {
@@ -42,6 +43,9 @@ class MySqlFacade
 	const Q_INSERT_FROMSELECT = 9;
 	const Q_DDLCMD = 10;
 
+	const RESULT_MODE_ASSOC = MYSQLI_ASSOC;
+	const RESULT_MODE_NUM = MYSQLI_NUM;
+	
 	//cache for all active connection
 	private $dbConnectionCache = array();
 	//cache for the name of the current selected database on an open connection
@@ -86,13 +90,13 @@ class MySqlFacade
 	 * cnxSettings a DbConnectionSettings object with everything needed to connect to the database
 	 * throws MySqlFacadeException in case of error
 	 */
-	public function selectFirst($principal, $sql, $cnxSettings, $resultType=MYSQL_ASSOC)
+	public function selectFirst($principal, $sql, $cnxSettings, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{
 		$this->executionSink()->publishStartOperation("selectFirst", $principal);
 		try
 		{
 			$idQuery = $this->query($sql, $cnxSettings, MySqlFacade::Q_SELECTFIRST);
-			$returnValue = mysql_fetch_array($idQuery, $resultType);
+			$returnValue = mysqli_fetch_array($idQuery, $resultType);
 			if($returnValue === false) return null;
 			$this->freeMemoryResult($idQuery);
 		}
@@ -116,17 +120,17 @@ class MySqlFacade
 	 * throws MySqlFacadeException in case of error
 	 * throws MySqlFacadeException(INVALID_ARGUMENT) if number of records selected in the database is greater than one.
 	 */
-	public function selectOne($principal, $sql, $cnxSettings, $resultType=MYSQL_ASSOC)
+	public function selectOne($principal, $sql, $cnxSettings, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{
 		$this->executionSink()->publishStartOperation("selectOne", $principal);
 		try
 		{
 			$idQuery = $this->query($sql, $cnxSettings, MySqlFacade::Q_SELECTONE);
 			//controls that the result is one line or no lines but cannot be multiple:
-			if(mysql_num_rows($idQuery)>1){
+			if(mysqli_num_rows($idQuery)>1){
 				throw new MySqlFacadeException("Invalid SQL, return more than one row for selectOne:\n".$sql,MySqlFacadeException::INVALID_ARGUMENT);
 			}
-			$returnValue = mysql_fetch_array($idQuery, $resultType);
+			$returnValue = mysqli_fetch_array($idQuery, $resultType);
 			if($returnValue === false) return null;
 			$this->freeMemoryResult($idQuery);
 		}
@@ -153,7 +157,7 @@ class MySqlFacade
 		$this->executionSink()->publishStartOperation("selectOneValue", $principal);
 		try
 		{
-			$row = $this->selectOne($principal, $sql, $cnxSettings, MYSQL_NUM);
+			$row = $this->selectOne($principal, $sql, $cnxSettings, MySqlFacade::RESULT_MODE_NUM);
 			if(is_null($row)) throw new MySqlFacadeException("Invalid SQL, return no row for selectOneValue:\n".$sql,MySqlFacadeException::INVALID_ARGUMENT);
 			else $returnValue = $row[0];
 		}
@@ -179,7 +183,7 @@ class MySqlFacade
 	 * returns the number of records selected.
 	 * throws MySqlFacadeException in case of error
 	 */
-	public function selectAll($principal, $sql, $cnxSettings, $rowList, $resultType=MYSQL_ASSOC)
+	public function selectAll($principal, $sql, $cnxSettings, $rowList, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{
 		$this->executionSink()->publishStartOperation("selectAll", $principal);
 		$n = 0;
@@ -191,8 +195,8 @@ class MySqlFacade
 			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."selectAll query is done"] = microtime(true);
 //			fput($sql);
 //			fput($idQuery);
-//			fput(mysql_num_rows($idQuery));
-			while($row = mysql_fetch_array($idQuery, $resultType)){
+//			fput(mysqli_num_rows($idQuery));
+			while($row = mysqli_fetch_array($idQuery, $resultType)){
 //				$this->debugLogger()->write("row ".$n." is fetched");
 				//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."row $n is fetched"] = microtime(true);
 				$rowList->addRow($row);
@@ -229,7 +233,7 @@ class MySqlFacade
 	 *
 	 * postcondition: automatically adds to sql query the SQL_CALC_FOUND_ROWS and LIMIT clauses
 	 */
-	public function selectPage($principal, $sql, $cnxSettings, $offset, $pageSize, $rowList, $resultType=MYSQL_ASSOC)
+	public function selectPage($principal, $sql, $cnxSettings, $offset, $pageSize, $rowList, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{
 		$this->executionSink()->publishStartOperation("selectPage", $principal);
 		$n = 0;
@@ -249,7 +253,7 @@ class MySqlFacade
 
 			// gets row count
 			$idRowCountQuery = $this->query('SELECT FOUND_ROWS() AS NROWS;', $cnxSettings, MySqlFacade::Q_SELECTONE);
-			if($row = mysql_fetch_array($idRowCountQuery, MYSQL_ASSOC))
+			if($row = mysqli_fetch_array($idRowCountQuery, MySqlFacade::RESULT_MODE_ASSOC))
 			{
 				$n = $row['NROWS'];
 				$this->freeMemoryResult($idRowCountQuery);
@@ -257,7 +261,7 @@ class MySqlFacade
 			else {throw new MySqlFacadeException('expected to select SQL FOUND_ROWS(), but nothing.', MySqlFacadeException::UNEXPECTED_ERROR);}
 
 			// gets records
-			while($row = mysql_fetch_array($idQuery, $resultType)){
+			while($row = mysqli_fetch_array($idQuery, $resultType)){
 				$rowList->addRow($row);
 			}
 
@@ -650,7 +654,7 @@ class MySqlFacade
 
 			// gets row count
 			$idRowCountQuery = $this->query('SELECT FOUND_ROWS() AS NROWS;', $cnxSettings, MySqlFacade::Q_SELECTONE);
-			if($row = mysql_fetch_array($idRowCountQuery, MYSQL_ASSOC))
+			if($row = mysqli_fetch_array($idRowCountQuery, MySqlFacade::RESULT_MODE_ASSOC))
 			{
 				$n = $row['NROWS'];
 				$this->freeMemoryResult($idRowCountQuery);
@@ -703,7 +707,7 @@ class MySqlFacade
 
 			// gets row count
 			$idRowCountQuery = $this->query('SELECT FOUND_ROWS() AS NROWS;', $cnxSettings, MySqlFacade::Q_SELECTONE);
-			if($row = mysql_fetch_array($idRowCountQuery, MYSQL_ASSOC))
+			if($row = mysqli_fetch_array($idRowCountQuery, MySqlFacade::RESULT_MODE_ASSOC))
 			{
 				$n = $row['NROWS'];
 				$this->freeMemoryResult($idRowCountQuery);
@@ -973,7 +977,7 @@ class MySqlFacade
 	 * Executes an sql query
 	 * return an integer depending on the queryType:
 	 *  - insertOne, insertMultiple: last insert id
-	 *  - selectFirst, One, All: idQuery
+	 *  - selectFirst, One, All: idQuery (instance of mysqli_result)
 	 *  - update, delete: num affected rows
 	 *  - create table from select, insert into table from select: num affected rows
 	 *  - ddl cmd : 1
@@ -981,25 +985,25 @@ class MySqlFacade
 	 *  or it can also be an existing open MySqlConnection obtained by calling the 'MySqlFacade::connect' method.
 	 */
 	protected function query($sql, $cnxSettings, $queryType)
-	{
-		if(is_resource($cnxSettings)) $mysqlId = $cnxSettings;
+	{		
+		if($cnxSettings instanceof mysqli) $mysqlId = $cnxSettings;
 		else $mysqlId = $this->connect($cnxSettings);
 
-		$idQuery = mysql_query($sql, $mysqlId);
+		$idQuery = mysqli_query($mysqlId, $sql);
 		if($this->debugLogger()->isEnabled())
 		{
 			$this->debugLogger()->write("Executes SQL query : ".$sql);
 		}
 		if($idQuery === false){
-			$this->debugLogger()->write("Invalid SQL:".mysql_error($mysqlId)."\nMySqlErrorNo:".mysql_errno($mysqlId));
-			throw new MySqlFacadeException("Invalid SQL: ".$sql,MySqlFacadeException::MYSQL_SQLERROR, null, mysql_error($mysqlId),  mysql_errno($mysqlId));
+			$this->debugLogger()->write("Invalid SQL:".mysqli_error($mysqlId)."\nMySqlErrorNo:".mysqli_errno($mysqlId));
+			throw new MySqlFacadeException("Invalid SQL: ".$sql,MySqlFacadeException::MYSQL_SQLERROR, null, mysqli_error($mysqlId),  mysqli_errno($mysqlId));
 		}
 		$returnValue = 0;
 		switch($queryType)
 		{
 			case MySqlFacade::Q_INSERTONE:
 			case MySqlFacade::Q_INSERTMULTIPLE:
-				$returnValue = mysql_insert_id($mysqlId);
+				$returnValue = mysqli_insert_id($mysqlId);
 				break;
 			case MySqlFacade::Q_SELECTFIRST:
 			case MySqlFacade::Q_SELECTONE:
@@ -1010,7 +1014,7 @@ class MySqlFacade
 			case MySqlFacade::Q_DELETE:
 			case MySqlFacade::Q_CREATETABLE_FROMSELECT:
 			case MySqlFacade::Q_INSERT_FROMSELECT:
-				$returnValue = mysql_affected_rows($mysqlId);
+				$returnValue = mysqli_affected_rows($mysqlId);
 				break;
 			case MySqlFacade::Q_DDLCMD:
 				$returnValue = 1;
@@ -1028,9 +1032,8 @@ class MySqlFacade
 	 * this needs to be used only after queries as SELECT, SHOW, EXPLAIN and DESCRIBE
 	 */
 	protected function freeMemoryResult($idQuery){
-		if(mysql_free_result($idQuery)){
-			$this->debugLogger()->write("MySqlFacade freeMemoryResult successful for query: $idQuery");
-		}
+		mysqli_free_result($idQuery);
+		$this->debugLogger()->write("MySqlFacade freeMemoryResult successful for query");
 	}
 
 	/**
@@ -1041,14 +1044,16 @@ class MySqlFacade
 		$returnValue = $this->getCachedDbConnection($cnxSettings);
 		if(!isset($returnValue))
 		{
-			$returnValue = mysql_connect($cnxSettings->getHost(), $cnxSettings->getUsername(), $cnxSettings->getPassword());
+			$returnValue = mysqli_connect($cnxSettings->getHost(), $cnxSettings->getUsername(), $cnxSettings->getPassword());
 			if(!$returnValue) throw new MySqlFacadeException("Connection to database with: ".$cnxSettings->displayDebug()." failed.", MySqlFacadeException::INVALID_ARGUMENT);
-			if(!mysql_select_db($cnxSettings->getDbName(), $returnValue)){
+			if(!mysqli_select_db($returnValue, $cnxSettings->getDbName())){
 				throw new MySqlFacadeException("No database: ".$cnxSettings->getDbName()." on host: ".$cnxSettings->getHost(), MySqlFacadeException::INVALID_ARGUMENT);
 			}
 			//set the charset to UTF8
-			mysql_query("SET NAMES utf8;", $returnValue);
-			mysql_query("SET CHARACTER SET utf8;", $returnValue);
+			// 10.08.2016: lets server manage UTF8 details to handle correctly emoticons in text
+			// 11.08.2016: regression on datatype Files with htmlArea=1 => force again UTF8
+			mysqli_query($returnValue, "SET NAMES utf8;");
+			mysqli_query($returnValue, "SET CHARACTER SET utf8;");
 			$this->cacheDbConnection($cnxSettings, $returnValue);
 		}
 		return $returnValue;
@@ -1065,24 +1070,25 @@ class MySqlFacade
 		// changes the active database if new one differs from active one
 		$dbName = $cnxSettings->getDbName();
 		if($this->currentDbCache[$key] != $dbName) {
-			if(!mysql_select_db($dbName, $returnValue)){
+			if(!mysqli_select_db($returnValue, $dbName)){
 				throw new MySqlFacadeException("No database: ".$dbName." on host: ".$cnxSettings->getHost(), MySqlFacadeException::INVALID_ARGUMENT);
 			}
 			$this->currentDbCache[$key] = $dbName;
 			if($this->debugLogger()->isEnabled()) $this->debugLogger()->write('changes current db to '.$dbName);
 		}
-		if($this->debugLogger()->isEnabled()) $this->debugLogger()->write('found DB connection '.$returnValue.' for '.$dbName);
+		if($this->debugLogger()->isEnabled()) $this->debugLogger()->write('found DB connection '.mysqli_thread_id($returnValue).' for '.$dbName);
 		return $returnValue;
 	}
 
-	protected function cacheDbConnection($cnxSettings, $dbConnectionId)
+	protected function cacheDbConnection($cnxSettings, $dbConnection)
 	{
 		if(is_null($cnxSettings)) return;
 		$key = $this->getDbConnectionCacheKey($cnxSettings);
-		$this->dbConnectionCache[$key] = $dbConnectionId;
+		$this->dbConnectionCache[$key] = $dbConnection;
 		$this->currentDbCache[$key] = $cnxSettings->getDbName();
-		if($this->debugLogger()->isEnabled()) $this->debugLogger()->write("stores DB connection\n".$dbConnectionId."\n".$cnxSettings->displayDebug());
+		if($this->debugLogger()->isEnabled()) $this->debugLogger()->write("stores DB connection\n".mysqli_thread_id($dbConnection)."\n".$cnxSettings->displayDebug());
 	}
+
 	/**
 	 * Returns (hostname/username)
 	 */

@@ -166,7 +166,9 @@ $val = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($f
 $sameAsField = (string)$fieldXml["sameAsField"];
 if(!empty($sameAsField)) {	
 	$sameAsFieldId = $formId.'_'.$sameAsField.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
-	$this->addJsCode('$("#'.$inputId.'").html($("#'.$sameAsFieldId.' option").clone()).find("option[selected]").prop("selected", false);');
+	// clones drop-down and unselects value
+	$this->addJsCode('$("#'.$inputId.'").attr("data-placeholder", $("#'.$sameAsFieldId.'").attr("data-placeholder")).html($("#'.$sameAsFieldId.' option").clone()).find("option[selected]").prop("selected", false);');
+	// selects new value (the two calls must be separated to work)
 	$this->addJsCode('$("#'.$inputId.'").'.'find("option[value='."'$val'".']").prop("selected", "selected");');
 	
 	$existingKeys = array();
@@ -206,7 +208,23 @@ else {
 	//define the options:
 	$html2text = new Html2text();
 	foreach($fieldXml->attribute as $attribute_key => $attribute){
+		$label = $this->getRecord()->getRedirectedFieldLabel($this->getP(), $fieldName, $attribute);
+		$tempDisabled = false;
+		if(!$label && $label!=="0"){
+			$label = $transS->t($p, (string)$attribute, $attribute);
+			$tempDisabled = true;
+		}
+		
+		// cleans up the html
+		$html2text->html2text($label);
+		$label = $html2text->get_text();
+		$html2text->clear();
+		$label = trim($label);
+		
 		if($attribute == "none" && $flex){
+			if($label != '' && $label!='&nbsp;') {
+				$this->addJsCode("$('#".$inputId."').attr('data-placeholder','".$label."')");		
+			}
 			$this->put('<option '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="" title="" ></option>');
 			continue;
 		}
@@ -221,19 +239,7 @@ else {
 			$selected = ' selected="selected" ';
 		} else {
 			$selected = "";
-		}
-	
-		$label = $this->getRecord()->getRedirectedFieldLabel($this->getP(), $fieldName, $attribute);
-		$tempDisabled = false;
-		if(!$label && $label!=="0"){
-			$label = $transS->t($p, (string)$attribute, $attribute);
-			$tempDisabled = true;
-		}
-	
-		// cleans up the html		
-		$html2text->html2text($label);
-		$label = $html2text->get_text();
-		$html2text->clear();		
+		}		
 	
 		if($attribute["optGroupStart"]=="1"){
 			$this->put('<optgroup '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' label="'.$label.'" >');

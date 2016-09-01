@@ -39,5 +39,7 @@
 		<WigiiGraphServiceException from="4500" to="4599"/>
 		<FuncExpEvalException from="4600" to="4699"/>
 		<WigiiBPLException from="4700" to="4799"/>
+		<BoxServiceException from="4800" to="4899"/>
+		<ElementFileAdminServiceException from="4900" to="4999" />
 	</exceptions>
 </errorcodes>

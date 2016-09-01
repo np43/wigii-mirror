@@ -581,13 +581,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			if(insertIntoAnchor && !options['id'] && !options['classId']) {
 				options['id'] = 'popup_'+(new Date()).getTime();
 			}
-			
+
+			if(!options.referenceWindow) options.referenceWindow = $(window);			
 			var popupSelector = (options['id']?'#'+options.id:(options['classId']?'.'+options.classId:undefined));
 			var title = options['title'];
-			var width = options['width'] || Math.round($(window).width()/3);
-			var height = options['height'] || Math.round($(window).height()/3);
-			var top = options['top'] ||  Math.max(0,($(window).height()-height)/2);
-			var left = options['left'] || Math.max(0,($(window).width()-width)/2);
+			var width = options['width'] || Math.round(options.referenceWindow.width()/3);			
+			var height = options['height'] || Math.round(options.referenceWindow.height()/3);
+			var top = options['top'] ||  Math.max(0,(options.referenceWindow.height()-height)/2);
+			var left = options['left'] || Math.max(0,(options.referenceWindow.width()-width)/2);		
 			
 			// if displays relative to anchor
 			var popupPosition = 'fixed';
@@ -714,35 +715,37 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * @param jQuery anchor the jQuery selector on which to fix a popup
 			 * @param options the help and popup options
 			 */
-			self.showHelp = function(content,anchor,options) {		
+			self.showHelp = function(content,anchor,options) {
+				options.referenceWindow =  anchor.parentsUntil('#elementDialog').last().parent(); //addElement_form
 				var context = anchor.data(self.ctxKey);
 				if(!context) {
 					context = {};
 					// popup positioning
 					if(!options.top && !options.left) {
-						var anchorOffset = anchor.offset();
-						var scrollLeft = $(window).scrollLeft();
-						var scrollTop = $(window).scrollTop();
+						//if option.referenceWindow first child has 'html' it was the window object and use offset else use position
+						var anchorOffset = (options.referenceWindow.children().first().is('html')) ? anchor.offset() : anchor.position();
+						var scrollLeft = options.referenceWindow.scrollLeft(); //changer cette valeur si on est dans une fenêtre
+						var scrollTop = options.referenceWindow.scrollTop();
 						// takes max available window height if position is S,SE or SW, 1/3 window height if position is center.
 						switch(options.position) {
 						case 'SE':
 						case 'S':
 						case 'SW':							
-							options.height = Math.max(options.height, $(window).height()-(anchorOffset.top-scrollTop)-options.offset-15);
+							options.height = Math.max(options.height, options.referenceWindow.height()-(anchorOffset.top-scrollTop)-options.offset-15);
 							break;
 						case 'center':
-							options.height = Math.max(options.height,Math.floor($(window).height()/2));	
+							options.height = Math.max(options.height,Math.floor(options.referenceWindow.height()/2));	
 							break;
 						}
 						wigiiApi.positionBox({pageX:anchorOffset.left,pageY:anchorOffset.top}, options, options);
 						// make position relative to anchor
-						options.top = options.top+scrollTop-anchorOffset.top;
-						options.left = options.left+scrollLeft-anchorOffset.left;
+						options.top = options.top+scrollTop-anchorOffset.top;				
+						options.left = options.left+scrollLeft-anchorOffset.left;					
 						options.relativeToAnchor=true;
 					}
 					else {
 						options.relativeToAnchor=false;
-					}
+					};
 					// popup creation					
 					context.popup = wigiiApi.createPopUpInstance(anchor,options);
 					if(options.localContent) {
@@ -981,6 +984,23 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(wigiiNotif) {
 					self.renderHelpAnchor(wigiiNotif, notif.url, notif);
 				}
+			};
+			
+			/**
+			 * Remove the * add with a JQuery prepend function.
+			 * @param Object collection a JQuery object collection
+			 */
+			self.removePrependStar = function(collection) {
+				collection.each(function(){ 
+					$(this).contents().each(function(){
+						if($(this)[0].nodeType == 3){
+							if($(this)[0].nodeValue.indexOf('*')!=-1) {
+								$(this).remove();
+								return false;
+							}
+						}
+					});			
+				});
 			};
 		};
 		
@@ -2545,17 +2565,18 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		wigiiApi.positionBox = function(mouseEvent,boxOptions,positionOptions) {
 			if(!boxOptions) boxOptions = {};
 			var screenTop=undefined,screenLeft=undefined,boxTop=undefined,boxLeft=undefined;			
-			if(!positionOptions) positionOptions = {};			
+			if(!positionOptions) positionOptions = {};
+			if(!positionOptions.referenceWindow) positionOptions.referenceWindow = $(window);		
 			// if no mouseEvent then takes window center
-			if(!mouseEvent) {
-				screenTop = Math.floor($(window).height()/2);
-				screenLeft = Math.floor($(window).width()/2);	
+			if(!mouseEvent) {			
+				screenTop = Math.floor(positionOptions.referenceWindow.height()/2);
+				screenLeft = Math.floor(positionOptions.referenceWindow.width()/2);	
 				if(!positionOptions.position) positionOptions.position = 'center';
 			}
 			// else takes mouse position
 			else {
-				screenTop = mouseEvent.pageY-$(window).scrollTop();
-				screenLeft = mouseEvent.pageX-$(window).scrollLeft();
+				screenTop = mouseEvent.pageY-positionOptions.referenceWindow.scrollTop();
+				screenLeft = mouseEvent.pageX-positionOptions.referenceWindow.scrollLeft();
 				if(!positionOptions.position) positionOptions.position = 'SE';
 				if(!positionOptions.position=='center' && !positionOptions.offset && positionOptions.offset!==0) positionOptions.offset=15;
 			}
@@ -2578,8 +2599,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				boxLeft = screenLeft+positionOptions.offset;
 				break;	
 			case 'SE':
-				boxTop = screenTop+positionOptions.offset;
-				boxLeft = screenLeft+positionOptions.offset;
+				boxTop = screenTop+positionOptions.offset;		
+				boxLeft = screenLeft+positionOptions.offset;	
 				break;
 			case 'S':
 				boxTop = screenTop+positionOptions.offset;
@@ -2598,12 +2619,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				boxLeft = screenLeft-positionOptions.offset-boxOptions.width;
 				break;
 			}
-			// keeps box fully visible except if preventCovering
+			// keeps box fully visible except if preventCovering		
 			if(!positionOptions.preventCovering) {
 				if(boxTop<0) boxTop = 0;
 				if(boxLeft<0) boxLeft = 0;
-				boxTop = Math.min(boxTop,$(window).height()-boxOptions.height-15);
-				boxLeft = Math.min(boxLeft,$(window).width()-boxOptions.width-15);
+				boxTop = Math.min(boxTop,positionOptions.referenceWindow.height()-boxOptions.height-15);
+				boxLeft = Math.min(boxLeft,positionOptions.referenceWindow.width()-boxOptions.width-15);
 			}
 			boxOptions.left = Math.ceil(boxLeft);
 			boxOptions.top = Math.ceil(boxTop);

@@ -81,7 +81,7 @@
 	</Emailing>
 
 	<fields>
-		<value excelExport="auto" type="Strings" require="1" expand="1" ><label_l01>Value</label_l01><label_l02>Valeur</label_l02></value>
+		<value excelExport="auto" type="Strings" require="1" expand="1" funcExp='str_replace(newList(concat(" ",txtAmp()," "),txtAmp()),"_",value)'><label_l01>Value</label_l01><label_l02>Valeur</label_l02></value>
 		<label excelExport="auto" type="Varchars" require="0" expand="1" ><label_l01>Label</label_l01><label_l02>Libellé</label_l02></label>
 		<moreOptions groupStart="1" noFieldset="0" expand="0"><label_l01>More options</label_l01><label_l02>Plus d&apos;options</label_l02></moreOptions> 
 			<freeText needTranslation="1" onlyInForm="1">Dimensions_idGroup</freeText>

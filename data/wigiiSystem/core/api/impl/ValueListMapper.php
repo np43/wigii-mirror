@@ -35,7 +35,7 @@ class ValueListMapper implements RowList
 
 	/**
 	 * colName = sql column name from which to extract the value,
-	 * or numeric index if fetched with MYSQL_NUM mode
+	 * or numeric index if fetched with MySqlFacade::RESULT_MODE_NUM mode
 	 */
 	public static function createInstance($valueList, $colName)
 	{
@@ -46,7 +46,7 @@ class ValueListMapper implements RowList
 
 	/**
 	 * colName = sql column name from which to extract the value,
-	 * or numeric index if fetched with MYSQL_NUM mode
+	 * or numeric index if fetched with MySqlFacade::RESULT_MODE_NUM mode
 	 */
 	public function reset($valueList, $colName)
 	{

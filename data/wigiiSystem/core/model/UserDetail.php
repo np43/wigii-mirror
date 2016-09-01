@@ -279,9 +279,9 @@ class UserDetail extends Model
 	public function needsAdminAccess()
 	{
 		return
-//			$this->isUserCreator() ||
-//			$this->isAdminCreator() ||
-//			$this->isReadAllUsersInWigiiNamespace() ||
+			$this->isUserCreator() ||
+			$this->isAdminCreator() ||
+			$this->isReadAllUsersInWigiiNamespace() ||
 //			$this->getGroupCreator() ||
 			$this->getRootGroupCreator() ||
 //			$this->getReadAllGroupsInWigiiNamespace() ||
@@ -297,6 +297,7 @@ class UserDetail extends Model
 		return
 		$this->isUserCreator() ||
 		$this->isAdminCreator() ||
+		$this->isReadAllUsersInWigiiNamespace() ||
 		$this->getRootGroupCreator() ||
 		$this->isWigiiNamespaceCreator() ||
 		$this->isModuleEditor();
@@ -310,7 +311,7 @@ class UserDetail extends Model
 		return
 			$this->isUserCreator() ||
 			$this->isAdminCreator() ||
-			//$this->isReadAllUsersInWigiiNamespace() || //this is not really an admin level
+			$this->isReadAllUsersInWigiiNamespace() || //this is not really an admin level
 			$this->getGroupCreator() ||
 			$this->getRootGroupCreator() ||
 			//$this->getReadAllGroupsInWigiiNamespace() || //this is not really an admin level
@@ -319,8 +320,7 @@ class UserDetail extends Model
 	}
 
 	/**
-	 * @param $fullModuleAccess will be the moduleAccess used when wigiiNamespace creator
-	 * or moduleEditor
+	 * @param $fullModuleAccess will be the moduleAccess used when wigiiNamespace creator or moduleEditor
 	 * $intersectWithFullModuleAccess = false, if true the groupCreator etc are intersected with it. This should be done only from the SuperAdmin
 	 */
 	public function calculateAdminLevelRights($fullModuleAccess, $intersectWithFullModuleAccess=false){
@@ -338,6 +338,7 @@ class UserDetail extends Model
 			if($this->isModuleEditor()){
 				$this->setAdminCreator(true);
 				unset($fullModuleAccess[Module::ADMIN_MODULE]);
+				/*
 				if($this->getRootGroupCreator()==null){
 					$this->setRootGroupCreator($fullModuleAccess);
 				} else {
@@ -348,6 +349,7 @@ class UserDetail extends Model
 				} else {
 					$this->setReadAllGroupsInWigiiNamespace(array_merge($this->getReadAllGroupsInWigiiNamespace(), $fullModuleAccess));
 				}
+				*/
 			}
 			if($intersectWithFullModuleAccess){
 				if($this->getRootGroupCreator()!=null){

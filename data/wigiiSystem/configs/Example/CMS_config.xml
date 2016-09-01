@@ -1,0 +1,180 @@
+<?xml version='1.0' standalone='yes'?>
+<CMS>
+
+	<parameters
+
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+
+		Notification_enable="1"
+		Notification_enableOnSharing="1"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="0"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="0"
+		Notification_includeSenderInNotification="0"
+		Notification_includeOtherNamespaceInUpdateOrSetState="0"
+		Notification_hideElementView="0"
+		Notification_hideAccessButton="0"
+
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableCreationSysDate="0"
+		ExcelExport_enableId="0"
+
+		Element_enableLockedStatus="0"
+		Element_enableImportant1Status="0"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="1"
+		Element_enableDeprecatedStatus="1"
+		Element_enableApprovedStatus="0"
+		Element_enableDissmissedStatus="0"
+		Element_enableFinalizedStatus="0"
+		Element_enableBlockedStatus="0"
+		Element_enableHiddenStatus="0"
+		Element_evaluator="WigiiCMSElementEvaluator"
+
+		Field_enableDynamicAttributes="1"
+		
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_selectAllGroupsOnSearch="1"
+		Group_enableDynamicConfig="1"
+		Group_enablePortal="0"
+		Group_enableSubscription="0"
+		Group_enableXmlPublish="0"
+		nbOfLevelToExpandOnInit="2"
+
+		autoSave="1"
+
+		elementTotalWidth="1000"
+		elementLabelWidth="200"
+
+		reloadDetailAfterModify="0"
+		useGoogleServiceToPreviewOfficeDocuments="0"
+
+		trashBinGroup=""
+		/>
+
+	<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+
+	<Notification>
+		<template path="Notification.php" inClientFolder="1" />
+	</Notification>
+
+	<fields >
+		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="640"  />
+			<contentType enableDynamicAttributes="1" excelExport="auto" type="Attributs" require="1" expand="1" readonly='eq(onSaveFuncExp,logTrue())' jsCodeInFormExp='cms_authoringOnLoadJS()'><label_l01>Content type</label_l01><label_l02>Type de contenu</label_l02>
+				<attribute disabled="1">none</attribute>
+				<attribute>content<label_l01>Article</label_l01><label_l02>Article</label_l02></attribute>
+				<attribute>siteMap<label_l01>Site Map</label_l01><label_l02>Site Map</label_l02></attribute>
+				<attribute>intro<label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></attribute>
+				<attribute>footer<label_l01>Page footer</label_l01><label_l02>Pied de page</label_l02></attribute>
+				<attribute>image<label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></attribute>	
+				<attribute>css<label_l01>CSS definition</label_l01><label_l02>Définitions CSS</label_l02></attribute>
+				<attribute>js<label_l01>JS code</label_l01><label_l02>Code JS</label_l02></attribute>
+			</contentType>
+			<groupSiteMap groupStart="1"><label_l01>Site Map</label_l01><label_l02>Site Map</label_l02></groupSiteMap>
+				<siteUrl enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1" defaultExp='concat("/")'><label_l01>Access URL</label_l01><label_l02>URL d&apos;accès</label_l02></siteUrl>
+				<folderId enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1" defaultExp='cfgCurrentGroup("id")'><label_l01>Folder ID</label_l01><label_l02>ID Dossier</label_l02></folderId>					
+			<groupSiteMap groupEnd="1" expand="1"/>
+			<groupIntro groupStart="1"><label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></groupIntro>
+				<siteTitle enableDynamicAttributes="1" excelExport="auto" type="Varchars" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1"><label_l01>Browser title</label_l01><label_l02>Titre du navigateur</label_l02></siteTitle>
+				<contentIntro enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Page header</label_l01><label_l02>En-tête de la page</label_l02></contentIntro>
+			<groupIntro groupEnd="1" expand="1"/>
+			<groupContent groupStart="1"><label_l01>Article</label_l01><label_l02>Article</label_l02></groupContent>
+				<choosePosition enableDynamicAttributes="1" excelExport="auto" type="Attributs" require='eq(contentType,"content")' readonly='isNotNull(contentPosition)' allowNewValues='1' disabled='notNullAndNotEq(contentType,"content")' expand="1" jsCodeInFormExp='ctlIf(logIn(ctlCurrentFlow(),"element-add","element-copy"), cms_authoringLoadChoosePosition())' onlyInForm="1"><label_l01>Insert before</label_l01><label_l02>Insérer avant</label_l02>
+					<attribute>10000<label_l01>the footer, at the end</label_l01><label_l02>avant le pied de page, à la fin</label_l02></attribute>
+				</choosePosition>		
+				<contentPosition excelExport="auto" type="Numerics" require="0" hidden="1" clearOnCopy="1"><label_l01>Position</label_l01><label_l02>Position</label_l02></contentPosition>				
+				<contentTitle enableDynamicAttributes="1" excelExport="auto" type="Texts" require='eq(contentType,"content")' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" fullToolbarHtmlArea="1" isInLine="1"><label_l01>Title</label_l01><label_l02>Titre</label_l02></contentTitle>
+				<contentHTML enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"content")' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentHTML>
+			<groupContent groupEnd="1" expand="1"/>
+			<groupImage groupStart="1"><label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></groupImage>
+				<contentImage enableDynamicAttributes="1"  excelExport="auto" type="Files" require='eq(contentType,"image")' disabled='notNullAndNotEq(contentType,"image")' expand="1" displayContentInDetail="1" noLabel="1"><label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></contentImage>
+			<groupImage groupEnd="1" expand="1"/>
+			<groupFooter groupStart="1"><label_l01>Footer</label_l01><label_l02>Pied de page</label_l02></groupFooter>
+				<contentFooter enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"footer")' disabled='notNullAndNotEq(contentType,"footer")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" noLabel="1" ><label_l01>Page Footer</label_l01><label_l02>Pied de page</label_l02></contentFooter>
+			<groupFooter groupEnd="1" expand="1"/>
+			<groupCSS groupStart="1"><label_l01>CSS definition</label_l01><label_l02>Définition CSS</label_l02></groupCSS>
+				<contentCSS enableDynamicAttributes="1"  excelExport="auto" type="Blobs" require='eq(contentType,"css")' disabled='notNullAndNotEq(contentType,"css")' expand="1" noWrap='1' isInLine="1" noLabel="1"><label_l01>CSS definition</label_l01><label_l02>Définition CSS</label_l02></contentCSS>
+			<groupCSS groupEnd="1" expand="1"/>
+			<groupJS groupStart="1"><label_l01>JS code</label_l01><label_l02>Code JS</label_l02></groupJS>
+				<contentJS enableDynamicAttributes="1"  excelExport="auto" type="Blobs" require='eq(contentType,"js")' disabled='notNullAndNotEq(contentType,"js")' expand="1" noWrap='1' isInLine="1" noLabel="1"><label_l01>JS code</label_l01><label_l02>Code JS</label_l02></contentJS>
+			<groupJS groupEnd="1" expand="1"/>		
+		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
+
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" labelWidth="100" totalWidth="300" class="fieldGroupRight" />
+			<status enableDynamicAttributes="1" excelExport="auto" type="Attributs" require="1" expand="1" useRadioButtons="1"><label_l01>Status</label_l01><label_l02>Statut</label_l02>
+				<attribute>writing<label_l01>Writing</label_l01><label_l02>En rédaction</label_l02></attribute>
+				<attribute>published<label_l01>Published</label_l01><label_l02>Publié</label_l02></attribute>
+			</status>
+			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="0" height="400" clearOnCopy="1" funcExp='trackHistory(status)'><label_l01>Comments</label_l01><label_l02>Commentaires</label_l02></comments>
+		<groupRight groupEnd="1" expand="1" noFieldset="1" />		
+		<onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='ctlSeq(cms_authoringOnSave(),logTrue())' />
+		<contentSummary type="Strings" hidden="1" htmlArea="1" funcExp='implode(" ",siteUrl,contentTitle,concat(contentImage.name,contentImage.type))'><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentSummary>
+	</fields>
+
+	<selectSearchBar>
+		<fields>
+			<c1 field="contentType" />	
+			<c2 field="status" />
+			<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
+			<e2 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e2>
+		</fields>
+	</selectSearchBar>
+
+	<listView isDefaultView="1">
+		<fields>
+			<c1 field="contentType" width="120" isDefaultGroupByKey="1"/>			
+			<c2 field="contentSummary" width="null"/>
+			<c3 field="status" width="120"/>
+			<ch1 field="contentPosition" hidden="1" isDefaultSortByKey="1"/>
+			<e1 elementAttribut="sys_date" width="120" defaultSorted=" DESC " />
+			<e2 elementAttribut="sys_username" width="140"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
+		</fields>
+	</listView>
+	
+	<sortBy>
+		<fields>
+			<c1 field="contentType" width="120" isDefaultGroupByKey="1"/>			
+			<c2 field="contentSummary" width="null"/>
+			<ch1 field="contentPosition" hidden="1" isDefaultSortByKey="1"/>
+			<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
+			<e11 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e11>
+			<e2 elementAttribut="sys_username" width="140"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
+			<e21 elementAttribut="sys_creationUsername" width="140"><label_l01>Created by</label_l01><label_l02>Créé par</label_l02></e21>
+		</fields>
+	</sortBy>
+	
+	<groupBy>
+		<fields>
+			<c1 field="contentType" width="120" isDefaultGroupByKey="1"/>			
+			<c2 field="contentSummary" width="null"/>
+			<ch1 field="contentPosition" hidden="1" isDefaultSortByKey="1"/>
+			<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
+			<e11 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e11>
+			<e2 elementAttribut="sys_username" width="140"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
+			<e21 elementAttribut="sys_creationUsername" width="140"><label_l01>Created by</label_l01><label_l02>Créé par</label_l02></e21>
+		</fields>
+	</groupBy>
+</CMS>

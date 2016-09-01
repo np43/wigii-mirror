@@ -128,6 +128,19 @@ class CopyElementFormExecutor extends AddElementFormExecutor {
 		return $newPath;
 	}
 
+	protected function realoadAfterCheckedRecord($p, $exec){
+		/* CWE 23.08.2016 already done on client side before showing the copy form
+		// if destination folder is different than current folder, then refreshes group panel and module view
+		$currentGroupId = $this->getCurrentSelectedGroup($p, $exec);
+		$groupId = $this->getGroupIdInWhichToAdd($p, $exec);
+		if($currentGroupId && $currentGroupId != $groupId) {
+			$exec->addJsCode("setTimeout(function(){update('NoAnswer/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/groupSelectorPanel/selectGroup/".$groupId."');}, 100);");
+		}
+		// else refreshes only list and invalids cache
+		else parent::realoadAfterCheckedRecord($p, $exec);
+		*/
+		parent::realoadAfterCheckedRecord($p, $exec);
+	}
 }
 
 

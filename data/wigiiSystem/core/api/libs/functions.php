@@ -252,6 +252,20 @@ function simplexml_removeNode($node) {
 	$parent = $child->parentNode;
 	return $parent->removeChild($child);
 }
+/**
+ * Tries to convert a string to a SimpleXmlElement, 
+ * if not possible, lets it as a string.
+ * @param String $str input string
+ * @return SimpleXMLElement | String
+ */
+function tryStr2Xml($str) {
+	if(empty($str)) return $str;
+	$use_errors = libxml_use_internal_errors(true);
+	$returnValue = simplexml_load_string($str);
+	if($returnValue === false) $returnValue = $str;
+	libxml_use_internal_errors($use_errors);
+	return $returnValue;
+}
 
 /**
  * Check qu'un string ne contient pas de caractère spéciaux et qu'il a une longueur correcte
@@ -1062,7 +1076,7 @@ function fs_e($attributeName) {return TechnicalServiceProvider::getFuncExpBuilde
  * in a comma separated list as a normal function call.
  * example: $funcExpBuilder->fsl(fs1, fs2, fs3) is equivalent
  * to $funcExpBuilder->fsl(array(fs1, fs2, fs3))
- * @param Array $fsArr an array of FieldSelector or one FieldSelector
+ * @param FieldSelector[]|FieldSelector $fsArr an array of FieldSelector or one FieldSelector
  */
 function fsl($fsArr) {
 	$nArgs = func_num_args();
@@ -1285,7 +1299,7 @@ function lxInG($lx) {return TechnicalServiceProvider::getFuncExpBuilder()->lxInG
 
 /**
  * Constructs a logical in group expression given a group selection expression
- * Children groups are also selected.
+ * Children groups are also selected. 
  * @param LogExp $lx a LogExp instance to select groups
  * @return LogExpInGroup a LogExpInGroup instance with children
  */
@@ -1374,7 +1388,8 @@ function dfas($className, $params=null) {
  * in a comma separated list as a normal function call.
  * example: $funcExpBuilder->dfasl(dfas1, dfas2, dfas3) is equivalent
  * to $funcExpBuilder->dfasl(array(dfas1, dfas2, dfas3))
- * @param Array $dfasArr an array of DataFlowActivitySelectors or one DataFlowActivitySelector
+ * @param  DataFlowActivitySelector[]|DataFlowActivitySelector $dfasArr  array of DataFlowActivitySelectors or one DataFlowActivitySelector
+ * @return DataFlowActivitySelectorListArray|null
  */
 function dfasl($dfasArr) {
 	$nArgs = func_num_args();
@@ -1405,7 +1420,8 @@ function dfs($src, $dfasl) {
  * in a comma separated list as a normal function call.
  * example: $funcExpBuilder->dfsList(dfs1, dfs2, dfs3) is equivalent
  * to $funcExpBuilder->dfsList(array(dfs1, dfs2, dfs3))
- * @param Array $dfsArr an array of DataFlowSelectors or one DataFlowSelector
+ * @param DataFlowActivitySelector[] $dfsArr an array of DataFlowSelectors or one DataFlowSelector
+ * @return DataFlowSelectorList|null
  */
 function dfsList($dfsArr) {
 	$nArgs = func_num_args();

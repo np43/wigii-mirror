@@ -87,14 +87,74 @@ function getFullCKEditorToolbar(){
 	];
 }
 
+function boxSuccess(inputNameId, inputPathId, response, SITE_ROOT_forFileUrl, v){
+	$('div.updateCurrentFile', v).show();
+	$('div.removeCurrentFile', v).show();
+	
+	$('div.downloadCurrentFile', v).hide();
+	
+	name = response[0].name;
+	fileId = response[0].id
+
+	type = name.substring(name.lastIndexOf("."), name.length);
+	
+	ext = name.substring(name.lastIndexOf('.')+1);
+	name = name.substring(0,name.lastIndexOf("."));
+	
+	//put the name of the file in the path box://xxxxx and the type of the file
+	$(inputPathId).val("box://".concat(fileId));
+	$(inputPathId.replace("path", "type")).val(type);
+	
+	$(this).hide();	
+	$(inputNameId).val(name).show().focus().change().select();
+	$('div.filePreview', v).css('background-image', 'url("'+SITE_ROOT_forFileUrl+'images/preview/prev.26.'+ext+'.png")');
+	$('div.filePreview', v).show();	
+}
+
+function boxChooseFile(inputBoxFileId, inputFileId, inputNameId, inputPathId, SITE_ROOT_forFileUrl){
+	$(inputBoxFileId).click(function(){ 
+
+		
+
+		//Launch the Box's File Picker
+		boxSelect.launchPopup();
+	
+		//Register a success callback handler
+		boxSelect.success(function(response) {
+			v = $(inputNameId).parent();
+			
+			$(inputBoxFileId).hide();
+			$(inputFileId).hide();
+						
+			boxSuccess(inputNameId, inputPathId, response, SITE_ROOT_forFileUrl, v);
+			
+		}); 
+			
+		//Register a cancel callback handler
+		boxSelect.cancel(function() {
+			/*nothing to do*/
+		});
+	});
+}
+
 function addJsCodeOnFileInput(inputFileId, inputNameId, inputPathId, clickToBrowseAndFindANewFile, SITE_ROOT_forFileUrl){
 	v = $(inputNameId).parent();
 	$('div.removeCurrentFile', v).click(function(){
 		v = $(inputNameId).parent();
 		$(this).hide();
+		
+		w = "#".concat($(inputNameId).parent().parent().attr('id'));
+		
+		if(domElementHasWigiiService(w, "box")){
+			domElementRemoveWigiiService(w, "box");
+		}
+		
 		$('div.filePreview', v).hide();
 		$('div.updateCurrentFile', v).hide();
 		$('div.downloadCurrentFile', v).hide();
+		$('div.backToFilename', v).hide();
+		boxElement = inputFileId.concat('_box');
+		$(boxElement).show();
 		$(inputFileId).val('').show();
 		$(inputNameId).val('').hide().change().blur(); //this is important to generate autoSave feature if activated
 		$(inputPathId).val('');
@@ -109,14 +169,36 @@ function addJsCodeOnFileInput(inputFileId, inputNameId, inputPathId, clickToBrow
 		$(inputNameId).show();
 	});
 	$('div.updateCurrentFile', v).click(function(e){
-		v = $(inputNameId).parent();
-		$(this).hide();
-		$('div.removeCurrentFile', v).show();
-		$('div.filePreview', v).hide();
-		$('div.backToFilename', v).show();
-		$(inputNameId).hide();
-		$(inputFileId).show();
-		showHelp($(inputFileId), clickToBrowseAndFindANewFile, 0, 'left');
+			
+		if($(inputPathId).val().indexOf("box://")>=0 && window.boxSelect){
+			
+			boxSelect.launchPopup();
+			v = $(inputNameId).parent();
+			//Register a success callback handler
+			boxSelect.success(function(response) {
+		
+				$('div.downloadCurrentFile', v).hide();
+				$('div.removeCurrentFile', v).hide();
+
+				boxSuccess(inputNameId, inputPathId, response, SITE_ROOT_forFileUrl, v);
+		
+			}); 
+				
+			//Register a cancer callback handler
+			boxSelect.cancel(function() {
+				
+			});
+			
+		}else{
+			v = $(inputNameId).parent();
+			$(this).hide();
+			$('div.removeCurrentFile', v).show();
+			$('div.filePreview', v).hide();
+			$('div.backToFilename', v).show();
+			$(inputNameId).hide();
+			$(inputFileId).show();
+			showHelp($(inputFileId), clickToBrowseAndFindANewFile, 0, 'left');
+		}
 	});
 	$(inputFileId).click(function(){ hideHelp(); }).change(function(){
 		v = $(inputFileId).parent();
@@ -132,7 +214,9 @@ function addJsCodeOnFileInput(inputFileId, inputNameId, inputPathId, clickToBrow
 		name = name.replace(re, '');
 		re = new RegExp('.*\\\\', "g");
 		name = name.replace(re, '');
-		$(this).hide();
+		$(this).hide();	
+		boxElement = inputFileId.concat('_box');
+		$(boxElement).hide();
 		$(inputNameId).val(name).show().focus().select();
 		$('div.filePreview', v).css('background-image', 'url("'+SITE_ROOT_forFileUrl+'images/preview/prev.26.'+ext+'.png")');
 		$('div.filePreview', v).show();
@@ -238,7 +322,11 @@ function getAjaxformOption(formId){
 		},
 		beforeSubmit:  function(){
 //			$(window).scrollTop(0);
-			hideHelp(); setVis('busyDiv', true);
+			hideHelp(); setVis('busyDiv', true); 
+			
+//			if(formId == "#editElement_form" || formId == "#addElement_form"){
+//				setVis('uploadBoxFile', true);
+//			}
 		},
 		uploadProgress: function(event, position, total, percentComplete) {
 	        $("#formProgressBar").progressbar({
@@ -364,19 +452,32 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	*/
 	
 	// flex or chosen class enables select2 plugin
-	$(formId+' select.chosen').each(function(i) {
-		var e = $(this);
-		if(!e.hasClass("allowNewValues")){
-			e.attr("data-max-selection")?e.select2({maximumSelectionLength: e.attr("data-max-selection")}):e.select2();
-		} else {
-			e.attr("data-max-selection")?e.select2({tags:[], maximumSelectionLength: e.attr("data-max-selection")}):e.select2({tags:[]});
-		}	
-	});
+//	$(formId+' select.chosen').each(function(i) {
+//		var e = $(this);		
+//		if(!e.hasClass("allowNewValues")){		
+//			e.attr("data-max-selection")?e.select2({maximumSelectionLength: e.attr("data-max-selection")}):e.select2();
+//		} else {
+//			e.attr("data-max-selection")?e.select2({tags:[], maximumSelectionLength: e.attr("data-max-selection")}):e.select2({tags:[]});
+//		}	
+//	});
+//	$(formId+' select.flex:not(.allowNewValues)').select2();		
+//	$(formId+' select.flex.allowNewValues').select2({
+//		tags:[]
+//	});	
+	$('select.flex, select.chosen',formId).each(function(i) {
+		var current = $(this);
+		var attrPlaceholder = $.trim(current.attr('data-placeholder')) || false;
+		var maxSelection = current.attr("data-max-selection") || false;
+		//create options for the creation of select2 list
+		var options = {};
+		if(attrPlaceholder != false && attrPlaceholder.length>0) {
+			if(current.hasClass('flex')) options.allowClear = true;
+			options.placeholder = attrPlaceholder;
+		}		
+		if(maxSelection != false && current.hasClass('chosen')) options.maximumSelectionLength = maxSelection;
+		if(current.hasClass('allowNewValues')) options.tags = [];
 
-		
-	$(formId+' select.flex:not(.allowNewValues)').select2();		
-	$(formId+' select.flex.allowNewValues').select2({
-		tags:[]
+		current.select2(options);
 	});
 	
 	$(formId+' textarea:not(.htmlArea,.isJournal).wordlimit').each(function(){ $(this).wordlimit({ allowed: $(this).attr('class').match(/ wordlimit_([0-9]*) /g)[0].replace(/ wordlimit_([0-9]*) /g, '$1') }); });
@@ -448,7 +549,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	$(formId+' div.field').mouseleave(function(e){
 		$(this).find(".addinfo").hide();
 	});
-
+	addScrollWithShadow($(formId).parent().prop("id"));
 }
 
 function convertTimestamps(obj){
@@ -634,8 +735,20 @@ function actOnDisplayOnRightSide(elementDialogId, fieldId, journalItemWidth, tot
 
 }
 
+// Displays a waiting message on file download
+function messageDownload(fieldId){
+	if(domElementHasWigiiService("#".concat(fieldId), "box")){
+		$('#fileLoadingBar').html(wigii().context.box.fileLoadingBarMsg);
+	}else{
+		$('#fileLoadingBar').html(wigii().context.std.fileLoadingBarMsg);
+	}
+	setVis('fileLoadingBar', true);	
+}
+
 function setListenerToDownloadFile(fieldId, fieldName, src){
 	$('#'+fieldId+' .fileDownload').click(function(e){
+		messageDownload(fieldId);
+		setTimeout(function() {setVis('fileLoadingBar', false)}, 5000); // time out to hide fileLoadingBar
 		e.stopPropagation();
 		download(src);
 		return false; //if the click is on a link, prevent the link adress to be executed
@@ -644,10 +757,12 @@ function setListenerToDownloadFile(fieldId, fieldName, src){
 function setListenerToPreviewFile(fieldId, fieldName, src, time){
 	$('#'+fieldId+' .value .imgPreview').click(function(e){
 		previewImage(src, time);
+		messageDownload(fieldId);
 		e.stopPropagation();
 	});
 	$('#'+fieldId+' .value .htmlPreview').click(function(e){
 		previewHtml(src, time);
+		messageDownload(fieldId);
 		e.stopPropagation();
 	});
 }
@@ -1176,3 +1291,76 @@ function actOnHistorizedHtmlFile(fieldName) {
 		blockHistoryForOnlineFileTextFieldName = fieldName;
 	}
 }
+
+/**
+*@param String selector jQuery selector to fetch some DOM elements
+*@param String serviceNames a space separated string of service names to add to data-wigii-service attribute
+*/
+function domElementAddWigiiService(selector, serviceNames) {
+	
+	var existingServices = $(selector).attr("data-wigii-service");
+	
+	if(existingServices == null){
+		existingServices = serviceNames;
+	}else{
+		var servicesArray = serviceNames.split(" ");
+		var servicesList = existingServices.split(" ");
+		
+		//loop on all element of the both arrays and return true if there are already this element
+		//else add the new element in the second array
+		for(key1 in servicesArray){
+			var exist = false;
+			for (key2 in servicesList) {
+				
+				if(servicesArray[key1] === servicesList[key2]){
+					exist = true;
+				}
+			}
+		
+			if(!exist){
+				existingServices = existingServices.concat(" ".concat(servicesArray[key1]));
+			}
+		}
+	}
+	$(selector).attr("data-wigii-service", existingServices);
+}
+/**
+*@param String selector jQuery selector to fetch some DOM elements
+*@param String serviceNames a space separated string of service names to remove from data-wigii-service attribute
+*/
+function domElementRemoveWigiiService(selector, serviceNames){
+	var existingServices = $(selector).attr("data-wigii-service");
+	var newServices = "";
+	
+	if(existingServices != null){
+		var servicesArray = serviceNames.split(" ");
+		var servicesList = existingServices.split(" ");
+
+		for (key in servicesArray) {
+			servicesList.splice(servicesList.indexOf(servicesArray[key]),1)
+		}
+		
+		for (key in servicesList) {
+			newServices = newServices.concat(" ".concat(servicesList[key]));
+		}
+		$(selector).attr("data-wigii-service", newServices);
+	}
+}
+/**
+*@param String selector jQuery selector to fetch some DOM elements
+*@param String serviceName a service name to check if exist in the data-wigii-service attribute
+*/
+function domElementHasWigiiService(selector, serviceName){
+	var existingServices = $(selector).attr("data-wigii-service");
+	if(existingServices != null){
+		var servicesList = existingServices.split(" ");
+			for (key in servicesList) {
+				if(servicesList[key] === serviceName){
+					return true;
+				}
+			}
+	}
+	return false;
+}
+
+

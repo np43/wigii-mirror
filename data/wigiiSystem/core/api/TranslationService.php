@@ -58,6 +58,13 @@ interface TranslationService {
 	 * Returns an array of installed language in the system
 	 */
 	public function getInstalledLanguage();
+	
+	/**
+	 * Returns an array of languages that can be selected by the user 
+	 * @param string $key language key. If provided, then returns the language name for the given key
+	 * @return Array an array of languages where key is a language key and value is the language name (label)
+	 */
+	public function getVisibleLanguage($key = null);
 }
 
 

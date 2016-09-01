@@ -28,6 +28,7 @@
 $exec = $this->getExecutionService();
 $idAnswer = $exec->getIdAnswer();
 if(!$idAnswer) $idAnswer = "mainDiv";
+$boxServiceFormExecutor = TechnicalServiceProvider::getBoxServiceFormExecutor();
 
 if(!isset($elS)) $elS = ServiceProvider::getElementService();
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
@@ -78,10 +79,10 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	if($fieldXml["displayLabel"]=="1") $this->put('<font class="grayFont" >'.$this->t($fieldName, $field->getXml()).':</font><br />');
 	$this->put('<img class="prev" style="vertical-align:top;" src="'.SITE_ROOT_forFileUrl."images/preview/prev.18.html.png".'" />&nbsp;&nbsp;');
 	if(!$this->isForNotification()){
-		$this->put('<a class="H fileDownload" href="#" target="_self">');
+		$this->put('<a class="H fileDownload" href="#" target="_self" onclick="longDownload('."'$src','$fieldId'".')">');
 		$this->put($name.$type.'('.$size.')');
 		$this->put('</a>');
-		$exec->addJsCode("setListenerToDownloadFile('$fieldId', '".$field->getFieldName()."', '$src');");
+		//$exec->addJsCode("setListenerToDownloadFile('$fieldId', '".$field->getFieldName()."', '$src');");
 		//read button is not usefull if displayInContent is enable
 	} else {
 		//link button
@@ -113,6 +114,18 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	$name = $this->formatValueFromRecord($fieldName, "name", $this->getRecord());
 	$type = $this->formatValueFromRecord($fieldName, "type", $this->getRecord());
 
+	
+	$boxElement = $fieldXml["enableBoxIntegration"];
+	$boxGeneral = $this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "enableBoxIntegration");
+	
+	
+	if(!$this->isForNotification() && (($boxElement == "1") || ($boxGeneral == "1" && ($boxElement != "0"))) && strstr($path, "box://")){
+		$formId = $this->getDetailRenderer()->getDetailId()."__$fieldName";
+		
+		$exec->addJsCode("domElementAddWigiiService('#$formId', 'box')");
+	}
+	
+	
 	//the ssrc is used for the media unzip, pdf, or html type
 	if(is_a($this->getRecord(), "ActivityRecord")){
 		$ssrc = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/download/".$this->getRecord()->getActivity()->getActivityName()."/".$field->getFieldName()."/".$this->getRecord()->getAttachedRecord()->getId();
@@ -139,9 +152,15 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	if($fieldXml["displayPreviewOnly"]!="1"){
 		$this->put(' ');
 		$this->put('<font class="grayFont">(');
-		if($this->isForNotification() || $isSmall) $this->put($size.', ');
+		if(($this->isForNotification() || $isSmall) && $size>0) $this->put($size.', ');
 		$this->put($date);
 		$this->put(')</font>');
+	}
+
+	if(!$this->isForNotification() && (($boxElement == "1") || ($boxGeneral == "1" && ($boxElement != "0"))) && strstr($path, "box://") && $boxServiceFormExecutor->isBoxEnabled()){
+		$boxFileId = str_replace("box://", "", $path);
+		$folderId = $boxServiceFormExecutor->getFolderId($this->getP(), $boxFileId);
+		$this->put('<img class="box Icon" style="cursor: pointer" title="'.$this->t("boxFile").'" src="'.SITE_ROOT_forFileUrl.'images/gui/box_icon_16x16.jpg" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$folderId[0].'/'.$folderId[1].'\',\'_blank\');"/>');
 	}
 	if(!$this->isForNotification() && !$isSmall) $this->put('</div>');
 	if(!$this->isForNotification() && !$isSmall) $this->put('<div class="clear"></div>');

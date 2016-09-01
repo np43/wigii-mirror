@@ -1025,7 +1025,9 @@ class ConfigServiceCoreImpl implements ConfigService
 		try
 		{
 			if(!isset($this->xml)) $this->xml = array();
-			$returnValue = $this->lookupDatatypeXml($datatypeName)->dbFields;
+			$dtXml = $this->lookupDatatypeXml($datatypeName);
+			if(!isset($dtXml)) throw new ConfigServiceException("Unknown data type '$datatypeName'. Please check spelling in configuration file.", ConfigServiceException::CONFIGURATION_ERROR);
+			$returnValue = $dtXml->dbFields;
 		}
 		catch(Exception $e)
 		{

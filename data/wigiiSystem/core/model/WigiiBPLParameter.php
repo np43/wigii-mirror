@@ -30,14 +30,14 @@ interface WigiiBPLParameter {
 	/**
 	 * Sets a value for the given parameter
 	 * @param String $key parameter name
-	 * @param Any $value the parameter value
+	 * @param mixed $value the parameter value
 	 */
 	public function setValue($key, $value);
 	
 	/**
 	 * Returns the value of the given parameter
 	 * @param String $key the parameter name
-	 * @return Any the parameter value
+	 * @return mixed the parameter value
 	 */
 	public function getValue($key);
 	

@@ -60,7 +60,7 @@ class MySqlFacadeCodeProfilingImpl extends MySqlFacade //extends MySqlFacadeWith
 	 * cnxSettings a DbConnectionSettings object with everything needed to connect to the database
 	 * throws MySqlFacadeException in case of error
 	 */
-	public function selectFirst($principal, $sql, $cnxSettings, $resultType=MYSQL_ASSOC)
+	public function selectFirst($principal, $sql, $cnxSettings, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{
 		$this->logSql($sql, $principal);
 		return parent::selectFirst($principal, $sql, $cnxSettings, $resultType);
@@ -72,7 +72,7 @@ class MySqlFacadeCodeProfilingImpl extends MySqlFacade //extends MySqlFacadeWith
 	 * throws MySqlFacadeException in case of error
 	 * throws MySqlFacadeException(INVALID_ARGUMENT) if number of records selected in the database is greater than one.
 	 */
-	public function selectOne($principal, $sql, $cnxSettings, $resultType=MYSQL_ASSOC)
+	public function selectOne($principal, $sql, $cnxSettings, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{
 		$this->logSql($sql, $principal);
 		return parent::selectOne($principal, $sql, $cnxSettings, $resultType);
@@ -96,7 +96,7 @@ class MySqlFacadeCodeProfilingImpl extends MySqlFacade //extends MySqlFacadeWith
 	 * returns the number of records selected.
 	 * throws MySqlFacadeException in case of error
 	 */
-	public function selectAll($principal, $sql, $cnxSettings, $rowList, $resultType=MYSQL_ASSOC)
+	public function selectAll($principal, $sql, $cnxSettings, $rowList, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{
 		$this->logSql($sql, $principal);
 		return parent::selectAll($principal, $sql, $cnxSettings, $rowList, $resultType);
@@ -115,7 +115,7 @@ class MySqlFacadeCodeProfilingImpl extends MySqlFacade //extends MySqlFacadeWith
 	 *
 	 * postcondition: automatically adds to sql query the SQL_CALC_FOUND_ROWS and LIMIT clauses
 	 */
-	public function selectPage($principal, $sql, $cnxSettings, $offset, $pageSize, $rowList, $resultType=MYSQL_ASSOC)
+	public function selectPage($principal, $sql, $cnxSettings, $offset, $pageSize, $rowList, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{
 		$this->logSql($sql, $principal);
 		return parent::selectPage($principal, $sql, $cnxSettings, $offset, $pageSize, $rowList, $resultType);
@@ -146,7 +146,7 @@ class MySqlFacadeCodeProfilingImpl extends MySqlFacade //extends MySqlFacadeWith
 	/**
 	 * Executes an sql select query and fills a list of records without execution log
 	 */
-	public function selectAllWithoutLog($principal, $sql, $cnxSettings, $rowList, $resultType=MYSQL_ASSOC)
+	public function selectAllWithoutLog($principal, $sql, $cnxSettings, $rowList, $resultType=MySqlFacade::RESULT_MODE_ASSOC)
 	{		
 		$n = 0;
 		try
@@ -155,8 +155,8 @@ class MySqlFacadeCodeProfilingImpl extends MySqlFacade //extends MySqlFacadeWith
 			$idQuery = $this->query($sql, $cnxSettings, MySqlFacade::Q_SELECTALL);
 //			fput($sql);
 //			fput($idQuery);
-//			fput(mysql_num_rows($idQuery));
-			while($row = mysql_fetch_array($idQuery, $resultType)){
+//			fput(mysqli_num_rows($idQuery));
+			while($row = mysqli_fetch_array($idQuery, $resultType)){
 				$rowList->addRow($row);
 				$n++;
 			}

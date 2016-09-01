@@ -49,7 +49,7 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		$this->endEltNumber = 0;
 		$this->currentEltNumber = 0;
 	}	
-	public function freeMemory() {
+	public function freeMemory() {		
 		unset($this->inGroupLogExp);
 		unset($this->listFilter);
 		unset($this->dataFlowService);
@@ -57,6 +57,7 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		unset($this->calculatedGroupList);
 		$this->nElements = 0;	
 		$this->lockedForUse = false;	
+		unset($this->extApiClient);
 	}
 		
 	public function isLockedForUse() {
@@ -110,6 +111,15 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 			$this->wigiiNamespaceAS = ServiceProvider::getWigiiNamespaceAdminService();
 		}
 		return $this->wigiiNamespaceAS;
+	}
+	
+	private $injectedApiClient;
+	/**
+	 * Injects a ready to use GroupBasedWigiiApiClient to be used instead of creating a fresh one.
+	 * @param GroupBasedWigiiApiClient $apiClient used only if LinkSelector is set and has no RootConfigSelector defined.
+	 */	
+	public function setGroupBasedWigiiApiClient($apiClient) {
+		$this->injectedApiClient = $apiClient;
 	}
 	
 	// Configuration
@@ -221,7 +231,7 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		if($isSubitem) {
 			// sets configuration if defined
 			$configSel = $this->linkSelector->getRootConfigSelector();
-			$apiClient = null;
+			$apiClient = $this->injectedApiClient;
 			if(isset($configSel)) {
 				// a wigiiNamespace has been specified --> adapts the Principal if needed
 				$confWigiiNamespace = $configSel->getWigiiNamespaceName();

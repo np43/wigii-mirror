@@ -47,7 +47,7 @@ class ArrayBufferDFA implements DataFlowActivity
 	
 	private $unpair;
 	/**
-	 * If true, indicates that the flow is a flow of pairs (key,value) represented as StdClass instances
+	 * If true, indicates that the flow is a flow of pairs (key,value) represented as StdClass instances or Elements
 	 * These pairs are unpaired and stored into the array as key=>value.
 	 * Else, queues the data in the array as it arrives without handling keys.
 	 */
@@ -85,7 +85,11 @@ class ArrayBufferDFA implements DataFlowActivity
 	}
 	public function processDataChunk($data, $dataFlowContext) {
 		if($this->unpair) {
-			if(is_object($data)) {
+			if(($data instanceof Element) || ($data instanceof ElementP)) {
+				$element = $data->getDbEntity();
+				$this->buffer[$element->getFieldValue($this->keyField)] = $element->getFieldValue($this->valueField);
+			}
+			elseif(is_object($data)) {
 				$key = $data->{$this->keyField};
 				$value = $data->{$this->valueField};
 				if(!isset($value) && !property_exists($data, $this->valueField)) $value = $data;

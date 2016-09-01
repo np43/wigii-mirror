@@ -470,7 +470,7 @@ class DbAdminServiceImpl implements DbAdminService
 		$idListMapper = $this->getIdListMapper();
 		$returnValue = null;
 		try {
-			if($this->getMySqlFacade()->selectAll($principal, $sql, $cnxSettings, $idListMapper, MYSQL_NUM) > 0)
+			if($this->getMySqlFacade()->selectAll($principal, $sql, $cnxSettings, $idListMapper, MySqlFacade::RESULT_MODE_NUM) > 0)
 			{
 				$returnValue = $idListMapper->getIdList();
 			}

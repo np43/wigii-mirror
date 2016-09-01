@@ -88,11 +88,13 @@ if(!$(this).hasClass('disabled')){
 		$(this).next('.cm').remove();
 	}
 	$(this).after('<div class=\'cm SBB\' style=\'\'></div>');
-	$('#navigateMenu li').each(function(){
-		label = $(this).find('a').text();
-		workingModule = $(this).find('a').attr('href').split('/').pop();
+	//$('#adminGroupMenu a').each(function(){
+	$('#adminGroupUser').next().find('a').each(function(){
+		label = $(this).text();
+		var id = $(this).prop('id');
+		id = id.slice(id.indexOf('_')+1,id.length);
+		workingModule = id;
 		$('#elementDetail_toolbar .userRights').next('.cm').append('<div class=\'H\' title=\''+workingModule+'\'>'+label+'</div>');
-		$(this).find('a').attr('href').replace('#', '');
 	});
 	$('#elementDetail_toolbar .userRights').next('.cm').css('display','table').css('position', 'absolute').css('top',$('#elementDetail_toolbar .userRights').position().top +30).css('left', $('#elementDetail_toolbar .userRights').position().left+45).find('div').css('float','none').css('margin','0px').css('padding','6px 10px');
 	$('#elementDetail_toolbar .userRights').next('.cm').mouseleave(function(){ $(this).remove(); });

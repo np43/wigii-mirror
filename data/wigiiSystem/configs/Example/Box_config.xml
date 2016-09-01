@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<box>
+	<boxWebUrl>https://www.box.com</boxWebUrl>
+	<clientId></clientId>
+	<clientSecret></clientSecret>
+	<accessToken></accessToken>
+	<refreshToken></refreshToken>
+	<refreshUrl>https://api.box.com/oauth2/token</refreshUrl>
+	<boxUrl>https://api.box.com/2.0/files/</boxUrl>
+	<boxUpload>https://upload.box.com/api/2.0/files/</boxUpload>
+	<boxFolderUrl>https://api.box.com/2.0/folders/</boxFolderUrl>
+	<modificationDate></modificationDate>
+	<userId></userId><!-- user id of Box account owning the app -->
+	<statusDate></statusDate>
+	<lock>Idle</lock>
+</box>

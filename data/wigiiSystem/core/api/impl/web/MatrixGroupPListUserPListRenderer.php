@@ -239,7 +239,7 @@ $('#".$this->getId()." .MatrixColHeaders').mouseleave(function(e){
 			$class .= " RW ";
 		} else $class .= " RX ";
 
-		?><li id="<?=$id;?>" >&nbsp;<div id="row<?=$rowId;?>" class="divAsSpan <?=$class;?>" UNSELECTABLE="on" <?=$help;?> style="<?=$style; ?>" ><?
+		?><li id="<?=$id;?>" ><div id="row<?=$rowId;?>" class="divFolder <?=$class;?>" UNSELECTABLE="on" <?=$help;?> style="<?=$style; ?>" ><?
 
 		if($wigiiNamespace!=null && $wigiiNamespace != $p->getWigiiNamespace()->getWigiiNamespaceName())
 		echo $wigiiNamespace." : ";

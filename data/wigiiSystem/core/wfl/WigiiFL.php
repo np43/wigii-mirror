@@ -1326,9 +1326,9 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			$businessKey = 'lxEq(fs("'.$keyField.'"),"'.$data->value.'")';
 			$businessKey = base64url_encode($businessKey);
 			
-			$url .= $query.'/'.$businessKey;		
+			$url .= $query.'/'.$businessKey.'/filter';		
 				
-			$onclick = "$(this).attr('href', prependCrtWigiiNamespaceAndModule2Url('".$url."'));return true;";
+			$onclick = "$(this).attr('href', prependCrtWigiiNamespaceAndModule2Url('".$url."')); event.stopPropagation(); return true;";
 			$url = '';
 			
 			$labels = $data->label;
@@ -1365,6 +1365,23 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		FuncExpEvalException::throwNotImplemented();
 	}
 
+	/**
+	 * Returns a SimpleXmlElement compatible with attribute expressions, which contains the visible languages in the system
+	 * See TranslationService::getVisibleLanguage
+	 * FuncExp signature : <code>cfgAttrLanguage()</code><br/>
+	 * @return SimpleXMLElement
+	 */
+	public function cfgAttrLanguage($args) {
+		$returnValue = '<attributes>';
+		foreach($this->getTranslationService()->getVisibleLanguage() as $lang=>$langName) {
+			$returnValue .= '<attribute>';
+			$returnValue .= $lang.'<label>'.$langName.'</label>';
+			$returnValue .= '</attribute>';
+		}
+		$returnValue .= '</attributes>';
+		return simplexml_load_string($returnValue);
+	}
+	
 	/**
 	 * Select some elements field values and returns a SimpleXmlElement compatible with attribute expressions.<br/>
 	 * FuncExp signature : <code>cfgAttrElementField(elementSource, mapElement2ValueFx, mapElement2LabelFx=null, sortOrder=1)</code><br/>
@@ -1956,11 +1973,95 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}
 	
 	/**
-	 * Returns current user id (real user)
-	 * FuncExp signature : <code>sysUser()</code>
-	 * @return String the ID of the real user connected
+	 * Returns current user id (real user) or user object or principal object. Defaults to user id.
+	 * FuncExp signature : <code>sysUser(returnAttribute=id|object|principal)</code>
+	 * @return String|User|Principal the ID of the real user connected or User object or current principal.
 	 */
 	public function sysUser($args) {
-		return $this->getPrincipal()->getRealUserId();
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) $returnAttribute = $this->evaluateArg($args[0]);
+		else $returnAttribute = 'id';
+		
+		$principal = $this->getPrincipal();
+		switch($returnAttribute) {
+			case 'id': return $principal->getRealUserId();
+			case 'object':
+			case 'user': return $principal->getRealUser();
+			case 'principal': return $principal;
+			default: throw new FuncExpEvalException("invalid return attribute '$returnAttribute', should be one of id, object or principal", FuncExpEvalException::INVALID_ARGUMENT);
+		}
+	}
+	
+	/**
+	 * Reads an HTML file from an Element and echoes content to browser
+	 * FuncExp signature : <code>sysReadFile(elementId,fieldName,configSelector=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) elementId: Id. The element ID to fetch
+	 * - Arg(1) fieldName: String|FieldSelector. The field of type Files for which to dump the file content.
+	 * - Arg(2) configSelector: ConfigSelector|LogExp|String optional parameter. If set, then defines the configuration of the element or the root element in case of subitems.
+	 * If LogExp then should be the group selection log exp used to define the configuration,
+	 * if String then should be the wigiiNamespace name used to define the configuration.
+	 * Postcondition: header() is sent to browser.
+	 */
+	public function sysReadFile($args) {
+		$nArgs = $this->getNumberOfArgs($args);	
+		$p = $this->getPrincipal();
+		if($nArgs<2) throw new FuncExpEvalException("sysReadFile takes at least two arguments which are the elementId and the fieldName", FuncExpEvalException::INVALID_ARGUMENT);
+		// Extracts arguments
+		$elementId = $this->evaluateArg($args[0]);
+		if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+		else {
+			$fieldName = $this->evaluateArg($args[1]);
+			if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+		}
+		if($nArgs>2) $configSelector = $this->evaluateArg($args[2]);
+		else $configSelector = null;
+		
+		// Prepares fsl to fetch file
+		$fslForFetch = FieldSelectorListArrayImpl::createInstance();
+		$fslForFetch->addFieldSelector($fieldName, "path");
+		$fslForFetch->addFieldSelector($fieldName, "name");
+		$fslForFetch->addFieldSelector($fieldName, "size");
+		$fslForFetch->addFieldSelector($fieldName, "type");
+		$fslForFetch->addFieldSelector($fieldName, "mime");
+		$fslForFetch->addFieldSelector($fieldName, "date");
+		$fslForFetch->addFieldSelector($fieldName, "user");
+		$fslForFetch->addFieldSelector($fieldName, "username");
+		$fslForFetch->addFieldSelector($fieldName, "version");
+		$fslForFetch->addFieldSelector($fieldName, "thumbnail");
+		$fslForFetch->addFieldSelector($fieldName, "content");
+		$fslForFetch->addFieldSelector($fieldName, "textContent");
+						
+		// sets adaptative WigiiNamespace
+		$currentNamespace = $p->getWigiiNamespace();
+		$hasAdaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
+		$p->setAdaptiveWigiiNamespace(true);
+		
+		// Fetches element
+		$elementP = sel($p, elementP($elementId, $fslForFetch, $configSelector), dfasl(dfas("NullDFA")));		
+		
+		// switches back to original WigiiNamespace
+		if(!$hasAdaptiveWigiiNamespace) {
+			$p->setAdaptiveWigiiNamespace(false);
+			$p->bindToWigiiNamespace($currentNamespace);
+		}
+		
+		// Dumps File content back to user
+		if(isset($elementP)) {
+			$element = $elementP->getDbEntity();
+			$fieldXml = $element->getFieldList()->getField($fieldName)->getXml();
+			$path = $element->getFieldValue($fieldName, 'path');
+			
+			header("Content-Type: text/html; charset=UTF-8");
+			if($fieldXml["htmlArea"] == "1") {
+				echo $element->getFieldValue($fieldName, "textContent");
+			}
+			elseif($path) {
+				$path = FILES_PATH.$path;
+				if(!file_exists($path)) echo $element->getFieldValue($fieldName, "content");
+				else readfile($path);
+			}
+			else echo $element->getFieldValue($fieldName, "content");		
+		}
 	}
 }

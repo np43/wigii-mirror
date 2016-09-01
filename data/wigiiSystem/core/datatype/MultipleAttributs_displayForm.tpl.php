@@ -136,7 +136,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 	$sameAsField = (string)$fieldXml["sameAsField"];
 	if(!empty($sameAsField)) {
 		$sameAsFieldId = $formId.'_'.$sameAsField.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
-		$this->addJsCode('$("#'.$inputId.'").html($("#'.$sameAsFieldId.' option").clone()).find("option[selected]").prop("selected", false);');
+		$this->addJsCode('$("#'.$inputId.'").attr("data-placeholder", $("#'.$sameAsFieldId.'").attr("data-placeholder")).html($("#'.$sameAsFieldId.' option").clone()).find("option[selected]").prop("selected", false);');
 		
 		$existingKeys = array();
 		foreach($fieldXml->attribute as $attribute_key => $attribute){
@@ -210,6 +210,14 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 			$html2text->html2text($label);
 			$label = $html2text->get_text();
 			$html2text->clear();
+			$label = trim($label);
+			
+			if($attribute == "none" && $chosen){				
+				if($label != '' && $label !='&nbsp;') {
+					$this->addJsCode("$('#".$inputId."').attr('data-placeholder','".$label."')");					
+				}
+				continue;
+			}
 			
 			if($attribute["optGroupStart"]=="1"){
 				$this->put('<optgroup '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' label="'.$label.'" >');
@@ -221,7 +229,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 					$label = substr($label, 0, 61)."...";
 				}
 				$label = str_replace(" ", "&nbsp;", $label);
-				$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" '.$selected.' title="'.$labelForTitle.'" >'.$label.'</option>');
+				$this->put('<option  '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" '.$selected.' title="'.$labelForTitle.'" >'.$label.'</option>');
 			}
 		}
 		

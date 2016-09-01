@@ -189,6 +189,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 						"} else { " .
 							"$('#".$crtFieldGroupId.">.label>span.expand').remove();" .
 							"$('#".$crtFieldGroupId."_group').show();" .
+							"resize_scrollArea(true);".
 						"}" .
 					"});");
 				if($fieldXml["expand"]=="0" || $fieldXml["forceCollapse"]=="1"){

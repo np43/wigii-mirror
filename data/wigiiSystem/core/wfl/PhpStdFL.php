@@ -173,4 +173,32 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		}
 		else return 0; 
 	}
+	/**
+	 * str_replace. See http://www.php.net/str_replace
+	 */
+	public function str_replace($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 3) throw new FuncExpEvalException("str_replace function takes at least three parameters, the search, the replace and the subject", FuncExpEvalException::INVALID_ARGUMENT);
+		$search = $this->evaluateArg($args[0]);
+		$replace = $this->evaluateArg($args[1]);
+		$subject = $this->evaluateArg($args[2]);
+		return str_replace($search, $replace, $subject);
+	}
+	/**
+	 * number_format. See http://www.php.net/number_format
+	 * By default takes 2 decimals, uses point to separate decimal part, and no thousand sep.
+	 */
+	public function number_format($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException("number_format function takes at one parameter the number", FuncExpEvalException::INVALID_ARGUMENT);
+		$number = $this->evaluateArg($args[0]);
+		if($nArgs>1) $decimals = $this->evaluateArg($args[1]);
+		else $decimals=2;
+		if($nArgs>2) $dec_point = $this->evaluateArg($args[2]);
+		else $dec_point='.';
+		if($nArgs>3) $thousands_sep = $this->evaluateArg($args[3]);
+		else $thousands_sep = "";
+		return number_format($number,$decimals,$dec_point,$thousands_sep);
+	}
+	
 }

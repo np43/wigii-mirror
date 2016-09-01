@@ -1087,6 +1087,96 @@ class GroupAdminServiceImpl implements GroupAdminService
 		return $sqlB->formatBinExp('Groups.wigiiNamespace', '=', $wigiiNamespace->getWigiiNamespaceName(), MySqlQueryBuilder::SQLTYPE_VARCHAR);
 	}
 	
+	public function deleteGroupContent($rootPrincipal, $principal, $groupId, $trashBinGroupId) {
+		$dbAS = $this->getDbAdminService();
+		$dbCS = $dbAS->getDbConnectionSettings($principal);
+		$mySqlF = $this->getMySqlFacade();
+		$elS = $this->getElementService(); //ServiceProvider::getElementService();
+	
+		// reads existing group in database
+		$origGroupP = $this->getGroup($principal, $groupId, $this->getFieldSelectorListForGroupWithoutDetail());
+		if(is_null($origGroupP)) return 0;
+		$origPRights = $origGroupP->getRights();
+		
+		// checks authorization
+		$this->assertPrincipalAuthorizedForDeleteGroupContent($principal, $origGroupP, $groupId);
+		$group = $origGroupP->getGroup();
+		
+		// checks if principal is admin on group :
+		$isAdmin = $origGroupP->getRights()->canModify() || $principal->getGroupCreator($origGroupP->getGroup()->getModule());
+		
+		// get direct children
+		$listFilter = ListFilter::createInstance();
+		$listFilter->setFieldSelectorList($this->getFieldSelectorListForGroupWithoutDetail());	
+		$listFilter->setFieldSelectorLogExp(LogExp::createEqualExp(FieldSelector::createInstance("id_group_parent"), $groupId));
+
+		// transfers lock to root principal
+		$dbAS->lock($rootPrincipal, 'Groups', $group, true);
+		try {
+			// deletes only child group if admin on group
+			$groupPList = GroupPListArrayImpl::createInstance();				
+			if($isAdmin && $this->getSelectedGroups($principal, $listFilter, $groupPList) > 0)
+			{		
+				$newChildG = Group::createInstance();
+				//$newParentGroupId = $group->getGroupParentId();
+				foreach($groupPList->getListIterator() as $childGroupP)
+				{
+					$childG = $childGroupP->getGroup();		
+	                if(!$trashBinGroupId) {
+	                	$this->deleteGroup($principal, $childG->getId());
+	                } else {
+	                	// changes parent
+	                	$newChildG->setId($childG->getId());
+	                	$newChildG->setWigiiNamespace($childG->getWigiiNamespace());
+	                	$newChildG->setGroupName($childG->getGroupName());
+	                	$newChildG->setModule($childG->getModule());
+	                	$newChildG->setGroupParentId($trashBinGroupId);
+	                	$this->changeParentGroup($rootPrincipal, $newChildG, GroupP::createInstance($childG), $mySqlF, $dbCS);	                		
+	                	// deletes old UGR
+	                	$mySqlF->delete($principal, $this->getSqlForRemoveAllUsers($newChildG->getId(), true), $dbCS);
+	                }				
+				}
+			}
+			
+			// deletes group content
+			$listFilter = ListFilter::createInstance();
+			$fieldSelectorIdOnlyList = FieldSelectorListArrayImpl::createInstance();
+			$fieldSelectorIdOnlyList->addElementAttributeSelector('id');
+			$listFilter->setFieldSelectorList($fieldSelectorIdOnlyList);
+			$elementList = ElementPAdvancedListArrayImpl::createInstance();		
+			if($elS->getAllElementsInGroup($principal, $group, $elementList, false, $listFilter) > 0){
+				if($trashBinGroupId) {
+					$elS->addMultipleElementSharing($rootPrincipal, $rootPrincipal, $elementList, $trashBinGroupId);
+					$elS->removeMultipleElementSharing($rootPrincipal, $principal, $elementList, $groupId, false);
+				} else {		
+					$elS->deleteMultipleElements($rootPrincipal, $principal, $elementList);
+				}
+			}
+		
+		}
+		catch(Exception $e) {
+			// unlocks
+			$this->unLock($rootPrincipal, $group);
+			throw $e;
+		}
+		// unlocks
+		$this->unLock($rootPrincipal, $group);
+	}
+	protected function assertPrincipalAuthorizedForDeleteGroupContent($principal, $origGroupP, $userErrorInfo='')
+	{
+		if(is_null($principal)) throw new GroupAdminServiceException('principal can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
+	
+		$autoS = $this->getAuthorizationService();
+		// checks general authorization
+		$autoS->assertPrincipalAuthorized($principal, "GroupAdminService", "deleteGroupContent");
+		// check specific rights: write on group is sufficient to delete content
+		if(is_null($origGroupP) || is_null($origGroupP->getRights()) ||
+			!$origGroupP->getRights()->canWriteElement() 
+		)
+		{
+			$autoS->fail($principal, "has no right to delete group content from $userErrorInfo");
+		}
+	}
 	public function deleteGroup($principal, $groupId, $moveContentAndChildrenToParent=false)
 	{
 		$this->executionSink()->publishStartOperation("deleteGroup", $principal);
@@ -2033,7 +2123,7 @@ order by isParent DESC
 				$this->getMySqlFacade()->selectAll($principal,
 					$this->getSqlForGetSelectedGroupsField($fieldSelector, $groupLogExp, $parentOrChildren),
 					$this->getDbAdminService()->getDbConnectionSettings($principal),
-					$valueMapper, MYSQL_NUM);
+					$valueMapper, MySqlFacade::RESULT_MODE_NUM);
 			}
 			// else only reads groups for which principal has read access (NOT SUPPORTED FOR NOW)
 			else
@@ -3982,6 +4072,119 @@ inner join Groups_Groups as GG2 on GG.id_group = GG2.id_group and GG2.id_group_o
 		return $this->groupGroupCount;
 	}
 }
+
+class GroupSqlBuilderToDisconnectGroupFromParentInElementGroup extends MySqlQueryBuilder implements RowList
+{
+	private $mysqlF;
+	private $dbAS;
+	private $groupGroupIds;
+	private $groupGroupCount;
+
+	// Object life cycle
+
+	public static function createInstance($principal, $group)
+	{
+		$returnValue = new GroupSqlBuilderToDisconnectGroupFromParentInElementGroup();
+		$returnValue->reset($principal, $group);
+		return $returnValue;
+	}
+	public function reset($principal, $group)
+	{
+		parent::reset();
+		if(is_null($group)) throw new GroupAdminServiceException('group can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
+		$groupId = $group->getId();
+
+		// gets all children ids to disconnect
+		$this->groupGroupIds = '';
+		$this->groupGroupCount = 0;
+		$this->getMySqlFacade()->selectAll($principal,
+				$this->getSqlForSelectAllChildrenIdsToDisconnect($groupId),
+				$this->getDbAdminService()->getDbConnectionSettings($principal),
+				$this);
+
+		// prepares delete query
+		$this->setTableForDelete('Elements_Groups');
+		$groupId = $this->formatValue($groupId, MySqlQueryBuilder::SQLTYPE_INT);
+		$this->setWhereClause("id_group = $groupId ".
+				($this->groupGroupCount > 0 ? "or id_relation_group in (".$this->groupGroupIds.")" : ''));
+	}
+
+	// dependency injection
+
+	public function setMySqlFacade($mysqlFacade)
+	{
+		$this->mysqlF = $mysqlFacade;
+	}
+	protected function getMySqlFacade()
+	{
+		// autowired
+		if(!isset($this->mysqlF))
+		{
+			$this->mysqlF = TechnicalServiceProvider::getMySqlFacade();
+		}
+		return $this->mysqlF;
+	}
+	public function setDbAdminService($dbAdminService)
+	{
+		$this->dbAS = $dbAdminService;
+	}
+	protected function getDbAdminService()
+	{
+		// autowired
+		if(!isset($this->dbAS))
+		{
+			$this->dbAS = ServiceProvider::getDbAdminService();
+		}
+		return $this->dbAS;
+	}
+
+	// Sql builder implementation
+
+	protected function getSqlForSelectAllChildrenIdsToDisconnect($groupId)
+	{
+		/*return "select
+		GG.id_relation_group
+		from Elements_Groups GG
+		inner join Elements_Groups as GG1 on GG.id_group_owner = GG1.id_group_owner and GG1.id_group = $groupId
+		inner join Elements_Groups as GG2 on GG.id_group = GG2.id_group and GG2.id_group_owner = $groupId";*/
+		return "SELECT
+				EG.id_element_group
+				FROM Elements_Groups EG
+				WHERE EG.id_group = $groupId";
+	}
+
+	// RowList implementation
+
+	public function addRow($row)
+	{
+		if(isset($row))
+		{
+			$groupGroupId = $row["id_relation_group"];
+			if(isset($groupGroupId))
+			{
+				if($this->groupGroupCount > 0)
+				{
+					$this->groupGroupIds .= ", ";
+				}
+				$this->groupGroupIds .= $groupGroupId;
+				$this->groupGroupCount++;
+			}
+		}
+	}
+	public function getListIterator()
+	{
+		throw new GroupAdminServiceException("GroupSqlBuilderToDisconnectGroupFromParentInElementGroup::RowList is write oly", GroupAdminServiceException::UNSUPPORTED_OPERATION);
+	}
+	public function isEmpty()
+	{
+		return ($this->groupGroupCount == 0);
+	}
+	public function count()
+	{
+		return $this->groupGroupCount;
+	}
+}
+
 
 class GroupWhereClauseBuilderForSelectGroups extends FieldSelectorLogExpSqlBuilder
 {

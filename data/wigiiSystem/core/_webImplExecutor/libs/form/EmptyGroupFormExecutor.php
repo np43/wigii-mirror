@@ -58,115 +58,36 @@ class EmptyGroupFormExecutor extends FormExecutor {
 
 		$groupAS = ServiceProvider::getGroupAdminService();
 		$transS = ServiceProvider::getTranslationService();
-
+		$configS = $this->getWigiiExecutor()->getConfigurationContext();
+		
 		$groupEditRec = $this->getRecord();
 		$group = $this->getGroupP()->getGroup();
 		$parentId = $group->getGroupParentId();
 		$workingModule = $group->getModule();
 		$workingModuleName = $workingModule->getModuleName();
-		
-		GroupAdminServiceException::throwNotImplemented();
-		
-		$moveContentToParent = ($groupEditRec->getFieldValue("deleteGroupOption")=="moveChildrenAndContentToParent");
-		
+				
+		// Empty group is not authorized if user has no admin right and enableDeleteOnlyForAdmin=1
+		if(!($this->getGroupP()->getRights() && $this->getGroupP()->getRights()->canModify()) 
+				&& $configS->getGroupParameter($p, $group, 'enableDeleteOnlyForAdmin')=='1') throw new AuthorizationServiceException("cannot delete elements in non admin groups.", AuthorizationServiceException::FORBIDDEN);
 		// if trashbin exists and user doesn't want to keep content, then moves group to trashbin
-		$trashBinGroupId = (string)$this->getWigiiExecutor()->getConfigurationContext()->getParameter($p, $group->getModule(), "trashBinGroup");
-		if(!empty($trashBinGroupId) && !$moveContentToParent && $parentId != $trashBinGroupId){
-			// checks for delete authorization
-			$this->assertPrincipalAuthorizedForEmptyGroup($p, $this->getGroupP());
-			
-			$rootP = $this->getRootPrincipal();
-			// transfers lock to root principal
-			ServiceProvider::getDbAdminService()->lock($rootP, 'Groups', $group, true);
-			try {
-				// moves group to trashbin
-				$groupAS->moveGroup($rootP, $group->getId(), $trashBinGroupId);
-			}
-			catch(Exception $e) {
-				if($e instanceof GroupAdminServiceException && $e->getCode() == GroupAdminServiceException::INVALID_ARGUMENT) {
-					$e = new GroupAdminServiceException("trashBinGroup $trashBinGroupId is not a valid group. Correct the configuration. Root message is : ".$e->getMessage(), GroupAdminServiceException::CONFIGURATION_ERROR);
-				}
-				// unlocks
-				$this->getWigiiExecutor()->unLockEntity($rootP, $exec, null, "group", $group);
-				throw $e;
-			}
-			// unlocks
-			$this->getWigiiExecutor()->unLockEntity($rootP, $exec, null, "group", $group);
-		}
-		// else deletes group
-		else {
-			//delete possible files in activities
-			$groupActivityWithConfig = array (
-				"groupPortal",
-				"groupHtmlContent",
-				"groupXmlPublish",
-				"groupSubscription"
-			);
-			foreach ($groupActivityWithConfig as $activityName) {
-				$rec = $this->getWigiiExecutor()->createActivityRecordForForm($p, Activity :: createInstance($activityName), $exec->getCrtModule());
-				switch ($activityName) {
-					case "groupPortal" :
-						$rec->getWigiiBag()->importFromSerializedArray($group->getDetail()->getPortal(), $rec->getActivity());
-						break;
-					case "groupHtmlContent" :
-						$rec->getWigiiBag()->importFromSerializedArray($group->getDetail()->getHtmlContent(), $rec->getActivity());
-						break;
-					case "groupXmlPublish" :
-						$rec->getWigiiBag()->importFromSerializedArray($group->getDetail()->getXmlPublish(), $rec->getActivity());
-						break;
-					case "groupSubscription" :
-						$rec->getWigiiBag()->importFromSerializedArray($group->getDetail()->getSubscription(), $rec->getActivity());
-						break;
-				}
-				foreach ($rec->getFieldList()->getListIterator() as $field) {
-					if ($field->getDataType() != null && $field->getDataType()->getDataTypeName() == "Files") {
-						if (isImage($rec->getFieldValue($field->getFieldName(), "mime")))
-							@ unlink(FILES_PATH . "tn_" . $rec->getFieldValue($field->getFieldName(), "path"));
-						@ unlink(FILES_PATH . $rec->getFieldValue($field->getFieldName(), "path"));
-					}
-				}
-			}
-	
-			//delete group config if defined
-			if ($this->getWigiiExecutor()->getConfigurationContext()->doesGroupHasConfigFile($p, $group)) {
-				$configfile = $this->getWigiiExecutor()->getConfigurationContext()->getGroupConfigFilename($p, $group);
-				@ unlink($configfile);
-			}
-			//delete the group and all the content associated to him
-			$groupAS->deleteGroup($p, $group->getId(), $moveContentToParent);
-		}
+		$trashBinGroupId = (string)$configS->getParameter($p, $group->getModule(), "trashBinGroup");
+		$groupAS->deleteGroupContent($this->getRootPrincipal(), $p, $group->getId(), $trashBinGroupId);
 		
 		$exec->addJsCode("actOnCloseDialog('" . $exec->getIdAnswer() . "');");
-
+		$exec->addJsCode('
+			invalidCache("moduleView");
+			invalidCache("groupPanel");
+			update("moduleView/" + crtWigiiNamespaceUrl + "/" + crtModuleName + "/display/moduleView");
+		');
+		
 		$this->getWigiiExecutor()->operationSuccessfullMessage($exec->getIdAnswer(), 350, $transS->t($p, "operationDoneSuccessfully"), "", "done");
-
 		$this->getWigiiExecutor()->throwEvent()->deleteGroup(PWithGroup :: createInstance($p, $group));
-
-		if(array_pop(explode("/",$this->getSubmitUrl()))=="groupPanel"){
-			//the timeout is important to let the JS of the request to be executed first, as the setListenersToGroupPanel
-			$exec->addJsCode(" setTimeout(function(){ clickOnGroupInGroupPanel(".$parentId.");}, 100); ");
-		}
-
+			
 		if($this->getActOnCheckedRecordRequest()!=null){
 			$exec->addRequests($this->getActOnCheckedRecordRequest());
 		}
 	}
-	protected function assertPrincipalAuthorizedForEmptyGroup($p, $groupP)
-	{
-		$autoS = ServiceProvider::getAuthorizationService();
-		// checks general authorization based on same rights as deletion
-		$autoS->assertPrincipalAuthorized($p, "GroupAdminService", "deleteGroup");
-		// check specific rights
-		if(is_null($groupP->getRights()) ||
-				!$groupP->getRights()->canModify() ||
-				!$p->getGroupCreator($groupP->getGroup()->getModule()) ||
-				(!$p->getRootGroupCreator($groupP->getGroup()->getModule()) && $groupP->getGroup()->getGroupParentId()==null)
-		)
-		{
-			$autoS->fail($p, "has no right to empty the group ".$groupP->getId());
-		}
-	}
-
+	
 	protected function doRenderForm($p, $exec){
 		$transS = ServiceProvider::getTranslationService();
 		$groupAS = ServiceProvider::getGroupAdminService();

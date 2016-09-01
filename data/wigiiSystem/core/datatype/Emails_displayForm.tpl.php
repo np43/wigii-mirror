@@ -47,6 +47,8 @@ $isRequire = 	$fieldXml["require"]=="1" && !$isPublicPrincipal ||
 				$isPublicPrincipal && $fieldXml["requireInPublic"]=="1" ||
 				$isPublicPrincipal && $fieldXml["require"]=="1" && $fieldXml["requireInPublic"]!="0";
 $isNotExpanded = !$isFilled && $fieldXml["expand"]!="1" && (!$isRequire || $fieldXml["expand"]=="0");
+if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
+$isNoAutofill = $fieldXml["noAutofill"]=="1" || ($this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "noAutofill")=='1') && $fieldXml["noAutofill"]!="0";
 
 
 $inputId = $formId.'_'.$fieldName;
@@ -64,6 +66,7 @@ if($fieldXml["isMultiple"]=="1"){
 	if($readonly) $this->put(' disabled ');
 	$this->put(' class="noElastic');
 	if($readonly) $this->put(' removeDisableOnSubmit ');
+	if($isNoAutofill) $this->put('autocomplete="off"');
 	$this->put(' " ');
 	$this->put(' style="'.$valueWidth." height:80px;");
 	if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
@@ -80,6 +83,7 @@ if($fieldXml["isMultiple"]=="1"){
 	if($inputType != null) $this->put(' type="'.$inputType.'" ');
 	if($disabled) $this->put(' disabled ');
 	if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
+	if($isNoAutofill) $this->put('autocomplete="off"');
 	$this->put(' style="'.$valueWidth);
 	if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
 	$this->put('" value="');

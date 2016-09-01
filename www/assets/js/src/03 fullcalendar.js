@@ -3,13 +3,18 @@
  * Docs & License: http://arshaw.com/fullcalendar/
  * (c) 2013 Adam Shaw
  */
+/*
+ * Updated by Medair (AC) on 20.07.2016
+ * to bind Wigii context menu when Right-Clicking on a day cell.
+ * (modified function dayBind)
+ */
+
 
 /*
  * Use fullcalendar.css for basic styling.
  * For event drag & drop, requires jQuery UI draggable.
  * For event resizing, requires jQuery UI resizable.
  */
- 
 (function($, undefined) {
 
 
@@ -2448,7 +2453,20 @@ function BasicView(element, calendar, viewName) {
 	
 	function dayBind(days) {
 		days.click(dayClick)
-			.mousedown(daySelectionMousedown);
+			.mousedown(daySelectionMousedown)
+			/* Medair (AC) binding Wigii context menu when right clicking on a day */
+			.contextmenu(function(e){
+				var cmSelector = '#moduleView .calendar>.cm';
+				positionElementOnMouse($(cmSelector), e, 'fromRight', null, 5);
+				$(cmSelector+' div.write').hide();
+				$(cmSelector+' #cm_open').hide();
+				$(cmSelector+' #cm_edit').hide();
+    			$(cmSelector+' #cm_delete').hide();
+    			$(cmSelector+' #cm_organize').hide();
+        		$(cmSelector).show();
+        		e.stopPropagation();
+				return false
+			});
 	}
 	
 	

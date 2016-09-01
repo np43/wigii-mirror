@@ -43,6 +43,11 @@ a > .sf-sub-indicator {
 .sf-menu ul {
 	border-bottom:none;
 }
+
+/*.sf-menu ul {
+	visibility: hidden;
+}*/
+
 .sf-menu li ul {
 	z-index:999999;
 }
@@ -136,6 +141,35 @@ adds for making work the navBar
 	height:0px;
 	visibility:hidden;
 }
+/* use for auto hide submenu with delai */
+.delai-navbar {
+	background: #f1f3f7 !important;
+	color: black !important;
+}
+.delai-navbar a span {
+    background-position: -10px -100px !important;
+}
+.delai-navbar ul {	
+    border: 1px solid #E0E2E5 !important;
+    width: auto !important;
+    display: table !important;
+    visibility: visible !important;
+    left: auto !important;
+    top: auto !important;
+    margin-top: -5px !important;
+}
+.delai-navbar ul a {
+    padding: 5px 20px !important;
+} 
+.delai-navbar ul li {
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+	display: block !important;
+	z-index: 1 !important;
+	float: none !important;
+	background: #fff !important;
+}
+
 .sf-navbar li.selected {
 	margin-bottom:-1px;
 	margin-top:3px;
@@ -243,7 +277,7 @@ adds for making work the navBar
 }
 
 /* deactivate css to make visible or not user menu */
-#userMenu.sf-menu li:hover>ul>li,
+/*#userMenu.sf-menu li:hover>ul>li,
 #userMenu.sf-menu li:hover>ul,
 #userMenu.sf-menu li.selected:hover>ul
 {
@@ -255,7 +289,7 @@ adds for making work the navBar
 #userMenu.sf-menu #userName.menuHover>ul>li.subMenuHover>ul>li
 {
 	visibility:visible;
-}
+}*/
 #userMenu.sf-menu #userName.menuHover>ul
 {
 	top:28px;
@@ -279,6 +313,15 @@ adds for making work the navBar
 	padding:1px 8px;
 }
 */
+
+.subMenuHoverTemp {
+	background-color: #AAC9FF !important;
+}
+
+#adminSearchBar .subMenuHoverTemp {
+	background-color: #cfdeff !important;
+}
+
 #userMenu #userName, #userMenu .closeAdmin {
 	padding-left:10px;
 	padding-right:10px;

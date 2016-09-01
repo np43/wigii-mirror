@@ -347,8 +347,9 @@ class ModuleAdminServiceImpl implements ModuleAdminService
 				$moduleAccess = array();
 			} elseif(is_string($moduleAccess)) {
 				//remove any space or _ in the moduleAccess
-				$moduleAccess = str_replace("_", "", str_replace(" ", "", $moduleAccess));
-				$moduleAccess = explode(";", $moduleAccess);
+				$moduleAccess = str_replace("_", "", str_replace(" ", "", $moduleAccess));				
+				//$moduleAccess = explode(";", $moduleAccess);
+				$moduleAccess = preg_split("/".ValueListArrayMapper::Natural_Separators."/", $moduleAccess);
 				$moduleAccess = array_combine($moduleAccess, $moduleAccess);
 				sort($moduleAccess);
 			} elseif(!is_array($moduleAccess)){

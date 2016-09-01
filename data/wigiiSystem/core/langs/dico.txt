@@ -503,6 +503,7 @@ adminUserRoleButtonHelp:Define the roles that each user can use.:Définit les r�
 adminUserUserButton:User ownership:Possession d'utilisateur:::::::::
 adminUserUserButtonHelp:Define the users a user can see in Admin.:Définit les utilisateurs qu'un utilisateur peut voir dans l'Admin.:::::::::
 adminUsersAreRed:Administrators are in red:Les administrateurs sont en rouge:::::::::
+adminMultipleUsername:To create multiple users in one operation, add several usernames separated by a comma:Pour créer plusieurs utilisateurs en une opération, saisissez une liste de noms séparés par des virgules:::::::::
 usernameAlreadyUsed:Please choose another username (this one is already used):Veuillez choisir un autre nom d'utilisateur (celui-ci est déjà utilisé):::::
 itemShownInFolders:#Element# is shown in the following #groups#:#Element# est montré dans #groups# suivants:::::
 
@@ -513,7 +514,7 @@ areYouSureDeleteFile:Are you sure you want to delete this file?:Etes-vous sûre 
 areYouSureDeleteElement:Are you sure you want to delete #thisElement#?:Etes-vous sûre de vouloir effacer #thisElement#?:::::::::
 areYouSureDeleteElements:Are you sure you want to delete these #-elements#?:Etes-vous sûre de vouloir effacer ces #-elements#?:::::::::
 areYouSureDeleteGroup:Are you sure you want to delete the #-group#\::Etes-vous sûr de vouloir supprimer #group#\::::::::::
-areYouSureEmptyGroup:Are you sure you want to delete the content of the #-group#\::Etes-vous sûr de vouloir supprimer le contenu du #_group#\::::::::::
+areYouSureEmptyGroup:Are you sure you want to delete the content of the #-group#\::Etes-vous sûr de vouloir supprimer le contenu du #-group#\::::::::::
 areYouSureDeleteUser:Are you sure you want to delete this user?:Etes-vous sûr de vouloir supprimer cet utilisateur?:::::::::
 areYouSureDeleteRole:Are you sure you want to delete this role?:Etes-vous sûr de vouloir supprimer ce rôle?:::::::::
 attachedFile0:Attached file 1:Fichier attaché 1:::::::::
@@ -799,19 +800,19 @@ info_lastFailedLogin:Last failed login:Dernier essai infructueux:::::::::
 info_nbLogin:Nb login:Nb de login:::::::::
 integratedFile:On-line document:Document en-ligne:::::::::
 userAdminRights:Administration rights:Droits d'administrateur:
-isAdminCreator:Administrator creator:Créateur d'administrateur:::::::::
-isAdminCreator_help:Can create administrators.:Peut créer des administrateurs.:::::::::
+isAdminCreator:Administrator manager:Manager d&apos;administrateurs:::::::::
+isAdminCreator_help:Ability to define administration rights on user/role.:Peut définir des droits d&apos;administration sur les utilisateurs et rôles.:::::::::
 isModuleEditor:Config editor:Editeur de configuration:::::::::
 isModuleEditor_help:Can change the configuration of tabs in the namespace.:Peut modifier la configuration des tabs par espace de nom.:::::::::
 isWigiiNamespaceCreator:Namespace creator:Créateur d'espace de nom:::::::::
 isWigiiNamespaceCreator_help:Can create namespace and define namespace to user or #groups#.:Peut créer des espaces de noms et définir l'espace de nom des utilisateurs ou des #-groups#.:::::::::
-isReadAllUsersInWigiiNamespace:Access to all users:Accès à tous les utilisateurs:::::::::
-isReadAllUsersInWigiiNamespace_help:Can access all users in the namespace.:Peut accéder à tous les utilisateurs de l'espace de nom.:::::::::
+isReadAllUsersInWigiiNamespace:User/Role access manager:Gestionnaire des accès utilisateurs/rôles:::::::::
+isReadAllUsersInWigiiNamespace_help:Ability to change folder access rights of users/roles and ability to modify the user/role mapping.:Peut changer les droits d&apos;accès aux dossiers des utilisateurs/rôles et peut changer l&apos;attribution utilisateur/rôle.:::::::::
 isRole:Is a role:Est un rôle:::::::::
 isRoleHelp:If ticked, this user is a role. That means you can allocate other users to use this role (go in Role allocation matrix).:Si coché, cet utilisateur est un rôle. Cela vous permet d'allouer d'autres utilisateurs à ce rôle (aller dans la matrice Allocation de rôle).:::::::::
 isUploaded:is already uploaded:est déjà importé:::::::::
-isUserCreator:User creator:Créateur d'utilisateur:::::::::
-isUserCreator_help:Can create users.:Peut créer des utilisateurs.:::::::::
+isUserCreator:User/Role manager:Gestionnaire d&apos;utilisateurs et de rôles:::::::::
+isUserCreator_help:Ability to create/edit/delete user/role.:Peut créer, modifier ou supprimer des utilisateurs et des rôles.:::::::::
 language:Language:Langue:::::::::
 last_name:Last name:Nom:::::::::
 logout:Logout:Déconnexion:::::::::
@@ -820,6 +821,7 @@ man:Man:Homme:::::::::
 message:Message:Message:::::::::
 missingElement:Missing #element#:#-Element# manquant:::::::::
 moduleAccess:Tabs access:Accès aux onglets:::::::::
+addModuleAccess:Add tabs access:Ajouter un accès aux onglets:::::::::
 moduleConfigEdit:Edit the file:Modifie le fichier:::::::::
 moduleEditorCalc:Calculate (#-elements#):Recalcul (#-elements#):::::::::
 moduleEditorCalc_help:Calculate the value of each auto calc field for each #-element#:Recalcul les valeurs des champs auto-calculés pour chaque #-element#:::::::::
@@ -850,7 +852,6 @@ wigiiNamespaceWrongFormat:The namespace name can only contains alphanumerical ch
 usernameWrongFormat:Wrong format:Mauvais format:
 wigiiNamespaceAlreadyExist:The namespace name already exists. Please choose a new one.:Le nom de l'espace existe déjà, veuillez choisir un autre nom.:
 newUserNeedsCredentials:For new user you need to define credentials.:Pour un nouvel utilisateur il est obligatoire de définir les paramêtres d'accès.:::
-
 moveInTrashBin:Sent to \: :Envoyé(s) dans \: :
 trashbinGroupName:zz. Trashbin:zz. Corbeille::::
 trashBinGroupOperationImpossible:#ThisGroup# is the trashbin, therefore the operation cannot complete.:#ThisGroup# est la corbeille, par conséquent l'opération ne peut pas se terminer.::::
@@ -1048,6 +1049,7 @@ roleNew:New:Nouveau:::::::::
 userNew_help:Create a new user:Créer un nouvel utilisateur:::::::::
 userOwns: owns : est proptiétaire de :::::::::
 username:User:Utilisateur:::::::::
+principalEmail:Email:Email:::::::::
 rolename:Role name:Nom du rôle:::::::::
 usual:through a fixed password:via un mot-de-passe défini:::::::::
 pop3SSL:through a SSL POP3 server:via un serveur POP3 SSL:::::::::
@@ -1402,11 +1404,14 @@ doYouWantToMoveThisFolderUnderParent:Are you sure you want to move this folder u
 doYouWantToMoveOrKeepInBoth:Move in :Déplacer dans :::::
 move:Yes:Oui:
 keepInBoth:Yes and keep in current folder:Oui et garder dans le dossier actuel::::
-
+copyToFolder:Copy to folder:Copier dans le dossier::::
+copyToFolder_help:Select the destination folder in which to copy:Sélectionnez le dossier dans lequel copier::::
 invalidCaptchaCode:Please enter again the code displayed in the image:Veuillez rentrer à nouveau le code de l'image:::::::::
 invalidPassword:The password is invalid:Le mot de passe est invalide:::::::::
 invalidUsernameOnPop3Server:The username is not existing on the pop3 server:Le nom d'utilisateur est inexistant sur le serveur pop3::::::::
 pop3ServerConnectionProblem:Connection with pop3 server failed. Please try again.:Erreur dans la connection avec le serveur pop3. Veuillez réessayer.:::::::::
+pop3ResetPassword:Please change the password of your linked email account:Veuillez changer le mot de passe de votre compte email associé:::::::::
+resetPassword:Please ask your administrator to reset your password:Veuillez demander à votre administrateur de changer votre mot de passe:::::::::
 invalidUsername:Unknown user:Utilisateur inconnu:::::::::
 forbiddenUser:Forbidden user:Utilisateur interdit:::::::::
 toManyLoginFailure:Please wait. Too many login failed. Try again in 10min:Veuillez attendre. Trop de tentatives infructeuses de login. Essayez à nouveau dans 10min.:::::::::
@@ -1430,6 +1435,7 @@ newOnLineFile:write content:écrire le contenu:::::::::
 updateExistingOnLineFile:update content:changer le contenu:::::::::
 removeExistingOnLineFile:remove content:supprimer le contenu:::::::::
 newDocument:New document:Nouveau document:::::::::
+boxChooseFile:Pick file from box...:Choisir un doc dans box...:::::::::
 
 onlyInWrite_help:This document is visible only if the user has a modification right.:Ce document est visible uniquement si l'utilisateur à un droit de modification.:::::::::
 creationDateField_help:Please fill an approximate date if #thisElement# has been created before today.:Veuillez remplir une date approximative dans le cas où #thisElement# a été créé avant aujourd'hui:::::::::
@@ -1691,3 +1697,27 @@ syncDimensionNewValue:new value in dimension:nouvelle valeur dans la dimension::
 syncDimensionDeletedValue:dimension value has been deleted:la valeur a été supprimée de la dimension:::::::
 syncCfgFieldsNewValue:new field in config:nouveau champ défini dans la config:::::::
 syncCfgFieldsDeletedValue:field deleted from config:le champ a été supprimé de la config:::::::
+
+fileLoading:Your file is preparing to be downloaded...:Votre fichier est en préparation de téléchargement...:::::::::
+boxLoading:Your Box file is preparing to be downloaded...:Votre fichier Box est en préparation de téléchargement...:::::::::
+savingMsg:Save in progress:Sauvegarde en cours:::::::::
+boxFile:File's Box:Fichier Box:::::::::
+boxFileFolder:File will be uploaded in Box in the folder:Le fichier va être sauvegardé sur Box dans le dossier:::::::::
+
+cmsAnchorTop:top:haut:::::::::
+cmsNoTitleAvailable:No title available in :Pas de titre traduit en :::::::::
+cmsNoContentAvailable:No content available in :Pas de contenu traduit en :::::::::
+CMS:Web Content:Contenu Web:::::::::
+#anElementCMS#:a web content:un contenu web:::::::::
+#elementCMS#:web content:le contenu web:::::::::
+#theElementCMS#:the web content:le contenu web:::::::::
+#-elementCMS#:web content:contenu web:::::::
+#-elementsCMS#:web contents:contenus web:::::::
+#ElementCMS#:Web content:Le contenu web:::::::::
+#ThisElementCMS#:This web content:Ce contenu web:::::::
+#thoseElementsCMS#:those web contens:ces contenus web:::::::
+#thisElementCMS#:this web content:ce contenu web:::::::
+#ThoseElementsCMS#:Those web contents:Ces contenus web:::::::
+#elementsCMS#:web contents:les contenu web:::::::
+#ofElementCMS#:of the web content:du contenu web:::::::
+#ofElementsCMS#:of web contents:des contenus web:::::::

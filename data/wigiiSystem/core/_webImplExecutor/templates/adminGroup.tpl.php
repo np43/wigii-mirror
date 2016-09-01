@@ -64,7 +64,7 @@ $groupPTree->end($p, $exec);
 				$activities[] = "groupNewCopy";
 				$activities[] = "groupEdit";
 				$activities[] = "groupDelete";
-				//TODO TICKET #6162 $activities[] = "groupEmpty";
+				//$activities[] = "groupEmpty"; // CWE 12.08.2016: do not show empty group action in admin console but only in contextual menu.
 				if($this->getConfigurationContext()->allowGroupDynamicConfig($p, $ac->getWorkingModule())) $activities[] = "groupConfigEdit";
 			}
 			if($this->getConfigurationContext()->getParameter($p, $ac->getWorkingModule(), "Group_enableSubscription")=="1") $activities[] = "groupSubscription";

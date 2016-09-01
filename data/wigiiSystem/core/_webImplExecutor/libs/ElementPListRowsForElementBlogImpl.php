@@ -588,7 +588,8 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 				'Element_enableDismissedStatus' => $configS->getParameter($p, $m, 'Element_enableDismissedStatus')=="1",
 				'Element_enableArchivedStatus' => $configS->getParameter($p, $m, 'Element_enableArchivedStatus')=="1",
 				'Element_enableDeprecatedStatus' => $configS->getParameter($p, $m, 'Element_enableDeprecatedStatus')=="1",
-				'Element_enableHiddenStatus' => $configS->getParameter($p, $m, 'Element_enableHiddenStatus')=="1"
+				'Element_enableHiddenStatus' => $configS->getParameter($p, $m, 'Element_enableHiddenStatus')=="1",
+				'Element_enableHiddenDelete' => $configS->getParameter($p, $m, 'enableDeleteOnlyForAdmin')=="1"
 			);
 		}
 
@@ -603,6 +604,7 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		$elementP->enableElementState_archived($this->enableElementStateConfigCache['Element_enableArchivedStatus']);
 		$elementP->enableElementState_deprecated($this->enableElementStateConfigCache['Element_enableDeprecatedStatus']);
 		$elementP->enableElementState_hidden($this->enableElementStateConfigCache['Element_enableHiddenStatus']);
+		$elementP->enableElementState_delete($this->enableElementStateConfigCache['Element_enableHiddenDelete'] && !$elementP->getRights()->canModify());
 
 		// updates policy using the ElementPolicyEvaluator
 		$policyEval = $this->getElementPolicyEvaluator();

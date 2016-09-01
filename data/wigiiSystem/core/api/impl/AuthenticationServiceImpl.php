@@ -698,7 +698,22 @@ class AuthenticationServiceImpl implements AuthenticationService
 
 		//set clear password to fill  password fields, to make
 		//possible the expiration even on authentication different than usual
-		if(!$isPublic) $userd->setClearPassword($password);
+		if(!$isPublic) {
+			try {
+				$userd->setClearPassword($password);
+			}
+			catch(ServiceException $ue) {
+				if($ue->getCode()==UserAdminServiceException::INVALID_PASSWORD) {									
+					if($userd->getAuthenticationMethod()=='usual') {
+						throw new AuthenticationServiceException($ue->getMessage(), AuthenticationServiceException::INVALID_PASSWORD_LENGTH);
+					}
+					else {
+						throw new AuthenticationServiceException($ue->getMessage(), AuthenticationServiceException::INVALID_PASSWORD_LENGTH_POP3);
+					}
+				}
+				else throw $ue;
+			}
+		}
 
 
 		//store in DB the user login informations

@@ -1482,6 +1482,40 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Persists a field of type Files from an Element, which content is posted to the application
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param mixed $caller the class object reference calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementPersistFileField business process needs the following parameters to run :
+	 * - element: Element. The filled element containing the field of type Files
+	 * - fieldName: String. The field name containing the File to persist.
+	 * - formFieldName: String Optional defaults to <fieldName>_file
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 */
+	public function elementPersistFileFieldFromPost(Principal $principal, $caller, WigiiBPLParameter $parameter, ExecutionSink $executionSink = null) {
+		$this->executionSink()->publishStartOperation("elementPersistFileFieldFromPost", $principal);
+		try {
+			// Check params are passed in as expected
+			$element = $parameter->getValue('element');
+			if (!is_a($element, 'Element')) throw new WigiiBPLException('$parameter element must be a valid element', WigiiBPLException::INVALID_PARAMETER);
+	
+			$fieldName = $parameter->getValue('fieldName');
+			if (empty($fieldName)) throw new WigiiBPLException('fieldName cannot be empty', WigiiBPLException::INVALID_PARAMETER);
+				
+			//generate formFieldName
+			$formFieldName = $parameter->getValue('formFieldName');
+			if (is_null($formFieldName)) $formFieldName = $fieldName . '_file';
+			$elementFileAdminService = TechnicalServiceProvider::getElementFileAdminService();
+			$elementFileAdminService->stagePostedFile($principal, $element, $fieldName, $formFieldName);
+			$this->elementPersistFileField($principal, $caller, $parameter, $executionSink);
+		} catch (Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("elementPersistFileFieldFromPost", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementPersistFileFieldFromPost", $principal);
+	}
+	
+	/**
 	 * Fetches an Element into the database. All fields are fetched and element is ready to be displayed.
 	 * For fetching only part of the element, use the ElementService or ElementP data flow connector.
 	 * @param Principal $principal authenticated user executing the Wigii business process

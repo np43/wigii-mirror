@@ -46,8 +46,15 @@ class ElementPAdvancedListArrayImpl extends ObjectListArrayImpl implements Eleme
 	protected function setAllHaveWriteRights($var){
 		$this->allHaveWriteRights = $var;
 	}
+	private $allHaveAdminRights;
+	protected function setAllHaveAdminRights($var){
+		$this->allHaveAdminRights = $var;
+	}
 	public function allHaveWriteRights(){
 		return $this->allHaveWriteRights;
+	}
+	public function allHaveAdminRights(){
+		return $this->allHaveAdminRights;
 	}
 	private $specificAttributFS;
 	private $allHaveSpecificAttribut;
@@ -161,6 +168,7 @@ class ElementPAdvancedListArrayImpl extends ObjectListArrayImpl implements Eleme
 		
 		$this->setAllHaveReadRights(true);
 		$this->setAllHaveWriteRights(true);
+		$this->setAllHaveAdminRights(true);
 		$this->setFilterOnWritable($filterOnWritable);
 		if($specificAttributName!=null){
 			$this->specificAttributFS = FieldSelector::createElementAttributeSelector($specificAttributName);
@@ -203,13 +211,16 @@ class ElementPAdvancedListArrayImpl extends ObjectListArrayImpl implements Eleme
 			$val = $elementP->getElement()->getAttribute($this->getSpecificAttributFieldSelector());
 			if($val == false) $this->setAllHaveSpecificAttribut(false);
 			else $this->setAtLeastOneHasSpecificAttribut(true);
-		}
-			
+		}			
 		if($elementP->getRights()==null){
 			$this->setAllHaveReadRights(false);
 			$this->setAllHaveWriteRights(false);
+			$this->setAllHaveAdminRights(false);
 		} elseif(!$elementP->getRights()->canWriteElement()){
 			$this->setAllHaveWriteRights(false);
+		}
+		if($elementP->getRights()!=null && !$elementP->getRights()->canModify()){
+			$this->setAllHaveAdminRights(false);
 		}
 	}
 

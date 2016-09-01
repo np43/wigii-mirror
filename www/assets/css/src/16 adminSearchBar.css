@@ -103,19 +103,84 @@
 	cursor:pointer;
 }
 
-#adminAccessMenu {
+#adminSearchBar ul {
+	display: inline;
+}
+
+#adminSearchBar ul>li>ul>li {
+	background-color: white;
+}
+
+#adminAccessMenu, #adminGroupMenu {
 	cursor: pointer;
 	position: absolute;
 	padding: 0px;
 	background:#fff;
 }
 
-#adminAccessMenu div {
+#adminAccessMenu div, #adminGroupMenu div {
 	position: block;
 	float: none;
 	padding: 3px 15px 3px 15px;
 }
 
+#adminSearchBar > ul.sf-menu > li > a {
+	font-size: 16px;
+}
+
+#adminSearchBar a .sf-sub-indicator {
+	padding-right: 0;
+	/*margin-left: 5px;
+	margin-right: 5px;*/
+}
+
+/******************************
+* correction of sf-menu for #adminSearchBar
+******************************/
+
+#adminSearchBar .sf-menu li ul {
+	top: 28px; /* match top ul list item height */
+	visibility: hidden;
+}
+
+#adminSearchBar ul.sf-menu li li ul {
+    left: 15em;
+    visibility: hidden;
+}
+
+#adminSearchBar .sf-menu a {
+	padding-right: 20px;
+}
+
+#adminSearchBar .sf-menu a:hover {
+	background: #cfdeff;
+}
+
+#adminSearchBar .sf-sub-indicator, #adminSearchBar .sf-sub-indicator:hover {
+	/*right: 5px;*/
+}
+
+#adminSearchBar .S {
+	background-position: -10px -100px;
+}
+
+#adminSearchBar ul.S > li > a > .sf-sub-indicator {
+    background-position: -10px -100px;
+}
+
+#adminSearchBar ul.S a.S > .sf-sub-indicator {
+    background-position: -10px 0 !important;
+}
+
+#adminSearchBar ul a.S > .sf-sub-indicator {
+	background-position: -10px 0;
+}
 
 
+#adminSearchBar :not(div) > ul > li a .sf-sub-indicator, #adminSearchBar :not(div) > ul >li:hover a .sf-sub-indicator {
+    margin-right: 15px;
+}
 
+.first-level > li a .sf-sub-indicator, .first-level >li:hover a .sf-sub-indicator {
+    margin-right: 5px;
+}

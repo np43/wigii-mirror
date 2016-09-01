@@ -311,16 +311,14 @@ class EmailingFormExecutor extends FormExecutor {
 			strpos($body, '$access$')!==false
 			){
 			foreach($this->getElementIds() as $elementId=>$elementEmails){
-
-				$crtAccess = end($elementEmails);
-				$crtEmail = $crtAccess["value"];
-				$crtAccessLevel = $crtAccess["externalAccessLevel"];
-				$crtAccess = $crtAccess["externalCode"];
-				if(!$crtAccessLevel){
-					$this->addErrorToField($transS->t($p, "missExternalAccessEmailPre")." ".$crtEmail." ".$transS->t($p, "missExternalAccessEmailPost"),"message");
-				}
+				//loop from the end to fetch the email fields
+				foreach(array_reverse($elementEmails) as $element) {				
+					if(!is_array($element)) continue;
+					if($element["value"] && !($element["externalCode"] && $element["externalAccessLevel"])){
+						$this->addErrorToField($transS->t($p, "missExternalAccessEmailPre")." ".$element["value"]." ".$transS->t($p, "missExternalAccessEmailPost"),"message");
+					}
+				}								
 			}
-
 		}
 
 		if($this->getState()=="sendTestEmail" && $this->hasError()){

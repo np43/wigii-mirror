@@ -46,6 +46,7 @@ class EditUserFormExecutor extends FormExecutor {
 		return $fe;
 	}
 
+	private $multipleUsernames;
 	protected function doSpecificCheck($p, $exec){
 		$workingModuleName = $this->getWigiiExecutor()->getAdminContext($p)->getWorkingModule()->getModuleName();
 
@@ -59,13 +60,6 @@ class EditUserFormExecutor extends FormExecutor {
 		if($user->isRole()){
 			$usernameFieldName = "rolename";
 			$passwordLifeFieldName = "rolePasswordLife";
-		}
-
-		if($p->isWigiiNamespaceCreator() && $userEditRec->getFieldValue("moduleAccess")==null){
-			$userEditRec->setFieldValue(implode(";", array_keys($p->getModuleAccess())), "moduleAccess");
-		}
-		if($p->isWigiiNamespaceCreator()){
-			$user->getDetail()->setModuleAccess(ServiceProvider::getModuleAdminService()->formatModuleArray($p, $userEditRec->getFieldValue("moduleAccess")));
 		}
 
 		//on usual authentication method
@@ -88,7 +82,8 @@ class EditUserFormExecutor extends FormExecutor {
 					// CWE 03.02.2016: on reset password, resets nb of failed logins
 					$user->getDetail()->setInfo_nbFailedLogin(0);
 				} catch(ServiceException $e){
-					$this->addErrorToField($transS->h($p, "invalidPassword"), "password");
+					$this->addErrorToField($transS->h($p, "invalidPassword")
+					.($e->getCode() == UserAdminServiceException::INVALID_PASSWORD?'. '.$e->getMessage():''), "password");
 				}
 			}
 		} else {
@@ -110,27 +105,36 @@ class EditUserFormExecutor extends FormExecutor {
 		//try to set the username
 		//if the username contains the defaultEmailPostfix, delete it
 		try{
-			$username = $userEditRec->getFieldValue("$usernameFieldName");
-			$result = array();
-			$allow = '[_a-z0-9-]';
-			$defaultEmailPostfix = EMAIL_postfix;
-			if(preg_match('/@('.$allow.'+(\.'.$allow.'+)*)(\.'.$allow.'{2,})+$/i', $username, $result)==1){
-				if($result[0] == $defaultEmailPostfix){
-					$username = str_replace($result[0], "", $username);
-				}
-			}
-			//if role add a @wigiiNamespace if not yet defined
+			//$username = $userEditRec->getFieldValue("$usernameFieldName");			
 			if($user->isRole()){
-				//replace anything after an @
-				$atPos = strpos($username, "@");
-				if($atPos!==false){
-					$username = substr($username, 0, $atPos);
-				}
-				if($user->getWigiiNamespace()->getWigiiNamespaceName()){
-					$username = $username."@".$user->getWigiiNamespace()->getWigiiNamespaceName();
-				}
+				$usernames[0] = $userEditRec->getFieldValue("$usernameFieldName");
+			} else {
+				$usernames = preg_split("/".ValueListArrayMapper::Natural_Separators."/", $userEditRec->getFieldValue("$usernameFieldName"));
 			}
-			$user->setUsername($username);
+			$this->multipleUsernames = array();
+			foreach($usernames as $username){
+				$result = array();
+				$allow = '[_a-z0-9-]';
+				$defaultEmailPostfix = EMAIL_postfix;
+				if(preg_match('/@('.$allow.'+(\.'.$allow.'+)*)(\.'.$allow.'{2,})+$/i', $username, $result)==1){
+					if($result[0] == $defaultEmailPostfix){
+						$username = str_replace($result[0], "", $username);
+					}
+				}
+				//if role add a @wigiiNamespace if not yet defined
+				if($user->isRole()){
+					//replace anything after an @
+					$atPos = strpos($username, "@");
+					if($atPos!==false){
+						$username = substr($username, 0, $atPos);
+					}
+					if($user->getWigiiNamespace()->getWigiiNamespaceName()){
+						$username = $username."@".$user->getWigiiNamespace()->getWigiiNamespaceName();
+					}
+				}			
+				$this->multipleUsernames[$username] = $username;	
+			}
+			$user->setUsername(reset($this->multipleUsernames));
 		} catch(ServiceException $e){
 			$this->addErrorToField($e->getMessage(), "$usernameFieldName");
 		}
@@ -141,7 +145,8 @@ class EditUserFormExecutor extends FormExecutor {
 		if($p->isReadAllUsersInWigiiNamespace()) $user->getDetail()->setReadAllUsersInWigiiNamespace($userEditRec->getFieldValue("isReadAllUsersInWigiiNamespace"));
 		if($p->isAdminCreator()) $user->getDetail()->setAdminCreator($userEditRec->getFieldValue("isAdminCreator"));
 		if($p->isUserCreator()) $user->getDetail()->setUserCreator($userEditRec->getFieldValue("isUserCreator"));
-
+		
+		/*
 		if($p->getReadAllGroupsInWigiiNamespace($workingModuleName)){
 			$checked = $userEditRec->getFieldValue("getReadAllGroupsInWigiiNamespace");
 			$moduleArray = $user->getDetail()->getReadAllGroupsInWigiiNamespace();
@@ -162,6 +167,118 @@ class EditUserFormExecutor extends FormExecutor {
 			if($checked) $moduleArray[$workingModuleName] = ServiceProvider::getModuleAdminService()->getModule($p, $workingModuleName);
 			else unset($moduleArray[$workingModuleName]);
 			$user->getDetail()->setGroupCreator($moduleArray);
+		}
+		*/
+		
+		$moduleAccess = array();
+		// if superadmin then takes the selected boxes		
+		if($p->isWigiiNamespaceCreator()) {
+			$checkedModuleArray = $userEditRec->getFieldValue("getReadAllGroupsInWigiiNamespace");					
+			if($checkedModuleArray!=null) {
+				$checkedModuleArray = array_combine($checkedModuleArray, $checkedModuleArray);
+				$checkedModuleArray = ServiceProvider::getModuleAdminService()->formatModuleArray($p, $checkedModuleArray);
+				unset($checkedModuleArray[Module::EMPTY_MODULE_NAME]);
+				unset($checkedModuleArray[Module::ADMIN_MODULE]);
+				if($checkedModuleArray[Module::HELP_MODULE]) unset($checkedModuleArray[Module::HELP_MODULE]);
+				$user->getDetail()->setReadAllGroupsInWigiiNamespace($checkedModuleArray);
+				$moduleAccess = array_merge($moduleAccess, $checkedModuleArray);
+			}
+			
+			$checkedModuleArray = $userEditRec->getFieldValue("getRootGroupCreator");
+			if($checkedModuleArray!=null) {
+				$checkedModuleArray = array_combine($checkedModuleArray, $checkedModuleArray);
+				$checkedModuleArray = ServiceProvider::getModuleAdminService()->formatModuleArray($p, $checkedModuleArray);
+				unset($checkedModuleArray[Module::EMPTY_MODULE_NAME]);
+				unset($checkedModuleArray[Module::ADMIN_MODULE]);
+				if($checkedModuleArray[Module::HELP_MODULE]) unset($checkedModuleArray[Module::HELP_MODULE]);
+				$user->getDetail()->setRootGroupCreator($checkedModuleArray);
+				$moduleAccess = array_merge($moduleAccess, $checkedModuleArray);
+			}
+			
+			$checkedModuleArray = $userEditRec->getFieldValue("getGroupCreator");
+			if($checkedModuleArray!=null) {
+				$checkedModuleArray = array_combine($checkedModuleArray, $checkedModuleArray);
+				$checkedModuleArray = ServiceProvider::getModuleAdminService()->formatModuleArray($p, $checkedModuleArray);
+				unset($checkedModuleArray[Module::EMPTY_MODULE_NAME]);
+				unset($checkedModuleArray[Module::ADMIN_MODULE]);
+				if($checkedModuleArray[Module::HELP_MODULE]) unset($checkedModuleArray[Module::HELP_MODULE]);
+				$user->getDetail()->setGroupCreator($checkedModuleArray);
+				$moduleAccess = array_merge($moduleAccess, $checkedModuleArray);
+			}
+		}
+		// else intersects with principal access
+		else {
+			$modulesList = $p->getModuleAccess();
+			unset($modulesList[Module::ADMIN_MODULE]);
+			if($modulesList[Module::HELP_MODULE]) unset($modulesList[Module::HELP_MODULE]);
+			
+			$moduleArray = $user->getDetail()->getReadAllGroupsInWigiiNamespace();
+			$checkedModuleArray = $userEditRec->getFieldValue("getReadAllGroupsInWigiiNamespace");
+			if($checkedModuleArray==null) $checkedModuleArray = array();
+			foreach ($modulesList as $moduleName=>$module) {
+				if($p->isWigiiNamespaceCreator() || $p->getReadAllGroupsInWigiiNamespace($moduleName)) {
+					$checked = in_array($moduleName, $checkedModuleArray);
+					if($checked)
+						$moduleArray[$moduleName] = $module;
+					else
+						unset($moduleArray[$moduleName]);
+				}
+			}
+			$user->getDetail()->setReadAllGroupsInWigiiNamespace($moduleArray);
+			if($moduleArray!=null) $moduleAccess = array_merge($moduleAccess,$moduleArray);
+			/*if($p->getReadAllGroupsInWigiiNamespace($workingModuleName)){
+			 $checked = $userEditRec->getFieldValue("getReadAllGroupsInWigiiNamespace");
+			 $moduleArray = $user->getDetail()->getReadAllGroupsInWigiiNamespace();
+			 if($checked) $moduleArray[$workingModuleName] = ServiceProvider::getModuleAdminService()->getModule($p, $workingModuleName);
+			 else unset($moduleArray[$workingModuleName]);
+			 $user->getDetail()->setReadAllGroupsInWigiiNamespace($moduleArray);
+			}*/
+			
+			$moduleArray = $user->getDetail()->getRootGroupCreator();
+			$checkedModuleArray = $userEditRec->getFieldValue("getRootGroupCreator");
+			if($checkedModuleArray==null) $checkedModuleArray = array();
+			foreach ($modulesList as $moduleName => $module) {
+				if($p->isWigiiNamespaceCreator() || $p->getRootGroupCreator($moduleName)){
+					$checked = in_array($moduleName, $checkedModuleArray);
+					if($checked)
+						$moduleArray[$moduleName] = $module;
+					else
+						unset($moduleArray[$moduleName]);
+				}
+			}
+			$user->getDetail()->setRootGroupCreator($moduleArray);
+			if($moduleArray!=null) $moduleAccess = array_merge($moduleAccess,$moduleArray);
+			/*
+			 if($p->getRootGroupCreator($workingModuleName)){
+			 $checked = $userEditRec->getFieldValue("getRootGroupCreator");
+			 $moduleArray = $user->getDetail()->getRootGroupCreator();
+			 if($checked) $moduleArray[$workingModuleName] = ServiceProvider::getModuleAdminService()->getModule($p, $workingModuleName);
+			 else unset($moduleArray[$workingModuleName]);
+			 $user->getDetail()->setRootGroupCreator($moduleArray);
+			 }
+			*/
+			
+			$moduleArray = $user->getDetail()->getGroupCreator();
+			$checkedModuleArray = $userEditRec->getFieldValue("getGroupCreator");
+			if($checkedModuleArray==null) $checkedModuleArray = array();
+			foreach ($modulesList as $moduleName => $module) {
+				if($p->isWigiiNamespaceCreator() || $p->getGroupCreator($moduleName)){
+					$checked = in_array($moduleName, $checkedModuleArray);
+					if($checked)
+						$moduleArray[$moduleName] = $module;
+					else
+						unset($moduleArray[$moduleName]);
+				}
+			}
+			$user->getDetail()->setGroupCreator($moduleArray);
+			if($moduleArray!=null) $moduleAccess = array_merge($moduleAccess,$moduleArray);
+			/*if($p->getGroupCreator($workingModuleName)){
+			 $checked = $userEditRec->getFieldValue("getGroupCreator");
+			 $moduleArray = $user->getDetail()->getGroupCreator();
+			 if($checked) $moduleArray[$workingModuleName] = ServiceProvider::getModuleAdminService()->getModule($p, $workingModuleName);
+			 else unset($moduleArray[$workingModuleName]);
+			 $user->getDetail()->setGroupCreator($moduleArray);
+			 }*/
 		}
 
 		$user->getDetail()->setCanModifyOwnPassword($userEditRec->getFieldValue("canModifyOwnPassword"));
@@ -185,18 +302,66 @@ class EditUserFormExecutor extends FormExecutor {
 		//the other password details are already changed if necessary in the setClearPassword
 		$user->getDetail()->setDescription($userEditRec->getFieldValue("description"));
 		$user->getDetail()->setAuthenticationMethod($userEditRec->getFieldValue("authenticationMethod"));
-		$user->getDetail()->setAuthenticationServer($userEditRec->getFieldValue("authenticationServer"));
-
+		$user->getDetail()->setAuthenticationServer($userEditRec->getFieldValue("authenticationServer"));			
+	}
+	
+	protected function getModuleConfigTemplateFilename($principal){
+		$configS = ServiceProvider::getConfigService();
+		$file = $configS->getClientConfigFolderPath($principal).'config_moduleTemplate.xml';
+		if(!file_exists($file)){
+			$file = $configS->getConfigFolderPath($principal).'config_moduleTemplate.xml';
+		}	
+		return $file;
+	}
+	
+	protected function doesModuleHasConfigFile($principal, $module, $wigiiNamespace){
+		$configS = ServiceProvider::getConfigService();
+		return file_exists($configS->getModuleConfigFilename($principal, $module, $wigiiNamespace));
 	}
 
+	protected function createModuleFile($principal, $module, $templateFilePath, $configFolder){
+		$xmlString = file_get_contents($templateFilePath);		
+		$xmlString = str_replace('<moduleName>','<'.$module->getModuleName().'>', $xmlString);
+		$xmlString = str_replace('</moduleName>','</'.$module->getModuleName().'>', $xmlString);
+		$filename = $configFolder.$module->getModuleName().'_config.xml';		
+		file_put_contents($filename, $xmlString);
+	}
+		
 	protected function actOnCheckedRecord($p, $exec) {
-
 		$userAS = ServiceProvider::getUserAdminService();
 		$fsl = FieldSelectorListArrayImpl::createInstance(false);
 		$userAS->fillFieldSelectorListForUserEdit($fsl);
 		$userD = $this->getUserP()->getUser()->getDetail();
-		if($p->isWigiiNamespaceCreator()){
+		$userEditRec = $this->getRecord();
+		$configS = ServiceProvider::getConfigService();
+		/*
+		if($p->isWigiiNamespaceCreator()){			
 			$userD->calculateAdminLevelRights($userD->getModuleAccess(), true);
+		} else {
+			$userD->calculateAdminLevelRights($p->getModuleAccess());
+		}
+		*/
+		if($p->isWigiiNamespaceCreator()){
+			// prepares moduleAccess based on ticked boxes and add module field
+			if($userEditRec->getFieldValue('addModuleAccess')!=null) {
+				$addModule = ServiceProvider::getModuleAdminService()->formatModuleArray($p, $userEditRec->getFieldValue('addModuleAccess'));
+				foreach ($addModule as $module){
+					if(!$this->doesModuleHasConfigFile($p, $module, null)){
+						$path = $configS->getModuleConfigFilename($p, $module, null);
+						$templateFilePath = $this->getModuleConfigTemplateFilename($p);
+						if(file_exists($templateFilePath)){
+							$this->createModuleFile($p, $module, $templateFilePath, $configS->getClientConfigFolderPath($p));
+						}
+					}
+				}
+				if($moduleAccess==null) $moduleAccess = array();
+				$moduleAccess = array_merge($moduleAccess, $addModule);
+				$userD->setModuleAccess($moduleAccess);
+				// adds root group creator on new modules
+				if($userD->getRootGroupCreator()==null) $userD->setRootGroupCreator($addModule);
+				else $userD->setRootGroupCreator(array_merge($addModule, $userD->getRootGroupCreator()));
+			}			
+			$userD->calculateAdminLevelRights($userD->getModuleAccess());
 		} else {
 			$userD->calculateAdminLevelRights($p->getModuleAccess());
 		}
@@ -209,25 +374,26 @@ class EditUserFormExecutor extends FormExecutor {
 		}
 
 		//on new user, then just add from admin level rights
+		$moduleAccess = $userD->getModuleAccessOnGroupAdminLevelRights();
+				
+		$needsAdmin = $userD->needsAdminAccess();
+		if($needsAdmin){			
+			$moduleAccess[Module::ADMIN_MODULE] = Module::ADMIN_MODULE;						
+		}
 		if($this->getUserP()->getUser()->getId()==null){
-			$moduleAccess = $userD->getModuleAccessOnGroupAdminLevelRights();
-			$needsAdmin = $userD->needsAdminAccess();
-			if($needsAdmin){
-				$moduleAccess[Module::ADMIN_MODULE] = Module::ADMIN_MODULE;
-			}
 			$userD->setModuleAccess(ServiceProvider::getModuleAdminService()->formatModuleArray($p, $moduleAccess));
 		//on existing user, upgrade the moduleAccess to match rights
 		} else {
-			$tempGroupCreator = $this->getUserP()->getUser()->getDetail()->getGroupCreator();
+			$tempGroupCreator = $userD->getGroupCreator();
 			$newModuleAccess = $userAS->getModuleAccessFromRights($p, $this->getUserP());
-			if($newModuleAccess != $this->getUserP()->getUser()->getDetail()->getModuleAccess()){
+			if($newModuleAccess != $userD->getModuleAccess()){
 				$fsl->addFieldSelector("moduleAccess");
 				$fsl->addFieldSelector("info_resetSessionContext");
-				$userD->setModuleAccess($newModuleAccess);
+				$userD->setModuleAccess(array_merge($moduleAccess, $newModuleAccess));
 				//since 20/08/2013 context only contains information that should not be reset
 //				$user->getDetail()->setInfo_resetSessionContext(true);
 			}
-			if($tempGroupCreator != $this->getUserP()->getUser()->getDetail()->getGroupCreator()){
+			if($tempGroupCreator != $userD->getGroupCreator()){
 				$fsl->addFieldSelector("groupCreator");
 			}
 			if($p->isWigiiNamespaceCreator()){
@@ -236,20 +402,40 @@ class EditUserFormExecutor extends FormExecutor {
 		}
 		$userAS->fillFieldSelectorListForUserAdminRights($fsl);
 
-		$userEditRec = $this->getRecord();
-
+		//save email
+		if($userEditRec->getFieldList()->doesFieldExist('principalEmail')) {
+			$userInfo = str2array($userD->getInfo_lastSessionContext());
+			$userInfo['generalContext']['email'] = $userEditRec->getFieldValue('principalEmail');
+			$userD->setInfo_lastSessionContext(array2str($userInfo));
+			$fsl->addFieldSelector('info_lastSessionContext');
+		}
+		
 		// CWE 03.02.2016 adds 
 		if($userEditRec->getFieldValue("passwordHasBeenEdited") || ($userEditRec->getFieldValue("$passwordLifeFieldName") === "reset")) {
 			$fsl->addFieldSelector('info_nbFailedLogin');
 		}
 		
 		try{
-			$userAS->persistUser($p, $user, $fsl);
+			if(!$this->multipleUsernames) $this->multipleUsernames = array($user->getUsername() => $user->getUsername());
+			// if role then only takes first user
+			elseif($user->isRole()) {
+				$this->multipleUsernames = reset($this->multipleUsernames);
+				$this->multipleUsernames = array($this->multipleUsernames => $this->multipleUsernames);
+			}
+			$count = 0; $userInserted=array();
+			foreach($this->multipleUsernames as $username){
+				$user->setUsername($username);
+				if($count++ > 0) { $user->setId(0);	};
+				$userAS->persistUser($p, $user, $fsl);
+				$userInserted[$username] = $username;				
+			}
 			$exec->addJsCode(" adminUser_crtSelectedUser = '".$user->getId()."'; ");
 		} catch(UserAdminServiceException $e){
 			if($e->getCode() == UserAdminServiceException::USERNAME_ALREADY_USED){
 				$transS = ServiceProvider::getTranslationService();
-				$this->addErrorToField($transS->h($p, "usernameAlreadyUsed"), "$usernameFieldName");
+				$this->addErrorToField($transS->h($p, "usernameAlreadyUsed").(count($this->multipleUsernames)>1?" '$username'":''), "$usernameFieldName");
+				// replaces form with non yet inserted users
+				if(count($userInserted)>0) $userEditRec->setFieldValue(implode(", ",array_diff_key($this->multipleUsernames, $userInserted)), "$usernameFieldName");
 				return;
 			}
 			throw $e;
@@ -284,50 +470,63 @@ class EditUserFormExecutor extends FormExecutor {
 			$usernameFieldName = "rolename";
 			$passwordLifeFieldName = "rolePasswordLife";
 		}
-
 		//eput($user->displayDebug());
 		$state = $this->getState();
 
 		$this->getTrm()->setState($this->getState());
 
-		//fill values on start, only if user is an existing user (this is for the case of the herited case of the add)
-		if($state=="start" && $user->getId()){
-			$userEditRec->setFieldValue($user->getWigiiNamespace()->getWigiiNamespaceName(), "wigiiNamespace");
-			$userEditRec->setFieldValue($user->getUsername(), "$usernameFieldName");
-			$userEditRec->setFieldValue($user->getDetail()->getPasswordLife(), "$passwordLifeFieldName");
-//			$userEditRec->setFieldValue($user->isRole(), "isRole");
-			$moduleAccess = $user->getDetail()->getModuleAccess();
-			if($moduleAccess !=null){
-				$result = array();
-				foreach($moduleAccess as $module){
-					$result[] = $module->getModuleName();
-				}
-				$userEditRec->setFieldValue(implode(";", $result), "moduleAccess");
+		//fill values on start
+		if($state=="start"){
+			// fills all fields for existing user
+			if($user->getId()) {
+				$userEditRec->setFieldValue($user->getWigiiNamespace()->getWigiiNamespaceName(), "wigiiNamespace");
+				$userEditRec->setFieldValue($user->getUsername(), "$usernameFieldName");
+				$userEditRec->setFieldValue($user->getDetail()->getPasswordLife(), "$passwordLifeFieldName");
+	//			$userEditRec->setFieldValue($user->isRole(), "isRole");
+				$moduleAccess = $user->getDetail()->getModuleAccess();
+				if($moduleAccess !=null) $userEditRec->setFieldValue(implode(";",array_keys($moduleAccess)),"moduleAccess");
+				$userEditRec->setFieldValue(($user->getDetail()->isWigiiNamespaceCreator() ? true : null), "isWigiiNamespaceCreator");
+				$userEditRec->setFieldValue(($user->getDetail()->isModuleEditor() ? true : null), "isModuleEditor");
+				$userEditRec->setFieldValue(($user->getDetail()->isReadAllUsersInWigiiNamespace() ? true : null), "isReadAllUsersInWigiiNamespace");
+				$userEditRec->setFieldValue(($user->getDetail()->isAdminCreator() ? true : null), "isAdminCreator");
+				$userEditRec->setFieldValue(($user->getDetail()->isUserCreator() ? true : null), "isUserCreator");
+	
+				//$userEditRec->setFieldValue(($user->getDetail()->getReadAllGroupsInWigiiNamespace($workingModule) ? true : null), "getReadAllGroupsInWigiiNamespace");
+				$readAllGroups = $user->getDetail()->getReadAllGroupsInWigiiNamespace();			
+				if($readAllGroups!=null) $readAllGroups = array_keys($readAllGroups);
+				$userEditRec->setFieldValue($readAllGroups, "getReadAllGroupsInWigiiNamespace");
+				
+				//$userEditRec->setFieldValue(($user->getDetail()->getRootGroupCreator($workingModule) ? true : null), "getRootGroupCreator");
+				$rootGroupCreator = $user->getDetail()->getRootGroupCreator();
+				if($rootGroupCreator!=null) $rootGroupCreator = array_keys($rootGroupCreator);
+				$userEditRec->setFieldValue($rootGroupCreator, "getRootGroupCreator");
+				
+				//$userEditRec->setFieldValue(($user->getDetail()->getGroupCreator($workingModule) ? true : null), "getGroupCreator");
+				$groupCreator = $user->getDetail()->getGroupCreator();
+				if($groupCreator!=null) $groupCreator = array_keys($groupCreator);
+				$userEditRec->setFieldValue($groupCreator, "getGroupCreator");
+				
+				$userEditRec->setFieldValue($user->getDetail()->getDescription(), "description");
+				$userEditRec->setFieldValue(($user->getDetail()->canModifyOwnPassword() ? true : null), "canModifyOwnPassword");
+				$userEditRec->setFieldValue(($user->getDetail()->getPassword()!=null ? str_repeat("*", ($user->getDetail()->getPasswordLength() ? $user->getDetail()->getPasswordLength() : 4)): ""), "password");
+				$userEditRec->setFieldValue($user->getDetail()->getAuthenticationMethod(), "authenticationMethod");
+				$userEditRec->setFieldValue($user->getDetail()->getAuthenticationServer(), "authenticationServer");
 			}
-			$userEditRec->setFieldValue(($user->getDetail()->isWigiiNamespaceCreator() ? true : null), "isWigiiNamespaceCreator");
-			$userEditRec->setFieldValue(($user->getDetail()->isModuleEditor() ? true : null), "isModuleEditor");
-			$userEditRec->setFieldValue(($user->getDetail()->isReadAllUsersInWigiiNamespace() ? true : null), "isReadAllUsersInWigiiNamespace");
-			$userEditRec->setFieldValue(($user->getDetail()->isAdminCreator() ? true : null), "isAdminCreator");
-			$userEditRec->setFieldValue(($user->getDetail()->isUserCreator() ? true : null), "isUserCreator");
-			$userEditRec->setFieldValue(($user->getDetail()->getReadAllGroupsInWigiiNamespace($workingModule) ? true : null), "getReadAllGroupsInWigiiNamespace");
-			$userEditRec->setFieldValue(($user->getDetail()->getRootGroupCreator($workingModule) ? true : null), "getRootGroupCreator");
-			$userEditRec->setFieldValue(($user->getDetail()->getGroupCreator($workingModule) ? true : null), "getGroupCreator");
-			$userEditRec->setFieldValue($user->getDetail()->getDescription(), "description");
-			$userEditRec->setFieldValue(($user->getDetail()->canModifyOwnPassword() ? true : null), "canModifyOwnPassword");
-			$userEditRec->setFieldValue(($user->getDetail()->getPassword()!=null ? str_repeat("*", ($user->getDetail()->getPasswordLength() ? $user->getDetail()->getPasswordLength() : 4)): ""), "password");
-			$userEditRec->setFieldValue($user->getDetail()->getAuthenticationMethod(), "authenticationMethod");
-			$userEditRec->setFieldValue($user->getDetail()->getAuthenticationServer(), "authenticationServer");
+			// fills only WigiiNamespace for new user
+			else {
+				$userEditRec->setFieldValue($p->getWigiiNamespace()->getWigiiNamespaceName(), "wigiiNamespace");
+			}
 		}
-
+		
 		$hasOneAdminRight =
 			$p->isWigiiNamespaceCreator() ||
 			$p->isModuleEditor() ||
 			$p->isAdminCreator() ||
 			$p->isUserCreator() ||
 			$p->isReadAllUsersInWigiiNamespace() ||
-			$p->getReadAllGroupsInWigiiNamespace($workingModule) ||
-			$p->getRootGroupCreator($workingModule) ||
-			$p->getGroupCreator($workingModule)
+			$p->getReadAllGroupsInWigiiNamespace()!=null ||
+			$p->getRootGroupCreator()!=null ||
+			$p->getGroupCreator()!=null
 			;
 		$userEditRec->getWigiiBag()->setHidden(!$hasOneAdminRight, "userAdminRights");
 		$userEditRec->getWigiiBag()->setHidden(!$p->isWigiiNamespaceCreator(), "isWigiiNamespaceCreator");
@@ -335,9 +534,9 @@ class EditUserFormExecutor extends FormExecutor {
 		$userEditRec->getWigiiBag()->setHidden(!$p->isAdminCreator() || !$p->isReadAllUsersInWigiiNamespace(), "isReadAllUsersInWigiiNamespace");
 		$userEditRec->getWigiiBag()->setHidden(!$p->isAdminCreator(), "isAdminCreator");
 		$userEditRec->getWigiiBag()->setHidden(!$p->isAdminCreator(), "isUserCreator");
-		$userEditRec->getWigiiBag()->setHidden(!$p->getReadAllGroupsInWigiiNamespace($workingModule), "getReadAllGroupsInWigiiNamespace");
-		$userEditRec->getWigiiBag()->setHidden(!$p->isAdminCreator() || !$p->getRootGroupCreator($workingModule), "getRootGroupCreator");
-		$userEditRec->getWigiiBag()->setHidden(!$p->isAdminCreator() || !$p->getGroupCreator($workingModule), "getGroupCreator");
+		$userEditRec->getWigiiBag()->setHidden($p->getReadAllGroupsInWigiiNamespace()==null, "getReadAllGroupsInWigiiNamespace");
+		$userEditRec->getWigiiBag()->setHidden(!$p->isAdminCreator() || $p->getRootGroupCreator()==null, "getRootGroupCreator");
+		//$userEditRec->getWigiiBag()->setHidden(!$p->isAdminCreator() || $p->getGroupCreator()==null, "getGroupCreator"); /* always hidden */
 
 //		$userEditRec->getWigiiBag()->setHelp($transS->t($p, "isRoleHelp"), "isRole");
 		if($user->getDetail()->getPasswordLength() == null){

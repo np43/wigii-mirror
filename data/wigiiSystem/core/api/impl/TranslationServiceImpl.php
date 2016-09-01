@@ -166,6 +166,9 @@ class TranslationServiceImpl implements TranslationService {
 	protected function setInstalledLanguage($languages){
 		$this->language_installed = $languages;
 	}
+	/**
+	 * @return Array [l01=>English,l02=>Français]
+	 */
 	public function getVisibleLanguage($key = null){
 		if($key == null) return $this->language_visible;
 		return $this->language_visible[$key];

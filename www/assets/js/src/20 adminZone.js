@@ -382,8 +382,14 @@ function adminFilterGroup_hide(isHidden){
 //	}
 //}
 
-function adminButton_click(doAction, crtWigiiNamespace, crtModule, idButton, groupFilterLabel, userFilterLabel, roleFilterLabel, okLabel, cancelLabel, displayAllLabel, guGroupFilterLabel, guGroupFilterExplanation, guUserFilterLabel, guUserFilterExplanation, guScreenshot, urUserFilterLabel, urUserFilterExplanation, urRoleFilterLabel, urRoleFilterExplanation, urScreenshot, uuUserFilterLabel, uuUserFilterExplanation, uuUser2FilterLabel, uuUser2FilterExplanation, uuScreenshot, dialogTitle, title, message){
+function adminButton_click(doAction, crtWigiiNamespace, crtModule, idButton, groupFilterLabel, userFilterLabel, roleFilterLabel, okLabel, cancelLabel, displayAllLabel, guGroupFilterLabel, guGroupFilterExplanation, guUserFilterLabel, guUserFilterExplanation, guScreenshot, urUserFilterLabel, urUserFilterExplanation, urRoleFilterLabel, urRoleFilterExplanation, urScreenshot, uuUserFilterLabel, uuUserFilterExplanation, uuUser2FilterLabel, uuUser2FilterExplanation, uuScreenshot, dialogTitle, title, message, workingModule){
 	//define empty filter value
+	if (typeof workingModule === 'undefined') { workingModule = null; }
+	var idButtonPlus = idButton;
+	if(idButton.indexOf('_')) {
+		temp = idButton.split('_');
+		idButton = temp[0];
+	}
 	if(idButton =="adminGroup"){
 		userFilterDefaultValue = null;
 		user2FilterDefaultValue = null;
@@ -413,6 +419,13 @@ function adminButton_click(doAction, crtWigiiNamespace, crtModule, idButton, gro
 		user2FilterDefaultValue = null;
 		groupFilterDefaultValue = null;
 	}
+	
+	var parentMenu = $('#'+idButtonPlus).parent().parent();
+	if(doAction && parentMenu.prop('id')=='adminGroupMenu') {
+		tmpText = $('#adminGroup').children().first().children().first().contents()[0].data.split('(');
+		$('#adminGroup').children().first().children().first().contents()[0].data = tmpText[0]+' ('+$('#'+idButtonPlus).text().trim()+') ';
+	}
+	
 	if(!(doAction && (idButton =="adminGroupUser" || idButton =="adminUserRole" || idButton =="adminUserUser"))){
 		i1 = $('#adminFilterGroup input:first');
 		i2 = $('#adminFilterUser input:first');
@@ -488,7 +501,9 @@ function adminButton_click(doAction, crtWigiiNamespace, crtModule, idButton, gro
 				setVis("busyDiv", true);
 
 				url = SITE_ROOT +'Update/'+crtContextId+EXEC_requestSeparator+ 'NoAnswer/'+crtWigiiNamespace+'/'+crtModule+'/setFilterFor'+idButton.replace('admin', '');
-
+				if(workingModule!=null) {
+					url+= '/' + workingModule;
+				}
 				$('#elementDialog input.empty').val('');
 
 				var myAjax = new jQuery.ajax({
@@ -542,14 +557,23 @@ function adminButton_click(doAction, crtWigiiNamespace, crtModule, idButton, gro
 		return;
 	}
 
-
-	if($('#'+idButton).parent().attr('id')=="adminAccessMenu"){
-		$('#'+idButton).parent().parent().find('.S').removeClass('S');
-		$('#adminAccess').addClass('S');
-	} else {
-		$('#'+idButton).parent().find('.S').removeClass('S');
-	}
-	$('#'+idButton).addClass('S');
+	//subButton get the submenu action name
+	var subButton = '';
+	var button = $('#'+idButton);
+	var parentButton = button.parent().parent();
+	$('#adminSearchBar').find('.S').removeClass('S');
+	switch(parentButton.attr('id')) {
+		case 'adminAccessMenu': 
+			$('#adminAccess').addClass('S');
+			subButton = workingModule;
+			break;
+		case 'adminGroupMenu':
+			$('#adminGroup').addClass('S');
+			subButton = idButton;
+			idButton = 'adminGroup';
+			break;
+	} 
+	button.addClass('S');
 
 	adminFilterUser_hide(idButton=="adminGroup" || idButton=="adminModuleEditor" );
 	adminFilterUser2_hide(idButton=="adminGroup" || idButton=="adminModuleEditor" || idButton=="adminUser" || idButton=="adminRole" || idButton=="adminGroupUser" || idButton=="adminUserAdmin" );
@@ -566,8 +590,10 @@ function adminButton_click(doAction, crtWigiiNamespace, crtModule, idButton, gro
 	$('#adminFilterUser2 select[name=__horizontalPagingText]').val("1");
 //	$('#adminFilterGroup select[name=__horizontalPagingText]').val("1");
 
-	if(doAction) {
+	if(doAction && subButton=='') {
 		update('NoAnswer/'+crtWigiiNamespace+'/'+crtModule+'/switchAdminTo/'+idButton);
+	} else if(doAction && subButton!='') {
+		update('NoAnswer/'+crtWigiiNamespace+'/'+crtModule+'/switchAdminTo/'+idButton+'/'+subButton);
 	}
 }
 
@@ -619,7 +645,7 @@ function matrixResize(id){
 		mI.width(mC.width());
 		mI.height(mR.height()+5);
 	} else {
-		mI.width(mC.width());
+		mI.width(mC.width()-1);
 		mI.height(mR.height());
 	}
 
@@ -998,7 +1024,7 @@ function adminModuleEditorDetailOnResize(){
 function adminModuleEditorListOnResize(){
 	if($("#adminModuleEditor_list").offset()) { //test if the adminModuleEditor_list was created
 		$("#adminModuleEditor_list").height($(window).height()-$("#adminModuleEditor_list").offset().top-$("#footerBar").outerHeight()-10); //10 = padding-top + padding-bottom
-		$("#adminModuleEditor_list").width($(window).width()-$("#adminModuleEditor_detail").width()-16); //16 = padding-left + padding-right + border-left-width +1 for IE
+		$("#adminModuleEditor_list").width($(window).width()-$("#adminModuleEditor_detail").width()-15); //16 = padding-left + padding-right + border-left-width +1 for IE
 	}
 }
 
@@ -1071,6 +1097,17 @@ function setListenerToUserRoleAllocationFilter(){
 		}
 
 	});
+	
+	$('#adminRole_list_check_all')
+		.click(function(e){
+			$('#adminRole_list > div').not('[style*="display: none"]').addClass('S');
+			$('#adminRole_list_check_all').parent().children().first().text($('#adminRole_list > div.S').length);
+		});
+	$('#adminRole_list_uncheck_all')
+		.click(function(e){
+			$('#adminRole_list > div').not('[style*="display: none"]').removeClass('S');
+			$('#adminRole_list_uncheck_all').parent().children().first().text($('#adminRole_list > div.S').length);
+		});
 }
 
 $(window).resize(adminModuleEditorDetailOnResize);

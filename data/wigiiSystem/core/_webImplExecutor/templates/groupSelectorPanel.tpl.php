@@ -49,6 +49,10 @@ if($exec->getIdAnswer()!='groupPanel' && $exec->getIsUpdating()){ //!$exec->getI
 
 	$selectedGroupIds = $lc->getGroupPList()->getIds();
 
+	// gets trashbin
+	$trashbinID = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
+	if(empty($trashbinID)) $trashbinID = null;
+	
 	/**
 	 * group panel context menu
 	 */
@@ -64,7 +68,12 @@ if($exec->getIdAnswer()!='groupPanel' && $exec->getIsUpdating()){ //!$exec->getI
 		?><div id="cm_renameGroup" class="admin H fB <?=$protectLevel1;?>"><?=$transS->t($p, "cm_renameGroup");?>...</div><?
 		?><div id="cm_createSubGroup" class="admin H fB"><?=$transS->t($p, "cm_createSubGroup");?>...</div><?
 		?><div id="cm_copyGroup" class="admin H fB"><?=$transS->t($p, "cm_copyGroup");?>...</div><?
-		/*TODO ticket #6162 ?><div id="cm_emptyGroup" class="admin H fB <?=$protectLevel1;?>"><?=$transS->t($p, "cm_emptyGroup");?>...</div><?*/
+		// empty group is possible only if there is a trashbin until proper recursive deletion of files is coded (ticket 12796)
+		// empty group is possible as soon as write right are on folder (in that case, deletes only content and not subfolders)
+		// if enableDeleteOnlyForAdmin then empty group is possible only for admin
+		if($trashbinID) {
+		?><div id="cm_emptyGroup" class="<?=($configS->getParameter($p, $exec->getCrtModule(), 'enableDeleteOnlyForAdmin')=='1'?'admin':'write')?> H fB"><?=$transS->t($p, "cm_emptyGroup");?>...</div><?
+		}
 		?><div id="cm_deleteGroup" class="admin H fB <?=$protectLevel1;?>"><?=$transS->t($p, "cm_deleteGroup");?>...</div><?
 		?><div id="cm_findDuplicatesIn" class="H fB"><?=$transS->t($p, "findDuplicatesIn");?>...</div><?
 		?><div id="cm_portal" class="write H fB"><?=$transS->t($p, "cm_portal");?>...</div><?
@@ -79,9 +88,7 @@ if($exec->getIdAnswer()!='groupPanel' && $exec->getIsUpdating()){ //!$exec->getI
 
 	//get all groups
 	$groupPTree = GroupPTreeGroupPanelImpl::createInstance($p, $exec, $configS->getParameter($p, $exec->getCrtModule(), "nbOfLevelToExpandOnInit"), true);
-	// injects trashbin
-	$trashbinID = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
-	if(empty($trashbinID)) $trashbinID = null;
+	// injects trashbin	
 	$groupPTree->setTrashBinGroup($trashbinID);
 	$groupPTree->start($p, $exec);
 	$groupS->getAllGroups($p, $exec->getCrtModule(), $groupPTree);

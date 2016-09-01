@@ -24,6 +24,7 @@
 /**
  * MySql database technical facade with persistent connections
  * Created by CWE on 26 Feb 2013
+ * Modified by Medair (ACA) on August 10th 2016 to use mysqli driver instead of deprecated mysql. 
  */
 class MySqlFacadeWithPConnections extends MySqlFacade
 {
@@ -70,16 +71,19 @@ class MySqlFacadeWithPConnections extends MySqlFacade
 	{
 		$returnValue = $this->getCachedDbConnection($cnxSettings);
 		if(!isset($returnValue))
-		{
-			$returnValue = @mysql_pconnect($cnxSettings->getHost(), $cnxSettings->getUsername(), $cnxSettings->getPassword());
+		{			
+			$returnValue = @mysqli_connect('p:'.$cnxSettings->getHost(), $cnxSettings->getUsername(), $cnxSettings->getPassword());
 			if(!$returnValue) throw new MySqlFacadeException("Connection to database with: ".$cnxSettings->displayDebug()." failed.", MySqlFacadeException::INVALID_ARGUMENT);
-			if(!mysql_select_db($cnxSettings->getDbName(), $returnValue)){
+			$this->debugLogger()->write("Connected using persitent connections");
+			if(!mysqli_select_db($returnValue, $cnxSettings->getDbName())){
 				throw new MySqlFacadeException("No database: ".$cnxSettings->getDbName()." on host: ".$cnxSettings->getHost(), MySqlFacadeException::INVALID_ARGUMENT);
 			}
 			//set the charset to UTF8
-			mysql_query("SET NAMES utf8;", $returnValue);
-			mysql_query("SET CHARACTER SET utf8;", $returnValue);
-			mysql_query("SET SESSION wait_timeout = $this->connectionWaitTimeout", $returnValue);
+			// 10.08.2016: lets server manage UTF8 details to handle correctly emoticons in text
+			// 11.08.2016: regression on datatype Files with htmlArea=1 => force again UTF8
+			mysqli_query($returnValue, "SET NAMES utf8;");
+			mysqli_query($returnValue, "SET CHARACTER SET utf8;");
+			mysqli_query($returnValue, "SET SESSION wait_timeout = $this->connectionWaitTimeout");
 			$this->cacheDbConnection($cnxSettings, $returnValue);
 		}
 		return $returnValue;

@@ -200,6 +200,33 @@ class TechnicalServiceProvider
 	{
 		return new MySqlFacade();
 	}
+	
+	private $elementFileAdminService;
+	
+	/**
+	 * Helper class for managing files within Wigii elements with type of 'Files'
+	 *
+	 */
+    public static function getElementFileAdminService(){
+		return self::getInstance()->getElementFileAdminServiceInstance();
+	}
+
+	/**
+	 * default singleton
+	 */
+	protected function getElementFileAdminServiceInstance()
+	{
+		if(!isset($this->elementFileAdminService))
+		{
+			$this->elementFileAdminService = $this->createElementFileAdminService();
+		}
+		return $this->elementFileAdminService;
+	}
+
+	protected function createElementFileAdminService()
+	{
+		return new ElementFileAdminService();
+	}
 
 	private $argValidator;
 
@@ -834,6 +861,8 @@ class TechnicalServiceProvider
         //$an  = '[a-z0-9]';  // alphanum 		changed to	//	$an  = '[$a-z0-9]';  // alphanum
         //$and = '[a-z0-9-]'; // alphanum | "-"	changed to	//	$and = '[$a-z0-9-]'; // alphanum | "-"
         //for allow target="_blank" in html link
+		//$config->set('Core.Encoding', 'UTF-8');
+		//$config->set('Core.EscapeNonASCIICharacters', true);
 		$def = $config->getHTMLDefinition(true);
 		$def->addAttribute('a', 'target', 'Enum#_blank,_self,_target,_top');
 		return new HTMLPurifier($config);
@@ -949,6 +978,20 @@ class TechnicalServiceProvider
 	{
 		$returnValue = ServiceProvider::getExclusiveAccessObject('RowListCallbackImpl');
 		$returnValue->setAddRowCallback($method, $obj);
+		return $returnValue;
+	}
+	
+	/**
+	 * @return BoxServiceFormExecutor
+	 */
+	public static function getBoxServiceFormExecutor() {
+		return self::getInstance()->getBoxServiceFormExecutorInstance();
+	}
+	/**
+	 * Defaults as singlecall
+	 */
+	protected function getBoxServiceFormExecutorInstance() {
+		$returnValue = ServiceProvider::createWigiiObject('BoxServiceFormExecutor');
 		return $returnValue;
 	}
 	

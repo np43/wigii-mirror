@@ -26,7 +26,6 @@
  * Created on 15 sept. 09 by LWR
  */
 abstract class FormExecutor extends Model implements RecordStructureFactory, TRMProducer {
-
 	private $detailRenderer;
 	private $formChecker;
 	private $formRenderer;
@@ -753,13 +752,14 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 			if($isAfterInsert) $fileName = $record->getFieldValueBeforeInsert($fieldName, "path");
 			else $fileName = $record->getFieldValue($fieldName, "path");
 			$oldFileName = ($oldRecord != null ? $oldRecord->getFieldValue($fieldName, "path") : null);
-		
-			//				fput("field $fieldName is $fileName and was before $oldFileName");
+			
+			// Detects Box files
+			$isBoxFile = $fileName && strstr($fileName, "box://");
+			$isOldBoxFile = $oldFileName && strstr($oldFileName, "box://");
+			
 			//if the deleteFile is checked then delete the oldFile + thumbnail
 			//this work only if oldRecord is defined
-		
-			if($fileName == null && $oldRecord!=null){
-				//					fput("toDelete checked: delete old file $fieldName:".$oldFileName);
+			if($fileName == null && $oldRecord!=null && !$isOldBoxFile){
 				if (isImage($oldRecord->getFieldValue($fieldName, "mime"))) @unlink(FILES_PATH."tn_".$oldFileName);
 				if($oldFileName && $fieldXml["keepHistory"]>0){
 					$this->pushFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
@@ -769,7 +769,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 			}
 			//else if new Element then either move the file in Client folder and create a thumb
 			//either delete the file and the old file
-			else if($fileName!=null &&
+			else if($fileName!=null && !$isBoxFile &&
 					($oldFileName == null || $oldFileName!= $fileName)){
 		
 				$filePath = TEMPORARYUPLOADEDFILE_path.$fileName;
@@ -796,10 +796,10 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		
 				//					fput("delete old file $fieldName:".$oldFileName);
 				//delete old file if setted
-				if($oldFileName != null && isImage($oldRecord->getFieldValue($fieldName, "mime"))){
+				if($oldFileName != null && !$isOldBoxFile && isImage($oldRecord->getFieldValue($fieldName, "mime"))){
 					@unlink(FILES_PATH."tn_".$oldFileName);
 				}
-				if($oldFileName != null){
+				if($oldFileName != null && !$isOldBoxFile){
 					if($oldFileName && $fieldXml["keepHistory"]>0){
 						$this->pushFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
 					} else {

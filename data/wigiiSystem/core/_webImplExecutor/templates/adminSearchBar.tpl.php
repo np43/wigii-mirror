@@ -35,11 +35,23 @@ if(!isset($ac)) $ac = $this->getAdminContext($p);
 $crtWigiiNamespaceUrl = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 $crtModuleUrl = $exec->getCrtModule()->getModuleUrl();
 
-
 $subScreens = $ac->getSubScreens($p);
 if(false===array_search($ac->getSubScreen(), $subScreens)){
 	$ac->setSubScreen(reset($subScreens));
 }
+
+//get submenu
+$modules = $p->getModuleAccess();
+unset($modules[Module::ADMIN_MODULE]);
+if($modules[Module::HELP_MODULE]){
+	$help = $modules[Module::HELP_MODULE];
+	unset($modules[Module::HELP_MODULE]);
+	$modules[Module::HELP_MODULE] = $help;
+}
+$moduleReorder = reorderTabBasedOnKeyPriority($modules, (string)$configS->getParameter($p, null, "prioritizeModuleInHomePage"), true);
+$roleId = $p->getUserId();
+$crtWigiiNamespace = $p->getWigiiNamespace()->getWigiiNamespaceUrl();
+$crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
 
 $accessMenuBegan = false;
 $accessMenuClosed = false;
@@ -47,68 +59,111 @@ foreach($subScreens as $subScreen){
 	switch($subScreen){
 		case "adminModuleEditor":
 			if($accessMenuBegan && !$accessMenuClosed){
-				echo '</div>'; //ends the adminAccessMenu
+					?></li><?
+					?></ul><?
+				echo '</ul>'; //ends the adminAccessMenu
 				$accessMenuClosed = true;
 			}
 		case "adminGroup":
+			?><ul id="<?=$subScreen;?>" class="sf-menu first-level"> <?
+				?><li><?
+					?><a <?
+					if($subScreen == 'adminModuleEditor'){
+						?> href="javascript:adminButton_click(true, '<?=$crtWigiiNamespaceUrl;?>', '<?=$crtModuleUrl;?>', '<?=$subScreen;?>', '<?=$transS->h($p, "groupFilterLabel");?>', '<?=$transS->h($p, "userFilterLabel");?>', '<?=$transS->h($p, "roleFilterLabel");?>');" <?
+					} else {
+						?> href="#" onclick="$('#adminGroupMenu').css('visibility', 'hidden'); var find = $(this).text().slice( $(this).text().indexOf('(') +1 , $(this).text().indexOf(')')); window.location = $('#adminGroupMenu a:contains('+find+')').prop('href')"<? //window.location = $("#adminGroupMenu a:contains('Files')").prop('href');
+					}
+					?> onmouseover="showHelp(this, '<?=$transS->h($p, $subScreen."ButtonHelp")?>', 0, 'right',0,200,0);" onmouseout="hideHelp();" <?
+					?> > <?
+						if($subScreen != 'adminModuleEditor') {
+							$customLabel = $transS->t($p, $subScreen."Button").' ('.trim($transS->t($p, $ac->getWorkingModule()->getModuleName())).')';
+						} else {
+							$customLabel = $transS->t($p, $subScreen."Button");
+						}
+						echo $customLabel;
+						if($subScreen != 'adminModuleEditor'){ ?> <span class="sf-sub-indicator"> »</span> <?}
+					?> </a> <?
+					if($subScreen != 'adminModuleEditor'){
+						?> <ul id="adminGroupMenu"><?
+						foreach($moduleReorder as $moduleName=>$module){
+							?><li> <?
+								?><a id="<?=$moduleName; ?>" <?
+								?> href="javascript:adminButton_click(true, '<?=$crtWigiiNamespaceUrl;?>', '<?=$crtModuleUrl;?>', '<?=$moduleName;?>', '<?=$transS->h($p, "groupFilterLabel");?>', '<?=$transS->h($p, "userFilterLabel");?>', '<?=$transS->h($p, "roleFilterLabel");?>');" <?
+								?> ><?
+								echo $transS->t($p, $moduleName);
+								?> </a> <?
+							?></li><?
+						}
+						?> </ul><?
+					}
+				?></li><?
+			?></ul><?
+			//submenu
+			$exec->addJsCode("doShowAdminGroupMenuTimer = null; addNavigationToMenu('adminGroup', doShowAdminGroupMenuTimer)");
+			break;
 		case "adminUser":
 		case "adminRole":
-			?><div class="adminButton SBB <?=($ac->getSubScreen() == $subScreen ? " S " : "");?>" style="" <?
-				?> id="<?=$subScreen;?>" <?
-				?> onmouseover="showHelp(this, '<?=$transS->h($p, $subScreen."ButtonHelp")?>', 35, 'fromLeft',0,200,0);" onmouseout="hideHelp();" <?
-				?> onclick="adminButton_click(true, '<?=$crtWigiiNamespaceUrl;?>', '<?=$crtModuleUrl;?>', $(this).attr('id'), '<?=$transS->h($p, "groupFilterLabel");?>', '<?=$transS->h($p, "userFilterLabel");?>', '<?=$transS->h($p, "roleFilterLabel");?>');" <?
-				?> ><?
-				echo $transS->t($p, $subScreen."Button");
-			?></div><?
+			?><ul id="<?=$subScreen;?>" class="sf-menu first-level" style=""> <?
+				?><li><?
+					?> <a  <?
+					?> onmouseover="showHelp(this, '<?=$transS->h($p, $subScreen."ButtonHelp")?>', 35, 'fromLeft',0,200,0);" onmouseout="hideHelp();" <?
+					?> href="javascript:adminButton_click(true, '<?=$crtWigiiNamespaceUrl;?>', '<?=$crtModuleUrl;?>', '<?=$subScreen;?>', '<?=$transS->h($p, "groupFilterLabel");?>', '<?=$transS->h($p, "userFilterLabel");?>', '<?=$transS->h($p, "roleFilterLabel");?>');" <?
+					?> ><?
+						echo $transS->t($p, $subScreen."Button");
+					?> </a> <?  
+				?></li><?
+			?></ul><?
 			break;
 		case "adminGroupUser":
 		case "adminUserRole":
 		case "adminUserAdmin":
 		case "adminUserUser":
 			if(!$accessMenuBegan){
-				?><div class="adminButton SBB" style="" id="adminAccess" ><?
-					echo $transS->t($p, "adminAccess");
-				?></div><?
-				?><div class="SBB" id="adminAccessMenu" style="display:none;" ><?
+				?><ul id="adminAccess" class="sf-menu first-level"><?
+					?><li> <?
+					?><a href="#" onmouseover="showHelp(this, '<?=$transS->h($p, $subScreen."ButtonHelp")?>', 0, 'right',0,200,0);" onmouseout="hideHelp();"> <?
+						echo $transS->t($p, "adminAccess");
+						?> <span class="sf-sub-indicator"> »</span> <?
+					?></a> <?
+					?><ul id="adminAccessMenu" class="sf-with-ul"><?
 				$accessMenuBegan = true;
-				$exec->addJsCode("" .
-					"adminAccessMenuCloseTimeout = null;" .
-					"$('#adminAccessMenu')" .
-					".css('top', $('#adminAccess').position().top+$('#adminAccess').outerHeight())" .
-					".css('left', $('#adminAccess').position().left)" .
-					".mouseenter(function(){ clearTimeout(adminAccessMenuCloseTimeout); })" .
-					".mouseleave(function() { adminAccessMenuCloseTimeout = setTimeout(function(){ $('#adminAccessMenu').slideUp(200); }, 100); })" .
-					".click(function(){ $(this).slideUp(200); })" .
-					";" .
-					"$('#adminAccess')" .
-					".mouseenter(function(){ clearTimeout(adminAccessMenuCloseTimeout); " .
-					"adminAccessMenuCloseTimeout = setTimeout(function(){" .
-						"$('#adminAccessMenu').slideDown(200);" .
-						"tempZIndex = 100;" .
-						"$('#adminAccessMenu').css('zIndex', tempZIndex);" .
-						"}, 150);" .
-					"})" .
-					".mouseleave(function(){ clearTimeout(adminAccessMenuCloseTimeout); adminAccessMenuCloseTimeout = setTimeout(function(){ $('#adminAccessMenu').slideUp(); }, 1000); })" .
-					".click(function(){ $('#adminAccessMenu').show(); })" .
-					";" .
-					"if($('#adminAccessMenu div.selected').length>0){" .
-						"$('#adminAccess').addClass('selected');" .
-					"}" .
-					"");
+				$exec->addJsCode("doShowAdminAccessMenuTimer = null; addNavigationToMenu('adminAccess', doShowAdminAccessMenuTimer)");
 			}
-			?><div class="H <?=($ac->getSubScreen() == $subScreen ? " S " : "");?>" style="" <?
-				?> id="<?=$subScreen;?>" <?
-				?> onmouseover="showHelp(this, '<?=$transS->h($p, $subScreen."ButtonHelp")?>', 0, 'right',0,200,0);" onmouseout="hideHelp();" <?
-				?> onclick="adminButton_click(true, '<?=$crtWigiiNamespaceUrl;?>', '<?=$crtModuleUrl;?>', $(this).attr('id'), '<?=$transS->h($p, "groupFilterLabel");?>', '<?=$transS->h($p, "userFilterLabel");?>', '<?=$transS->h($p, "roleFilterLabel");?>', '<?=$transS->h($p, "setFilterOk");?>', '<?=$transS->h($p, "setFilterCancel");?>', '<?=$transS->h($p, "setFilterDisplayAllLabel");?>', '<?=$transS->h($p, "guGroupFilterLabel");?>', '<?=$transS->h($p, "guGroupFilterExplanation");?>', '<?=$transS->h($p, "guUserFilterLabel");?>', '<?=$transS->h($p, "guUserFilterExplanation");?>', '<?=$transS->h($p, "guScreenshot");?>', '<?=$transS->h($p, "urUserFilterLabel");?>', '<?=$transS->h($p, "urUserFilterExplanation");?>', '<?=$transS->h($p, "urRoleFilterLabel");?>', '<?=$transS->h($p, "urRoleFilterExplanation");?>', '<?=$transS->h($p, "urScreenshot");?>', '<?=$transS->h($p, "uuUserFilterLabel");?>', '<?=$transS->h($p, "uuUserFilterExplanation");?>', '<?=$transS->h($p, "uuUser2FilterLabel");?>', '<?=$transS->h($p, "uuUser2FilterExplanation");?>', '<?=$transS->h($p, "uuScreenshot");?>', '<?=$transS->h($p, "setFilterDialogTitle");?>', '<?=$transS->h($p, "setFilterTitle");?>', '<?=$transS->h($p, "setFilterMessage");?>');" <?
+			?><li> <?
+				?> <a id="<?=$subScreen;?>" <?
+				if($subScreen!='adminUserAdmin' && $subScreen!='adminGroupUser')
+				?> href="javascript:adminButton_click(true, '<?=$crtWigiiNamespaceUrl;?>', '<?=$crtModuleUrl;?>', '<?=$subScreen;?>', '<?=$transS->h($p, "groupFilterLabel");?>', '<?=$transS->h($p, "userFilterLabel");?>', '<?=$transS->h($p, "roleFilterLabel");?>', '<?=$transS->h($p, "setFilterOk");?>', '<?=$transS->h($p, "setFilterCancel");?>', '<?=$transS->h($p, "setFilterDisplayAllLabel");?>', '<?=$transS->h($p, "guGroupFilterLabel");?>', '<?=$transS->h($p, "guGroupFilterExplanation");?>', '<?=$transS->h($p, "guUserFilterLabel");?>', '<?=$transS->h($p, "guUserFilterExplanation");?>', '<?=$transS->h($p, "guScreenshot");?>', '<?=$transS->h($p, "urUserFilterLabel");?>', '<?=$transS->h($p, "urUserFilterExplanation");?>', '<?=$transS->h($p, "urRoleFilterLabel");?>', '<?=$transS->h($p, "urRoleFilterExplanation");?>', '<?=$transS->h($p, "urScreenshot");?>', '<?=$transS->h($p, "uuUserFilterLabel");?>', '<?=$transS->h($p, "uuUserFilterExplanation");?>', '<?=$transS->h($p, "uuUser2FilterLabel");?>', '<?=$transS->h($p, "uuUser2FilterExplanation");?>', '<?=$transS->h($p, "uuScreenshot");?>', '<?=$transS->h($p, "setFilterDialogTitle");?>', '<?=$transS->h($p, "setFilterTitle");?>', '<?=$transS->h($p, "setFilterMessage");?>');" <?
 				?> ><?
-				echo $transS->t($p, $subScreen."Button");
-			?></div><?
+					echo $transS->t($p, $subScreen."Button");
+					if($subScreen=='adminUserAdmin' || $subScreen=='adminGroupUser') {
+					?> <span class="sf-sub-indicator"> »</span><?
+					}
+				?> </a> <?
+				if($subScreen=='adminUserAdmin' || $subScreen=='adminGroupUser'){ //'adminUserAdmin'== Admin Level
+				?> <ul> <?
+						foreach($moduleReorder as $moduleName=>$module){
+							$customLabel = $transS->t($p, "homePage_".$crtWigiiNamespace."_".$moduleName);
+							if($customLabel == "homePage_".$crtWigiiNamespace."_".$moduleName) $customLabel=$transS->t($p, $moduleName);
+							else $customLabel.=" (".$transS->t($p, $moduleName).")";
+							?><li> <?
+								?><a id="<?=$subScreen.'_'.$moduleName; ?>" <?
+								?>  href="javascript:adminButton_click(true, '<?=$crtWigiiNamespaceUrl;?>', '<?=$crtModuleUrl;?>', '<?=$subScreen.'_'.$moduleName;?>', '<?=$transS->h($p, "groupFilterLabel");?>', '<?=$transS->h($p, "userFilterLabel");?>', '<?=$transS->h($p, "roleFilterLabel");?>', '<?=$transS->h($p, "setFilterOk");?>', '<?=$transS->h($p, "setFilterCancel");?>', '<?=$transS->h($p, "setFilterDisplayAllLabel");?>', '<?=$transS->h($p, "guGroupFilterLabel");?>', '<?=$transS->h($p, "guGroupFilterExplanation");?>', '<?=$transS->h($p, "guUserFilterLabel");?>', '<?=$transS->h($p, "guUserFilterExplanation");?>', '<?=$transS->h($p, "guScreenshot");?>', '<?=$transS->h($p, "urUserFilterLabel");?>', '<?=$transS->h($p, "urUserFilterExplanation");?>', '<?=$transS->h($p, "urRoleFilterLabel");?>', '<?=$transS->h($p, "urRoleFilterExplanation");?>', '<?=$transS->h($p, "urScreenshot");?>', '<?=$transS->h($p, "uuUserFilterLabel");?>', '<?=$transS->h($p, "uuUserFilterExplanation");?>', '<?=$transS->h($p, "uuUser2FilterLabel");?>', '<?=$transS->h($p, "uuUser2FilterExplanation");?>', '<?=$transS->h($p, "uuScreenshot");?>', '<?=$transS->h($p, "setFilterDialogTitle");?>', '<?=$transS->h($p, "setFilterTitle");?>', '<?=$transS->h($p, "setFilterMessage");?>', '<?=$moduleName;?>');" <?
+								?> ><?
+								echo $customLabel;
+								?> </a> <?
+							?></li><?
+						}
+				?></ul><?
+				}
+			?></li><?
 			break;
 	}
 }
 $exec->addJsCode("adminButton_click(false, '$crtWigiiNamespaceUrl', '$crtModuleUrl', '".$ac->getSubScreen()."', '".$transS->h($p, "groupFilterLabel")."', '".$transS->h($p, "userFilterLabel")."', '".$transS->h($p, "roleFilterLabel")."', '".$transS->h($p, "setFilterOk")."', '".$transS->h($p, "setFilterCancel")."', '".$transS->h($p, "setFilterDisplayAllLabel")."', '".$transS->h($p, "guGroupFilterLabel")."', '".$transS->h($p, "guGroupFilterExplanation")."', '".$transS->h($p, "guUserFilterLabel")."', '".$transS->h($p, "guUserFilterExplanation")."', '".$transS->h($p, "guScreenshot")."', '".$transS->h($p, "urUserFilterLabel")."', '".$transS->h($p, "urUserFilterExplanation")."', '".$transS->h($p, "urRoleFilterLabel")."', '".$transS->h($p, "urRoleFilterExplanation")."', '".$transS->h($p, "urScreenshot")."', '".$transS->h($p, "uuUserFilterLabel")."', '".$transS->h($p, "uuUserFilterExplanation")."', '".$transS->h($p, "uuUser2FilterLabel")."', '".$transS->h($p, "uuUser2FilterExplanation")."', '".$transS->h($p, "uuScreenshot")."', '".$transS->h($p, "setFilterDialogTitle")."', '".$transS->h($p, "setFilterTitle")."', '".$transS->h($p, "setFilterMessage")."');");
 if($accessMenuBegan && !$accessMenuClosed){
-	echo '</div>'; //ends the adminAccessMenu
+	?></li><?
+	?></ul><?
+	echo '</ul>'; //ends the adminAccessMenu
 	$accessMenuClosed = true;
 }
 

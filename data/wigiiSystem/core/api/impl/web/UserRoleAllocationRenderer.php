@@ -77,7 +77,7 @@ class UserRoleAllocationRenderer implements UserList, UserPList {
 
 		$exec->addJsCode("setListenerToUserRoleAllocationFilter();");
 		//add a first empty div to make the scrolling effect
-		?><div style="margin:5px 5px 15px 5px;font-weight:bold;" class="introduction"><span class="nb">0</span>&nbsp;<span><?=($exec->getCrtAction()=="userRoleAllocation" ? $transS->t($p, "roleSelected") : $transS->t($p, "userSelected"));?></span></div><?
+		?><div style="margin:5px 5px 15px 5px;font-weight:bold;" class="introduction"><span class="nb">0</span>&nbsp;<span><?=($exec->getCrtAction()=="userRoleAllocation" ? $transS->t($p, "roleSelected") : $transS->t($p, "userSelected"));?></span>&nbsp;<div id="adminRole_list_check_all">Check all</div>&nbsp;<div id="adminRole_list_uncheck_all">Uncheck all</div></div><?
 		?><div id="<?=$this->getId();?>"><?
 
 	}

@@ -1184,7 +1184,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * FuncExp signature : <code>ctlCheckNoError()</code><br/>
 	 * @return boolean false if attached FormExecutor has some errors, else true.
 	 */
-	public function ctlCheckNoError($args) {
+	public function ctlCheckNoError($args=null) {
 		$form = $this->getFormExecutor();
 		if(isset($form) && $form->hasError()) return false;
 		else return true;
@@ -1192,7 +1192,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	
 	/**
 	 * Adds an error message to a field in the record.
-	 * FuncExp signature : <code>ctlAddErrorToField(fieldName, errorMessage)</code><br/>
+	 * FuncExp signature : <code>ctlAddError(fieldName, errorMessage)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) fieldName: String|FieldSelector. The name of the field to which to add an error message
 	 * - Arg(1) errorMessage: String. Evaluates to a String that will be displayed as an error message. The message is automatically translated if needed.	 

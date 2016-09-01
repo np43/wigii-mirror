@@ -24,9 +24,12 @@
 /**
  * Checks a posted Form and fills the Record WigiiBag.
  * Created on 1 sept. 09 by LWR
+ * Modified by Medair on 21.07.2016 to integrate Box
  */
 class FormChecker implements FieldListVisitor {
 
+	// Dependency injection
+	
 	private $formExecutor;
 	public function getFormExecutor(){ return $this->formExecutor; }
 	public function setFormExecutor($formExecutor){ $this->formExecutor = $formExecutor; }
@@ -40,6 +43,25 @@ class FormChecker implements FieldListVisitor {
 	}
 	public function setP($p){ $this->p = $p; return $this; }
 
+	private $boxServiceFormExecutor;
+	/**
+	 * Injects a BoxServiceFormExecutor to use to communicate with Box and store uploaded files
+	 * @param BoxServiceFormExecutor $boxServiceFormExecutor
+	 */
+	public function setBoxServiceFormExecutor($boxServiceFormExecutor) {
+		$this->boxServiceFormExecutor = $boxServiceFormExecutor;
+	}
+	protected function getBoxServiceFormExecutor() {
+		// lazy loading
+		if(!isset($this->boxServiceFormExecutor)) {
+			$this->boxServiceFormExecutor = TechnicalServiceProvider::getBoxServiceFormExecutor();
+		}
+		return $this->boxServiceFormExecutor;
+	}
+	
+	
+	// Object lifecycle
+	
 	public static function createInstance($formExecutor){
 		$fc = new self();
 		$fc->setFormExecutor($formExecutor);
@@ -82,9 +104,10 @@ class FormChecker implements FieldListVisitor {
 		return $this->fieldGroupHasAtLeastFilled[$this->getCrtFieldGroup()];
 	}
 
-//	private $crtGroup; //will contain the name of the current group of field if defined.
-//	private $crtGroupHasAtLeastFilled; //contains the number of minium field filled in the group
-//	private $nbFilledFieldInCrtGroup; //contains the number of filled element in a group
+	
+	// FieldListVisitor implementation
+	
+	
 	/**
 	 * Acts on the current specified field linked to the generic datatype
 	 * the action consist to control the field value, and fill the wigii bag with the value.
@@ -159,6 +182,7 @@ class FormChecker implements FieldListVisitor {
 		//pas de sens d'avoir un nom sans fichier... ATTENTION en multipleEdit il ne devrait jamais y avoir la possibilité de changer qqch à un Files, car ça n'a pas de sens
 		//we need those checks here, because some of the hidden subfields of a file are require. --> it is important
 		//to empty them before checking if the file has content based only on values in require subfields.
+		$oldBoxId=null;
 		if($dataTypeName == "Files"){
 			if(($fieldParams["htmlArea"]!="1" && $get[$fieldName."_path"]==null) || ($fieldParams["htmlArea"]=="1" && $get[$fieldName."_textContent"]==null)){
 				$get[$fieldName."_name"] = null;
@@ -191,6 +215,9 @@ class FormChecker implements FieldListVisitor {
 			if($fieldParams["noActiveJSInPublic"]=="1" && !$get[$fieldName."_name"]){
 				$get[$fieldName."_name"] = $get[$fieldName."_originalFilename"];
 			}
+			// records old Box ID if present
+			$oldBoxId = $recBag->getValue($ff->getRecord()->getId(), $dataTypeName, $fieldName, "path");
+			$oldBoxId = (strpos($oldBoxId,"box://")===0?str_replace("box://", '', $oldBoxId):null);
 		}
 
 		//we need to go on each subfield then
@@ -382,10 +409,46 @@ class FormChecker implements FieldListVisitor {
 			}
 		}
 		
+		// Box file upload in box folder if the path is not like "box://..."	
+		if ($dataTypeName=="Files" && $fieldHasContent && (!strstr($ff->getRecord()->getFieldValue($fieldName, "path"), "box://")) &&
+			(((string)$fieldParams['boxFolderId']) || $fieldParams['boxAllowUpdate']=='1') && $this->getBoxServiceFormExecutor()->isBoxEnabled()){			
+
+			try {
+				$boxFolderId = (string)$fieldParams['boxFolderId'];
+				// case boxFolderId and not boxAllowUpdate
+				if($boxFolderId && $fieldParams['boxAllowUpdate']!='1') {
+					$this->getBoxServiceFormExecutor()->boxUploadFileForField($p, wigiiBPLParam("element",$ff->getRecord(),"fieldName",$fieldName, "mimeType", $mime, "boxFolderId", $boxFolderId));
+				}
+				// case boxFolderId and boxAllowUpdate
+				elseif($boxFolderId && $fieldParams['boxAllowUpdate']=='1') {
+					// if already box then updates version
+					if($oldBoxId) {
+						$this->getBoxServiceFormExecutor()->boxUploadFileVersionForField($p, wigiiBPLParam("element",$ff->getRecord(),"fieldName",$fieldName, "mimeType", $mime, "boxFolderId", $boxFolderId, "fileId", $oldBoxId));
+					}
+					// else uploads
+					else {
+						$this->getBoxServiceFormExecutor()->boxUploadFileForField($p, wigiiBPLParam("element",$ff->getRecord(),"fieldName",$fieldName, "mimeType", $mime, "boxFolderId", $boxFolderId));
+					}
+				}
+				// case not boxFolderId and boxAllowUpdate
+				elseif(!$boxFolderId && $fieldParams['boxAllowUpdate']=='1') {
+						// if already box then updates version
+					if($oldBoxId) {
+						$this->getBoxServiceFormExecutor()->boxUploadFileVersionForField($p, wigiiBPLParam("element",$ff->getRecord(),"fieldName",$fieldName, "mimeType", $mime, "boxFolderId", $boxFolderId, "fileId", $oldBoxId));
+					}
+				}				
+			}
+			catch(Exception $be) {
+				$ff->addErrorToField($be->getMessage(), $fieldName);
+			}
+		}
+		
+
+		
 		//Fill specific information on Emails type:
 		if($dataTypeName=="Emails"){
 			//if there is new content calculate the codes
-			if($fieldHasContent && $fieldIsChanged){
+			if($fieldHasContent && ($fieldIsChanged || $recBag->getValue($ff->getRecord()->getId(), $dataTypeName, $fieldName, "externalCode")== null) ){
 				$value = $recBag->getValue($ff->getRecord()->getId(), $dataTypeName, $fieldName, "value");
 				$newProofKey = ServiceProvider::getElementService()->getEmailValidationCode($p, $value);
 				$newExternalCode = ServiceProvider::getElementService()->getEmailExternalCode($p, $ff->getRecord()->getId(), $fieldName, $value);

@@ -79,6 +79,9 @@ class WigiiExecutor extends WigiiCoreExecutor {
 		switch ($action) {
 			case 'fx': return true;
 			case 'infx': return false;
+			case 'box': return true;
+			case 'www': return true;
+			case 'inwww': return false;
 			default: return parent::shouldByPassHeader($action);
 		}
 	}
@@ -86,6 +89,9 @@ class WigiiExecutor extends WigiiCoreExecutor {
 		switch ($action) {
 			case 'fx': return true;
 			case 'infx': return false;
+			case 'box': return true;
+			case 'www': return true;
+			case 'inwww': return false;
 			default: return parent::shouldByPassFooter($action);
 		}
 	}
@@ -102,9 +108,12 @@ class WigiiExecutor extends WigiiCoreExecutor {
 				case "help": $returnValue = 'HelpServiceFormExecutor'; break;
 				case "fx": $returnValue = 'FxWebServiceFormExecutor'; break;
 				case "infx": $returnValue = (object)array('className'=>'FxWebServiceFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true))); break;
+				case "box" : $returnValue = 'BoxServiceFormExecutor'; break;
+				case "www": $returnValue = $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
+				case "inwww": $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true,'setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
 				default: $returnValue = null;
 			}
-		}
+		}	
 		return $returnValue;
 	}
 }

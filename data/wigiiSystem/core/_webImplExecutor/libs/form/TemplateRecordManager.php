@@ -808,8 +808,15 @@ class TemplateRecordManager extends Model {
 		$this->put(' enctype="multipart/form-data" ');
 		$this->put(' action="'.$submitAction.'" ');
 		if($class)	$this->put(' class="'.$class.'" ');
+		
+		// CWE 26.08.2016: prevents autofilling forms into Admin module, except for login page
+		// autocomplete=off doesn't work at field level for special login fields like username,password,email. autocomplete=off should be put at form level		
+		$crtModule = ServiceProvider::getExecutionService()->getCrtModule();
+		if(!ServiceProvider::getAuthenticationService()->isMainPrincipalMinimal() && $crtModule->isAdminModule() ||
+			$this->getConfigService()->getParameter($this->getP(), $crtModule, "noAutofill")=='1') {
+			$this->put('autocomplete="off"');
+		}		
 		$this->put(' >');
-
 	}
 
 	/**
@@ -953,7 +960,7 @@ class TemplateRecordManager extends Model {
 		}
 	}
 
-	protected function displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $dataTypeName, $inputNode, $inputType, $inputId, $inputName, $isRequire, $noLabel = false){
+	protected function displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $dataTypeName, $inputNode, $inputType, $inputId, $inputName, $isRequire, $noLabel = false, $isNoAutofill = false){
 		if(!$noLabel){
 			$this->put('<div class="subLabel" style="'.$labelWidth.'" ><label for="'.$inputId.'" >');
 			if($isRequire) $this->put("* ");
@@ -963,6 +970,7 @@ class TemplateRecordManager extends Model {
 		$this->put('<div class="subInput" style="'.$valueWidth.'" >');
 		$this->put('<'.$inputNode.' id="'.$inputId.'" name="'.$inputName.'" ');
 		if($inputType != null) $this->put(' type="'.$inputType.'" ');
+		if($isNoAutofill) $this->put('autocomplete="off"');
 	}
 	protected function displayForm_1_TillClassDefinition(){
 		$this->put(' class="');
@@ -1436,8 +1444,10 @@ class TemplateRecordManager extends Model {
 		return $value;
 	}
 	public function doFormatForTag($value, $xml){
-		if($value==null) return;
-		$preFix = '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;white-space:nowrap;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].'" >';
+		if($value==null) return;	
+		// Modified by AC on 07.19.2016 we remove the rule css "white-space: nowrap" to prevent the sector tag be too long
+		//$preFix = '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;white-space:nowrap;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].'" >';
+		$preFix = '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].'" >';
 		$postFix = '</span> ';
 		if(is_array($value)){
 			return $preFix.implode($postFix.$preFix, $value).$postFix;

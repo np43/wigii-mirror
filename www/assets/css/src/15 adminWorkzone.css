@@ -128,6 +128,22 @@ div.userHeader {
 	background-image:url('../../images/gui/iconcheckbox_checked.png');
 }
 
+#adminRole_list_check_all, #adminRole_list_uncheck_all {
+	display: inline-block;
+	cursor:pointer;
+	font-weight: normal;
+	font-style: italic;
+	margin-left: 5px;
+}
+
+#adminRole_list_check_all {
+	margin-left: 15px;
+}
+
+#adminRole_list_check_all:hover , #adminRole_list_uncheck_all:hover {
+	text-decoration: underline;
+}
+
 #editGroupParentMenu {
 	cursor: pointer;
 	position: absolute;
@@ -236,11 +252,14 @@ div#editGroupParentMenu li.root{
 #groupAdminForMatrix_treeview li.root {
 	padding:0px;
 }
-#groupAdminForMatrix_treeview li div.divAsSpan {
+#groupAdminForMatrix_treeview li div.divAsSpan, #groupAdminForMatrix_treeview li div.divFolder {
 	background-image:url('../../images/gui/iconsimplefolder.png');
 	background-repeat:no-repeat;
-	background-position:-8px center;
+	background-position:-8px -1px;
 	padding-left:20px;
+}
+.divFolder{
+	height: 20px;
 }
 #groupAdminForMatrix_treeview,
 #groupAdminForMatrix_treeview ul {

@@ -82,10 +82,16 @@ class LoginFormExecutor extends FormExecutor {
 				case AuthenticationServiceException::INVALID_PASSWORD:
 					$this->addErrorToField($transS->h($p, "invalidPassword"), "password");
 					break;
+				case AuthenticationServiceException::INVALID_PASSWORD_LENGTH:
+					$this->addErrorToField($authE->getMessage().". ".$transS->h($p, "resetPassword"), "password");
+					break;
+				case AuthenticationServiceException::INVALID_PASSWORD_LENGTH_POP3:
+					$this->addErrorToField($authE->getMessage().". ".$transS->h($p, "pop3ResetPassword"), "password");
+					break;				
 				default:
 					throw $authE;
 			}
-		}
+		}		
 
 		$p = $authS->getMainPrincipal();
 		if($p->passwordExpired() && !$p->canModifyRealUserPassword()){

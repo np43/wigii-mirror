@@ -25,6 +25,7 @@
  * The Func Exp VM Standard Library
  * Created by CWE on 1er octobre 2013
  * Modified by CWE on 14 octobre 2013
+ * Modified by Medair on 12.07.2016
  */
 class FuncExpVMStdFL extends FuncExpVMAbstractFL
 {
@@ -1879,6 +1880,14 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
+	 * Returns an ampestand character
+	 * @return string
+	 */
+	public function txtAmp($args) {
+		return '&';
+	}
+	
+	/**
 	 * Creates an html open tag
 	 * FuncExp signature : <code>htmlStartTag(tagName,key1,value1,key2,value2,...)</code><br/>
 	 * Where arguments are :
@@ -1970,6 +1979,47 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	public function htmlGt($args) {
 		return '&gt;';
 	}
+	/**
+	 * Returns an html amp entity
+	 * @return string
+	 */
+	public function htmlAmp($args) {
+		return '&amp;';
+	}
+	/**
+	 * Builds a URL Query based given the hierarchical part and the query arguments 
+	 * FuncExp signature : <code>htmlUrlQuery(baseUrl,key1,value1,key2,value2,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) baseUrl : String. The hierarchical part of the url (sheme://host/path)
+	 * - Arg(1,3,5,...) keyI: String. The query key
+	 * - Arg(2,4,6,...) valueI: String. The query value
+	 * @return String. Calling htmlUrlQuery(baseUrl,key1,value1,key2,value2) will return baseUrl?key1=value1&key2=value2
+	 */	
+	public function htmlUrlQuery($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException("htmlUrlQuery func exp takes at least one argument which is the base url", FuncExpEvalException::INVALID_ARGUMENT);
+		$baseUrl = $this->evaluateArg($args[0]);
+		if(empty($baseUrl)) throw new FuncExpEvalException("htmlUrlQuery func exp takes at least one argument which is the base url", FuncExpEvalException::INVALID_ARGUMENT);
+		$returnValue = array();
+		if($nArgs>1) {
+			$i = 1;
+			$key = null;
+			$value = null;
+			while($i<$nArgs) {
+				$key = $this->evaluateArg($args[$i]);
+				if(empty($key)) throw new FuncExpEvalException("query key cannot be null", FuncExpEvalException::INVALID_ARGUMENT);
+				$i++;
+				if($i<$nArgs) {
+					$value = $this->evaluateArg($args[$i]);
+					$i++;
+				}
+				else $value = '';
+				$returnValue[$key] = $value;
+			}
+		}
+		$returnValue = $baseUrl.'?'.http_build_query($returnValue);
+		return $returnValue;
+	}
 	
 	/**
 	 * Returns an html document headeer
@@ -2018,6 +2068,29 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException("func exp 'txtExt2Mime' takes at least one argument: the file extension with the dot (example: .html or .pdf)", FuncExpEvalException::INVALID_ARGUMENT);
 		return typeMime($this->evaluateArg($args[0]));
+	}
+	
+	/**
+	 * Converts a string to be html compatible. If already html, then keeps it like this, else replaces needed entities
+	 * FuncExp signature : <code>txt2html(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : the string to be converted
+	 * @return String the String html compatible.
+	 */
+	public function txt2html($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$returnValue = '';
+		if($nArgs > 0) {
+			$str = $this->evaluateArg($args[0]);
+			$tmpTag = 'txt2html'.time();			
+			$returnValue = tryStr2Xml("<$tmpTag>".$str."</$tmpTag>");			
+			if($returnValue instanceof SimpleXMLElement) {
+				$returnValue = $returnValue->asXml();
+				$returnValue = str_replace(array('<?xml version="1.0"?>',"\n<$tmpTag>","<$tmpTag>","</$tmpTag>\n","</$tmpTag>"), '', $returnValue);
+			}
+			else $returnValue = htmlentities($str,ENT_COMPAT,'UTF-8');			
+		}
+		return $returnValue;
 	}
 	
 	/**

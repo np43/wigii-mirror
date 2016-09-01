@@ -25,6 +25,7 @@
  * Main Wigii page structure
  * Created on 23 juil. 09 by LWR
  * Modified by CWE on November 23rd 2015: added initialization of Wigii JS client and support of Wigii Light Client.
+ * Modified by Medair on 22.07.2016 to enable Box integration
  */
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start header.php"] = microtime(true);
 $this->executionSink()->publishStartOperation("TEMPLATE header.php");
@@ -128,8 +129,11 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.4.3/ckeditor.js"></script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.4.3/config.js"></script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.4.3/adapters/jquery.js"></script>
-<?
+<?// Enables Box integration
+if(TechnicalServiceProvider::getBoxServiceFormExecutor()->isBoxEnabled()) {
 ?>
+<script type="text/javascript" src ="https://app.box.com/js/static/select.js"></script>
+<?}?>
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii_<?=ASSET_REVISION_NUMBER;?>.css" type="text/css" media="all" />
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/theme.css.php" type="text/css" media="all" />
 <?
@@ -178,7 +182,12 @@ DIALOG_doYouWantToMoveThisFolderUnderParent = '<?=$transS->h($p, "doYouWantToMov
 DIALOG_doYouWantToMoveOrKeepInBoth = '<?=$transS->h($p, "doYouWantToMoveOrKeepInBoth");?>';
 DIALOG_move = '<?=$transS->h($p, "move");?>';
 DIALOG_keepInBoth = '<?=$transS->h($p, "keepInBoth");?>';
+DIALOG_copyToFolder = '<?=$transS->h($p, "copyToFolder");?>';
+DIALOG_copyToFolder_help = '<?=$transS->h($p, "copyToFolder_help");?>';
 wigii().initContext();
+wigii().context.box = {fileLoadingBarMsg: '<?=$transS->h($p, "boxLoading");?><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>'};
+wigii().context.std = {fileLoadingBarMsg: '<?=$transS->h($p, "fileLoading");?><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>'};
+wigii().context.boxUpload = {fileLoadingBarMsg: '<?=$transS->h($p, "boxUploading");?><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>'};
 <?
 //Browser detection, at each refresh, the browser and window height is refreshed
 ?>
@@ -361,6 +370,7 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 ?>
 <div id="busyDiv" class="ui-corner-all" style="background-color:<?=$companyColor;?>;color:<?=$rCompanyColor;?>;border:2px solid <?=$rCompanyColor;?>;font-size:small;padding:2px 13px;position:absolute; top:32px; left:48%; display:none; z-index:999999;"><?=$transS->t($p, "wigiiBusyLoading");?></div>
 <div id="filteringBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiFilteringLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
+<div id="fileLoadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "fileLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="loadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiBusyLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="formProgressBar" style="background-color:#fff;position:absolute; top:40%; left:40%; width:20%; display:none; z-index:999999;padding:10px;"></div>
 <div id="help" style="display:none;"></div>
@@ -379,6 +389,7 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 <div id='importDialog' style='top:0px; left:0px;display:none;'></div>
 <div id='changePasswordDialog' style='top:0px; left:0px;display:none;'></div>
 <div id='downloadingDialog' style='top:0px; left:0px;display:none;'></div>
+<div id="uploadBoxFile" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "savingMsg");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <script type="text/javascript" >
 $('#systemConsole').css('display','none').resizable({handles:'e,w',stop:function(event,ui){$(this).css('height','auto');}}).draggable({cursor:'crosshair',handle:'.header'});
 </script>

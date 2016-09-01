@@ -69,7 +69,7 @@ abstract class MatrixRenderer {
 		if($m->countRows() == 0) throw new ListException("try to render an empty matrix", ListException::UNSUPPORTED_OPERATION);
 
 		?><div id="<?=$this->getId();?>" class="Matrix"><?
-		?><div class="MatrixCorner BSB"><? ?></div><?
+		?><div class="MatrixCorner BSB"><div><? ?></div></div><?
 		?><div class="MatrixColHeaders BSB"><?
 			$this->prepareRenderingColHeader($p, $exec, $wigiiExecutor);
 			?><table class="" ><tr><?
@@ -118,6 +118,8 @@ abstract class MatrixRenderer {
 		?><div class="clear"></div><?
 
 	?></div><?
+if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
+$workingModule = $transS->t($p, $wigiiExecutor->getAdminContext($p)->getWorkingModule()->getModuleName());
 
 	$exec->addJsCode("
 matrixResize('".$this->getId()."');
@@ -146,5 +148,14 @@ $(window).resize(function(){
 	matrixResize('".$this->getId()."');
 });
 ");
+	$exec->addJsCode("
+		var position = $('#adminSearchBar .S .S').parent().index();				
+		var displayText = '';
+console.log($('#adminSearchBar .S .S').contents());			
+		displayText = $.trim($('#adminSearchBar .S .S').contents().first().text());					
+		if(position==0 || position > 2)	
+			displayText+= ' / ".$workingModule."';
+		$('.MatrixCorner.BSB > div').text(displayText);
+	");
 	}
 }

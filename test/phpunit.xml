@@ -1,0 +1,20 @@
+<phpunit bootstrap="bootstrap.php">
+    <testsuites>
+        <testsuite name="wigii">
+            <directory suffix='.php'>./data/**/*</directory>
+        </testsuite>
+    </testsuites>
+    <!--logging>
+        <log type="coverage-html" target="reports" lowUpperBound="10" highLowerBound="80"/>
+    </logging>
+    <filter>
+        <blacklist>
+            <directory suffix=".php">./</directory>
+        </blacklist>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">../data/</directory>
+            <directory suffix=".php">../www/</directory>
+
+        </whitelist>
+    </filter-->
+</phpunit>

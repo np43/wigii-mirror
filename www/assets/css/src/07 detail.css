@@ -82,6 +82,8 @@ div.ui-dialog-titlebar a.el_printDetails:hover {
 
 div.elementDetail {
 	float:left;
+	/* add by ACA on 17.08.16 it for made an nearest positioned ancestor and solve a bug with position on scroll with IE & Chrome */
+    position: relative;
 }
 
 div.elementDetail h4, div.elementDetail h3 {

@@ -307,6 +307,9 @@ class AuthorizationServiceImpl implements AuthorizationService
 						$this->assertPrincipalHasAttachedUser($principal);
 						$this->assertPrincipalHasAdminAccess($principal);
 						return null; /* principal gets no special rights */
+					case "deleteGroupContent":
+						$this->assertPrincipalHasAttachedUser($principal);
+						return null; /* principal gets no special rights, no need to be admin to delete group content (in that case subfolders will no be touched) */
 					case "deleteAllGroupsFromWigiiNamespace":
 						$this->assertPrincipalHasAttachedUser($principal);
 						$this->assertPrincipalHasAdminAccess($principal);

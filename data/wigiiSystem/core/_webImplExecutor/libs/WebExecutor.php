@@ -48,6 +48,11 @@ interface WebExecutor {
 	 */
 	public function isMinimalPrincipalAuthorized();
 	
+	/**
+	 * Returns true if PublicPrincipal is authorized to run this WebExecutor, else false.
+	 */
+	public function isPublicPrincipalAuthorized();
+	
 	
 	// HTTP request delegation
 	

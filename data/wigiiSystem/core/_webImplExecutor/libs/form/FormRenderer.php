@@ -24,8 +24,12 @@
 /**
  * Renders a Record as a Form (edit view).
  * Created on 3 déc. 09 by LWR
+ * Modified by Medair on 21.07.2016 to integrate Box
  */
 class FormRenderer extends FieldRenderer implements FieldListVisitor {
+	
+	// Dependency injection
+	
 	private $_debugLogger;
 	private $_executionSink;
 	private function debugLogger()
@@ -92,6 +96,26 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if(isset($this->funcExpEvaluator) && method_exists($this->funcExpEvaluator, 'freeMemory')) $this->funcExpEvaluator->freeMemory();
 	}
 	
+	private $boxServiceFormExecutor;
+	/**
+	 * Injects a BoxServiceFormExecutor to use to communicate with Box and store uploaded files
+	 * @param BoxServiceFormExecutor $boxServiceFormExecutor
+	 */
+	public function setBoxServiceFormExecutor($boxServiceFormExecutor) {
+		$this->boxServiceFormExecutor = $boxServiceFormExecutor;
+	}
+	public function getBoxServiceFormExecutor() {
+		// lazy loading
+		if(!isset($this->boxServiceFormExecutor)) {
+			$this->boxServiceFormExecutor = TechnicalServiceProvider::getBoxServiceFormExecutor();
+		}
+		return $this->boxServiceFormExecutor;
+	}
+	
+	
+	// Object lifecycle
+	
+	
 	public static function createInstance($formExecutor, $formId, $templateRecordManager, $totalWidth=null, $labelWidth = null, $visibleLanguage=null){
 		$r = new self();
 		$r->setFormExecutor($formExecutor);
@@ -124,6 +148,10 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		$this->first = true;
 	}
 
+	
+	// FieldListVisitor implementation
+	
+	
 	public function actOnField($field, $dataType){
 		$transS = ServiceProvider::getTranslationService();
 		$exec = ServiceProvider::getExecutionService();
@@ -233,6 +261,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 					"} else {" .
 						"$('#".$crtFieldGroupId.">.label>span.expand').remove();" .
 						"$('#".$crtFieldGroupId."_group').show();" .
+						"resize_scrollArea(true);".
 					"}" .
 				"});");
 			//collapse a fieldGroup only if there is no data and nothing is required

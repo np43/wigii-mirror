@@ -91,5 +91,8 @@ class HelpServiceFormExecutor extends WebServiceFormExecutor {
 		// renders help content
 		if($content) echo $content;
 		else throw new FormExecutorException('Help not found',FormExecutorException::NOT_FOUND);
+		
+		// if help content has been successfully fetched, triggers read event on element
+		$this->getWigiiExecutor()->throwEvent()->readElement(PWithElement :: createInstance($p, $element));
 	}
 }

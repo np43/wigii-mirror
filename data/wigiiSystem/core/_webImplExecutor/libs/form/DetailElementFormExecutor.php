@@ -62,7 +62,7 @@ class DetailElementFormExecutor extends FormExecutor {
 		$elementP = $this->getElementP();
 
 		if($this->getState() == "start"){
-			if($config->getParameter($p, null, "preventFolderContentCaching") !="1"){
+			if($config->getParameter($p, $exec->getCrtModule(), "preventFolderContentCaching") !="1"){
 				$exec->cacheAnswer($p, $idAnswer, "selectElementDetail", "element/detail/".$element->getId());
 			}
 		}
@@ -146,7 +146,9 @@ class DetailElementFormExecutor extends FormExecutor {
 				}
 
 				//delete
-				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked())) {
+				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked()) &&
+					($config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && $elementP->getRights()->canModify()) ||
+					 $config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')!="1") {
 					?><div class="H el_delete"><?=$transS->t($p, "delete");?></div><?
 				}
 			}
@@ -157,7 +159,8 @@ class DetailElementFormExecutor extends FormExecutor {
 			}
 			?></div><div class="clear"></div><?
 		}
-
+		//add a div here for can scroll all content except the menu above
+		?><div id="scrollElement"><?
 		?><div id="<?=$this->getFormId(); ?>" class="elementDetail" ><?
 		if($element->isState_locked()){
 			echo '<fieldset class="isPlayingRole ui-corner-all" style="border-color:#CC4B4B;" ><legend class="ui-corner-all" style="background-color:#CC4B4B;" >';
@@ -409,7 +412,7 @@ class DetailElementFormExecutor extends FormExecutor {
 		$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_printDetails\" href=\"".str_replace("//", '\/\/', SITE_ROOT."usecontext/".$exec->getCrtContext()."/__/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/print/".$element->getId())."\" target=\"_blank\" >".$transS->t($p, "printDetails")."</a>');");
 
 		//$exec->addJsCode("$('#elementDialogContent .tags').corner();");
-		if(!$element->isSubElement()) $exec->addJsCode("$('#".$idAnswer."').parent().css('overflow','visible');");
+		//if(!$element->isSubElement()) $exec->addJsCode("$('#".$idAnswer."').parent().css('overflow','visible');");
 
 		//back to parent on close sub item
 		if($element->isSubElement()) {
@@ -433,7 +436,8 @@ class DetailElementFormExecutor extends FormExecutor {
 //		}
 
 		$elS->displayElementAdditionalInformation($p, $exec, $element,$this->getTotalWidth(), $this->getLabelWidth());
-
+		//end of scroll div
+		?></div><?
 		// if subelement then
 		// - replaces the copy button url by subelement/copy/...
 		// - replaces the module in delete button for confirmation dialog translation

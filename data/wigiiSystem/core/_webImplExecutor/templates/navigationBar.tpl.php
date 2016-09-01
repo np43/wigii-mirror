@@ -72,7 +72,7 @@ include(TEMPLATE_PATH . "navigationUserMenu.tpl.php");
 ?><ul id="navigateMenu" class="notHome sf-menu sf-navbar" style="" ><?
 
 	if($exec->getCrtModule()->isAdminModule()){
-		$modules = $p->getModuleAccess();
+		/*$modules = $p->getModuleAccess();
 		unset($modules[Module::ADMIN_MODULE]);
 		if($modules[Module::HELP_MODULE]){
 			$help = $modules[Module::HELP_MODULE];
@@ -94,8 +94,10 @@ include(TEMPLATE_PATH . "navigationUserMenu.tpl.php");
 				else echo $customLabel." (".$transS->t($p, $moduleName).")";
 				?></a><?
 			?></li><?
-		}
-
+		}*/
+		?>
+		<li class="selected"></li>
+		<?
 	} else {
 
 		$crtWigiiNamespace = $defaultWigiiNamespace;

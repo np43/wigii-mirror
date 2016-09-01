@@ -38,7 +38,8 @@ if(!isset($config)) $config = $this->getConfigurationContext();
 	$companyLogoMargins = $config->getParameter($p, null, "companyLogoMargin");
 	if($companyLogo){
 		if(!$companyLogoMargins) $companyLogoMargins = "2px 5px 2px 15px";
-		echo '<div class="SBB" style="padding:'.($companyLogoMargins).';px;float:left;border-left:none;border-right:none;border-top:none;"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
+		$homeClick = $exec->getUpdateJsCode($p->getRealUserId(), $p->getUserId(), WigiiNamespace::EMPTY_NAMESPACE_URL, Module::HOME_MODULE, "workZone", Module::HOME_MODULE, "start'+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true);
+		echo '<div class="SBB" style="padding:'.($companyLogoMargins).';px;float:left;border-left:none;border-right:none;border-top:none;cursor: pointer;" onclick="'.$homeClick.'"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
 	}
 	?><li id="userName"><?
 		echo '<a href="#" onclick="return false;" class="sf-with-ul">';

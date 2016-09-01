@@ -186,9 +186,12 @@ class ElementPListRowsForPreview implements ElementPList, DataFlowActivity {
 			if($element->isState_blocked() || $this->isElementBlocked()) {
 				$trm->put('<td class="disabledBg"><div>'.$trm->doFormatForState('blocked', true).'</div></td>'); //no restore
 			}
+			elseif(!$elementP->getRights()->canWriteElement()) {
+				$trm->put('<td class="disabledBg"><div></div></td>'); //no restore
+			}
 			else $trm->put('<td class="restore"><div></div></td>'); //restore
-		} else {			
-			if($element->isState_blocked() || $this->isElementBlocked() || $this->getLinkType() == Links::LINKS_TYPE_QUERY) {
+		} else {						
+			if(!$elementP->getRights()->canWriteElement() || $element->isState_blocked() || $this->isElementBlocked() || $this->getLinkType() == Links::LINKS_TYPE_QUERY) {
 				$s = '';
 				$s .= $trm->doFormatForState('approved', $element->isState_approved(), false, true);
 				$s .= $trm->doFormatForState('finalized', $element->isState_finalized(), false, true);

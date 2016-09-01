@@ -457,6 +457,11 @@ function download(url){
 	url = SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ url.replace(SITE_ROOT, '');
 	window.location.href = url;
 }
+function longDownload(url,fieldId) {
+	messageDownload(fieldId);
+	setTimeout(function() {setVis('fileLoadingBar', false);}, 5000);
+	download(url);
+}
 
 /**
  * cette méthode réeffectue l'update trois fois s'il y a eu une erreur de request.
@@ -596,6 +601,7 @@ function parseUpdateResult(tabReq, textStatus){
 	clearKeepInCache();
 	*/
 	setVis("busyDiv", false);
+	//setVis('uploadBoxFile', false);
 }
 
 function positionElementOnMouse(obj, event, align, linkedObj, additionalLowOffset){

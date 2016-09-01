@@ -62,6 +62,8 @@ class AuthenticationServiceException extends ServiceException
 	const INVALID_USERNAME = 1131; //the user is not existing
 	const INVALID_PASSWORD = 1132; //the password is not matching
 	const INVALID_PASSWORD_MORE_THAN_2_TIMES = 1134; //the password is not matching and it is already more than 2 tries
+	const INVALID_PASSWORD_LENGTH_POP3 = 1135; // the password length is incorrect and authentication server is pop
+	const INVALID_PASSWORD_LENGTH = 1136; // the password length is incorrect and authentication server is wigii
 	const INVALID_CODE = 1133; //the catpcha code is not matching
 	
 	const POP3_AUTHENTICATION_SERVER_CONNECTION_PROBLEM = 1121;

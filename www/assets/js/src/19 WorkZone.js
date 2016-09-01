@@ -83,6 +83,7 @@ function resize_elementList(){
 	resize_coverPage();
 	resize_calendar();
 	resize_blog();
+	resize_scrollArea(true);
 }
 $(window).resize(resize_elementList);
 
@@ -446,7 +447,7 @@ function openOrganizeDialog(elementId){
 				setVis("busyDiv", false);
 				returnText = returnText.split(EXEC_answerRequestSeparator)[0].split(EXEC_answerParamSeparator);
 				dialogTitle = returnText[1];
-				$('#ui-dialog-title-organizeDialog').text(dialogTitle);
+				$('#organizeDialog').prev().find('.ui-dialog-title').text(dialogTitle);
 				checkedFolders = returnText[4];
 				if(checkedFolders=="") return;
 				checkedFolders = checkedFolders.split(",");
@@ -535,7 +536,7 @@ function openOrganizeMultipleDialog(){
 				setVis('busyDiv', false);
 				returnText = returnText.split(EXEC_answerRequestSeparator)[0].split(EXEC_answerParamSeparator);
 				dialogTitle = returnText[1];
-				$('#ui-dialog-title-organizeDialog').text(dialogTitle);
+				$('#organizeDialog').prev().find('.ui-dialog-title').text(dialogTitle);
 				eval(returnText[2]); //fill var originalFolders
 				totalElementsChecked = parseInt($('#multipleDialog .summary .multipleSelectionNb').text());
 				//result = '';
@@ -684,6 +685,10 @@ function setListenersToGroupTree(id, selectedClass){
 		}
 		if($(this).parent().parent().hasClass('level1')){
 			$(id+'>.cm div.level1').hide();
+		}
+		// hides empty group on trashbin until proper recursive deletion of files is coded (ticket 12796)
+		if($(this).parent().parent().hasClass('trashbin')){
+			$('#cm_emptyGroup').hide();
 		}
 		$(id+'>.cm').show();
 		e.stopPropagation();
@@ -1378,6 +1383,11 @@ function setListenersToRows(listSelector, elSelector, folderSelector, cmSelector
 			else s.addClass('unchecked').removeClass('checked');
 		}
 		else $(cmSelector+' #cm_hide').hide();
+		
+		// hides delete if non admin and enableDeleteOnlyForAdmin=1
+		if(elEnableState & 1024) {
+			$(cmSelector+' #cm_delete').hide();
+		}
 
 		$(cmSelector).show();
 		e.stopPropagation();
@@ -1567,7 +1577,8 @@ function setListenersToElementList(){
 			return true;
 		}
 		if($(this).attr('id')=="cm_copy"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/copy/'+idItem+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
+			copyWithOrganize('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName, idItem);
+			//update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/copy/'+idItem+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
 			return true;
 		}
 		if($(this).attr('id')=="cm_organize"){
@@ -1697,7 +1708,8 @@ function setListenersToElementBlog(){
 			return true;
 		}
 		if($(this).attr('id')=="cm_copy"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/copy/'+idItem+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
+			copyWithOrganize('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName, idItem);
+			//update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/copy/'+idItem+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
 			return true;
 		}
 		if($(this).attr('id')=="cm_organize"){
@@ -1835,6 +1847,54 @@ function mailToFromLink(elementDialogId, link){
 	//window.location = 'mailto:?body=Access document with: '+link+' .';
 }
 
+/*
+ * copyWithOrganize, Copy a card with a dialog box organize to choose where you want to put the copy
+ * it is in a function to share the code with the button in the card and the right click on list view item
+ */
+function copyWithOrganize(startUrl, itemID){
+	var targetFolder = $('#groupPanel li.selected.write');
+	if(targetFolder.length>0) targetFolder = targetFolder.attr('id').split('_')[1];
+	else targetFolder = undefined;
+	var initialFolder = targetFolder;
+	//var currentFolderId = ($('#groupPanel li.selected').length>0)?targetFolder:null;
+	prepareOrganizeDialog(
+		//on click
+		function(e){
+			if(!$(this).hasClass('disabled')){
+				$('#organizeDialog .selected').removeClass('selected');
+				$(this).toggleClass('selected');
+				targetFolder = $(this).parent().attr('id').split('_')[1];
+			}
+			return false;
+		}, 
+		//on Ok
+		function(){
+			if(!targetFolder) {
+				jAlert(DIALOG_selectAtLeastOneGroup);
+				return false;
+			}
+			if( $('#organizeDialog').is(':ui-dialog')) { $('#organizeDialog').dialog("destroy"); }			
+			// opens copy dialog
+			// if folder changed, then navigates to new folder
+			invalidCache("moduleView");
+			if(targetFolder != initialFolder) startUrl = 'NoAnswer/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/groupSelectorPanel/selectGroup/'+targetFolder+EXEC_requestSeparator+startUrl;
+			update(startUrl+'/element/copy/'+itemID+'/'+targetFolder);
+		});
+	$('#organizeDialog').prev().find('.ui-dialog-title').text(DIALOG_copyToFolder);
+	$('#organizeDialog').prepend('<div class="introduction">'+DIALOG_copyToFolder_help+'</div>');
+	
+	//disables read only groups
+	$('#organizeDialog>.groupPanel li:not(.write)').addClass("disabled noRights");
+	$('#organizeDialog>.groupPanel li:not(.write)>div').addClass("disabled noRights");
+	if(targetFolder) $('#organizeDialog>.groupPanel #group_'+targetFolder+', #organizeDialog>.groupPanel #group_'+targetFolder+'>div').addClass('selected');
+	unfoldToSelectedGroupButNotChildren('#organizeDialog>.groupPanel');
+	positionSelectedGroup('#organizeDialog>.groupPanel');	
+	if(targetFolder) {		
+		// sets focus on OK button to manage pressing enter to copy directly in current folder
+		$('#organizeDialog').next().find('button.ok').focus();
+	}	
+}
+
 function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useModuleName, isSubItem, parentModuleName, elementParentId, elementLinkName, parentCacheLookup){
 	if(arguments.length < 4){
 		isSubItem = false;
@@ -1858,10 +1918,12 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 			return;
 		}
 		if($(this).hasClass('el_copy')){
+			var itemID = $(this).parent().attr('href').replace('#', '');			
 			if(isSubItem){
 				update(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/subelement/copy/'+elementParentId+'/'+elementLinkName+'/'+$(this).parent().attr('href').replace('#', ''));
 			} else {
-				update(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/element/copy/'+$(this).parent().attr('href').replace('#', '')+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
+				copyWithOrganize(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName, itemID);
+				//update(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/element/copy/'+$(this).parent().attr('href').replace('#', '')+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
 			}
 			return;
 		}
@@ -1925,6 +1987,7 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 		$(this).next().toggle();
 		if($(this).hasClass("expanded")){
 			$(window).scrollTop($(window).scrollTop() +$('#'+elementDialogId+' .elementHistoric').height());
+			resize_scrollArea(true);
 		}
 	});
 
@@ -1985,6 +2048,7 @@ $(window).resize(resize_navigateMenu);
 navigateMenuTimerComeBackToSelected = null;
 doShowUserMenuUserNameTimer = null;
 doShowUserSubMenuUserNameTimer = null;
+myTimer = [0];
 
 var ctrlPressed = false;
 window.onmousedown = function(e){ ctrlPressed = e.ctrlKey; };
@@ -2031,36 +2095,58 @@ function setListenerToNavigateMenu(){
 			doShowUserMenuUserNameTimer = setTimeout(function(){
 				$('#userName').removeClass('menuHover');
 				$('#userName>ul, #userName>ul>li').css('visibility','hidden');
-			}, 240);
+			}, 400);
 		})
 	;
-	$('#userName>ul>li').each(function(){
-		$(this)
-			.mouseenter(function(e){		
-				var height = $(window).height()-$(this).offset().top-$('#footerBar').outerHeight();
-				//$('#userMenu ul li ul').css('max-height',height+'px');
-				$(this).children().last().css('max-height',height+'px'); //relative path
-				
-				$('#userName>ul>li.subMenuHoverTemp').removeClass('subMenuHoverTemp');
-				$(this).addClass('subMenuHoverTemp');
-				clearTimeout(doShowUserSubMenuUserNameTimer);
-				doShowUserSubMenuUserNameTimer = setTimeout(function(){
-					$('#userName>ul>li.subMenuHover>ul, #userName>ul>li.subMenuHover>ul>li').css('visibility','hidden');
-					$('#userName>ul>li.subMenuHover').removeClass('subMenuHover');
-					$('#userName>ul>li.subMenuHoverTemp').addClass('subMenuHover');
-					$('#userName>ul>li.subMenuHover ul, #userName>ul>li.subMenuHover>ul>li').css('visibility','visible');
-				}, 250);
-			})
-			.mouseleave(function(e){
-				clearTimeout(doShowUserSubMenuUserNameTimer);
-				doShowUserSubMenuUserNameTimer = setTimeout(function(){
-					$('#userName>ul>li.subMenuHover>ul, #userName>ul>li.subMenuHover>ul>li').css('visibility','hidden');
-					$('#userName>ul>li.subMenuHover').removeClass('subMenuHover');
-				}, 240);
-			})
-		;
+	$('#userName>ul>li')
+		.mouseenter(function(e){		
+			var height = $(window).height()-$(this).offset().top-$('#footerBar').outerHeight();
+			//$('#userMenu ul li ul').css('max-height',height+'px');
+			//add a max-height for let the browser handle the scrollbar
+			$(this).children().last().css('max-height',height+'px'); //relative path
+			
+			$('#userName>ul>li.subMenuHoverTemp').removeClass('subMenuHoverTemp');
+			$(this).addClass('subMenuHoverTemp');
+			clearTimeout(doShowUserSubMenuUserNameTimer);
+			doShowUserSubMenuUserNameTimer = setTimeout(function(){
+				$('#userName>ul>li.subMenuHover>ul, #userName>ul>li.subMenuHover>ul>li').css('visibility','hidden');
+				$('#userName>ul>li.subMenuHover').removeClass('subMenuHover');
+				$('#userName>ul>li.subMenuHoverTemp').addClass('subMenuHover');
+				$('#userName>ul>li.subMenuHover ul, #userName>ul>li.subMenuHover>ul>li').css('visibility','visible');
+			}, 400);
+		})
+		.mouseleave(function(e){
+			clearTimeout(doShowUserSubMenuUserNameTimer);
+			doShowUserSubMenuUserNameTimer = setTimeout(function(){
+				$('#userName>ul>li.subMenuHover>ul, #userName>ul>li.subMenuHover>ul>li').css('visibility','hidden');
+				$('#userName>ul>li.subMenuHover').removeClass('subMenuHover');
+			}, 400);
 		})
 	;
+	//Create a delai for hide submenu in navigationBar
+	$("#navigateMenu li.with-ul").on("mouseenter", function() {
+		if(!$(this).hasClass("selected")){
+			var navMenu = $("#navigateMenu li.with-ul");
+			var currentLi = navMenu.index(this);
+			clearTimeout(myTimer[currentLi]);
+			for(var index=0, len=myTimer.length; index<len; index++){
+				if(index!=currentLi) {
+					myTimer[index] = null;
+					navMenu.eq(index).removeClass("delai-navbar");
+				}
+			}
+		}
+	}).on("mouseleave", function() {
+		if(!$(this).hasClass("selected")){
+			var navMenu = $("#navigateMenu li.with-ul");
+			var currentLi = navMenu.index(this);
+			$(this).addClass("delai-navbar");
+			myTimer[currentLi] = setTimeout(function(){
+				navMenu.removeClass("delai-navbar");
+			}, 400);
+		}
+	});
+	
 	$('#navigationBar .navL').click(function(e){
 		if($(this).hasClass('D')) return;
 		$('#navigateMenu').stop(true, true).animate({ marginLeft: "+=200" }, 200, enableDisableNavScroll);
@@ -2074,6 +2160,94 @@ function setListenerToNavigateMenu(){
 		navigateMenuTimerComeBackToSelected = setTimeout(timeToScrollBack, 5000);
 	});
 }
+
+function addNavigationToMenu(menuId, menuTimer){
+	var menu = $('#'+menuId);
+	var submenu = menu.children().children().last();
+	//console.log(menu.is("li"));
+	menu
+		.mouseenter(function(e){
+			clearTimeout(menuTimer);
+			menuTimer = setTimeout(function(){
+				menu.addClass('menuHover');
+				submenu.css('visibility','visible');
+			}, 150);
+		})
+		.mouseleave(function(e){
+			clearTimeout(menuTimer);
+			menuTimer = setTimeout(function(){
+				menu.removeClass('menuHover');
+				menu.find('ul').css('visibility','hidden');
+			}, 400);
+		})
+		/*.click(function(){ 
+			//submenu.slideUp(200);
+			submenu.css('visibility','hidden');
+		})*/
+	;
+	
+	addNavigationToSubMenu(submenu.children(), menuTimer);
+}
+
+function addNavigationToSubMenu(subMenus, menuTimer){
+	//subMenus is a JQuery collection of list item (<li>)
+	subMenus
+		.mouseenter(function(e){
+			var self = $(this);
+			var childMenu = self.children().last();
+			var currentSpaceAvailable = $(window).height() -childMenu.offset().top -$('#footerBar').outerHeight();
+			//for solve a resize problem we put the initial height in data
+			if(childMenu.data('originHeight')===undefined)
+				childMenu.data('originHeight',childMenu.height());
+			childMenu.height(childMenu.data('originHeight'));
+			
+			if(childMenu.is('ul') && currentSpaceAvailable < childMenu.outerHeight()) {
+				//add a max-height for let the browser handle the scrollbar
+				childMenu.css({'max-height':currentSpaceAvailable+'px', 'overflow-y':'auto', 'overflow-x':'hidden'});
+			} else {
+				childMenu.css({'max-height':'','overflow-x':'','overflow-y':''});
+			}
+			
+			self.parent().find('.subMenuHoverTemp').removeClass('subMenuHoverTemp');
+			self.addClass('subMenuHoverTemp');
+			clearTimeout(menuTimer);
+			menuTimer = setTimeout(function(){
+				if(childMenu.is("ul")) {
+					subMenus.find('ul').css('visibility','hidden');
+					childMenu.css({'top':'0','visibility':'visible'});
+				} else {
+					subMenus.find("ul").css('visibility','hidden');
+				}
+			}, 10);
+		})
+		.mouseleave(function(e){
+			clearTimeout(menuTimer);
+			menuTimer = setTimeout(function(){
+				//mainMenu.find('.subMenuHoverTemp').removeClass('subMenuHoverTemp');
+				subMenus.parent().find('.subMenuHoverTemp').removeClass('subMenuHoverTemp');
+				
+				//$('#'+menuId+'>ul>li.subMenuHover>ul, #'+menuId+'>ul>li.subMenuHover>ul>li').css('visibility','hidden');
+				subMenus.find('.subMenuHover>ul').css('visibility','hidden');
+				//$('#'+menuId+'>ul>li.subMenuHover').removeClass('subMenuHover');
+				subMenus.find('.subMenuHover').removeClass('subMenuHover');
+			}, 400);
+		})
+		.click(function(){ 
+			//submenu.slideUp(200);
+			var self = $(this);
+			self.addClass('S');
+			subMenus.parent().css('visibility','hidden');
+		})
+	;
+	//Recursion for sub-submenu...
+	subMenus.each(function( index ) {
+		var nextSubMenu = $(this).children().last();
+		if(nextSubMenu.is('ul')) {
+			addNavigationToSubMenu(nextSubMenu.children(), menuTimer);
+		}
+	});
+}
+
 function enableDisableNavScroll(){
 	NMOriginalOffset = $('#NMContainer').offset().left;
 	NMFirst = $('#navigateMenu>li:first').offset().left-NMOriginalOffset;
@@ -2200,20 +2374,33 @@ function setListenerToHomePage(subMenuPosition){
 		e.stopPropagation();
 	});
 
+	var homePageMenuTimers = [];
 	$('#ContainerHome #homePageWigiiNamespaceMenu li')
 		.mouseenter(function(){
+			var self = this;
 			//dont't display submenu if only one module
-			if($('ul li', this).length>1){
+			if($('ul li', self).length>1){
 				tempOffsetLow = null;
 				if(subMenuPosition == "right" || subMenuPosition=="left"){
 					tempOffsetLow = 0;
 				}
-				positionElementOnDom($('ul', this), $(this), subMenuPosition, tempOffsetLow, true);
-				$('ul', this).show();
+				positionElementOnDom($('ul', self), $(self), subMenuPosition, tempOffsetLow, true);				
+				
+				var currentLi = $('#homePageWigiiNamespaceMenu .H.N').index(self);
+				clearTimeout(homePageMenuTimers[currentLi]);
+				homePageMenuTimers[currentLi] = setTimeout(function(){
+					$('#homePageWigiiNamespaceMenu .H.N > ul').hide();
+					$('ul', self).show();
+				}, 100);
 			}
 		})
 		.mouseleave(function(){
-			$('ul', this).hide();
+			var self = this;
+			var currentLi = $('#homePageWigiiNamespaceMenu .H.N').index(self);
+			clearTimeout(homePageMenuTimers[currentLi]);
+			homePageMenuTimers[currentLi] = setTimeout(function(){
+				$('ul', self).hide();
+			}, 400);
 		})
 		.click(function(e){
 			if($('ul li:first a', this).length){
@@ -2297,10 +2484,14 @@ function setSelectionMode(isMultiple){
 			$('#multipleDialog div.organizeMultiple').hide();
 			$('#multipleDialog div.deleteMultiple').hide();
 		}
+		// hides delete if non admin and enableDeleteOnlyForAdmin config parameter
+		if(multipleEnableElementState & 1024) {
+			$('#multipleDialog div.deleteMultiple').hide();
+		}
 		// hides edit if all elements are blocked
 		if(multipleElementStateRest & 2) {
 			$('#multipleDialog div.editMultiple').hide();
-		}
+		}		
 		// shows or hides element statuses
 		if(multipleEnableElementState > 0) {
 			// enables lock
@@ -2484,7 +2675,7 @@ function previewHtml(fileSrc, previewTime){
 				width: '90%',
 				height:'90%'
 			},
-			message: '<div class=\'ui-corner-all\' style=\'position:absolute; top:3%px; left:101%; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;cursor:pointer; background-color:#fff;\' onclick=\'$.unblockUI();\' >X</div><iframe style=\'height:100%;width:100%;\'src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'/integrated?'+previewTime+'\' >Your browser does not support iframes.</iframe>'
+			message: '<div class=\'ui-corner-all\' style=\'position:absolute; top:3%px; left:101%; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;cursor:pointer; background-color:#fff;\' onclick=\'$.unblockUI();$("#fileLoadingBar").hide();\' >X</div><iframe onload=\'$("#fileLoadingBar").hide();\' style=\'height:100%;width:100%;\'src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'/integrated?'+previewTime+'\' >Your browser does not support iframes.</iframe>'
 		}
 	);
 	$('.blockOverlay').unbind('click').click($.unblockUI);
@@ -2515,7 +2706,7 @@ function previewImage(fileSrc, previewTime){
 			width: '80%',
 			height:'80%',
 			background: 'none'
-		}, message: '<img style=\'max-height:100%;max-width:100%;vertical-align:middle;\'src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'?'+previewTime+'\' /><span class=\'ui-corner-all\' style=\'position:absolute; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;margin-left:5px;margin-top:0px;cursor:pointer; background-color:#fff;\' onclick=\'$.unblockUI();\' >X</span>'
+		}, message: '<img style=\'max-height:100%;max-width:100%;vertical-align:middle;\' onload=\'$("#fileLoadingBar").hide();\' src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'?'+previewTime+'\' /><span class=\'ui-corner-all\' style=\'position:absolute; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;margin-left:5px;margin-top:0px;cursor:pointer; background-color:#fff;\'  onclick=\'$.unblockUI(); $("#fileLoadingBar").hide();\' >X</span>'
 	});
 	$('.blockOverlay').unbind('click').click($.unblockUI);
 }
@@ -2563,7 +2754,7 @@ function setListenersToCheckInOutFiles(elementDialogId, elementId, fieldId, fiel
 		elementDialogId="mainDiv";
 	}
 	$('#'+fieldId+'.field .value .checkOutIn').click(function(e){
-		$(this).after('<div class="SBB ui-corner-all" style="font-size:small;background-color:#fff;top:'+(parseInt($(this).position().top)+parseInt($(this).outerHeight())+8)+'px; left:'+$(this).position().left+'px; padding:5px; position:absolute;" ><div style="font-size:small;">'+checkTitleText+'</div><textarea style="width:300px;margin-top:5px; margin-bottom:5px;height:100px;" class=""></textarea><br /><input type="button" name="ok" value="'+okLabel+'" /><input type="button" name="cancel" value="'+cancelLabel+'" /></div>');
+		$(this).after('<div class="SBB ui-corner-all" style="font-size:small;background-color:#fff;zIndex:'+($(this).closest('.ui-dialog').css('zIndex')+1)+';top:'+(parseInt($(this).position().top)+parseInt($(this).outerHeight())+8)+'px; left:'+$(this).position().left+'px; padding:5px; position:absolute;" ><div style="font-size:small;">'+checkTitleText+'</div><textarea style="width:300px;margin-top:5px; margin-bottom:5px;height:100px;" class=""></textarea><br /><input type="button" name="ok" value="'+okLabel+'" /><input type="button" name="cancel" value="'+cancelLabel+'" /></div>');
 		autosize($(this).next().find('.elastic'));
 		$(this).next().find('input:input:last').click(function(){
 			$(this).parent().hide().remove();
@@ -2576,14 +2767,19 @@ function setListenersToCheckInOutFiles(elementDialogId, elementId, fieldId, fiel
 			} else {
 				url = SITE_ROOT +'Update/'+crtContextId+EXEC_requestSeparator+ 'mainDiv/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/'+checkFunction+'/'+elementId+'/'+fieldName;
 			}
-				var myAjax = new jQuery.ajax({
-						type: 'POST',
-						url: encodeURI(url),
-						success : parseUpdateResult,
-						cache:false,
-						data: {message:$(this).parent().find('textarea').val(), elementDialogId: elementDialogId },
-						error: errorOnUpdate
-					});
+			
+			if(checkFunction == 'download/checkoutFile') {
+				messageDownload(fieldId);
+				setTimeout(function() {setVis('fileLoadingBar', false);}, 5000);
+			}			
+			var myAjax = new jQuery.ajax({
+					type: 'POST',
+					url: encodeURI(url),
+					success : parseUpdateResult,
+					cache:false,
+					data: {message:$(this).parent().find('textarea').val(), elementDialogId: elementDialogId },
+					error: errorOnUpdate
+				});
 			});
 		e.stopPropagation();
 	});
@@ -2837,9 +3033,8 @@ function setListenerToPreviewList(elementId, linkName, previewListId, moduleName
 					nbLoaded = parseInt(data[1]);
 					nbTot = parseInt(data[2]);
 					data = data[0];
-
 					$('#'+crtPreviewListId+' tr.loadNextLines').before(data);
-					$('#'+crtPreviewListId+' tr.loadNextLines .nbItem').html(nbItem + nbLoaded);
+					if(e.which || (!e.which && nbItem == 0)) $('#'+crtPreviewListId+' tr.loadNextLines .nbItem').html(nbItem + nbLoaded);
 					$('#'+crtPreviewListId+' tr.loadNextLines .totalItems').html(nbTot);
 
 					setListenerToPreviewListLines(crtPreviewListId, moduleName, crtLinkType, crtwListenerToPreviewList, nbItem);
@@ -2851,7 +3046,17 @@ function setListenerToPreviewList(elementId, linkName, previewListId, moduleName
 						$('#'+crtPreviewListId+' tr.loadNextLines>td>font').show();
 					}
 					//update the cache content
-					updateCurrentElementDialogViewCache();
+					// Modified by AC on 06 july 2016 to handle dynamic javascript from config. Do not store modified HTML in cache but only store click instruction
+					// e.which is not undefine if the user use the mouse and click
+					//updateCurrentElementDialogViewCache();
+					if(__cacheJS && __cacheJS["elementDialog"] && __cacheJS["elementDialog"][currentElementDialogViewCacheKey] && e.which){
+						var cacheJSaddon = "$(document).ready(function(){" +
+									"$('#"+crtPreviewListId+" tr.loadNextLines').click();" +
+									"$('#"+crtPreviewListId+" tr.loadNextLines .nbItem').html("+(nbItem + nbLoaded)+"); ";
+						if((nbItem + nbLoaded) >= nbTot) cacheJSaddon+= "$('#"+crtPreviewListId+" tr.loadNextLines>td>font').hide();";
+						cacheJSaddon+= "});"
+						__cacheJS["elementDialog"][currentElementDialogViewCacheKey] = __cacheJS["elementDialog"][currentElementDialogViewCacheKey]+cacheJSaddon;
+					}
 				},
 				error: errorOnUpdate
 			});
@@ -2864,6 +3069,13 @@ function setListenerToPreviewList(elementId, linkName, previewListId, moduleName
 
 	//click on refresh
 	$('#'+crtPreviewListId+' .refresh').click(function(e){
+		// Modified by AC on 06 july 2016 to handle dynamic javascript from config. Do not store modified HTML in cache but only store click instruction
+		if(__cacheJS && __cacheJS["elementDialog"] && __cacheJS["elementDialog"][currentElementDialogViewCacheKey]){
+			var regexExpression = "(\\$\\(document\\)\\.ready\\([\\s]*function\\(\\)[\\s]*\\{[\\w\\s\\n\\r$()'#.;]*(?:value[\\s]*tr\\.loadNextLines\\'\\)\\.click\\(\\);){1}[\\w\\s\\n\\r$()'#.;]*\\}\\);)";
+			regexExpression = regexExpression.replace('value', crtPreviewListId);
+			var theRegExp = new RegExp(regexExpression, 'gmi');
+			__cacheJS["elementDialog"][currentElementDialogViewCacheKey] = __cacheJS["elementDialog"][currentElementDialogViewCacheKey].replace(theRegExp, '');
+		}
 		//empty previewList
 		$('#'+crtPreviewListId+' tr:not(.loadNextLines, .header)').remove();
 		$('#'+crtPreviewListId+' tr.loadNextLines .nbItem').html(0);
@@ -3087,7 +3299,8 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 			return true;
 		}
 		if($(this).attr('id')=="cm_copy"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/copy/'+idItem+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
+			copyWithOrganize('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName, idItem);
+			//update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/copy/'+idItem+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
 			return true;
 		}
 		if($(this).attr('id')=="cm_organize"){
@@ -3137,5 +3350,141 @@ function resize_blog(){
 		blogWidth = blogWidth - 42 - 2; //padding 2x, border 2x, margin 1x + rounding
 		$('#moduleView>div.blog div.el:not(.max)').width(blogWidth);
 		$('#moduleView>div.blog .dataBlog').height($(window).height()-$('#moduleView>div.blog .dataBlog').position().top - fb.outerHeight()-3);
+	}
+}
+
+//Normalizing mousewheel speed across browsers
+//find on http://stackoverflow.com/questions/5527601/normalizing-mousewheel-speed-across-browsers
+function normalizeWheelSpeed(event) {
+    var normalized;
+    if (event.wheelDelta) {
+        normalized = (event.wheelDelta % 120 - 0) == -0 ? event.wheelDelta / 120 : event.wheelDelta / 12;
+    } else {
+        var rawAmmount = event.deltaY ? event.deltaY : event.detail;
+        normalized = -(rawAmmount % 3 ? rawAmmount * 10 : rawAmmount / 3);
+    }
+    return normalized;
+}
+
+//calculate the height of dialogeElement scroll area
+function getElementDialogScrollHeight(name, object){
+	var height = window.innerHeight;
+	if(object.prop('id')=='scrollElement')
+		height = height - object.parent().parent().offset().top;
+	else
+		height = height - object.parent().offset().top;
+	switch(name){
+		case 'neighbour':
+			height-= object.prev().outerHeight(true);
+			if(object.next().hasClass('scrollGradient'))
+				height-= object.next().next().outerHeight(true);
+			else
+				height-= object.next().outerHeight(true);
+			break;
+		case 'children':
+			height-= object.parent().prev().outerHeight(true);
+			height-= object.parent().children().first().outerHeight(true);
+			break;
+	}
+	
+	return (height -30);
+}
+
+//Add gradient on a scroll area
+//if no scroll bar exist, create it
+function addScrollWithShadow(idScrollElement, elementPreviousTop) {
+	if (arguments.length<2) elementPreviousTop = 0;
+	//change the CSS of an element
+	function changeElementCss(element, cssRules){
+		for(var index in cssRules) 
+			if(cssRules[index]!='na') element.css(index,cssRules[index]);
+	}
+	//add the scroll event for an element
+	function addScrollEvent(element) {	
+		element.unbind('scroll');
+		element.scroll(function() {
+			var self = $(this);
+			if(self.next().hasClass('scrollGradient'))
+				self.next().css("display",((self.scrollTop() + self.outerHeight() >= this.scrollHeight) ? "none" : "block"));
+		});
+	}
+	//add gradient div, passe the height in the css rules
+	function addGradient(element, cssRules){
+		if(element.next().hasClass('scrollGradient')) return;
+		
+		var html = '<div class="scrollGradient" style="';
+		for(var index in cssRules)
+			html+= index+':'+cssRules[index]+';';
+		html+= '"></div>';
+		element.after(html);
+	}
+	
+	var scrollElement = $('#'+idScrollElement);
+	var element = idScrollElement;
+	if(jQuery.inArray(idScrollElement, ['elementDialog', 'emailingDialog', 'filtersDialog']) > -1)
+		element = ((scrollElement.find('div.T').length == 0) ? "neighbour" : "children");
+	var cssArray = {"height":"na","overflow-x":"hidden","overflow-y":"auto","margin-right":"na"};
+	switch(element){
+		case 'neighbour':
+			if(scrollElement.parent().outerHeight(true) > window.innerHeight || scrollElement.prop('scrollHeight') > scrollElement.prop('clientHeight')) { //if the dialog box is bigger than the window height, then resize.				
+				cssArray.height = getElementDialogScrollHeight(element, scrollElement);//window.innerHeight - scrollElement.prev().outerHeight(true) - scrollElement.next().outerHeight(true)-30;
+				changeElementCss(scrollElement, cssArray);
+				addScrollEvent(scrollElement);
+				addGradient(scrollElement, {"bottom":(scrollElement.next().outerHeight(true))+"px"});
+				scrollElement.next().css({"display":"block","width":(scrollElement.innerWidth()-18)+"px"});
+			}
+			break;
+		case 'children':
+			if(scrollElement.parent().outerHeight(true) > window.innerHeight) { //if the dialog box is bigger than the window height, then resize.
+				scrollElement = $('#scrollElement');
+				cssArray.height = getElementDialogScrollHeight(element, scrollElement);//window.innerHeight - scrollElement.prev().outerHeight(true) - toolbarHeight -30;
+				cssArray["margin-right"] = "-7px";
+				changeElementCss(scrollElement, cssArray);
+				addScrollEvent(scrollElement);
+				addGradient(scrollElement, {"bottom":"0px"});
+				scrollElement.next().css({"display":"block","width":(scrollElement.innerWidth()-18)+"px"});
+			}
+			break;
+	}//end switch
+	
+	scrollElement.scrollTop(elementPreviousTop);
+	if(scrollElement.next().hasClass('scrollGradient')) {
+		scrollElement.next().unbind('mouseenter DOMMouseScroll mousewheel');
+		scrollElement.next().mouseenter(function() {
+			scrollElement.animate( { scrollTop: (scrollElement.scrollTop()+40) }, 750 );
+		}).bind('DOMMouseScroll mousewheel', function(e){
+			scrollElement.scrollTop(scrollElement.scrollTop()+(-normalizeWheelSpeed(e.originalEvent)*10));//*10 for better amplitude and - for invert the sens
+	    });
+	}
+}
+
+//resize function for elementDialog for the moment
+function resize_scrollArea(keepScrollPosition){
+	if (arguments.length<1) keepScrollPosition = false;
+	var elements = ['elementDialog', 'emailingDialog', 'filtersDialog'];
+	var element = null;
+	var elementName = 'elementDialog';
+	var elementPreviousTop = 0;
+	// find the type of dialog box by browsing the table 'elements' and look if the object has children
+	$.each(elements, function(index, value) {
+		var tmpElement = $('#'+value);	
+		if (tmpElement.children().length > 0) {
+			element = tmpElement;
+			elementName = value;
+		}
+	});
+
+	if(element!=null && element.parent().prop("tagName").toLowerCase()!='body') {
+		if(keepScrollPosition) elementPreviousTop = ((element.find('#scrollElement').length == 1) ? element.find('#scrollElement').scrollTop() : element.scrollTop());
+		var typeOfDialog = ((element.find('div.T').length == 0) ? "neighbour" : "children");
+		if(typeOfDialog == 'neighbour'){
+			element.css("height","");
+			if(element.next().hasClass('scrollGradient'))
+				element.next().css("display", "none");
+		} else {
+			$('#scrollElement').css("height","")
+			.next().css("display", "none");
+		}
+		addScrollWithShadow(elementName, elementPreviousTop);
 	}
 }

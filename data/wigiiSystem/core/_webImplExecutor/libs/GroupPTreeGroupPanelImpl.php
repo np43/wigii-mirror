@@ -185,6 +185,8 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 		$class .= (($groupP->getRights() != null && $groupP->getRights()->canWriteElement())?"write ":"");
 		$class .= (($groupP->getRights() != null && $groupP->getRights()->canModify())?"admin ":"");
 		$class .= ($this->depth == 0 ?"level1 ":"");
+		// marks trashbin
+		if($groupP->getGroup()->getId()==$this->trashBinGroup) $class .= "trashbin ";
 		?><li id="<?=$id;?>" class="<?=$class;?>"><?
 		 $this->writeHtmlForGroupItem($groupP);
 		
@@ -210,7 +212,7 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 		echo '</div>';
 	}
 	
-	protected function displayContextMenu($groupP){
+	protected function displayContextMenu($groupP){		
 		echo '<span class="menu">&nbsp;</span>';
 	}
 	protected function getStyleBasedOnDepth(){

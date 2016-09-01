@@ -57,6 +57,10 @@ class Field extends Model {
 	public function setFieldName($fieldName) {
 		$this->fieldName = $fieldName;
 	}
+
+	/**
+	 * @return DataType
+	 */
 	public function getDataType() {
 		return $this->dataType;
 	}

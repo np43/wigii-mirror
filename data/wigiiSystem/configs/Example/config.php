@@ -62,4 +62,10 @@ define ("GROUPNAME_minLength", USERNAME_minLength);
 define ("PASSWORD_maxLength", 32);
 define ("PASSWORD_minLength", 3);
 
-
+/*****************************************
+ * Additional programmatic configuration
+ *****************************************/
+if(!TEST_ON) {
+	// Medair 16.08.2016: if Files uploads to Box then show a warning message displaying in which box folder file is uploaded. (useful for testing and dev environments)
+	//ServiceProvider::configureClass('BoxServiceFormExecutor', ObjectConfigurator::createInstance(array('setShowWarningIfBoxUpload' => true)));
+}

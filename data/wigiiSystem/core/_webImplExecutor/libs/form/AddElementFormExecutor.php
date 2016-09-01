@@ -50,6 +50,16 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 		return $exec->getCrtParameters(1);
 	}
 	/**
+	 * @return int current selected groupId or null if several groups or no groups are selected
+	 */
+	protected function getCurrentSelectedGroup($p,$exec) {
+		$elementListContext = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+		if ($elementListContext->getGroupPList()->count() == 1) {
+			$ids = $elementListContext->getGroupPList()->getIds();
+			return reset($ids);
+		}
+	}
+	/**
 	 * @return GroupListAdvancedImpl containing the group in which to add the element
 	 */
 	public function getGroupInWhichToAdd($p, $exec){
@@ -189,12 +199,8 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 	protected function realoadAfterCheckedRecord($p, $exec){
 		$exec->addJsCode("addElementInList('" . $this->getRecord()->getId() . "');");
 		//invalid the cache of the list
-		$elementListContext = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
-		if ($elementListContext->getGroupPList()->count() == 1) {
-			$ids = $elementListContext->getGroupPList()->getIds();
-			$ids = reset($ids);
-			$exec->invalidCache($p, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $ids);
-		}
+		$ids = $this->getCurrentSelectedGroup($p,$exec);
+		if($ids) $exec->invalidCache($p, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $ids);		
 	}
 
 	public function CheckForm($p, $exec) {

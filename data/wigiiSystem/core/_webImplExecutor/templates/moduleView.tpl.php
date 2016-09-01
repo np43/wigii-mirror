@@ -51,7 +51,7 @@ if($exec->getIdAnswer()!='moduleView' && $exec->getIsUpdating()){ //!$exec->getI
 	$exec->addRequests("moduleView/". $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/groupSelectorPanel/".$groupSelectorPanelParam."/".(count($selectedGroupIds)>1 ? "0" : implode(",",$selectedGroupIds)));
 } else {
 
-	if($configS->getParameter($p, null, "preventFolderContentCaching") !="1"){
+	if($configS->getParameter($p, $exec->getCrtModule(), "preventFolderContentCaching") !="1"){
 		$cachekey = $exec->cacheAnswer($p, ($exec->getIdAnswer() ? $exec->getIdAnswer() : 'moduleView'), 'groupSelectorPanel', "groupSelectorPanel/".$groupSelectorPanelParam."/".(count($selectedGroupIds)>1 ? "0" : implode(",",$selectedGroupIds)));
 		// informs navigation cache of module view cache key
 		$exec->addJsCode("setModuleViewKeyCacheForNavigate('".$cachekey."')");

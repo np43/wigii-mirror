@@ -144,6 +144,10 @@ class ElementP extends Model implements DbEntity
 	public function isEnabledElementState_hidden() {return $this->enabledElementState_hidden;}
 	public function enableElementState_hidden($bool) {$this->enabledElementState_hidden = $bool;}
 	
+	private $enabledElementState_delete;
+	public function isEnabledElementState_delete() {return $this->enabledElementState_delete;}
+	public function enableElementState_delete($bool) {$this->enabledElementState_delete = $bool;}
+	
 	/**
 	 * Returns a binary encoding of the "enableElementState"
 	 * 2^0: state_locked, 
@@ -155,7 +159,8 @@ class ElementP extends Model implements DbEntity
 	 * 2^6: state_dismissed,
 	 * 2^7: state_archived, 
 	 * 2^8: state_deprecated, 
-	 * 2^9: state_hidden, 
+	 * 2^9: state_hidden,
+	 * 2^10: state_delete, 
 	 */
 	public function getEnableElementStateAsInt() {
 		$returnValue = 0;
@@ -169,6 +174,7 @@ class ElementP extends Model implements DbEntity
 		if($this->isEnabledElementState_archived()) $returnValue += 128;
 		if($this->isEnabledElementState_deprecated()) $returnValue += 256;
 		if($this->isEnabledElementState_hidden()) $returnValue += 512;
+		if($this->isEnabledElementState_delete()) $returnValue += 1024;
 		return $returnValue;
 	}	
 
@@ -189,6 +195,7 @@ class ElementP extends Model implements DbEntity
 			case 'archived': return $this->isEnabledElementState_archived(); break;
 			case 'deprecated': return $this->isEnabledElementState_deprecated(); break;
 			case 'hidden': return $this->isEnabledElementState_hidden(); break;
+			case 'delete': return $this->isEnabledElementState_delete(); break;
 			default: throw new RecordException("state '$state' is not a valid Element state.", RecordException::INVALID_ARGUMENT);
 		}
 	}
@@ -211,6 +218,7 @@ class ElementP extends Model implements DbEntity
 			case 'archived': return $this->enableElementState_archived($bool); break;
 			case 'deprecated': return $this->enableElementState_deprecated($bool); break;
 			case 'hidden': return $this->enableElementState_hidden($bool); break;
+			case 'delete': return $this->enableElementState_delete($bool); break;
 			default: throw new RecordException("state '$state' is not a valid Element state.", RecordException::INVALID_ARGUMENT);
 		}
 	}

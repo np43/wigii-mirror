@@ -345,6 +345,7 @@ class WigiiCoreExecutor {
 	}
 	
 	
+	
 	// Object factories
 	
 	
@@ -683,7 +684,7 @@ class WigiiCoreExecutor {
 	 * flag to tell to use public principal for the download:
 	 */
 	private $usePublicPrincipalForDownloadRequest = null;
-	private function doesPrincipalForDownloadRequestShouldBePublic() {
+	public function doesPrincipalForDownloadRequestShouldBePublic() {
 		return $this->usePublicPrincipalForDownloadRequest;
 	}
 	private function usePublicPrincipalForDownloadRequest() {
@@ -1332,12 +1333,42 @@ class WigiiCoreExecutor {
 				'}' .
 				'],' .
 				'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
-				'title: "' . $dialogTitle . '", width:' . ($width) . ', position: myPosition,' .
+				'title: "' . $dialogTitle . '", width:' . ($width+17) . ', position: myPosition,' .
 				'closeOnEscape: true, resizable:false, ' .
 				'' . ($modal ? 'modal:true, ' : '') . '' .
 				'beforeClose: function(){ if(checkOpenItem("' . $domId . '")){ return false; } else { ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '");} },' .
 				'}).dialog("moveToTop");' .
-				'');
+				'if($("#' . $domId . '").prop("id")=="elementDialog" || $("#' . $domId . '").prop("id")=="emailingDialog") {'.
+				'	$("#' . $domId . '").css("height",getElementDialogScrollHeight("elementDialog_neighbour", $("#elementDialog"))).css("overflow-x","auto");' .
+				'};'.
+				'resize_scrollArea()');
+		/*$exec->addJsCode('$("#elementDialog")
+				.css("height",window.innerHeight-$("#elementDialog").prev().outerHeight(true)-$("#elementDialog").next().outerHeight(true)-30)
+				.css("overflow-x","auto")
+				.scroll(function() {
+					self = $(this);
+					if(self.scrollTop()+self.outerHeight(true) == this.scrollHeight) {
+						self.next().css("display","none");
+					} else {
+						self.next().css("display","block");
+					}
+				}).after("<div class=\"scrollGradient\" style=\"bottom:"+($("#elementDialog").next().outerHeight(true))+"px\"></div>");
+				console.log("script executed");					
+				
+				
+				');
+		*/
+		/*
+		 	$("<div />").css({
+				    position: "absolute",
+				    width: "100%",
+				    height: "100%",
+				    left: 0,
+				    top: 0,
+				    zIndex: 1000000,  // to be on the safe side
+				    background: "url(/img/loading.gif) no-repeat 50% 50%"
+				}).appendTo("#elementDialog"); 
+		 */
 	
 		if ($dialogTitle == null) {
 			$exec->addJsCode(' $("#' . $domId . '").prev().css("display","none"); ');
@@ -1385,12 +1416,14 @@ class WigiiCoreExecutor {
 		$exec->addJsCode('' .
 				'myPosition = dialogPos["' . $domId . '"]; if(myPosition == null){ myPosition = { my : "center", at: "center" }; }' .
 				'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
-				'title: "' . $dialogTitle . '", width:' . $width . ', position: myPosition,' .
+				'title: "' . $dialogTitle . '", width:' . ($width + 17) . ', position: myPosition,' .
 				'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
 				'beforeClose: function(){ ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '"); $(this).dialog("destroy"); $(window).scrollTop(0); },' .
 				'closeOnEscape: true, resizable:false' .
-				'}).dialog("moveToTop");' .
+				'}).dialog("moveToTop")'.
 				'; ');
+		$exec->addJsCode('addScrollWithShadow("elementDialog");
+						resize_scrollArea();');
 		if ($dialogTitle == null) {
 			$exec->addJsCode(' $("#' . $domId . '").prev().css("display","none"); ');
 		}
@@ -3345,10 +3378,76 @@ invalidCompleteCache();
 		$this->executionSink()->publishEndOperation("stopExternalAccess");
 	}
 
+	/**
+	 * Create the XMl code for the 'Access all folders', 'Root folder creator', 'Folder creator' option in Admin role/user popup
+	 * @param Principal $p 	 
+	 * @param Field $field the field for which xml needs to be changed
+	 * @param array $moduleAccess the complete list of Modules
+	 * @param array $adminRight the list of module access for the admin 
+	 * @param array $userRight the list of module access for the users
+	 * @return SimpleXMLElement the XMl code
+	 */
+	private function createMultipleCheckForAdminForm($p, $field, $moduleAccess, $adminRight, $userRight) {
+		$transS = ServiceProvider :: getTranslationService();		
+		
+		$newXmlCode = simplexml_load_string('<'.$field->getFieldName().'/>');
+		foreach ($field->getXml()->attributes() as $attrName=>$attrValue){
+			$newXmlCode[$attrName] = $attrValue;
+		}
+		
+		if($moduleAccess) {
+			if($adminRight==null) $adminRight = array();
+			if($userRight==null) $userRight = array();
+			foreach ($moduleAccess as $moduleName => $module) {
+				$attrXml = simplexml_load_string("<attribute>$moduleName</attribute>");
+				if(!$p->isWigiiNamespaceCreator() && !$adminRight[$moduleName]) $attrXml['disabled']="1";
+				$moduleName = tryStr2Xml($transS->t($p, $moduleName));
+				if($moduleName instanceof SimpleXMLElement) {
+					$attrXml->{'label'} = '';
+					simplexml_appendChild($attrXml->{'label'}, $moduleName);
+				}
+				else $attrXml->{'label'} = $moduleName;
+				simplexml_appendChild($newXmlCode, $attrXml); 
+			}
+		}
+		return $newXmlCode;
+	}
 	
-	
-	
-	
+	/**
+	 * Create access and folder creator form
+	 * @param User $user $user current user 
+	 * @param Principal $p
+	 * @param Record $userEditRec record user edit form
+	 */
+	private function createAccessAndFolderCreatorForm($user, $p, $userEditRec){
+		// full module access
+		$moduleAccess = $p->getModuleAccess();
+		$userRight = $user->getDetail()->getModuleAccess();
+		if($moduleAccess && $userRight) $moduleAccess = array_merge($moduleAccess, $userRight);
+		elseif($userRight) $moduleAccess = $userRight;
+		if($moduleAccess) {
+			unset($moduleAccess[Module::ADMIN_MODULE]);
+			unset($moduleAccess[Module::HELP_MODULE]);			
+		}  
+		
+		// Read all groups in WigiiNamespace
+		$adminRight = $p->getReadAllGroupsInWigiiNamespace();					
+		$userRight = $user->getDetail()->getReadAllGroupsInWigiiNamespace();			
+		$field = $userEditRec->getFieldList()->getField('getReadAllGroupsInWigiiNamespace');
+		$field->setXml($this->createMultipleCheckForAdminForm($p, $field, $moduleAccess, $adminRight, $userRight));
+			
+		// Root Group creator
+		$adminRight = $p->getRootGroupCreator();
+		$userRight = $user->getDetail()->getRootGroupCreator();			
+		$field = $userEditRec->getFieldList()->getField('getRootGroupCreator');
+		$field->setXml($this->createMultipleCheckForAdminForm($p, $field, $moduleAccess, $adminRight, $userRight));
+			
+		// Group creator
+		$adminRight = $p->getGroupCreator();
+		$userRight = $user->getDetail()->getGroupCreator();
+		$field = $userEditRec->getFieldList()->getField('getGroupCreator');
+		$field->setXml($this->createMultipleCheckForAdminForm($p, $field, $moduleAccess, $adminRight, $userRight));
+	}	
 	
 	
 	// Wigii communication protocol handling
@@ -3708,19 +3807,29 @@ invalidCompleteCache();
 		}
 		// instantiates a configured WebExecutor
 		$webExec = ServiceProvider::createWigiiObject($webExecClass);
-		// sets dynamic configuration if provided
-		if(isset($options)) {
-			$options->configure($webExec);
-		}
-		// checks authorization
-		$authS = ServiceProvider :: getAuthenticationService();
-		if ($authS->isMainPrincipalMinimal() && !$webExec->isMinimalPrincipalAuthorized()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 		if(isset($webExec)) {
+			// sets dynamic configuration if provided
+			if(isset($options)) {
+				$options->configure($webExec);
+			}
+			
 			// injects dependencies
 			$webExec->setWigiiExecutor($this);
 			$webExec->setConfigService($this->getConfigurationContext());
-			// runs WebExecutor
+			
+			// checks authorization
+			$authS = ServiceProvider :: getAuthenticationService();
 			$p = $authS->getMainPrincipal();
+			if ($authS->isMainPrincipalMinimal()) {
+				// checks if public principal is authorized
+				if($webExec->isPublicPrincipalAuthorized()) {
+					$p = $this->getPublicPrincipal();
+				}
+				// checks if MinimalPrincial is authorized
+				elseif (!$webExec->isMinimalPrincipalAuthorized()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+			}
+					
+			// runs WebExecutor
 			$webExec->processAndEnds($p,$exec);
 		}
 	}
@@ -3831,6 +3940,10 @@ invalidCompleteCache();
 				//			$this->persistMainPrincipalSessionContext($p, $exec);
 				break;
 			case "setFilterUser" :
+				//if a second parameters is set, we switch to the new working module
+				if($exec->getCrtParameters(1)!=null){
+					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
+				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -3863,6 +3976,10 @@ invalidCompleteCache();
 				//			}
 				break;
 			case "setFilterUser2" :
+				//if a second parameters is set, we switch to the new working module
+				if($exec->getCrtParameters(1)!=null){
+					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
+				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -3878,6 +3995,10 @@ invalidCompleteCache();
 				}
 				break;
 			case "setFilterGroup" :
+				//if a second parameters is set, we switch to the new working module
+				if($exec->getCrtParameters(1)!=null){
+					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
+				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -3893,6 +4014,11 @@ invalidCompleteCache();
 				}
 				break;
 			case "setFilterForGroupUser" :
+				//if the first parameter is set, we switch to the new working module
+				if($exec->getCrtParameters(0)!=null){
+					$tmpArray = explode('<br>',$exec->getCrtParameters(0));
+					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $tmpArray[0]));
+				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -3911,6 +4037,10 @@ invalidCompleteCache();
 				}
 				break;
 			case "setFilterForUserRole" :
+				//if a second parameters is set, we switch to the new working module
+				if($exec->getCrtParameters(1)!=null){
+					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
+				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -3929,6 +4059,10 @@ invalidCompleteCache();
 				}
 				break;
 			case "setFilterForUserUser" :
+				//if a second parameters is set, we switch to the new working module
+				if($exec->getCrtParameters(1)!=null){
+					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
+				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -3947,6 +4081,11 @@ invalidCompleteCache();
 				}
 				break;
 			case "switchAdminTo" :
+				//if a second parameters is set, we switch to the new working module
+				if($exec->getCrtParameters(1)!=null){
+					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
+				}
+	
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -3966,6 +4105,13 @@ invalidCompleteCache();
 					"adminFilterUser2_reset('".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."', '".Module :: ADMIN_MODULE."');" .
 					"clearTimeout(adminFilterTextOnBlurTimeout);" .
 					"");
+				if($exec->getCrtParameters(0) == 'adminUserAdmin')
+					$exec->addJsCode("
+						if($('#adminGroup').css('visibility')=='visible') {
+							tmpText = $('#adminGroup').children().first().children().first().contents()[0].data.split('(');
+							$('#adminGroup').children().first().children().first().contents()[0].data = tmpText[0]+' (".ServiceProvider::getTranslationService()->t($p,$exec->getCrtParameters(1)).") ';
+						}
+					");
 				$exec->addRequests("adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . Module :: ADMIN_MODULE . "/display/" . $exec->getCrtParameters(0));
 				//persist context in DB;
 				$this->persistMainPrincipalSessionContext($p, $exec);
@@ -4938,7 +5084,12 @@ invalidCompleteCache();
 				$labelWidth = 250;
 
 				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("userDetail"), $exec->getCrtModule());
-
+				//get the user email
+				if($userEditRec->getFieldList()->doesFieldExist('principalEmail')) {
+					$userInfo = str2array($userP->getUser()->getDetail()->getInfo_lastSessionContext());
+					//put the email in userEditrec
+					$userEditRec->setFieldValue($userInfo['generalContext']['email'], 'principalEmail');
+				}
 				//$this->throwEvent()->readElement(PWithElement::createInstance($p, $element));
 				$form = $this->createDetailUserFormExecutor(ServiceProvider :: getModuleAdminService()->getModule($p, $workingModuleName), $userP, $userEditRec, "detailUser_form", null);
 				$form->setCorrectionWidth(26);
@@ -4975,7 +5126,7 @@ invalidCompleteCache();
 				}
 
 				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance(!$user->isRole() ? "userEdit" :	"roleEdit"), $exec->getCrtModule());
-
+				$this->createAccessAndFolderCreatorForm($user, $p, $userEditRec);
 				//set url to refresh on done, depending on context
 				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/" . $this->getAdminContext($p)->getSubScreen();
 
@@ -4987,6 +5138,7 @@ invalidCompleteCache();
 				$state = "start";
 				if ($_POST["action"] != null)
 					$state = addslashes($_POST["action"]);
+				/*
 				if (!$p->isWigiiNamespaceCreator()) {
 					$userEditRec->setFieldValue($userP->getUser()->getWigiiNamespace()->getWigiiNamespaceName(), "wigiiNamespace");
 					$userEditRec->getWigiiBag()->setDisabled(true, "wigiiNamespace");
@@ -4994,6 +5146,7 @@ invalidCompleteCache();
 					$userEditRec->getWigiiBag()->setDisabled(true, "moduleAccess");
 					$userEditRec->getWigiiBag()->setHidden(true, "moduleAccess");
 				}
+				*/
 				$form->ResolveForm($p, $exec, $state);
 
 				break;
@@ -5022,7 +5175,14 @@ invalidCompleteCache();
 					break;
 				//eput($user->displayDebug());
 
-				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance((!$user->isRole() ? "userEdit" : "roleEdit")), $exec->getCrtModule());
+				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance((!$user->isRole() ? "userEdit" : "roleEdit")), $exec->getCrtModule());	
+				//get the user email
+				if($userEditRec->getFieldList()->doesFieldExist('principalEmail')) {
+					$userInfo = str2array($userP->getUser()->getDetail()->getInfo_lastSessionContext());
+					//put the email in userEditrec
+					$userEditRec->setFieldValue($userInfo['generalContext']['email'], 'principalEmail');
+				}
+				$this->createAccessAndFolderCreatorForm($user, $p, $userEditRec);
 
 				//set url to refresh on done, depending on context
 				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/" . $this->getAdminContext($p)->getSubScreen();
@@ -5036,6 +5196,7 @@ invalidCompleteCache();
 				if ($_POST["action"] != null)
 					$state = addslashes($_POST["action"]);
 
+				/*
 				if (!$p->isWigiiNamespaceCreator()) {
 					$userEditRec->setFieldValue($user->getWigiiNamespace()->getWigiiNamespaceName(), "wigiiNamespace");
 					$userEditRec->getWigiiBag()->setDisabled(true, "wigiiNamespace");
@@ -5043,6 +5204,7 @@ invalidCompleteCache();
 					$userEditRec->getWigiiBag()->setDisabled(true, "moduleAccess");
 					$userEditRec->getWigiiBag()->setHidden(true, "moduleAccess");
 				}
+				*/
 				$form->ResolveForm($p, $exec, $state);
 
 				break;
@@ -7961,6 +8123,21 @@ onUpdateErrorCounter = 0;
 							if ($isThumbs) {
 								$content = $element->getFieldValue($fieldName, "thumbnail");
 								$path = FILES_PATH . "tn_" . $path;
+								
+							}elseif(strstr($path, "box://")){
+							
+								$crtWigiiNamespaceUrl = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
+								$crtModuleUrl = $exec->getCrtModule()->getModuleUrl();
+								$id = str_replace("box://", "", $path);																							
+								if($isIntegrated){
+									$path = "$crtWigiiNamespaceUrl/$crtModuleUrl/box/preview/$id";
+								}else{
+									$path = "$crtWigiiNamespaceUrl/$crtModuleUrl/box/download/$id";								
+								}
+								// forwards PublicPrincipal delegation to box
+								if(ServiceProvider::getAuthorizationService()->isPublicPrincipal($p)) $this->usePublicPrincipalForDownloadRequest();
+								$exec->addRequests($path);
+								break;
 							} else {
 								$this->throwEvent()->downloadFileFromElement(PWithElementWithFieldname :: createInstance($p, $element, $fieldName));
 								if ($fieldXml["htmlArea"] == "1") {
@@ -9216,6 +9393,9 @@ onUpdateErrorCounter = 0;
 						//the element is deleted
 						$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementNotFound") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementNotFoundExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
 						break;
+					} else if($exec->getCrtParameters(0) == "delete" && $configS->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && !$elementP->getRights()->canModify()){
+						$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
+						break;
 					} else if($elementP->getRights() == null ||
 							/* allows only read access on element if it is blocked */
 							(($element->isState_blocked() || $elementP->isParentElementState_blocked()) &&
@@ -9224,7 +9404,8 @@ onUpdateErrorCounter = 0;
 							$exec->getCrtParameters(0) != "copy" &&
 							$exec->getCrtParameters(0) != "print" )/*&&
 							$exec->getCrtParameters(0) != "restore") ||
-							$exec->getCrtParameters(0) == "restore" && $elementP->isParentElementState_blocked()*/){
+							$exec->getCrtParameters(0) == "restore" && $elementP->isParentElementState_blocked()*/
+							){
 						$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
 						break;
 					}
@@ -9350,7 +9531,8 @@ onUpdateErrorCounter = 0;
 						$mlc->setGroupBy('reset'); $mlc->setSortedBy('reset');
 						$nbRows = $elS->getSelectedElements($p, $lc->getMultipleSelection(), $elementPAList, $mlc);
 						// multiple operation needs to have no element blocked
-						if($elementPAList->atLeastOneHasSpecificAttribut()) throw new AuthorizationServiceException("multiple operation is not authorized on blocked elements.", AuthorizationServiceException::FORBIDDEN);
+						if($elementPAList->atLeastOneHasSpecificAttribut()) throw new AuthorizationServiceException("multiple operation is not authorized on blocked elements.", AuthorizationServiceException::FORBIDDEN);						
+						if($exec->getCrtParameters(0) == "delete" && $configS->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && !$elementPAList->allHaveAdminRights()) throw new AuthorizationServiceException("cannot delete elements in non admin groups.", AuthorizationServiceException::FORBIDDEN);
 					}
 
 

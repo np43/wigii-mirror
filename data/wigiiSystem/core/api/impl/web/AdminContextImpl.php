@@ -97,8 +97,8 @@ class AdminContextImpl extends Model implements AdminContext {
 		 * This is in adminSearchBar.tpl.php
 		 */
 		$subScreens = array();
-		$subScreens[] = "adminGroup";
-		$subScreens[] = "adminUser"; //even if not user creator, this is needed to be able to define access rights from existing users to folders or associate users to roles
+		if($p->getGroupCreator()) $subScreens[] = "adminGroup";
+		$subScreens[] = "adminUser"; //even if not user creator, this is needed to be able to define access rights from existing users to folders or associate users to roles		
 		$subScreens[] = "adminRole"; //even if not user creator, this is needed to be able to define rights for roles to folders, and map users to roles
 		$subScreens[] = "adminGroupUser";
 		$subScreens[] = "adminUserRole";

@@ -138,7 +138,7 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 					if($elSubFieldName) $label .= " ".$transS->t($p, $elField["type"]."_".$elSubFieldName);
 				}
 			}
-
+			
 			if($elField["type"]=="Attributs" || $elField["type"]=="MultipleAttributs"){
 				$attribute = '';
 				//add the element fields
@@ -154,7 +154,7 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 					$html2text->html2text($attrLabel);
 					$attrLabel = $html2text->get_text();
 					$html2text->clear();
-					$attribute .= '<attribute>'.(string)$option.'<label>'.$attrLabel.'</label></attribute>';
+					$attribute .= '<attribute>'.(string)$option.'<label>'.str_replace(array("&", "<", ">"), array("&amp;", "&lt;", "&gt;"), $attrLabel).'</label></attribute>';
 				}
 				unset($html2text);
 				$this->reverseFields[$fieldName] = $label;
