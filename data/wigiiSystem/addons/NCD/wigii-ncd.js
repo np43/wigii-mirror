@@ -314,7 +314,7 @@
 			self.putButton = function(label, onClick){
 				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('button','class',self.emittedClass()).html());
 				self.htmlTree.append(label);
-				var b = output.append(self.htmlTree.pop('</button>')).last();
+				var b = output.append(self.htmlTree.pop('</button>')).children().last();
 				if($.isFunction(onClick) && b) b.off().click(onClick);				
 			};
 			/**
@@ -719,6 +719,12 @@
 			};
 			self.grid = function() {
 				return grid;
+			};
+			self.x = function() {
+				return x;
+			};
+			self.y = function() {
+				return y;
 			};
 			self.click = function(onClick) {
 				if($.isFunction(onClick)) $("#"+id).off('click').click(function(){onClick(self);});
