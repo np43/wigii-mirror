@@ -147,7 +147,7 @@
 			self.previousException = previous; 
 		};
 		
-		// NCD Servies
+		// NCD Services
 		
 		/**
 		 * A String Stack object
@@ -307,7 +307,23 @@
 			 */
 			self.endColor = function() {
 				output.append(self.htmlTree.pop('</span>'));	
-			};			
+			};	
+			/**
+			 * Emits a div which has a delay before displaying
+			 *@param Integer delay in seconds before displaying the div
+			 */
+			self.startDelay = function(delay,cssClass) {
+				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('div','class',self.emittedClass()+(cssClass?' '+cssClass:''),
+				'style', 'display:none;','data-ncd-delay',delay).html());
+			};
+			/**
+			 * Closes delayed div
+			 */
+			self.endDelay = function() {
+				var delayedDiv = output.append(self.htmlTree.pop('</div>')).children().last();
+				delayedDiv.delay(delayedDiv.attr('data-ncd-delay')*1000).fadeIn(700);	
+			};
+			
 			/**
 			 * Emits a button
 			 */
@@ -686,36 +702,36 @@
 				}
 			};
 			self.left = function(wrap) {
-				var neighbour = x-1;
-				if(neighbour<0) {
-					if(wrap) neighbour = grid.nCols-1;
-					else return undefined;
-				}
-				return grid.cell(neighbour,y);
-			};
-			self.right = function(wrap) {
-				var neighbour = x+1;
-				if(neighbour>=grid.nCols) {
-					if(wrap) neighbour = 0;
-					else return undefined;
-				}
-				return grid.cell(neighbour,y);
-			};
-			self.up = function(wrap) {
 				var neighbour = y-1;
 				if(neighbour<0) {
-					if(wrap) neighbour = grid.nRows-1;
+					if(wrap) neighbour = grid.nCols()-1;
 					else return undefined;
 				}
 				return grid.cell(x,neighbour);
 			};
-			self.down = function(wrap) {
+			self.right = function(wrap) {
 				var neighbour = y+1;
-				if(neighbour>=grid.nRows) {
+				if(neighbour>=grid.nCols()) {
 					if(wrap) neighbour = 0;
 					else return undefined;
 				}
 				return grid.cell(x,neighbour);
+			};
+			self.up = function(wrap) {
+				var neighbour = x-1;
+				if(neighbour<0) {
+					if(wrap) neighbour = grid.nRows()-1;
+					else return undefined;
+				}
+				return grid.cell(neighbour,y);
+			};
+			self.down = function(wrap) {
+				var neighbour = x+1;
+				if(neighbour>=grid.nRows()) {
+					if(wrap) neighbour = 0;
+					else return undefined;
+				}
+				return grid.cell(neighbour,y);
 			};
 			self.grid = function() {
 				return grid;
