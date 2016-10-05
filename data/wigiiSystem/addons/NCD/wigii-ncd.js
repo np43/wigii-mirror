@@ -636,17 +636,17 @@
 		wigiiNcd.Grid = function(htmlEmitter, nRows,nCols) {
 			var self = this;
 			self.className = 'Grid';
-			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className;
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+(new Date()).getTime();
 			
 			self.context = {};
 			self.context.rows = [];
 			var htmlB = wigiiNcd.getHtmlBuilder();
-			htmlB.putStartTag('table','class',htmlEmitter.emittedClass());
+			htmlB.putStartTag('table','class',htmlEmitter.emittedClass(),"id",self.ctxKey);
 			for(var i=0;i<nRows;i++) {
 				htmlB.putStartTag('tr','class',htmlEmitter.emittedClass());
 				self.context.rows.push([]);
 				for(var j=0;j<nCols;j++) {
-					var id = i+"_"+j;
+					var id = self.ctxKey+"_"+i+"_"+j;
 					htmlB.putStartTag('td','class',htmlEmitter.emittedClass(),"id",id);
 					self.context.rows[i].push(new wigiiNcd.GridCell(self,i,j,id));					
 					htmlB.putNbsp(4);
