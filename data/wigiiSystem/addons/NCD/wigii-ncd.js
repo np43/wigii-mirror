@@ -340,10 +340,16 @@
 				return new wigiiNcd.Grid(self, nRows, nCols);
 			};
 			/**
-			 * Creates and emits a TextArea to capture user input
+			 * Creates and emits a TextArea to capture a multiline user input
 			 */
 			self.createTextArea = function() {
 				return new wigiiNcd.TextArea(self);
+			};
+			/**
+			 * Creates and emits a TextInput to capture a single line user input
+			 */
+			self.createTextInput = function() {
+				return new wigiiNcd.TextInput(self);
 			};
 			
 			// Control functions
@@ -742,11 +748,14 @@
 			self.y = function() {
 				return y;
 			};
+			self.id = function() {
+				return id;
+			};
 			self.click = function(onClick) {
 				if($.isFunction(onClick)) $("#"+id).off('click').click(function(){onClick(self);});
 				else if(onClick===undefined) $("#"+id).click();
 				return self;
-			};
+			};			
 		};
 		
 		/**		
@@ -767,6 +776,66 @@
 			
 			// Properties
 			
+			/**
+			 * Sets or returns the text contained in this TextArea
+			 */
+			self.text = function(txt) {
+				if(txt===undefined) return self.context.text;
+				else {
+					self.context.text = txt;
+					$("#"+self.ctxKey).val(txt);
+				}
+			};
+			/**
+			 * Registers a oninput event handler
+			 */
+			self.onInput = function(onInput) {
+				if($.isFunction(onInput)) {
+					if(!self.context.onInputSubscribers) {
+						self.context.onInputSubscribers = [];
+						// registers oninput event handler on text area
+						$("#"+self.ctxKey).on('input', function(){self.onInput();})
+					}
+					self.context.onInputSubscribers.push(onInput);
+				}
+				else if(onInput===undefined) {
+					if(self.context.onInputSubscribers) {
+						for(var i=0;i<self.context.onInputSubscribers.length;i++) {
+							var eh = self.context.onInputSubscribers[i];
+							if($.isFunction(eh)) eh(self,$("#"+self.ctxKey).val());
+						}
+					}
+				}
+			};
+		};
+		
+		/**		
+		 * NCD TextInput
+		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the text area component
+		 */
+		wigiiNcd.TextInput = function(htmlEmitter) {
+			var self = this;
+			self.className = 'TextInput';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+(new Date()).getTime();
+			
+			self.context = {};
+
+			var htmlB = wigiiNcd.getHtmlBuilder();
+			htmlB.putStartTag('input','type','text','class',htmlEmitter.emittedClass(), "id", self.ctxKey);		
+			htmlB.putEndTag('input');
+			htmlEmitter.putHtml(htmlB.html());
+			
+			// Properties
+			
+			/**
+			 * Sets background color and text color
+			 */
+			self.color = function(backgroundC,textC) {
+				var elt = $("#"+self.ctxKey);			
+				if(backgroundC) elt.css('background-color',backgroundC);
+				if(textC) elt.css('color',textC);
+				return self;
+			};
 			/**
 			 * Sets or returns the text contained in this TextArea
 			 */
