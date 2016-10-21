@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 15 sept. 09
- * by LWR
+/**
+ * Created on 15 sept. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class EditElementFormExecutor extends FormExecutor {
 
@@ -257,7 +257,6 @@ class EditElementFormExecutor extends FormExecutor {
 	protected function addAutoSaveJSCode($p, $exec){
 		//autoSave work only on edition
 		if(!$this->getRecord()->getId()) return;
-
 		$configS = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
 		$transS = ServiceProvider::getTranslationService();
 		if($configS->getParameter($p, $exec->getCrtModule(), "autoSave")=="1" && !$this->isForExternalAccess()){
@@ -283,12 +282,24 @@ class EditElementFormExecutor extends FormExecutor {
 			if(!$idAnswer){
 				$idAnswer = "mainDiv";
 			}
-			if($idAnswer!="mainDiv"){
+			if($this->isWorkzoneViewDocked()) {//prepare delete draft toolbar
+				$idAnswer = 'searchBar';
+				$findSelector = ".find('.middleBox .T').append";	
+				$exec->addJsCode("
+					var middleBox = initMiddleBox();
+					$('#searchBar .middleBox .T').empty();
+					middleBox.show();
+				");		
+			} elseif($idAnswer!="mainDiv"){
 				$findSelector = ".parent().find('.ui-dialog-title').after";
 			} else {
 				$findSelector = ".find('.T div:last').after";
 			}
-			$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_deleteDraft\" href=\"javascript:update(\\'confirmationDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/delete/".$this->getRecord()->getId()."/$idAnswer\\', false, {action:\\'persistAndSkipNotify\\'});"."\">".$transS->t($p, "deleteDraft")."</a>');");
+			$exec->addJsCode("
+				$('#".$idAnswer."')$findSelector('<a class=\"H el_deleteDraft\" href=\"javascript:update(\\'confirmationDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/delete/".$this->getRecord()->getId()."/$idAnswer\\', false, {action:\\'persistAndSkipNotify\\'});"."\">".$transS->t($p, "deleteDraft")."</a>');
+				resize_groupPanel();
+				resize_elementList();
+			");
 		}
 	}
 	
@@ -598,7 +609,9 @@ class EditElementFormExecutor extends FormExecutor {
 		return $cancelJsCode;
 	}
 	protected function getOkJsCode(){
-		return '$("form input:submit", this).click();';
+		$jsCode = '$("form input:submit", this).click();';
+		if($this->isWorkzoneViewDocked()) $jsCode = '$("#'. $this->getFormId().'  input:submit").click();';
+		return $jsCode;
 	}
 	
 	protected function getDialogTitle($p, $exec){
@@ -700,9 +713,7 @@ class EditElementFormExecutor extends FormExecutor {
 				}
 			}
 		}
-
-		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog(), $transS->t($p, "cancel"));
-
+		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), ($this->isWorkzoneViewDocked())?false:$this->isDialog(), $transS->t($p, "cancel"));
 		if(isset($this->additionalText)){
 			$this->getTrm()->put('<div class="clear"></div>');
 			$this->getTrm()->put('<p style="margin:5px 0 10px 0;">'.$this->additionalText."</p>");
@@ -736,6 +747,41 @@ class EditElementFormExecutor extends FormExecutor {
 		//adds WigiiHelp icon in dialog title
 		if($state!="addMessageToNotification"){
 			$this->bindWigiiHelpService($p, $exec);
+		}
+		// If workzone view is docked :
+		// Create middleBox in searchBar if doesn't exist
+		// If edit then moves button from dialog box
+		// If add then removes all buttons
+		// If autosave on edit then renames cancel button as close
+		if($this->isWorkzoneViewDocked()) {
+			$exec->addJsCode("
+					var middleBox = initMiddleBox(true);
+			");
+			//if we are in autosave mode we remove only button for keep 'delete draft'
+			if($config->getParameter($p, $exec->getCrtModule(), "autoSave")=="1") {
+				$exec->addJsCode("middleBox.find('.T button').remove();");
+			} else { //we remove all
+				$exec->addJsCode("middleBox.find('.T').children().remove();");
+			}
+			
+			$exec->addJsCode("if($('div.ui-dialog #elementDialog').length!=1) middleBox.find('.T').append($('.publicFormBorder button').clone(true));");
+	
+			if($config->getParameter($p, $exec->getCrtModule(), "autoSave")=="1") { //if autosave mode we add close button on modify card
+				$exec->addJsCode("
+						if(middleBox.find('.T .el_deleteDraft').length==0) {
+							var cancelButton = middleBox.find('.T .cancel');
+							var height = cancelButton.height();
+							var width = cancelButton.width();
+						
+							cancelButton.text(DIALOG_closeLabel).height(height).width(width).show(); 
+						}
+				");
+			}
+			$exec->addJsCode("
+				middleBox.show();
+				resize_groupPanel();
+				resize_elementList();
+			");
 		}
 	}
 }

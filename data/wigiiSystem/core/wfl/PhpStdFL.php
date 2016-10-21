@@ -149,6 +149,40 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		return array_slice($arr, $offset, $length, $preserve_keys);
 	}
 	/**
+	 * array_values. See http://www.php.net/array_values
+	 */
+	public function array_values($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if ($nArgs < 1) throw new FuncExpEvalException("array_values function takes one parameters, the array", FuncExpEvalException::INVALID_ARGUMENT);
+		$arr = $this->evaluateArg($args[0]);
+		return array_values($arr);
+	}
+	/**
+	 * array_unique. See http://www.php.net/array_unique
+	 */
+	public function array_unique($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if ($nArgs < 1) throw new FuncExpEvalException("array_unique function takes one parameters, the array", FuncExpEvalException::INVALID_ARGUMENT);
+		$arr = $this->evaluateArg($args[0]);
+	
+		if($nArgs>1) $sort=$this->evaluateArg($args[1]);
+		else $sort = SORT_REGULAR;
+		return array_unique($arr, $sort);
+	}
+	/**
+	 * array_implode. See http://www.php.net/implode
+	 */
+	public function array_implode($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if ($nArgs < 1) throw new FuncExpEvalException("array_implode function takes one parameters, the array", FuncExpEvalException::INVALID_ARGUMENT);
+		if ($nArgs > 1){
+	
+			return implode($this->evaluateArg($args[0]), $this->evaluateArg($args[1]));
+		}else{
+			return implode($this->evaluateArg($args[0]));
+		}
+	}
+	/**
 	 * substr. See http://www.php.net/substr
 	 */
 	public function substr($args) {

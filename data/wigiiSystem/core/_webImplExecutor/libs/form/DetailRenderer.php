@@ -24,6 +24,7 @@
 /**
  * Renders a Record for detail view (read).
  * Created on 3 déc. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 	private $_debugLogger;
@@ -312,7 +313,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 
 		// for Links datatype: if element is not writable, then hides the 'Add' button
 		if($dataType && $dataTypeName=="Links") {
-			if(!$this->getRecordIsWritable()){
+			if(!$this->getRecordIsWritable() || $rm->getRecord()->getWigiiBag()->isReadonly($field->getFieldName()) || $rm->getRecord()->getWigiiBag()->isDisabled($field->getFieldName())){
 				//$this->addJsCodeAfterShow("$('#".$this->getDetailId()." .addNewSubElement').removeClass('Green').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
 				$this->addJsCodeAfterShow("$('#".$this->getDetailId()."').find('.addNewSubElement, td.edit, td.delete, td.restore').removeClass('Green edit delete restore').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
 			}

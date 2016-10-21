@@ -398,6 +398,7 @@ role:Role:Rôle:::::::::
 user:User:Utilisateur:::::::::
 calculatedRole:Calculated user:Utilisateur calculé:::::::::
 wigiiBusyLoading:Loading...:Chargement...:::::::
+wigiiBusySaving:Transmitting to server...:Transmission avec le serveur en cours...:::::::
 wigiiNotLoadedMessage:If page does not load, please click on the HOME menu.:Si la page ne se charge pas, cliquez sur le menu ACCUEIL.:::::::
 wigiiFilteringLoading:Filtering...:Mise en place du filtre...:::::
 wigiiCredentialExpirationTime:days:jours::::::
@@ -1698,10 +1699,10 @@ syncDimensionDeletedValue:dimension value has been deleted:la valeur a été sup
 syncCfgFieldsNewValue:new field in config:nouveau champ défini dans la config:::::::
 syncCfgFieldsDeletedValue:field deleted from config:le champ a été supprimé de la config:::::::
 
-fileLoading:Your file is preparing to be downloaded...:Votre fichier est en préparation de téléchargement...:::::::::
-boxLoading:Your Box file is preparing to be downloaded...:Votre fichier Box est en préparation de téléchargement...:::::::::
-savingMsg:Save in progress:Sauvegarde en cours:::::::::
-boxFile:File's Box:Fichier Box:::::::::
+fileDownloading:Your file is beeing prepared to be downloaded...:Votre fichier est en préparation de téléchargement...:::::::::
+boxFileDownloading:Your file is beeing prepared to be downloaded from Box.com...:Votre fichier est en préparation de téléchargement depuis Box.com...:::::::::
+boxFileUploading:Your file is beeing uploaded to Box.com...:Votre fichier est en cours de téléchargement vers Box.com...:::::::::
+boxFile:File is located into Box folder:Le fichier est stocké dans le dossier Box:::::::::
 boxFileFolder:File will be uploaded in Box in the folder:Le fichier va être sauvegardé sur Box dans le dossier:::::::::
 
 cmsAnchorTop:top:haut:::::::::

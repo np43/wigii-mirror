@@ -21,11 +21,11 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 6 oct. 09
- * by LWR
+/**
+ * Created on 6 oct. 09 by LWR
  * modified on 8 April 2012 by Benjamin Girardet
  * - add the sx = true and make the xml generation through a simpleXml object
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 
@@ -167,6 +167,7 @@ class ElementPListExportXml extends ElementPListWebImplWithWigiiExecutor impleme
 	private function getTrm(){
 		if(!isset($this->trm_)){
 			$this->trm_ = TemplateRecordManager::createInstance();
+			$this->trm_->setWorkzoneViewDocked($this->isWorkzoneViewDocked());
 		}
 		return $this->trm_;
 	}

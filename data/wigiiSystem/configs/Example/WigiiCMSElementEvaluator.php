@@ -89,7 +89,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				fskl(fsk('contentPosition','value'))
 			)), 
 			dfasl(
-				dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('concat',fx('htmlStartTag','option','value',fs('contentPosition')),fs('contentSummary'),fx('htmlEndTag','option'))),
+				dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('concat',fx('htmlStartTag','option','value',fs('contentPosition')),fx('str_replace',"'","\\'",fs('contentSummary')),fx('htmlEndTag','option'))),
 				dfas('StringBufferDFA')
 			)
 		);
@@ -112,6 +112,38 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		case "siteMap": $this->cms_auhoringOnSaveSiteMap(); break;
 		}
 	}
+	
+	/**
+	 * Summarizes article content or title into a single line of non html text<br/>
+	 * FuncExp signature is: <code>cms_summarize(txt)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) txt: String. The html string to summarize
+	 * @return String. The summarized string
+	 */
+	public function cms_summarize($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$returnValue = '';
+		if($nArgs>0) {
+			$txt = $this->evaluateArg($args[0]);
+			$html2text = new Html2text();
+			if(is_array($txt)) {
+				foreach($txt as $t) {					
+					$html2text->html2text($t);
+					$returnValue .= $html2text->get_text();
+					$html2text->clear();
+					$returnValue .= ' ';
+				}
+			}
+			else {
+				$html2text->html2text($txt);
+				$returnValue = $html2text->get_text();
+				$html2text->clear();
+			}
+			$returnValue = substr($returnValue,0,255);
+		}
+		return $returnValue;
+	}
+	
 	/**
 	 * Specific authoring process when saving content
 	 * - calculates the position of the article
@@ -175,19 +207,6 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			if(!($params instanceof WigiiBPLParameter)) throw new FuncExpEvalException('cms_processUrl takes at least one argument which is a WigiiBPLParameter object containing the parsedUrl array', FuncExpEvalException::INVALID_ARGUMENT);
 			// extracts parsedUrl
 			$parsedUrl = $params->getValue('parsedUrl');
-			// extracts language
-			$languages = ServiceProvider::getTranslationService()->getVisibleLanguage();
-			if(is_array($parsedUrl)) {
-				// if first parameter is a valid language then extracts it
-				if($languages[$parsedUrl[0]]) {
-					$params->setValue('language', $parsedUrl[0]);
-					array_shift($parsedUrl);
-				}
-				// else default language
-				else  $params->setValue('language', 'l01');
-			}
-			elseif($languages[$parsedUrl]) $params->setValue('language', $parsedUrl);
-			else $params->setValue('language', 'l01');
 			
 			// extracts folder path and file name
 			if(is_array($parsedUrl)) {
@@ -211,7 +230,15 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			}
 			// else folder identified
 			else {
-				$folderPath .= $fileName.'/';
+				// extracts language
+				$languages = ServiceProvider::getTranslationService()->getVisibleLanguage();
+				// if last parameter is a valid language then extracts it
+				if($languages[$fileName]) {
+					$params->setValue('language', $fileName);
+				}	
+				// else keeps complete folder path
+				else $folderPath .= $fileName.'/';
+				
 				$returnValue = $this->evaluateFuncExp(fx('cms_getContent',array($folderPath,$params)),$this);
 			}			
 		}
@@ -291,23 +318,33 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			if(empty($url)) throw new FuncExpEvalException('cms_getContent takes at least one argument which is the logical URL of the content', FuncExpEvalException::INVALID_ARGUMENT);
 			// gets options
 			if($nArgs>1) $options = $this->evaluateArg($args[1]);
-			if($options instanceof WigiiBPLParameter) {
-				$language = $options->getValue('language');
-			}
-			// else default options
-			else {
-				$language = 'l01';
-				$options = wigiiBPLParam('language',$language);
-			}
+			if(!($options instanceof WigiiBPLParameter)) $options = wigiiBPLParam();			
 			$options->setValue('url',$url);
 			
 			// lookups groupId associated to url
 			$groupId = $this->evaluateFuncExp(fx('cms_getGroupIdForUrl',$url),$this);
 			if(empty($groupId)) throw new FuncExpEvalException("No content found at $url", FuncExpEvalException::NOT_FOUND);			
 			else $options->setValue('groupId',$groupId);
+			
+			// gets site map
+			$siteMap = $this->cms_getSiteMap($options);
+			if(!isset($siteMap)) throw new FuncExpEvalException("No content found at $url", FuncExpEvalException::NOT_FOUND);	
+			
 			// gets languages
 			$transS = ServiceProvider::getTranslationService();
-			$languages = $transS->getVisibleLanguage();
+			$languages = $siteMap->getFieldValue('supportedLanguage');
+			if(empty($languages)) $languages = $transS->getVisibleLanguage();
+			elseif(is_array($languages)) $languages = array_intersect_key($transS->getVisibleLanguage(), $languages);			
+			else $languages = array($languages=>$languages);
+			$options->setValue('languages',$languages);
+			
+			// gets default language
+			$language = $options->getValue('language');
+			if(!isset($language)) {
+				$language = $siteMap->getFieldValue('defaultLanguage');				
+				if(!isset($language)) $language='l01';
+				$options->setValue('language',$language);
+			}
 			
 			// gets page title and intro
 			$intro = $this->cms_getIntro($options);
@@ -357,16 +394,17 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 						fx('htmlEndTag','div'),"\n",
 					fx('htmlEndTag','div'),"\n")
 				),
-				dfas('StringSepDFA','setHeader',$this->cms_getHtmlHeader($options)."\n<body>\n".
+				dfas('StringSepDFA','setHeader',$this->cms_getHtmlHeader($options)."\n<body>".'<div class="wigii-globalContainer">'."\n".
 				'<div class="wigii-cms">'."\n".
-				'<div class="wigii-cms title" id="top"><div class="wigii-cms title-content">&nbsp;</div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
-				'<div class="wigii-cms content">'.(empty($intro)?'&nbsp;':$intro).'</div>'."\n".
+				'<div class="wigii-cms title" id="top"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
+				'<div class="wigii-cms content">'.(empty($intro)?' ':$intro).'</div>'."\n".
 				'</div>'."\n",
 				'setFooter',"\n".
-				'<div class="wigii-cms">'."\n".
-				'<div class="wigii-cms title" id="bottom"><div class="wigii-cms title-content">&nbsp;</div><div class="wigii-cms a-top">'.$atopLink.'</div></div>'."\n".
-				'<div class="wigii-cms content">'.(empty($footer)?'&nbsp;':$footer).'</div>'."\n".
-				'</div>'."\n".
+				'<p style="color:#fff;">.</p></div>'.(empty($footer)?' ':$footer).
+				//'<div class="wigii-cms">'."\n".
+				//'<div class="wigii-cms title" id="bottom"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$atopLink.'</div></div>'."\n".
+				//'<div class="wigii-cms content">'.(empty($footer)?' ':$footer).'</div>'."\n".
+				//'</div>'."\n".
 				(!empty($js)?"<script>".$js."</script>\n":'')."</body>\n</html>",'setSeparator',"\n"),
 				dfas('EchoDFA')
 				)
@@ -483,7 +521,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 -->
 <html>
 <head>
-<base href=".$url" />
+<base href="$url" />
 $title
 <meta name="Copyright" content="Source Code: 2016 Wigii.org" />
 <meta name="License" content="GNU GPL 3.0" />
@@ -507,6 +545,9 @@ HTMLHEAD;
 html, body { height:100%; padding: 0px; margin:0px; font-family:arial; }
 a { text-decoration: none;}
 a:hover { text-decoration: underline; }
+div.wigii-globalContainer {
+	min-height:100%;
+}
 div.wigii-cms {
 	width:100%;
 	box-sizing:border-box;
@@ -519,7 +560,7 @@ div.wigii-cms.title-content {
 	float:left;	
 	width:80%;
 	padding-left:50px;
-	
+	padding-right:50px;
 }
 div.wigii-cms.a-top {
 	float:right;
@@ -537,7 +578,8 @@ div.wigii-cms.content {
 	clear:left;
 	color: #696969;
 	margin:0px;
-	padding-left:50px;	
+	padding-left:50px;
+	padding-right:50px;
 }
 span.wigii-cms.content-sep {
 	font-size:22px;
@@ -568,11 +610,28 @@ HTMLCSS;
 		$languages = $options->getValue('languages');
 		if(!isset($languages)) $languages = ServiceProvider::getTranslationService()->getVisibleLanguage(); 
 		$returnValue = '';
-		foreach($languages as $lan=>$language) {
-			if($returnValue) $returnValue .= '&nbsp;|&nbsp;';
-			$returnValue .= '<a href="./'.$lan.'">'.$language.'</a>';
+		if(count($languages)>1) {
+			foreach($languages as $lan=>$language) {
+				if($returnValue) $returnValue .= ' | ';
+				$returnValue .= '<a href="./'.$lan.'">'.$language.'</a>';
+			}
 		}
 		return $returnValue;
+	}
+	
+	/**
+	 * Returns a SiteMap element given its folder ID
+	 * @param WigiiBPLParameter $options some rendering options
+	 * @return Element found element with fields siteUrl, supportedLanguage, defaultLanguage or null if not found
+	 */
+	protected function cms_getSiteMap($options) {
+		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
+				lf(fsl(fs('siteUrl'),fs('supportedLanguage'),fs('defaultLanguage')),
+				lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')),
+				null,1,1)),
+				dfasl(dfas("NullDFA")));
+		if(isset($returnValue)) $returnValue = $returnValue->getDbEntity();
+		return $returnValue;	
 	}
 	
 	/**
@@ -691,7 +750,7 @@ HTMLCSS;
 		$returnValue = null;
 		switch($contentType) {
 			case "content": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentTitle"),fs("contentHTML")); break;
-			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("siteMap")); break;
+			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
 			case "intro": $returnValue = fsl(fs("siteTitle"),fs("contentIntro")); break;
 			case "image": $returnValue = fsl(fs("contentImage")); break;
 			case "footer": $returnValue = fsl(fs("contentFooter")); break;

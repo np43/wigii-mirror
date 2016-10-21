@@ -2,7 +2,7 @@
 * Module View
 **************************************/
 #moduleView {
-	float:none;
+	/*float:left; since 30.08.2016 manage from JS*/
 	display:block;
 	overflow-y:hidden;
 	overflow-x:none;

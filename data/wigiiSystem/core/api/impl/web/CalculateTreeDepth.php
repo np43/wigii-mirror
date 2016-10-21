@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 20 juil. 10
- * by LWR
+/**
+ * Created on 20 juil. 10 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class CalculateTreeDepth extends Model implements TreeInDepthVisitor {
@@ -38,7 +38,7 @@ class CalculateTreeDepth extends Model implements TreeInDepthVisitor {
 	public function reset(){
 		$this->depth = 0;
 	}
-	public function createInstance(){
+	public static function createInstance(){
 		$r = new self();
 		$r->reset();
 		return $r;

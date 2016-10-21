@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 12 October 2011
- * by LWR
+/**
+ * Created on 12 October 2011 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class FiltersSelectSearchBarFieldList implements FieldList {
@@ -151,9 +151,9 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 					}else{
 						$attrLabel = $option;
 					}
-					$html2text->html2text($attrLabel);
-					$attrLabel = $html2text->get_text();
-					$html2text->clear();
+					$html2text->setHtml($attrLabel);
+					$attrLabel = $html2text->getText();
+// 					$html2text->clear();
 					$attribute .= '<attribute>'.(string)$option.'<label>'.str_replace(array("&", "<", ">"), array("&amp;", "&lt;", "&gt;"), $attrLabel).'</label></attribute>';
 				}
 				unset($html2text);

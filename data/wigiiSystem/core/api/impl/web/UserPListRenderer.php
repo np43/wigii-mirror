@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 20 janv. 10
- * by LWR
+/**
+ * Created on 20 janv. 10 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class UserPListRenderer implements UserPList {
@@ -53,7 +53,7 @@ class UserPListRenderer implements UserPList {
 	public function setP($p){ $this->p = $p; }
 	protected function getp(){ return $this->p; }
 	
-	public function createInstance($p, $id){
+	public static function createInstance($p, $id){
 		$r = new self();
 		$r->setId($id);
 		$r->setP($p);

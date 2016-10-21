@@ -17,7 +17,7 @@
 	border-left-width:0px;
 }
 
-#groupPanel>div.collapse {
+#groupPanel>div.collapse, #dockingContainer>div.collapse {
 	float:right;
 	width:10px;
 	height:10px; /* updated by JS*/
@@ -28,6 +28,12 @@
 	padding:1px;
 	vertical-align:middle;
 }
+
+#dockingContainer>div.collapse {
+	float:left;
+	display:none;
+}
+
 #groupPanel #group_0, #groupPanel .keepNotify {
 	margin-right:12px;
 }

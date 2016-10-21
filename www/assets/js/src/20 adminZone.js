@@ -985,8 +985,8 @@ function adminUserDetailOnResize(){
 	if($('#adminUser_list').length>0){
 		if(browserName == "msie" && version =="8") corr = 25;
 		else corr = 5;
-		$('#adminUser_detail').width($(window).width()-$('#adminUser_list').outerWidth()-corr);
 		$('#adminUser_list').css('height', $(window).height()-$('#adminUser_list').position().top -$('#footerBar').outerHeight()-5);
+		$('#adminUser_detail').width($(window).width()-$('#adminUser_list').outerWidth()-corr);
 		$('#elementDetail').width($('#adminUser_detail').width()-60-5); //60 is internal padding
 		$('#elementDetail').css('height', $(window).height()-$('#elementDetail').position().top -$('#footerBar').outerHeight()-10);
 		//position the scroll on selected element

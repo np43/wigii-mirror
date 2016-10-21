@@ -57,6 +57,10 @@ class ElementPListRowsForPreview implements ElementPList, DataFlowActivity {
 	protected function isElementBlocked() {return $this->elementIsBlocked;}
 	public function setElementIsBlocked($bool) {$this->elementIsBlocked = $bool;}
 	
+	private $elementIsReadonly;
+	protected function isElementReadonly() {return $this->elementIsReadonly;}
+	public function setElementIsReadonly($bool) {$this->elementIsReadonly = $bool;}
+	
 	private $p;
 	protected function getP(){ return $this->p; }
 	public function setP($var){ $this->p = $var; }
@@ -186,12 +190,12 @@ class ElementPListRowsForPreview implements ElementPList, DataFlowActivity {
 			if($element->isState_blocked() || $this->isElementBlocked()) {
 				$trm->put('<td class="disabledBg"><div>'.$trm->doFormatForState('blocked', true).'</div></td>'); //no restore
 			}
-			elseif(!$elementP->getRights()->canWriteElement()) {
+			elseif(!$elementP->getRights()->canWriteElement() || $this->isElementReadonly()) {
 				$trm->put('<td class="disabledBg"><div></div></td>'); //no restore
 			}
 			else $trm->put('<td class="restore"><div></div></td>'); //restore
 		} else {						
-			if(!$elementP->getRights()->canWriteElement() || $element->isState_blocked() || $this->isElementBlocked() || $this->getLinkType() == Links::LINKS_TYPE_QUERY) {
+			if(!$elementP->getRights()->canWriteElement() || $this->isElementReadonly() || $element->isState_blocked() || $this->isElementBlocked() || $this->getLinkType() == Links::LINKS_TYPE_QUERY) {
 				$s = '';
 				$s .= $trm->doFormatForState('approved', $element->isState_approved(), false, true);
 				$s .= $trm->doFormatForState('finalized', $element->isState_finalized(), false, true);

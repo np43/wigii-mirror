@@ -21,11 +21,13 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 24/06/2013
- * by LWR
+/**
+ * Created on 24/06/2013 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 $exec = $this->getExecutionService();
+$readonly = $this->getRecord()->getWigiiBag()->isReadonly($fieldName);
+$disabled = $this->getRecord()->getWigiiBag()->isDisabled($fieldName);
 
 $fieldXml = $field->getXml();
 if(!$this->isForNotification()){

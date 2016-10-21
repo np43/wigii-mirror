@@ -24,6 +24,7 @@
 /**
  * Core technical service provider
  * Created by CWE on 3 juin 09
+ * Modified by Medair in 2016 to integrate Box
  */
 class TechnicalServiceProvider
 {
@@ -981,18 +982,26 @@ class TechnicalServiceProvider
 		return $returnValue;
 	}
 	
+	private $boxServiceFormExecutor;
+	
 	/**
+	 * Creates Box.com facade facade
 	 * @return BoxServiceFormExecutor
 	 */
 	public static function getBoxServiceFormExecutor() {
 		return self::getInstance()->getBoxServiceFormExecutorInstance();
 	}
 	/**
-	 * Defaults as singlecall
+	 * defaults singleton
 	 */
 	protected function getBoxServiceFormExecutorInstance() {
-		$returnValue = ServiceProvider::createWigiiObject('BoxServiceFormExecutor');
-		return $returnValue;
+		if(!isset($this->boxServiceFormExecutor)) {
+			$this->boxServiceFormExecutor = $this->createBoxServiceFormExecutorInstance();
+		}
+		return $this->boxServiceFormExecutor;
+	}
+	protected function createBoxServiceFormExecutorInstance() {
+		return ServiceProvider::createWigiiObject('BoxServiceFormExecutor');
 	}
 	
 	// base infrastructure

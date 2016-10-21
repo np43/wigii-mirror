@@ -1,11 +1,28 @@
 
+.elementDialog.docked {
+	display: none;
+	padding: 10px;
+}
+
 .elementDialog .T {
 	margin-bottom:15px;
 	margin-top:-5px; margin-left:-8px; margin-right:-8px;
 	float:left;
 }
 
-.elementDialog .T>div {
+.elementDialog.docked .T {
+	margin: 2px 0 5px;
+}
+
+.elementDialog.docked .elementHistoric{
+	float: none;
+}
+
+.middleBox {
+	float: right;
+}
+
+.elementDialog .T>div, .middleBox .T>div, .middleBox .T>a {
 	padding:6px 3px 6px 28px;
 	float:left;
 	text-align:center;
@@ -14,67 +31,82 @@
 	cursor:pointer;
 }
 
-.elementDialog .T>div.el_edit {
-	background:url('../../images/icones/22x22/iconeditfiles22x22.png') 0px 3px no-repeat;
+.elementDialog .T>div.el_edit, .middleBox .T>div.el_edit {
+	background:url('../../images/icones/22x22/iconeditfiles22x22.png') 0 3px no-repeat;
 }
-.elementDialog .T>div.el_copy {
-	background:url('../../images/icones/22x22/iconcopy22x22.png') 0px 3px no-repeat;
+.elementDialog .T>div.el_copy, .middleBox .T>div.el_copy {
+	background:url('../../images/icones/22x22/iconcopy22x22.png') 0 3px no-repeat;
 }
-.elementDialog .T>div.el_copy {
-	background:url('../../images/icones/22x22/iconcopy22x22.png') 0px 3px no-repeat;
-}
-.elementDialog .T>div.el_status {
+.elementDialog .T>div.el_status, .middleBox .T>div.el_status {
 	padding-top:1px;
 	padding-bottom:1px;
-	background:url('../../images/icones/tango/22x22/emblems/emblem-noStatus.png') 0px 3px no-repeat;
+	background:url('../../images/icones/tango/22x22/emblems/emblem-noStatus.png') 0 3px no-repeat;
 }
-.elementDialog .T>div.el_organize {
-	background:url('../../images/icones/22x22/iconfolder22x22.png') 0px 3px no-repeat;
+.elementDialog .T>div.el_organize, .middleBox .T>div.el_organize {
+	background:url('../../images/icones/22x22/iconfolder22x22.png') 0 3px no-repeat;
 }
-.elementDialog .T>div.el_delete {
-	background:url('../../images/icones/26px/cancel.png') 0px 0px no-repeat;
+.elementDialog .T>div.el_delete, .middleBox .T>div.el_delete {
+	background:url('../../images/icones/26px/cancel.png') 0 0 no-repeat;
 }
-.elementDialog .T>div.el_feedback {
-	background:url('../../images/icones/22x22/iconfeedback22x22.png') 0px 3px no-repeat;
+.elementDialog .T>div.el_feedback, .middleBox .T>div.el_feedback, .middleBox .T>a.el_feedback {
+	background:url('../../images/icones/22x22/iconfeedback22x22.png') 0 3px no-repeat;
 }
-.elementDialog .T>div.el_sendLink {
-	background:url('../../images/icones/22x22/iconsendlink22x22.png') 0px 3px no-repeat;
+.elementDialog .T>div.el_sendLink, .middleBox .T>div.el_sendLink, .middleBox .T>a.el_sendLink {
+	background:url('../../images/icones/22x22/iconsendlink22x22.png') 0 3px no-repeat;
 }
-.elementDialog .T>div.el_back {
-	background:url('../../images/icones/tango/22x22/actions/dynamic-blue-left.png') 0px 3px no-repeat;
+.elementDialog .T>div.el_back, .middleBox .T>div.el_back {
+	background:url('../../images/icones/tango/22x22/actions/dynamic-blue-left.png') 0 3px no-repeat;
 	padding-top:1px;
 	padding-bottom:1px;
 	float:right;
 }
 div.ui-dialog-titlebar a.el_feedback, .elementDialog .T>a.el_feedback {
-	background:url('../../images/icones/18px/feedbacks.png') 0px 0px no-repeat;
+	background:url('../../images/icones/18px/feedbacks.png') 0 0 no-repeat;
 	padding:3px;
 	padding-left:20px;
 	float:right;
 	margin-right:10px;
 }
 div.ui-dialog-titlebar a.el_sendLink, .elementDialog .T>a.el_sendLink {
-	background:url('../../images/icones/18px/mail.png') 0px 0px no-repeat;
+	background:url('../../images/icones/18px/mail.png') 0 0 no-repeat;
 	padding:3px;
 	padding-left:20px;
 	float:right;
 	margin-right:10px;
 }
-div.ui-dialog-titlebar a.el_deleteDraft, .elementDialog .T>a.el_deleteDraft {
-	background:url('../../images/icones/tango/22x22/emblems/trash.png') 0px 0px no-repeat;
+div.ui-dialog-titlebar a.el_deleteDraft, .elementDialog .T>a.el_deleteDraft, .middleBox .T>a.el_deleteDraft {
+	background:url('../../images/icones/tango/22x22/emblems/trash.png') 0 0 no-repeat;
 	padding:3px;
 	padding-left:25px;
 	float:right;
 	margin-right:30px;
 }
 div.ui-dialog-titlebar a.el_printDetails, .elementDialog .T>a.el_printDetails {
-	background:url('../../images/icones/18px/print.png') 0px 0px no-repeat;
+	background:url('../../images/icones/18px/print.png') 0 0 no-repeat;
 	padding:3px;
 	padding-left:20px;
 	float:right;
 	margin-right:20px;
 	text-decoration:none;
 }
+
+.middleBox .T>a.el_printDetails {
+	background:url('../../images/icones/tango/22x22/actions/print.png') 0 2px no-repeat;
+}
+
+.middleBox .T>div.el_closeDetails {
+	background:url('../../images/icones/26px/close2.png') 0 0 no-repeat;
+}
+
+
+.middleBox .T>a {
+	background-position: 0;
+	color: black;
+	float: left;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
 div.ui-dialog-titlebar a.el_printDetails:hover {
 	text-decoration:underline;
 }
@@ -83,7 +115,7 @@ div.ui-dialog-titlebar a.el_printDetails:hover {
 div.elementDetail {
 	float:left;
 	/* add by ACA on 17.08.16 it for made an nearest positioned ancestor and solve a bug with position on scroll with IE & Chrome */
-    position: relative;
+	position: relative;
 }
 
 div.elementDetail h4, div.elementDetail h3 {
@@ -122,7 +154,7 @@ div.title,
 div.separator {
 	float:left;
 	margin-bottom:5px;
-	padding:5px 0px;
+	padding:5px 0;
 }
 div.value,
 div.field div.value {
@@ -130,11 +162,11 @@ div.field div.value {
 	min-height:26px;
 }
 div.field div.fieldGroup {
-	padding:2px 0px 2px 10px;
+	padding:2px 0 2px 10px;
 }
 div.field div.noFieldset {
 	border:none;
-	padding:2px 0px;
+	padding:2px 0;
 }
 
 
@@ -193,12 +225,12 @@ div.field div.preview table td>div {
 div.fdet {
 	word-wrap:break-word;
 	font-size:16px;
-	margin-bottom:0px;
+	margin-bottom:0;
 	font-weight:bold;
 }
 div.field div.file div.small {
 	font-size:small;
-	margin-bottom:0px;
+	margin-bottom:0;
 }
 div.fdet a, div.value a.fdet {
 	text-decoration:none;
@@ -234,7 +266,7 @@ div.field div.file div {
 }
 div.field div.file div.clear {
 	float:none;
-	padding:0px;
+	padding:0;
 }
 div.field div.file div img {
 	vertical-align:middle;
@@ -245,13 +277,13 @@ div.field div.text {
 	font-weight:normal;
 }
 div.field div.value p{
-	margin:0px;
+	margin:0;
 }
 
 div.displayId {
 	margin-top:5px;
 	margin-bottom:5px;
-	padding-left:0px;
+	padding-left:0;
 	font-size:0.9em;
 }
 div.displayId .label { color:#666; }
@@ -260,7 +292,7 @@ div.displayId .value { color:#000; }
 div.displayVersion {
 	margin-top:5px;
 	margin-bottom:5px;
-	padding-left:0px;
+	padding-left:0;
 	font-size:0.9em;
 }
 div.displayVersion .label { color:#666; }
@@ -269,12 +301,12 @@ div.displayVersion .value { color:#000; }
 .elementHistoric {
 	margin-top:5px;
 	margin-bottom:5px;
-	padding-left:0px;
+	padding-left:0;
 	font-size:0.9em;
 	float:left;
 }
 .elementHistoric>.label {
-	border-width:0px;
+	border-width:0;
 	padding-left:15px;
 	cursor:pointer;
 	width:95%;
@@ -293,15 +325,15 @@ div.displayVersion .value { color:#000; }
 }
 
 .elementHistoric table{
-	margin:0px;
+	margin:0;
 	margin-top:5px;
-	padding:0px;
+	padding:0;
 	border-collapse:collapse;
 	border:none;
 }
 .elementHistoric table td {
-	padding:0px;
-	margin:0px;
+	padding:0;
+	margin:0;
 }
 
 /*.elementStates>div.value img, .elementStates>div.value span {
@@ -328,7 +360,7 @@ div.elementStatusMenu.cm div.exit {
 	clear:both;
 }
 .elementGroups>div.value>div {
-	padding-top:0px;
+	padding-top:0;
 	padding-bottom:8px;
 /* 	to make the folder icons printable don't use the background property
 	padding-left:27px;
@@ -336,8 +368,8 @@ div.elementStatusMenu.cm div.exit {
 	*/
 }
 .elementGroups>div.value {
-	padding:0px;
-	margin:0px;
+	padding:0;
+	margin:0;
 }
 
 div.value div.generalButton {
@@ -353,7 +385,7 @@ div.value div.generalButton:hover>span{
 }
 
 div.value div.generalButton span {
-	margin-top:0px;
+	margin-top:0;
 	margin-left:5px;
 	margin-right:5px;
 }
@@ -366,7 +398,7 @@ div.value div.generalButton img {
 div.field.comments div.label {
 	width: 100%;
     padding: 5px 10px;
-    margin-bottom: 0px;
+    margin-bottom: 0;
     border-bottom: 1px solid #95c33b;
     font-weight: bold;
     color: #95c33b;    

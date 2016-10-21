@@ -24,6 +24,7 @@
 /**
  * GroupP - UserP matrix (Group rights per User and Roles)
  * Created on 20 janv. 10 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class MatrixGroupPListUserPListRenderer extends MatrixRenderer implements GroupPList, UserPList, UserRPList {
 
@@ -62,7 +63,7 @@ class MatrixGroupPListUserPListRenderer extends MatrixRenderer implements GroupP
 	protected function getTotalNumberOfUsers(){ return $this->totalNbOfUsers; }
 
 	//we need the adminContext to add the userListFilter to the GroupAdminService->getAllUsers()
-	public function createInstance($p, $id, $ac){
+	public static function createInstance($p, $id, $ac){
 		$r = new self();
 		$r->setId($id);
 		$r->setP($p);

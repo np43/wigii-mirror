@@ -20,6 +20,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
+/*
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details) 
+ */
+
 //timeout for external access
 externalAccessTimeoutTimer = null;
 previewCrtHeight = 10;
@@ -87,80 +91,132 @@ function getFullCKEditorToolbar(){
 	];
 }
 
+function boxChooseFile(inputBoxFileId, inputFileId, inputNameId, inputPathId, SITE_ROOT_forFileUrl){
+	$(inputBoxFileId).click(function(){
+		// Clears all previous callbacks
+		boxSelect.unregister(boxSelect.SUCCESS_EVENT_TYPE);
+		boxSelect.unregister(boxSelect.CANCEL_EVENT_TYPE);
+		//Register a success callback handler
+		boxSelect.success(function(response) {
+			var v = $(inputNameId).parent();
+			$(inputBoxFileId).hide();
+			$(inputFileId).hide();
+			boxSuccess(inputNameId, inputPathId, response, SITE_ROOT_forFileUrl, v);
+		}); 			
+		//Register a cancel callback handler
+		boxSelect.cancel(function() {/*nothing to do*/});		
+		//Launch the Box's File Picker
+		boxSelect.launchPopup();
+	});
+}
 function boxSuccess(inputNameId, inputPathId, response, SITE_ROOT_forFileUrl, v){
+	// Shows file management buttons
 	$('div.updateCurrentFile', v).show();
 	$('div.removeCurrentFile', v).show();
-	
 	$('div.downloadCurrentFile', v).hide();
-	
-	name = response[0].name;
-	fileId = response[0].id
-
-	type = name.substring(name.lastIndexOf("."), name.length);
-	
-	ext = name.substring(name.lastIndexOf('.')+1);
-	name = name.substring(0,name.lastIndexOf("."));
-	
-	//put the name of the file in the path box://xxxxx and the type of the file
+	// Extracts file info 
+	var name = response[0].name;
+	var fileId = response[0].id;
+	var dotSep=name.lastIndexOf(".");
+	var type='';
+	var ext='';
+	if(dotSep>-1) {
+		ext = name.substring(dotSep+1).toLowerCase();
+		type = '.'+ext;
+		name = name.substring(0,dotSep);
+	}	
+	// Puts the ID of the file in the path as box://xxxxx
 	$(inputPathId).val("box://".concat(fileId));
+	// Puts the type of the file
 	$(inputPathId.replace("path", "type")).val(type);
-	
+	// Hides Box file picker button
 	$(this).hide();	
+	// puts file name in text box and shows mime type
 	$(inputNameId).val(name).show().focus().change().select();
 	$('div.filePreview', v).css('background-image', 'url("'+SITE_ROOT_forFileUrl+'images/preview/prev.26.'+ext+'.png")');
 	$('div.filePreview', v).show();	
 }
-
-function boxChooseFile(inputBoxFileId, inputFileId, inputNameId, inputPathId, SITE_ROOT_forFileUrl){
-	$(inputBoxFileId).click(function(){ 
-
-		
-
-		//Launch the Box's File Picker
-		boxSelect.launchPopup();
-	
-		//Register a success callback handler
-		boxSelect.success(function(response) {
-			v = $(inputNameId).parent();
-			
-			$(inputBoxFileId).hide();
-			$(inputFileId).hide();
-						
-			boxSuccess(inputNameId, inputPathId, response, SITE_ROOT_forFileUrl, v);
-			
-		}); 
-			
-		//Register a cancel callback handler
-		boxSelect.cancel(function() {
-			/*nothing to do*/
-		});
-	});
+/**
+ * Callback from BoxService which updates File info for the given field of type Files
+ * @param String inputFileId HTML id of field of type Files for which to update File info
+ * @param String fileName file name got from Box
+ * @param Numeric fileSize actual file size in bytes got from Box
+ * @param String fileSizeFormatted file size expressed as a string for end user
+ * @param String fileMime file MIME type got from Box
+ * @param String file date got from Box in format (YYYY-MM-DD HH:MM:SS)
+ * @param String fileDateFormatted file date expressed as a string for end user
+ */
+function boxUpdateFileInfo(inputFileId, fileName, fileType, fileMime, fileSize, fileSizeFormatted, fileDate, fileDateFormatted) {
+	// Extracts formId and field name from inputFileId
+	var formId = inputFileId.split('__');
+	var fieldName = formId[1];
+	formId = formId[0];
+	// Detects if we are in edit mode
+	if($('#'+inputFileId+' div.value input#'+formId+'_'+fieldName+'_path_hidden').length>0) {		
+		// Updates file name
+		$('#'+formId+'_'+fieldName+'_name_text').val(fileName);
+		// And all hidden fields
+		$('#'+formId+'_'+fieldName+'_size_hidden').val(fileSize);
+		$('#'+formId+'_'+fieldName+'_type_hidden').val(fileType);
+		$('#'+formId+'_'+fieldName+'_mime_hidden').val(fileMime);
+		$('#'+formId+'_'+fieldName+'_date_hidden').val(fileDate);
+	}
+	// Or in details mode
+	else {
+		var fileDet = $('#'+inputFileId+' div.value.file');
+		if(fileDet.length>0) {
+			// if small view
+			if(fileDet.find('div.fdet.small').length>0){
+				// updates file name
+				fileDet.find('div.fdet a.H.fileDownload').html(fileName);
+				// updates file date
+				fileDet.find('div.fdet font').html('('+fileSizeFormatted+', '+fileDateFormatted+')');
+				// updates file size
+				var e = fileDet.find('div.fdet a.fdet.fileDownload img');
+				if(e.attr('title')) e.attr('title',e.attr('title').replace(/\(.*\)/g,'('+fileSizeFormatted+')'));
+				e = fileDet.find('div.fdet img.checkOutIn');
+				if(e.attr('title')) e.attr('title',e.attr('title').replace(/\(.*\)/g,'('+fileSizeFormatted+')'));
+				
+			}
+			// else if normal view
+			else {
+				// updates file name
+				fileDet.find('div.fdet a.fileDownload').html(fileName);
+				// updates file date
+				fileDet.find('div.fdet font').html('('+fileDateFormatted+')');
+				// updates file size
+				fileDet.find('a.fdet.fileDownload div span font').html('('+fileSizeFormatted+')');
+			}
+		}
+	} 		
 }
-
 function addJsCodeOnFileInput(inputFileId, inputNameId, inputPathId, clickToBrowseAndFindANewFile, SITE_ROOT_forFileUrl){
-	v = $(inputNameId).parent();
+	var v = $(inputNameId).parent();
+	var inputBoxFileId = inputPathId.replace('_path_hidden','_box_hidden');
 	$('div.removeCurrentFile', v).click(function(){
-		v = $(inputNameId).parent();
+		var v = $(inputNameId).parent();
 		$(this).hide();
 		
-		w = "#".concat($(inputNameId).parent().parent().attr('id'));
-		
+		var w = "#".concat($(inputNameId).parent().parent().attr('id'));
+
+		// Removes Box service tag on file removal
 		if(domElementHasWigiiService(w, "box")){
 			domElementRemoveWigiiService(w, "box");
 		}
-		
+		// Hides file operations
 		$('div.filePreview', v).hide();
 		$('div.updateCurrentFile', v).hide();
 		$('div.downloadCurrentFile', v).hide();
 		$('div.backToFilename', v).hide();
-		boxElement = inputFileId.concat('_box');
-		$(boxElement).show();
+		// Shows Box file picker button
+		$(inputBoxFileId).show();
+		// Shows Local file chooser
 		$(inputFileId).val('').show();
 		$(inputNameId).val('').hide().change().blur(); //this is important to generate autoSave feature if activated
 		$(inputPathId).val('');
 	});
 	$('div.backToFilename', v).click(function(){
-		v = $(inputNameId).parent();
+		var v = $(inputNameId).parent();
 		$(this).hide();
 		$('div.filePreview', v).show();
 		$('div.updateCurrentFile', v).show();
@@ -169,28 +225,23 @@ function addJsCodeOnFileInput(inputFileId, inputNameId, inputPathId, clickToBrow
 		$(inputNameId).show();
 	});
 	$('div.updateCurrentFile', v).click(function(e){
-			
+		var v = $(inputNameId).parent();	
 		if($(inputPathId).val().indexOf("box://")>=0 && window.boxSelect){
-			
-			boxSelect.launchPopup();
-			v = $(inputNameId).parent();
+			// Clears all previous callbacks
+			boxSelect.unregister(boxSelect.SUCCESS_EVENT_TYPE);
+			boxSelect.unregister(boxSelect.CANCEL_EVENT_TYPE);
 			//Register a success callback handler
 			boxSelect.success(function(response) {
-		
 				$('div.downloadCurrentFile', v).hide();
 				$('div.removeCurrentFile', v).hide();
-
 				boxSuccess(inputNameId, inputPathId, response, SITE_ROOT_forFileUrl, v);
-		
-			}); 
-				
-			//Register a cancer callback handler
-			boxSelect.cancel(function() {
-				
-			});
+			}); 			
+			//Register a cancel callback handler
+			boxSelect.cancel(function() {/*nothing to do*/});		
+			//Launch the Box's File Picker
+			boxSelect.launchPopup();
 			
-		}else{
-			v = $(inputNameId).parent();
+		} else {
 			$(this).hide();
 			$('div.removeCurrentFile', v).show();
 			$('div.filePreview', v).hide();
@@ -201,22 +252,24 @@ function addJsCodeOnFileInput(inputFileId, inputNameId, inputPathId, clickToBrow
 		}
 	});
 	$(inputFileId).click(function(){ hideHelp(); }).change(function(){
-		v = $(inputFileId).parent();
+		var v = $(inputFileId).parent();
 		$('div.backToFilename', v).hide();
 		$('div.updateCurrentFile', v).show();
 		$('div.removeCurrentFile', v).show();
-		name = $(this).val();
+		var name = $(this).val();
 		name = name.substring(name.lastIndexOf('"."\\"."\\"."')+1);
-		ext = name.substring(name.lastIndexOf('.')+1);
+		var ext = name.substring(name.lastIndexOf('.')+1);
 		name = name.substring(0, name.lastIndexOf('.'));
 		//remove any local path in the name
-		re = new RegExp('.*/', "g");
+		var re = new RegExp('.*/', "g");
 		name = name.replace(re, '');
 		re = new RegExp('.*\\\\', "g");
 		name = name.replace(re, '');
+		// hides local File chooser
 		$(this).hide();	
-		boxElement = inputFileId.concat('_box');
-		$(boxElement).hide();
+		// hides Box file picker
+		$(inputBoxFileId).hide();
+		// puts file name in text box and shows mime type
 		$(inputNameId).val(name).show().focus().select();
 		$('div.filePreview', v).css('background-image', 'url("'+SITE_ROOT_forFileUrl+'images/preview/prev.26.'+ext+'.png")');
 		$('div.filePreview', v).show();
@@ -311,6 +364,8 @@ function addJsCodeOnOnLineFileInput(textContentId, inputNameId, template, cancel
 	});
 }
 
+var progressBarTimeout = null;
+var savingBarTimeout = null;
 function getAjaxformOption(formId){
 	return {
 		success: parseUpdateResult,
@@ -321,12 +376,25 @@ function getAjaxformOption(formId){
 			}
 		},
 		beforeSubmit:  function(){
-//			$(window).scrollTop(0);
 			hideHelp(); setVis('busyDiv', true); 
-			
-//			if(formId == "#editElement_form" || formId == "#addElement_form"){
-//				setVis('uploadBoxFile', true);
-//			}
+			// show long run loading bar if server side response takes more than 2 seconds
+			if(savingBarTimeout==null){
+				savingBarTimeout = setTimeout(function(){ 
+					$("#savingBar").html(wigii().context.serverSavingWaitingMsg).show();
+					// if Form has Fields linked to box-upload service, then shows Box specific waiting message
+					if($(formId).wigii('FormHelper').fields("[data-wigii-service~='box-upload']").$.length) {
+						var boxCtx = wigii().context.box;
+						boxCtx.showBoxWaitingMsg = true;
+						if(!boxCtx.waitForBoxUpload) boxCtx.waitForBoxUpload = function() {
+							if(wigii().context.box.showBoxWaitingMsg) $("#savingBar").html(wigii().context.box.serverSavingWaitingMsg).show();
+							else $("#savingBar").html(wigii().context.serverSavingWaitingMsg).show();
+							wigii().context.box.showBoxWaitingMsg = !wigii().context.box.showBoxWaitingMsg;
+							savingBarTimeout = setTimeout(wigii().context.box.waitForBoxUpload, 5000);
+						};
+						savingBarTimeout = setTimeout(boxCtx.waitForBoxUpload, 3500);						
+					}
+				}, 2000);
+		    }
 		},
 		uploadProgress: function(event, position, total, percentComplete) {
 	        $("#formProgressBar").progressbar({
@@ -343,7 +411,6 @@ function getAjaxformOption(formId){
 		error: errorOnUpdate, cache:false };
 }
 
-var progressBarTimeout = null;
 function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	$(formId+' textarea.htmlArea').each(function(){
 		var editorID = $(this).attr('id');
@@ -549,7 +616,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	$(formId+' div.field').mouseleave(function(e){
 		$(this).find(".addinfo").hide();
 	});
-	addScrollWithShadow($(formId).parent().prop("id"));
+	if(isWorkzoneViewMode) addScrollWithShadow($(formId).parent().prop("id"));	
 }
 
 function convertTimestamps(obj){
@@ -651,7 +718,7 @@ function actOnDisplayOnRightSide(elementDialogId, fieldId, journalItemWidth, tot
 			$('#'+elementDialogId+' .elementDetail>table td.center').width(totalWidth+22);
 			$('#'+elementDialogId+'').closest('.ui-dialog').width(totalWidth+journalItemWidth+32);
 			$('#'+elementDialogId+'>div.T').width(totalWidth+journalItemWidth+31);
-			$('#'+elementDialogId+'').closest('.ui-dialog').css('left', Math.min($('#'+elementDialogId+'').closest('.ui-dialog').position().left, $(window).width()-$('#'+elementDialogId+'').closest('.ui-dialog').outerWidth()-5));
+			if($('#'+elementDialogId+'').closest('.ui-dialog').position()) $('#'+elementDialogId+'').closest('.ui-dialog').css('left', Math.min($('#'+elementDialogId+'').closest('.ui-dialog').position().left, $(window).width()-$('#'+elementDialogId+'').closest('.ui-dialog').outerWidth()-5));
 //			$('#'+elementDialogId+' .elementDetail').before('<div style="position:fixed;margin-top:-50px;margin-left:'+(totalWidth+19)+'px;border-width:2px;padding:5px;width:'+(journalItemWidth+20)+'px;background-color:#fff;" id="elementRightSide" class="SBIB ui-corner-all"></div>');
 		} else if($('#mainDiv .elementDetail').length){
 			//in print mode
@@ -691,7 +758,7 @@ function actOnDisplayOnRightSide(elementDialogId, fieldId, journalItemWidth, tot
 			$('#'+elementDialogId+' form>table td.center').width(totalWidth+12);
 			$('#'+elementDialogId+' form').width(totalWidth+journalItemWidth+32);
 			$('#'+elementDialogId+'').closest('.ui-dialog').width(totalWidth+journalItemWidth+37);
-			$('#'+elementDialogId+'').closest('.ui-dialog').css('left', Math.min($('#'+elementDialogId+'').closest('.ui-dialog').position().left, $(window).width()-$('#'+elementDialogId+'').closest('.ui-dialog').outerWidth()-5));
+			if($('#'+elementDialogId+'').closest('.ui-dialog').position()) $('#'+elementDialogId+'').closest('.ui-dialog').css('left', Math.min($('#'+elementDialogId+'').closest('.ui-dialog').position().left, $(window).width()-$('#'+elementDialogId+'').closest('.ui-dialog').outerWidth()-5));
 //			$('#'+elementDialogId+' form').wrapInner('<div class="center" />');
 //			$('#'+elementDialogId+' form>.center').before('<div style="position:fixed;margin-left:'+(totalWidth+12)+'px;border-width:2px;padding:5px;width:'+(journalItemWidth+20)+'px;background-color:#fff;" id="elementRightSide" class="SBIB ui-corner-all"></div>');
 		} else {
@@ -737,18 +804,20 @@ function actOnDisplayOnRightSide(elementDialogId, fieldId, journalItemWidth, tot
 
 // Displays a waiting message on file download
 function messageDownload(fieldId){
-	if(domElementHasWigiiService("#".concat(fieldId), "box")){
-		$('#fileLoadingBar').html(wigii().context.box.fileLoadingBarMsg);
-	}else{
-		$('#fileLoadingBar').html(wigii().context.std.fileLoadingBarMsg);
+	if(domElementHasWigiiService('#'+fieldId, 'box')) {
+		$('#fileDownloadingBar').html(wigii().context.box.fileDownloadingWaitingMsg);
+		setVis('fileDownloadingBar', true);	
 	}
-	setVis('fileLoadingBar', true);	
+	else {
+		$('#fileDownloadingBar').html(wigii().context.fileDownloadingWaitingMsg);
+		/* doesn't show fileDownloadingBar by default, but still restores default message inside */
+	}
 }
 
 function setListenerToDownloadFile(fieldId, fieldName, src){
 	$('#'+fieldId+' .fileDownload').click(function(e){
 		messageDownload(fieldId);
-		setTimeout(function() {setVis('fileLoadingBar', false)}, 5000); // time out to hide fileLoadingBar
+		if(domElementHasWigiiService('#'+fieldId, 'box')) setTimeout(function() {setVis('fileDownloadingBar', false);}, 5000); // time out to hide fileDownloadingBar
 		e.stopPropagation();
 		download(src);
 		return false; //if the click is on a link, prevent the link adress to be executed
@@ -966,8 +1035,8 @@ function setListenerToEmailExternalCode(
 	//resize subject input
 	$(emb).parent().find('input.subject').width(395-$(emb).parent().find('span.subject').width());
 
-	//hide externalaccess view and edit if element is readOnly
-	if($('#'+elementDialogId+' div.T div.el_edit').length==0){
+	//hide externalaccess view and edit if element is readOnly	
+	if((!isWorkzoneViewMode() && $('#'+elementDialogId+' div.T div.el_edit').length==0) || (isWorkzoneViewMode() && $('#searchBar .middleBox div.T div.el_edit').length==0)){
 		$('.externalAccessMenu input[value="externalAccessMenuViewLink"]').hide().next().hide().next().hide();
 		$('.externalAccessMenu input[value="externalAccessMenuEditLink"]').hide().next().hide().next().hide();
 		$('.externalAccessMenu input[value="externalAccessMenuStop"]').hide().next().hide().next().hide();
@@ -1283,6 +1352,13 @@ function setListenerForAutoSave(formId, submitUrlForAutoSave, labelAutoSaveTrigg
 	if($('#'+formId).parents('.ui-dialog').find('button.cancel').length){
 		$('#'+formId).parents('.ui-dialog').find('button.cancel').hide();
 	}
+	// Re-initializes middle box with toolbar from dialog box.
+	if(isWorkzoneViewMode()){
+		var middleBox = initMiddleBox();
+		middleBox.append($('#elementDialog .T').addClass('docked').css({'width':''}));
+		$('#searchBar .toolbarBox').hide();
+	}
+	
 }
 // called each time the server historizes an online html file.
 function actOnHistorizedHtmlFile(fieldName) {

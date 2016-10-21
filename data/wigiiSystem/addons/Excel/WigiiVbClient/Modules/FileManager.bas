@@ -1,23 +1,25 @@
 Attribute VB_Name = "FileManager"
-'-
-'This file is part of Wigii.
-'
-'Wigii is free software: you can redistribute it and\/or modify
-'it under the terms of the GNU General Public License as published by
-'the Free Software Foundation, either version 3 of the License, or
-'(at your option) any later version.
-'
-'Wigii is distributed in the hope that it will be useful,
-'but WITHOUT ANY WARRANTY; without even the implied warranty of
-'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-'GNU General Public License for more details.
-'
-'You should have received a copy of the GNU General Public License
-'along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
-'
-'@copyright  Copyright (c) 2000-2015 Wigii    https://github.com/wigii/wigii    http://www.wigii.org/system
-'@license    http://www.gnu.org/licenses/     GNU General Public License
-'-
+'**
+'*  This file is part of Wigii.
+'*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+'*
+'*  Wigii is free software: you can redistribute it and/or modify it
+'*  under the terms of the GNU General Public License as published by
+'*  the Free Software Foundation, either version 3 of the License,
+'*  or (at your option) any later version.
+'*
+'*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+'*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+'*  See the GNU General Public License for more details.
+'*
+'*  A copy of the GNU General Public License is available in the Readme folder of the source code.
+'*  If not, see <http://www.gnu.org/licenses/>.
+'*
+'*  @copyright  Copyright (c) 2016  Wigii.org
+'*  @author     <http://www.wigii.org/system>      Wigii.org
+'*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+'*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+'*/
 
 '----------------------------------------------------------------------------
 '- FILE MANAGER
@@ -71,7 +73,7 @@ Public FIDglobalBase As Integer
 '-------------------------------------------------------------
 Public Function FM_Initialize() As Integer
   Dim ref As Workbook
-  Dim error As Integer
+  Dim Error As Integer
   Dim fileIndex2 As PhyTable
   Dim TD As Range
   
@@ -80,8 +82,8 @@ Public Function FM_Initialize() As Integer
   fileIndex.Load ThisWorkbook.Worksheets(FM_HOSTSHEET).Range(FILEINDEX_TD)
         
   'Opens the global reference index
-  error = FM_getWorkbook(FIDglobalBase, ref)
-  If error = -2 Then
+  Error = FM_getWorkbook(FIDglobalBase, ref)
+  If Error = -2 Then
     FM_Initialize = -1
     Exit Function
   End If
@@ -114,8 +116,8 @@ End Function
 '-         -1 : invalid FID
 '-         -2 : invalid file path
 '-------------------------------------------------------------
-Public Function FM_getWorkbook(FID As Integer, output As Workbook) As Integer
-   Dim r As Range
+Public Function FM_getWorkbook(FID As Integer, Output As Workbook) As Integer
+   Dim R As Range
    Dim events As Boolean
    Dim errorNumber As Integer
    Dim lastActiveWb As Workbook
@@ -124,16 +126,16 @@ Public Function FM_getWorkbook(FID As Integer, output As Workbook) As Integer
    errorNumber = 0
    
    If Not FM_isFIDvalid(FID) Then
-      Set output = Nothing
+      Set Output = Nothing
       FM_openWorkbook = -1
       Exit Function
    End If
       
-   Set r = fileIndex.LogTable.Data.Cells(FID - FIDglobalBase + 1, 1)
+   Set R = fileIndex.LogTable.data.Cells(FID - FIDglobalBase + 1, 1)
    
    'Looks if the workbook is already open
    errorNumber = 1
-   Set output = Workbooks(r.Offset(0, 1).Value2)
+   Set Output = Workbooks(R.Offset(0, 1).Value2)
    errorNumber = 0
    FM_openWorkbook = 0
    Exit Function
@@ -144,7 +146,7 @@ openWorkbook:
    Application.EnableEvents = False
    Set lastActiveWb = ActiveWorkbook
    errorNumber = 2
-   Set output = Workbooks.Open(r.Offset(0, 2).Value2 & "\" & r.Offset(0, 1).Value2, _
+   Set Output = Workbooks.Open(R.Offset(0, 2).Value2 & "\" & R.Offset(0, 1).Value2, _
                                0, False, notify:=False)
    errorNumber = 0
    lastActiveWb.Activate
@@ -154,7 +156,7 @@ openWorkbook:
    
    'Invalid file path
 invalidPath:
-   Set output = Nothing
+   Set Output = Nothing
    Application.EnableEvents = events
    FM_openWorkbook = -2
    Exit Function

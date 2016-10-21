@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 18 sept. 13
- * by LWR
+/**
+ * Created on 18 sept. 13  by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class DeleteElementFormExecutor extends EditElementFormExecutor {
 
@@ -298,6 +298,7 @@ class DeleteElementFormExecutor extends EditElementFormExecutor {
 			if(!$element->isSubElement()) {
 				//remove from list
 				$exec->addJsCode("removeElementInList('" . $elementId . "');");
+				$exec->addJsCode("if(isWorkzoneViewMode()) manageWorkzoneViewDocked('clear');");
 				//refetch events if calendar view:
 				$exec->addJsCode("if($('#moduleView .calendar').length){ $('#moduleView .calendar').fullCalendar('refetchEvents');}");
 

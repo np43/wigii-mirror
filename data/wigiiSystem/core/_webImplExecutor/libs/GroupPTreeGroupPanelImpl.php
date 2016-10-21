@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 21 July 2011
- * by LWR
+/**
+ * Created on 21 July 2011 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
@@ -78,7 +78,7 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 		return $this->countData[$groupId];
 	}
 	
-	public function createInstance($p, $exec, $nbLevelToExpandOnInit, $displayContextMenu = true, $countData=null){
+	public static function createInstance($p, $exec, $nbLevelToExpandOnInit, $displayContextMenu = true, $countData=null){
 		$gt = new self();
 		$gt->setNbLevelToExpandOnInit($nbLevelToExpandOnInit);
 		$gt->setP($p);

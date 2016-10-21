@@ -43,7 +43,7 @@
 		Group_enableXmlPublish="0"
 		nbOfLevelToExpandOnInit="2"
 
-		autoSave="1"
+		autoSave="0"
 
 		elementTotalWidth="1000"
 		elementLabelWidth="200"
@@ -96,6 +96,16 @@
 			<groupSiteMap groupStart="1"><label_l01>Site Map</label_l01><label_l02>Site Map</label_l02></groupSiteMap>
 				<siteUrl enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1" defaultExp='concat("/")'><label_l01>Access URL</label_l01><label_l02>URL d&apos;accès</label_l02></siteUrl>
 				<folderId enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1" defaultExp='cfgCurrentGroup("id")'><label_l01>Folder ID</label_l01><label_l02>ID Dossier</label_l02></folderId>					
+				<supportedLanguage enableDynamicAttributes="1"  excelExport="auto" type="MultipleAttributs" useCheckboxes="1" useMultipleColumn='2' require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1">
+					<label_l01>Supported languages</label_l01><label_l02>Langues supportées</label_l02>
+					<attribute >l01<label>English</label></attribute>
+					<attribute checked="1">l02<label>Français</label></attribute>
+				</supportedLanguage>
+				<defaultLanguage enableDynamicAttributes="1" excelExport="auto" type="Attributs" useRadioButtons="1" useMultipleColumn='2' require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1">
+					<label_l01>Default language</label_l01><label_l02>Langue par défaut</label_l02>
+					<attribute >l01<label>English</label></attribute>
+					<attribute checked="1">l02<label>Français</label></attribute>
+				</defaultLanguage>			
 			<groupSiteMap groupEnd="1" expand="1"/>
 			<groupIntro groupStart="1"><label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></groupIntro>
 				<siteTitle enableDynamicAttributes="1" excelExport="auto" type="Varchars" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1"><label_l01>Browser title</label_l01><label_l02>Titre du navigateur</label_l02></siteTitle>
@@ -131,7 +141,7 @@
 			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="0" height="400" clearOnCopy="1" funcExp='trackHistory(status)'><label_l01>Comments</label_l01><label_l02>Commentaires</label_l02></comments>
 		<groupRight groupEnd="1" expand="1" noFieldset="1" />		
 		<onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='ctlSeq(cms_authoringOnSave(),logTrue())' />
-		<contentSummary type="Strings" hidden="1" htmlArea="1" funcExp='implode(" ",siteUrl,contentTitle,concat(contentImage.name,contentImage.type))'><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentSummary>
+		<contentSummary type="Strings" hidden="1" htmlArea="0" funcExp='implode(" ",siteUrl,cms_summarize(contentTitle),concat(contentImage.name,contentImage.type))'><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentSummary>
 	</fields>
 
 	<selectSearchBar>

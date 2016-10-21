@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 5 October 2011
- * by LWR
+/**
+ * Created on 5 October 2011 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class UserRoleAllocationRenderer implements UserList, UserPList {
@@ -61,7 +61,7 @@ class UserRoleAllocationRenderer implements UserList, UserPList {
 		return $this->orgRole[$roleId];
 	}
 
-	public function createInstance($p, $id){
+	public static function createInstance($p, $id){
 		$r = new self();
 		$r->setId($id);
 		$r->setP($p);

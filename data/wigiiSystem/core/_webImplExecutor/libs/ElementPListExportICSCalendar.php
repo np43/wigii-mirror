@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 21 November 2012
- * by LWR
+/**
+ * Created on 21 November 2012 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class ElementPListExportICSCalendar extends ElementPListWebImplWithWigiiExecutor {
@@ -282,9 +282,9 @@ class ElementPListExportICSCalendar extends ElementPListWebImplWithWigiiExecutor
 				}
 				$description = $finDescr;
 			}
-			$this->html2text->html2text($description);
+			$this->html2text->setHtml($description);
 			$this->put("DESCRIPTION:".str_replace(array("\n", "\r"), array('\n', ""), $this->html2text->get_text()));
-			$this->html2text->clear();
+// 			$this->html2text->clear();
 			$this->put("X-ALT-DESC;FMTTYPE=text/html:".str_replace(array("\n", "\r"), array('\n', ""), $description));
 		}
 		

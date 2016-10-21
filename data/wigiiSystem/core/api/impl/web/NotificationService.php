@@ -21,11 +21,11 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 20 nov. 09
- * by LWR
+/**
+ * Wigii email NotificationService 
+ * Created on 20 nov. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
-
 class NotificationService implements MultiplexedEvent {
 
 	private $_debugLogger;
@@ -861,56 +861,6 @@ class NotificationService implements MultiplexedEvent {
 		}
 		$result .= '<p></p>';
 		return $result;
-//
-//		$wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceName();
-//		$transS = $this->getTranslationService();
-//		//$text = '<h3>'.$transS->t($p, "notificationInTab")." ".($wigiiNamespace ? $wigiiNamespace.' - ' : "").$this->getTranslationService()->t($p, $module->getModuleName()).'</h3>';
-//		//$text .= '<p>'.$transS->t($p, "notificationIntroduction").':</p>';
-//		$text = "";
-//		$subject = null;
-//		switch($entityName){
-//			case "MultipleElement":
-//				switch ($eventName){
-//					case "insert":
-//						if(!$subject) $subject = $this->getTranslationService()->t($p, "thoseElementsAreImportedInGroups")."<br />";
-//					case "share":
-//						if(!$subject) $subject = $this->getTranslationService()->t($p, "thoseElementsAreAddedInGroups")."<br />";
-//					case "unshare":
-//						if(!$subject) $subject = $this->getTranslationService()->t($p, "thoseElementsAreRemovedFromGroups")."<br />";
-//					case "setShare":
-//						if(!$subject) $subject = $this->getTranslationService()->t($p, "thoseElementsAreSettedInGroups")."<br />";
-//					case "moveToModule":
-//						if(!$subject) $subject = $this->getTranslationService()->t($p, "thoseElementsAreMovedInModuleGroup")."<br />";
-//						ob_start();
-//						$this->getElementService()->displayGroups($p, $this->getExecutionService(), $gObj, null, null, true, $subject);
-//						$text .= ob_get_clean();
-//						break;
-//					default:
-//						$text .= '<p>'.str_replace($this->getShortSubject($p, $eventName, $entityName, $module), "", $this->getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj, true)).'.</p>';
-//				}
-//				break;
-//			case "Element":
-//				switch ($eventName){
-////					case "insert":
-////						if(!$subject) $subject = $this->getTranslationService()->t($p, "newElementInGroup")."<br />";
-//					case "delete":
-//						if(!$subject) $subject = $this->getTranslationService()->t($p, "thisElementIsDeleted")."<br />";
-//					case "share":
-//						if(!$subject) $subject = $this->getTranslationService()->t($p, "thisElementIsAddedToGroup")."<br />";
-//					case "unshare":
-//						if(!$subject) $subject = $this->getTranslationService()->t($p, "thisElementIsMovedOutOfGroup")."<br />";
-//						ob_start();
-//						$this->getElementService()->displayGroups($p, $this->getExecutionService(), (is_a($gObj, "GroupPList") ? $gObj : GroupListArrayImpl::createInstance()->addGroup($gObj)), null, null, true, $subject);
-//						$text .= ob_get_clean();
-//						break;
-//					default:
-////						$text .= '<p>'.str_replace($this->getShortSubject($p, $eventName, $entityName, $module), "", $this->getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj)).'.</p>';
-//				}
-//				break;
-//		}
-//
-////		$text .= '<p>'.$transS->t($p, "notificationConclusion").'</p>';
-//		return $text;
 	}
 	protected function getShortSubject($p, $eventName, $entityName, $module){
 		$wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceName();
@@ -1102,6 +1052,8 @@ class NotificationService implements MultiplexedEvent {
 					} else {
 						//if the file has changed (TEMPORARYUPLOADEDFILE_path)
 						$path = $rec->getFieldValue($field->getFieldName(), "path");
+						// CWE 16.09.2016 : skips attachements of Files located on Box
+						if(strstr($path, "box://")) continue;
 						//do not delete the file after send, as it is a stored file
 						$mail->createAttachment(
 							FILES_PATH.$path, false,
@@ -1221,6 +1173,9 @@ class NotificationService implements MultiplexedEvent {
 			foreach($rec->getFieldList()->getListIterator() as $field){
 				$fieldXml = $field->getXml();
 				if($fieldXml["attachContentInNotification"]=="1" && $field->getDataType() && $field->getDataType()->getDataTypeName()=="Files" && $rec->getWigiiBag()->isFilled($field->getFieldName())){
+					// CWE 16.09.2016 : skips attachements of Files located on Box
+					if(strstr($rec->getFieldValue($field->getFieldName(),'path'), "box://")) continue;
+					// Else shows attachements
 					$trm->displayLabel($field->getFieldName());
 					echo $trm->formatValueFromRecord($field->getFieldName(), "name", $rec);
 					echo $trm->formatValueFromRecord($field->getFieldName(), "type", $rec);

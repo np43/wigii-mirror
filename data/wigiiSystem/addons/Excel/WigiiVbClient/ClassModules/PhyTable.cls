@@ -4,28 +4,30 @@ BEGIN
 END
 Attribute VB_Name = "PhyTable"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-'-
-'This file is part of Wigii.
-'
-'Wigii is free software: you can redistribute it and\/or modify
-'it under the terms of the GNU General Public License as published by
-'the Free Software Foundation, either version 3 of the License, or
-'(at your option) any later version.
-'
-'Wigii is distributed in the hope that it will be useful,
-'but WITHOUT ANY WARRANTY; without even the implied warranty of
-'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-'GNU General Public License for more details.
-'
-'You should have received a copy of the GNU General Public License
-'along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
-'
-'@copyright  Copyright (c) 2000-2015 Wigii    https://github.com/wigii/wigii    http://www.wigii.org/system
-'@license    http://www.gnu.org/licenses/     GNU General Public License
-'-
+'**
+'*  This file is part of Wigii.
+'*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+'*
+'*  Wigii is free software: you can redistribute it and/or modify it
+'*  under the terms of the GNU General Public License as published by
+'*  the Free Software Foundation, either version 3 of the License,
+'*  or (at your option) any later version.
+'*
+'*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+'*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+'*  See the GNU General Public License for more details.
+'*
+'*  A copy of the GNU General Public License is available in the Readme folder of the source code.
+'*  If not, see <http://www.gnu.org/licenses/>.
+'*
+'*  @copyright  Copyright (c) 2016  Wigii.org
+'*  @author     <http://www.wigii.org/system>      Wigii.org
+'*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+'*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+'*/
 
 '---------------------------------------------------------------
 '- PHYSICAL TABLE
@@ -43,7 +45,7 @@ Attribute VB_Exposed = False
 '- Before using the DB don't forget to call LTFact_Initialize
 '- and load all physical tables
 '---------------------------------------------------------------
-
+Option Explicit
 '- Instance variables :
 Private descriptor As Range
 Private table As LogTable
@@ -72,11 +74,11 @@ End Property
 '- Input   : -
 '- Output  : the name or "" if the table is not loaded
 '-------------------------------------------------------------
-Public Property Get Name() As String
+Public Property Get name() As String
    If Not descriptor Is Nothing Then
-      Name = phyName
+      name = phyName
    Else
-      Name = ""
+      name = ""
    End If
 End Property
 
@@ -168,21 +170,21 @@ End Property
 '-------------------------------------------------------------
 Public Sub Load(descr As Range)
    Dim d As Range
-   Dim r As Integer, c As Integer
+   Dim R As Integer, c As Integer
    
    Set descriptor = descr
    Set d = phyFirstCell
-   r = phyRowCount: c = phyColCount
+   R = phyRowCount: c = phyColCount
    Set table = New LogTable
    
    'Binds the logical table to the physical range
    If phyHasHeader And (c > 0) Then
       With phySheet
-         table.SetRange .Range(d, d.Offset(r, c - 1)), True
+         table.SetRange .Range(d, d.Offset(R, c - 1)), True
       End With
-   ElseIf (r > 0) And (c > 0) Then
+   ElseIf (R > 0) And (c > 0) Then
       With phySheet
-         table.SetRange .Range(d, d.Offset(r - 1, c - 1)), False
+         table.SetRange .Range(d, d.Offset(R - 1, c - 1)), False
       End With
    Else
       table.SetRange Nothing, False
@@ -212,7 +214,7 @@ Public Function insertDelete(oldD As LogTable, newD As LogTable, col As Integer,
    
    Dim tmp1 As LogTable, tmp2 As LogTable
    Dim tmprange As Range
-   Dim r As Integer, c As Integer
+   Dim R As Integer, c As Integer
    
    If descriptor Is Nothing Or table Is Nothing Then
       insertDelete = -1 'Table not loaded
@@ -228,7 +230,7 @@ Public Function insertDelete(oldD As LogTable, newD As LogTable, col As Integer,
    
    'Builds the complementary of the old data in tmp1
    If oldD Is Nothing Then
-      tmp2.SetRange table.Data, False
+      tmp2.SetRange table.data, False
       Set tmp1 = tmp2.CopyTo(tmprange)
    Else
       Set tmp1 = LT_Complementary(oldD, table, col, tmprange, oldSorted, oldSortOrder, tSorted, tSortOrder)
@@ -236,7 +238,7 @@ Public Function insertDelete(oldD As LogTable, newD As LogTable, col As Integer,
       
    'Appends the new data to tmp1
    If Not newD Is Nothing Then
-      tmp2.SetRange newD.Data, False
+      tmp2.SetRange newD.data, False
       If Not tmp1 Is Nothing Then
          Set tmprange = tmprange.Offset(tmp1.rowCount, 0)
          Set tmp2 = tmp2.CopyTo(tmprange)
@@ -256,7 +258,7 @@ Public Function insertDelete(oldD As LogTable, newD As LogTable, col As Integer,
       
    'Deletes the old table
    If Not table.IsEmpty Then
-      table.Data.ClearContents
+      table.data.ClearContents
    End If
    
    'Copies the new data on the physical table
@@ -267,25 +269,25 @@ Public Function insertDelete(oldD As LogTable, newD As LogTable, col As Integer,
       Else
          Set tmp2 = tmp1.CopyTo(tmprange)
       End If
-      r = tmp2.rowCount: c = phyColCount
+      R = tmp2.rowCount: c = phyColCount
    Else
       Set tmp2 = Nothing
-      r = 0: c = phyColCount
+      R = 0: c = phyColCount
    End If
    
    'Builds the new physical table
    If phyHasHeader And (c > 0) Then
       With phySheet
-         table.SetRange .Range(tmprange, tmprange.Offset(r, c - 1)), True
+         table.SetRange .Range(tmprange, tmprange.Offset(R, c - 1)), True
       End With
-   ElseIf (r > 0) And (c > 0) Then
+   ElseIf (R > 0) And (c > 0) Then
       With phySheet
-         table.SetRange .Range(tmprange, tmprange.Offset(r - 1, c - 1)), False
+         table.SetRange .Range(tmprange, tmprange.Offset(R - 1, c - 1)), False
       End With
    Else
       table.SetRange Nothing, False
    End If
-   phyRowCount = r
+   phyRowCount = R
    
    If tSorted Then
       table.Sort col, tSortOrder
@@ -312,17 +314,17 @@ Public Function insertUpdate(uData As LogTable, col As Integer, _
                              Optional tSorted As Boolean = True, Optional tSortOrder As Integer = xlAscending, _
                              Optional dSorted As Boolean = True, Optional dSortOrder As Integer = xlAscending)
    Dim i As Integer, j As Integer, aj As Integer, bj As Integer
-   Dim t As Range, d As Range, res As Range, dest As Range
-   Dim r As Integer, c As Integer
+   Dim T As Range, d As Range, res As Range, dest As Range
+   Dim R As Integer, c As Integer
    
    If descriptor Is Nothing Or table Is Nothing Then
       insertUpdate = -1 'Table not loaded
       Exit Function
    End If
    
-   r = phyRowCount: c = phyColCount
-   Set t = table.Data
-   Set d = uData.Data
+   R = phyRowCount: c = phyColCount
+   Set T = table.data
+   Set d = uData.data
    Set dest = phyFirstCell
    If tSorted Then
       If dSorted Then
@@ -333,8 +335,8 @@ Public Function insertUpdate(uData As LogTable, col As Integer, _
          End If
          i = 1: j = 1
          Do While i <= table.rowCount And j <= uData.rowCount
-            Do While (t.Cells(i, col).Value2 < d.Cells(aj + bj * j, col).Value2 And tSortOrder = xlAscending) Or _
-                     (t.Cells(i, col).Value2 > d.Cells(aj + bj * j, col).Value2 And tSortOrder = xlDescending)
+            Do While (T.Cells(i, col).Value2 < d.Cells(aj + bj * j, col).Value2 And tSortOrder = xlAscending) Or _
+                     (T.Cells(i, col).Value2 > d.Cells(aj + bj * j, col).Value2 And tSortOrder = xlDescending)
                                        
                i = i + 1
                If i > table.rowCount Then
@@ -344,20 +346,20 @@ Public Function insertUpdate(uData As LogTable, col As Integer, _
             If i > table.rowCount Then
                Exit Do
             End If
-            If t.Cells(i, col).Value2 = d.Cells(aj + bj * j, col).Value2 Then
+            If T.Cells(i, col).Value2 = d.Cells(aj + bj * j, col).Value2 Then
                'Updates the data
-               t.Rows(i).Value2 = d.Rows(aj + bj * j).Value2
+               T.rows(i).Value2 = d.rows(aj + bj * j).Value2
                j = j + 1
             End If
             If j > uData.rowCount Then
                Exit Do
             End If
-            Do While (t.Cells(i, col).Value2 > d.Cells(aj + bj * j, col).Value2 And tSortOrder = xlAscending) Or _
-                     (t.Cells(i, col).Value2 < d.Cells(aj + bj * j, col).Value2 And tSortOrder = xlDescending)
+            Do While (T.Cells(i, col).Value2 > d.Cells(aj + bj * j, col).Value2 And tSortOrder = xlAscending) Or _
+                     (T.Cells(i, col).Value2 < d.Cells(aj + bj * j, col).Value2 And tSortOrder = xlDescending)
                
                'Inserts the data
-               getNextFreeRow(r, c).Value2 = d.Rows(aj + bj * j).Value2
-               r = r + 1: j = j + 1
+               getNextFreeRow(R, c).Value2 = d.rows(aj + bj * j).Value2
+               R = R + 1: j = j + 1
                If j > uData.rowCount Then
                   Exit Do
                End If
@@ -365,18 +367,18 @@ Public Function insertUpdate(uData As LogTable, col As Integer, _
          Loop
          Do While j <= uData.rowCount
             'Inserts the data
-            getNextFreeRow(r, c).Value2 = d.Rows(aj + bj * j).Value2
-            r = r + 1: j = j + 1
+            getNextFreeRow(R, c).Value2 = d.rows(aj + bj * j).Value2
+            R = R + 1: j = j + 1
          Loop
       Else
          For i = 1 To uData.rowCount
             Set res = table.FindDichotomy(d.Cells(i, col).Value2, col, tSortOrder)
             If res Is Nothing Then
                'Inserts the data
-               getNextFreeRow(r, c).Value2 = d.Rows(i).Value2
+               getNextFreeRow(R, c).Value2 = d.rows(i).Value2
             Else
                'Updates the data
-               Intersect(res.EntireRow, t).Value2 = d.Rows(i).Value2
+               Intersect(res.EntireRow, T).Value2 = d.rows(i).Value2
             End If
          Next i
       End If
@@ -385,11 +387,11 @@ Public Function insertUpdate(uData As LogTable, col As Integer, _
          Set res = table.FindLinear(d.Cells(i, col).Value2, col)
          If res Is Nothing Then
             'Inserts the data
-            getNextFreeRow(r, c).Value2 = d.Rows(i).Value2
-            r = r + 1
+            getNextFreeRow(R, c).Value2 = d.rows(i).Value2
+            R = R + 1
          Else
             'Updates the data
-            Intersect(res.EntireRow, t).Value2 = d.Rows(i).Value2
+            Intersect(res.EntireRow, T).Value2 = d.rows(i).Value2
          End If
       Next i
    End If
@@ -397,16 +399,16 @@ Public Function insertUpdate(uData As LogTable, col As Integer, _
    'Builds the new physical table
    If phyHasHeader And (c > 0) Then
       With phySheet
-         table.SetRange .Range(dest, dest.Offset(r, c - 1)), True
+         table.SetRange .Range(dest, dest.Offset(R, c - 1)), True
       End With
-   ElseIf (r > 0) And (c > 0) Then
+   ElseIf (R > 0) And (c > 0) Then
       With phySheet
-         table.SetRange .Range(dest, dest.Offset(r - 1, c - 1)), False
+         table.SetRange .Range(dest, dest.Offset(R - 1, c - 1)), False
       End With
    Else
       table.SetRange Nothing, False
    End If
-   phyRowCount = r
+   phyRowCount = R
    
    If tSorted Then
       table.Sort col, tSortOrder
@@ -473,8 +475,8 @@ End Property
 Private Property Get phyRowCount() As Integer
    phyRowCount = descriptor.Offset(0, 4).Value2
 End Property
-Private Property Let phyRowCount(ByVal r As Integer)
-   descriptor.Offset(0, 4).Value2 = r
+Private Property Let phyRowCount(ByVal R As Integer)
+   descriptor.Offset(0, 4).Value2 = R
 End Property
 
 Private Property Get phyColCount() As Integer
@@ -485,30 +487,30 @@ Private Property Let phyColCount(ByVal c As Integer)
 End Property
 
 Private Property Get phySheet() As Worksheet
-   Set phySheet = Worksheets(descriptor.Offset(0, 6).Value2)
+   Set phySheet = ThisWorkbook.Worksheets(descriptor.Offset(0, 6).Value2)
 End Property
 Private Property Set phySheet(s As Worksheet)
-   descriptor.Offset(0, 6).Value2 = s.Name
+   descriptor.Offset(0, 6).Value2 = s.name
 End Property
 
 Private Property Get phyFirstCell() As Range
    Set phyFirstCell = phySheet.Cells(descriptor.Offset(0, 7).Value2, _
                                      descriptor.Offset(0, 8).Value2)
 End Property
-Private Property Set phyFirstCell(r As Range)
-   descriptor.Offset(0, 6).Value2 = r.Worksheet.Name
-   descriptor.Offset(0, 7).Value2 = r.Row
-   descriptor.Offset(0, 8).Value2 = r.Column
+Private Property Set phyFirstCell(R As Range)
+   descriptor.Offset(0, 6).Value2 = R.Worksheet.name
+   descriptor.Offset(0, 7).Value2 = R.row
+   descriptor.Offset(0, 8).Value2 = R.column
 End Property
 
-Private Function getNextFreeRow(r As Integer, c As Integer) As Range
+Private Function getNextFreeRow(R As Integer, c As Integer) As Range
    If phyHasHeader Then
       With phyFirstCell
-         Set getNextFreeRow = .Worksheet.Range(.Offset(1 + r, 0), .Offset(1 + r, c - 1))
+         Set getNextFreeRow = .Worksheet.Range(.Offset(1 + R, 0), .Offset(1 + R, c - 1))
       End With
    Else
       With phyFirstCell
-         Set getNextFreeRow = .Worksheet.Range(.Offset(r, 0), .Offset(r, c - 1))
+         Set getNextFreeRow = .Worksheet.Range(.Offset(R, 0), .Offset(R, c - 1))
       End With
    End If
 End Function

@@ -24,6 +24,7 @@
 /**
  * Created on 4 déc. 09 by LWR
  * Modified by CWE on 25.02.2016 to display a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 
@@ -207,9 +208,9 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 			}
 			
 			// cleans up the html
-			$html2text->html2text($label);
-			$label = $html2text->get_text();
-			$html2text->clear();
+			$html2text->setHtml($label);
+			$label = $html2text->getText();
+// 			$html2text->clear();
 			$label = trim($label);
 			
 			if($attribute == "none" && $chosen){				

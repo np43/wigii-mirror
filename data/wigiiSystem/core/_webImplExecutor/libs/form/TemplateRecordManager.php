@@ -25,6 +25,7 @@
  * Main HTML renderer helper class. Helps rendering Element Form and Detail, using Element XML configuration.
  * Created on 3 dec. 09 by LWR
  * Updated on 23 march 10 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class TemplateRecordManager extends Model {
 
@@ -52,6 +53,17 @@ class TemplateRecordManager extends Model {
 	public function isForPreviewList(){ return $this->isForPreviewList; }
 	public function setForPreviewList($enable){ $this->isForPreviewList = $enable; return $this; }
 
+	private $isWorkzoneViewDocked;
+	public function isWorkzoneViewDocked(){
+		if($this->isWorkzoneViewDocked===null) {
+			$formExec = $this->getFormRenderer();
+			if(isset($formExec)) $formExec = $formExec->getFormExecutor();
+			if(isset($formExec)) $this->isWorkzoneViewDocked = $formExec->isWorkzoneViewDocked();
+		}
+		return $this->isWorkzoneViewDocked; 
+	}
+	public function setWorkzoneViewDocked($enable){ $this->isWorkzoneViewDocked = $enable; return $this; }
+	
 	private $record;
 	public function getRecord(){ return $this->record; }
 	public function setRecord($record){
@@ -431,6 +443,7 @@ class TemplateRecordManager extends Model {
 				}
 			}
 		}
+		$elementIsReadonly = $fieldXml['readonly']=='1' || $fieldXml['disabled']=='1';
 		
 		$listFilter = ListFilter::createInstance();
 		$listFilter->setFieldSelectorList($fsl);
@@ -489,6 +502,7 @@ class TemplateRecordManager extends Model {
 							'setLinkName', $linkName,
 							'setLinkType', $linkType,
 							'setElementIsBlocked', $elementIsBlocked,
+							'setElementIsReadonly', $elementIsReadonly,
 							'setPreviewListId', $previewListId,
 							'setWidth', $width)
 					), false);				
@@ -504,6 +518,7 @@ class TemplateRecordManager extends Model {
 				if(!$nb) {
 					// if no rows, then displays an empty table
 					$elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+					$elementPList->setElementIsReadonly($elementIsReadonly);
 					if($querySource instanceof ElementPListDataFlowConnector) {
 						$groupList = $querySource->getCalculatedGroupList();
 						if(isset($groupList) && !$groupList->isEmpty()) {
@@ -712,9 +727,9 @@ class TemplateRecordManager extends Model {
 						}
 						$val = implode(", ", $val);
 					}
-					$html2text->html2text($val);
-					$this->put("<TD><div>".$html2text->get_text()."</div></TD>");
-					$html2text->clear();
+					$html2text->setHtml($val);
+					$this->put("<TD><div>".$html2text->getText()."</div></TD>");
+// 					$html2text->clear();
 				}
 				$this->put("</TR>");
 				$nb++;

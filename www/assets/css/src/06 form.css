@@ -43,6 +43,10 @@ form select.filled + span.select2 {
     border-radius: 4px;	
 }
 
+.elementDialog.docked .publicFormBorder{
+	margin-bottom: 30px;
+	margin-right: 10px;
+}
 
 
 

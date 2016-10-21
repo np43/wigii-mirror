@@ -444,7 +444,6 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			if(!options) options = {};
 			if(options['resizable'] !== false) options.resizable=true;
 			if(options['closeable'] !== false) options.closeable=true;
-			
 			/**
 			 * Shows the popup 
 			 * or registers an event handler on show event
@@ -716,7 +715,10 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * @param options the help and popup options
 			 */
 			self.showHelp = function(content,anchor,options) {
-				options.referenceWindow =  anchor.parentsUntil('#elementDialog').last().parent(); //addElement_form
+				//We go back to the tree node 'scrollElement' if not found we are in html node
+				options.referenceWindow =  anchor.parentsUntil('#scrollElement').last().parent();
+				//If we didn't find node 'scrollElement' we try to find 'elementDialog'
+				if(options.referenceWindow.attr('id')!='scrollElement' || isWorkzoneViewMode()) options.referenceWindow =  anchor.parentsUntil('#elementDialog').last().parent(); //addElement_form
 				var context = anchor.data(self.ctxKey);
 				if(!context) {
 					context = {};
@@ -867,6 +869,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				case 'notif':
 					helpAnchor = 'notifAnchor';
 					break;
+				case 'search':
+					helpAnchor = 'searchAnchor';
+					break;
 				case 'info':
 				default:
 					helpAnchor = 'infoAnchor';
@@ -902,12 +907,18 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					}
 					// inserts popup after helpSpan
 					options.domInsertionMode = 'after';
+					// if position==blank then opens new tab with content as url
+					if(options.position == 'blank') {
+						helpSpan.attr('href',content).attr('target', '_blank');
+					}
 					// adds click event handler
-					helpSpan.off().click(function(event){
-						var e = $(this);						
-						wigiiApi.getHelpService().toggleHelp(content,e,options);
-						event.stopPropagation();
-					});
+					else {
+						helpSpan.off().click(function(event){
+							var e = $(this);						
+							wigiiApi.getHelpService().toggleHelp(content,e,options);
+							event.stopPropagation();
+						});
+					}
 				}
 			};
 			/**
@@ -958,8 +969,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					wigiiNotif = $('#elementDialog').parent().find('.wigiiNotif');
 					// creates div if does not exist
 					if(wigiiNotif.length == 0) {
-						$('#elementDialog').parent().find('.ui-dialog-titlebar-close').before('<div class="wigiiNotif" style="float:right;padding-right:3px;padding-left:3px;padding-top:3px;padding-bottom:3px;margin-right:10px;max-width:100%;overflow:hidden;"/>');
-						wigiiNotif = $('#elementDialog').parent().find('.wigiiNotif');
+						if(isWorkzoneViewMode()) {
+							$('#searchBar .middleBox div.T').children().last().after('<div class="wigiiNotif" style=""/>');
+							wigiiNotif = $('#searchBar .middleBox div.T').find('.wigiiNotif');
+						} else {
+							$('#elementDialog').parent().find('.ui-dialog-titlebar-close').before('<div class="wigiiNotif" style="float:right;padding-right:3px;padding-left:3px;padding-top:3px;padding-bottom:3px;margin-right:10px;max-width:100%;overflow:hidden;"/>');
+							wigiiNotif = $('#elementDialog').parent().find('.wigiiNotif');
+						}
 					}
 					// if notif is help, then gets special help placeholder
 					if(notif.type == 'help') {						
@@ -967,7 +983,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						var wigiiHelp = wigiiNotif.prev('.elementHelp'); 
 						if(wigiiHelp.length == 0) {
 							wigiiNotif.before('<div class="elementHelp" style="float:right;padding-right:3px;padding-left:0px;padding-top:3px;padding-bottom:3px;margin-right:10px;max-width:100%;overflow:hidden;"/>');
-							wigiiNotif = $('#elementDialog').parent().find('.elementHelp');
+							if(isWorkzoneViewMode()) {
+								wigiiNotif = $('#searchBar').find('.elementHelp');
+							} else {
+								wigiiNotif = $('#elementDialog').parent().find('.elementHelp');
+							}
 						}
 						// else clears elementHelp placeholder
 						else {

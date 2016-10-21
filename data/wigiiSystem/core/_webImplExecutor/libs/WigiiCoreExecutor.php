@@ -27,6 +27,7 @@
  * 
  * Created on 24 juil. 09 by LWR
  * Refactored in two classes WigiiExecutor and WigiiCoreExecutor by CWE on November 23rd 2015.
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class WigiiCoreExecutor {
 	
@@ -443,6 +444,7 @@ class WigiiCoreExecutor {
 	public function createTRM($record = null, $isForNotification = false, $isForPrint=false, $isForExternalAccess = false, $isForListView=false, $isForPreviewList=false, $isOutputEnabled = true) {
 		$trm = TemplateRecordManager::createInstance($isForNotification, $isForPrint, $isForExternalAccess, $isForListView, $isForPreviewList, $isOutputEnabled);
 		$trm->setConfigService($this->getConfigurationContext());
+		$trm->setWorkzoneViewDocked($this->isWorkzoneViewDocked());
 		$trm->reset($record);
 		return $trm;
 	}
@@ -679,6 +681,14 @@ class WigiiCoreExecutor {
 	
 	// WigiiExecutor state management
 	
+	/**
+	 * Returns true if Workzone has a docked ListView and ElementDialog, 
+	 * Returns false if ElementDialog shows as a popup.	 
+	 */
+	public function isWorkzoneViewDocked() {
+		if(defined('WORKZONEVIEWDOCKED') && WORKZONEVIEWDOCKED) return true;
+		else return false;
+	}
 	
 	/**
 	 * flag to tell to use public principal for the download:
@@ -990,10 +1000,12 @@ class WigiiCoreExecutor {
 		//does this view include export activities?
 		$activity = Activity :: createInstance("exportMenu");
 		$act = $configS->mf($p, $exec->getCrtModule(), $activity);
+		$responseDiv = 'elementDialog';
+		if($this->isWorkzoneViewDocked()) $responseDiv = 'confirmationDialog';
 
 		if (!empty ($act)) {
 			foreach ($act->export->attribute as $export) {
-			?><div class="export H G SBIB" onclick="update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/export/<?=str_replace('#', '', $export);?>');"><?=$transS->t($p, $export . "", $export);?></div><?
+			?><div class="export H G SBIB" onclick="update('<?=$responseDiv;?>/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/export/<?=str_replace('#', '', $export);?>');"><?=$transS->t($p, $export . "", $export);?></div><?
 
 			}
 			?><?
@@ -1013,7 +1025,7 @@ class WigiiCoreExecutor {
 				$options .= "<a href=\"#".$export."\">".$transS->t($p, $export . "", $export)."</a>";
 				$options .= "</div>";
 			}
-			$exec->addJsCode("" .
+			$JsCode = "" .
 					"if($('#searchBar .toolbarBox .exportMenuButton').length==0){ " .
 						"$('#searchBar .toolbarBox').append('<div id=\"exportMenuButton\" class=\"exportMenuButton L H \">".$transS->h($p, "exportElementButton")."</div>');" .
 						"$('#searchBar .toolbarBox .exportMenuButton').append('" .
@@ -1021,9 +1033,14 @@ class WigiiCoreExecutor {
 							"<div class=\"exit SBB\">x</div>" .
 							"$options" .
 							"</div>" .
-							"');" .
-						"setListenersToMenu('exportMenuButton', 'exportMenu', 'elementDialog', 'export');".
-					" } ");
+							"');";
+			if($this->isWorkzoneViewDocked()) {
+				$JsCode.= "setListenersToMenu('exportMenuButton', 'exportMenu', 'confirmationDialog', 'export');";
+			} else {
+				$JsCode.= "setListenersToMenu('exportMenuButton', 'exportMenu', 'elementDialog', 'export');";
+			}
+			$JsCode.= " } ";
+			$exec->addJsCode($JsCode);
 		}
 
 		$this->executionSink()->publishEndOperation("includeExportMenu", $p);
@@ -1185,6 +1202,7 @@ class WigiiCoreExecutor {
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
 		//Class need to have capital C to be compatible with IE7 and 8....
 		//$iconType = "ui-icon-".$iconType;
+		if($this->isWorkzoneViewDocked()) $domId = 'confirmationDialog';
 		$html = '';
 		if($messageText || $messageTitle){
 			$html .= '<div>';
@@ -1192,13 +1210,13 @@ class WigiiCoreExecutor {
 			if ($messageTitle) $html .= '<strong style="vertical-align:middle;">' . $messageTitle . '</strong>';
 			$html .= '</div><br />';
 			if ($messageText) $html .= '<div>'.$messageText.'</div>';
-		}
-		if ($exec->getIsUpdating()) {
+		}	
+		if ($exec->getIsUpdating() && !$this->isWorkzoneViewDocked()) {
 			echo $html;
 		} else {
 			$exec->addJsCode(' $("#' . $domId . '").html(\'' . str_replace("//", "\/\/", str_replace("'", "\'", $html)) . '\'); ');
 		}
-		$jsCode = "";
+		$jsCode = "";	
 		$jsCode .= '' .
 				'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({'.
 				'width:' . ($width) . ',' .
@@ -1207,6 +1225,7 @@ class WigiiCoreExecutor {
 				'$("#' . $domId . '").css("min-height", "0").prev().css("display","none");' .
 				'if(checkOpenItemTemp_url==null) {setTimeout(function(){ $("#' . $domId . '").dialog("destroy"); }, 1000); }' .
 				'else {$("#' . $domId . '").html($("#' . $domId . '").html()+"<br />'.$transS->t($p, "operationDoneWaitNextAction").'");}; ';
+		$jsCode .= 'if(isWorkzoneViewMode() && $(".elementDialog.docked").children().length==0){manageWorkzoneViewDocked(\'hide\')};';		
 		$exec->addJsCode($jsCode);
 	}
 	public function openAsMessage($domId, $width, $messageTitle, $messageText, $okJsCode = null, $okLabel = "Ok", $forceQuitJsCode = null, $forceQuitLabel = null, $iconType = "info") {
@@ -1316,6 +1335,23 @@ class WigiiCoreExecutor {
 		$exec = ServiceProvider :: getExecutionService();
 		$transS = ServiceProvider :: getTranslationService();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
+		
+		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
+			//27.09.2016 added in form position relative to ensure that help popup position is correctly calculated in WigiiAPI.js
+			$exec->addJsCode("
+					manageWorkzoneViewDocked('show',".$this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "elementTotalWidth").");
+					var elementDialogButtons =$('#elementDialog .publicFormBorder').find('button');
+					elementDialogButtons.last().click(function(){".$okJsCode."});
+					elementDialogButtons.first().click(function(){".$cancelJsCode . ' ' . $closeJsCode . ' actOnCancelDialog("' . $domId . '");  ' . ($scrollTopOnEnd ? ' $(window).scrollTop(0); ' : '')." manageWorkzoneViewDocked('hide')});
+					if(!$('#scrollElement').children().first().hasClass('elementDetail')) $('#scrollElement').children().first().css('position','relative');
+			");
+			return true;
+		}		
+		
+		//change the position of feedbackDialog on docked mode
+		if($this->isWorkzoneViewDocked() && $domId=='feedbackDialog'){
+			$defaultPosition = '{ my : "center", at: "center", of: window }';
+		}
 		//Class need to have capital C to be compatible with IE7 and 8....
 		$exec->addJsCode('' .
 				'myPosition = dialogPos["' . $domId . '"]; ' . ($forcePosition ? ' myPosition = ' . $defaultPosition . '; ' : ' if(myPosition == null){ myPosition = ' . $defaultPosition . '; } ') . '' .
@@ -1339,9 +1375,9 @@ class WigiiCoreExecutor {
 				'beforeClose: function(){ if(checkOpenItem("' . $domId . '")){ return false; } else { ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '");} },' .
 				'}).dialog("moveToTop");' .
 				'if($("#' . $domId . '").prop("id")=="elementDialog" || $("#' . $domId . '").prop("id")=="emailingDialog") {'.
-				'	$("#' . $domId . '").css("height",getElementDialogScrollHeight("elementDialog_neighbour", $("#elementDialog"))).css("overflow-x","auto");' .
+				'	$("#' . $domId . '").css("height",getElementDialogScrollHeight("neighbour", $("#elementDialog"))).css("overflow-x","auto");' .
 				'};'.
-				'resize_scrollArea()');
+				'resize_scrollArea();');
 		/*$exec->addJsCode('$("#elementDialog")
 				.css("height",window.innerHeight-$("#elementDialog").prev().outerHeight(true)-$("#elementDialog").next().outerHeight(true)-30)
 				.css("overflow-x","auto")
@@ -1376,10 +1412,17 @@ class WigiiCoreExecutor {
 	}
 	public function openAsDialogForm3B($domId, $width, $okJsCode = null, $dialogTitle = null, $okLabel = "Ok", $intermediateLabel = "Skip", $cancelLabel = "Cancel", $cancelJsCode = null, $intermediateJsCode = null, $defaultPosition = '{ my : "center", at: "center" }', $closeJsCode = null, $modal = false, $forcePosition = false, $scrollTopOnEnd = false, $closeDialogAfterOk = true, $closeDialogAfterIntermediate = true) {
 		$exec = ServiceProvider :: getExecutionService();
+		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
+			$exec->addJsCode('manageWorkzoneViewDocked("hide");');
+			$okJsCode = "$('form', this).submit(); manageWorkzoneViewDocked('clear');";
+// 			$cancelJsCode .= 'manageWorkzoneViewDocked("hide");';
+// 			$intermediateJsCode .= 'manageWorkzoneViewDocked("hide");';
+		};
 		$transS = ServiceProvider :: getTranslationService();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
 		//Class need to have capital C to be compatible with IE7 and 8....
 		$exec->addJsCode('' .
+				'$("#scrollElement").css({"height":"","width":""});'.
 				'myPosition = dialogPos["' . $domId . '"]; ' . ($forcePosition ? ' myPosition = ' . $defaultPosition . '; ' : ' if(myPosition == null){ myPosition = ' . $defaultPosition . '; } ') . '' .
 				'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
 				'buttons: [' .
@@ -1405,6 +1448,7 @@ class WigiiCoreExecutor {
 				'' . ($modal ? 'modal:true, ' : '') . '' .
 				'beforeClose: function(){ if(checkOpenItem("' . $domId . '")){ return false; } else { ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '");} }' .
 				'}).dialog("moveToTop");' .
+				' $(".elementDialog").css("float","none") ' .
 				'');
 		if ($dialogTitle == null) {
 			$exec->addJsCode(' $("#' . $domId . '").prev().css("display","none"); ');
@@ -1412,7 +1456,17 @@ class WigiiCoreExecutor {
 	}
 	public function openAsDialog($domId, $width, $dialogTitle = null, $closeJsCode = null) {
 		$exec = ServiceProvider :: getExecutionService();
-	
+		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
+		
+		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
+			$exec->addJsCode("					
+				if($('#elementDialog').is(':ui-dialog')) {
+					$('#elementDialog').dialog('destroy');
+				}
+				manageWorkzoneViewDocked('show',".$this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "elementTotalWidth").");
+			");	
+			return true;
+		}
 		$exec->addJsCode('' .
 				'myPosition = dialogPos["' . $domId . '"]; if(myPosition == null){ myPosition = { my : "center", at: "center" }; }' .
 				'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
@@ -1427,6 +1481,31 @@ class WigiiCoreExecutor {
 		if ($dialogTitle == null) {
 			$exec->addJsCode(' $("#' . $domId . '").prev().css("display","none"); ');
 		}
+	}
+	
+	/**
+	 * Sends some JS code to resize ListView (or BlogView or CalendarView) depending of element size and config parameters :
+	 * - minWidth: Integer. Min width of list view (defined in activity)
+	 * - GroupList_collapsed: Boolean. If true group panel is always collapsed by default (defined as module parameter)
+	 * - ListView_collapsed: Boolean. If true listView (blogView or calendarView) is always collapsed by default (defined as module parameter)
+	 */
+	public function manageListViewDockedSize() {
+		$exec = ServiceProvider :: getExecutionService();
+		
+		$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+		$GroupListCollapsed = ($this->getConfigurationContext()->getParameter($p,$exec->getCrtModule(),'GroupList_collapsed')==1) | false;
+		$ListViewCollapsed = ($this->getConfigurationContext()->getParameter($p,$exec->getCrtModule(),'ListView_collapsed')==1) | false;
+			
+		$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+		$moduleViewXml = $this->getConfigurationContext()->ma($p, $exec->getCrtModule(), Activity::createInstance($lc->getCrtViewActivityName()));
+		$minWidth = trim((string)$moduleViewXml['minWidth']);
+		
+		if(empty($minWidth) || strtoupper($minWidth) == 'NULL') $minWidth = 100;
+		
+		$exec->addJsCode("
+			$('#groupPanel').data('GroupListCollapsed',".$GroupListCollapsed.");
+			$('#moduleView').data('minWidth',".(integer)$minWidth.").data('ListViewCollapsed',".$ListViewCollapsed.");
+		");
 	}
 	
 	public function closeStandardsDialogs() {
@@ -3489,7 +3568,7 @@ invalidCompleteCache();
 					$rRequests = $exec->getRemainingRequests();
 					if(count($rRequests) == 1) {
 						$rAction = ($exec->getIsUpdating() ? $rRequests[0][3] : $rRequests[0][2]);
-						if($rAction != 'navigate' && $rAction != 'externalAccess'  && $rAction != 'newSubscription' && !$this->shouldByPassHeader($rAction)) {
+						if($rAction != 'navigate' && $rAction != 'externalAccess'  && $rAction != 'newSubscription' && $rAction != 'validateEmailFromCode' && !$this->shouldByPassHeader($rAction)) {
 							//fput($exec->displayDebug());
 							$exec->cleanRemainingRequest();
 							$exec->addJsCode('self.location.reload();');
@@ -3784,14 +3863,16 @@ invalidCompleteCache();
 	/**
 	 * Given an action, finds a WebExecutor class name which can handle it.
 	 * @param String $action ExecutionService action in the Wigii communication protocol.
-	 * @return String|StdClass the name of a class implementing WebExecutor interface, or null if not found;
-	 * or a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options.
+	 * @return String|StdClass|WebExecutor the name of a class implementing WebExecutor interface, or null if not found;
+	 * or a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options,
+	 * or an instance of a ready to use WebExecutor
 	 */
 	protected function findWebExecutorForAction($action) {return null;}
 	/**
 	 * Runs the WebExecutor on the given http request
-	 * @param String|StdClass $webExecClass the name of the WebExecutor implementation to instanciate and run, or
-	 * a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options.
+	 * @param String|StdClass|WebExecutor $webExecClass the name of the WebExecutor implementation to instanciate and run, or
+	 * a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options,
+	 * or an already instanciated WebExecutor class
 	 * @param ExecutionService $exec current ExecutionService
 	 * @throws AuthenticationServiceException if main principal is minimal.
 	 * @throws Exception any exception that occur during WebExecutor execution.
@@ -3799,14 +3880,17 @@ invalidCompleteCache();
 	protected function runWebExecutor($webExecClass,$exec) {
 		if(!isset($webExecClass)) return;
 		if(!isset($exec)) throw new ServiceException('ExecutionService cannot be null', ServiceException::INVALID_ARGUMENT);		
-		// checks if some configuration options are given
-		$options=null;
-		if(is_object($webExecClass)) {
-			$options = $webExecClass->options;
-			$webExecClass = $webExecClass->className;
+		if($webExecClass instanceof WebExecutor) $webExec = $webExecClass;
+		else {
+			// checks if some configuration options are given
+			$options=null;
+			if(is_object($webExecClass)) {
+				$options = $webExecClass->options;
+				$webExecClass = $webExecClass->className;
+			}
+			// instantiates a configured WebExecutor
+			$webExec = ServiceProvider::createWigiiObject($webExecClass);
 		}
-		// instantiates a configured WebExecutor
-		$webExec = ServiceProvider::createWigiiObject($webExecClass);
 		if(isset($webExec)) {
 			// sets dynamic configuration if provided
 			if(isset($options)) {
@@ -7466,7 +7550,7 @@ onUpdateErrorCounter = 0;
 				$fieldKeyF = $updateToRec->getFieldList()->getField("fieldKey");
 				$fieldKeyXml = '<fieldKey type="Attributs">';
 				//add element id
-				$fieldKeyXml .= '<attribute>__element id<label>'.$transS->t($p, "idOfElement").' (__element id)</label></attribute>';
+				$fieldKeyXml .= '<attribute>__element id<label>'.str_replace("&", "&amp;", $transS->t($p, "idOfElement")).' (__element id)</label></attribute>';
 				$fieldXml = $configS->mf($p, $exec->getCrtModule());
 				$allowedFieldForDuplicates = $lc->defineFieldsKeysForUpdate();
 				$html2text = new Html2text();
@@ -7475,7 +7559,7 @@ onUpdateErrorCounter = 0;
 						$label = $transS->t($p, $field->getName(), $field);
 						$subField = $allowedFieldForDuplicates[(string)$field['type']];
 						//clean label of any html
-						$html2text->html2text($label);$label = $html2text->get_text();$html2text->clear();
+						$html2text->setHtml($label);$label = $html2text->getText();//$html2text->clear();
 						$label .= ' ('.(string)$field->getName().($subField && $subField!="value" ? ' '.$subField : '').')';
 						$fieldKeyXml .= '<attribute>'.(string)$field->getName().($subField ? ' '.$subField : '').'<label>'.$label.'</label></attribute>';
 					}
@@ -7554,7 +7638,7 @@ onUpdateErrorCounter = 0;
 					if(array_key_exists((string)$field['type'], $allowedFieldForDuplicates)){
 						$label = $transS->t($p, $field->getName(), $field);
 						//clean label of any html
-						$html2text->html2text($label);$label = $html2text->get_text();$html2text->clear();
+						$html2text->setHtml($label);$label = $html2text->getText();//$html2text->clear();
 						$subField = $allowedFieldForDuplicates[(string)$field['type']];
 						$label .= ' ('.(string)$field->getName().($subField && $subField!="value" ? ' '.$subField : '').')';
 						$fieldKeyXml .= '<attribute'.($emailField && $emailField == (string)$field->getName() ? ' checked="1"' : '').'>'.(string)$field->getName().' '.$subField.'<label>'.$label.'</label></attribute>';
@@ -10263,7 +10347,9 @@ onUpdateErrorCounter = 0;
 							//multiple organize
 							?><div class="organizeMultiple onlyWriteRights H" onclick="openOrganizeMultipleDialog();"><?=$transS->t($p, "shareElements");?></div><?
 							//multiple delete
-							?><div class="deleteMultiple onlyWriteRights H" onclick="update('elementDialog/<?=$crtWigiiNamespace;?>/<?=$crtModule;?>/element/delete/multiple/elementDialog');"><?=$transS->t($p, "deleteElements");?></div><?
+							$responseDiv = 'elementDialog';
+							if($this->isWorkzoneViewDocked()) $responseDiv = 'confirmationDialog';
+							?><div class="deleteMultiple onlyWriteRights H" onclick="update('<?=$responseDiv;?>/<?=$crtWigiiNamespace;?>/<?=$crtModule;?>/element/delete/multiple/elementDialog');"><?=$transS->t($p, "deleteElements");?></div><?
 
 							if($configS->m($p, $exec->getCrtModule())->transferMultipleElement != null && @count($configS->m($p, $exec->getCrtModule())->transferMultipleElement->children())!=null){
 								//multiple transfer

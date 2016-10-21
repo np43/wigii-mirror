@@ -20,6 +20,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
+/*
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details) 
+ */
+
 function printObj(obj) {
 	var arr = [];
 	$.each(obj, function(key, val) {
@@ -110,7 +114,10 @@ function setVis(element, vis){
 		}
 	}
 }
-
+function resetBusyDiv() {
+	busyDivStack = new Array();
+	$('#busyDiv').hide();
+}
 
 //called each time a dialog is closed
 function actOnCloseDialog(id){
@@ -199,6 +206,72 @@ function checkOpenItem(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCac
 	return false;
 }
 
+function checkOpenWorkzoneViewMode(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCache){
+	if (arguments.length<2) lookupPath = null;
+	if (arguments.length<3) url = null;
+	if (arguments.length<4) checkAnyOpenItem = false;
+	if (arguments.length<5) informIfFoundInCache = false;
+
+	if(checkAnyOpenItem){
+		f = $('.elementDialog.docked').find('form');
+	} else {
+		f = $('#'+id).find('form');
+	}
+	
+	if(f.length>0){
+		if(f.length==1){
+			//those needs to be updated only there is a checkOpenItems thing, this is to prevent the call on cancel click to change them
+			checkOpenItemTemp_id = id;
+			checkOpenItemTemp_lookupPath = lookupPath;
+			checkOpenItemTemp_url = url;
+			checkOpenItemTemp_f = f;
+			checkOpenItemTemp_informIfFoundInCache = informIfFoundInCache;
+			customConfirmTextFromDialogId = DIALOG_doYouWantToSaveChage;
+			if(typeof( window["DIALOG_doYouWantToSave_"+id] ) != "undefined") eval("customConfirmTextFromDialogId = DIALOG_doYouWantToSave_"+id);
+			// if cancel button exists and is visible, then asks user to confirm what to do
+			cButton = $('.cancel.ui-button', checkOpenItemTemp_f);
+					
+			if(cButton.filter(':visible').length){
+				jConfirm(customConfirmTextFromDialogId, null, function(check){
+					if(check===true){
+						//click on Ok button
+						$('.ok.ui-button', checkOpenItemTemp_f).click();
+						//cancel current action
+					} else if(check===null){
+						//do nothing and cancel current action
+						checkOpenItemTemp_url = null;
+					} else if(check===false){
+						//do cancel or no button
+						$('.cancel.ui-button', checkOpenItemTemp_f).click();
+						//continue current action
+						if(checkOpenItemTemp_url!=null){
+							updateThroughCache(checkOpenItemTemp_id, checkOpenItemTemp_lookupPath, checkOpenItemTemp_url, null, checkOpenItemTemp_informIfFoundInCache, true);
+							checkOpenItemTemp_url = null;
+						}
+					}
+				});
+			// else if cancel button but not visible then clicks on it and  closes the dialog
+			} else if(cButton.length) {
+				//do cancel or no button
+				cButton.click();
+				//continue current action
+				if(checkOpenItemTemp_url!=null){
+					updateThroughCache(checkOpenItemTemp_id, checkOpenItemTemp_lookupPath, checkOpenItemTemp_url, null, checkOpenItemTemp_informIfFoundInCache, true);
+					checkOpenItemTemp_url = null;
+				}
+			// else no cancel button, only ok button to click onto
+			} else {
+				$('.ok.ui-button', checkOpenItemTemp_f).click();
+			}
+			return true;
+		} else {
+			jAlert(DIALOG_finishCurrentAction);
+			return true;
+		}
+	}
+	return false;
+}
+
 currentElementDialogViewCacheKey = null;
 function updateCurrentElementDialogViewCache(){
 	if(__cache && __cache["elementDialog"] && __cache["elementDialog"][currentElementDialogViewCacheKey]){
@@ -230,9 +303,15 @@ function updateThroughCache(id, lookupPath, url, checkAnyOpenItem, informIfFound
 	if (arguments.length<4) checkAnyOpenItem = false;
 	if (arguments.length<5) informIfFoundInCache = false;
 	if (arguments.length<6) noOpenItemCheck = false;
-
-	if(!noOpenItemCheck && checkOpenItem(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCache)){
-		return;
+ 
+	if(!isWorkzoneViewMode()){
+		if(!noOpenItemCheck && checkOpenItem(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCache)){	
+			return;
+		}
+	} else {
+		if(!noOpenItemCheck && checkOpenWorkzoneViewMode(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCache)){	
+			return;
+		}
 	}
 
 	//special caching for moduleView
@@ -424,8 +503,14 @@ function update(url, noOpenItemCheck, postdata, successCallback){
 	idAnswer = url.split("/")[0];
 
 	if(!noOpenItemCheck){
-		if(checkOpenItem(idAnswer, null, url)){
-			return;
+		if(isWorkzoneViewMode()){
+			if(checkOpenWorkzoneViewMode(idAnswer, null, url)){
+				return;
+			}
+		} else {
+			if(checkOpenItem(idAnswer, null, url)){
+				return;
+			}
 		}
 	}
 
@@ -459,7 +544,7 @@ function download(url){
 }
 function longDownload(url,fieldId) {
 	messageDownload(fieldId);
-	setTimeout(function() {setVis('fileLoadingBar', false);}, 5000);
+	setTimeout(function() {setVis('fileDownloadingBar', false);}, 5000);
 	download(url);
 }
 
@@ -501,107 +586,15 @@ decHTML = function(text) {
  * @param {} textStatus
  */
 function parseUpdateResult(tabReq, textStatus){
-
-	//setVis("busyDiv", false);
-	$("#formProgressBar").hide();
+	// hides progress bar
+	setVis('formProgressBar', false);
+	// hides long run waiting message
+	if(savingBarTimeout) {clearTimeout(savingBarTimeout);savingBarTimeout=null;}
+	setVis('savingBar', false);
 	// Wigii 4.324 R1790: transfers parseUpdateResult algorithm to wigii() JS client.
 	wigii().parseUpdateResult(tabReq,textStatus);
-	/*
-	tabReq = tabReq.split(EXEC_answerRequestSeparator);
-
-	var tabLength = tabReq.length;
-	var code = '';
-
-	lookupPaths = new Object();
-	for (var i=0; i<tabLength; i = i+1){
-		request = tabReq[i].split(EXEC_answerParamSeparator);
-		if(request != ""){
-			//d'abord on traite les idRequest de type mot clé:
-			if (request[0] == "JSCode"){
-				if(request.length > 2){
-					tempCode = decHTML(request[2]);
-					if(tempCode.substr(0, 6)=="<br />"){ //this is when there is a fatal arror back
-						tempCode = null;
-					}
-					if(request[1] == "foundInCache") {
-						if(lookupPaths["foundInCache"]) {
-							setJSCache(lookupPaths["foundInCache"][1], lookupPaths["foundInCache"][0], tempCode);
-							keepInCache(lookupPaths["foundInCache"][0]);
-						}
-					}
-					else {
-						setJSCache(request[1], lookupPaths[request[1]], tempCode);
-						keepInCache(lookupPaths[request[1]]);
-					}
-				} else {
-					tempCode = decHTML(request[1]);
-					if(tempCode.substr(0, 6)=="<br />"){ //this is when there is a fatal arror back
-						tempCode = null;
-					}
-				}
-//				tempCode1 = prompt("", tempCode);
-//				if(tempCode1 != null) tempCode = tempCode1;
-				eval(tempCode);
-			} else if (request[0] == "Alert"){
-				alert(request[1]);
-			} else if (request[0] == "Reload"){
-				self.location = request[1];
-			} else if (request[0] == "NoAnswer"){
-				// detects a cache key
-				if(request[1].indexOf('cacheKey_') == 0) {
-					lookupPaths[request[0]] = request[1];
-				}
-				//should never occurs, but if there is an answer
-				//then we alert it.
-				else if(request[1] != ""){
-					if(request.length>2){
-						alert(request[1]+'\n'+request[2]);
-					} else {
-						alert(request[1]);
-					}
-				}
-			} else if (request[0] == "foundInCache"){
-				// detects a cache key
-				if(request[1].indexOf('cacheKey_') == 0) {
-					lookupPaths[request[0]] = [request[1],request[2]];
-				}
-			} else {
-				//si la réponse est = keep --> do nothing
-				if(request[1]=='keep'){
-
-				} else {
-					//on remplace le contenu de l'id par l'html qui suit
-					$("#"+request[0]).stopTime(); //very important to stop all the timers on elements that we will destroy.
-					$("#"+request[0]+" *").stopTime(); //very important to stop all the timers on elements that we will destroy.
-					if(request.length > 2){
-						$("#"+request[0]).html(request[2]);
-						//dans le cas ou la réponse est vide, alors on ferme le dialog
-						if(request[2]==''){
-							if($("#"+request[0]).is(':ui-dialog')){
-								$("#"+request[0]).dialog("destroy");
-							}
-						} else {
-							setCache(request[0], request[1], request[2]);
-							keepInCache(request[1]);
-							lookupPaths[request[0]] = request[1];
-						}
-					} else {
-						$("#"+request[0]).html(request[1]);
-						//dans le cas ou la réponse est vide, alors on ferme le dialog
-						if(request[1]==''){
-							if($("#"+request[0]).is(':ui-dialog')){
-								$("#"+request[0]).dialog("destroy");
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	clearKeepInCache();
-	*/
-	setVis("busyDiv", false);
-	//setVis('uploadBoxFile', false);
+	// hides short run waiting message
+	setVis("busyDiv", false);	
 }
 
 function positionElementOnMouse(obj, event, align, linkedObj, additionalLowOffset){
@@ -917,12 +910,14 @@ var cronJobsWorkingFunction = function(params){
 		return;
 	}
 	doingWakeup = true;
-	$('#cronJobsCursor').text(' > ');
+	// CWE 13.09.2016: clears busyDiv stack to ensure having a fresh empty stack
+	resetBusyDiv();
+	$('#cronJobsCursor').text(' > ');	
 	update('JSCode/NoWigiiNamespace/NoModule/wakeup/'+params);
-}
+};
 var cronJobsFinishWorkingFunction = function(){
 	doingWakeup = false;
-}
+};
 function setListenersToCronJob(wakeupJsCode, postponeTimer){
 	$('#cronJobsStart').click(function(){
 		$('#cronJobsNb').stopTime('cronJobsWorking');

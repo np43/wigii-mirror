@@ -60,12 +60,11 @@ $inputNameId = $formId.'_'.$fieldName.'_name_text';
 $inputFileId = $formId.'_'.$fieldName.'_file_file';
 $inputPathId = $formId.'_'.$fieldName.'_path_hidden';
 $textContentId = $formId.'_'.$fieldName.'_textContent_textarea';
-$inputBoxFileId =  $inputFileId.'_box';
+$inputBoxFileId =  $formId.'_'.$fieldName.'_box_hidden';
+$boxFolderIdTag = (string)$fieldXml["boxFolderId"];
 
 //display the type preview
 $this->put('<div class="filePreview" style="'.(!($path || $textContent)? "display:none;" : "").'float:left; background:url(\''.SITE_ROOT_forFileUrl.'images/preview/prev.26'.$type.'.png\') no-repeat 0px -1px; margin-right:4px;width:26px;height:26px;"></div>');
-
-$folderIdTag = (string)$fieldXml["boxFolderId"];
 
 //the name field
 $subFieldName = "name";
@@ -74,7 +73,8 @@ $this->put('<input id="'.$inputNameId.'" name="'.$inputName.'" ');
 if($disabled) $this->put(' disabled ');
 if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
 
-if($folderIdTag && $boxServiceFormExecutor->getShowWarningIfBoxUpload() && $boxServiceFormExecutor->isBoxEnabled()){
+// resizes field to show Warning icon if upload to box enabled
+if($boxFolderIdTag && $boxServiceFormExecutor->getShowWarningIfBoxUpload() && $boxServiceFormExecutor->isBoxEnabled()){
 	$this->put(' style="'.(!($path || $textContent) ? "display:none;" : "").'height:18px;float:left;'." width:".($parentWidth-5-40-10)."px; ");
 }else{
 	$this->put(' style="'.(!($path || $textContent) ? "display:none;" : "").'height:18px;float:left;'." width:".($parentWidth-5-40)."px; ");
@@ -85,10 +85,10 @@ $this->put('" value="');
 $this->put($this->formatValueFromRecord($fieldName, $subFieldName, $this->getRecord()));
 $this->put('" />');
 
-
-if($folderIdTag && $boxServiceFormExecutor->getShowWarningIfBoxUpload() && $boxServiceFormExecutor->isBoxEnabled()){
+// shows Warning icon if upload to box enabled
+if($boxFolderIdTag && $boxServiceFormExecutor->getShowWarningIfBoxUpload() && $boxServiceFormExecutor->isBoxEnabled()){
 	try{
-		$array = $boxServiceFormExecutor->getFolderNameFromFolderId($this->getP(), $folderIdTag);
+		$array = $boxServiceFormExecutor->getFolderNameFromFolderId($this->getP(), $boxFolderIdTag);
 		$this->put('<img class="box Icon" style="cursor: pointer" title="'.$this->t("boxFileFolder").': '.$array[1].'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/status/software-update-urgent.png" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$array[0].'/'.$array[1].'\',\'_blank\');"/>');
 	}catch (Exception $e){
 		$this->put('<img class="box Icon" title="'.$this->t("boxFileFolder").': '.$array[1].'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/status/software-update-urgent.png"/>');
@@ -124,14 +124,17 @@ if($fieldXml["htmlArea"]=="1"){
 	$this->put(' style="float:left;'.($path && $activeJS ? "display:none;" : "").'width:'.($parentWidth-5).'px;" value="" />');
 }
 
-	
-	// Box File picker integration
-	$boxElement = $fieldXml["enableBoxIntegration"]; 
-	$boxGeneral = $this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "enableBoxIntegration");
-	if((($boxElement == "1") || ($boxGeneral == "1" && ($boxElement != "0"))) && ($fieldXml["htmlArea"]!="1") 
-		&& $this->getFormRenderer()->getBoxServiceFormExecutor()->isBoxEnabled()) {
+	// Box File picker integration (disabled on Activities, disabled if attachContentInNotification=1, disabled if isForExternalAccess)
+	$boxElement = (string)$fieldXml["enableBoxIntegration"]; 
+	$boxGeneral = (string)$this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "enableBoxIntegration");
+	if(!is_a($this->getRecord(), "ActivityRecord") &&
+		($boxElement == "1" || $boxGeneral == "1" && $boxElement !== "0") 
+		&& $fieldXml["htmlArea"]!="1" 
+		&& $boxServiceFormExecutor->isBoxEnabled()
+		&& $fieldXml["attachContentInNotification"]!="1"
+		&& !$this->isForExternalAccess()) {
 
-		$this->put('<input id="'.$inputBoxFileId.'" name="Box_file" class="ui-button-icon-box"');
+		$this->put('<input id="'.$inputBoxFileId.'" name="'.$fieldName.'_box" class="ui-button-icon-box"');
 		$this->put(' type="button" ');
 		
 		if($disabled) $this->put(' disabled ');
@@ -141,16 +144,18 @@ if($fieldXml["htmlArea"]=="1"){
 		$elem = $xml->clientId;
 	
 		//initializes the Box file picker
-		$this->getFormRenderer()->getBoxServiceFormExecutor()->initializeFilePicker($this->getP(),$exec);
-		
-		//if we are in a Box's case add the tag "data-wigii-service" with "box" value
-		if(strstr($path, "box://")){
-			$exec->addJsCode("domElementAddWigiiService('#".$formId."__".$fieldName."', 'box')");
-		}
-		
+		$boxServiceFormExecutor->initializeFilePicker($this->getP(),$exec);			
 		$this->getExecutionService()->addJsCode("boxChooseFile('#$inputBoxFileId', '#$inputFileId', '#$inputNameId', '#$inputPathId', '".str_replace("//", "\/\/",SITE_ROOT_forFileUrl)."');");
 	}
-
+	
+	// if File is linked to Box, tags field with box service
+	// if File is linked to Box and boxAllowUpdate=1, tags field with box-upload service
+	// if File field is linked to Box folder, tags field with box-upload service
+	if(strstr($path, "box://")) {
+		if($fieldXml["boxAllowUpdate"]=='1' && $boxServiceFormExecutor->isBoxEnabled()) $exec->addJsCode("domElementAddWigiiService('#".$formId."__".$fieldName."', 'box box-upload')");
+		else $exec->addJsCode("domElementAddWigiiService('#".$formId."__".$fieldName."', 'box')");
+	}
+	if($boxFolderIdTag && $boxServiceFormExecutor->isBoxEnabled()) $exec->addJsCode("domElementAddWigiiService('#".$formId."__".$fieldName."', 'box-upload')");
 	
 $this->put('<div class="clear" style="margin-top:5px;"></div>');
 if($fieldXml["htmlArea"]=="1"){

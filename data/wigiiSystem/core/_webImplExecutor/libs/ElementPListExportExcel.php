@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 6 oct. 09
- * by LWR
+/**
+ * Created on 6 oct. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor implements ElementDataTypeSubfieldVisitor, TreeInDepthVisitor {
@@ -400,6 +400,7 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 	private function getTrm(){
 		if(!isset($this->trm_)){
 			$this->trm_ = TemplateRecordManager::createInstance();
+			$this->trm_->setWorkzoneViewDocked($this->isWorkzoneViewDocked());
 		}
 		return $this->trm_;
 	}
@@ -600,9 +601,9 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 
 //			$exl->getActiveSheet()->setCellValue(num2letter($c).$l, trim(strtr($value, array_flip(get_html_translation_table(HTML_ENTITIES, ENT_QUOTES)))));
 			if(!isset($this->html2text)) $this->html2text = new Html2text();
-			$this->html2text->html2text($value);
+			$this->html2text->setHtml($value);
 			$exl->getActiveSheet()->setCellValue(num2letter($c).$l, trim(str_replace(array("	", "\n\n", " ", "   ", "  ", " \n"), array("", "\n", "", " ", " ", "\n"), htmlspecialchars_decode($this->html2text->get_text(), ENT_QUOTES))));
-			$this->html2text->clear();
+// 			$this->html2text->clear();
 		}
 	}
 

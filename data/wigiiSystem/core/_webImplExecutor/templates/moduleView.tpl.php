@@ -57,6 +57,8 @@ if($exec->getIdAnswer()!='moduleView' && $exec->getIsUpdating()){ //!$exec->getI
 		$exec->addJsCode("setModuleViewKeyCacheForNavigate('".$cachekey."')");
 	}
 
+	$this->manageListViewDockedSize();
+	
 	if($lc->getGroupPList()==null){
 		//if no group selected, then diplay nothing in the moduleView
 		echo($transS->t($p, "noGroupSelected"));

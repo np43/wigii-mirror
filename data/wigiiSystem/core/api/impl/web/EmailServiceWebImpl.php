@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 23 nov. 09
- * by LWR
+/**
+ * Created on 23 nov. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class EmailServiceWebImpl implements EmailService {
@@ -407,9 +407,9 @@ WHERE $statusCd AND (E.sys_lockId IS NULL OR (E.sys_lockMicroTime + ".$this->get
 			if($email->getBodyText()==null){
 				$processedBody = $email->getBodyHtmlForDb();
 				$html2text = new Html2text();
-				$html2text->html2text($processedBody);
-				$processedBody = $html2text->get_text();
-				$html2text->clear();
+				$html2text->setHtml($processedBody);
+				$processedBody = $html2text->getText();
+// 				$html2text->clear();
 				$email->setBodyText($processedBody);
 			}
 
@@ -502,7 +502,7 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 //			//setup the plain text with the html data
 //			if($mail->getBodyText()==null){
 //				$processedBody = html_entity_decode($mail->getBodyHtmlForDb(), ENT_COMPAT, 'UTF-8');
-//				$processedBody = html2text($processedBody);
+//				$processedBody = setHtml($processedBody);
 //				$mail->setBodyText($processedBody);
 //			}
 //
@@ -593,6 +593,8 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 						$succeed[$emailId] = time();
 					} catch (Exception $e){
 						$failure[$emailId] = time();
+						// signals fatal error to monitoring system
+						ServiceProvider::getClientAdminService()->signalFatalError($e);
 					}
 				}
 

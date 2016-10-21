@@ -24,6 +24,7 @@
 /**
  * UserP - Role matrix (Allocated roles per User)
  * Created on 4 march 2010 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class MatrixUserPListRoleListRenderer extends MatrixRenderer implements UserList, UserPList {
 
@@ -50,7 +51,7 @@ class MatrixUserPListRoleListRenderer extends MatrixRenderer implements UserList
 	public function setWorkingModule($workingModule){ $this->workingModule = $workingModule; }
 	protected function getWorkingModule(){ return $this->workingModule; }
 
-	public function createInstance($p, $id, $workingModule){
+	public static function createInstance($p, $id, $workingModule){
 		$r = new self();
 		$r->setId($id);
 		$r->setP($p);

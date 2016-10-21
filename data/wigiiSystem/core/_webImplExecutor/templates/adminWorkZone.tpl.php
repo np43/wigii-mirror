@@ -21,10 +21,13 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 21 July 2011
- * by LWR
+/**
+ * Created on 21 July 2011 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
+if($this->isWorkzoneViewDocked()) { 
+	?><div id='elementDialog' class='elementDialog'></div><?
+}
 
 if(!$exec->getIsUpdating() || $exec->getIdAnswer() == "workZone"){
 	?><div id="adminSearchBar" class="SB" ><?

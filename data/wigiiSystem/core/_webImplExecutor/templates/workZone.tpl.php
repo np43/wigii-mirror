@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 21 July 2011
- * by LWR
+/**
+ * Created on 21 July 2011 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start workzone.tpl.php"] = microtime(true);
@@ -48,12 +48,24 @@ switch($exec->getCrtModule()->getModuleName()){
 			//asynch call groupPanel --> this allow caching and accelerate rendering
 			//$exec->addJsCode($exec->getCurrentUpdateJsCode($p, 'groupPanel', 'display/groupPanel'));
 		?></div><?
-
-		?><div id="moduleView" ><?
+		if($this->isWorkzoneViewDocked()) {
+		?><div id="dockingContainer" style=""><?
+		?><div id="moduleView" class="docked"><?
 			if($exec->getIsUpdating() && !$displayOnlyStructure) $this->includeTemplateModuleView($p, $exec);
 			//asynch call module view --> this allow caching and accelerate rendering
 			//$exec->addJsCode($exec->getCurrentUpdateJsCode($p, 'moduleView', 'display/moduleView'));
+		?></div><?		
+		?><div class="collapse SB grayFont"><span>&laquo;</span></div><?
+		?><div id='elementDialog' class='elementDialog docked'></div><?
 		?></div><?
+		}
+		else {		
+		?><div id="moduleView"><?
+			if($exec->getIsUpdating() && !$displayOnlyStructure) $this->includeTemplateModuleView($p, $exec);
+			//asynch call module view --> this allow caching and accelerate rendering
+			//$exec->addJsCode($exec->getCurrentUpdateJsCode($p, 'moduleView', 'display/moduleView'));
+		?></div><?		
+		}
 }
 
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end workzone.tpl.php"] = microtime(true);

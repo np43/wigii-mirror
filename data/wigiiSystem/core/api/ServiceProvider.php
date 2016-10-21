@@ -985,6 +985,15 @@ class ServiceProvider
 	}
 	
 	/**
+	 * Returns a Development instance of QlikSenseFormExecutor
+	 * @param Principal $rootPrincipal should be the root principal
+	 * @return QlikSenseFormExecutor
+	 */
+	public static function createQlikSenseFormExecutorDevInstance($rootPrincipal) {
+		return ServiceProvider::getInstance()->createClientClassInstance($rootPrincipal, 'QlikSenseFormExecutor');
+	}
+	
+	/**
 	 * defaults to new className
 	 */
 	protected function createExclusiveAccessObjectInstance($className) {

@@ -24,6 +24,7 @@
 /**
  * UserP - UserP matrix (Owned Users per User)
  * Created on 20 janv. 10 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class MatrixUserPListUserPListRenderer extends MatrixRenderer implements UserPList, UserURPList {
 
@@ -50,7 +51,7 @@ class MatrixUserPListUserPListRenderer extends MatrixRenderer implements UserPLi
 	public function setWorkingModule($workingModule){ $this->workingModule = $workingModule; }
 	protected function getWorkingModule(){ return $this->workingModule; }
 
-	public function createInstance($p, $id, $workingModule){
+	public static function createInstance($p, $id, $workingModule){
 		$r = new self();
 		$r->setId($id);
 		$r->setP($p);

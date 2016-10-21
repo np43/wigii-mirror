@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 6 October 2011
- * by LWR
+/**
+ * Created on 6 October 2011 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class GroupPTreeAccessRightsGroupImpl extends GroupPTreeGroupPanelImpl {
@@ -37,7 +37,7 @@ class GroupPTreeAccessRightsGroupImpl extends GroupPTreeGroupPanelImpl {
 //	protected $nbLevelToExpandOnInit;
 //	protected $displayCM;
 
-	public function createInstance($p, $exec, $nbLevelToExpandOnInit = 100, $displayContextMenu = false){
+	public static function createInstance($p, $exec, $nbLevelToExpandOnInit = 100, $displayContextMenu = false){
 		$gt = new self();
 		$gt->setNbLevelToExpandOnInit($nbLevelToExpandOnInit);
 		$gt->setP($p);

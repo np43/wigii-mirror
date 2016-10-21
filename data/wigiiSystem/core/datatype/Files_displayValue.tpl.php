@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 3 déc. 09
- * by LWR
+/**
+ * Created on 3 déc. 09 by LWR
+ * Modified by Medair (AMA,CWE) in 2016.09 to integrate Box
  */
 $exec = $this->getExecutionService();
 $idAnswer = $exec->getIdAnswer();
@@ -37,6 +37,8 @@ $fieldXml = $field->getXml();
 $elementId = $this->getRecord()->getId();
 if(!$this->isForNotification()){
 	$fieldId = $this->getDetailRenderer()->getDetailId()."__".$fieldName;
+	// Activates File info refresh from Box on first call
+	$boxServiceFormExecutor->setSyncBoxFileInfoIntoWigii($fieldId); 
 }
 $readonly = $this->getRecord()->getWigiiBag()->isReadonly($fieldName);
 $disabled = $this->getRecord()->getWigiiBag()->isDisabled($fieldName);
@@ -115,13 +117,11 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	$type = $this->formatValueFromRecord($fieldName, "type", $this->getRecord());
 
 	
-	$boxElement = $fieldXml["enableBoxIntegration"];
-	$boxGeneral = $this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "enableBoxIntegration");
-	
-	
-	if(!$this->isForNotification() && (($boxElement == "1") || ($boxGeneral == "1" && ($boxElement != "0"))) && strstr($path, "box://")){
+	// if File is linked to Box, tags field with box service
+	$boxElement = (string)$fieldXml["enableBoxIntegration"];
+	$boxGeneral = (string)$this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "enableBoxIntegration");
+	if(!$this->isForNotification() && ($boxElement == "1" || $boxGeneral == "1" && $boxElement !== "0") && strstr($path, "box://")){
 		$formId = $this->getDetailRenderer()->getDetailId()."__$fieldName";
-		
 		$exec->addJsCode("domElementAddWigiiService('#$formId', 'box')");
 	}
 	
@@ -157,10 +157,16 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 		$this->put(')</font>');
 	}
 
-	if(!$this->isForNotification() && (($boxElement == "1") || ($boxGeneral == "1" && ($boxElement != "0"))) && strstr($path, "box://") && $boxServiceFormExecutor->isBoxEnabled()){
+	// Adds icon pointing to Box folder containing the file	
+	if(!$this->isForNotification() && ($boxElement == "1" || $boxGeneral == "1" && $boxElement !== "0") && strstr($path, "box://") && $boxServiceFormExecutor->isBoxEnabled()){
 		$boxFileId = str_replace("box://", "", $path);
-		$folderId = $boxServiceFormExecutor->getFolderId($this->getP(), $boxFileId);
-		$this->put('<img class="box Icon" style="cursor: pointer" title="'.$this->t("boxFile").'" src="'.SITE_ROOT_forFileUrl.'images/gui/box_icon_16x16.jpg" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$folderId[0].'/'.$folderId[1].'\',\'_blank\');"/>');
+		try {
+			$folderId = $boxServiceFormExecutor->getFolderId($this->getP(), $boxFileId);
+			// CWE 16.09.2016 replace opening Box folder by opening Box file
+			//$this->put('<img class="box Icon" style="cursor: pointer" title="'.$this->t("boxFile").': '.$folderId[1].'" src="'.SITE_ROOT_forFileUrl.'images/gui/box_icon_16x16.jpg" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$folderId[0].'/'.$folderId[1].'\',\'_blank\');"/>');
+			$this->put('<img class="box Icon" style="cursor: pointer" title="'.$this->t("boxFile").': '.$folderId[1].'" src="'.SITE_ROOT_forFileUrl.'images/gui/box_icon_16x16.jpg" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$folderId[0].'/1/f_'.$boxFileId.'\',\'_blank\');"/>');
+		}
+		catch(Exception $boxExc) {/* doesn't display icon in case of exception */}
 	}
 	if(!$this->isForNotification() && !$isSmall) $this->put('</div>');
 	if(!$this->isForNotification() && !$isSmall) $this->put('<div class="clear"></div>');
@@ -180,134 +186,145 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	 * Add other specific buttons based on the file type
 	 */
 	if(!$this->isForPrint() && !$this->isForNotification() && !is_a($this->getRecord(), "ActivityRecord")){
-		$mediaId = $fieldName.'_file_media';
-		switch ($type){
-			case ".aif":
-			case ".aiff":
-			case ".mid":
-			case ".midi":
-			case ".ogg":
-			case ".au":
-			case ".aac":
-			case ".rm":
-			case ".ra":
-				break;
-			case ".mp3":
-			case ".wav":
-			case ".wma":
-				//the player is after the download button
-				break;
-			case ".wmv":
-			case ".avi":
-			case ".mpg":
-			case ".mpeg":
-			case ".mp4":
-			case ".h264":
-			case ".3g2":
-			case ".mov":
-			case ".ram":
-			case ".swf":
-				//no player for those format
-				break;
-			case ".flv":
-			case ".h264":
-			case ".h.264":
-			case ".H.264":
-				//the player is after the download button
-				break;
-			case ".zip":
-				if(!doesZipHaveAnIndexFile(FILES_PATH.$path)) {
+		// CWE 20.09.2016: if file is located into Box, then always proposes a preview (from Box)
+		if(strstr($path, "box://")) {
+			if($isSmall){
+				$this->put('<img class="htmlPreview H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
+			} else {
+				$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
+			}
+			$exec->addJsCode("setListenerToPreviewFile('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
+		}
+		else {
+			$mediaId = $fieldName.'_file_media';
+			switch ($type){
+				case ".aif":
+				case ".aiff":
+				case ".mid":
+				case ".midi":
+				case ".ogg":
+				case ".au":
+				case ".aac":
+				case ".rm":
+				case ".ra":
 					break;
-				}
-				if($isSmall){
-					$this->put('<img class="htmlPreview  H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
-				} else {
-					$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
-				}
-				$exec->addJsCode("setListenerToUnzipForViewing('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
-				break;
-			case ".doc":
-			case ".docx":
-			case ".dot":
-			case ".dotx":
-			case ".xls":
-			case ".xlsx":
-			case ".xlsm":
-			case ".xlt":
-			case ".xltx":
-			case ".xltm":
-			case ".pps":
-			case ".ppsx":
-			case ".ppsm":
-			case ".ppt":
-			case ".pptx":
-			case ".pptm":
-			case ".msg":
-			case ".odt":
-			case ".rtf":
-//			case ".svg":
-//			case ".sql":
-			case ".db":
-			case ".dbf":
-				if($this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "useGoogleServiceToPreviewOfficeDocuments")=="1"){
-					//http://docs.google.com/gview?url=http://domain.com/path/docFile.doc&embedded=true
+				case ".mp3":
+				case ".wav":
+				case ".wma":
+					//the player is after the download button
+					break;
+				case ".wmv":
+				case ".avi":
+				case ".mpg":
+				case ".mpeg":
+				case ".mp4":
+				case ".h264":
+				case ".3g2":
+				case ".mov":
+				case ".ram":
+				case ".swf":
+					//no player for those format
+					break;
+				case ".flv":
+				case ".h264":
+				case ".h.264":
+				case ".H.264":
+					//the player is after the download button
+					break;
+				case ".zip":
+					if(!doesZipHaveAnIndexFile(FILES_PATH.$path)) {
+						break;
+					}
+					if($isSmall){
+						$this->put('<img class="htmlPreview  H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
+					} else {
+						$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
+					}
+					$exec->addJsCode("setListenerToUnzipForViewing('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
+					break;
+				case ".doc":
+				case ".docx":
+				case ".dot":
+				case ".dotx":
+				case ".xls":
+				case ".xlsx":
+				case ".xlsm":
+				case ".xlt":
+				case ".xltx":
+				case ".xltm":
+				case ".pps":
+				case ".ppsx":
+				case ".ppsm":
+				case ".ppt":
+				case ".pptx":
+				case ".pptm":
+				case ".msg":
+				case ".odt":
+				case ".rtf":
+	//			case ".svg":
+	//			case ".sql":
+				case ".db":
+				case ".dbf":
+					if($this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "useGoogleServiceToPreviewOfficeDocuments")=="1"){
+						//http://docs.google.com/gview?url=http://domain.com/path/docFile.doc&embedded=true
+						if($isSmall){
+							$this->put('<img class="htmlPreview H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
+						} else {
+							$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
+						}
+						$exec->addJsCode("setListenerToUnzipForViewing('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
+					}
+					break;
+				case ".pdf":
+				case ".html":
+				case ".htm":
+				case ".svg":
+				case ".txt":
+				case ".csv":
+				case ".sql":
+				case ".config":
+				case ".xml":
+				case ".bat":
+				case ".dat":
+				case ".data":
 					if($isSmall){
 						$this->put('<img class="htmlPreview H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
 					} else {
 						$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
 					}
-					$exec->addJsCode("setListenerToUnzipForViewing('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
-				}
-				break;
-			case ".pdf":
-			case ".html":
-			case ".htm":
-			case ".svg":
-			case ".txt":
-			case ".csv":
-			case ".sql":
-			case ".config":
-			case ".xml":
-			case ".bat":
-			case ".dat":
-			case ".data":
-				if($isSmall){
-					$this->put('<img class="htmlPreview H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
-				} else {
-					$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
-				}
-				$exec->addJsCode("setListenerToPreviewFile('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
-
-//				if($fieldXml["forceDisplayContent"]=="1"){
-//					$exec->addJsCode('previewFile(\''.$src.'\', \''.time().'\');');
-//				}
-				if($fieldXml["forceDisplayContent"]=="1"){
-					$exec->addJsCode("$('#".$this->getDetailRenderer()->getDetailId()."_".$fieldName." .read').click()");
-				}
-				//$this->put('<div class="print" onclick="var w = window.open(\''.$src.'/integrated\'); setTimeout(function(){ w.print(); }, 3000);" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/actions/print.png" /><span>'.$this->t("").'</span></div>');
-
-//				$this->put('<div class="lockAndModify'.$field->getFieldName().' generalButton G ui-corner-all" style="margin-top:4px; margin-right:5px;" onclick="update(\'elementDialog/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/lockAndModify/".$elementId."/".$field->getFieldName().'\');" ><img style="margin-left:5px;vertical-align:middle;" src="'.SITE_ROOT_forFileUrl.'images/icones/sanscons/edit.png" /><span class="" style="margin-left:5px;margin-right:5px;">'.$this->t("lockAndModify").'</span></div>');
-//				//if no modify rights then mask the lockAndModify button
-//				$exec->addJsCode("
-//if($('#elementDetail_toolbar .onlyWriteRights').length==0){
-//	$('#elementDialog .elementDetail .field .value div.lockAndModify".$field->getFieldName()." ').hide();
-//}
-//");
-				break;
-			case ".jpg":
-			case ".jpeg":
-			case ".gif":
-			case ".png":
-			case ".bmp":
-				//create a tempPublicUrl to preview the content
-				if($isSmall){
-					$this->put('<img class="imgPreview H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
-				} else {
-					$this->put('<div class="mediaPreview imgPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
-				}
-				//$this->put('<div class="print" style="margin-top:4px; margin-right:5px;" onclick="var w = window.open(\''.$src.'/integrated\'); setTimeout(function(){ w.print(); }, 3000);" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/actions/print.png" /><span>'.$this->t("").'</span></div>');
-				$exec->addJsCode("setListenerToPreviewFile('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
-				break;
+					$exec->addJsCode("setListenerToPreviewFile('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
+	
+	//				if($fieldXml["forceDisplayContent"]=="1"){
+	//					$exec->addJsCode('previewFile(\''.$src.'\', \''.time().'\');');
+	//				}
+					if($fieldXml["forceDisplayContent"]=="1"){
+						$exec->addJsCode("$('#".$this->getDetailRenderer()->getDetailId()."_".$fieldName." .read').click()");
+					}
+					//$this->put('<div class="print" onclick="var w = window.open(\''.$src.'/integrated\'); setTimeout(function(){ w.print(); }, 3000);" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/actions/print.png" /><span>'.$this->t("").'</span></div>');
+	
+	//				$this->put('<div class="lockAndModify'.$field->getFieldName().' generalButton G ui-corner-all" style="margin-top:4px; margin-right:5px;" onclick="update(\'elementDialog/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/lockAndModify/".$elementId."/".$field->getFieldName().'\');" ><img style="margin-left:5px;vertical-align:middle;" src="'.SITE_ROOT_forFileUrl.'images/icones/sanscons/edit.png" /><span class="" style="margin-left:5px;margin-right:5px;">'.$this->t("lockAndModify").'</span></div>');
+	//				//if no modify rights then mask the lockAndModify button
+	//				$exec->addJsCode("
+	//if($('#elementDetail_toolbar .onlyWriteRights').length==0){
+	//	$('#elementDialog .elementDetail .field .value div.lockAndModify".$field->getFieldName()." ').hide();
+	//}
+	//");
+					break;
+				case ".jpg":
+				case ".jpeg":
+				case ".gif":
+				case ".png":
+				case ".bmp":
+					//create a tempPublicUrl to preview the content
+					if($isSmall){
+						$this->put('<img class="imgPreview H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
+					} else {
+						$this->put('<div class="mediaPreview imgPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
+					}
+					//$this->put('<div class="print" style="margin-top:4px; margin-right:5px;" onclick="var w = window.open(\''.$src.'/integrated\'); setTimeout(function(){ w.print(); }, 3000);" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/actions/print.png" /><span>'.$this->t("").'</span></div>');
+					$exec->addJsCode("setListenerToPreviewFile('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
+					break;
+			}
 		}
 
 		//add the check-in/out button

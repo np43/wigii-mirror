@@ -21,17 +21,19 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 24 juil. 09
- * by LWR
+/**
+ * Web Impl PHP general functions
+ * Created on 24 juil. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
-/*
-file class
-this help to manage files
-*/
+/**
+ * File helping class
+ * Created in 2008 by B.Girardet
+ * Modified 06.09.2016 by Medair (ACA) to be compatible with PHP 5.6
+ */
 class File{
-	function list_dirs($dir,$prefix=""){
+	public static function list_dirs($dir,$prefix=""){
 		$dir_dirs = File::scan_dir($dir);
 		foreach($dir_dirs as $d){
 			if(is_dir($dir . $d) && File::check_filter($d,"",$prefix) && $d != "." && $d != "..")
@@ -40,7 +42,7 @@ class File{
 		return $dirs;
 	}
 
-	function list_files($dir,$ext_filter="",$prefix=""){
+	public static function list_files($dir,$ext_filter="",$prefix=""){
 		$dir_files = File::scan_dir($dir);
 		foreach($dir_files as $file){
 			if(is_file($dir . $file) && File::check_filter($file,$ext_filter,$prefix))
@@ -49,7 +51,7 @@ class File{
 		return $files;
 	}
 
-	function scan_dir($dir){
+	public static function scan_dir($dir){
 		$dh  = opendir($dir);
 		$files = null;
 		if($dh){ //if directory does not exist return null;
@@ -61,7 +63,7 @@ class File{
 		return $files;
 	}
 
-	function check_filter($name,$ext_filter,$prefix){
+	public static function check_filter($name,$ext_filter,$prefix){
 		if(is_string($ext_filter) && !empty($ext_filter))
 			$ext_filter = array($ext_filter);
 

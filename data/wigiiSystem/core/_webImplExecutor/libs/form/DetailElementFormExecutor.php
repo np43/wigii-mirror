@@ -147,8 +147,8 @@ class DetailElementFormExecutor extends FormExecutor {
 
 				//delete
 				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked()) &&
-					($config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && $elementP->getRights()->canModify()) ||
-					 $config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')!="1") {
+					($config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && $elementP->getRights()->canModify() ||
+					 $config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')!="1")) {
 					?><div class="H el_delete"><?=$transS->t($p, "delete");?></div><?
 				}
 			}
@@ -160,7 +160,7 @@ class DetailElementFormExecutor extends FormExecutor {
 			?></div><div class="clear"></div><?
 		}
 		//add a div here for can scroll all content except the menu above
-		?><div id="scrollElement"><?
+		?><div id="scrollElement" style="<?=(!$this->isWorkzoneViewDocked())? 'overflow:auto;':''?> "><?
 		?><div id="<?=$this->getFormId(); ?>" class="elementDetail" ><?
 		if($element->isState_locked()){
 			echo '<fieldset class="isPlayingRole ui-corner-all" style="border-color:#CC4B4B;" ><legend class="ui-corner-all" style="background-color:#CC4B4B;" >';
@@ -392,8 +392,10 @@ class DetailElementFormExecutor extends FormExecutor {
 //				$transS->t($p, "detailElement"), "");
 			$exec->addJsCode("$('#mainDiv').css('margin', '10px');");
 		}
-		//add link and feedback in the dialog Title
-		if($idAnswer!="mainDiv"){
+		
+		if($this->isWorkzoneViewDocked()) {//add link and feedback in the dialog Title
+			$findSelector = ".find('.T').append";
+		} elseif($idAnswer!="mainDiv"){
 			$findSelector = ".parent().find('.ui-dialog-title').after";
 		} else {
 			$findSelector = ".find('.T div:last').after";
@@ -417,6 +419,10 @@ class DetailElementFormExecutor extends FormExecutor {
 		//back to parent on close sub item
 		if($element->isSubElement()) {
 			$exec->addJsCode("$('#".$idAnswer."').parents('.ui-dialog').find('.ui-dialog-titlebar-close').unbind('click').click(function(e){ $(this).parents('.ui-dialog').find('.T .el_back').click(); return false; });");
+		}
+		
+		if($this->isWorkzoneViewDocked()) {
+			$exec->addJsCode("$('#".$idAnswer."')$findSelector('<div class=\"H el_closeDetails\">".$transS->t($p, "close")."</div>');");
 		}
 
 		//since 08.01.2013 all those informations are unified in displayElementAdditionalInformation

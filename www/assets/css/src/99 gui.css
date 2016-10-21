@@ -47,17 +47,13 @@
 	padding-left:5px;
 	padding-bottom:3px;
 }
-
+/*******************************/
+/* Box file picker integration */
+/*******************************/
 .ui-button-icon-box{
-	/*width: 150px;*/
 	background-color: #ffffff;
-	font-family :"Comic Sans MS", cursive, sans-serif;
-	/*color: rgb(42,157,224);*/
-	/*font-weight: bold;*/
-	/*border-radius: 3px;*/
-	/*border-color: grey;*/
+	font-family : Verdana,Arial,sans-serif;
 	border-style: none;
-	/*border-width: 1px;*/
 	background-image:url(../../images/gui/box_icon_22x22.jpg);
 	background-repeat: no-repeat;
 	background-position: left center;
@@ -66,12 +62,9 @@
 	padding-bottom:5px;
 	cursor:pointer;	
 }
-
 .ui-button-icon-box:hover{
 	background-color: rgb(188,229,252);
-	/*background-image:url(images/boxLogo2.png);*/
-	}
-
+}
 /****************************/
 /* SysInfo (system information at field level) */
 /****************************/

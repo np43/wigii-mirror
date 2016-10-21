@@ -66,32 +66,32 @@ RewriteEngine On
 RewriteCond %{SCRIPT_FILENAME} !-f
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteCond %{REQUEST_URI} ^.*wigii/.*$
-RewriteRule ^modif/(.*)$ /wigii/indexModif.php?url=$1 [L]
+RewriteRule ^modif/(.*)$ /wigii/indexModif.php?url=$1 [QSA,L]
 
 RewriteCond %{SCRIPT_FILENAME} !-f
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteCond %{REQUEST_URI} ^.*wigii/.*$
-RewriteRule ^(.*)$ /wigii/index.php?url=$1 [L]
+RewriteRule ^(.*)$ /wigii/index.php?url=$1 [QSA,L]
 
 RewriteEngine On
 RewriteCond %{SCRIPT_FILENAME} !-f
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteCond %{REQUEST_URI} ^.*example/.*$
-RewriteRule ^modif/(.*)$ /example/indexModif.php?url=$1 [L]
+RewriteRule ^modif/(.*)$ /example/indexModif.php?url=$1 [QSA,L]
 
 RewriteCond %{SCRIPT_FILENAME} !-f
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteCond %{REQUEST_URI} ^.*example/.*$
-RewriteRule ^(.*)$ /example/index.php?url=$1 [L]
+RewriteRule ^(.*)$ /example/index.php?url=$1 [QSA,L]
 
 RewriteCond %{SCRIPT_FILENAME} !-f
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteCond %{REQUEST_URI} ^.*/.*$
-RewriteRule ^modif/(.*)$ /indexModif.php?url=$1 [L]
+RewriteRule ^modif/(.*)$ /indexModif.php?url=$1 [QSA,L]
 
 RewriteCond %{SCRIPT_FILENAME} !-f
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteCond %{REQUEST_URI} ^.*/.*$
-RewriteRule ^(.*)$ /index.php?url=$1 [L]
+RewriteRule ^(.*)$ /index.php?url=$1 [QSA,L]
 
 

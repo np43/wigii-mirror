@@ -26,6 +26,7 @@
  * Base class, subclass can extend the FuncExp language.
  * Created by CWE on 17 avr. 10
  * Modified by CWE on 07 mars 2014 to activate by default the FuncExpVM when evaluating a record.
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class RecordEvaluator implements FuncExpEvaluator
 {
@@ -1243,9 +1244,9 @@ class RecordEvaluator implements FuncExpEvaluator
 		// removes html from comment if not an html area
 		if(!$isHtmlArea) {
 			$html2text = new Html2text();
-			$html2text->html2text($comment);
-			$comment = $html2text->get_text();
-			$html2text->clear();
+			$html2text->setHtml($comment);
+			$comment = $html2text->getText();
+// 			$html2text->clear();
 		}
 
 		if($isJournal) {
@@ -2236,13 +2237,13 @@ class RecordEvaluator implements FuncExpEvaluator
 				// removes html from value and field label if not an html area
 				if(!$isHtmlArea) {
 					$html2text = new Html2text();
-					$html2text->html2text($value);
-					$value = $html2text->get_text();
-					$html2text->clear();
+					$html2text->setHtml($value);
+					$value = $html2text->getText();
+// 					$html2text->clear();
 						
-					$html2text->html2text($fieldLabel);
-					$fieldLabel = $html2text->get_text();
-					$html2text->clear();
+					$html2text->setHtml($fieldLabel);
+					$fieldLabel = $html2text->getText();
+// 					$html2text->clear();
 				}
 	
 				if($isMultipleEdit) {

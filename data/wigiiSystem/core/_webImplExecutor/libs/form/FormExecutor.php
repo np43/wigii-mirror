@@ -24,6 +24,7 @@
 /**
  * Abstract FormExecutor class, parent class of all Form controllers present in the Wigii WebImpl.
  * Created on 15 sept. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 abstract class FormExecutor extends Model implements RecordStructureFactory, TRMProducer {
 	private $detailRenderer;
@@ -194,6 +195,11 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		return $this->isDialog;
 	}
 	public function setIsDialog($isDialog) { $this->isDialog = $isDialog; }
+	
+	public function isWorkzoneViewDocked() {
+		return $this->getWigiiExecutor()->isWorkzoneViewDocked();
+	}
+	
 	private $languageVisible;
 	public function getLanguageVisible() {
 		if(!isset($this->languageVisible)){

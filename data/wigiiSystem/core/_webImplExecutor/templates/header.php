@@ -175,6 +175,7 @@ EXEC_requestSeparator = '<?=ExecutionServiceImpl::requestSeparator;?>';
 EXEC_foundInJSCache = '<?=ExecutionServiceImpl::answerFoundInJSCache;?>';
 DIALOG_okLabel = '<?=$transS->h($p, "ok");?>';
 DIALOG_cancelLabel = '<?=$transS->h($p, "cancel");?>';
+DIALOG_closeLabel = '<?=$transS->h($p, "close");?>';
 DIALOG_doYouWantToSaveChage = '<?=$transS->h($p, "doYouWantToSaveChange");?>';
 DIALOG_finishCurrentAction = '<?=$transS->h($p, "pleaseFinishYourCurrentAction");?>';
 DIALOG_selectAtLeastOneGroup = '<?=$transS->h($p, "pleaseSelectAtLeastOneGroup");?>';
@@ -185,9 +186,11 @@ DIALOG_keepInBoth = '<?=$transS->h($p, "keepInBoth");?>';
 DIALOG_copyToFolder = '<?=$transS->h($p, "copyToFolder");?>';
 DIALOG_copyToFolder_help = '<?=$transS->h($p, "copyToFolder_help");?>';
 wigii().initContext();
-wigii().context.box = {fileLoadingBarMsg: '<?=$transS->h($p, "boxLoading");?><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>'};
-wigii().context.std = {fileLoadingBarMsg: '<?=$transS->h($p, "fileLoading");?><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>'};
-wigii().context.boxUpload = {fileLoadingBarMsg: '<?=$transS->h($p, "boxUploading");?><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>'};
+wigii().context.fileDownloadingWaitingMsg = '<?=$transS->h($p, "fileDownloading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>';
+wigii().context.serverSavingWaitingMsg = '<?=$transS->h($p, "wigiiBusySaving");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>';
+wigii().context.box = {fileDownloadingWaitingMsg:'<?=$transS->h($p, "boxFileDownloading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>',
+					   serverSavingWaitingMsg: '<?=$transS->h($p, "boxFileUploading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>'};
+wigii().context.isWorkzoneViewDocked = <?= ($this->isWorkzoneViewDocked()?'true':'false')?>;
 <?
 //Browser detection, at each refresh, the browser and window height is refreshed
 ?>
@@ -369,14 +372,17 @@ if(!$companyColor) $rCompanyColor = "#3E4552";
 if(!$rCompanyColor) $rCompanyColor = "#fff";
 ?>
 <div id="busyDiv" class="ui-corner-all" style="background-color:<?=$companyColor;?>;color:<?=$rCompanyColor;?>;border:2px solid <?=$rCompanyColor;?>;font-size:small;padding:2px 13px;position:absolute; top:32px; left:48%; display:none; z-index:999999;"><?=$transS->t($p, "wigiiBusyLoading");?></div>
-<div id="filteringBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiFilteringLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
-<div id="fileLoadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "fileLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="loadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiBusyLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
+<div id="filteringBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiFilteringLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
+<div id="fileDownloadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "fileDownloading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="formProgressBar" style="background-color:#fff;position:absolute; top:40%; left:40%; width:20%; display:none; z-index:999999;padding:10px;"></div>
+<div id="savingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiBusySaving");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="help" style="display:none;"></div>
 <div id="systemConsole" class="ui-corner-all" style="display:none;" ></div>
 <div id="summaryDialog" class="summary cm SBB" style="display:none; top:100px; left:100px;" ><div class="exit SBB" onclick="$(this).parent().hide();">x</div><div class="handler F"></div><textarea class="content"></textarea></div>
+<? if(!$this->isWorkzoneViewDocked()) { ?>
 <div id='elementDialog' class='elementDialog' style='display:none; top:0px; left:0px;'></div>
+<? } ?>
 <div id='organizeDialog' style='display:none; top:0px; left:0px;'></div>
 <div id='multipleDialog' style='display:none; top:0px; left:0px;'></div>
 <div id='filtersDialog' style='display:none; top:0px; left:0px;'></div>
@@ -389,7 +395,6 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 <div id='importDialog' style='top:0px; left:0px;display:none;'></div>
 <div id='changePasswordDialog' style='top:0px; left:0px;display:none;'></div>
 <div id='downloadingDialog' style='top:0px; left:0px;display:none;'></div>
-<div id="uploadBoxFile" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "savingMsg");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <script type="text/javascript" >
 $('#systemConsole').css('display','none').resizable({handles:'e,w',stop:function(event,ui){$(this).css('height','auto');}}).draggable({cursor:'crosshair',handle:'.header'});
 </script>

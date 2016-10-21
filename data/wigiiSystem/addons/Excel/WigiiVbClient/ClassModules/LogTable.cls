@@ -4,28 +4,31 @@ BEGIN
 END
 Attribute VB_Name = "LogTable"
 Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = True
+Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-'-
-'This file is part of Wigii.
-'
-'Wigii is free software: you can redistribute it and\/or modify
-'it under the terms of the GNU General Public License as published by
-'the Free Software Foundation, either version 3 of the License, or
-'(at your option) any later version.
-'
-'Wigii is distributed in the hope that it will be useful,
-'but WITHOUT ANY WARRANTY; without even the implied warranty of
-'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-'GNU General Public License for more details.
-'
-'You should have received a copy of the GNU General Public License
-'along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
-'
-'@copyright  Copyright (c) 2000-2015 Wigii    https://github.com/wigii/wigii    http://www.wigii.org/system
-'@license    http://www.gnu.org/licenses/     GNU General Public License
-'-
+'**
+'*  This file is part of Wigii.
+'*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+'*
+'*  Wigii is free software: you can redistribute it and/or modify it
+'*  under the terms of the GNU General Public License as published by
+'*  the Free Software Foundation, either version 3 of the License,
+'*  or (at your option) any later version.
+'*
+'*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+'*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+'*  See the GNU General Public License for more details.
+'*
+'*  A copy of the GNU General Public License is available in the Readme folder of the source code.
+'*  If not, see <http://www.gnu.org/licenses/>.
+'*
+'*  @copyright  Copyright (c) 2016  Wigii.org
+'*  @author     <http://www.wigii.org/system>      Wigii.org
+'*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+'*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+'*/
+' Modified by Medair Sept 2016 to extend ability to retrieve data from different table formats
 
 '-------------------------------------------------------------
 '- LOGICAL TABLE
@@ -43,7 +46,7 @@ Attribute VB_Exposed = False
 '- Use the method SetRange to initialize a new table with
 '- a given range
 '-------------------------------------------------------------
-
+Option Explicit
 '- Instance variables :
 Private trange As Range
 Private theader As Boolean
@@ -69,11 +72,11 @@ End Property
 '- Input   : -
 '- Output  : the range or Nothing if there is no header
 '-------------------------------------------------------------
-Public Property Get Header() As Range
+Public Property Get header() As Range
     If theader And Not (trange Is Nothing) Then
-        Set Header = trange.Rows(1)
+        Set header = trange.rows(1)
     Else
-        Set Header = Nothing
+        Set header = Nothing
     End If
 End Property
 
@@ -85,17 +88,17 @@ End Property
 '- Input   : -
 '- Output  : the range or Nothing if the table is empty
 '-------------------------------------------------------------
-Public Property Get Data() As Range
+Public Property Get data() As Range
     If Not Me.IsEmpty Then
         If theader Then
             With trange
-                Set Data = .Worksheet.Range(.Cells(2, 1), .Cells(Me.rowCount + 1, Me.colCount))
+                Set data = .Worksheet.Range(.Cells(2, 1), .Cells(Me.rowCount + 1, Me.colCount))
             End With
         Else
-            Set Data = trange
+            Set data = trange
         End If
     Else
-        Set Data = Nothing
+        Set data = Nothing
     End If
 End Property
 
@@ -108,7 +111,7 @@ End Property
 '-------------------------------------------------------------
 Public Property Get colCount() As Integer
     If Not (trange Is Nothing) Then
-        colCount = trange.Columns.Count
+        colCount = trange.Columns.count
     Else
         colCount = 0
     End If
@@ -124,9 +127,9 @@ End Property
 Public Property Get rowCount() As Integer
     If Not (trange Is Nothing) Then
         If theader Then
-            rowCount = trange.Rows.Count - 1
+            rowCount = trange.rows.count - 1
         Else
-            rowCount = trange.Rows.Count
+            rowCount = trange.rows.count
         End If
     Else
         rowCount = 0
@@ -165,9 +168,9 @@ End Property
 '- Input   : the new range, use first row for header (true) or not
 '- Output  : -
 '------------------------------------------------------------------
-Public Sub SetRange(r As Range, withHeader As Boolean)
-    Set trange = r
-    If withHeader And Not (r Is Nothing) Then
+Public Sub SetRange(R As Range, withHeader As Boolean)
+    Set trange = R
+    If withHeader And Not (R Is Nothing) Then
         theader = True
     Else
         theader = False
@@ -183,24 +186,24 @@ End Sub
 '- Output  : -
 '-------------------------------------------------------------
 Public Sub Resize(nbrows As Integer, nbcols As Integer)
-    Dim r As Integer, c As Integer
+    Dim R As Integer, c As Integer
     
     If trange Is Nothing Then
         Exit Sub
     End If
-    r = nbrows + Me.rowCount
+    R = nbrows + Me.rowCount
     c = nbcols + Me.colCount
     
     If theader Then
-        If (r >= 0) And (c > 0) Then
+        If (R >= 0) And (c > 0) Then
             With trange
-                Set trange = .Worksheet.Range(.Cells(1, 1), .Cells(1 + r, c))
+                Set trange = .Worksheet.Range(.Cells(1, 1), .Cells(1 + R, c))
             End With
         End If
     Else
-        If (r > 0) And (c > 0) Then
+        If (R > 0) And (c > 0) Then
             With trange
-                Set trange = .Worksheet.Range(.Cells(1, 1), .Cells(r, c))
+                Set trange = .Worksheet.Range(.Cells(1, 1), .Cells(R, c))
             End With
         End If
     End If
@@ -215,22 +218,22 @@ End Sub
 '-           ! the range must not be in table !
 '- Output  : the new table (the current one is not changed)
 '-------------------------------------------------------------
-Public Function CopyTo(r As Range, Optional withHeader As Boolean = True) As LogTable
+Public Function CopyTo(R As Range, Optional withHeader As Boolean = True) As LogTable
     Dim result As New LogTable
         
-    If Not withHeader And Me.HasHeader And Not r Is Nothing Then
+    If Not withHeader And Me.HasHeader And Not R Is Nothing Then
         If Me.IsEmpty Then
             Set CopyTo = Nothing
         Else
-            With r
+            With R
                 result.SetRange .Worksheet.Range(.Cells(1, 1), .Cells(Me.rowCount, Me.colCount)), False
             End With
-            result.Range.Value2 = Me.Data.Value2
+            result.Range.Value2 = Me.data.Value2
             Set CopyTo = result
         End If
-    ElseIf Not r Is Nothing And Not trange Is Nothing Then
-        With r
-            result.SetRange .Worksheet.Range(.Cells(1, 1), .Cells(trange.Rows.Count, trange.Columns.Count)), theader
+    ElseIf Not R Is Nothing And Not trange Is Nothing Then
+        With R
+            result.SetRange .Worksheet.Range(.Cells(1, 1), .Cells(trange.rows.count, trange.Columns.count)), theader
         End With
         result.Range.Value2 = trange.Value2
         Set CopyTo = result
@@ -250,22 +253,22 @@ End Function
 '-           the number of columns to copy
 '- Output  : the new table
 '-------------------------------------------------------------
-Public Function SpecificCopy(r As Range, colmap() As Integer, nbcol As Integer) As LogTable
+Public Function SpecificCopy(R As Range, colmap() As Integer, nbcol As Integer) As LogTable
     Dim result As New LogTable
     Dim i As Integer, n As Integer
     
-    If (Not r Is Nothing) And _
+    If (Not R Is Nothing) And _
        (Not trange Is Nothing) And _
        (nbcol > 0) Then
     
         'Calculates the number of columns to copy
-        n = trange.Columns.Count
+        n = trange.Columns.count
         If nbcol < n Then
             n = nbcol
         End If
         'Constructs the result table
-        With r
-            result.SetRange .Worksheet.Range(.Cells(1, 1), .Cells(trange.Rows.Count, n)), theader
+        With R
+            result.SetRange .Worksheet.Range(.Cells(1, 1), .Cells(trange.rows.count, n)), theader
         End With
         'Copies the data
         For i = 1 To n
@@ -289,7 +292,7 @@ Public Sub Sort(col As Integer, Optional order As Integer = xlAscending)
        (col <= 0 Or col > Me.colCount) Then
         Exit Sub
     End If
-    With Me.Data
+    With Me.data
         .Sort .Cells(1, col), order
     End With
 End Sub
@@ -300,21 +303,23 @@ End Sub
 '- Purpose : Looks for the given value in the given column
 '-           Use this method for none sorted table (complexity : O(n))
 '- Input   : the value, the column, return the first value found (true)
-'-           or return the last value found (false)
+'-           or return the last value found (false), return the data in column (n)
 '- Output  : the range containing the value or Nothing if not found
 '----------------------------------------------------------------------
 Public Function FindLinear(val As Variant, col As Integer, _
-                           Optional first As Boolean = True) As Range
+                           Optional first As Boolean = True, _
+                           Optional lookupColumn As Integer = 0) As Range
     Dim d As Range, NAVal As Boolean, NACell As Boolean
-    Dim a, b, s As Integer
+    Dim a, b, s, i
+    
+    If lookupColumn = 0 Then lookupColumn = col
     
     If (Me.IsEmpty) Or _
        (col <= 0 Or col > Me.colCount) Then
-       
         Set FindLinear = Nothing
         Exit Function
     End If
-    Set d = Me.Data
+    Set d = Me.data
     NAVal = Application.WorksheetFunction.IsNA(val)
     
     'Goes forward through the table
@@ -331,12 +336,12 @@ Public Function FindLinear(val As Variant, col As Integer, _
         NACell = Application.WorksheetFunction.IsNA(d.Cells(i, col))
         If NACell And NAVal Then
            'value found
-            Set FindLinear = d.Cells(i, col)
+            Set FindLinear = d.Cells(i, lookupColumn)
             Exit Function
         ElseIf Not NACell And Not NAVal Then
-            If d.Cells(i, col).Value2 = val Then
+            If CStr(d.Cells(i, col).Value2) = CStr(val) Then
                'value found
-               Set FindLinear = d.Cells(i, col)
+               Set FindLinear = d.Cells(i, lookupColumn)
                Exit Function
             End If
         End If
@@ -368,7 +373,7 @@ Public Function FindDichotomy(val As Variant, col As Integer, _
         Set FindDichotomy = Nothing
         Exit Function
     End If
-    Set d = Me.Data
+    Set d = Me.data
     NAVal = Application.WorksheetFunction.IsNA(val)
     i = 1: j = Me.rowCount
     
@@ -387,7 +392,7 @@ Public Function FindDichotomy(val As Variant, col As Integer, _
             Else
                 i = k
             End If
-        ElseIf d.Cells(k, col).Value2 = val Then
+        ElseIf CStr(d.Cells(k, col).Value2) = CStr(val) Then
             'value found
             Set FindDichotomy = d.Cells(k, col)
             Exit Function
@@ -419,6 +424,49 @@ Public Function FindDichotomy(val As Variant, col As Integer, _
 End Function
 
 '----------------------------------------------------------------------
+'- EXPORT AS XML
+'----------------------------------------------------------------------
+'- Purpose : Exports a table in simple XML format
+'- Input   : -
+'- Output  : the XML string
+'----------------------------------------------------------------------
+Public Function exportAsXML(Optional topNodeLable As String = "data", Optional rowNodeLabel As String = "row") As String
+    Dim export As String
+    Dim row As Range
+    Dim col As Integer
+    
+    export = createXMLStartNode(topNodeLable)
+    
+    For Each row In Me.data.rows
+        export = export & createXMLStartNode(rowNodeLabel)
+        For col = 1 To Me.colCount
+            If Me.HasHeader Then
+                 export = export & createXMLStartNode(Me.header.Cells(1, col).value)
+                 export = export & Trim(row.Cells(1, col).value)
+                 export = export & createXMLEndNode(Me.header.Cells(1, col).value)
+            Else
+                 export = export & createXMLStartNode("data" & col)
+                 export = export & Trim(row.Cells(1, col).value)
+                 export = export & createXMLEndNode("data" & col)
+            End If
+        
+        Next
+        export = export & createXMLEndNode(rowNodeLabel)
+    Next
+    export = export + createXMLEndNode(topNodeLable)
+    
+    exportAsXML = export
+End Function
+
+Private Function createXMLStartNode(name As String) As String
+    createXMLStartNode = "<" & Trim(name) & ">"
+End Function
+
+Private Function createXMLEndNode(name As String) As String
+    createXMLEndNode = "</" & Trim(name) & ">"
+End Function
+
+'----------------------------------------------------------------------
 '- EXPORT AS CSV
 '----------------------------------------------------------------------
 '- Purpose : Exports a table in CSV format
@@ -427,7 +475,14 @@ End Function
 '----------------------------------------------------------------------
 Public Function exportAsCSV() As Boolean
    Dim events As Boolean
-   Dim wb As Workbook, nbSheets As Long
+   Dim wb As Workbook
+   
+#If VBA7 Then ' 64 bits
+   Dim nbSheets As LongPtr
+#Else  ' 32 bits
+   Dim nbSheets As Long
+#End If
+
    Dim response As Boolean
    
    nbSheets = Application.SheetsInNewWorkbook
@@ -444,5 +499,27 @@ Public Function exportAsCSV() As Boolean
    Application.SheetsInNewWorkbook = nbSheets
    Application.EnableEvents = events
    exportAsCSV = response
+End Function
+
+'----------------------------------------------------------------------
+'- SELECT DATA FROM ROW
+'----------------------------------------------------------------------
+'- Purpose : Select a value from the table by Row number and column heading or number. Allows mapping data by heading.
+'- Input   : Row number, Column Name
+'- Output  : (String) The value of the data or empty string on error
+'----------------------------------------------------------------------
+Public Function SelectDataFromRow(columnName As String, rowNumber As Integer) As String
+    Dim colIndex As Range
+    If theader And Not (trange Is Nothing) Then
+        Set colIndex = trange.rows(1).Find(columnName, Lookat:=xlWhole)
+        
+        If Not colIndex Is Nothing Then
+            SelectDataFromRow = trange.Cells(rowNumber, colIndex.column).value
+        Else
+            SelectDataFromRow = ""
+        End If
+    Else
+        SelectDataFromRow = ""
+    End If
 End Function
 

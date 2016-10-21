@@ -1,23 +1,25 @@
 Attribute VB_Name = "VBProjectManager"
-'-
-'This file is part of Wigii.
-'
-'Wigii is free software: you can redistribute it and\/or modify
-'it under the terms of the GNU General Public License as published by
-'the Free Software Foundation, either version 3 of the License, or
-'(at your option) any later version.
-'
-'Wigii is distributed in the hope that it will be useful,
-'but WITHOUT ANY WARRANTY; without even the implied warranty of
-'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-'GNU General Public License for more details.
-'
-'You should have received a copy of the GNU General Public License
-'along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
-'
-'@copyright  Copyright (c) 2000-2015 Wigii    https://github.com/wigii/wigii    http://www.wigii.org/system
-'@license    http://www.gnu.org/licenses/     GNU General Public License
-'-
+'**
+'*  This file is part of Wigii.
+'*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+'*
+'*  Wigii is free software: you can redistribute it and/or modify it
+'*  under the terms of the GNU General Public License as published by
+'*  the Free Software Foundation, either version 3 of the License,
+'*  or (at your option) any later version.
+'*
+'*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+'*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+'*  See the GNU General Public License for more details.
+'*
+'*  A copy of the GNU General Public License is available in the Readme folder of the source code.
+'*  If not, see <http://www.gnu.org/licenses/>.
+'*
+'*  @copyright  Copyright (c) 2016  Wigii.org
+'*  @author     <http://www.wigii.org/system>      Wigii.org
+'*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+'*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+'*/
 
 Option Explicit
 '----------------------------------------------------------------------------
@@ -55,7 +57,7 @@ Public Sub VBPM_exportArtefactsToFolder(folderPath As String)
    Dim fso As Scripting.FileSystemObject
    Set fso = New Scripting.FileSystemObject
    
-   folderPath = folderPath & "\" & ThisWorkbook.VBProject.Name
+   folderPath = folderPath & "\" & ThisWorkbook.VBProject.name
    
    For Each vbCompo In ThisWorkbook.VBProject.VBComponents
       Select Case vbCompo.Type
@@ -78,13 +80,13 @@ Private Sub VBPM_exportVbComponent(vbCompo As Variant, fileExtension As String, 
    If fso Is Nothing Then
       Set fso = New Scripting.FileSystemObject
    End If
-   Dim fileName As String
-   fileName = folderPath & "\" & vbCompo.Name & fileExtension
-   If fso.FileExists(fileName) Then
-      fso.DeleteFile fileName
+   Dim filename As String
+   filename = folderPath & "\" & vbCompo.name & fileExtension
+   If fso.FileExists(filename) Then
+      fso.DeleteFile filename
    End If
    VBPM_createFolder folderPath, fso
-   vbCompo.Export fileName
+   vbCompo.export filename
    Set fso = Nothing
 End Sub
 Private Sub VBPM_createFolder(folderPath As String, Optional fso As Scripting.FileSystemObject = Nothing)

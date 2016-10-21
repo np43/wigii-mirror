@@ -20,20 +20,36 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
+//Get the height of the top of screen (companyBanner + navigationBar + searchBar (in option))
+function getTopHeight(includeSearchBar){
+	if(arguments.length<1){
+		includeSearchBar = false;
+	}
+	var height = 0;
+	$('#companyBanner').children().each(function(){height += $(this).outerHeight();});
+	height += $('#NMContainer').outerHeight();	
+	if(includeSearchBar) height += $('#searchBar').outerHeight();
+	
+	return height;
+}
+
 function resize_groupPanel(){
 	resize_groupPanel_i = $('#groupPanel>ul');
 	fb = $('#footerBar');
 	gpT = $('#groupPanel>.keepNotify');
 	if(resize_groupPanel_i.length>0){
-		//alert($(window).height()+" "+ul.position().top+" "+fb.height());
-		resize_groupPanel_i.height($(window).height()-resize_groupPanel_i.position().top - fb.outerHeight() - gpT.outerHeight()-20);
-		if($('#groupPanel>ul:hidden').length){
-			var tempH = $('#moduleView').height();
-			var tempPad = tempH / 2 -30;
-		} else {
-			var tempH = $(window).height()-resize_groupPanel_i.position().top - fb.outerHeight();
-			var tempPad = tempH / 2 -30;
-		}
+		resize_groupPanel_i.height($(window).height() - getTopHeight(true) - fb.outerHeight() - gpT.outerHeight()-20);
+//		if($('#groupPanel>ul:hidden').length){
+//			var tempH = $('#moduleView').height();
+//			var tempPad = tempH / 2 -30;
+//		} else {
+//			var tempH = $(window).height()-resize_groupPanel_i.position().top - fb.outerHeight();
+//			var tempPad = tempH / 2 -30;
+//		}
+//		var tempH = $(window).height()-$('#groupPanel').position().top - fb.outerHeight();
+		var tempH = $(window).height() - getTopHeight(true) - fb.outerHeight();
+		var tempPad = tempH / 2 -30;
+
 		$('#groupPanel>.collapse').height(tempH-tempPad).css('padding-top',tempPad);
 	}
 }
@@ -53,6 +69,8 @@ function ElementPListRows_makeHeaders(){
 	$('#moduleView .list .headerList>div:last').css('padding-right', ElementPListRows_scrollWidth+'px'); //to cover the space of the vertical scroll
 }
 function resize_elementList(){
+	if(isWorkzoneViewMode() && crtModuleName!='Admin' && !$('#elementDialog').hasClass('ui-dialog-content')) resize_workzoneViewDocked();
+
 	resize_elementList_i = $('#moduleView>div.list>div.dataList');
 	fb = $('#footerBar');
 	if(resize_elementList_i.length>0){
@@ -73,7 +91,7 @@ function resize_elementList(){
 			$('#moduleView div.nbItemsInList').css('margin-top', '-25px');
 		}
 
-		resize_elementList_i.height($(window).height()-resize_elementList_i.position().top - fb.outerHeight());
+		resize_elementList_i.height($(window).height() - getTopHeight(true) - $('#moduleView > .dataZone.list > .headerList').outerHeight() - fb.outerHeight());
 
 		$('#moduleView .list .dataList').unbind('scroll').scroll(function(){
 			$('#moduleView>div.list .headerList').css('margin-left', -$(this).scrollLeft());
@@ -83,10 +101,108 @@ function resize_elementList(){
 	resize_coverPage();
 	resize_calendar();
 	resize_blog();
-	resize_scrollArea(true);
+	if(!isWorkzoneViewMode()||crtModuleName=='Admin'){
+		resize_scrollArea(true);
+	}
 }
 $(window).resize(resize_elementList);
 
+function resize_workzoneViewDocked(){
+	var collapseSymbole = '&laquo;',
+		explodeSymbole = '&raquo;',
+		collapseRef = $('#groupPanel>.collapse'),
+		elementDialog = $('#elementDialog'),
+		moduleView = $('#moduleView'),
+		groupPanel = $('#groupPanel'),
+		dockingContainer = $('#dockingContainer');
+		dockingCollapse = dockingContainer.find('.collapse');
+		height = $(window).innerHeight() - getTopHeight(true) - $('#footerBar').outerHeight(),
+		availableWidthSpace = $(window).innerWidth();
+	
+	var dockingCardVisible = $('#elementDialog:visible').length==1,
+		windowSize = $(window).innerWidth(),
+		scrollSize = $('#scrollElement').width(),
+		cardSize = scrollSize + 15,
+		groupSize = groupPanel.outerWidth(),
+		moduleSize = windowSize - groupSize - cardSize,
+		GroupListCollapsed = groupPanel.data('GroupListCollapsed') || 0 ;
+		ListViewCollapsed = moduleView.data('ListViewCollapsed') || 0 ;
+		collapseMinWidth = moduleView.data('minWidth') || 100;
+	//get the same parameters of existing collapse bar
+	dockingCollapse.height(collapseRef.height()).css('padding-top',collapseRef.css('padding-top'));
+	
+	//set width of docked card
+	elementDialog.width(cardSize);
+	
+	//Auto-Collapse
+	var userHasClick = groupPanel.data('userClickCollapse') || dockingCollapse.find('span').data('userClickCollapse');
+	if(dockingCardVisible) {
+		if(GroupListCollapsed == 1 && !userHasClick || moduleSize < collapseMinWidth && !userHasClick) {
+			groupPanel.find('ul#group_0').hide();
+			groupPanel.find('.keepNotify').hide();
+		    positionSelectedGroup("#groupPanel");
+		    groupPanel.find('.collapse').html(explodeSymbole);
+		    
+		    groupSize = groupPanel.outerWidth();
+		    moduleSize = windowSize - groupSize - cardSize;
+		    
+		    if(ListViewCollapsed == 1 && !userHasClick || moduleSize < collapseMinWidth && !userHasClick){
+				moduleView.hide();
+				dockingCollapse.find('span').html(explodeSymbole);
+			}
+		}
+		
+		if(ListViewCollapsed == 1 && !userHasClick) {
+			moduleView.hide();
+			dockingCollapse.find('span').html(explodeSymbole);
+		}
+	} else {
+		if(!userHasClick) {
+			groupPanel.find('ul#group_0').show();
+			groupPanel.find('.keepNotify').show();
+		    positionSelectedGroup("#groupPanel");
+		    groupPanel.find('.collapse').html(collapseSymbole);
+		    groupSize = groupPanel.outerWidth();
+		}
+	}
+	groupPanel.data('userClickCollapse',false);
+	dockingCollapse.find('span').data('userClickCollapse',false);
+
+	var marginsWidth = elementDialog.outerWidth() - cardSize;//scrollSize;	
+	availableWidthSpace -= groupSize;
+	
+	//When element dialog is not visible or is there empty moduleView is display with the totality of space available
+	if(elementDialog.children().length==0 || elementDialog.css('display')=='none') {
+		//remove margin size
+		availableWidthSpace -= moduleView.outerWidth()-moduleView.width();
+		moduleView.width(availableWidthSpace).show();
+		return;
+	}
+	
+	//if docking collapse bar is not hidden, we subtract is availableWidthSpace
+	if($('#dockingContainer>.collapse:hidden').length==0) availableWidthSpace-= dockingCollapse.outerWidth();
+	
+	//if moduleView is visible then calculate available space and asign then to it
+	if(dockingContainer.find('#moduleView:hidden').length==0) {		
+		var remainingWidthSpace = availableWidthSpace - elementDialog.outerWidth(); // + marginsWidth;	
+		//if moduleView is too small, we put the minimum and reduce elementDialog
+		var moduleViewMinWidth = collapseMinWidth;
+		if (remainingWidthSpace <= moduleViewMinWidth) {		
+			moduleView.width(moduleViewMinWidth);
+			elementDialog.width(availableWidthSpace - marginsWidth - moduleView.outerWidth());
+		} else {
+			moduleView.width(remainingWidthSpace -15);
+			elementDialog.width(cardSize+(marginsWidth/2))
+		}
+	} else { //if moduleView is hidden calculate the availableWidthSpace
+		availableWidthSpace -= marginsWidth;		
+		elementDialog.width(availableWidthSpace);
+	}	
+	elementDialog.height(height + (elementDialog.height()-elementDialog.outerHeight())).css('overflow','auto');
+	if(dockingCardVisible){
+		$('.firstBox, .toolbarBox','#searchBar').hide();
+	}
+}
 
 function resize_homePage(){
 	resize_homePage_i = $('#workZone #ContainerHome');
@@ -158,6 +274,10 @@ function hideCoverPage(){
 	$('#searchBar .toolbarBox div:not(.toggleCoverPage,.addNewElement,.cm,.disabledR,.ui-dialog)').show();
 	$('#moduleView .dataZone').show();
 	resize_elementList();
+}
+
+function isWorkzoneViewMode(){
+	return wigii().context.isWorkzoneViewDocked;
 }
 
 function fold(id){
@@ -939,6 +1059,7 @@ function setListenersToGroupPanel(doYouWantToRemoveYouMultipleSelectionText){
 		$('#groupPanel>.collapse').remove();
 	} else {
 		$('#groupPanel>.collapse').click(function(){
+			$("#groupPanel").data('userClickCollapse',true);
 			if($('#groupPanel>ul#group_0:hidden').length){
 				$('#groupPanel>ul#group_0').show();
 				$('#groupPanel>.keepNotify').show();
@@ -955,8 +1076,27 @@ function setListenersToGroupPanel(doYouWantToRemoveYouMultipleSelectionText){
 			resize_portal();
 		});
 	}
+	
+	$('#dockingContainer>.collapse').click(function(){
+//	$('#dockingContainer>.collapse span').click(function(){
+		var docking = $('#dockingContainer'),
+			moduleView = $('#moduleView');
+//		$(this).data('userClickCollapse',true);
+		$(this).find('span').data('userClickCollapse',true);
+		if(docking.find('#moduleView:hidden').length){
+			moduleView.show();
+//			$(this).html("&laquo;");
+			$(this).find('span').html("&laquo;");
+		} else {
+			moduleView.hide();
+//			$(this).html("&raquo;");
+			$(this).find('span').html("&raquo;");
+		}
 
-
+		resize_elementList();
+		resize_coverPage();
+		resize_portal();
+	});
 
 	//add resize on fold/unfold folder
 	$('#groupPanel li span.folder').click(function(){
@@ -1020,6 +1160,10 @@ function setListenersToGroupPanel(doYouWantToRemoveYouMultipleSelectionText){
 			groupItem.click();
 			return true;
 		}
+		
+		var responseDiv = 'elementDialog';
+		if(isWorkzoneViewMode()) responseDiv = 'confirmationDialog';
+		
 		if($(this).attr('id')=="cm_findDuplicatesIn"){
 			//this action is special as it take the current context to find duplicates.
 			//so it is good to first load the current folder
@@ -1033,22 +1177,22 @@ function setListenersToGroupPanel(doYouWantToRemoveYouMultipleSelectionText){
 			return true;
 		}
 		if($(this).attr('id')=="cm_renameGroup"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/Admin/groupEdit/'+crtModuleName+'/'+idGroup+'/groupPanel');
+			update(responseDiv+'/'+crtWigiiNamespaceUrl+'/Admin/groupEdit/'+crtModuleName+'/'+idGroup+'/groupPanel');
 			groupItem.click();
 			return true;
 		}
 		if($(this).attr('id')=="cm_deleteGroup"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/Admin/groupDelete/'+crtModuleName+'/'+idGroup+'/groupPanel');
+			update(responseDiv+'/'+crtWigiiNamespaceUrl+'/Admin/groupDelete/'+crtModuleName+'/'+idGroup+'/groupPanel');
 			groupItem.click();
 			return true;
 		}
 		if($(this).attr('id')=="cm_emptyGroup"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/Admin/groupEmpty/'+crtModuleName+'/'+idGroup+'/groupPanel');
+			update(responseDiv+'/'+crtWigiiNamespaceUrl+'/Admin/groupEmpty/'+crtModuleName+'/'+idGroup+'/groupPanel');
 			groupItem.click();
 			return true;
 		}
 		if($(this).attr('id')=="cm_createSubGroup"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/Admin/groupNew/'+crtModuleName+'/'+idGroup+'/groupPanel');
+			update(responseDiv+'/'+crtWigiiNamespaceUrl+'/Admin/groupNew/'+crtModuleName+'/'+idGroup+'/groupPanel');
 			groupItem.click();
 			return true;
 		}
@@ -1070,15 +1214,15 @@ function setListenersToGroupPanel(doYouWantToRemoveYouMultipleSelectionText){
 			return true;
 		}
 		if($(this).attr('id')=="cm_subscription"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/Admin/groupSubscription/'+crtModuleName+'/'+idGroup+'/groupPanel');
+			update(responseDiv+'/'+crtWigiiNamespaceUrl+'/Admin/groupSubscription/'+crtModuleName+'/'+idGroup+'/groupPanel');
 			return true;
 		}
 		if($(this).attr('id')=="cm_emailNotification"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/Admin/groupEmailNotification/'+crtModuleName+'/'+idGroup+'/groupPanel');
+			update(responseDiv+'/'+crtWigiiNamespaceUrl+'/Admin/groupEmailNotification/'+crtModuleName+'/'+idGroup+'/groupPanel');
 			return true;
 		}
 		if($(this).attr('id')=="cm_xmlPublish"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/Admin/groupXmlPublish/'+crtModuleName+'/'+idGroup+'/groupPanel');
+			update(responseDiv+'/'+crtWigiiNamespaceUrl+'/Admin/groupXmlPublish/'+crtModuleName+'/'+idGroup+'/groupPanel');
 			return true;
 		}
 	});
@@ -1573,7 +1717,10 @@ function setListenersToElementList(){
 			return true;
 		}
 		if($(this).attr('id')=="cm_delete"){
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/delete/'+idItem+'/elementDialog');
+			var responseDiv = 'elementDialog';
+			//update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/delete/'+idItem+'/elementDialog');
+			if(isWorkzoneViewMode()) responseDiv = 'confirmationDialog';
+			update(responseDiv+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/delete/'+idItem+'/elementDialog');
 			return true;
 		}
 		if($(this).attr('id')=="cm_copy"){
@@ -1840,8 +1987,11 @@ function mailToFromLink(elementDialogId, link){
 
 	} else {
 		link = link.replace(" ", "%20");
-		//in ie 7 there is an alignement problem, that is not solved. But no time to correct IE7 bugs
-		$('#'+elementDialogId+'').parent().prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;float:left;margin-top:20px;margin-left:'+($('#'+elementDialogId+'').width()-425)+'px;padding:5px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>').find('input').select().next().click(function(e){ $(this).parent().remove(); e.stopPropagation(); return false; });
+		if(isWorkzoneViewMode()) {
+			$('#'+elementDialogId+'').prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;left:'+($('#searchBar .el_sendLink').position().left+$('#searchBar .el_sendLink').outerWidth()-425)+'px;top:'+getTopHeight(true)+'px;padding:5px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>').find('input').select().next().click(function(e){ $(this).parent().remove(); e.stopPropagation(); return false; });
+		} else {
+			$('#'+elementDialogId+'').parent().prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;float:left;margin-top:20px;margin-left:'+($('#'+elementDialogId+'').width()-425)+'px;padding:5px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>').find('input').select().next().click(function(e){ $(this).parent().remove(); e.stopPropagation(); return false; });
+		}
 	}
 	//link = link.replace('#', '#').replace(' ', '%2520');
 	//window.location = 'mailto:?body=Access document with: '+link+' .';
@@ -1915,12 +2065,15 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 	$('#'+elementDialogId+' .T>div, #'+elementDialogId+' .T>a').add($('a', $('#'+elementDialogId+'').prev())).click(function(){
 		if($(this).hasClass('el_edit')){
 			update(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/element/edit/'+$(this).parent().attr('href').replace('#', ''));
+			if(isWorkzoneViewMode()) {
+				$('#searchBar .middleBox div.T').children().remove();
+			}
 			return;
 		}
 		if($(this).hasClass('el_copy')){
 			var itemID = $(this).parent().attr('href').replace('#', '');			
 			if(isSubItem){
-				update(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/subelement/copy/'+elementParentId+'/'+elementLinkName+'/'+$(this).parent().attr('href').replace('#', ''));
+				update(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/subelement/copy/'+elementParentId+'/'+elementLinkName+'/'+itemID);
 			} else {
 				copyWithOrganize(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName, itemID);
 				//update(''+elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/element/copy/'+$(this).parent().attr('href').replace('#', '')+'/'+$('#groupPanel li.selected').attr('id').split('_')[1]);
@@ -1933,7 +2086,11 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 		}
 		if($(this).hasClass('el_status')){
 			//positionElementOnDom($('#elementStatusMenu'), $(this), 'fromLeft', 26);
-			$('#'+elementDialogId+' .elementStatusMenu').show();
+			if(isWorkzoneViewMode()){
+				$('#searchBar .elementStatusMenu').show();
+			} else {
+				$('#'+elementDialogId+' .elementStatusMenu').show();
+			}
 			return;
 		}
 		if($(this).hasClass('el_delete')){
@@ -1960,14 +2117,39 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 			//window.location = 'mailto:?body='+$(this).attr('href').replace('#', '').replace(' ', '%2520');
 			return;
 		}
-
+		
+		if(isWorkzoneViewMode() && $(this).hasClass('el_closeDetails')){
+			manageWorkzoneViewDocked('hide');
+			return;
+		}
+		
 	});
+	
+	if(isWorkzoneViewMode()){ //move control to serchBar middleBox
+		var middleBox = $('#searchBar .middleBox');
+		if(middleBox.length > 0) {
+			middleBox.remove();
+			needToResize = false;
+		};
+		var height = $('#searchBar .firstBox').after('<div class="middleBox"></div>').css('display','none').height();
+		middleBox = $('#searchBar .middleBox').height(height);
+		middleBox.append($('#elementDialog .T').addClass('docked').css({'width':''}));
+		$('#searchBar .toolbarBox').hide();
+		resize_groupPanel();
+		resize_elementList();
+		resize_calendar();
+		resize_blog();
+		resize_workzoneViewDocked();			
+	}
 
 	$('#'+elementDialogId+' .elementStatusMenu')
 		.mouseleave(function(){
 			$(this).hide();
 		});
-	$('#'+elementDialogId+' .elementStatusMenu>div').click(function(e){
+	var elementDialogIdForStatus = elementDialogId;
+	if(isWorkzoneViewMode()) elementDialogIdForStatus = 'searchBar';
+		
+	$('#'+elementDialogIdForStatus+' .elementStatusMenu>div').click(function(e){
 			if(!$(this).hasClass('exit')){
 				$(this).toggleClass('checked');
 				if($(this).hasClass('checked')){
@@ -1975,9 +2157,9 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 				} else {
 					val = "0";
 				}
-				update(elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/setElementState/'+$('#'+elementDialogId+' .T').attr('href').replace('#', '')+'/'+$(this).attr('href').replace('#', '')+'/'+val);
+				update(elementDialogId+'/'+useWigiiNamespaceUrl+'/'+useModuleName+'/setElementState/'+$('#'+elementDialogIdForStatus+' .T').attr('href').replace('#', '')+'/'+$(this).attr('href').replace('#', '')+'/'+val);
 			} else {
-				$('#'+elementDialogId+' .elementStatusMenu').hide();
+				$('#'+elementDialogIdForStatus+' .elementStatusMenu').hide();
 			}
 			e.stopPropagation();
 		});
@@ -1987,7 +2169,7 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 		$(this).next().toggle();
 		if($(this).hasClass("expanded")){
 			$(window).scrollTop($(window).scrollTop() +$('#'+elementDialogId+' .elementHistoric').height());
-			resize_scrollArea(true);
+			if(!isWorkzoneViewMode()) resize_scrollArea(true);
 		}
 	});
 
@@ -2675,7 +2857,7 @@ function previewHtml(fileSrc, previewTime){
 				width: '90%',
 				height:'90%'
 			},
-			message: '<div class=\'ui-corner-all\' style=\'position:absolute; top:3%px; left:101%; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;cursor:pointer; background-color:#fff;\' onclick=\'$.unblockUI();$("#fileLoadingBar").hide();\' >X</div><iframe onload=\'$("#fileLoadingBar").hide();\' style=\'height:100%;width:100%;\'src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'/integrated?'+previewTime+'\' >Your browser does not support iframes.</iframe>'
+			message: '<div class=\'ui-corner-all\' style=\'position:absolute; top:3%px; left:101%; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;cursor:pointer; background-color:#fff;\' onclick=\'$.unblockUI();$("#fileDownloadingBar").hide();\' >X</div><iframe onload=\'$("#fileDownloadingBar").hide();\' style=\'height:100%;width:100%;\'src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'/integrated?'+previewTime+'\' >Your browser does not support iframes.</iframe>'
 		}
 	);
 	$('.blockOverlay').unbind('click').click($.unblockUI);
@@ -2706,7 +2888,7 @@ function previewImage(fileSrc, previewTime){
 			width: '80%',
 			height:'80%',
 			background: 'none'
-		}, message: '<img style=\'max-height:100%;max-width:100%;vertical-align:middle;\' onload=\'$("#fileLoadingBar").hide();\' src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'?'+previewTime+'\' /><span class=\'ui-corner-all\' style=\'position:absolute; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;margin-left:5px;margin-top:0px;cursor:pointer; background-color:#fff;\'  onclick=\'$.unblockUI(); $("#fileLoadingBar").hide();\' >X</span>'
+		}, message: '<img style=\'max-height:100%;max-width:100%;vertical-align:middle;\' onload=\'$("#fileDownloadingBar").hide();\' src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'?'+previewTime+'\' /><span class=\'ui-corner-all\' style=\'position:absolute; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;margin-left:5px;margin-top:0px;cursor:pointer; background-color:#fff;\'  onclick=\'$.unblockUI(); $("#fileDownloadingBar").hide();\' >X</span>'
 	});
 	$('.blockOverlay').unbind('click').click($.unblockUI);
 }
@@ -2770,7 +2952,7 @@ function setListenersToCheckInOutFiles(elementDialogId, elementId, fieldId, fiel
 			
 			if(checkFunction == 'download/checkoutFile') {
 				messageDownload(fieldId);
-				setTimeout(function() {setVis('fileLoadingBar', false);}, 5000);
+				setTimeout(function() {setVis('fileDownloadingBar', false);}, 5000);
 			}			
 			var myAjax = new jQuery.ajax({
 					type: 'POST',
@@ -3369,10 +3551,11 @@ function normalizeWheelSpeed(event) {
 //calculate the height of dialogeElement scroll area
 function getElementDialogScrollHeight(name, object){
 	var height = window.innerHeight;
-	if(object.prop('id')=='scrollElement')
+	if(object.prop('id')=='scrollElement') {
 		height = height - object.parent().parent().offset().top;
-	else
+	} else {
 		height = height - object.parent().offset().top;
+	}	
 	switch(name){
 		case 'neighbour':
 			height-= object.prev().outerHeight(true);
@@ -3386,13 +3569,13 @@ function getElementDialogScrollHeight(name, object){
 			height-= object.parent().children().first().outerHeight(true);
 			break;
 	}
-	
 	return (height -30);
 }
 
 //Add gradient on a scroll area
 //if no scroll bar exist, create it
 function addScrollWithShadow(idScrollElement, elementPreviousTop) {
+	if(isWorkzoneViewMode()) return true;
 	if (arguments.length<2) elementPreviousTop = 0;
 	//change the CSS of an element
 	function changeElementCss(element, cssRules){
@@ -3432,6 +3615,8 @@ function addScrollWithShadow(idScrollElement, elementPreviousTop) {
 				addScrollEvent(scrollElement);
 				addGradient(scrollElement, {"bottom":(scrollElement.next().outerHeight(true))+"px"});
 				scrollElement.next().css({"display":"block","width":(scrollElement.innerWidth()-18)+"px"});
+			} else {
+				scrollElement.css('overflow','visible');
 			}
 			break;
 		case 'children':
@@ -3443,6 +3628,8 @@ function addScrollWithShadow(idScrollElement, elementPreviousTop) {
 				addScrollEvent(scrollElement);
 				addGradient(scrollElement, {"bottom":"0px"});
 				scrollElement.next().css({"display":"block","width":(scrollElement.innerWidth()-18)+"px"});
+			} else {
+				$('#scrollElement').css('overflow','visible');
 			}
 			break;
 	}//end switch
@@ -3461,6 +3648,7 @@ function addScrollWithShadow(idScrollElement, elementPreviousTop) {
 //resize function for elementDialog for the moment
 function resize_scrollArea(keepScrollPosition){
 	if (arguments.length<1) keepScrollPosition = false;
+	if(isWorkzoneViewMode() && !crtModuleName=='Admin') return true;
 	var elements = ['elementDialog', 'emailingDialog', 'filtersDialog'];
 	var element = null;
 	var elementName = 'elementDialog';
@@ -3487,4 +3675,71 @@ function resize_scrollArea(keepScrollPosition){
 		}
 		addScrollWithShadow(elementName, elementPreviousTop);
 	}
+}
+
+function manageWorkzoneViewDocked(action, cardSize){
+	if (arguments.length<1) action = 'show';
+	if (arguments.length<2) cardSize = 1000;
+	
+	var elementDialog = $('#elementDialog'),
+		moduleView = $('#moduleView'),
+		collapseBar = $('#dockingContainer>.collapse'),
+		scrollElement = $('#scrollElement');
+
+	if(scrollElement.length==0) {
+		elementDialog.append('<div id="scrollElement"></div>');
+		scrollElement = $('#scrollElement').append(elementDialog.find('form'));
+	}
+	scrollElement.width(cardSize);
+	
+	switch (action){
+		case 'show':		
+			cardSize+=10;
+			elementDialog.css({'display':'block','float':'left','width':cardSize+'px'});
+			collapseBar.css('display','block');
+			moduleView.css({'float':'left'});
+			if ($('#moduleView:hidden').length) {
+				collapseBar.find('span').html("&raquo;");
+			} else {
+				collapseBar.find('span').html("&laquo;");
+			}
+			$('.firstBox, .toolbarBox','#searchBar').css('display','none');
+			elementDialog.scrollTop(0);
+			break;
+		case 'clear':
+			elementDialog.html('');
+		case 'hide':			
+			elementDialog.css('display','none');
+			$('#dockingContainer>.collapse').css('display','none');
+			$('#moduleView').css({'float':'none'});
+			$('.firstBox, .toolbarBox','#searchBar').css('display','block');
+			$('#searchBar .middleBox').css('display','none');
+			break;
+	};
+	
+	resize_elementList();
+}
+
+//Re-initializes middle box
+function initMiddleBox(keepExistingBox){
+	if (arguments.length<1) keepExistingBox = false;
+	
+	var middleBox = $('#searchBar .middleBox');
+	var firstBox = $('#searchBar .firstBox');
+
+	if(!keepExistingBox && middleBox.length > 0) {
+		middleBox.remove();
+	};
+	
+	middleBox = $('#searchBar .middleBox');
+	
+	if(middleBox.length == 0) {
+		firstBox.after('<div class="middleBox"></div>');
+		middleBox = $('#searchBar .middleBox');
+	}
+	
+	if(middleBox.find('div.T').length==0) middleBox.append('<div class=\"T docked\"></div>');
+	
+	var height = $('#searchBar .firstBox').height();
+	return $('#searchBar .middleBox').height(height);
 }

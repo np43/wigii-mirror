@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 25 sept. 09
- * by LWR
+/**
+ * Created on 25 sept. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class GroupPTreeWebImpl extends Model implements GroupPTree {
@@ -37,7 +37,7 @@ class GroupPTreeWebImpl extends Model implements GroupPTree {
 		}
 		return $this->groups; }
 	
-	public function createInstance(){
+	public static function createInstance(){
 		$gt = new self();
 		return $gt;
 	}

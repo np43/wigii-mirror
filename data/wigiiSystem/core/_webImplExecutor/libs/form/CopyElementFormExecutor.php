@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 17 February 2011
- * by LWR
+/**
+ * Created on 17 February 2011 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class CopyElementFormExecutor extends AddElementFormExecutor {
 
@@ -54,7 +54,7 @@ class CopyElementFormExecutor extends AddElementFormExecutor {
 		//remove any key field value
 		$isKey = $this->getWigiiExecutor()->doesCrtModuleHasIsKeyField($p, $exec->getCrtModule());
 		if($isKey) $this->getRecord()->setFieldValue(null, $isKey->getName(), $this->getWigiiExecutor()->getSubFieldnameForIsKeyField($isKey));
-		//empty all Files none htmlArea form
+		//empty all Files none htmlArea form, clear emails externalAccess code
 		$oldmask = umask(0000);
 		foreach($element->getFieldList()->getListIterator() as $field){
 			$dt = $field->getDataType();
@@ -113,6 +113,10 @@ class CopyElementFormExecutor extends AddElementFormExecutor {
 					}
 				}
 				$element->setFieldValue($multiLanguageValues, $field->getFieldName(), "value");
+			} 
+			// CWE 02.09.2016: clears external access codes on emails
+			else if($dt && $dt->getDataTypeName()=="Emails") {
+				$element->setFieldValue(null, $field->getFieldName(), "externalCode");
 			}
 		}
 		umask($oldmask);

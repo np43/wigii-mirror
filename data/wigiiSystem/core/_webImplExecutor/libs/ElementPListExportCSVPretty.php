@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 6 oct. 09
- * by LWR
+/**
+ * Created on 6 oct. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 class ElementPListExportCSVPretty extends ElementPListWebImplWithWigiiExecutor implements ElementDataTypeSubfieldVisitor {
@@ -184,6 +184,7 @@ class ElementPListExportCSVPretty extends ElementPListWebImplWithWigiiExecutor i
 	private function getTrm(){
 		if(!isset($this->trm_)){
 			$this->trm_ = TemplateRecordManager::createInstance();
+			$this->trm_->setWorkzoneViewDocked($this->isWorkzoneViewDocked());
 		}
 		return $this->trm_;
 	}
@@ -258,9 +259,9 @@ class ElementPListExportCSVPretty extends ElementPListWebImplWithWigiiExecutor i
 		if(!$firstCell) echo $this->getSeparator();
 		
 		if(!isset($this->html2text)) $this->html2text = new Html2text();
-		$this->html2text->html2text($value);
+		$this->html2text->setHtml($value);
 		$value = htmlspecialchars_decode($this->html2text->get_text(), ENT_QUOTES);
-		$this->html2text->clear();
+// 		$this->html2text->clear();
 		
 //		$value = formatToString($value);
 		$value = str_replace('"', '', str_replace("\n", " ", str_replace("\r", "", $value)));

@@ -1,23 +1,25 @@
 Attribute VB_Name = "ExecutionSink"
-'-
-'This file is part of Wigii.
-'
-'Wigii is free software: you can redistribute it and\/or modify
-'it under the terms of the GNU General Public License as published by
-'the Free Software Foundation, either version 3 of the License, or
-'(at your option) any later version.
-'
-'Wigii is distributed in the hope that it will be useful,
-'but WITHOUT ANY WARRANTY; without even the implied warranty of
-'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-'GNU General Public License for more details.
-'
-'You should have received a copy of the GNU General Public License
-'along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
-'
-'@copyright  Copyright (c) 2000-2015 Wigii    https://github.com/wigii/wigii    http://www.wigii.org/system
-'@license    http://www.gnu.org/licenses/     GNU General Public License
-'-
+'**
+'*  This file is part of Wigii.
+'*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+'*
+'*  Wigii is free software: you can redistribute it and/or modify it
+'*  under the terms of the GNU General Public License as published by
+'*  the Free Software Foundation, either version 3 of the License,
+'*  or (at your option) any later version.
+'*
+'*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+'*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+'*  See the GNU General Public License for more details.
+'*
+'*  A copy of the GNU General Public License is available in the Readme folder of the source code.
+'*  If not, see <http://www.gnu.org/licenses/>.
+'*
+'*  @copyright  Copyright (c) 2016  Wigii.org
+'*  @author     <http://www.wigii.org/system>      Wigii.org
+'*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+'*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+'*/
 
 Option Explicit
 '----------------------------------------------------------------------------
@@ -79,7 +81,7 @@ Public Sub ES_setOutputToLogFile(Optional logFileName As String = "", Optional f
    If logFileName <> "" Then
       ES_logFileName = logFileName
    Else
-      ES_logFileName = ThisWorkbook.Name & ".log"
+      ES_logFileName = ThisWorkbook.name & ".log"
    End If
    If folderPath <> "" Then
       ES_logFileFolder = folderPath
@@ -168,16 +170,16 @@ Private Sub ES_logToFile(message As String)
    If Not ES_outputToLogFile Then Exit Sub
    Dim logFile As String
    logFile = ES_logFileFolder & "\" & ES_logFileName
-   Dim out As Scripting.TextStream
+   Dim Out As Scripting.TextStream
    If ES_logFso Is Nothing Then
       Set ES_logFso = New Scripting.FileSystemObject
-      Set out = ES_logFso.OpenTextFile(logFile, IIf(ES_appendLogFile, ForAppending, ForWriting), True)
+      Set Out = ES_logFso.OpenTextFile(logFile, IIf(ES_appendLogFile, ForAppending, ForWriting), True)
    Else
-      Set out = ES_logFso.OpenTextFile(logFile, ForAppending, True)
+      Set Out = ES_logFso.OpenTextFile(logFile, ForAppending, True)
    End If
-   out.WriteLine Format(Now(), "yyyy-MM-dd hh:mm:ss") & " " & message
-   out.Close
-   Set out = Nothing
+   Out.WriteLine Format(Now(), "yyyy-MM-dd hh:mm:ss") & " " & message
+   Out.Close
+   Set Out = Nothing
 End Sub
 
 'UNIT TESTING
@@ -194,5 +196,5 @@ Private Sub ES_test()
    Err.Raise 1000, "A vb error"
    Exit Sub
 errorHandler:
-   ES_endOnError "ExecutionSink", "test", Err.Number, Err.description
+   ES_endOnError "ExecutionSink", "test", Err.Number, Err.Description
 End Sub

@@ -64,8 +64,8 @@
 	<changePassword>
 		<fields>
 			<oldPassword type="Strings" secret="1" require="1" expand="1"/>
-			<newPassword type="Strings" secret="1" require="1" expand="1"/>
-			<confNewPassword type="Strings" secret="1" require="1" expand="1"/>
+			<newPassword type="Strings" secret="1" require="1" expand="1" noAutofill="1"/>
+			<confNewPassword type="Strings" secret="1" require="1" expand="1" noAutofill="1"/>
 		</fields>
 	</changePassword>
 
@@ -354,14 +354,14 @@
 			<url type="Urls" require="0" expand="1" onlyUrl="1" noCheck="1" help="Enter a valid URL or a FuncExp generating a valid URL"/>
 			<groupExternalSystemConnection groupStart="1" ><label>Connect external systems</label></groupExternalSystemConnection>
 				<freetext>By setting a Cookie name, the system will create a cookie when you click on this folder in the following format:<br />username|custom|expiration|roles<br /><br />The | will be replaced with the defined separator.<br />The whole string will be encoded if the Encrypt checkbox is ticked.<br /><i>username</i>: username of the current user<br /><i>custom</i>: the content of the custom field<br /><i>expiration</i>: the date calculated by adding expiration value to the time when the user display the folder (yyyy-mm-dd hh:mm:ss)<br /><i>roles</i>: the list of the roles that the user has in this tab<br /></freetext>
-				<groupPortalCookieName type="Strings" require="0" expand="1" ><label>Cookie name</label></groupPortalCookieName>
+				<groupPortalCookieName type="Strings" require="0" expand="1" noAutofill="1"><label>Cookie name</label></groupPortalCookieName>
 				<groupPortalCookieSeparator type="Strings" require="0" expand="1" ><label>Separator</label></groupPortalCookieSeparator>
 				<groupPortalCookieCustomParameter type="Strings" require="0" expand="1" ><label>Custom parameter</label></groupPortalCookieCustomParameter>
 				<groupPortalCookieExpiration type="Strings" require="0" expand="1" ><label>Expiration (in hours)</label></groupPortalCookieExpiration>
 				<groupPortalCookieIncludeRoles type="Booleans" require="0" expand="1" ><label>Include roles?</label></groupPortalCookieIncludeRoles>
 				<groupPortalCookieDomain type="Strings" require="0" expand="1" ><label>Cookie domain?</label></groupPortalCookieDomain>
 				<groupPortalCookieEncrypt type="Booleans" require="0" expand="1" ><label>Encrypt cookie content?</label></groupPortalCookieEncrypt>
-				<groupPortalCookieRotationKey type="Strings" secret="1" require="0" expand="1" ><label>Rotation nb (if encryption is enabled)?</label></groupPortalCookieRotationKey>
+				<groupPortalCookieRotationKey type="Strings" secret="1" require="0" expand="1" noAutofill="1"><label>Rotation nb (if encryption is enabled)?</label></groupPortalCookieRotationKey>
 			<groupExternalSystemConnection groupEnd="1" />
 		</fields>
 	</groupPortal>
@@ -507,7 +507,7 @@
 			<moduleEditorNewNamespaceSupportEmail type="Strings" require="0" expand="1"/>
 			<freeText><HR /></freeText>
 			<freeText needTranslation="1">moduleEditorNewNamespaceLinkToUserExplanation</freeText>
-			<username type="Strings" require="1" expand="1"/>
+			<username type="Strings" require="1" expand="1" noAutofill="1"/>
 			<freeText needTranslation="1">moduleEditorNewNamespaceAuthenticationExplanation</freeText>
 			<authenticationMethod type="Attributs" require="0" expand="1">
 				<attribute>usual</attribute>
@@ -515,7 +515,7 @@
 				<attribute>pop3SSL</attribute>
 			</authenticationMethod>
 			<authenticationServer type="Strings" expand="1"/>
-			<password type="Strings" secret="1" require="0" expand="1"/>
+			<password type="Strings" secret="1" require="0" expand="1" noAutofill="1"/>
 		</fields>
 	</moduleEditorNewNamespace>
 

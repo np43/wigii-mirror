@@ -1,23 +1,28 @@
 Attribute VB_Name = "TableManager"
-'-
-'This file is part of Wigii.
-'
-'Wigii is free software: you can redistribute it and\/or modify
-'it under the terms of the GNU General Public License as published by
-'the Free Software Foundation, either version 3 of the License, or
-'(at your option) any later version.
-'
-'Wigii is distributed in the hope that it will be useful,
-'but WITHOUT ANY WARRANTY; without even the implied warranty of
-'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-'GNU General Public License for more details.
-'
-'You should have received a copy of the GNU General Public License
-'along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
-'
-'@copyright  Copyright (c) 2000-2015 Wigii    https://github.com/wigii/wigii    http://www.wigii.org/system
-'@license    http://www.gnu.org/licenses/     GNU General Public License
-'-
+'**
+'*  This file is part of Wigii.
+'*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+'*
+'*  Wigii is free software: you can redistribute it and/or modify it
+'*  under the terms of the GNU General Public License as published by
+'*  the Free Software Foundation, either version 3 of the License,
+'*  or (at your option) any later version.
+'*
+'*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+'*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+'*  See the GNU General Public License for more details.
+'*
+'*  A copy of the GNU General Public License is available in the Readme folder of the source code.
+'*  If not, see <http://www.gnu.org/licenses/>.
+'*
+'*  @copyright  Copyright (c) 2016  Wigii.org
+'*  @author     <http://www.wigii.org/system>      Wigii.org
+'*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+'*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+'*/
+
+' Modified by Medair Sept 2016. Added option Explict to solve 64-bit + VBA7 compatability issues
+Option Explicit
 
 '----------------------------------------------------------------------------
 '- TABLE MANAGER
@@ -97,7 +102,7 @@ Private TM_mode As Integer
 Public Function TM_Initialize(Optional mode As Integer = LOCAL_MODE) As Integer
    Dim i As Integer, n As Integer
    Dim ref As Workbook
-   Dim error As Integer
+   Dim Error As Integer
    Dim globalIndex2 As PhyTable
    Dim TD As Range
    
@@ -118,7 +123,7 @@ Public Function TM_Initialize(Optional mode As Integer = LOCAL_MODE) As Integer
    
    'Loads the local tables
    If n > 0 Then
-      With localIndex.LogTable.Data
+      With localIndex.LogTable.data
          TIDlocalBase = .Cells(1, 1).Value2
          ReDim localPhyTables(n - 1) As PhyTable
          
@@ -154,7 +159,7 @@ Public Function TM_Initialize(Optional mode As Integer = LOCAL_MODE) As Integer
    'Initializes the global index
    With globalIndex.LogTable
       If Not .IsEmpty Then
-         TIDglobalBase = .Data.Cells(1, 1).Value2
+         TIDglobalBase = .data.Cells(1, 1).Value2
       Else
          TIDglobalBase = 0
       End If
@@ -177,38 +182,38 @@ End Function
 '-          -3 : invalid FID associated to TID
 '-          -4 : file path error for FID associated to TID
 '-------------------------------------------------------------
-Public Function TM_getPhyTable(TID As Integer, output As PhyTable) As Integer
+Public Function TM_getPhyTable(TID As Integer, Output As PhyTable) As Integer
    Dim FID As Integer
    Dim wb As Workbook
-   Dim error As Integer
+   Dim Error As Integer
    
    If TM_mode = NOT_INITIALIZED_MODE Then
-      Set output = Nothing
+      Set Output = Nothing
       TM_getPhyTable = -1
       Exit Function
    End If
       
    If TM_isTIDlocal(TID) Then
-      Set output = localPhyTables(TID - TIDlocalBase)
+      Set Output = localPhyTables(TID - TIDlocalBase)
       TM_getPhyTable = 0
    ElseIf (TM_mode = DISTRIBUTED_MODE) And TM_isTIDglobal(TID) Then
       'Opens the associated file
-      FID = globalIndex.LogTable.Data.Cells(TID - TIDglobalBase + 1, 2).Value2
-      error = FM_getWorkbook(FID, wb)
-      If (error = -1) Or (error = -2) Then
-         Set output = Nothing
-         TM_getPhyTable = error - 2
+      FID = globalIndex.LogTable.data.Cells(TID - TIDglobalBase + 1, 2).Value2
+      Error = FM_getWorkbook(FID, wb)
+      If (Error = -1) Or (Error = -2) Then
+         Set Output = Nothing
+         TM_getPhyTable = Error - 2
          Exit Function
       End If
       
       'Gives control to the file and asks for the table
-      TM_getPhyTable = wb.TM_getPhyTable(TID, output)
+      TM_getPhyTable = wb.TM_getPhyTable(TID, Output)
       If TM_getPhyTable = -1 Then
         wb.TM_Initialize DISTRIBUTED_MODE
-        TM_getPhyTable = wb.TM_getPhyTable(TID, output)
+        TM_getPhyTable = wb.TM_getPhyTable(TID, Output)
       End If
    Else
-      Set output = Nothing
+      Set Output = Nothing
       TM_getPhyTable = -2
    End If
 End Function

@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 6 oct. 09
- * by LWR
+/**
+ * Created on 6 oct. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 
 abstract class ElementPListWebImplWithWigiiExecutor implements ElementPList {
@@ -35,6 +35,10 @@ abstract class ElementPListWebImplWithWigiiExecutor implements ElementPList {
 	private $wigiiExecutor;
 	protected function setWigiiExecutor($var){$this->wigiiExecutor = $var; }
 	protected function getWigiiExecutor(){return $this->wigiiExecutor; }
+	
+	public function isWorkzoneViewDocked(){
+		return $this->getWigiiExecutor()->isWorkzoneViewDocked();
+	}
 	
 	private $elementPolicyEvaluator;
 	/**

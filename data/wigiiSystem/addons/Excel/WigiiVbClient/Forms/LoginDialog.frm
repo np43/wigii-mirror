@@ -13,25 +13,27 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-'-
-'This file is part of Wigii.
-'
-'Wigii is free software: you can redistribute it and\/or modify
-'it under the terms of the GNU General Public License as published by
-'the Free Software Foundation, either version 3 of the License, or
-'(at your option) any later version.
-'
-'Wigii is distributed in the hope that it will be useful,
-'but WITHOUT ANY WARRANTY; without even the implied warranty of
-'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-'GNU General Public License for more details.
-'
-'You should have received a copy of the GNU General Public License
-'along with Wigii.  If not, see <http:\//www.gnu.org/licenses/>.
-'
-'@copyright  Copyright (c) 2000-2015 Wigii    https://github.com/wigii/wigii    http://www.wigii.org/system
-'@license    http://www.gnu.org/licenses/     GNU General Public License
-'-
+'**
+'*  This file is part of Wigii.
+'*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+'*
+'*  Wigii is free software: you can redistribute it and/or modify it
+'*  under the terms of the GNU General Public License as published by
+'*  the Free Software Foundation, either version 3 of the License,
+'*  or (at your option) any later version.
+'*
+'*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+'*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+'*  See the GNU General Public License for more details.
+'*
+'*  A copy of the GNU General Public License is available in the Readme folder of the source code.
+'*  If not, see <http://www.gnu.org/licenses/>.
+'*
+'*  @copyright  Copyright (c) 2016  Wigii.org
+'*  @author     <http://www.wigii.org/system>      Wigii.org
+'*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+'*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+'*/
 
 '----------------------------------------------------------------------------
 '- LOGIN DIALOG
@@ -67,12 +69,12 @@ Public Sub Initialize(mode As Integer, _
    LD_mode = mode
    If LD_mode = LD_LOGIN Then
       LoginDialog.Caption = "Login"
-      Label1.Caption = "Utilisateur :"
-      Label2.Caption = "Mot de passe :"
+      Label1.Caption = "User Name :"
+      Label2.Caption = "Password :"
       With TextBox1
          .Enabled = enable1
          .PasswordChar = ""
-         .Value = default1
+         .value = default1
          If enable1 Then
             .SetFocus
          End If
@@ -80,7 +82,7 @@ Public Sub Initialize(mode As Integer, _
       With TextBox2
          .Enabled = enable2
          .PasswordChar = "*"
-         .Value = ""
+         .value = ""
          If enable2 And Not enable1 Then
             .SetFocus
          End If
@@ -88,13 +90,13 @@ Public Sub Initialize(mode As Integer, _
       OKButton.Default = True
       Me.Show
    ElseIf LD_mode = LD_CHANGEPASSWORD Then
-      LoginDialog.Caption = "Nouveau mot de passe"
-      Label1.Caption = "Mot de passe :"
-      Label2.Caption = "Confirmer :"
+      LoginDialog.Caption = "New Password"
+      Label1.Caption = "Password :"
+      Label2.Caption = "Confirm :"
       With TextBox1
          .Enabled = enable1
          .PasswordChar = "*"
-         .Value = ""
+         .value = ""
          If enable1 Then
             .SetFocus
          End If
@@ -102,7 +104,7 @@ Public Sub Initialize(mode As Integer, _
       With TextBox2
          .Enabled = enable2
          .PasswordChar = "*"
-         .Value = ""
+         .value = ""
          If enable2 And Not enable1 Then
             .SetFocus
          End If
@@ -111,8 +113,8 @@ Public Sub Initialize(mode As Integer, _
       Me.Show
    Else
       dialogValided = False
-      TextBox1.Value = ""
-      TextBox2.Value = ""
+      TextBox1.value = ""
+      TextBox2.value = ""
    End If
 End Sub
 
@@ -137,14 +139,14 @@ End Property
 '-------------------------------------------------------------
 Public Property Get LoginName() As String
    If LD_mode = LD_LOGIN Then
-      LoginName = TextBox1.Value
+      LoginName = TextBox1.value
    Else
       LoginName = ""
    End If
 End Property
 Public Property Get LoginPassword() As String
    If LD_mode = LD_LOGIN Then
-      LoginPassword = TextBox2.Value
+      LoginPassword = TextBox2.value
    Else
       LoginPassword = ""
    End If
@@ -159,14 +161,14 @@ End Property
 '-------------------------------------------------------------
 Public Property Get NewPassword1() As String
    If LD_mode = LD_CHANGEPASSWORD Then
-      NewPassword1 = TextBox1.Value
+      NewPassword1 = TextBox1.value
    Else
       NewPassword1 = ""
    End If
 End Property
 Public Property Get NewPassword2() As String
    If LD_mode = LD_CHANGEPASSWORD Then
-      NewPassword2 = TextBox2.Value
+      NewPassword2 = TextBox2.value
    Else
       NewPassword2 = ""
    End If
@@ -176,8 +178,8 @@ End Property
 
 Private Sub CancelButton_Click()
    dialogValided = False
-   TextBox1.Value = ""
-   TextBox2.Value = ""
+   TextBox1.value = ""
+   TextBox2.value = ""
    Me.Hide
 End Sub
 
@@ -188,7 +190,7 @@ End Sub
 
 Private Sub UserForm_Terminate()
    dialogValided = False
-   TextBox1.Value = ""
-   TextBox2.Value = ""
+   TextBox1.value = ""
+   TextBox2.value = ""
    Me.Hide
 End Sub

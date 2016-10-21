@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 3 déc. 09
- * by LWR
+/**
+ * Created on 3 déc. 09 by LWR
+ * Modified by Medair (AMA,CWE) in 2016.09 to integrate Box
  */
 $exec = $this->getExecutionService();
 $idAnswer = $exec->getIdAnswer();
@@ -36,7 +36,9 @@ $elementId = $this->getRecord()->getId();
  * Preview only!!!!
  ******************/
 if($fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification()){
-
+	$type = $this->formatValueFromRecord($fieldName, "type", $this->getRecord());
+	$path = $this->getRecord()->getFieldValue($fieldName, "path");
+	
 	if($elementId==0){
 		$this->put($this->t($fieldName, $field->getXml())."<br />");
 		$src = SITE_ROOT_forFileUrl."images/preview/preview.jpg";
@@ -51,9 +53,26 @@ if($fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification()){
 		}
 
 		//the default preview management is done into the download part
-		//add the time to prevent rpeview caching!!!
+		//add the time to prevent preview caching!!!
 		$this->put('<a href="'.$src.'" target="_self" >');
-		$this->put('<img style="width:'.min(150, $parentWidth-20).'px;" src="'.$src.'/thumbs?_'.time().'" />');
+		$srcPreview = $src.'/thumbs';
+				
+		// 23.09.2016 CWE if Box and an image, download directly the whole file from Box, don't take any thumbs.
+		$boxElement = (string)$fieldXml["enableBoxIntegration"];
+		$boxGeneral = (string)$this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "enableBoxIntegration");
+		if(($boxElement == "1" || $boxGeneral == "1" && $boxElement !== "0") && strstr($path, "box://")){
+			switch($type) {
+				case ".jpg":
+				case ".jpeg":
+				case ".gif":
+				case ".png":
+				case ".bmp":
+					$srcPreview=$src;
+					break;
+			}
+		}
+
+		$this->put('<img style="width:'.min(150, $parentWidth-20).'px;" src="'.$srcPreview.'?_'.time().'" />');
 		$this->put('</a>');
 	}
 

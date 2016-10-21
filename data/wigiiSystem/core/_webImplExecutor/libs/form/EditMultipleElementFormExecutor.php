@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 15 sept. 09
- * by LWR
+/**
+ * Created on 15 sept. 09 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class EditMultipleElementFormExecutor extends EditElementFormExecutor implements ElementDataTypeSubfieldVisitor {
 
@@ -446,7 +446,7 @@ class EditMultipleElementFormExecutor extends EditElementFormExecutor implements
 
 		$this->getTrm()->getCaptchaHTML($this);
 
-		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog());
+		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), ($this->isWorkzoneViewDocked())?false:$this->isDialog());
 
 		$this->openDialog($p, $exec, $state);
 

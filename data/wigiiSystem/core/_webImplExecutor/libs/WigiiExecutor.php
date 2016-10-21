@@ -26,6 +26,7 @@
  * Main service which interprets the Wigii communication protocol and allows extension by plugin WebExecutor instances.
  * Created on 24 juil. 09 by LWR
  * Refactored in two classes WigiiExecutor and WigiiCoreExecutor by CWE on November 23rd 2015.
+ * Modified by Medair in 2016 to integrate Box and QlikSense
  */
 class WigiiExecutor extends WigiiCoreExecutor {
 
@@ -82,6 +83,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 			case 'box': return true;
 			case 'www': return true;
 			case 'inwww': return false;
+			case 'qliksense': return true;
 			default: return parent::shouldByPassHeader($action);
 		}
 	}
@@ -92,6 +94,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 			case 'box': return true;
 			case 'www': return true;
 			case 'inwww': return false;
+			case 'qliksense': return true;
 			default: return parent::shouldByPassFooter($action);
 		}
 	}
@@ -111,6 +114,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 				case "box" : $returnValue = 'BoxServiceFormExecutor'; break;
 				case "www": $returnValue = $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
 				case "inwww": $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true,'setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
+				case "qliksense" : $returnValue = ServiceProvider::createQlikSenseFormExecutorDevInstance($this->getRootPrincipal()); break;
 				default: $returnValue = null;
 			}
 		}	

@@ -21,7 +21,8 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* A wigii user activity
+/**
+ * A wigii user activity
  * User activities are for instance :
  * - display list of elements
  * - display detail of element

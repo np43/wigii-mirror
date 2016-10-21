@@ -110,3 +110,11 @@ a.HelpService.notifAnchor {
 	padding-bottom:1px;
 	cursor:pointer;
 }
+a.HelpService.searchAnchor {
+	background:url('../../images/icones/tango/16x16/actions/system-search.png') no-repeat;
+	margin-left:3px;
+	padding-left:16px;
+	padding-right:1px;
+	padding-bottom:1px;
+	cursor:pointer;
+}

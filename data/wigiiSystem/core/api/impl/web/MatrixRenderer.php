@@ -24,6 +24,7 @@
 /**
  * Abstract superclass to render matrix
  * Created on 20 janv. 10  by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 abstract class MatrixRenderer {
 
@@ -46,7 +47,7 @@ abstract class MatrixRenderer {
 		return MatrixArrayImpl::createInstance();
 	}
 
-	public function createInstance($id){
+	public static function createInstance($id){
 		$r = new self();
 		$r->setId($id);
 		return $r;

@@ -96,23 +96,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if(isset($this->funcExpEvaluator) && method_exists($this->funcExpEvaluator, 'freeMemory')) $this->funcExpEvaluator->freeMemory();
 	}
 	
-	private $boxServiceFormExecutor;
-	/**
-	 * Injects a BoxServiceFormExecutor to use to communicate with Box and store uploaded files
-	 * @param BoxServiceFormExecutor $boxServiceFormExecutor
-	 */
-	public function setBoxServiceFormExecutor($boxServiceFormExecutor) {
-		$this->boxServiceFormExecutor = $boxServiceFormExecutor;
-	}
-	public function getBoxServiceFormExecutor() {
-		// lazy loading
-		if(!isset($this->boxServiceFormExecutor)) {
-			$this->boxServiceFormExecutor = TechnicalServiceProvider::getBoxServiceFormExecutor();
-		}
-		return $this->boxServiceFormExecutor;
-	}
-	
-	
+
 	// Object lifecycle
 	
 	
@@ -298,10 +282,10 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if(!empty($help)){
 			// filters html tags in help text
 			$html2text = new Html2text();
-			$html2text->html2text($help);
-			$help = $html2text->get_text();
+			$html2text->setHtml($help);
+			$help = $html2text->getText();
 			$help = str_replace("\\'", "'", str_replace('"', "'", $help));
-			$html2text->clear();
+// 			$html2text->clear();
 			unset($html2text);
 			$help = ' title="'.$help.'" ';
 		}

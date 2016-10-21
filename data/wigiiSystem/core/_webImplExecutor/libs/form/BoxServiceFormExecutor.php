@@ -1,30 +1,30 @@
 <?php
 /**
-*  This file has been added to Wigii by Medair.
-*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
-*
-*  Wigii is free software: you can redistribute it and/or modify it
-*  under the terms of the GNU General Public License as published by
-*  the Free Software Foundation, either version 3 of the License,
-*  or (at your option) any later version.
-*
-*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*  See the GNU General Public License for more details.
-*
-*  A copy of the GNU General Public License is available in the Readme folder of the source code.
-*  If not, see <http://www.gnu.org/licenses/>.
-*
-*  @copyright  Copyright (c) 2016  Medair
-*  @author     <http://www.medair.org>            Medair.org
-*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
-*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
-*/
+ *  This file has been added to Wigii by Medair.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *
+ *  Wigii is free software: you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License,
+ *  or (at your option) any later version.
+ *
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016  Medair
+ *  @author     <http://www.medair.org>            Medair.org
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+ */
 
 /**
  * Box.com Service client
  * Allows to preview, download or upload files located on Box
- * Created by Medair (Arnaud Mader) on June 21st 2016
+ * Created by Medair (AMA, CWE) on June 21st 2016
  */
 class BoxServiceFormExecutor extends WebServiceFormExecutor {
 	
@@ -72,6 +72,35 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 		return $this->guzzleHelper;
 	}
 	
+	private $mySqlF;
+	public function setMySqlFacade($mysqlFacade)
+	{
+		$this->mysqlF = $mysqlFacade;
+	}
+	protected function getMySqlFacade()
+	{
+		// autowired
+		if(!isset($this->mysqlF))
+		{
+			$this->mysqlF = TechnicalServiceProvider::getMySqlFacade();
+		}
+		return $this->mysqlF;
+	}
+	private $dbAS;
+	public function setDbAdminService($dbAdminService)
+	{
+		$this->dbAS = $dbAdminService;
+	}
+	protected function getDbAdminService()
+	{
+		// autowired
+		if(!isset($this->dbAS))
+		{
+			$this->dbAS = ServiceProvider::getDbAdminService();
+		}
+		return $this->dbAS;
+	}	
+	
 	// Configuration
 	
 	/**
@@ -100,6 +129,19 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 		}
 		return $this->showWarning;
 	}
+	
+	
+	private $syncBoxFileNameInWigii;
+	private $fileFieldIdToSync;
+	/**
+	 * Requests Box service to update File information into the Wigii database, next time Box service reads file information of a given file.
+	 * @param String $fileFieldId if given, a JS code will be sent back to the given field of type Files in the Browser, to update the name and other meta data.
+	 */
+	public function setSyncBoxFileInfoIntoWigii($fileFieldId) {
+		$this->syncBoxFileNameInWigii = true;
+		$this->fileFieldIdToSync = $fileFieldId;
+	}
+	
 	
 	/**
 	 * Returns a box configuration token value from the Box_config.xml, given its name
@@ -235,75 +277,6 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 		return $returnValue;
 	}
 	
-	/**	
-	 * 
-	 * @param unknown $principal
-	 * @param unknown $id -> FileId
-	 * @throws BoxServiceException
-	 * @throws Exception
-	 * @return NULL
-	 * @see https://docs.box.com/reference#update-metadata
-	 */
-	protected function boxFileMetadata($principal, $id){
-		
-		$this->executionSink()->publishStartOperation("boxFileMetadata", $principal);
-		$returnValue = null;
-
-		try {
-			// throws exception if Box integration is disabled
-			if(!$this->isBoxEnabled()) throw new BoxServiceException('Box integration has been disabled. Cannot preview Box file.', BoxServiceException::CONFIGURATION_ERROR);
-				
-			$httpClient = $this->getGuzzleHelper()->createHttpClient($principal);
-			// Tries max 5 times to get a valid token in case of busy or expired token
-			$retry=false; $nTries=0;
-
-			do {
-				try{
-					$attributes = array(array("op"=>"add", "path"=>"/", "value"=>""), array("op"=>"add", "path"=>"/", "value"=>""), array("op"=>"add", "path"=>"/", "value"=>""));
-				
-					$httpRequest = $this->getMetadataUrl($httpClient, $id);
-					$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
-					$httpRequest->addHeader('Content-Type', 'application/json-patch+json');
-				
-					$httpRequest->setBody(json_encode($attributes));
-				
-					$response = $this->boxQuery($principal, $httpClient, $httpRequest);
-				}catch(Exception $e){
-					
-					if($e->getCode() === ServiceException::WRAPPING){
-							
-						try{
-							$attributes = array(""=>"", ""=>"", ""=>"");
-				
-							$httpRequest = $this->createMetadataUrl($httpClient, $id);
-							$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
-							$httpRequest->addHeader('Content-Type', 'application/json');
-							
-							$httpRequest->setBody(json_encode($attributes));
-							
-							$response = $this->boxQuery($principal, $httpClient, $httpRequest);
-						}catch(Exception $e){
-							throw new Exception("Problem with the creation of metadata for the file".$e->getCode());
-						}
-					}else{
-						throw new Exception("Problem with the update of the metadat for the file".$e->getCode());
-					}
-				}	
-				if($nTries>=4){
-					$retry=false;
-					throw new BoxServiceException("There is a problem with the Box access or the access document is busy. Please try later or if the problem persists contact the IT team.", ServiceException::UNEXPECTED_ERROR);
-				}
-				$nTries++;
-			} while($retry);
-		}catch(Exception $e) {
-			$this->executionSink()->publishEndOperationOnError("boxFileMetadata", $e, $principal);
-			throw $e;
-		}
-		$this->executionSink()->publishEndOperation("boxFileMetadata", $principal);
-		return $returnValue;
-	}
-	
-	
 	protected function boxPreview($principal, $id) {
 		$this->executionSink()->publishStartOperation("boxPreview", $principal);
 		$returnValue = null;
@@ -317,20 +290,50 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 
 			do {
 				try {
-					// Gets file meta information: file creator id					
+					// Gets file meta information: 
 					$obj = $this->getFileInformation($principal, $httpClient, $id);
-					
-					$idCreater = $obj->{'created_by'}->{'id'};
+					$creatorId = $obj->{'created_by'}->{'id'};
+					$lastModifierId = $obj->{'modified_by'}->{'id'};
+					$ownerId = $obj->{'owned_by'}->{'id'};
 					
 					// Get temporary url to preview file
 					$httpRequest = $this->getHttpRequestEmbedLink($httpClient, $id);
 					$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
 					
-					//Test if the creator of the file is the App, if yes adding the As-User header
-					if($this->getXmlElement('userId') !== $idCreater){
-						$httpRequest->addHeader('As-User', $idCreater);	
+					$appUserId = $this->getXmlElement('userId');
+					$response = null;
+					// 1. first tries as file owner
+					if(is_null($response) && $ownerId!==$appUserId) {
+						$httpRequest->setHeader('As-User', $ownerId);
+						try {$response = $this->boxQuery($principal, $httpClient, $httpRequest);}
+						catch(BoxServiceException $asUserExc) {
+							if($asUserExc->getCode()!=BoxServiceException::ERROR403) throw $asUserExc;
+							$response = null;
+						}
 					}
-					$response = $this->boxQuery($principal, $httpClient, $httpRequest);
+					// 2. then tries as file last modifier
+					if(is_null($response) && $lastModifierId!==$appUserId) {
+						$httpRequest->setHeader('As-User', $lastModifierId);
+						try {$response = $this->boxQuery($principal, $httpClient, $httpRequest);}
+						catch(BoxServiceException $asUserExc) {
+							if($asUserExc->getCode()!=BoxServiceException::ERROR403) throw $asUserExc;
+							$response = null;
+						}
+					}
+					// 3. then tries as file creator
+					if(is_null($response) && $creatorId!==$appUserId) {
+						$httpRequest->setHeader('As-User', $creatorId);
+						try {$response = $this->boxQuery($principal, $httpClient, $httpRequest);}
+						catch(BoxServiceException $asUserExc) {
+							if($asUserExc->getCode()!=BoxServiceException::ERROR403) throw $asUserExc;
+							$response = null;
+						}
+					}
+					// 4. then tries with App user.
+					if(is_null($response)) {
+						$httpRequest->removeHeader('As-User');
+						$response = $this->boxQuery($principal, $httpClient, $httpRequest);
+					}
 					
 					$data = $response->getBody();
 					$obj = json_decode($data);
@@ -369,7 +372,6 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 		return $returnValue;
 	}
 
-	
 	protected function boxDownload($principal, $id) {
 		$this->executionSink()->publishStartOperation("boxDownload", $principal);
 		$returnValue = null;
@@ -387,7 +389,6 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 					
 					$filename = $obj->{'name'};
 					$filesize = $obj->{'size'};
-					$idCreater = $obj->{'created_by'}->{'id'};
 					$mime = typeMime('.'.strtolower(array_pop(explode('.',$filename))));
 						
 					// 2. Request file location on Box
@@ -429,6 +430,69 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 		return $returnValue;
 	}
 	
+	/**
+	 * @throws BoxServiceException::NOT_IMPLEMENTED
+	 */
+	protected function boxFileMetadata($principal, $id){
+	
+		BoxServiceException::throwNotImplemented();
+	
+		$this->executionSink()->publishStartOperation("boxFileMetadata", $principal);
+		$returnValue = null;
+	
+		try {
+			// throws exception if Box integration is disabled
+			if(!$this->isBoxEnabled()) throw new BoxServiceException('Box integration has been disabled. Cannot preview Box file.', BoxServiceException::CONFIGURATION_ERROR);
+	
+			$httpClient = $this->getGuzzleHelper()->createHttpClient($principal);
+			// Tries max 5 times to get a valid token in case of busy or expired token
+			$retry=false; $nTries=0;
+	
+			do {
+				try{
+					$attributes = array(array("op"=>"add", "path"=>"/", "value"=>""), array("op"=>"add", "path"=>"/", "value"=>""), array("op"=>"add", "path"=>"/", "value"=>""));
+	
+					$httpRequest = $this->getMetadataUrl($httpClient, $id);
+					$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
+					$httpRequest->addHeader('Content-Type', 'application/json-patch+json');
+	
+					$httpRequest->setBody(json_encode($attributes));
+	
+					$response = $this->boxQuery($principal, $httpClient, $httpRequest);
+				}catch(Exception $e){
+						
+					if($e->getCode() === ServiceException::WRAPPING){
+							
+						try{
+							$attributes = array(""=>"", ""=>"", ""=>"");
+	
+							$httpRequest = $this->createMetadataUrl($httpClient, $id);
+							$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
+							$httpRequest->addHeader('Content-Type', 'application/json');
+								
+							$httpRequest->setBody(json_encode($attributes));
+								
+							$response = $this->boxQuery($principal, $httpClient, $httpRequest);
+						}catch(Exception $e){
+							throw new Exception("Problem with the creation of metadata for the file".$e->getCode());
+						}
+					}else{
+						throw new Exception("Problem with the update of the metadat for the file".$e->getCode());
+					}
+				}
+				if($nTries>=4){
+					$retry=false;
+					throw new BoxServiceException("There is a problem with the Box access or the access document is busy. Please try later or if the problem persists contact the IT team.", ServiceException::UNEXPECTED_ERROR);
+				}
+				$nTries++;
+			} while($retry);
+		}catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("boxFileMetadata", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("boxFileMetadata", $principal);
+		return $returnValue;
+	}
 	
 	// HTTP requests and Box URLs
 	
@@ -549,14 +613,180 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 	
 	
 	/**
-	 * @param unknown $principal
-	 * @param unknown $httpClient
-	 * @param unknown $idFile : the id of the file we want to change the name
-	 * @param unknown $fileName : the new name of the file
-	 * @param unknown $extension : the extension of the new file
+	 * Uploads a File attached to a given element field into box
+	 * @param Principal $principal authenticated user executing the process
+	 * @param WigiiBPLParameter $parameter a map of parameters :
+	 * - element: Element. The filled element containing the field of type Files
+	 * - fieldName: String. The field name containing the File to persist.
+	 * - mimeType: String. The mime type of the File.
+	 * - boxFolderId: String. Box folder id in which to push the file
 	 * @throws BoxServiceException
-	 * This function change the name of the file in Box with the name of the local's file that the user want to modify
 	 */
+	public function boxUploadFileForField($principal, $parameter) {
+	
+		$this->executionSink()->publishStartOperation("boxUploadFileForField", $principal);
+		$returnValue = null;
+	
+		$element = $parameter->getValue('element');
+		$fieldName = $parameter->getValue('fieldName');
+		$path = $element->getFieldValue($fieldName, "path");
+	
+	
+		$boxFolderId = $parameter->getValue('boxFolderId');
+		$fileName = $element->getFieldValue($fieldName, 'name');
+		$fileType = $element->getFieldValue($fieldName, 'type');
+		$file_name = $fileName.$fileType;
+	
+		$filePath = realpath(TEMPORARYUPLOADEDFILE_path.$path);
+			
+		$returnValue = null;
+		try {
+			// throws exception if Box integration is disabled
+			if(!$this->isBoxEnabled()) throw new BoxServiceException('Box integration has been disabled. Cannot upload file to Box.', BoxServiceException::CONFIGURATION_ERROR);
+				
+			$httpClient = $this->getGuzzleHelper()->createHttpClient($principal);
+			// Tries max 5 times to get a valid token in case of busy or expired token
+			$retry=false; $nTries=0;
+			do {
+				try {
+						
+					$boxFileId = $element->getFieldValue($fieldName, 'path');
+						
+					if(strstr($boxFileId, "box://")){
+						$retry=false;
+					}else{
+	
+						$file_up = "@".$filePath;
+	
+						$httpRequest = $this->getHttpUploadFile($httpClient);
+						$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
+	
+						$attributes = array('name'=>$file_name,'parent'=>array('id'=>$boxFolderId));
+	
+						$httpRequest->setPostField('attributes',  json_encode($attributes));
+						$httpRequest->addPostFile('file',  $file_up);
+	
+						$response = $this->boxQuery($principal, $httpClient, $httpRequest);
+	
+						$data = $response->getBody();
+						$obj = json_decode($data);
+						$fileId = $obj -> {'entries'}[0] -> {'id'};
+	
+						$element->setFieldValue("box://".$fileId, $fieldName, 'path');
+						$retry=false;
+					}
+						
+				}catch(BoxServiceException $be) {
+					if(($be->getCode() == BoxServiceException::NEW_TOKEN) || ($be->getCode() == ServiceException::OPERATION_CANCELED)){
+						$retry=true;
+						// If file already exists into Box, then uploads a new version of it.
+					}elseif ($be->getCode() == BoxServiceException::BOX_EXISTING_FILE){
+						$retry=false;
+	
+						$errorBody = $be->getPreviousException()->getResponse()->getBody(true);
+						$obj = json_decode($errorBody);
+	
+						$oldBoxId = $obj->{'context_info'}->{'conflicts'}->{'id'};
+	
+						$this->boxUploadFileVersionForField($p, wigiiBPLParam("element",$element,"fieldName",$fieldName, "mimeType", $parameter->getValue('mimeType'), "boxFolderId", $boxFolderId, "fileId", $oldBoxId));
+	
+					}else{
+						throw $be;
+					}
+				}
+	
+				if($nTries>=5){
+					$retry=false;
+					throw new BoxServiceException("There is a problem with the Box access or the access document is busy. Please try later or if the problem persists contact the IT team.", ServiceException::UNEXPECTED_ERROR);
+				}
+				$nTries++;
+			} while($retry);
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("boxUploadFileForField", $e, $principal);
+			throw $e;
+		}
+	
+		@unlink($filePath);
+		$this->executionSink()->publishEndOperation("boxUploadFileForField", $principal);
+		return $returnValue;
+	}
+	
+	/**
+	 * Uploads a new version into Box of a File attached to a given element field
+	 * @param Principal $principal authenticated user executing the process
+	 * @param WigiiBPLParameter $parameter a map of parameters :
+	 * - element: Element. The filled element containing the field of type Files
+	 * - fieldName: String. The field name containing the File to persist.
+	 * - mimeType: String. The mime type of the File.
+	 * - boxFolderId: String. Box folder id in which to push the file
+	 * - fileId: String. Existing file id
+	 * @throws BoxServiceException in case of error
+	 */
+	public function boxUploadFileVersionForField($principal, $parameter){
+	
+		$this->executionSink()->publishStartOperation("boxUploadFileVersionForField", $principal);
+		$returnValue = null;
+	
+		$element = $parameter->getValue('element');
+		$fieldName = $parameter->getValue('fieldName');
+			
+		$path = $element->getFieldValue($fieldName, "path");
+			
+		$mimeType = $parameter->getValue('mimeType');
+		$boxFolderId = $parameter->getValue('boxFolderId');
+		$idOldVersionFile = $parameter->getValue('fileId');
+		$fileName = $element->getFieldValue($fieldName, 'name');
+		$fileType = $element->getFieldValue($fieldName, 'type');
+	
+		$filePath = realpath(TEMPORARYUPLOADEDFILE_path.$path);
+	
+		try {
+			// throws exception if Box integration is disabled
+			if(!$this->isBoxEnabled()) throw new BoxServiceException('Box integration has been disabled. Cannot upload new version of file to Box.', BoxServiceException::CONFIGURATION_ERROR);
+	
+			$httpClient = $this->getGuzzleHelper()->createHttpClient($principal);
+			// Tries max 5 times to get a valid token in case of busy or expired token
+			$retry=false; $nTries=0;
+			$erreur=false;
+			do {
+				try {
+					$this->uploadFileVersion($principal, $httpClient, $idOldVersionFile, $fileName, $filePath, $mimeType, $fieldName, $element);
+				}catch(BoxServiceException $be) {
+					if(($be->getCode() == BoxServiceException::NEW_TOKEN) || ($be->getCode() == ServiceException::OPERATION_CANCELED)){
+						$retry=true;
+					}else{
+						throw $be;
+					}
+				}
+	
+				if($nTries>=5){
+					$retry=false;
+					throw new BoxServiceException("There is a problem with the Box access or the access document is busy. Please try later or if the problem persists contact the IT team.", ServiceException::UNEXPECTED_ERROR);
+				}
+				$nTries++;
+			} while($retry);
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("boxUploadFileVersionForField", $e, $principal);
+			throw $e;
+		}
+	
+		@unlink($filePath);
+		$this->executionSink()->publishEndOperation("boxUploadFileVersionForField", $principal);
+		return $returnValue;
+	
+	}
+	
+	/**
+	 * Changes the name of the file in Box with the name of the local's file that the user wants to modify
+	 * @param Principal $principal current principal
+	 * @param Guzzle\Http\Client $httpClient
+	 * @param String $idFile the Box id of the file we want to change the name
+	 * @param String $fileName the new name of the file
+	 * @param String $extension the extension of the new file
+	 * @throws BoxServiceException in case of error
+	 */	
 	public function changeBoxFileName($principal, $httpClient, $idFile, $fileName, $extension){	
 		try{
 			$attributes = array('name'=>"$fileName$extension");
@@ -577,17 +807,17 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 	}
 	
 	/**
-	 * Function that upload a new version of a file only if the bothe mime type are the same. If the name of the new file is different of the old name, 
-	 * we change the name of the box's file with the new one.
-	 * @param unknown $principal
-	 * @param unknown $httpClient
-	 * @param unknown $idOldVersionFile : the old id of the file
-	 * @param unknown $fileName : the new file name
-	 * @param unknown $filePath : the path in the temporary folder
-	 * @param unknown $mimeType : the mime type of the file
-	 * @param unknown $fieldName : the field that contains the name of the document
-	 * @param unknown $element : a set of parameters with the name, path, mimetype of the element (file)
-	 * @throws BoxServiceException
+	 * Uploads a new version of a file only if the mime type are the same. 
+	 * If the name of the new file is different of the old name, we change the name of the box's file with the new one.
+	 * @param Principal $principal current principal
+	 * @param Guzzle\Http\Client $httpClient
+	 * @param String $idOldVersionFile the old Box id of the file
+	 * @param String $fileName the new file name
+	 * @param String $filePath the path in the temporary folder
+	 * @param String $mimeType the mime type of the file
+	 * @param String $fieldName the field that contains the name of the document
+	 * @param Element $element current element into which to update the File metadatas.
+	 * @throws BoxServiceException in case of error
 	 */
 	private function uploadFileVersion($principal, $httpClient, $idOldVersionFile, $fileName, $filePath, $mimeType, $fieldName, $element){
 	
@@ -623,16 +853,16 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 				
 			$retry=false;
 		}else{
-			throw new BoxServiceException("Both file is not the same format, it must be $extension", ServiceException::UNEXPECTED_ERROR);
+			throw new BoxServiceException("Both file are not the same format, it must be $extension", ServiceException::INVALID_ARGUMENT);
 		}
 	}
 	
 	/**
-	 * return the download's url of a file
-	 * @param unknown $principal
-	 * @param unknown $httpClient
-	 * @param unknown $id : the id of a file
-	 * @throws BoxServiceException
+	 * Returns the download's url of a file
+	 * @param Principal $principal current principal
+	 * @param Guzzle\Http\Client $httpClient $httpClient
+	 * @param String $id the Box id of a file
+	 * @throws BoxServiceException in case of error
 	 */
 	private function getUrlForDownload($principal, $httpClient, $id){
 	
@@ -649,12 +879,12 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 		return $url;
 	}
 	/**
-	 * return information about a file
-	 * @param unknown $principal
-	 * @param unknown $httpClient
-	 * @param unknown $id : the id of the file
-	 * @throws BoxServiceException
-	 * @return mixed
+	 * Return information about a file
+	 * @param Principal $principal current principal
+	 * @param Guzzle\Http\Client $httpClient $httpClient
+	 * @param String $id the Box id of the file
+	 * @throws BoxServiceException in case of error
+	 * @return StdClass Box file information Std Object
 	 */
 	private function getFileInformation($principal, $httpClient, $id){
 		try {
@@ -664,217 +894,111 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 			// Parse reponse
 			$data = $response->getBody();
 			$obj = json_decode($data);
-		
+			// Syncs file info if requested
+			if(isset($obj) && $this->syncBoxFileNameInWigii && $obj->{'id'}==$id) {
+				$this->debugLogger()->write('syncs file info from Box to Wigii');
+				$this->updateFileInformationIntoDb($principal, $obj);
+				if($this->fileFieldIdToSync) {
+					$this->updateFileInformationOnBrowser($principal, $this->fileFieldIdToSync, $obj);
+					$this->fileFieldIdToSync=null;
+				}
+				$this->syncBoxFileNameInWigii=false;
+			}
 			return $obj;
 		}catch(BoxServiceException $be){
 			throw $be;
 		}
 	}
-	
 	/**
-	 * Uploads a new version into Box of a File attached to a given element field
-	 * @param Principal $principal authenticated user executing the process
-	 * @param WigiiBPLParameter $parameter a map of parameters :
-	 * - element: Element. The filled element containing the field of type Files
-	 * - fieldName: String. The field name containing the File to persist.
-	 * - mimeType: String. The mime type of the File.
-	 * - boxFolderId: String. Box folder id in which to push the file
-	 * - fileId: String. Existing file id
-	 * @throws BoxServiceException
+	 * Updates meta info of all fields of type Files stored into the database with a path equal to box://boxFileID
+	 * @param Principal $principal current principal
+	 * @param StdClass $fileInfoObj Box File info object as retrieved by calling getFileInformation.
 	 */
-	public function boxUploadFileVersionForField($principal, $parameter){
-		
-		$this->executionSink()->publishStartOperation("boxUploadFileVersionForField", $principal);
-		$returnValue = null;
-		
-		$element = $parameter->getValue('element');
-		$fieldName = $parameter->getValue('fieldName');
-			
-		$path = $element->getFieldValue($fieldName, "path");
-			
-		$mimeType = $parameter->getValue('mimeType');
-		$boxFolderId = $parameter->getValue('boxFolderId');
-		$idOldVersionFile = $parameter->getValue('fileId');
-		$fileName = $element->getFieldValue($fieldName, 'name');
-		$fileType = $element->getFieldValue($fieldName, 'type');
-		
-		$filePath = realpath(TEMPORARYUPLOADEDFILE_path.$path);
-		
-		try {
-			// throws exception if Box integration is disabled
-			if(!$this->isBoxEnabled()) throw new BoxServiceException('Box integration has been disabled. Cannot upload new version of file to Box.', BoxServiceException::CONFIGURATION_ERROR);
-			
-			$httpClient = $this->getGuzzleHelper()->createHttpClient($principal);
-			// Tries max 5 times to get a valid token in case of busy or expired token
-			$retry=false; $nTries=0;
-			$erreur=false;
-			do {
-				try {
-					$this->uploadFileVersion($principal, $httpClient, $idOldVersionFile, $fileName, $filePath, $mimeType, $fieldName, $element);
-				}catch(BoxServiceException $be) {
-					if(($be->getCode() == BoxServiceException::NEW_TOKEN) || ($be->getCode() == ServiceException::OPERATION_CANCELED)){
-						$retry=true;
-					}else{
-						throw $be;
-					}
-				}
-				
-				if($nTries>=5){
-					$retry=false;
-					throw new BoxServiceException("There is a problem with the Box access or the access document is busy. Please try later or if the problem persists contact the IT team.", ServiceException::UNEXPECTED_ERROR);
-				}
-				$nTries++;
-			} while($retry);
+	private function updateFileInformationIntoDb($principal, $fileInfoObj) {
+		$this->debugLogger()->logBeginOperation('updateFileInformationIntoDb');
+		if(isset($fileInfoObj)) {
+			// Prepares File info details
+			$boxFileId = $fileInfoObj->{'id'};
+			$name = explode('.',$fileInfoObj->{'name'});
+			$type = '.'.strtolower(array_pop($name));
+			$name = implode('.',$name);
+			$size = $fileInfoObj->{'size'};
+			$date = $fileInfoObj->{'modified_at'};
+			if(!empty($date)) $date = date_timestamp_get(date_create_from_format('Y-m-d\\TH:i:sT', $date));
+			// Updates Files element fields linked to the given Box ID with the new file info
+			$this->getMySqlFacade()->update($principal,
+				$this->getSqlForUpdateFileInformationIntoDb($principal,$boxFileId,$name,$type,$size,$date),
+				$this->getDbAdminService()->getDbConnectionSettings($principal)
+			);
 		}
-		catch(Exception $e) {
-			$this->executionSink()->publishEndOperationOnError("boxUploadFileVersionForField", $e, $principal);
-			throw $e;
-		}
-		
-		@unlink($filePath);
-		$this->executionSink()->publishEndOperation("boxUploadFileVersionForField", $principal);
-		return $returnValue;
+		$this->debugLogger()->logEndOperation('updateFileInformationIntoDb');
+	}
+	private function getSqlForUpdateFileInformationIntoDb($principal,$boxFileId,$name,$type,$size,$date) {
+		$sqlB = $this->getMySqlFacade()->getSqlBuilder();
+		$sqlB->setTableForUpdate('Files');
+		$sqlB->updateValue('name', $name, MySqlQueryBuilder::SQLTYPE_VARCHAR);
+		$sqlB->updateValue('type', $type, MySqlQueryBuilder::SQLTYPE_VARCHAR);
+		$sqlB->updateValue('size', $size, MySqlQueryBuilder::SQLTYPE_BIGINT);
+		$sqlB->updateValue('mime', typeMime($type), MySqlQueryBuilder::SQLTYPE_VARCHAR);
+		$sqlB->updateValue('date', $date, MySqlQueryBuilder::SQLTYPE_DATETIME);
+		$sqlB->updateSysUser($principal);
+		$sqlB->setWhereClause($sqlB->formatBinExp('path', '=', 'box://'.$boxFileId, MySqlQueryBuilder::SQLTYPE_VARCHAR).' AND ('.
+			$sqlB->formatBinExp('name', '!=', $name, MySqlQueryBuilder::SQLTYPE_VARCHAR).' OR '.
+			$sqlB->formatBinExp('type', '!=', $type, MySqlQueryBuilder::SQLTYPE_VARCHAR).' OR '.
+			$sqlB->formatBinExp('size', '!=', $size, MySqlQueryBuilder::SQLTYPE_BIGINT).' OR '.
+			$sqlB->formatBinExp('date', '!=', $date, MySqlQueryBuilder::SQLTYPE_DATETIME)
+		.')');
+		return $sqlB->getSql();
+	}
+	/**
+	 * Sends back a JS code which updates the File info for the given field of type Files based on box info.
+	 * @param Principal $principal current principal
+	 * @param String $fileFieldId HTML ID of field of type Files for which to send back a JS query to update File info into Browser.
+	 * @param StdClass $fileInfoObj Box File info object as retrieved by calling getFileInformation.
+	 */
+	private function updateFileInformationOnBrowser($principal, $fileFieldId, $fileInfoObj) {
+		$this->debugLogger()->logBeginOperation('updateFileInformationOnBrowser');
+		if(isset($fileInfoObj)) {
+			// File ID, name and type
+			$boxFileId = $fileInfoObj->{'id'};
+			$fileName = explode('.',$fileInfoObj->{'name'});
+			$fileType = '.'.strtolower(array_pop($fileName));
+			$fileName = implode('.',$fileName);
 
-	}
-	
-	/**
-	 * Uploads a File attached to a given element field into box
-	 * @param Principal $principal authenticated user executing the process
-	 * @param WigiiBPLParameter $parameter a map of parameters :
-	 * - element: Element. The filled element containing the field of type Files
-	 * - fieldName: String. The field name containing the File to persist.
-	 * - mimeType: String. The mime type of the File.
-	 * - boxFolderId: String. Box folder id in which to push the file
-	 * @throws BoxServiceException
-	 */
-	public function boxUploadFileForField($principal, $parameter) {
-		
-		$this->executionSink()->publishStartOperation("boxUploadFileForField", $principal);
-		$returnValue = null;
-		
-		$element = $parameter->getValue('element');
-		$fieldName = $parameter->getValue('fieldName');
-		$path = $element->getFieldValue($fieldName, "path");
-		
-	
-		$boxFolderId = $parameter->getValue('boxFolderId');
-		$fileName = $element->getFieldValue($fieldName, 'name');
-		$fileType = $element->getFieldValue($fieldName, 'type');
-		$file_name = $fileName.$fileType;
-		
-		$filePath = realpath(TEMPORARYUPLOADEDFILE_path.$path);
+			// File mime
+			$fileMime = typeMime($fileType);
 			
-		$returnValue = null;
-		try {
-			// throws exception if Box integration is disabled
-			if(!$this->isBoxEnabled()) throw new BoxServiceException('Box integration has been disabled. Cannot upload file to Box.', BoxServiceException::CONFIGURATION_ERROR);
+			// File size
+			$fileSize = $fileInfoObj->{'size'};
+			$fileSizeFormatted = formatFileSize($fileSize);
 			
-			$httpClient = $this->getGuzzleHelper()->createHttpClient($principal);
-			// Tries max 5 times to get a valid token in case of busy or expired token
-			$retry=false; $nTries=0;
-			do {
-				try {
-					
-					$boxFileId = $element->getFieldValue($fieldName, 'path');
-					
-					if(strstr($boxFileId, "box://")){
-						$retry=false;
-					}else{
-						
-						$file_up = "@".$filePath;	
-						
-						$httpRequest = $this->getHttpUploadFile($httpClient);
-						$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
-						
-						$attributes = array('name'=>$file_name,'parent'=>array('id'=>$boxFolderId));
-						
-						$httpRequest->setPostField('attributes',  json_encode($attributes));
-						$httpRequest->addPostFile('file',  $file_up);
-												
-						$response = $this->boxQuery($principal, $httpClient, $httpRequest);
-						 	
-						$data = $response->getBody();
-						$obj = json_decode($data);
-						$fileId = $obj -> {'entries'}[0] -> {'id'};
-						
-						$element->setFieldValue("box://".$fileId, $fieldName, 'path');
-						$retry=false;
-					}
-					
-				}catch(BoxServiceException $be) {
-					if(($be->getCode() == BoxServiceException::NEW_TOKEN) || ($be->getCode() == ServiceException::OPERATION_CANCELED)){
-						$retry=true;
-					}elseif ($be->getCode() == BoxServiceException::BOX_EXISTING_FILE){
-						$retry=false;
-						
-						$errorBody = $be->getPreviousException()->getResponse()->getBody(true);
-						$obj = json_decode($errorBody);
-						
-						$oldBoxId = $obj->{'context_info'}->{'conflicts'}->{'id'};
-						
-						$this->boxUploadFileVersionForField($p, wigiiBPLParam("element",$element,"fieldName",$fieldName, "mimeType", $parameter->getValue('mimeType'), "boxFolderId", $boxFolderId, "fileId", $oldBoxId));
-						
-					}else{
-						throw $be;
-					}
-				}
-	
-				if($nTries>=5){
-					$retry=false;
-					throw new BoxServiceException("There is a problem with the Box access or the access document is busy. Please try later or if the problem persists contact the IT team.", ServiceException::UNEXPECTED_ERROR);
-				}
-				$nTries++;
-			} while($retry);
-		}
-		catch(Exception $e) {
-			$this->executionSink()->publishEndOperationOnError("boxUploadFileForField", $e, $principal);
-			throw $e;
-		}
-		
-		@unlink($filePath);
-		$this->executionSink()->publishEndOperation("boxUploadFileForField", $principal);
-		return $returnValue;
-	}
-	
-	/**
-	 * Return the folder's name
-	 * @param unknown $folderId : the id of the folder we want the name
-	 * @param unknown $httpClient
-	 * @throws BoxServiceException
-	 * @return unknown
-	 */
-	public function getFolderName($folderId, $httpClient){
-		
-		try{
-			$httpRequest = $this->getHttpRequestFolderInfo($httpClient, $folderId);
-			$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
-				
-			$response = $this->boxQuery($principal, $httpClient, $httpRequest);
-				
-			$data = $response->getBody();
-			$obj = json_decode($data);
-				
-			$folderName = $obj->{'name'};
+			// File date
+			$date = $fileInfoObj->{'modified_at'};
+			$fileDate = null;
+			$fileDateFormatted = null;
+			if(!empty($date)) {
+				$date = date_timestamp_get(date_create_from_format('Y-m-d\\TH:i:sT', $date));
+				$fileDate = date('Y-m-d H:i', $date);
+				$fileDateFormatted = date('d.m.Y H:i', $date);
+			}
 			
-			return $folderName;
-		}catch(BoxServiceException $be){
-			throw $be;
+			// Sends back JS callback
+			ServiceProvider::getExecutionService()->addJsCode("boxUpdateFileInfo('$fileFieldId', '$fileName', '$fileType', '$fileMime', '$fileSize', '$fileSizeFormatted', '$fileDate', '$fileDateFormatted');");
 		}
+		$this->debugLogger()->logEndOperation('updateFileInformationOnBrowser');
 	}
 	
 	/**
 	 * Function that returns an array with the id of the folder and the name of the folder
-	 * @param unknown $principal
+	 * @param Principal $principal current principal
 	 * @param unknown $folderId : the id of the folder we want the name
-	 * @throws BoxServiceException
-	 * @throws Exception
+	 * @throws BoxServiceException in case of error
+	 * @return Array [0=>folder ID, 1=>folder name]
 	 */
 	public function getFolderNameFromFolderId($principal, $folderId){
 		
 		$this->executionSink()->publishStartOperation("getFolderNameFromFolderId", $principal);
-		$returnValue = null;
-		$array = array();
-		
+		$returnValue = array();
 		try {
 			// throws exception if Box integration is disabled
 			if(!$this->isBoxEnabled()) throw new BoxServiceException('Box integration has been disabled. Cannot have Box file information.', BoxServiceException::CONFIGURATION_ERROR);
@@ -885,8 +1009,8 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 			do {
 				try {
 						
-					$array[0] = $folderId;
-					$array[1] = $this->getFolderName($folderId, $httpClient);
+					$returnValue[0] = $folderId;
+					$returnValue[1] = $this->getFolderName($folderId, $httpClient);
 					$retry=false;
 					
 				}catch(BoxServiceException $be) {
@@ -908,10 +1032,7 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 			$this->executionSink()->publishEndOperationOnError("getFolderNameFromFolderId", $e, $principal);
 			throw $e;
 		}
-		
-		return $array;
-		
-		@unlink($filePath);
+	
 		$this->executionSink()->publishEndOperation("getFolderNameFromFolderId", $principal);
 		return $returnValue;
 		
@@ -919,17 +1040,14 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 	
 	/**
 	 * Function that returns an array with the id of the folder and the name of the folder
-	 * @param unknown $principal
-	 * @param unknown $idFile : the id of the file we want have information about the parent folder (id and name)
-	 * @throws BoxServiceException
-	 * @throws Exception
+	 * @param Principal $principal current principal
+	 * @param String $idFile the Box id of the file we want have information about the parent folder (id and name)
+	 * @throws BoxServiceException in case of error
+	 * @return Array [0=>file folderID, 1=>folder name]
 	 */
 	public function getFolderId($principal, $idFile){
-		
 		$this->executionSink()->publishStartOperation("getFolderId", $principal);
-		$returnValue = null;
-		$array = array();
-		
+		$returnValue = array();
 		try {
 			// throws exception if Box integration is disabled
 			if(!$this->isBoxEnabled()) throw new BoxServiceException('Box integration has been disabled. Cannot have Box file information.', BoxServiceException::CONFIGURATION_ERROR);
@@ -944,8 +1062,8 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 					
 					$folderId = $obj->{'parent'}->{'id'};
 				
-					$array[0] = $folderId;
-					$array[1] = $this->getFolderName($folderId, $httpClient);
+					$returnValue[0] = $folderId;
+					$returnValue[1] = $this->getFolderName($folderId, $httpClient);
 					
 					$retry = false;
 					
@@ -969,14 +1087,39 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 			throw $e;
 		}
 		
-		return $array;
-		
-		$this->executionSink()->publishEndOperation("fileInfo", $principal);
+		$this->executionSink()->publishEndOperation("getFolderId", $principal);
 		return $returnValue;
-	
 	}
 	
+	/**
+	 * Return the folder's name give its ID
+	 * @param String $folderId the id of the folder we want the name
+	 * @param Guzzle\Http\Client $httpClient
+	 * @throws BoxServiceException in case of error
+	 * @return String then name of the folder
+	 */
+	public function getFolderName($folderId, $httpClient){
+	
+		try{
+			$httpRequest = $this->getHttpRequestFolderInfo($httpClient, $folderId);
+			$httpRequest->addHeader('Authorization', 'Bearer '.$this->getXmlElement('accessToken'));
+	
+			$response = $this->boxQuery($principal, $httpClient, $httpRequest);
+	
+			$data = $response->getBody();
+			$obj = json_decode($data);
+	
+			$folderName = $obj->{'name'};
+				
+			return $folderName;
+		}catch(BoxServiceException $be){
+			throw $be;
+		}
+	}
+	
+	
 	// Box facade implementation	
+	
 	private function boxQuery($principal, $httpClient, $httpRequest){	
 
 		$lock = $this->getXmlElement('lock');

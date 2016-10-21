@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 12 October 2011
- * by LWR
+/**
+ * Created on 12 October 2011 by LWR
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class FiltersFormExecutor extends FormExecutor {
 
@@ -168,10 +168,10 @@ class FiltersFormExecutor extends FormExecutor {
 				if($field->getDataType()==null) continue;
 				$dxml = $field->getDataType()->getXml();
 				?><div class="searchField"><?
-				//display field name
-				$html2text->html2text($transS->t($p, $field->getFieldName(), $field->getXml()));
-				$translatedFieldName = $html2text->get_text();
-				$html2text->clear();
+				//display field name		
+				$html2text->setHtml($transS->t($p, $field->getFieldName(), $field->getXml()));
+				$translatedFieldName = $html2text->getText();
+// 				$html2text->clear();
 				?><div class="H fB handler" ><?
 	    			echo $translatedFieldName;
 	    		?></div><?
