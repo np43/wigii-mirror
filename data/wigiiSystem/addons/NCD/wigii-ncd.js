@@ -376,7 +376,7 @@
 			 * Publishes any catched exception
 			 */
 			self.publishException = function(exception) {
-				htmlb = wigiiNcd.getHtmlBuilder();
+				var htmlb = wigiiNcd.getHtmlBuilder();
 				htmlb.putStartTag('p','class',self.emittedClass()+'-error').put(exception.code).prepend(' ',wigiiNcd.errorLabels[exception.code]).putBr()
 				.implode(' : ',exception.name,exception.message.replace(/</g,'&lt;').replace(/>/g,'&gt;'))
 				.putEndTag('p');	
