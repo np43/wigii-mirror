@@ -67,6 +67,14 @@ class DetailElementFormExecutor extends FormExecutor {
 			}
 		}
 
+		// if sub-element, checks if parent Links field is readonly or disabled
+		$parentReadonly = false;
+		if($element->isSubElement()) {
+			$parentFieldXml = $config->getCurrentFieldXml($p);
+			if(!isset($parentFieldXml)) throw new ConfigServiceException("Could not retrieve XML configuration of parent field '".$config->getCurrentFieldName()."' in module ".$config->getCurrentModule()->getModuleName(), ConfigServiceException::CONFIGURATION_ERROR);
+			$parentReadonly = $parentFieldXml['readonly']=='1' || $parentFieldXml['disabled']=='1';
+		}
+		
 		//display the toolbar only when editable, the feedback and the link is integrated in the bottom of the element:
 		$crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 		$crtModule = $exec->getCrtModule()->getModuleUrl();
@@ -75,15 +83,15 @@ class DetailElementFormExecutor extends FormExecutor {
 			if($elementP->getRights()->canWriteElement()){
 				$enableElementState = $this->computeEnableElementState($p, $exec, $elementP);
 				//edit
-				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked())) {
+				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked() || $parentReadonly)) {
 					?><div class="H el_edit"><?=$transS->t($p, "edit");?></div><?
 				}
 				//copy
-				if(!$elementP->isParentElementState_blocked()) {
+				if(!$elementP->isParentElementState_blocked() && !$parentReadonly) {
 					?><div class="H el_copy"><?=$transS->t($p, "copy");?></div><?
 				}
 				//element status
-				if($enableElementState > 0){
+				if($enableElementState > 0 && !$parentReadonly){
 					?><div class="H el_status"><?=$transS->t($p, "changeElementStates");?><?
 						?><div class="cm SBB elementStatusMenu" style="display:none;" ><?
 							?><div class="exit SBB">x</div><?
@@ -141,12 +149,12 @@ class DetailElementFormExecutor extends FormExecutor {
 					?></div><?
 				}
 				//modify groups sharing
-				if(!$element->isSubElement() && !$element->isState_blocked()){
+				if(!$element->isSubElement() && !$element->isState_blocked() && !$parentReadonly){
 					?><div class="H el_organize"><?=$transS->t($p, "organize");?></div><?
 				}
 
 				//delete
-				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked()) &&
+				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked() || $parentReadonly) &&
 					($config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && $elementP->getRights()->canModify() ||
 					 $config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')!="1")) {
 					?><div class="H el_delete"><?=$transS->t($p, "delete");?></div><?

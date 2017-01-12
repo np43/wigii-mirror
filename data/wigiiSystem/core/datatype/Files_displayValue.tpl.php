@@ -158,13 +158,13 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	}
 
 	// Adds icon pointing to Box folder containing the file	
-	if(!$this->isForNotification() && ($boxElement == "1" || $boxGeneral == "1" && $boxElement !== "0") && strstr($path, "box://") && $boxServiceFormExecutor->isBoxEnabled()){
+	if(!$this->isForNotification() && ($boxElement == "1" || $boxGeneral == "1" && $boxElement !== "0") && strstr($path, "box://") && $boxServiceFormExecutor->isBoxEnabled()
+			 && $this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "hideBoxLink") != '1'){
 		$boxFileId = str_replace("box://", "", $path);
 		try {
 			$folderId = $boxServiceFormExecutor->getFolderId($this->getP(), $boxFileId);
-			// CWE 16.09.2016 replace opening Box folder by opening Box file
-			//$this->put('<img class="box Icon" style="cursor: pointer" title="'.$this->t("boxFile").': '.$folderId[1].'" src="'.SITE_ROOT_forFileUrl.'images/gui/box_icon_16x16.jpg" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$folderId[0].'/'.$folderId[1].'\',\'_blank\');"/>');
-			$this->put('<img class="box Icon" style="cursor: pointer" title="'.$this->t("boxFile").': '.$folderId[1].'" src="'.SITE_ROOT_forFileUrl.'images/gui/box_icon_16x16.jpg" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$folderId[0].'/1/f_'.$boxFileId.'\',\'_blank\');"/>');
+			// Medair (LMA) 09.12.2016 Adds an hyperlink which opens the file into Box with user account
+			$this->put(' <a href="#" style="font-size: 8pt;" class="linkBox" onclick="window.open(\''.$boxServiceFormExecutor->getBoxWebInterfaceUrl().'/files/0/f/'.$folderId[0].'/1/f_'.$boxFileId.'\',\'_blank\');">'. $this->t("boxFileOpen"). '</a>');
 		}
 		catch(Exception $boxExc) {/* doesn't display icon in case of exception */}
 	}
@@ -191,7 +191,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 			if($isSmall){
 				$this->put('<img class="htmlPreview H" title="'.$this->t("detailViewButton").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/system-search.png" />');
 			} else {
-				$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
+				$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img class="box Icon" style="cursor: pointer" src="'.SITE_ROOT_forFileUrl.'images/gui/box_icon_16x16.jpg" /><span>'.$this->t("detailViewButton").'</span></div>');
 			}
 			$exec->addJsCode("setListenerToPreviewFile('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
 		}

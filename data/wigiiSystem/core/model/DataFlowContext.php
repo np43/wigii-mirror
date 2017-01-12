@@ -26,6 +26,7 @@
  * Created by CWE on 28 mai 2013
  * Updated by CWE on 5 décembre 2013: added data flow context attributes
  * Updated by CWE on 14 février 2013: added wigii events dispatcher
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  */
 class DataFlowContext
 {
@@ -167,7 +168,28 @@ class DataFlowContext
 		$this->principal = $principal;
 	}
 
-
+	/**
+	 * Asserts that current DataFlowActivitySelectorList beeing evaluated does not originate from public space.
+	 * @throws DataFlowServiceException with code FORBIDDEN (403) if current DataFlowActivitySelectorList is marked as public.
+	 */
+	public function assertOriginIsNotPublic() {
+		if($this->isOriginPublic()) throw new DataFlowServiceException("Current DataFlowActivitySelectorList originates from public space and is not authorized to be executed.", DataFlowServiceException::FORBIDDEN);
+	}
+	
+	/**
+	 * @return Boolean returns true if current DataFlowActivitySelectorList beeing evaluated originates from public space, null if unknown, false if not.
+	 */
+	public function isOriginPublic() {
+		if(isset($this->dataFlowActivitySelectorList)) return $this->dataFlowActivitySelectorList->isOriginPublic();
+	}
+	
+	/**
+	 * Marks the current DataFlowActivitySelectorList as originating from Public space. Cannot be undone.
+	 * Once origin is marked as public, then DataFlowService or any DataFlowActivity implementation are free to stop execution with an DataFlowServiceException::FORBIDDEN (403)
+	 */
+	public function setOriginIsPublic() {
+		if(isset($this->dataFlowActivitySelectorList)) $this->dataFlowActivitySelectorList->setOriginIsPublic();
+	}
 
 	// User defined attributes
 	private $attributes;

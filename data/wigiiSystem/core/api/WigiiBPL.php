@@ -24,6 +24,7 @@
 /** 
  * Wigii Business Process Library
  * Created by CWE on 19.11.2014
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class WigiiBPL
 {
@@ -1840,6 +1841,8 @@ class WigiiBPL
 				$returnValue=str2fx($data);				
 			}
 		}
+		// sets Origin as Public
+		if($returnValue instanceof FuncExp) $returnValue->setOriginIsPublic();
 		return $returnValue;
 	}
 	

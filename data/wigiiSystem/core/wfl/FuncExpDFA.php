@@ -24,6 +24,7 @@
 /**
  * A data flow activity which delegates stream processing to a func exp
  * Created by CWE on 1er octobre 2013
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  */
 class FuncExpDFA implements DataFlowActivity
 {	
@@ -174,8 +175,9 @@ class FuncExpDFA implements DataFlowActivity
 	
 	public function startOfStream($dataFlowContext) {
 		if(isset($this->funcExp)) {
+			if($this->funcExp->isOriginPublic()) $dataFlowContext->setOriginIsPublic();
 			$this->state = self::FUNCEXP_DFA_STARTSTREAM;
-			$this->dataFlowContext = $dataFlowContext;		
+			$this->dataFlowContext = $dataFlowContext;			 
 			if(!isset($this->funcExpEvaluator)) throw new DataFlowServiceException("funcExpEvaluator has not been set", DataFlowServiceException::CONFIGURATION_ERROR);
 
 			// Adds DataFlow arguments to FuncExp existing arguments
@@ -223,6 +225,7 @@ class FuncExpDFA implements DataFlowActivity
 	
 	public function processWholeData($data, $dataFlowContext) {
 		if(isset($this->funcExp)) {
+			if($this->funcExp->isOriginPublic()) $dataFlowContext->setOriginIsPublic();
 			$this->state = self::FUNCEXP_DFA_SINGLE_DATA;
 			$this->dataFlowContext = $dataFlowContext;		
 			if(!isset($this->funcExpEvaluator)) throw new DataFlowServiceException("funcExpEvaluator has not been set", DataFlowServiceException::CONFIGURATION_ERROR);	

@@ -24,6 +24,8 @@
 /**
  * Wigii CMS module Element evaluator
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016
+ * Updated by Lionel Weber on 05.10.2016
+ * Updated by Weber wwigii-system.net for Wigii.org on 15.11.2016
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {		
@@ -58,12 +60,14 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 	public function cms_authoringOnLoadJS($args) {
 		return '(function(){
 	var displayForm = function() {
-		$("#$$idForm$$__groupSiteMap, #$$idForm$$__groupIntro, #$$idForm$$__groupContent, #$$idForm$$__groupImage, #$$idForm$$__groupFooter, #$$idForm$$__groupCSS, #$$idForm$$__groupJS").hide();
+		$("#$$idForm$$__groupSiteMap, #$$idForm$$__groupIntro, #$$idForm$$__groupLogo, #$$idForm$$__groupMenu, #$$idForm$$__groupContent, #$$idForm$$__groupImage, #$$idForm$$__groupFooter, #$$idForm$$__groupCSS, #$$idForm$$__groupJS").hide();
 		if($("#$$idForm$$_contentType_value_select").val()=="none") $("#$$idForm$$_contentType_value_select").val("content");
 		switch($("#$$idForm$$_contentType_value_select").val()) {
 		case "content": $("#$$idForm$$__groupContent").show();break;
 		case "siteMap": $("#$$idForm$$__groupSiteMap").show();break;
 		case "intro": $("#$$idForm$$__groupIntro").show();break;
+		case "logo": $("#$$idForm$$__groupLogo").show();break;
+		case "menu": $("#$$idForm$$__groupMenu").show();break;
 		case "image": $("#$$idForm$$__groupImage").show();break;
 		case "footer": $("#$$idForm$$__groupFooter").show();break;
 		case "css": $("#$$idForm$$__groupCSS").show();break;
@@ -84,16 +88,70 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		// gets the ChoosePosition drop-down as html
 		$choosePosition = sel($this->getPrincipal(), elementPList(lxInG(lxEq(fs('id'),$groupId)),
 			lf(
-				fsl(fs('contentPosition'),fs('contentSummary')),
+				fsl(fs('contentPosition'),fs('contentSummary'),fs('contentNextId')),
 				lxEq(fs('contentType'),'content'),
 				fskl(fsk('contentPosition','value'))
 			)), 
 			dfasl(
-				dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('concat',fx('htmlStartTag','option','value',fs('contentPosition')),fx('str_replace',"'","\\'",fs('contentSummary')),fx('htmlEndTag','option'))),
+				/* add missing links to next element */
+				dfas('CallbackDFA','setProcessDataChunkCallback',function($data,$callbackDFA){
+					$currentElement = $data->getDbEntity();
+					$previousElement = $callbackDFA->getValueInContext('previousElement');
+					// stores first element
+					if(!isset($previousElement)) {
+						$callbackDFA->setValueInContext('previousElement',$currentElement);
+					}					
+					else {
+						$previousElement->setDynamicAttribute('contentNextIdChanged',ElementDynAttrMutableValueImpl::createInstance(false));
+						// else if previous element does not link to current element, then corrects contentNextId field
+						if($previousElement->getFieldValue('contentNextId') != $currentElement->getId()) {
+							$previousElement->setFieldValue($currentElement->getId(), 'contentNextId');
+							// marks element as changed to make it persisted.
+							$previousElement->setDynamicAttributeValue('contentNextIdChanged',true);
+							// if previousElement equals current element in Form, then updates contentNextId in Form to allow drop-down sync
+							if($previousElement->getId() == $this->getElement()->getId()) {
+								$this->getElement()->setFieldValue($previousElement->getFieldValue('contentNextId'),'contentNextId');
+							}
+						}
+						// stores currentElement as new previousElement
+						$callbackDFA->setValueInContext('previousElement',$currentElement);	
+						// pushes previousElement down in stream
+						$callbackDFA->writeResultToOutput($previousElement);
+					}													
+				},
+				'setEndOfStreamCallback',function($callbackDFA){
+					// updates last element if needed
+					$previousElement = $callbackDFA->getValueInContext('previousElement');
+					if(isset($previousElement)) {
+						$previousElement->setDynamicAttribute('contentNextIdChanged',ElementDynAttrMutableValueImpl::createInstance(false));
+						if($previousElement->getFieldValue('contentNextId') != 'last') {
+							$previousElement->setFieldValue('last', 'contentNextId');
+							// marks element as changed to make it persisted.
+							$previousElement->setDynamicAttributeValue('contentNextIdChanged',true);
+							// if previousElement equals current element in Form, then updates contentNextId in Form to allow drop-down sync
+							if($previousElement->getId() == $this->getElement()->getId()) {
+								$this->getElement()->setFieldValue($previousElement->getFieldValue('contentNextId'),'contentNextId');
+							}
+						}
+						// pushes previousElement down in stream
+						$callbackDFA->writeResultToOutput($previousElement);
+					}
+				}),
+				/* persists elements which have missing link added */
+				dfas('ElementDFA','setFieldSelectorList',fsl(fs('contentNextId')),'setMode',3,'setDecisionMethod',function($element,$dataFlowContext){
+					if($element->getDynamicAttributeValue('contentNextIdChanged')) return 1;
+					else return 5;
+				}),
+				/* creates drop-down (filters current element) */
+				dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('ctlIf',fx('neq',fs_e('id'),$this->getElement()->getId()),fx('concat',fx('htmlStartTag','option','value',fs_e('id')),fx('str_replace',"'","\\'",fs('contentSummary')),fx('htmlEndTag','option')))),
 				dfas('StringBufferDFA')
 			)
 		);
-		if(isset($choosePosition)) return '(function(){$("#$$idForm$$_choosePosition_value_select").append('."'".$choosePosition."'".');})();';
+		// Builds next article drop-down and syncs with current next ID
+		if(isset($choosePosition)) {
+			$nextId = $this->getElement()->getFieldValue('contentNextId');
+			return '(function(){$("#$$idForm$$_choosePosition_value_select").append('."'".$choosePosition."'".')'.($nextId?".val('$nextId')":'').';})();';
+		}
 	}
 	
 	/**
@@ -150,27 +208,45 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 	 */
 	protected function cms_authoringOnSaveContent() {
 		$content = $this->getElement();
-		// calculates the position if not already done
-		if($content->getFieldValue('contentPosition') == null) {
+		if($content->isNew()) $currentId = 'new';
+		else $currentId = $content->getId();
+		
+		// gets next article position
+		$nextId = $content->getFieldValue('choosePosition');
+		if($nextId!='last') {
+			$nextPos = sel($this->getPrincipal(),elementP($nextId,fsl(fs('contentPosition'))),
+				dfasl(dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentPosition')))
+			);
+		}
+		else $nextPos = 10000;
+		
+		// calculates the position if not already done or if next ID changed
+		if($content->getFieldValue('contentPosition') == null || $content->getFieldValue('contentNextId') != $nextId) {
 			// gets content folder ID
 			$groupId = $this->evaluateFuncExp(fx('cfgCurrentGroup','id'),$this);
-			// gets next article position
-			$nextPos = $content->getFieldValue('choosePosition');
-			// retrieves previous article position
+			
+			// retrieves previous article
 			$prevPos = sel($this->getPrincipal(), elementPList(lxInG(lxEq(fs('id'),$groupId)),
 				lf(
-					fsl(fs('contentPosition')),
+					fsl(fs('contentPosition'),fs('contentNextId')),
 					lxAnd(lxEq(fs('contentType'),'content'),lxSm(fs('contentPosition'),$nextPos)),
 					fskl(fsk('contentPosition','value',false)),
 					1,1
-				)), 
-				dfasl(dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentPosition')))
+				)), dfasl(
+					/* updates contentNextId link to current article */
+					dfas('ElementSetterDFA','setCalculatedFieldSelectorMap',cfsMap(cfs('contentNextId',$currentId))),
+					dfas('ElementDFA','setFieldSelectorList',fsl(fs('contentNextId')),'setMode','1'),
+					/* and returns position */				
+					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentPosition'))
+				)
 			);
 			
 			// calculates article position (compacts at the end to let more space at the beginning)
 			$content->setFieldValue(0.25*$prevPos+0.75*$nextPos, 'contentPosition');
+			// stores next ID
+			$content->setFieldValue($nextId, 'contentNextId');
 			// resets choosePosition option
-			$content->setFieldValue(10000, 'choosePosition');
+			$content->setFieldValue('last', 'choosePosition');
 		}
 	}	
 	/**
@@ -200,7 +276,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$returnValue = null;
 		$principal = $this->getPrincipal();
 		$this->executionSink()->publishStartOperation("cms_processUrl", $principal);
-		try {
+		try {			
 			// extracts parameters
 			if($nArgs<1) throw new FuncExpEvalException('cms_processUrl takes at least one argument which is a WigiiBPLParameter object containing the parsedUrl array', FuncExpEvalException::INVALID_ARGUMENT);
 			$params = $this->evaluateArg($args[0]);
@@ -355,6 +431,57 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				$intro = $intro->getFieldValue('contentIntro');
 				if(is_array($intro)) $intro = $intro[$language];
 			}
+			
+			// gets page options
+			$forceHeight = $siteMap->getFieldValue('forceHeight');				
+			if(!isset($forceHeight)) $forceHeight=false;
+			$options->setValue('forceHeight',$forceHeight);
+			$forceHeightFirst = $siteMap->getFieldValue('forceHeightFirst');				
+			if(!isset($forceHeightFirst)) $forceHeightFirst=true;
+			$options->setValue('forceHeightFirst',$forceHeightFirst);
+			$marginWidth = $siteMap->getFieldValue('marginWidth');				
+			if(!isset($marginWidth)) $marginWidth="11%";
+			$options->setValue('marginWidth',$marginWidth);
+			$logoTextColor = $siteMap->getFieldValue('logoTextColor');				
+			if(!isset($logoTextColor)) $logoTextColor="666";
+			$options->setValue('logoTextColor',$logoTextColor);
+			$logoTextSize = $siteMap->getFieldValue('logoTextSize');				
+			if(!isset($logoTextSize)) $logoTextSize="22px";
+			$options->setValue('logoTextSize',$logoTextSize);
+			$menuBgColor = $siteMap->getFieldValue('menuBgColor');				
+			if(!isset($menuBgColor)) $menuBgColor="ccc";
+			$options->setValue('menuBgColor',$menuBgColor);
+			$menuTextColor = $siteMap->getFieldValue('menuTextColor');				
+			if(!isset($menuTextColor)) $menuTextColor="fff";
+			$options->setValue('menuTextColor',$menuTextColor);
+			$titleTextColor = $siteMap->getFieldValue('titleTextColor');				
+			if(!isset($titleTextColor)) $titleTextColor="696969";
+			$options->setValue('titleTextColor',$titleTextColor);
+			$menuTextHoverColor = $siteMap->getFieldValue('menuTextHoverColor');				
+			if(!isset($menuTextHoverColor)) $menuTextHoverColor="5c523d";
+			$options->setValue('menuTextHoverColor',$menuTextHoverColor);
+			$titleTextSize = $siteMap->getFieldValue('titleTextSize');				
+			if(!isset($titleTextSize)) $titleTextSize="24px";
+			$options->setValue('titleTextSize',$titleTextSize);
+			$footerBgColor = $siteMap->getFieldValue('footerBgColor');				
+			if(!isset($footerBgColor)) $footerBgColor="696969";
+			$options->setValue('footerBgColor',$footerBgColor);
+			$footerTextColor = $siteMap->getFieldValue('footerTextColor');				
+			if(!isset($footerTextColor)) $footerTextColor="fff";
+			$options->setValue('footerTextColor',$footerTextColor);
+			$linkTextColor = $siteMap->getFieldValue('linkTextColor');				
+			if(!isset($linkTextColor)) $linkTextColor="646eff";
+			$options->setValue('linkTextColor',$linkTextColor);
+			$oddArticleBgColor = $siteMap->getFieldValue('oddArticleBgColor');				
+			if(!isset($oddArticleBgColor)) $oddArticleBgColor="ebecff";
+			$options->setValue('oddArticleBgColor',$oddArticleBgColor);
+			
+			// gets page Logo
+			$logo = $this->cms_getLogo($options);
+
+			// gets page Menu
+			$menu = $this->cms_getMenu($options);
+
 			// gets CSS definitions
 			$css = $this->cms_getCSS($options);
 			if(isset($css)) $options->setValue('css',$css);
@@ -363,7 +490,10 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			//gets page footer
 			$footer = $this->cms_getFooter($options);
 			// top link
-			$atopLink = '<a href="./'.$language.'#top">∧ '.$transS->t($principal,"cmsAnchorTop",null,$language).'</a>';
+			$atopLink = '<a href="./'.$language.'#top">▲ '.$transS->t($principal,"cmsAnchorTop",null,$language).'</a>';
+			
+			// renders header
+			echo $this->cms_composeHeader($options,$logo,$menu,$intro)."\n";
 			
 			// renders article content
 			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)), 
@@ -390,25 +520,19 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 								fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
 							fx('htmlEndTag', 'p'))
 						),
-						fx('htmlStartTag','p','style','text-align:center;'),fx('htmlStartTag','span','class','wigii-cms content-sep'),$this->cms_getArticleSep($options),fx('htmlEndTag','span'),fx('htmlEndTag','p'),
+						//fx('htmlStartTag','p','style','text-align:center;'),$this->cms_getArticleSep($options),fx('htmlEndTag','p'),
 						fx('htmlEndTag','div'),"\n",
 					fx('htmlEndTag','div'),"\n")
 				),
-				dfas('StringSepDFA','setHeader',$this->cms_getHtmlHeader($options)."\n<body>".'<div class="wigii-globalContainer">'."\n".
-				'<div class="wigii-cms">'."\n".
-				'<div class="wigii-cms title" id="top"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
-				'<div class="wigii-cms content">'.(empty($intro)?' ':$intro).'</div>'."\n".
-				'</div>'."\n",
-				'setFooter',"\n".
-				'<p style="color:#fff;">.</p></div>'.(empty($footer)?' ':$footer).
-				//'<div class="wigii-cms">'."\n".
-				//'<div class="wigii-cms title" id="bottom"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$atopLink.'</div></div>'."\n".
-				//'<div class="wigii-cms content">'.(empty($footer)?' ':$footer).'</div>'."\n".
-				//'</div>'."\n".
-				(!empty($js)?"<script>".$js."</script>\n":'')."</body>\n</html>",'setSeparator',"\n"),
+				dfas('StringSepDFA',
+				'setSeparator',
+				"\n"),
 				dfas('EchoDFA')
 				)
 			);
+			
+			// renders footer
+			echo "\n".$this->cms_composeFooter($options,$footer,$js);
 		}
 		catch(Exception $e) {
 			$this->executionSink()->publishEndOperationOnError("cms_getContent", $e, $principal);
@@ -416,6 +540,98 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		}
 		$this->executionSink()->publishEndOperation("cms_getContent", $principal);
 		return $returnValue;
+	}
+	protected function cms_composeHeader($options,$logo,$menu,$intro) {
+		return $this->cms_getHtmlHeader($options)."\n<body>".'<div class="wigii-globalContainer">'."\n".
+				(empty($logo)&&empty($menu)?' ':'<div class="wigii-menu">').
+				(empty($logo)?' ':'<div id="wigii-logo">'.$logo.'</div>').
+				(empty($menu)?' ':$menu).
+				(empty($logo)&&empty($menu)?' ':'</div>').
+				'<!-- top anchor -->'.
+				'<div id="top" ></div><div style="clear:both;"></div>'.
+				'<div class="wigii-cms">'."\n".
+				'<div class="wigii-cms title"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
+				'<div class="wigii-cms content">'.(empty($intro)?' ':$intro).'</div>'."\n".
+				'</div>';
+	}
+	protected function cms_composeFooter($options,$footer,$js) {
+		return 	'<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>'.
+				'<script>
+var enableArticleResize = '.($options->getValue("forceHeight") ? 'true' : 'false').';
+var enableFirstArticleResize = '.($options->getValue("forceHeightFirst") ? 'true' : 'false').';
+$(document).ready(function(){
+	function resize(e){
+		$("div#top").height($("div.wigii-menu").outerHeight());
+		if(enableArticleResize) {  $("div.wigii-globalContainer>div.wigii-cms:not(.wigii-footer)").css("min-height",$(window).height()-$("div.wigii-menu").outerHeight()); }
+		if(enableFirstArticleResize) {  $("div.wigii-globalContainer>div.wigii-cms:not(.wigii-footer):first").css("min-height",$(window).height()-$("div.wigii-menu").outerHeight()); }
+		$("div.wigii-globalContainer>div.wigii-cms:not(.wigii-footer):last").css("min-height",$(window).height()-$("div.wigii-menu").outerHeight()-$("div.wigii-footer").outerHeight()-1);
+		$("div.wigii-cms div.bottom").each(function(){ $(this).css("margin-top", Math.max(0,$(window).height()-$("div.wigii-menu").outerHeight()-$(this).parent().prev().outerHeight()-$(this).parent().outerHeight()-46)); });
+	}
+	function scrollToHash(e){
+		/* Make sure this.hash has a value before overriding default behavior */
+		/* check if link refers to host with a . */
+		var fromClick = arguments.length > 0;
+		var sameLocation = false;
+		var hash = "";
+		var scrollTo = "";
+		if(this.hash !== ""){
+			/* check if link goes in a new location from the current location */
+			var href = $(this).attr("href")+"";
+			//alert(this.hash);
+			//alert(window.location);
+			//alert(href);
+			//alert(href.substr(0,1));
+			//alert(href.split("#")[0]);
+			sameLocation = href.substr(0,1)=="." || href.substr(0,1)=="#" || href.split("#")[0]==(window.location+("")).split("#")[0];
+		}
+		if (!fromClick || sameLocation) {
+			$("*").removeClass("over").find(".wigii-arrow").remove();
+			if(fromClick){ 
+				/* Prevent default anchor click behavior */
+				e.preventDefault();
+				hash = this.hash;
+				if($(this).parents("#wigii-logo").length || $(this).parent().hasClass("a-top")){
+					/* do nothing $(this).addClass("over").append("<span class=\"wigii-arrow\"> ▲</span>"); */
+				} else {
+					$(this).addClass("over").append("<span class=\"wigii-arrow\"> ▼</span>");
+				}
+			} else {
+				hash = window.location.hash;
+				if($(\'div.wigii-menu a[href*="\'+hash+\'"]\').parents("#wigii-logo").length  || $(\'div.wigii-menu a[href*="\'+hash+\'"]\').parent().hasClass("a-top")){
+					/* do nothing */
+				} else {
+					$(\'div.wigii-menu a[href*="\'+hash+\'"]\').addClass("over").append("<span class=\"wigii-arrow\"> ▼</span>");
+				}
+			}
+			/* if hash tag exist in the page */
+			if($(hash).length){
+				scrollTo = $(hash).offset().top-$("div.wigii-menu").outerHeight();
+				$("html, body").animate({
+							scrollTop: scrollTo
+					}, 800, function(){
+						/* Add hash (#) to URL when done scrolling (default click behavior) */
+						if(fromClick){ 
+							window.location.hash = hash;
+						}
+						$(window).scrollTop(scrollTo);
+					});
+			}
+		}
+	}
+	resize();
+	scrollToHash();
+	$(window).resize(function(e){ resize(e); });
+	$("a").click(scrollToHash);
+	window.onhashchange = function() { scrollToHash(); }
+});
+</script>
+'.
+				(empty($footer)?' ':'<div class="wigii-footer wigii-cms content">'.$footer.'</div>').
+				//'<div class="wigii-cms">'."\n".
+				//'<div class="wigii-cms title" id="bottom"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$atopLink.'</div></div>'."\n".
+				//'<div class="wigii-cms content">'.(empty($footer)?' ':$footer).'</div>'."\n".
+				//'</div>'."\n".
+				(!empty($js)?"<script>".$js."</script>\n":'')."</body>\n</html>";
 	}
 	/**
 	 * Builds HTML Page intro string
@@ -430,6 +646,42 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				dfasl(dfas("NullDFA")));
 		if(isset($returnValue)) $returnValue = $returnValue->getDbEntity();
 		return $returnValue;	
+	}
+	/**
+	 * Builds HTML Page logo string
+	 * @param WigiiBPLParameter $options some rendering options
+	 * @return String 
+	 */
+	protected function cms_getLogo($options) {
+		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
+				lf(fsl(fs('contentLogo')),
+						lxAnd(lxEq(fs('contentType'),'logo'),lxEq(fs('status'),'published')),
+						null,1,1)),
+				dfasl(
+					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentLogo')),
+					dfas('StringBufferDFA','setChunkSeparator',"\n")
+				)
+			);
+		if(is_array($returnValue)) $returnValue = $returnValue[$options->getValue('language')];
+		return $returnValue;
+	}
+	/**
+	 * Builds HTML Page menu string
+	 * @param WigiiBPLParameter $options some rendering options
+	 * @return String 
+	 */
+	protected function cms_getMenu($options) {
+		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
+				lf(fsl(fs('contentMenu')),
+						lxAnd(lxEq(fs('contentType'),'menu'),lxEq(fs('status'),'published')),
+						null,1,1)),
+				dfasl(
+					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentMenu')),
+					dfas('StringBufferDFA','setChunkSeparator',"\n")
+				)
+			);
+		if(is_array($returnValue)) $returnValue = $returnValue[$options->getValue('language')];
+		return $returnValue;
 	}
 	/**
 	 * Builds HTML Page footer string
@@ -528,6 +780,7 @@ $title
 <meta name="Generator" content="Wigii-system" />
 <meta name="Description" content="Wigii is a web based system allowing management of any kind of data (contact, document, calendar, and any custom types). Find out documentation on http://www.wigii-system.net" />
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
 $css
 </style>
@@ -541,51 +794,69 @@ HTMLHEAD;
 	 * @return String HTML CSS string included with header
 	 */
 	protected function cms_getHtmlStyles($options) {
+		$marginWidth = $options->getValue("marginWidth");
+		$logoTextColor = $options->getValue("logoTextColor");
+		$logoTextSize = $options->getValue("logoTextSize");
+		$menuBgColor = $options->getValue("menuBgColor");
+		$menuTextColor = $options->getValue("menuTextColor");
+		$menuTextHoverColor = $options->getValue("menuTextHoverColor");
+		$titleTextColor = $options->getValue("titleTextColor");
+		$titleTextSize = $options->getValue("titleTextSize");
+		$footerBgColor = $options->getValue("footerBgColor");
+		$footerTextColor = $options->getValue("footerTextColor");
+		$linkTextColor = $options->getValue("linkTextColor");
+		$oddArticleBgColor = $options->getValue("oddArticleBgColor");
+		
 		$returnValue = <<<HTMLCSS
-html, body { height:100%; padding: 0px; margin:0px; font-family:arial; }
-a { text-decoration: none;}
-a:hover { text-decoration: underline; }
-div.wigii-globalContainer {
-	min-height:100%;
-}
-div.wigii-cms {
-	width:100%;
-	box-sizing:border-box;
-}
-div.wigii-cms.title {
-	color:#696969;
-	font-size:24px;	
-}
-div.wigii-cms.title-content {
-	float:left;	
-	width:80%;
-	padding-left:50px;
-	padding-right:50px;
-}
-div.wigii-cms.a-top {
-	float:right;
-	width:20%;	
-	margin-top:24px;
-	margin-bottom:24px;
-	font-size:small;
-	text-align:right;
-	padding-right:50px;
-}
-div.wigii-cms.a-top>a {
-	color:#696969;	
-}
-div.wigii-cms.content {
-	clear:left;
-	color: #696969;
-	margin:0px;
-	padding-left:50px;
-	padding-right:50px;
-}
-span.wigii-cms.content-sep {
-	font-size:22px;
-	font-weight:strong;
-	color: #646EFF;
-}
+html, body 						{ height:100%; padding: 0px; margin:0px; font-family:arial; }
+a 								{ text-decoration: none;}
+a:hover 						{ text-decoration: underline; }
+div.wigii-globalContainer 		{ min-height:100%; }
+div.wigii-globalContainer>div.wigii-cms
+								{ padding-top:10px; padding-bottom:30px; }
+div.wigii-cms 					{ width:100%; box-sizing:border-box; }
+div.wigii-cms.title-content 	{ float:left; width:80%; }
+div.wigii-cms.a-top 			{ float:right; width:20%; margin-top:24px; margin-bottom:24px; font-size:small; text-align:right; }
+div.wigii-cms.content 			{ clear:left; margin:0px; }
+div.wigii-cms.content p			{ margin-top:6px; margin-bottom:6px; }
+div.wigii-globalContainer>div.wigii-footer.wigii-cms.content 
+								{ position:absolute; width:100%; font-size:small; padding-top:10px; padding-bottom:10px; }
+div.wigii-footer p 				{ margin:0px; padding:0px; }
+div.wigii-menu 					{ z-index:1;padding:10px 0px; position:fixed; width:100%; @media (max-height:600px) { padding-top:1px; padding-bottom:1px; } }
+div.wigii-menu #wigii-logo 		{ padding-left:-10px; margin-top:0px; float:left; }
+div.wigii-menu #wigii-logo p	{ margin:0px; }
+div.wigii-menu #wigii-logo span	{ font-size:22px; vertical-align:bottom; }
+div.wigii-menu #wigii-logo a:hover 
+								{ text-decoration:none; }
+div.wigii-menu ul 				{ list-style-type:none; float:right; padding:0px; margin:0px; margin-top:17px; }
+div.wigii-menu ul li 			{ float:left; margin-left:22px; margin-bottom:10px; font-weight:bold; @media (max-height:600px) { margin-bottom:1px; } }
+div.wigii-menu a:hover, div.wigii-menu a.over 
+								{ text-decoration:none; }
+div#top 						{ float:left; }
+
+/* color and size of text in logo */
+div.wigii-menu #wigii-logo a { color: #$logoTextColor; font-size:$logoTextSize; vertical-align:bottom; }
+/* color of menu */
+div.wigii-menu { background-color:#$menuBgColor;}
+/* color of text in menu */
+div.wigii-menu a { color: #$menuTextColor; }
+div.wigii-menu a:hover, div.wigii-menu a.over { color: #$menuTextHoverColor; }
+/* color and size of title of article */
+div.wigii-cms.title { color:#$titleTextColor; font-size:$titleTextSize }
+/* background-color of footer */
+div.wigii-globalContainer>div.wigii-footer.wigii-cms.content { background-color:#$footerBgColor; }
+/* text color of footer */
+div.wigii-footer.wigii-cms.content a { color:#$footerTextColor; }
+/* side margin percentage */
+div.wigii-menu #wigii-logo { margin-left:$marginWidth; }
+div.wigii-menu ul { margin-right:$marginWidth; }
+div.wigii-cms.a-top { padding-right:$marginWidth; }
+div.wigii-cms.title-content { padding-left:$marginWidth;  padding-right:$marginWidth; }
+div.wigii-cms.content { padding-left:$marginWidth; padding-right:$marginWidth; }
+/* color of links in article*/
+a { color: #$linkTextColor; }
+/* background-color of odd articles */
+div.wigii-globalContainer>div.wigii-cms:nth-child(odd) { background-color:#$oddArticleBgColor; /* #646EFF; */}
 HTMLCSS;
 		$customCSS = $options->getValue('css');
 		if(isset($customCSS)) $returnValue .= "\n".$customCSS;
@@ -598,7 +869,7 @@ HTMLCSS;
 	 * @return String used to separate the articles
 	 */
 	protected function cms_getArticleSep($options) {
-		return "⌘ ⌘ ⌘ ";
+		return "* * *";
 	}
 	
 	/**
@@ -612,7 +883,7 @@ HTMLCSS;
 		$returnValue = '';
 		if(count($languages)>1) {
 			foreach($languages as $lan=>$language) {
-				if($returnValue) $returnValue .= ' | ';
+				if($returnValue) $returnValue .= ' | ';
 				$returnValue .= '<a href="./'.$lan.'">'.$language.'</a>';
 			}
 		}
@@ -626,7 +897,7 @@ HTMLCSS;
 	 */
 	protected function cms_getSiteMap($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
-				lf(fsl(fs('siteUrl'),fs('supportedLanguage'),fs('defaultLanguage')),
+				lf(fsl(fs('siteUrl'),fs('forceHeight'),fs('forceHeightFirst'),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('oddArticleBgColor'),fs('supportedLanguage'),fs('defaultLanguage')),
 				lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')),
 				null,1,1)),
 				dfasl(dfas("NullDFA")));
@@ -749,9 +1020,11 @@ HTMLCSS;
 	protected function getFslForContentType($contentType) {
 		$returnValue = null;
 		switch($contentType) {
-			case "content": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentTitle"),fs("contentHTML")); break;
-			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
+			case "content": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentHTML")); break;
+			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("forceHeight"),fs("forceHeightFirst"),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('oddArticleBgColor'),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
 			case "intro": $returnValue = fsl(fs("siteTitle"),fs("contentIntro")); break;
+			case "logo": $returnValue = fsl(fs("contentLogo")); break;
+			case "menu": $returnValue = fsl(fs("contentMenu")); break;
 			case "image": $returnValue = fsl(fs("contentImage")); break;
 			case "footer": $returnValue = fsl(fs("contentFooter")); break;
 			case "css": $returnValue = fsl(fs("contentCSS")); break;

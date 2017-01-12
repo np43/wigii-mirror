@@ -68,6 +68,8 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 		$elPl->setListContext($listContext);
 		$elPl->isGroupedBy = $listContext->getGroupBy();
 		$elPl->crtGroupByValue = $listContext->getGroupByItemCurrentValue();
+		$elPl->nbOfHeaders = $listContext->getCrtViewParams('ElementPListRows_makeHeaders_getNb');
+		if(!$elPl->nbOfHeaders) $elPl->nbOfHeaders=0;
 		return $elPl;
 	}
 
@@ -575,6 +577,7 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 	public function getTotalWidth(){ return $this->totalWidth; }
 
 	public function makeHeaders(){
+		$this->nbOfHeaders = 0;
 		$elementFieldSelectorList = $this->getListContext()->getFieldSelectorList();
 		$trm = $this->createTRMInstance();
 		$trm->reset(null, false, false, false, true, false, false); //we want to be able to buffer the result
@@ -654,7 +657,7 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 				"ElementPListRows_makeHeaders_getNbNoWidth = ".$this->getNbNoWidth().";" .
 				"ElementPListRows_makeHeaders_totalPaddingInCol = ".$this->totalPaddingInCol.";" .
 				"");
-
+			$this->getListContext()->setCrtViewParams($this->getNbOfHeaders(), 'ElementPListRows_makeHeaders_getNb');
 		?></div><div class="clear"></div><?
 
 		$this->headersMade = true;

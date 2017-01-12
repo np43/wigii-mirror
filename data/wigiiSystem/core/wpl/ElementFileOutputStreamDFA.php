@@ -23,7 +23,9 @@
 
 /**
  * A data flow activity which writes a stream of data into a file attached to an element field
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE 13.04.2016
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class ElementFileOutputStreamDFA implements DataFlowActivity
 {
@@ -121,6 +123,7 @@ class ElementFileOutputStreamDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		// checks configuration
 		if(!isset($this->element)) throw new DataFlowServiceException('element has not been set', DataFlowServiceException::CONFIGURATION_ERROR);
 		if(!isset($this->fieldName)) throw new DataFlowServiceException('fieldName of type Files has not been set', DataFlowServiceException::CONFIGURATION_ERROR);

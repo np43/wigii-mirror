@@ -21,8 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
+/**
  * Created on 29 Jun 2012 by LWR
+ * Modified by Medair in 2016-2017 for maintenance purposes (see SVN logs for details)
  */
 
 /**
@@ -40,9 +41,11 @@ $fieldXml = $field->getXml();
 $this->put($this->t($fieldName, $fieldXml));
 
 //add a "+add" button
-if($fieldXml["isJournal"]=="1" && !$this->isForNotification() && !$this->isForPrint()){
+// Medair(CWE) 09.01.2017: if externalAccess allow add comments only if access level is Edit
+if($fieldXml["isJournal"]=="1" && !$this->isForNotification() && !$this->isForPrint() && 
+	(!$this->isForExternalAccess() || $this->isForExternalAccess() && $this->getExternalAccessLevel()==Emails::EXTERNAL_ACCESS_EDIT)){
 	$fieldId = $this->getDetailRenderer()->getDetailId()."__".$fieldName;
-	// CWE 10.02.2016: if element is blocked enables to add comments if allowOnReadOnly
+	// Medair(CWE) 10.02.2016: if element is blocked enables to add comments if allowOnReadOnly	
 	if(!($this->getRecord() instanceof Element && $this->getRecord()->isState_blocked()) || $fieldXml["allowOnReadOnly"]=="1"){
 		if($this->isForExternalAccess()){
 			$code = $exec->getCrtParameters(0);

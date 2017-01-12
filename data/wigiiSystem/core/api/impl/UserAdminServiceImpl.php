@@ -21,8 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* wigii UserAdminService implementation
+/** 
+ * Wigii UserAdminService implementation
  * Created by CWE on 2 juin 09
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class UserAdminServiceImpl implements UserAdminService
 {
@@ -4096,5 +4098,9 @@ class UserWhereClauseBuilderForSelectUsers extends FieldSelectorLogExpSqlBuilder
 			case "info_resetSessionContext":return MySqlQueryBuilder::SQLTYPE_BOOLEAN;
 			default: throw new UserAdminServiceException("invalid group attribute $fName in field selector LogExp", UserAdminServiceException::INVALID_ARGUMENT);
 		}
+	}
+	
+	public function supportsSysInformation() {
+		return true;
 	}
 }

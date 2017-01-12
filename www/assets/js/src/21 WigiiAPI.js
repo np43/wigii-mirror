@@ -1805,7 +1805,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						}			
 						// case: div with remoteContent
 						else if(e.is("div.remoteContent")) {
-							content = e.html();							
+							content = e.text();/* remote content is an url, so retrieves it as text to avoid double coding of amperstands */							
 							opts.localContent = false;							
 							e = e.parent().find("div.value");
 							if(content) {
@@ -1863,7 +1863,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						returnValue.attach(selection, options);
 					}
 				}								
-				return (!returnValue?{}:returnValue);
+				return (!returnValue?{$:selection}:returnValue);
 			};
 			
 			self.FormHelper = function(selection,options) {
@@ -1875,7 +1875,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					returnValue.attach(selection, options);
 				}
 				else if(selection && selection.length>1) throw wigiiApi.createServiceException('Wigii FormHelper selector can only be activated on a JQuery collection containing one element and not '+selection.length, wigiiApi.errorCodes.INVALID_ARGUMENT);
-				return (!returnValue?{}:returnValue);
+				return (!returnValue?{$:selection}:returnValue);
 			};
 		};
 		

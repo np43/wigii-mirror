@@ -21,8 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* wigii GroupAdminService implementation
+/**
+ * Wigii GroupAdminService implementation
  * Created by CWE on 2 juin 09
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class GroupAdminServiceImpl implements GroupAdminService
 {
@@ -4275,6 +4277,10 @@ class GroupWhereClauseBuilderForSelectGroups extends FieldSelectorLogExpSqlBuild
 		}
 	}
 
+	public function supportsSysInformation() {
+		return true;
+	}
+	
 	public function actOnInGroup($inGroupLogExp)
 	{
 		$inGroupLogExp->getGroupSelectionLogExp()->acceptLogExpVisitor($this);

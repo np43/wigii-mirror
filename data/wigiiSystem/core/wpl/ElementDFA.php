@@ -24,7 +24,9 @@
 /**
  * A data flow activity which inserts/updates/deletes a flow of element.
  * Supports a flow of Element or ElementP instances.
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 21 novembre 2013
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 {	
@@ -206,6 +208,7 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		if(!isset($this->mode)) throw new DataFlowServiceException("mode has not been set", DataFlowServiceException::CONFIGURATION_ERROR);
 
 		$this->areWigiiEventsEnabled = $dataFlowContext->areWigiiEventsEnabled();
@@ -299,7 +302,7 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 				else $this->doDeleteElement($principal, $element);
 				break;
 			case self::MODE_IGNORE:
-				if(!$dataFlowContext->isCurrentStepTheLastStep()) $dataFlowContext->writeResultToOutput($data);
+				if(!$dataFlowContext->isCurrentStepTheLastStep()) $dataFlowContext->writeResultToOutput($data,$this);
 				break;
 			// case MODE_FILTER :: does not touch element and does not push it any further.
 		}		

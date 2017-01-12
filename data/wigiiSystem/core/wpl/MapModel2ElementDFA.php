@@ -23,7 +23,9 @@
 
 /**
  * A data flow activity which maps Wigii Model instances to elements
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 10 octobre 2014
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class MapModel2ElementDFA implements DataFlowActivity
 {			
@@ -139,6 +141,7 @@ class MapModel2ElementDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		if(!isset($this->groupId) && !isset($this->linkSelector)) throw new DataFlowServiceException("No group id or link selector have been set to define where to insert elements, add one using the 'setGroupId' or 'setLinkSelector' method.", DataFlowServiceException::CONFIGURATION_ERROR);
 		$this->dataFlowContext = $dataFlowContext;
 		

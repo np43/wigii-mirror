@@ -30,7 +30,10 @@
  * The substream is described with an injected DataFlowActivitySelectorList
  * Subclasses can redefine the getSubstreamDescriptor(substreamID) method 
  * to return a specific DataFlowActivitySelectorList per substream instead of the injected one.
+ * 
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 27 juin 2013
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class SubstreamTapDFA implements DataFlowActivity
 {
@@ -104,6 +107,7 @@ class SubstreamTapDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		// checks configuration
 		if(!isset($this->substreamSource)) throw new DataFlowServiceException("substream source has not been set", DataFlowServiceException::CONFIGURATION_ERROR);
 		// are we the last step of the pipe ?

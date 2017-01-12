@@ -25,6 +25,7 @@
  * The root abstract class for all Func Exp libraries.
  * This class gives access to the VM context and helpers for Func Exp implementors 
  * Created by CWE on 1er octobre 2013
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  */
 abstract class FuncExpVMAbstractFL
 {
@@ -136,6 +137,16 @@ abstract class FuncExpVMAbstractFL
 	 */
 	protected function getValueInContext($key, $goThroughParents=true) {return $this->getFuncExpVM()->getValueInScope($key, $goThroughParents);}
 	
+	/**
+	 * Asserts that current FuncExp beeing evaluated does not originate from public space.
+	 * @throws FuncExpEvalException with code FORBIDDEN (403) if current FuncExp is marked as public.
+	 */
+	protected function assertFxOriginIsNotPublic() {$this->getFuncExpVM()->assertFxOriginIsNotPublic();}
+	
+	/**
+	 * @return Boolean returns true if current FuncExp beeing evaluated originates from public space, null if unknown, false if not.
+	 */
+	protected function isFxOriginPublic() {return $this->getFuncExpVM()->isFxOriginPublic();}
 	
 	// Utilities
 	
@@ -357,6 +368,7 @@ abstract class FuncExpVMAbstractFL
 					}
 					// clones the current func exp and puts all remaining arguments
 					$tailFx = FuncExp::createInstance($subject->getName());
+					if($subject->isOriginPublic()) $tailFx->setOriginIsPublic();
 					while($i<$sNArgs) {
 						$tailFx->addArgument($sArgs[$i]);
 						$i++;

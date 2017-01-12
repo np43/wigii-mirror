@@ -130,7 +130,7 @@ class StringSepDFA implements DataFlowActivity
 			if($this->isEven && !empty($this->evenSep)) $dataFlowContext->writeResultToOutput($this->evenSep, $this);
 			if(!$this->isEven && !empty($this->oddSep)) $dataFlowContext->writeResultToOutput($this->oddSep, $this);
 			if(!empty($this->groupSep)) {
-				$this->debugLogger()->write(json_encode($this->groupSep));
+				//$this->debugLogger()->write(json_encode($this->groupSep));
 				foreach($this->groupSep as $m => $s) {
 					if(($this->n % $m == 0) && !empty($s)) $dataFlowContext->writeResultToOutput($s, $this);
 				}

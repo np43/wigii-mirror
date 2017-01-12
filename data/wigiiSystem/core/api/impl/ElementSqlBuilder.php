@@ -24,6 +24,7 @@
 /**
  * Element Service base SQL builder
  * Created by CWE on 26 sept. 09
+ * Changed by Medair (CWE,LMA) on 06.12.2016 to allow deeper inheritance
  */
 class ElementSqlBuilder extends MySqlQueryBuilder implements FieldListVisitor, ElementDataTypeSubfieldVisitor, LogExpVisitor
 {
@@ -34,8 +35,8 @@ class ElementSqlBuilder extends MySqlQueryBuilder implements FieldListVisitor, E
 	private $dbAS;
 	private $fieldSelectorList;
 	private $selectedLanguages;
-	private $structuralFields;
-	private $structuralFieldTable;
+	protected $structuralFields;
+	protected $structuralFieldTable;
 	private $fieldSelectorLogExp;
 	private $fieldSortingKeyList;
 	private $incElementDetail;

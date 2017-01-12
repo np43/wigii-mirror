@@ -985,7 +985,7 @@ class TechnicalServiceProvider
 	private $boxServiceFormExecutor;
 	
 	/**
-	 * Creates Box.com facade facade
+	 * Creates Box.com facade
 	 * @return BoxServiceFormExecutor
 	 */
 	public static function getBoxServiceFormExecutor() {
@@ -1002,6 +1002,28 @@ class TechnicalServiceProvider
 	}
 	protected function createBoxServiceFormExecutorInstance() {
 		return ServiceProvider::createWigiiObject('BoxServiceFormExecutor');
+	}
+	
+	private $qlikSenseFormExecutor;
+	
+	/**
+	 * Creates QlikSense facade
+	 * @return QlikSenseFormExecutor
+	 */
+	public static function getQlikSenseFormExecutor() {
+		return self::getInstance()->getQlikSenseFormExecutorInstance();
+	}
+	/**
+	 * defaults singleton
+	 */
+	protected function getQlikSenseFormExecutorInstance() {
+		if(!isset($this->qlikSenseFormExecutor)) {
+			$this->qlikSenseFormExecutor = $this->createQlikSenseFormExecutorInstance();
+		}
+		return $this->qlikSenseFormExecutor;
+	}
+	protected function createQlikSenseFormExecutorInstance() {
+		return ServiceProvider::createWigiiObject('QlikSenseFormExecutor');
 	}
 	
 	// base infrastructure

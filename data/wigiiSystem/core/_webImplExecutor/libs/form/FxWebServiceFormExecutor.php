@@ -23,8 +23,8 @@
 
 /**
  * A WebService which executes some FuncExps and returns data to the client.
- * 
  * Created by CWE on January 07th 2016.
+ * Modified by Medair (CWE) on 25.11.2016 to secure against Cross Site Scripting
  */
 class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 	private $_debugLogger;
@@ -82,6 +82,8 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 				// parses the FuncExp
 				$fx = str2fx($fx);
 			}	
+			// Sets Origin as Public
+			if($fx instanceof FuncExp) $fx->setOriginIsPublic();
 			
 			// tries to login with a login request if provided and needed
 			$authS = ServiceProvider::getAuthenticationService();
@@ -149,7 +151,8 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 		catch(Exception $e) {
 			if(isset($fxEval) && method_exists($fxEval, 'freeMemory')) $fxEval->freeMemory();
 			header($_SERVER["SERVER_PROTOCOL"]." 500 Internal Error"); 
-			header("Access-Control-Allow-Origin: *");
+			header("Access-Control-Allow-Origin: ".$_SERVER['HTTP_ORIGIN']);
+			header("Access-Control-Allow-Credentials: true");
 			header("Content-Type: text/xml; charset=UTF-8");			
 			echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e));
 			// signals fatal error to monitoring system
@@ -168,7 +171,10 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 		$this->debugLogger()->logBeginOperation('serializeFxResult');
 		
 		$isIntegrated = $this->getIsIntegrated();
-		if(!$isIntegrated) header("Access-Control-Allow-Origin: *");
+		if(!$isIntegrated) {
+			header("Access-Control-Allow-Origin: ".$_SERVER['HTTP_ORIGIN']);
+			header("Access-Control-Allow-Credentials: true");
+		}
 		else if ($exec->getIsUpdating()) {			
 			echo ExecutionServiceImpl :: answerRequestSeparator;
 			echo $exec->getIdAnswer();
@@ -176,6 +182,7 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 		}
 		
 		if(is_scalar($result)) {
+			// CWE 25.11.2016: Should always be text/plain and never text/html to prevent sending links which build fake HTML pages (Cross Site Scripting attack)
 			if(!$isIntegrated) header("Content-Type: text/plain charset=UTF-8");
 			if($result===true) echo 1;
 			elseif($result===false) echo 0;

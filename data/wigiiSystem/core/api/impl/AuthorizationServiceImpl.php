@@ -327,7 +327,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "getAllElementsInGroups":
 					case "getSelectedElementsInGroups":
 					case "getSelectedElements":
-					case "countElementsInGroups":
+					case "countSelectedElementsDistribution":
 					case "fillElement":					
 						if($this->isPublicPrincipal($principal) || $this->isRootPrincipal($principal)){
 							return PrincipalRights::createInstance(array("canWriteElement"=>true, "canShareElement"=>true));

@@ -31,7 +31,9 @@
  * which path corresponds to the unmasked subpath, else the file will be added at the root of the zip (no subfolder)
  * Optionally deletes the source file and empty relative subfolders
  * 
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 27 juin 2013
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class ZipFileWriterDFA implements DataFlowActivity
 {		
@@ -161,6 +163,7 @@ class ZipFileWriterDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		$this->zipArchive = $this->createZipArchiveInstance();
 		// creates zip on file system in write mode
 		if($this->zipArchive->open($this->fileFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) throw new DataFlowServiceException("could not create zip file '$this->fileFullPath'", DataFlowServiceException::UNEXPECTED_ERROR);

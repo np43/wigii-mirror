@@ -542,6 +542,7 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 			//$this->debugLogger()->write("getValue in local bag");
 			if(!isset($this->bag)) return null;
 			if(!isset($this->bag[$fieldName])) return null;
+			if(!isset($this->bag[$fieldName][$subFieldName])) return null;
 			return $this->bag[$fieldName][$subFieldName];
 		}
 	}

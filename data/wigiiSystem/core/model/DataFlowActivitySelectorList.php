@@ -24,6 +24,7 @@
 /**
  * A list of DataFlowActivity selectors
  * Created by CWE on 28 mai 2013
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  */
 interface DataFlowActivitySelectorList extends ObjectList
 {
@@ -84,4 +85,15 @@ interface DataFlowActivitySelectorList extends ObjectList
 	 * parameters in each DataFlowActivitySelector
 	 */
 	public function configureDataFlowActivitySelectorByClassName($className, $configurator);
+	
+	
+	/**
+	 * Marks this DataFlowActivitySelectorList as originating from Public space. Cannot be undone.
+	 * Once origin is marked as public, then DataFlowService or any DataFlowActivity implementation are free to stop execution with an DataFlowServiceException::FORBIDDEN (403)
+	 */
+	public function setOriginIsPublic();
+	/**
+	 * @return Boolean returns true if this DataFlowActivitySelectorList has been marked as originating from Public space, else false.
+	 */
+	public function isOriginPublic();
 }

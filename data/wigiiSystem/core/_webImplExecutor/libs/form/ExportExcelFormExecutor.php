@@ -101,14 +101,7 @@ class ExportExcelFormExecutor extends ExportFormExecutor {
 		} else {
 			$groupList = $exportLC->getGroupPList();
 			if($groupList == null || $groupList->isEmpty()) return "No group selected";
-
-
-			$gl = $configS->getGroupPList($p, $exec->getCrtModule());
-			$rootGroups = $configS->getRootGroupsInModule($p, $exec->getCrtModule());
-			$stringLogExp = "INGR(id IN (".implode(",", $rootGroups->getIds())."))";
-			$fieldSelectorLogExpParser = TechnicalServiceProvider::getFieldSelectorLogExpParser();
-			$groupLogExp = $fieldSelectorLogExpParser->createLogExpFromString($stringLogExp);
-
+			
 			//query to find all ids in the view
 			//force to take content of all subgroups
 			if(!$exportLC->doesGroupListIncludeChildren()) $exportLC->setGroupPList($exportLC->getGroupPList(), true);
@@ -120,7 +113,7 @@ class ExportExcelFormExecutor extends ExportFormExecutor {
 			$elementIds = $this->getWigiiExecutor()->getAllElementIdsInListView($p, $exec, $exportLC);
 
 			$elementIds = array_keys($elementIds->getListIterator());
-			$countData = $elS->countElementsInGroups($p, $groupLogExp, $elementIds);
+			$countData = $elS->countSelectedElementsDistribution($p, $elementIds);
 			$filledGroupIds = array();
 			foreach($countData as $filledGroupId=>$nbItemsInGroup){
 				if($nbItemsInGroup){
@@ -131,9 +124,7 @@ class ExportExcelFormExecutor extends ExportFormExecutor {
 			$groupPTree = GroupPListTreeArrayImpl::createInstance();
 			$lf = ListFilter::createInstance();
 			$lf->setFieldSelectorList($groupAS->getFieldSelectorListForGroupWithoutDetail());
-			$stringLogExp = "ING(id IN (".implode(",", $filledGroupIds)."))";
-			$groupLogExp = $fieldSelectorLogExpParser->createLogExpFromString($stringLogExp);
-			$lf->setFieldSelectorLogExp($groupLogExp);
+			$lf->setFieldSelectorLogExp(lxInG(lxIn(fs('id'),$filledGroupIds)));
 
 			$groupAS->getAllGroups($p, $exec->getCrtModule(), $groupPTree, $lf);
 

@@ -114,7 +114,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 				case "box" : $returnValue = 'BoxServiceFormExecutor'; break;
 				case "www": $returnValue = $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
 				case "inwww": $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true,'setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
-				case "qliksense" : $returnValue = ServiceProvider::createQlikSenseFormExecutorDevInstance($this->getRootPrincipal()); break;
+				case "qliksense" : $returnValue = 'QlikSenseFormExecutor'; break;
 				default: $returnValue = null;
 			}
 		}	

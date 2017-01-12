@@ -932,7 +932,7 @@ function setListenerToAddJournalItem(elementDialogId, recordId, fieldName, field
 							error: errorOnUpdate
 						});
 			} else { //in modify mode, update the textarea
-				$('#'+fieldId+' div.value textarea').val(newJournalItemString.replace(newJournalContentStringCode, $(this).parent().find('textarea').val()).replace(/\\n/g, "\n")+$('#'+fieldId+' div.value textarea').val());
+				$('#'+fieldId+' div.value textarea').val(newJournalItemString.replace(newJournalContentStringCode, $(this).parent().find('textarea').val()).replace(/\\n/g, "\n").replace("style=&quot;",'style="').replace("&quot;>",'">')+$('#'+fieldId+' div.value textarea').val());
 				if(!isHtmlArea){
 					$('#'+fieldId+' div.value textarea').change().blur();
 				} else {

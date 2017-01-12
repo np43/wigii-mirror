@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 12 april 2010
- * by LWR
+/**
+ * Created on 12 april 2010 by LWR
+ * Updated by Medair (LMA) on 7 dec 2016 - Correct a bug with quote in number
  */
 class ImportElementInFormExecutor extends FormExecutor implements ElementDataTypeSubfieldVisitor {
 
@@ -285,13 +285,16 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 //		$fsl->setSelectedLanguages(array($transS->getLanguage()=>$transS->getLanguage()));
 //		$this->elementPAList = ElementPAdvancedListArrayImpl::createInstance(null, $fsl);
 		$this->elementPAList = ElementPAdvancedListArrayImpl::createInstance();
-
+		
 		foreach($datas as $lineNb=>$dataRow){
+			
 			if($lineNb == 0) continue; //first line is header
 			if($dataRow == null) continue; //ignore empty lines
+			
 			$dataRow = preg_replace('/^[^\\'.$sep.']*###\s*/', '', $dataRow);
 			$datas[$lineNb] = $dataRow; //remove the information added
 			$dataRow = $this->parseDataRow($sep, $dataRow);
+			
 			//take off the element id or modulename if defined
 			if($this->hasElementIdAttribute !== false){
 				unset($dataRow[$this->hasElementIdAttribute]);
@@ -299,7 +302,8 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 			if($this->hasElementModulenameAttribute !== false){
 				unset($dataRow[$this->hasElementModulenameAttribute]);
 			}
-			//eput($dataRow);
+			
+			
 			//create an ElementP
 			$el = Element::createInstance($exec->getCrtModule(), $this->originalFieldList, $wigiiBag);
 			$elP = ElementP::createInstance($el);
@@ -307,12 +311,14 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 			$el->setId($lineNb); //important that the first id is null --> new ids will always be different (id starts at 1), this is to prevent a problem in the case importing into a blank DB
 			//fills the elementP + check datas
 			$nb = 0;
+			
 			foreach($this->importFieldSelectorListFromFile->getListIterator() as $key=>$fs){
 
 				if(!$fs->isElementAttributeSelector()){
 					$field = $el->getFieldList()->getField($fs->getFieldName());
 					$dataType = $field->getDataType();
 					if($dataType == null) continue;
+					$dataTypeName = $dataType->getDataTypeName();
 				}
 
 				if(!$fs->isElementAttributeSelector() && $dataType->getXml()->{$fs->getSubFieldName()}["multiLanguage"]=="1"){
@@ -323,9 +329,9 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 					$pos = $this->headers[($fs->getSubFieldName()=="value" ? $fs->getFieldName() : $fs->getFieldName()." ".$fs->getSubFieldName())];
 				}
 
-//				if($lineNb == 1) eput($fs);
-//				if($lineNb == 1) eput("nb:".$nb." ");
-//				if($lineNb == 1) eput("pos:".$pos."\n");
+				//if($lineNb == 1) eput($fs);
+				//if($lineNb == 1) eput("nb:".$nb." ");
+				//if($lineNb == 1) eput("pos:".$pos."\n");
 				try{
 					if($fs->isElementAttributeSelector()){
 //						eput("set ".put($dataRow[$nb])." for ".$fs->getFieldName()." ".$fs->getSubFieldName()." | ");
@@ -345,13 +351,13 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 							}
 							$nb = $nb + count($this->languageInstalled);
 						//verify MultipleAttributes management
-						} else if($dataType->getDataTypeName()=="MultipleAttributs" && ($fs->getSubFieldName() == "value" || $fs->getSubFieldName() == "")){
+						} else if($dataTypeName=="MultipleAttributs" && ($fs->getSubFieldName() == "value" || $fs->getSubFieldName() == "")){
 							$temp = explode(", ", $dataRow[$pos-1]);
 							$nb++;
 							$temp = array_combine($temp, $temp);
 							$el->setFieldValue($temp, $fs->getFieldName(), $fs->getSubFieldName());
 						//calculate special email subfields
-						} else if ($dataType->getDataTypeName() == "Emails") {									
+						} else if ($dataTypeName == "Emails") {									
 							if(!$fs->getSubFieldName() || $fs->getSubFieldName() == "value") {
 								$newValue = str_replace('\n', "\n", $dataRow[$pos -1]);
 								
@@ -422,6 +428,17 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 							$el->setFieldValue(str_replace('\n', "\n", $dataRow[$pos-1]), $fs->getFieldName(), $fs->getSubFieldName());
 							$nb++;
 						}
+					}
+					//If the datatype is Numerics we remove all caracters which is not number
+					if($dataTypeName === 'Numerics' || $dataTypeName === 'Floats'){
+						//Get the value of the element
+						$elementValue = $el->getFieldValue($fs->getFieldName());
+						//Remove the simple quote if present in the number
+						$newElementValue = preg_replace('#\'#', '', $elementValue);
+						//Set again the field with the correct value
+						$el->setFieldValue($newElementValue, $fs->getFieldName());
+						
+						//eput(var_dump($newElementValue));
 					}
 				} catch (ServiceException $e){
 					$errorInLine[$lineNb] .= " !Exception ".$e->getCode()." ".$e->getMessage();

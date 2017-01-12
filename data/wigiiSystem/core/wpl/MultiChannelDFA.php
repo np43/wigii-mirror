@@ -26,7 +26,9 @@
  * A channel can be :
  * - a data flow which processes the data and puts some output in the parent flow
  * - a func exp which is executed (using the input data or not) and whose return value is put in the parent data flow
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 28 August 2014
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class MultiChannelDFA extends ObjectDFAWithFuncExpVM
 {			
@@ -86,6 +88,12 @@ class MultiChannelDFA extends ObjectDFAWithFuncExpVM
 		$this->channelMap = $map;
 	}		
 
+	// stream data event handling
+	
+	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
+	}
+	
 	// object event handling
 				
 	protected function processObject($obj, $dataFlowContext) {

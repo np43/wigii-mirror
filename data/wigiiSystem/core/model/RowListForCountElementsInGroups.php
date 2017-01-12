@@ -22,7 +22,7 @@
  */
 
 /**
- * RowList RowListForCountElementsInGroups implementation for method ElementService->countElementsInGroups
+ * RowList implementation for method ElementService->countSelectedElementsDistribution
  * Created by LWR on 17 October 2011
  */
 class RowListForCountElementsInGroups extends Model implements RowList

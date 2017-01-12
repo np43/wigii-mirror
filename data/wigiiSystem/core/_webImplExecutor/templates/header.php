@@ -380,9 +380,9 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 <div id="help" style="display:none;"></div>
 <div id="systemConsole" class="ui-corner-all" style="display:none;" ></div>
 <div id="summaryDialog" class="summary cm SBB" style="display:none; top:100px; left:100px;" ><div class="exit SBB" onclick="$(this).parent().hide();">x</div><div class="handler F"></div><textarea class="content"></textarea></div>
-<? if(!$this->isWorkzoneViewDocked()) { ?>
+<? /* 20.12.2016 Medair (LMA): moved elementDialog div to allow workzone docking ?>
 <div id='elementDialog' class='elementDialog' style='display:none; top:0px; left:0px;'></div>
-<? } ?>
+ */ ?>
 <div id='organizeDialog' style='display:none; top:0px; left:0px;'></div>
 <div id='multipleDialog' style='display:none; top:0px; left:0px;'></div>
 <div id='filtersDialog' style='display:none; top:0px; left:0px;'></div>

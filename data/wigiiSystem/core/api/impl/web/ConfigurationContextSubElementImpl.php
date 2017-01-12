@@ -175,6 +175,16 @@ class ConfigurationContextSubElementImpl extends ConfigurationContextImpl {
 	}
 	
 	/**
+	 * Returns the field Xml configuration under which the current sub element is linked
+	 * or null if no sub element configuration has been selected
+	 * @param Principal $principal current principal
+	 * @return SimpleXMLElement
+	 */
+	public function getCurrentFieldXml($principal) {
+		return $this->getCurrentSubElementConfigService()->getCurrentFieldXml($principal);
+	}
+	
+	/**
 	 * Returns the LinkSelector under which the current sub element is linked
 	 * or null if no sub element configuration has been selected
 	 * @return LinkSelector

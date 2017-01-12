@@ -310,15 +310,17 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			$rm->displayValue($fieldName, $valueWidth, $this->getVisibleLanguage());
 		}
 		$rm->put('</div>');
-
+		
 		// for Links datatype: if element is not writable, then hides the 'Add' button
+		/* CWE 07.11.2016: deprecated, if readonly or disabled, add button is not generated.
 		if($dataType && $dataTypeName=="Links") {
 			if(!$this->getRecordIsWritable() || $rm->getRecord()->getWigiiBag()->isReadonly($field->getFieldName()) || $rm->getRecord()->getWigiiBag()->isDisabled($field->getFieldName())){
 				//$this->addJsCodeAfterShow("$('#".$this->getDetailId()." .addNewSubElement').removeClass('Green').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
 				$this->addJsCodeAfterShow("$('#".$this->getDetailId()."').find('.addNewSubElement, td.edit, td.delete, td.restore').removeClass('Green edit delete restore').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
 			}
 		}
-
+		*/
+		
 		// adds any dynamically generated hidden divs
 		if((string)$fieldXml["divExp"]!=null) $this->resolveDivExp((string)$fieldXml["divExp"]);
 		if((string)$fieldXml["divInDetailExp"]!=null) $this->resolveDivExp((string)$fieldXml["divInDetailExp"]);

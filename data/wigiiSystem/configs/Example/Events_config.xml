@@ -176,10 +176,8 @@
 		</fields>
 	</exportExcelCalendar>
 
-	<!-- /**
-	 * Adds an element to the list
-	 * throws ListException::ALREADY_EXISTS if we try to put a second time the same element in the list
-	 *  *********************************************
+	<!-- 
+	 /* *********************************************
 		**** WARNING
 		**** the activity calendarView will be used as:
 		**** - first Strings/Varchars field as Subject

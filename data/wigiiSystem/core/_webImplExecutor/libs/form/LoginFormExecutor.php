@@ -55,7 +55,8 @@ class LoginFormExecutor extends FormExecutor {
 				$authS->loginAsPublic($p->getWigiiNamespace()->getClient()->getClientName());
 			}
 			else {
-				$authS->login($username, $pwd, $p->getWigiiNamespace()->getClient()->getClientName());
+				//Create an instance of ValueObject to send a hidden password
+				$authS->login($username, ValueObject::createInstance($pwd), $p->getWigiiNamespace()->getClient()->getClientName());
 			}			
 		} catch (AuthenticationServiceException $authE){
 			switch($authE->getCode()){

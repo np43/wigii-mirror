@@ -67,10 +67,11 @@ else {
 }
 $this->put($strValue);
 
-// add button
+// add button (only if not readonly and not disabled)
 $subEltModule = ServiceProvider::getModuleAdminService()->getModule($this->getP(), (string)$fieldXml['module'])->getModuleUrl();
 $trashBinPrefix = (string)$this->getConfigService()->getParameter($this->getP(), null, "deletedSubElementsLinkNamePrefix");
-if(!empty($trashBinPrefix) && strpos($field->getFieldName(), $trashBinPrefix)!==0 && $linkType == Links::LINKS_TYPE_SUBITEM){
+if(!empty($trashBinPrefix) && strpos($field->getFieldName(), $trashBinPrefix)!==0 && $linkType == Links::LINKS_TYPE_SUBITEM &&
+	!$readonly && !$disabled){
 	if($this->getRecord()->isNew()){
 		$this->put('<div class="grayFont" style="float: right; margin: 0 4px; padding: 2px 4px">'.$this->t("finishElementBeforeAddingSubItems_prefix").$this->t("#elements".$subEltModule."#").'.</div>');
 	} else {		

@@ -28,6 +28,7 @@
  * Created on 24 juil. 09 by LWR
  * Refactored in two classes WigiiExecutor and WigiiCoreExecutor by CWE on November 23rd 2015.
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) on 24.11.2016 to protect against Cross Site Scripting
  */
 class WigiiCoreExecutor {
 	
@@ -681,13 +682,19 @@ class WigiiCoreExecutor {
 	
 	// WigiiExecutor state management
 	
+	private $workzoneViewDocked = null;
 	/**
 	 * Returns true if Workzone has a docked ListView and ElementDialog, 
 	 * Returns false if ElementDialog shows as a popup.	 
 	 */
 	public function isWorkzoneViewDocked() {
-		if(defined('WORKZONEVIEWDOCKED') && WORKZONEVIEWDOCKED) return true;
-		else return false;
+		if(!isset($this->workzoneViewDocked)) {
+			$this->workzoneViewDocked = ($this->getConfigurationContext()->getParameter(ServiceProvider::getAuthenticationService()->getMainPrincipal(), ServiceProvider::getExecutionService()->getCrtModule(), "workZoneViewDocked") == '1');
+		}
+		return $this->workzoneViewDocked;
+	}
+	public function setWorkzoneViewDocked($bool) {		
+		$this->workzoneViewDocked = $bool;
 	}
 	
 	/**
@@ -1574,28 +1581,30 @@ class WigiiCoreExecutor {
 			if ($field->isCalculated() && $field->shouldCalculateOnFetch() && ($fsl->containsField($field->getFieldName()) || ($listContext->getGroupByItemFieldSelector() != null && $listContext->getGroupByItemFieldSelector()->getFieldName() == $field->getFieldName()))) {
 				$field->getFuncExpDependencies($fsl);
 			}
-			if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Emails") {
-				//if Emails then take all the subfields, there are usefull to display confirmation status, etc.
-				$fsl->addFieldSelector($field->getFieldName(), "proofStatus");
-				$fsl->addFieldSelector($field->getFieldName(), "proofKey");
-				$fsl->addFieldSelector($field->getFieldName(), "proof");
-				$fsl->addFieldSelector($field->getFieldName(), "externalConfigGroup");
-				$fsl->addFieldSelector($field->getFieldName(), "externalAccessLevel");
-				$fsl->addFieldSelector($field->getFieldName(), "externalCode");
-				$fsl->addFieldSelector($field->getFieldName(), "externalAccessEndDate");
-				$fsl->addFieldSelector($field->getFieldName(), "value");
-			}
-			if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Files") {
-				//if Files then take all the subfields, there are usefull to display download, dates, size, etc.
-				$fsl->addFieldSelector($field->getFieldName(), "name");
-				$fsl->addFieldSelector($field->getFieldName(), "type");
-				$fsl->addFieldSelector($field->getFieldName(), "size");
-				$fsl->addFieldSelector($field->getFieldName(), "mime");
-				$fsl->addFieldSelector($field->getFieldName(), "date");
-				$fsl->addFieldSelector($field->getFieldName(), "user");
-				$fsl->addFieldSelector($field->getFieldName(), "username");
-				$fsl->addFieldSelector($field->getFieldName(), "version");
-				$fsl->addFieldSelector($field->getFieldName(), "textContent");
+			if($fsl->containsField($field->getFieldName())) {
+				if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Emails") {
+					//if Emails then take all the subfields, there are usefull to display confirmation status, etc.
+					$fsl->addFieldSelector($field->getFieldName(), "proofStatus");
+					$fsl->addFieldSelector($field->getFieldName(), "proofKey");
+					$fsl->addFieldSelector($field->getFieldName(), "proof");
+					$fsl->addFieldSelector($field->getFieldName(), "externalConfigGroup");
+					$fsl->addFieldSelector($field->getFieldName(), "externalAccessLevel");
+					$fsl->addFieldSelector($field->getFieldName(), "externalCode");
+					$fsl->addFieldSelector($field->getFieldName(), "externalAccessEndDate");
+					$fsl->addFieldSelector($field->getFieldName(), "value");
+				}
+				if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Files") {
+					//if Files then take all the subfields, there are usefull to display download, dates, size, etc.
+					$fsl->addFieldSelector($field->getFieldName(), "name");
+					$fsl->addFieldSelector($field->getFieldName(), "type");
+					$fsl->addFieldSelector($field->getFieldName(), "size");
+					$fsl->addFieldSelector($field->getFieldName(), "mime");
+					$fsl->addFieldSelector($field->getFieldName(), "date");
+					$fsl->addFieldSelector($field->getFieldName(), "user");
+					$fsl->addFieldSelector($field->getFieldName(), "username");
+					$fsl->addFieldSelector($field->getFieldName(), "version");
+					$fsl->addFieldSelector($field->getFieldName(), "textContent");
+				}
 			}
 		}
 	
@@ -1616,11 +1625,13 @@ class WigiiCoreExecutor {
 	
 		//creating the list
 		$elementPList = ElementPListRowsForElementListImpl :: createInstance($this, $listContext);
+		/*
 		$pageSize = (int)$configS->getParameter($p, $exec->getCrtModule(), "listPageSize");
 		if($pageSize == null) $pageSize = 250; //default value
 		$elementPList->setPageSize($pageSize);
 		$elementPList->setDesiredPage($desiredPage);
-	
+		*/
+		
 		$elementPList->setFieldList($fieldList);
 		$elementPList->setP($p);
 		$elementPList->setExec($exec);
@@ -1631,13 +1642,6 @@ class WigiiCoreExecutor {
 		}
 		$elementPList->actOnBeforeAddElementP();
 	
-		//test on a specific group
-		//		$nbRow = $elS->getAllElementsInGroups(
-		//			$p,
-		//			GroupListArrayImpl::createInstance()->addGroup(Group::createInstance(array("id"=>"214", "wigiiNamespace"=>$exec->getCrtWigiiNamespace(), "module"=>$exec->getCrtModule()))), //getGroupList(), $
-		//			$elementPList,
-		//			false,
-		//			$listContext);
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start getSelectedElementsInGroups"] = microtime(true);
 		$this->executionSink()->log("start getSelectedElementsInGroups");
 		if ($listContext->doesGroupListIncludeChildren() || $listContext->getGroupPList()->count() == 1) {
@@ -1669,27 +1673,23 @@ class WigiiCoreExecutor {
 			$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp, //getGroupList(), $
 					$elementPList,
 					$listContext
-					,$desiredPage,$pageSize
+					/*,$desiredPage,$pageSize*/
 			);
 		} else {
 			$nbRow = 0;
 		}
 	
-		$nbRow = $elementPList->getTotalNumberOfElements();
-	
+		//$nbRow = $elementPList->getTotalNumberOfElements();
+		$total = $listContext->getTotalNumberOfObjects();
 		//manual paging since V4
+		/*
 		$total = $nbRow;
 		if(($pageSize*$desiredPage-$nbRow) > 0){
 			$nbRow = $pageSize-($pageSize*$desiredPage-$nbRow);
 		} else {
 			$nbRow = $pageSize;
 		}
-	
-		//		if ($listContext->getDesiredPageNumber() == 1) {
-		//			$total = $listContext->getTotalNumberOfObjects();
-		//		} else {
-		//			$total = $nbRow;
-		//		}
+		*/		
 		$elementPList->actOnFinishAddElementP($total);
 	
 		$this->setTempTotalElementsIdsForListView($elementPList->getTotalElementsIds());
@@ -1748,11 +1748,12 @@ class WigiiCoreExecutor {
 	
 		//creating the list
 		$elementPList = ElementPListRowsForElementBlogImpl :: createInstance($this, $listContext);
+		/*
 		$pageSize = (int)$configS->getParameter($p, $exec->getCrtModule(), "blogPageSize");
 		if($pageSize == null) $pageSize = 250; //default value
 		$elementPList->setPageSize($pageSize);
 		$elementPList->setDesiredPage($desiredPage);
-	
+		*/
 		$elementPList->setFieldList($fieldList);
 		$elementPList->setP($p);
 		$elementPList->setExec($exec);
@@ -1794,27 +1795,23 @@ class WigiiCoreExecutor {
 			$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp, //getGroupList(), $
 					$elementPList,
 					$listContext
-					,$desiredPage,$pageSize
+					/*,$desiredPage,$pageSize*/
 			);
 		} else {
 			$nbRow = 0;
 		}
 	
-		$nbRow = $elementPList->getTotalNumberOfElements();
-	
+		//$nbRow = $elementPList->getTotalNumberOfElements();
+		$total = $listContext->getTotalNumberOfObjects();
 		//manual paging since V4
-		$total = $nbRow;
-		if(($pageSize*$desiredPage-$nbRow) > 0){
-			$nbRow = $pageSize-($pageSize*$desiredPage-$nbRow);
-		} else {
-			$nbRow = $pageSize;
-		}
-	
-		//		if ($listContext->getDesiredPageNumber() == 1) {
-		//			$total = $listContext->getTotalNumberOfObjects();
-		//		} else {
-		//			$total = $nbRow;
-		//		}
+		/*
+		 $total = $nbRow;
+		 if(($pageSize*$desiredPage-$nbRow) > 0){
+		 $nbRow = $pageSize-($pageSize*$desiredPage-$nbRow);
+		 } else {
+		 $nbRow = $pageSize;
+		 }
+		 */
 		$elementPList->actOnFinishAddElementP($total);
 	
 		$this->setTempTotalElementsIdsForListView($elementPList->getTotalElementsIds());
@@ -2590,7 +2587,7 @@ invalidCompleteCache();
 		$fieldName = $_POST["journalFieldName"];
 		$elementDialogId = $_POST["elementDialogId"];
 
-		$message = str_replace('\\n', "\n", $message);
+		$message = str_replace(array('\\n',"=&quot;","&quot;>"), array("\n",'="','">'), $message);
 
 		$fsl = FieldSelectorListArrayImpl :: createInstance();
 		$fsl->addFieldSelector($fieldName);
@@ -2625,12 +2622,14 @@ invalidCompleteCache();
 		}
 		$this->throwEvent()->updateElement(PWithElementWithGroupPList::createInstance($p, $element, ($configS->getGroupPList($p, $exec->getCrtModule())->count()==1 ? $configS->getGroupPList($p, $exec->getCrtModule()) : null)));
 
+		$message = str_replace(array("\n",'"','&quot;'), array('<br />','\\"','\"'), $message);
+		fput($message);
 		if($isFromExternalAccess){
-			$exec->addJsCode("$('#externalAccessView_form__$fieldName div.value').prepend(\"".str_replace("\n", '<br />', $message)."\");");
+			$exec->addJsCode("$('#externalAccessView_form__$fieldName div.value').prepend(\"".$message."\");");
 		} else if($elementDialogId=="moduleView"){
 			//refresh line item
 			//remove moduleView cache + detail cache
-			$exec->addJsCode("$('#$elementDialogId #row_".$elementId."__".$fieldName." div.value').prepend(\"".str_replace("\n", '<br />', $message)."\");");
+			$exec->addJsCode("$('#$elementDialogId #row_".$elementId."__".$fieldName." div.value').prepend(\"".$message."\");");
 			$exec->invalidCache($p, 'elementDialog');
 			$exec->invalidCache($p, 'moduleView');
 		} else {
@@ -3619,7 +3618,7 @@ invalidCompleteCache();
 			//we keep in memory the lastAction, just to be able to manage the sending of footer for downloads or JSON
 			$lastAction = null;
 			$configurationContextSupportsSubElements = ($this->getConfigurationContext() instanceof ConfigurationContextSubElementImpl);
-	
+			$byPassedHeader=false;
 			while ($exec->loadNextRequest($this)) {
 				//				eput($exec->getCrtRequest());
 				//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."request ".$exec->getCrtAction()." loaded"] = microtime(true);
@@ -3652,6 +3651,7 @@ invalidCompleteCache();
 						if ($exec->getIdAnswer()=="newDialog" || !$exec->getIsUpdating())
 							include_once (IMPL_PATH . "templates/header.php");
 					}
+					else $byPassedHeader=true;
 					$started = true;
 				}
 	
@@ -3682,59 +3682,66 @@ invalidCompleteCache();
 	
 		} catch (AuthenticationServiceException $ase) {
 			if ($ase->getCode() == AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL ||
-					$ase->getCode() == AuthenticationServiceException :: FORBIDDEN_PUBLIC_USER ||
-					$ase->getCode() == AuthenticationServiceException :: EXPIRED_PRINCIPAL ||
-					$ase->getCode() == AuthenticationServiceException :: EXPIRED_PASSWORD) {
-						//session expired -> need reauthentication
-						if ($exec->getIsUpdating() && $openAnswer) {
-							echo ExecutionServiceImpl :: answerRequestSeparator;
-						}
-						if($ase->getCode() == AuthenticationServiceException :: EXPIRED_PASSWORD){
-							$_POST["action"] = null; //this is to prevent checking changeOwnPassword form on first display
-							$exec->cleanRemainingRequest();
-							if ($exec->getIsUpdating()) {
-								$exec->addRequests("changePasswordDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/changePassword");
-							} else {
-								//CWE 14.01.2016: in case of expired password, then shows changePassword dialog once Home/start is called by JS instead of directly on first request,
-								//this to avoid having a double change password dialog which shows up (one in mainDiv and the other in changePassword dialog),
-								//leading to messy refresh when the user clicks on the OK button.
-								//$exec->addRequests($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/changePassword");
-							}
-						} elseif ($ase->getCode() == AuthenticationServiceException :: FORBIDDEN_PUBLIC_USER) {
-							// logout from public
-							ServiceProvider::getAuthenticationService()->logout();
-							$this->clearWigiiContext();
-							$sessAS->clearData($exec, "lastPrincipalIdContext");
-							$_POST["action"] = null;
-							// displays login page
-							$exec->cleanRemainingRequest();
-							$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/":''). $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/all");
-						} else {
-							if ($exec->getIsUpdating()) {
-								//display a dialog box with the login form
-								$exec->cleanRemainingRequest();
-								$exec->addRequests("elementDialog/" . WigiiNamespace :: EMPTY_NAMESPACE_URL . "/Admin/login");
-							} else {
-								$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/display/all");
-							}
-						}
-						/*
-						 if (!isset ($_SESSION["RemainingUpdates"])) $_SESSION["RemainingUpdates"] = array ();
-						 $_SESSION["RemainingUpdates"][] = (!$exec->getIsUpdating() ? "mainDiv/" : "").$exec->getCrtRequest();
-						 */
-						//eput($exec->displayDebug());
-						//				$exec->addRequests('elementDialog/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl().'/'.$exec->getCrtModule()->getModuleUrl().'/display/login');
-						$this->executionSink()->publishEndOperationOnError("processAndEnds", $ase, $p);
-						return $this->processAndEnds(true);
+				$ase->getCode() == AuthenticationServiceException :: FORBIDDEN_PUBLIC_USER ||
+				$ase->getCode() == AuthenticationServiceException :: EXPIRED_PRINCIPAL ||
+				$ase->getCode() == AuthenticationServiceException :: EXPIRED_PASSWORD) {
+				
+				// if authentication exception and current action doesn't have any header sent, then answers with a redirect 302 to main login page.
+				if($byPassedHeader && !$exec->getIsUpdating()) {
+					header("Location:".SITE_ROOT);
+					exit;
+				}
+				
+				//session expired -> need reauthentication
+				if ($exec->getIsUpdating() && $openAnswer) {
+					echo ExecutionServiceImpl :: answerRequestSeparator;
+				}
+				if($ase->getCode() == AuthenticationServiceException :: EXPIRED_PASSWORD){
+					$_POST["action"] = null; //this is to prevent checking changeOwnPassword form on first display
+					$exec->cleanRemainingRequest();
+					if ($exec->getIsUpdating()) {
+						$exec->addRequests("changePasswordDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/changePassword");
+					} else {
+						//CWE 14.01.2016: in case of expired password, then shows changePassword dialog once Home/start is called by JS instead of directly on first request,
+						//this to avoid having a double change password dialog which shows up (one in mainDiv and the other in changePassword dialog),
+						//leading to messy refresh when the user clicks on the OK button.
+						//$exec->addRequests($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/changePassword");
 					}
-					//throw $ase;
-					if ($exec->getIsUpdating() && $openAnswer)
-						echo ExecutionServiceImpl :: answerRequestSeparator;
-					ExceptionSink :: publish($ase);
-					if ($this->shouldByPassFooter($lastAction)) {
-						$this->executionSink()->publishEndOperationOnError("processAndEnds", $ase, $p);
-						throw $ase;
+				} elseif ($ase->getCode() == AuthenticationServiceException :: FORBIDDEN_PUBLIC_USER) {
+					// logout from public
+					ServiceProvider::getAuthenticationService()->logout();
+					$this->clearWigiiContext();
+					$sessAS->clearData($exec, "lastPrincipalIdContext");
+					$_POST["action"] = null;
+					// displays login page
+					$exec->cleanRemainingRequest();
+					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/":''). $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/all");
+				} else {
+					if ($exec->getIsUpdating()) {
+						//display a dialog box with the login form
+						$exec->cleanRemainingRequest();
+						$exec->addRequests("elementDialog/" . WigiiNamespace :: EMPTY_NAMESPACE_URL . "/Admin/login");
+					} else {
+						$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/display/all");
 					}
+				}
+				/*
+				 if (!isset ($_SESSION["RemainingUpdates"])) $_SESSION["RemainingUpdates"] = array ();
+				 $_SESSION["RemainingUpdates"][] = (!$exec->getIsUpdating() ? "mainDiv/" : "").$exec->getCrtRequest();
+				 */
+				//eput($exec->displayDebug());
+				//				$exec->addRequests('elementDialog/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl().'/'.$exec->getCrtModule()->getModuleUrl().'/display/login');
+				$this->executionSink()->publishEndOperationOnError("processAndEnds", $ase, $p);
+				return $this->processAndEnds(true);
+			}
+			//throw $ase;
+			if ($exec->getIsUpdating() && $openAnswer)
+				echo ExecutionServiceImpl :: answerRequestSeparator;
+			ExceptionSink :: publish($ase);
+			if ($this->shouldByPassFooter($lastAction)) {
+				$this->executionSink()->publishEndOperationOnError("processAndEnds", $ase, $p);
+				throw $ase;
+			}
 		} catch (Exception $e) {
 			if ($exec->getIsUpdating() && $openAnswer)
 				echo ExecutionServiceImpl :: answerRequestSeparator;
@@ -7757,7 +7764,7 @@ onUpdateErrorCounter = 0;
 				$elementId = addslashes($_POST["elementId"]);
 				$previewListId = addslashes($_POST["previewListId"]);
 
-				list($sessElementId, $linkName, $linkType, $listFilter, $elementIsBlocked, $query) = $sessAS->getData($elS, $previewListId."_".$exec->getCrtContext());
+				list($sessElementId, $linkName, $linkType, $listFilter, $elementIsBlocked, $query, $elementIsReadonly) = $sessAS->getData($elS, $previewListId."_".$exec->getCrtContext());
 				if($sessElementId!=$elementId) throw new ServiceException("getNextElementInPreviewList elementId is not equal to stored context", ServiceException::DATA_INTEGRITY_ERROR);
 				$listFilter->setDesiredPageNumber($page);
 
@@ -7813,6 +7820,7 @@ onUpdateErrorCounter = 0;
 											'setLinkName', $linkName,
 											'setLinkType', $linkType,
 											'setElementIsBlocked', $elementIsBlocked,
+											'setElementIsReadonly', $elementIsReadonly,
 											'setPreviewListId', $previewListId,
 											'setWidth', null,
 											'setUpdateContentOnly', true)
@@ -7835,7 +7843,7 @@ onUpdateErrorCounter = 0;
 				// else subitem or links
 				else {
 					$elementPList = ElementPListRowsForPreview::createInstance($this->createTRM(), $p, $exec, $this->getConfigurationContext(), $listFilter->getFieldSelectorList(), $sessElementId, $linkName, $elementIsBlocked, $previewListId, $linkType);
-
+					$elementPList->setElementIsReadonly($elementIsReadonly);
 					if($linkType == Links::LINKS_TYPE_SUBITEM) {
 						$nbRow = $elS->getSubElementsForField($p, $sessElementId, $linkName, $elementPList, $listFilter);
 						$total = $listFilter->getTotalNumberOfObjects();
@@ -8938,8 +8946,15 @@ onUpdateErrorCounter = 0;
 				if($this->getTempTotalElementsIdsForListView()){
 					$elS = ServiceProvider::getElementService();
 					$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
-					$groupLogExp = $lc->getGroupLogExp()->reduceNegation(true);
-					$countData = $elS->countElementsInGroups($p, $groupLogExp, $this->getTempTotalElementsIdsForListView());
+					// Medair (CWE) 12.12.2016: if list is paged and total number of elements fits in page, then computes distribution of page
+					if($lc->isPaged() && $lc->getTotalNumberOfObjects() > 0 && $lc->getTotalNumberOfObjects() <= $lc->getPageSize()) {
+						$countData = $elS->countSelectedElementsDistribution($p, $this->getTempTotalElementsIdsForListView());
+					}
+					// else re-computes distribution of all elements
+					else {
+						$groupLogExp = $lc->getGroupLogExp()->reduceNegation(true);
+						$countData = $elS->countSelectedElementsDistributionInGroups($p, $groupLogExp, $lc);
+					}					
 					$exec->addJsCode("" .
 						"$('#groupPanel .found, #groupPanel .hidden, #groupPanel .empty').removeClass('found').removeClass('hidden').removeClass('empty');" .
 						"$('#groupPanel .nb').remove();" .
@@ -9907,12 +9922,7 @@ onUpdateErrorCounter = 0;
 
 						break;
 					case "getGroupsContainingElements" :
-						//$lc->getMultipleSelection(), $elementPAList
-						$rootGroups = $configS->getRootGroupsInModule($p, $exec->getCrtModule());
-						$stringLogExp = "INGR(id IN (".implode(",", $rootGroups->getIds())."))";
-						$fieldSelectorLogExpParser = TechnicalServiceProvider::getFieldSelectorLogExpParser();
-						$groupLogExp = $fieldSelectorLogExpParser->createLogExpFromString($stringLogExp);
-						$countData = $elS->countElementsInGroups($p, $groupLogExp, $lc->getMultipleSelection());
+						$countData = $elS->countSelectedElementsDistribution($p, $lc->getMultipleSelection());
 						echo $transS->t($p, "organizeElementsTitle");
 						echo ExecutionServiceImpl :: answerParamSeparator;
 						echo "originalFolders = {";
@@ -10798,6 +10808,16 @@ onUpdateErrorCounter = 0;
 					$p = $authS->changeToRole($p, $roleId);
 				}
 
+				//if the docked view per module is active
+				if($this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "workZoneViewDocked") == '1'){
+					$this->setWorkzoneViewDocked(true);
+					$exec->addJsCode("wigii().context.isWorkzoneViewDocked = true;");
+				
+				}else{
+					$this->setWorkzoneViewDocked(false);
+					$exec->addJsCode("wigii().context.isWorkzoneViewDocked = false;");
+				}
+				
 				// Prepares navigation cache
 				if($type == "user" && !$exec->wasFoundInJSCache()) {
 					// caches user navigation (navigate cache key depends on destination role id.)
@@ -11110,6 +11130,9 @@ document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->get
 																
 				$query = str2fx($strQuery);
 				$businessKey = str2fx($strBusinessKey);
+				// sets Origin as Public
+				if($query instanceof FuncExp) $query->setOriginIsPublic();
+				if($businessKey instanceof FuncExp) $businessKey->setOriginIsPublic();
 				
 				// builds query object				
 				$query = $this->evaluateFuncExp($p, $exec, $query);
@@ -11220,8 +11243,10 @@ document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->get
 				
 				if($outputEnabled) echo '</div>';
 				$p->bindToWigiiNamespace($exec->getCrtWigiiNamespace());
-				// if result is not empty, assumes it is some js code to send back to client
-				if(!empty($result)) $exec->addJsCode($result);				
+				
+				// CWE 25.11.2016: cannot trust result as JS code because could have been generated by the query as Cross Site Scripting 
+				// -- CANNOT BE TRUSTED -- if result is not empty, assumes it is some js code to send back to client
+				// if(!empty($result)) $exec->addJsCode($result);				
 				
 				break;				
 				
@@ -11245,7 +11270,8 @@ document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->get
 					$str .= "\nExec=".$exec->displayDebug();
 					fput($str);
 					*/
-					$exec->addJsCode("alert('Unknown request:\\n" . $exec->getCrtAction() . "');");
+					// 24.11.2016 protect against Cross Site Scripting by droping quotes in URL
+					$exec->addJsCode("alert('Unknown request:\\n" . str_replace(array('"',"'",'%22','%27'),'',$exec->getCrtAction()). "');");
 				}
 		}
 	}

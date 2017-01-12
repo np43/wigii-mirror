@@ -25,9 +25,8 @@
  * Created on 21 July 2011 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
-if($this->isWorkzoneViewDocked()) { 
-	?><div id='elementDialog' class='elementDialog'></div><?
-}
+// 20.12.2016 Medair (LMA): moved elementDialog div to allow workzone docking
+?><div id='elementDialog' class='elementDialog' style="display: none"></div><?
 
 if(!$exec->getIsUpdating() || $exec->getIdAnswer() == "workZone"){
 	?><div id="adminSearchBar" class="SB" ><?

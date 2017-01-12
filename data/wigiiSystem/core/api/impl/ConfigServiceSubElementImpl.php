@@ -273,6 +273,24 @@ class ConfigServiceSubElementImpl implements ConfigService
 	}
 	
 	/**
+	 * Returns the field Xml configuration under which the current sub element is linked
+	 * or null if no sub element configuration has been selected
+	 * @param Principal $principal current principal
+	 * @return SimpleXMLElement
+	 */
+	public function getCurrentFieldXml($principal) {
+		if(isset($this->currentLinkSelector)) {
+			// gets parent XML node
+			$returnValue = $this->mf($principal, $this->getModuleAdminService()->getModule($principal, $this->currentLinkSelector->getModuleName()));
+			// returns field xml
+			if(!isset($returnValue)) throw new ConfigServiceException('Did not find XML configuration for parent module '.$this->currentLinkSelector->getModuleName(), ConfigServiceException::CONFIGURATION_ERROR);
+			$returnValue = $returnValue->{$this->currentLinkSelector->getFieldName()};
+			return $returnValue;
+		}
+		else return null;
+	}
+	
+	/**
 	 * Returns the LinkSelector under which the current sub element is linked
 	 * or null if no sub element configuration has been selected
 	 * @return LinkSelector

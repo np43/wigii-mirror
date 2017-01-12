@@ -24,6 +24,7 @@
 /**
  * A data flow activity which pushes the data into another dataflow
  * Created by CWE on 21 novembre 2013
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class BridgeDFA implements DataFlowActivity
 {	
@@ -67,6 +68,9 @@ class BridgeDFA implements DataFlowActivity
 	
 	public function startOfStream($dataFlowContext) {
 		if(!isset($this->dataFlowContext)) throw new DataFlowServiceException("no data flow context has been set", DataFlowServiceException::CONFIGURATION_ERROR);
+		// Syncs public origin if needed
+		if($dataFlowContext->isOriginPublic()) $this->dataFlowContext->setOriginIsPublic();
+		elseif($this->dataFlowContext->isOriginPublic()) $dataFlowContext->setOriginIsPublic();
 	}
 	public function processDataChunk($data, $dataFlowContext) {
 		if($this->bridgeToBeginning) $this->dataFlowContext->getDataFlowService()->processDataChunk($data, $this->dataFlowContext);

@@ -24,9 +24,12 @@
 /**
  * DataFlowActivitySelectorList array implementation
  * Created by CWE on 28 mai 2013
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  */
 class DataFlowActivitySelectorListArrayImpl extends ObjectListArrayImpl implements DataFlowActivitySelectorList
 {
+	private $originPublic;
+	
 	public static function createInstance()
 	{
 		$returnValue = new self();
@@ -35,13 +38,21 @@ class DataFlowActivitySelectorListArrayImpl extends ObjectListArrayImpl implemen
 	}	
 	public function addDataFlowActivitySelectorInstance($dataFlowActivitySelector)
 	{
-		if(!isset($dataFlowActivitySelector)) throw new ListException("dataFlowActivitySelector cannot be null", ListException::INVALID_ARGUMENT);		
+		if(!isset($dataFlowActivitySelector)) throw new ListException("dataFlowActivitySelector cannot be null", ListException::INVALID_ARGUMENT);
+		// propagates public origin if needed
+		if($this->originPublic) $dataFlowActivitySelector->setOriginIsPublic();
+		elseif($dataFlowActivitySelector->isOriginPublic()) $this->setOriginIsPublic();
+		// adds DataFlowActivitySelector to the list
 		$this->objArray[] = $dataFlowActivitySelector;
 	}
 	
 	public function prependDataFlowActivitySelectorInstance($dataFlowActivitySelector)
 	{
-		if(!isset($dataFlowActivitySelector)) throw new ListException("dataFlowActivitySelector cannot be null", ListException::INVALID_ARGUMENT);		
+		if(!isset($dataFlowActivitySelector)) throw new ListException("dataFlowActivitySelector cannot be null", ListException::INVALID_ARGUMENT);
+		// propagates public origin if needed
+		if($this->originPublic) $dataFlowActivitySelector->setOriginIsPublic();
+		elseif($dataFlowActivitySelector->isOriginPublic()) $this->setOriginIsPublic();
+		// adds DataFlowActivitySelector to the list
 		array_unshift($this->objArray, $dataFlowActivitySelector);
 	}
 	
@@ -92,5 +103,27 @@ class DataFlowActivitySelectorListArrayImpl extends ObjectListArrayImpl implemen
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Marks this DataFlowActivitySelectorList as originating from Public space. Cannot be undone.
+	 * Once origin is marked as public, then DataFlowService or any DataFlowActivity implementation are free to stop execution with an DataFlowServiceException::FORBIDDEN (403)
+	 */
+	public function setOriginIsPublic() {
+		if(!$this->originPublic) {
+			$this->originPublic = true;
+			// propagates public origin to all DataFlowActivitySelectors
+			if(!empty($this->objArray)) {
+				foreach($this->objArray as $dfas) {
+					$dfas->setOriginIsPublic();
+				}
+			}
+		}		
+	}
+	/**
+	 * @return Boolean returns true if this DataFlowActivitySelectorList has been marked as originating from Public space, else false.
+	 */
+	public function isOriginPublic() {
+		return $this->originPublic;
 	}
 }

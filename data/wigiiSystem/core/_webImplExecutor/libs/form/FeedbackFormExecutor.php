@@ -101,9 +101,10 @@ class FeedbackFormExecutor extends FormExecutor {
 		foreach($rec->getFieldList()->getListIterator() as $field){
 			//ignore feedback_text as it is displayed in displayFeedbackText. The other info looks to the standard ignoreNotification="1"
 			if($field->getFieldName()=="feedback_text")	continue;
-
+			if(!$field->getDataType()) continue; //ignores free texts
+			
 			$fieldXml = $field->getXml();
-
+			
 			if($fieldXml["ignoreNotification"]=="1") continue;
 			if(!$rec->getWigiiBag()->isFilled($field->getFieldName())) continue;
 

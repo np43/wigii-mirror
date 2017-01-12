@@ -25,6 +25,7 @@
  * wigii ElementService implementation
  * Created by CWE on 2 juin 09
  * Modified by CWE on 9 février 2014 to add support of sub elements
+ * Modified by Medair (CWE,LMA) on 06.12.2016 to optimize SQL query for getAllElementsInGroups
  */
 class ElementServiceImpl implements ElementService
 {
@@ -47,6 +48,7 @@ class ElementServiceImpl implements ElementService
 	private $elementQueryPlanner;
 	private $sqlBuilderForGetAllElementsInGroup;
 	private $sqlBuilderForGetAllElementsInGroups;
+	private $sqlBuilderForGetPagedElementsInGroups;
 	private $sqlBuilderForGetSelectedElementsInGroups;
 	private $sqlBuilderForGetSelectedElements;
 	private $sqlBuilderForSelectElementsInGroups;
@@ -479,6 +481,8 @@ class ElementServiceImpl implements ElementService
 			{
 				if($queryPaged)
 				{
+					// Medair (CWE,LMA) 06.12.2016 - SQL optimization for paged query
+					/*
 					$nbRows = $mysqlF->selectPage($principal, $eltQP->getSql($i,
 						$this->getSqlBuilderForGetAllElementsInGroup($principal, $strategy, $group, $pRightsFromDb, $includeChildrenGroups)),
 						$dbCS, $offset, $pageSize,
@@ -486,6 +490,18 @@ class ElementServiceImpl implements ElementService
 					if($i === 0) {
 						$listFilter->setTotalNumberOfObjects($nbRows);
 						if($nbRows > 0) $elementPMapper->setTotalNumberOfElements($nbRows);
+					}
+					*/
+					$sqlB = $this->getSqlBuilderForGetPagedElementsInGroups($principal, $strategy, $group, $pRightsFromDb, $includeChildrenGroups,$offset,$pageSize);
+					// gets paged (SQL LIMIT is included into generated SQL, no need to call selectPage)
+					$nbRows = $mysqlF->selectAll($principal, $eltQP->getSql($i,$sqlB),
+							$dbCS,
+							$elementPMapper);
+					// fetches total number of rows
+					if($i===0) {
+						$totalNumberOfRows = $mysqlF->selectOneValue($principal, $sqlB->getSqlForCountElements(), $dbCS);
+						$listFilter->setTotalNumberOfObjects($totalNumberOfRows);
+						if($totalNumberOfRows > 0) $elementPMapper->setTotalNumberOfElements($totalNumberOfRows);
 					}
 				}
 				else
@@ -638,11 +654,28 @@ class ElementServiceImpl implements ElementService
 			{
 				if($queryPaged)
 				{
-					$nbRows = $mysqlF->selectPage($principal, $eltQP->getSql($i,
-						$this->getSqlBuilderForGetAllElementsInGroup($principal, $strategy, $group, $pRightsFromDb, $includeChildrenGroups)),
-						$dbCS, $offset, $pageSize,
-						$wigiiBagFiller);
-					if($i === 0) $listFilter->setTotalNumberOfObjects($nbRows);
+					// Medair (CWE,LMA) 06.12.2016 - SQL optimization for paged query
+					/*
+					 $nbRows = $mysqlF->selectPage($principal, $eltQP->getSql($i,
+					 $this->getSqlBuilderForGetAllElementsInGroup($principal, $strategy, $group, $pRightsFromDb, $includeChildrenGroups)),
+					 $dbCS, $offset, $pageSize,
+					 $elementPMapper);
+					 if($i === 0) {
+					 $listFilter->setTotalNumberOfObjects($nbRows);
+					 if($nbRows > 0) $elementPMapper->setTotalNumberOfElements($nbRows);
+					 }
+					 */
+					$sqlB = $this->getSqlBuilderForGetPagedElementsInGroups($principal, $strategy, $group, $pRightsFromDb, $includeChildrenGroups,$offset,$pageSize);
+					// gets paged (SQL LIMIT is included into generated SQL, no need to call selectPage)
+					$nbRows = $mysqlF->selectAll($principal, $eltQP->getSql($i,$sqlB),
+							$dbCS,
+							$elementPMapper);
+					// fetches total number of rows
+					if($i===0) {
+						$totalNumberOfRows = $mysqlF->selectOneValue($principal, $sqlB->getSqlForCountElements(), $dbCS);
+						$listFilter->setTotalNumberOfObjects($totalNumberOfRows);
+						if($totalNumberOfRows > 0) $elementPMapper->setTotalNumberOfElements($totalNumberOfRows);
+					}					
 				}
 				else
 				{
@@ -740,9 +773,11 @@ class ElementServiceImpl implements ElementService
 			$strategy = $eltQP->getQueryStrategy();
 			$mysqlF = $this->getMySqlFacade();
 			for($i = 0; $i < $n; $i++)
-			{
+			{				
 				if($queryPaged)
 				{
+					// Medair (CWE,LMA) 06.12.2016 - SQL optimization for paged query
+					/*
 					$nbRows = $mysqlF->selectPage($principal, $eltQP->getSql($i,
 						$this->getSqlBuilderForGetAllElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups)),
 						$dbCS, $offset, $pageSize,
@@ -751,6 +786,18 @@ class ElementServiceImpl implements ElementService
 						$listFilter->setTotalNumberOfObjects($nbRows);
 						if($nbRows > 0) $elementPMapper->setTotalNumberOfElements($nbRows);
 					}
+					*/					
+					$sqlB = $this->getSqlBuilderForGetPagedElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups,$offset,$pageSize);
+					// gets paged (SQL LIMIT is included into generated SQL, no need to call selectPage)
+					$nbRows = $mysqlF->selectAll($principal, $eltQP->getSql($i,$sqlB),
+						$dbCS,
+						$elementPMapper);
+					// fetches total number of rows
+					if($i===0) {						
+						$totalNumberOfRows = $mysqlF->selectOneValue($principal, $sqlB->getSqlForCountElements(), $dbCS);
+						$listFilter->setTotalNumberOfObjects($totalNumberOfRows);
+						if($totalNumberOfRows > 0) $elementPMapper->setTotalNumberOfElements($totalNumberOfRows);
+					}					
 				}
 				else
 				{
@@ -758,7 +805,7 @@ class ElementServiceImpl implements ElementService
 						$this->getSqlBuilderForGetAllElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups)),
 						$dbCS,
 						$elementPMapper);
-				}
+				}				
 				if(($i === 0) && ($nbRows === 0)) break;
 			}
 			$eltQP->freeMemory();
@@ -869,6 +916,22 @@ class ElementServiceImpl implements ElementService
 		}
 		return $sqlB;
 	}
+	public function setSqlBuilderForGetPagedElementsInGroups($sqlBuilderForGetPagedElementsInGroups) {
+		$this->sqlBuilderForGetPagedElementsInGroups = $sqlBuilderForGetPagedElementsInGroups;
+	}
+	/**
+	 * @return ElementSqlBuilderForGetPagedElementsInGroups returns an ElementSqlBuilder optimized for paged view using SQL LIMIT 
+	 */
+	protected function getSqlBuilderForGetPagedElementsInGroups($principal, $queryStrategy, $groupList, $pRightsFromDb, $includeChildrenGroups, $offset, $pageSize) {
+		if($queryStrategy != ElementQueryPlanner::QSTRATEGY_JOIN) throw new ElementServiceException('unsupported query strategy', ElementServiceException::INVALID_ARGUMENT);
+		if(!isset($this->sqlBuilderForGetPagedElementsInGroups)) {
+			$this->sqlBuilderForGetPagedElementsInGroups = ElementSqlBuilderForGetPagedElementsInGroups::createNonInitInstance();
+		}
+		$this->sqlBuilderForGetPagedElementsInGroups->setTripod($this->getTripod());
+		$this->sqlBuilderForGetPagedElementsInGroups->reset($principal, $groupList, $pRightsFromDb, $includeChildrenGroups);
+		$this->sqlBuilderForGetPagedElementsInGroups->setPaging($offset, $pageSize);
+		return $this->sqlBuilderForGetPagedElementsInGroups;
+	}
 	/**
 	 * exactly same authorizations and sql as getAllElementsInGroups
 	 */
@@ -928,11 +991,25 @@ class ElementServiceImpl implements ElementService
 			{
 				if($queryPaged)
 				{
+					// Medair (CWE,LMA) 06.12.2016 - SQL optimization for paged query
+					/*
 					$nbRows = $mysqlF->selectPage($principal, $eltQP->getSql($i,
-						$this->getSqlBuilderForGetAllElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups)),
-						$dbCS, $offset, $pageSize,
-						$wigiiBagFiller);
+							$this->getSqlBuilderForGetAllElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups)),
+							$dbCS, $offset, $pageSize,
+							$wigiiBagFiller);
 					if($i === 0) $listFilter->setTotalNumberOfObjects($nbRows);
+					*/ 
+					$sqlB = $this->getSqlBuilderForGetPagedElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups,$offset,$pageSize);
+					// gets paged (SQL LIMIT is included into generated SQL, no need to call selectPage)
+					$nbRows = $mysqlF->selectAll($principal, $eltQP->getSql($i,$sqlB),
+							$dbCS,
+							$elementPMapper);
+					// fetches total number of rows
+					if($i===0) {
+						$totalNumberOfRows = $mysqlF->selectOneValue($principal, $sqlB->getSqlForCountElements(), $dbCS);
+						$listFilter->setTotalNumberOfObjects($totalNumberOfRows);
+						if($totalNumberOfRows > 0) $elementPMapper->setTotalNumberOfElements($totalNumberOfRows);
+					}					
 				}
 				else
 				{
@@ -1928,82 +2005,124 @@ class ElementServiceImpl implements ElementService
 		}
 		$dbTableFiller->freeMemory();
 	}
-
-	/**
-	 * Create an array with each group id containing elements as a key and the nb of containing elements as a value
-	 * principal: authenticated user performing the operation
-	 * inGroupLogExp: a logical expression composed of LogExpInGroup and LogExpNotInGroup
-	 * 				  expressing element in group belonging and group selection
-	 * elementIds: filter on the element ids
-	 * throws ElementServiceException in case of error
-	 * returns array(groupId=>nbElementInGroup)
-	 */
-	public function countElementsInGroups($principal, $inGroupLogExp, $elementIds){
-		$this->executionSink()->publishStartOperation("countElementsInGroups", $principal);
+	
+		
+	public function countSelectedElementsDistributionInGroups($principal, $inGroupLogExp, $listFilter=null) {
+		$this->executionSink()->publishStartOperation("countSelectedElementsDistributionInGroups", $principal);
+		$eltQP = null;
+		$returnValue=null;
 		try
 		{
 			if(is_null($inGroupLogExp)) throw new ElementServiceException('inGroupLogExp can not be null', ElementServiceException::INVALID_ARGUMENT);
-
+		
 			// gets groupList
-//			$gAS = $this->getGroupAdminServiceImpl();
-//			$groupSelectionLogExp = $gAS->convertInGroupLogExp2GroupLogExp($inGroupLogExp);
-//			$groupList = GroupListArrayImpl::createInstance();
-//			$gAS->getSelectedGroupsWithoutDetail($principal, $groupSelectionLogExp, $groupList);
-
+			$gAS = $this->getGroupAdminServiceImpl();
+			$groupSelectionLogExp = $gAS->convertInGroupLogExp2GroupLogExp($inGroupLogExp);
+			$groupList = GroupListArrayImpl::createInstance();
+			$gAS->getSelectedGroupsWithoutDetail($principal, $groupSelectionLogExp, $groupList);
+		
 			// checks authorization
-			$pRights = $this->assertPrincipalAuthorizedForCountElementsInGroups($principal);
-
-			//this code is only if we want to use a listFilter instead. But because of performance it is better
-			//to directly filter on the ElementIds found
-
-//			// initializes pagination, etc.
-//			$fieldSelectorList = null;
-//			$fieldSelectorLogExp = null;
-//			$fieldSortingKeyList = null;
-//			$configGroupList = null;
-//			$queryPaged = false;
-//			if(isset($listFilter))
-//			{
-//				$fieldSelectorList = $listFilter->getFieldSelectorList();
-//				$fieldSelectorLogExp = $listFilter->getFieldSelectorLogExp();
-//				//no paging
-//			}
-//			$configGroupList = $groupList;
-//			//replacefieldSelector to take only the elementID
-//			$fieldSelectorList = FieldSelectorListArrayImpl::createInstance();
-//			$fieldSelectorList->addFieldSelectorInstance(FieldSelector::createElementAttributeSelector("id"));
-//
-//			// element in group selection
-//			$elementInGroupSqlB = $this->getSqlBuilderForSelectElementsInGroups($inGroupLogExp);
-//
-//			// computes effective field list
-//			$eltQP = $this->getElementQueryPlanner(MySqlFacade::Q_SELECTALL, $this->getReservedSqlJoinsForGetSelectedElementsInGroups($elementInGroupSqlB, $pRightsFromDb),
-//							$fieldSelectorList, $fieldSelectorLogExp, $fieldSortingKeyList);
-//			$this->getConfigService()->getGroupsFields($principal, $configGroupList, null, $eltQP);
-////			// ignores element detail
-//			$eltQP->ignoreElementDetail();
-//
-//			// gets elements
-//			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
-//			$n = $eltQP->getNumberOfQueries();
-//			$strategy = $eltQP->getQueryStrategy();
-//			$mysqlF = $this->getMySqlFacade();
-//			if($n != 1 || $strategy != ElementQueryPlanner::QSTRATEGY_JOIN) throw new ElementServiceException("", ElementServiceException::UNEXPECTED_ERROR);
-//
-//			$returnValue = RowListForCountElementsInGroups::createInstance();
-//			$sql = $eltQP->getSql(0, $this->getSqlBuilderForGetSelectedElementsInGroups($strategy, $elementInGroupSqlB, $principal, $groupList, $pRightsFromDb));
-//			$sql = "select tmp1.id_group, count(tmp1.id_element) as nbElements from Elements_Groups as tmp1
-//inner join (".$sql.") as tmp2 on tmp2.Eid = tmp1.id_element
-//group by tmp1.id_group";
-//
-//			$nbRows = $mysqlF->selectAll($principal,
-//				$sql,
-//				$dbCS,
-//				$returnValue);
-//			$eltQP->freeMemory();
-//
-//			$returnValue = $returnValue->getCountData();
-
+			$pRights = $this->assertPrincipalAuthorizedForGetSelectedElementsInGroups($principal, $groupList);
+			$pRightsFromDb = !isset($pRights);
+			
+			// initializes pagination, sorting, etc.
+			$fieldSelectorList = fsl(fs_e('id'));
+			$fieldSelectorLogExp = null;
+			$fieldSortingKeyList = null;
+			$configGroupList = null;
+			$queryPaged = false;
+			if(isset($listFilter))
+			{
+				$fieldSelectorLogExp = $listFilter->getFieldSelectorLogExp();
+				$configGroupList = $listFilter->getConfigGroupList();
+			}
+			if($configGroupList == null){
+				$configGroupList = $groupList;
+			}
+			
+			// checks if ingrouplogexp is a single instance of LogExpInGroup
+			// if yes, then uses the calculated GroupList
+			if($inGroupLogExp instanceof LogExpInGroup) {
+				// ElementQueryPlanner configuration
+				$reservedNumberOfJoins = $this->getReservedSqlJoinsForGetAllElementsInGroups();
+				$sqlB = $this->getSqlBuilderForGetAllElementsInGroups($principal, ElementQueryPlanner::QSTRATEGY_JOIN, $groupList, $pRightsFromDb, $inGroupLogExp->includeChildrenGroups());
+			}
+			// else continues with the ingrouplogexp.
+			else
+			{
+				// element in group selection
+				$elementInGroupSqlB = $this->getSqlBuilderForSelectElementsInGroups($inGroupLogExp);
+		
+				// ElementQueryPlanner configuration
+				$reservedNumberOfJoins = $this->getReservedSqlJoinsForGetSelectedElementsInGroups($elementInGroupSqlB, $pRightsFromDb);
+				$sqlB = $this->getSqlBuilderForGetSelectedElementsInGroups($strategy, $elementInGroupSqlB, $principal, $groupList, $pRightsFromDb);
+			}	
+			// computes effective field list
+			$eltQP = $this->getElementQueryPlanner(MySqlFacade::Q_SELECTALL, $reservedNumberOfJoins,
+					$fieldSelectorList, $fieldSelectorLogExp, $fieldSortingKeyList);
+	
+			if($eltQP->areFieldSelected())
+			{
+				$cS = $this->getConfigService();
+				// if ConfigService supports method unselectSubElementConfig
+				// then unselects any previous sub element config
+				if($this->subElementConfigSupport['unselectSubElementConfig']) $cS->unselectSubElementConfig($principal);
+				$cS->getGroupsFields($principal, $configGroupList, null, $eltQP);
+			}
+	
+			// gets elements
+			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
+			$n = $eltQP->getNumberOfQueries();
+			$strategy = $eltQP->getQueryStrategy();
+			$mysqlF = $this->getMySqlFacade();
+			if($n > 1 || $strategy != ElementQueryPlanner::QSTRATEGY_JOIN) {
+				throw new ElementServiceException('unsupported query strategy for counting elements', ElementServiceException::UNSUPPORTED_OPERATION);
+			}
+	
+			
+			$returnValue = RowListForCountElementsInGroups::createInstance();
+			
+			$sql = "select tmp1.id_group, count(tmp1.id_element) as nbElements from Elements_Groups as tmp1
+inner join (".$eltQP->getSql(0,$sqlB).") as tmp2 on tmp2.Eid = tmp1.id_element 
+group by tmp1.id_group";
+			
+			$nbRows = $mysqlF->selectAll($principal,
+					$sql,
+					$dbCS,
+					$returnValue);
+			
+			$returnValue = $returnValue->getCountData();
+			
+			$eltQP->freeMemory();
+		}
+		catch(ElementServiceException $ese)
+		{
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("countSelectedElementsDistributionInGroups", $ese, $principal);
+			throw $ese;
+		}
+		catch (AuthorizationServiceException $asE){
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("countSelectedElementsDistributionInGroups", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("countSelectedElementsDistributionInGroups", $e, $principal);
+			throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("countSelectedElementsDistributionInGroups", $principal);
+		return $returnValue;
+	}
+	
+	public function countSelectedElementsDistribution($principal, $elementIds) {
+		$this->executionSink()->publishStartOperation("countSelectedElementsDistribution", $principal);
+		try
+		{			
+			// checks authorization
+			$pRights = $this->assertPrincipalAuthorizedForCountSelectedElementsDistribution($principal);
+			
 			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
 			$mysqlF = $this->getMySqlFacade();
 
@@ -2021,26 +2140,26 @@ group by tmp1.id_group";
 		}
 		catch(ElementServiceException $ese)
 		{
-			$this->executionSink()->publishEndOperationOnError("countElementsInGroups", $ese, $principal);
+			$this->executionSink()->publishEndOperationOnError("countSelectedElementsDistribution", $ese, $principal);
 			throw $ese;
 		}
 		catch (AuthorizationServiceException $asE){
-			$this->executionSink()->publishEndOperationOnError("countElementsInGroups", $asE, $principal);
+			$this->executionSink()->publishEndOperationOnError("countSelectedElementsDistribution", $asE, $principal);
 			throw $asE;
 		}
 		catch(Exception $e)
 		{
-			$this->executionSink()->publishEndOperationOnError("countElementsInGroups", $e, $principal);
+			$this->executionSink()->publishEndOperationOnError("countSelectedElementsDistribution", $e, $principal);
 			throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
 		}
-		$this->executionSink()->publishEndOperation("countElementsInGroups", $principal);
+		$this->executionSink()->publishEndOperation("countSelectedElementsDistribution", $principal);
 		return $returnValue;
 	}
-	protected function assertPrincipalAuthorizedForCountElementsInGroups($principal)
+	protected function assertPrincipalAuthorizedForCountSelectedElementsDistribution($principal)
 	{
 		$autoS = $this->getAuthorizationService();
 		// checks general authorization
-		$pRights = $autoS->assertPrincipalAuthorized($principal, "ElementService", "countElementsInGroups");
+		$pRights = $autoS->assertPrincipalAuthorized($principal, "ElementService", "countSelectedElementsDistribution");
 
 		return $pRights;
 	}
@@ -2084,12 +2203,6 @@ group by tmp1.id_group";
 					$fieldSelectorLogExp = $listFilter->getFieldSelectorLogExp();
 					//$fieldSortingKeyList = $listFilter->getFieldSortingKeyList();
 					$configGroupList = $listFilter->getConfigGroupList();
-// 					if($listFilter->isPaged())
-// 					{
-// 						$queryPaged = true;
-// 						$pageSize = $listFilter->getPageSize();
-// 						$offset = ($listFilter->getDesiredPageNumber() - 1) * $pageSize;
-// 					}
 				}
 				if($configGroupList == null){
 					$configGroupList = $groupList;
@@ -2174,13 +2287,7 @@ group by tmp1.id_group";
 				//$fieldSelectorList = $listFilter->getFieldSelectorList();
 				$fieldSelectorLogExp = $listFilter->getFieldSelectorLogExp();
 				//$fieldSortingKeyList = $listFilter->getFieldSortingKeyList();
-				$configGroupList = $listFilter->getConfigGroupList();
-// 				if($listFilter->isPaged())
-// 				{
-// 					$queryPaged = true;
-// 					$pageSize = $listFilter->getPageSize();
-// 					$offset = ($listFilter->getDesiredPageNumber() - 1) * $pageSize;
-// 				}
+				$configGroupList = $listFilter->getConfigGroupList();		
 			}
 			if($configGroupList == null){
 				$configGroupList = $groupList;
@@ -7010,6 +7117,336 @@ class ElementSqlBuilderForGetAllElementsInGroups extends ElementSqlBuilder
 		{
 			return "select $selectCols from $fromClause $orderByClause";
 		}
+	}
+}
+
+/**
+ * JOIN strategy for SELECTALL with PAGING ACTIVE
+ * Created by Medair (CWE,LMA) to optimize fetch by moving LIMIT inside the query instead of at the end.
+ */
+class ElementSqlBuilderForGetPagedElementsInGroups extends ElementSqlBuilder
+{
+	private $_debugLogger;
+	private $moduleAS;
+	protected $principal;
+	protected $groupList;
+	protected $singleGroup;
+	protected $pRightsFromDb;
+	protected $hideDbRights = false;
+	protected $includeChildrenGroups;
+	private $sqlFromStructuralFields;
+	private $sqlForCountElements;
+	private $elementJoinColumnForStructuralFields;
+	private $offset;
+	private $pageSize;
+
+	// object lifecycle
+
+	public static function createNonInitInstance()
+	{
+		$returnValue = new ElementSqlBuilderForGetPagedElementsInGroups();
+		$returnValue->debugLogger()->write("Instanciates ElementSqlBuilderForGetPagedElementsInGroups");
+		return $returnValue;
+	}
+
+	public static function createInstance($principal, $groupList, $pRightsFromDb, $includeChildrenGroups)
+	{
+		$returnValue = ElementSqlBuilderForGetAllElementsInGroupsV2::createNonInitInstance();
+		$returnValue->reset($principal, $groupList, $pRightsFromDb, $includeChildrenGroups);
+		return $returnValue;
+	}
+	public function reset($principal, $groupList, $pRightsFromDb, $includeChildrenGroups)
+	{
+		parent::reset();
+		unset($this->sqlForCountElements); // cannot be put into freeMemory because should be kept  to be read into a second query.
+		$this->offset = 0;
+		$this->pageSize = 0;
+		
+		if(is_null($principal)) throw new ElementServiceException('principal can not be null', ElementServiceException::INVALID_ARGUMENT);
+		if(is_null($groupList)) throw new ElementServiceException('groupList can not be null', ElementServiceException::INVALID_ARGUMENT);
+		if($groupList instanceof Group)
+		{
+			$this->singleGroup = true;
+			$this->groupList = $groupList;
+		}
+		elseif(is_array($groupList))
+		{
+			$this->singleGroup = false;
+			if(count($groupList) == 0) throw new ElementServiceException('groupList can not be empty', ElementServiceException::INVALID_ARGUMENT);
+			$this->groupList = $groupList;
+		}
+		elseif($groupList instanceof GroupList)
+		{
+			$this->singleGroup = false;
+			if($groupList->isEmpty()) throw new ElementServiceException('groupList can not be empty', ElementServiceException::INVALID_ARGUMENT);
+			$this->groupList = $groupList->getListIterator();
+		}
+		else
+		{
+			throw new ElementServiceException('groupList can only be a non empty instance of GroupList or an array of Group', ElementServiceException::INVALID_ARGUMENT);
+		}
+		$this->principal = $principal;
+
+		$this->pRightsFromDb = $pRightsFromDb;
+		$this->includeChildrenGroups = $includeChildrenGroups;
+		// initialises ElementSqlBuilder
+		$this->setElementJoinColumnForStructuralFields('E1.id_element');
+		$this->setElementJoinColumn('E3.id_element');
+		$this->setFieldPrefix('F');
+	}
+	public function freeMemory()
+	{
+		parent::freeMemory();
+		unset($this->groupList);
+		unset($this->principal);
+		unset($this->sqlFromStructuralFields);
+	}
+
+	// dependency injection
+
+	private function debugLogger()
+	{
+		if(!isset($this->_debugLogger))
+		{
+			$this->_debugLogger = DebugLogger::getInstance("ElementSqlBuilderForGetPagedElementsInGroups");
+		}
+		return $this->_debugLogger;
+	}
+	
+	public function setModuleAdminService($moduleAdminService)
+	{
+		$this->moduleAS = $moduleAdminService;
+	}
+	protected function getModuleAdminService()
+	{
+		// autowired
+		if(!isset($this->moduleAS))
+		{
+			$this->moduleAS = ServiceProvider::getModuleAdminService();
+		}
+		return $this->moduleAS;
+	}	
+	
+	// configuration
+
+	/**
+	 * Calling this method, will hide the DB rights column in the resulting select
+	 * The columns EcanWriteElement and EcanShareElement will be calculated, but not displayed.
+	 * To prevent calculating DB rights, use a pRights instead.
+	 */
+	public function hideDbRightsInSelectedCols() {
+		$this->hideDbRights = true;
+	}
+
+	public function setPaging($offset, $pageSize) {
+		$this->offset = $offset;
+		$this->pageSize = $pageSize;
+	}
+	protected function setElementJoinColumnForStructuralFields($elementJoinColumn)
+	{
+		$this->elementJoinColumnForStructuralFields = $elementJoinColumn;
+	}
+	protected function getElementJoinColumnForStructuralFields()
+	{
+		if($this->getQueryStrategy() !== ElementQueryPlanner::QSTRATEGY_JOIN)
+		{
+			throw new ElementServiceException('operation only supported in join strategy', ElementServiceException::UNSUPPORTED_OPERATION);
+		}
+		return $this->elementJoinColumnForStructuralFields;
+	}
+	protected function getFromClauseForStructuralFields()
+	{
+		$sqlT = $this->getSqlQueryType();
+		if(($sqlT !==  MySqlFacade::Q_SELECTALL) &&
+				($sqlT !==  MySqlFacade::Q_SELECTONE))
+		{
+			throw new ElementServiceException('operation only for select queries', ElementServiceException::UNSUPPORTED_OPERATION);
+		}
+		return $this->sqlFromStructuralFields;
+	}
+	
+	// query builder implementation
+
+	/**
+	 * Returns number of static joins in query
+	 */
+	public function getNumberOfStaticJoins()
+	{
+		return 3;
+	}
+
+	public function getSql()
+	{
+		$tripod = $this->getTripod();
+		$eltS = $tripod->elementServiceImpl;
+		if($this->pRightsFromDb){
+			$principalId = $this->principal->getUserId();
+			if(is_null($principalId)) throw new ElementServiceException('principal attached user can not be null', ElementServiceException::INVALID_ARGUMENT);
+			$principalId = $this->formatValue($principalId, MySqlQueryBuilder::SQLTYPE_INT);
+		}
+
+		// Creates two builders with same initial state to be able to generate SQL query into two separate parts
+		$builder1 = $this; // used to select elements using paging
+		$builder2 = clone $this; // used to bring data fields
+		
+		// ELEMENTS SELECTION
+		
+		// builds groupId sql
+		if($builder1->singleGroup)
+		{
+			$groupId = $builder1->formatValue($builder1->groupList->getId(), MySqlQueryBuilder::SQLTYPE_INT);
+			$module = $builder1->groupList->getModule();
+		}
+		else
+		{
+			$groupId = ''; $n = 0;
+			foreach($builder1->groupList as $group)
+			{
+				if($n == 0)
+				{
+					$module = $group->getModule();
+				}
+				elseif($n > 0)
+				{
+					$groupId .= ', ';
+				}
+				$groupId .= $builder1->formatValue($group->getId(), MySqlQueryBuilder::SQLTYPE_INT);
+				$n++;
+			}
+		}
+
+		// select groups
+		$select_Groups = $eltS->getSqlForSelectGroups($groupId, $builder1->includeChildrenGroups, 'GG', 'G');
+
+		// if rights are given by the database
+		if($builder1->pRightsFromDb)
+		{
+			$select_Elements = $eltS->getSqlForSelectElementsP($eltS->getSqlForSelectGroupsP($builder1->principal, $module, $principalId,
+					$select_Groups,
+					$builder1->getModuleAdminService()->getDefaultPropagation($module), 'UGR1', 'GG1', 'GP1', 'G1'),
+					'GP2','EG2');
+		}
+		// else ignore rights computation
+		else
+		{
+			$select_Elements = $eltS->getSqlForSelectElements($select_Groups, 'G1', 'EG1');
+		}
+		
+		$selectCols = 'E1.id_element';
+		// includes db rights
+		if($builder1->pRightsFromDb && !$builder1->hideDbRights)
+		{
+			$selectCols .= ', E1.canModify, E1.canWriteElement, E1.canShareElement';
+		}			
+		
+		// From clause
+		$includeEltDetail = $builder1->includeElementDetail();
+		$fromClause = "($select_Elements) as E1 ";
+		if($includeEltDetail) $fromClause .= " inner join Elements as E2 on E2.id_element = E1.id_element ";
+		$fromClause .= $builder1->getFromClauseForStructuralFields();
+		
+		// Where clause
+		$whereClause = $builder1->getWhereClauseForFieldList('E2');		
+		
+		// OrderBy clause
+		$builder1->convertFieldSortingKeyListToOrderByClause('E2');
+		$orderByClause = $builder1->getOrderByClause();
+
+		// Paging
+		if($this->pageSize > 0) {
+			$limit = 'limit '.$this->offset.','.$this->pageSize;
+		}
+		else $limit = '';
+		
+		// Build sql for page selection
+		if(isset($whereClause) && $whereClause !== '')
+		{
+			$this->sqlForCountElements = "select count(E1.id_element) as NROWS from $fromClause where $whereClause";
+			$pagedElements = "select $selectCols from $fromClause where $whereClause $orderByClause $limit";
+		}
+		else
+		{
+			$this->sqlForCountElements = "select count(E1.id_element) as NROWS from $fromClause";
+			$pagedElements = "select $selectCols from $fromClause $orderByClause $limit";
+		}
+		//$this->debugLogger()->write($this->sqlForCountElements);
+		
+		
+		// JOIN DATA FIELDS
+		
+		// Select cols		
+		if(isset($tripod->elementPMapper)) $tripod->elementPMapper->setElementPrefix('E');
+		// includes element detail
+		if($includeEltDetail)
+		{
+			$selectCols = $builder2->getSqlColumnsForElement('E4', 'E');
+		}
+		else
+		{
+			$selectCols = 'E3.id_element as Eid';
+		}
+		// includes db rights
+		if($builder2->pRightsFromDb && !$builder2->hideDbRights)
+		{
+			$selectCols .= ', E3.canModify as EcanModify, E3.canWriteElement as EcanWriteElement, E3.canShareElement as EcanShareElement';
+		}
+		// includes fields
+		$s = $builder2->getSqlColumnsForFieldList();
+		if($s != null) $selectCols .= ', '.$s; 
+		
+		// From clause
+		$fromClause = "($pagedElements) as E3 ";
+		if($includeEltDetail) $fromClause .= " inner join Elements as E4 on E4.id_element = E3.id_element ";
+		$fromClause .= $builder2->getFromClauseForFieldList();
+		
+		// Build final sql
+		$returnValue = "select $selectCols from $fromClause";
+		return $returnValue;
+	}
+		
+	/**
+	 * Returns an SQL query that should be used to count the total number of elements regardless of pagination
+	 */
+	public function getSqlForCountElements() {
+		return $this->sqlForCountElements;
+	}
+	protected function actOnFieldForSelectAllStrategyJoin($field, $dataType)
+	{
+		// example: select FName.value as FXNameXvalueZZ from Element E left join Strings as FName on FName.id_element = E.id_element and FName.field = Name
+		$fName = $field->getFieldName();
+		
+		// adds columns to select only if not a structural field or an explicitely selected structural field
+		if(is_null($this->structuralFields) || is_null($this->structuralFields[$fName]) || ($this->structuralFields[$fName] === true))
+		{
+			$this->visitDataTypeSubfields($field, $dataType);
+		}
+		
+		// adds left join for field
+		$fP = $this->getFieldPrefix();
+		$tableAlias = "`".$fP.$fName."`";		
+		$this->leftJoinForFieldList($this->getDbAdminService()->getDataTypeTableName($dataType),
+				$tableAlias,
+				"id_element",
+				$this->getElementJoinColumn(),
+				$this->formatBinExp("$tableAlias.field", '=', $fName, MySqlQueryBuilder::SQLTYPE_VARCHAR));
+		
+		// adds left join for structural field
+		if(isset($this->structuralFields) && isset($this->structuralFields[$fName])) {
+			$this->leftJoinForStructuralField($this->getDbAdminService()->getDataTypeTableName($dataType),
+					$tableAlias,
+					"id_element",
+					$this->getElementJoinColumnForStructuralFields(),
+					$this->formatBinExp("$tableAlias.field", '=', $fName, MySqlQueryBuilder::SQLTYPE_VARCHAR));
+		}
+		// records field and table alias for structural fields
+		$this->structuralFields[$fName] = $field;
+		$this->structuralFieldTable[$fName] = $tableAlias;
+	}
+	protected function leftJoinForStructuralField($tableName, $tableAlias, $colToJoin, $joinExpression, $additionalCondition=null)
+	{
+		if(strlen($this->sqlFromStructuralFields) > 0) $this->sqlFromStructuralFields .= ' ';
+		$this->sqlFromStructuralFields .= "left join $tableName as $tableAlias on $tableAlias.$colToJoin = $joinExpression";
+		if(isset($additionalCondition)) $this->sqlFromStructuralFields .= " and $additionalCondition";
 	}
 }
 

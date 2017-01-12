@@ -24,7 +24,9 @@
 /**
  * A data flow activity which sets values in a flow of elements.
  * Supports a flow of Element or ElementP instances.
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 27 janvier 2014
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class ElementSetterDFA extends ElementDFAWithFuncExpVM
 {		
@@ -156,6 +158,7 @@ class ElementSetterDFA extends ElementDFAWithFuncExpVM
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		parent::startOfStream($dataFlowContext);
 		$this->areWigiiEventsEnabled = $dataFlowContext->areWigiiEventsEnabled();
 		

@@ -136,15 +136,23 @@ interface ElementService
 	public function fillDbTableWithSelectedElementsInGroups($principal, $inGroupLogExp, $dbTable, $listFilter=null);
 	
 	/**
-	 * Create an array with each group id containing elements as a key and the nb of containing elements as a value
-	 * principal: authenticated user performing the operation
-	 * inGroupLogExp: a logical expression composed of LogExpInGroup and LogExpNotInGroup
-	 * 				  expressing element in group belonging and group selection
-	 * elementIds: filter on the element ids
-	 * throws ElementServiceException in case of error
-	 * returns array(groupId=>nbElementInGroup)
+	 * Counts the distribution of the elements in the belonging selected groups
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param LogExp $inGroupLogExp a logical expression composed of LogExpInGroup and LogExpNotInGroup expressing element in group belonging and group selection
+	 * @param ListFilter listFilter filters the list of elements
+	 * @throws ElementServiceException in case of error
+	 * @return Array of the form array(groupId=>nbElementInGroup)
 	 */
-	public function countElementsInGroups($principal, $inGroupLogExp, $elementIds);
+	public function countSelectedElementsDistributionInGroups($principal, $inGroupLogExp, $listFilter=null);
+	
+	/**
+	 * Counts the distribution of the selected elements in the belonging groups
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param Array elementIds an array of elements ID for which to compute the distribution
+	 * @throws ElementServiceException in case of error
+	 * @return Array of the form array(groupId=>nbElementInGroup)
+	 */
+	public function countSelectedElementsDistribution($principal, $elementIds);
 	
 	/**
 	 * Count all elements satisfying group belonging logical expression and accessible by this user
@@ -153,7 +161,7 @@ interface ElementService
 	 * 				  expressing element in group belonging and group selection
 	 * @param ListFilter listFilter: filter on the list; filters columns, does pagination and sorting
 	 * @return the number of elements selected
-	 * throws ElementServiceException if an error occurs
+	 * @throws ElementServiceException if an error occurs
 	 */
 	public function countSelectedElementsInGroups($principal, $inGroupLogExp, $listFilter=null);
 

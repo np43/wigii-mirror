@@ -25,6 +25,7 @@
  * ExecutionService specialization which integrates http GET, COOKIES, JS code push.
  * Created by LWR on 21 july 09
  * Modified by CWE on 01.12.2015 to support JS notifications
+ * Modified by Medair (CWE) on 24.11.2016 to protect against Cross Site Scripting
  */
 class ExecutionServiceWebImpl extends ExecutionServiceImpl
 {
@@ -137,12 +138,17 @@ class ExecutionServiceWebImpl extends ExecutionServiceImpl
 
 	//In the Web Implementation, the URL is found in the $_GET magic variable
 	public function findUrl(){
-		return $_GET['url'];
+		$returnValue = $_GET['url'];
+		// 24.11.2016 protect against Cross Site Scripting by droping quotes in URL
+		$returnValue = str_replace(array('"',"'",'%22','%27'),'',$returnValue);
+		return $returnValue;
 	}
 	//return an array(wigiiNamespace=>val, module=>val, type=>val, id=>val).
 	protected function parseFragment(){
 		//$frag = str_replace('#', '', $_POST['wigii_anchor']); //the header has a reload if cookie anchor is not set yet
 		$frag = str_replace('#', '', $_COOKIE['wigii_anchor']); //the header has a reload if cookie anchor is not set yet
+		// 24.11.2016 protect against Cross Site Scripting by droping quotes in URL
+		$frag = str_replace(array('"',"'",'%22','%27'),'',$frag);
 		if($frag == Module::HOME_MODULE || $frag == "logout"){
 			return array("wigiiNamespace"=>null, "module"=>Module::HOME_MODULE, "type"=>null, "id"=>null);
 		}

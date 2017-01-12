@@ -456,3 +456,11 @@ div.fieldset > h1:after {
 }
 
 */
+
+/**
+ * Add the :hover event on the "Open in box" link
+ */
+ 
+ .linkBox:hover{
+ 	text-decoration: underline !important;
+ }

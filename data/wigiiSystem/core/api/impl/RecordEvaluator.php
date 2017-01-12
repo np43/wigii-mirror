@@ -26,6 +26,7 @@
  * Base class, subclass can extend the FuncExp language.
  * Created by CWE on 17 avr. 10
  * Modified by CWE on 07 mars 2014 to activate by default the FuncExpVM when evaluating a record.
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class RecordEvaluator implements FuncExpEvaluator
@@ -40,6 +41,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	private $useFuncExpVM = true; // default value defined at creation time, not reseted at each evaluation.
 	private $funcExpVM;
 	private $callingFuncExpEvaluator;
+	private $currentFuncExp;
 	private $trm;
 	private $translateAllValues;
 
@@ -61,6 +63,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		unset($this->principal);
 		unset($this->funcExpVM);
 		unset($this->callingFuncExpEvaluator);		
+		unset($this->currentFuncExp);
 		// contextual information that can be kept between two evaluations
 		if(!$keepContext) {
 			//$this->debugLogger()->write('frees context');
@@ -316,9 +319,10 @@ class RecordEvaluator implements FuncExpEvaluator
 		elseif(is_null($caller) && isset($this->callingFuncExpEvaluator) && $this->callingFuncExpEvaluator!==$this) return $this->callingFuncExpEvaluator->evaluateFuncExp($funcExp);
 		else {
 			if($caller instanceof FuncExpEvaluator) $this->callingFuncExpEvaluator = $caller;
-			if($funcExp instanceof FuncExp) {
+			if($funcExp instanceof FuncExp) {											
 				$fName = $funcExp->getName();
 				if(method_exists($this, $fName)) {
+					$this->currentFuncExp = $funcExp;
 					$returnVal = $this->$fName($funcExp->getArguments());
 					if($this->debugLogger()->isEnabled()) $this->debugLogger()->write($fName." returns ".(is_object($returnVal) ? get_class($returnVal) : $returnVal));
 					return $returnVal;
@@ -468,6 +472,21 @@ class RecordEvaluator implements FuncExpEvaluator
 	 */
 	protected function getCurrentValueOrEvaluateFirstArg($funcExpArgs) {
 		return $this->proposeDefaultValueIfNotSet($funExpArgs, null);
+	}
+	
+	/**
+	 * Asserts that current FuncExp beeing evaluated does not originate from public space.
+	 * @throws FuncExpEvalException with code FORBIDDEN (403) if current FuncExp is marked as public.
+	 */
+	protected function assertFxOriginIsNotPublic() {
+		if(isset($this->currentFuncExp) && $this->currentFuncExp->isOriginPublic()) throw new FuncExpEvalException("FuncExp '".$this->currentFuncExp->getName()."' originates from public space and is not authorized to be executed.", FuncExpEvalException::FORBIDDEN);
+	}
+	
+	/**
+	 * @return Boolean returns true if current FuncExp beeing evaluated originates from public space, null if unknown, false if not.
+	 */
+	public function isFxOriginPublic() {
+		if($this->currentFuncExp instanceof FuncExp) return $this->currentFuncExp->isOriginPublic();
 	}
 
 
@@ -1338,7 +1357,7 @@ class RecordEvaluator implements FuncExpEvaluator
 
 	/**
 	 * @return String returns the name of the current flow in which this element is evaluated.
-	 * One of ELEMENT_FLOW_ADD, ELEMENT_FLOW_EDIT, ELEMENT_FLOW_DELETE, ELEMENT_FLOW_COPY, ELEMENT_FLOW_DATAFLOW, ELEMENT_FLOW_MULTIPLE_ADD, ELEMENT_FLOW_MULTIPLE_EDIT, ELEMENT_FLOW_MULTIPLE_DELETE, ELEMENT_FLOW_MULTIPLE_COPY, ELEMENT_FLOW_UNSPECIFIED
+	 * One of ELEMENT_FLOW_READ, ELEMENT_FLOW_ADD, ELEMENT_FLOW_EDIT, ELEMENT_FLOW_DELETE, ELEMENT_FLOW_COPY, ELEMENT_FLOW_DATAFLOW, ELEMENT_FLOW_MULTIPLE_ADD, ELEMENT_FLOW_MULTIPLE_EDIT, ELEMENT_FLOW_MULTIPLE_DELETE, ELEMENT_FLOW_MULTIPLE_COPY, ELEMENT_FLOW_UNSPECIFIED
 	 * @return String 'unspecified'. Subclass ElementEvaluator implements the whole logic.
 	 */
 	protected function getCurrentFlowName() {

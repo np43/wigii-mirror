@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 28 sept 2012
- * by LWR
+/**
+ * Created on 28 sept 2012 by LWR
+ * Updated by Medair (LMA) on 7 dec 2016 - Correct a bug with quote in number
  */
 class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTypeSubfieldVisitor {
 
@@ -362,8 +362,8 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 				if (!$fs->isElementAttributeSelector()) {
 					$field = $el->getFieldList()->getField($fs->getFieldName());
 					$dataType = $field->getDataType();
-					if ($dataType == null)
-						continue;
+					if ($dataType == null) continue;					
+					$dataTypeName = $field->getDataType()->getDataTypeName();
 				}
 
 				if (!$fs->isElementAttributeSelector() && $dataType->getXml()->{$fs->getSubFieldName()}["multiLanguage"] == "1") {
@@ -395,14 +395,14 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 							$nb = $nb +count($this->languageInstalled);
 							//verify MultipleAttributes management
 						} else
-							if ($dataType->getDataTypeName() == "MultipleAttributs" && ($fs->getSubFieldName() == "value" || $fs->getSubFieldName() == "")) {
+							if ($dataTypeName == "MultipleAttributs" && ($fs->getSubFieldName() == "value" || $fs->getSubFieldName() == "")) {
 								$temp = explode(", ", $dataRow[$pos -1]);
 								$nb++;
 								$temp = array_combine($temp, $temp);
 								$el->setFieldValue($temp, $fs->getFieldName(), $fs->getSubFieldName());
 								//calculate special email subfields: takes what is in the CSV or proposes a default value if not present.
 							} else
-								if ($dataType->getDataTypeName() == "Emails") {									
+								if ($dataTypeName == "Emails") {									
 									if(!$fs->getSubFieldName() || $fs->getSubFieldName() == "value") {
 										$newValue = str_replace('\n', "\n", $dataRow[$pos -1]);
 										
@@ -469,6 +469,17 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$pos -1]), $fs->getFieldName(), $fs->getSubFieldName());
 									if($fs->getSubFieldName()!="value" && $this->headers[$fs->getFieldName() . " ".$fs->getSubFieldName()] || $fs->getSubFieldName()=="value" && ($this->headers[$fs->getFieldName()] || $this->headers[$fs->getFieldName()." value"])) $nb++;
 								}
+					}
+					//If the datatype is Numerics we remove all caracters which is not number
+					if($dataTypeName === 'Numerics' || $dataTypeName === 'Floats'){
+						//Get the value of the element
+						$elementValue = $el->getFieldValue($fs->getFieldName());
+						//Remove the simple quote if present in the number
+						$newElementValue = preg_replace('#\'#', '', $elementValue);
+						//Set again the field with the correct value
+						$el->setFieldValue($newElementValue, $fs->getFieldName());
+					
+						//eput(var_dump($newElementValue));
 					}
 				} catch (ServiceException $e) {
 					$errorInLine[$lineNb] .= " !Exception " . $e->getCode() . " " . $e->getMessage();

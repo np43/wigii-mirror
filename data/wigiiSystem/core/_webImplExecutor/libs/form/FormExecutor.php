@@ -166,7 +166,9 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		$this->templateRecordManager->reset($record);
 	}
 	protected function createTrmInstance(){
-		return $this->getWigiiExecutor()->createTRM(null, $this->isForNotification(), $this->isForPrint(), $this->isForExternalAccess(), false, false, true);
+		$returnValue = $this->getWigiiExecutor()->createTRM(null, $this->isForNotification(), $this->isForPrint(), $this->isForExternalAccess(), false, false, true);
+		$returnValue->setFormExecutor($this);
+		return $returnValue;
 	}
 
 	private $submitUrl;

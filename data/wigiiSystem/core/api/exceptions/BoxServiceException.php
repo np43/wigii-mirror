@@ -1,6 +1,6 @@
 <?php
 /**
- *  This file is part of Wigii.
+ *  This file has been added to Wigii by Medair.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  
  *  Wigii is free software: you can redistribute it and/or modify it 
@@ -15,8 +15,8 @@
  *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
  *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  @copyright  Copyright (c) 2016  Wigii.org
- *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @copyright  Copyright (c) 2016  Medair
+ *  @author     <http://www.medair.org>            Medair.org
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */

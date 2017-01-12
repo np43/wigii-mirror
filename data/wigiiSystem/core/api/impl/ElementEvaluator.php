@@ -25,9 +25,11 @@
  * Gives the infrastructure to evaluate an Element against funcExp attached to a field.
  * Base class, subclass can extend the FuncExp language.
  * Created by CWE on 17 avr. 10
+ * Modified by CWE on 12.12.2016 to add Manual Ordering of Elements Functions
  */
 class ElementEvaluator extends RecordEvaluator
 {	
+	const ELEMENT_FLOW_READ = 'element-read';
 	const ELEMENT_FLOW_ADD = 'element-add';
 	const ELEMENT_FLOW_EDIT = 'element-edit';
 	const ELEMENT_FLOW_DELETE = 'element-delete';
@@ -150,7 +152,7 @@ class ElementEvaluator extends RecordEvaluator
 	
 	/**
 	 * @return String returns the name of the current flow in which this element is evaluated.
-	 * One of ELEMENT_FLOW_ADD, ELEMENT_FLOW_EDIT, ELEMENT_FLOW_DELETE, ELEMENT_FLOW_COPY, ELEMENT_FLOW_DATAFLOW, ELEMENT_FLOW_MULTIPLE_ADD, ELEMENT_FLOW_MULTIPLE_EDIT, ELEMENT_FLOW_MULTIPLE_DELETE, ELEMENT_FLOW_MULTIPLE_COPY, ELEMENT_FLOW_UNSPECIFIED
+	 * One of ELEMENT_FLOW_READ, ELEMENT_FLOW_ADD, ELEMENT_FLOW_EDIT, ELEMENT_FLOW_DELETE, ELEMENT_FLOW_COPY, ELEMENT_FLOW_DATAFLOW, ELEMENT_FLOW_MULTIPLE_ADD, ELEMENT_FLOW_MULTIPLE_EDIT, ELEMENT_FLOW_MULTIPLE_DELETE, ELEMENT_FLOW_MULTIPLE_COPY, ELEMENT_FLOW_UNSPECIFIED
 	 */
 	protected function getCurrentFlowName() {
 		$element = $this->getElement();
@@ -169,6 +171,7 @@ class ElementEvaluator extends RecordEvaluator
 					elseif(is_a($formExec, 'DeleteElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_DELETE;
 					elseif(is_a($formExec, 'CopyElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_COPY;
 					elseif(is_a($formExec, 'AddElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_ADD;
+					elseif(is_a($formExec, 'DetailElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_READ;
 					elseif(is_a($formExec, 'EditElementFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_EDIT;
 					else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
 				}
@@ -584,6 +587,9 @@ class ElementEvaluator extends RecordEvaluator
 								if($groupList->count() == 1) {
 									$returnValue = reset($groupList->getListIterator());
 								}
+								elseif(count($selectedGroups) == 1) {
+									$returnValue = reset($selectedGroups);
+								}
 							}
 						}
 					}
@@ -822,5 +828,230 @@ class ElementEvaluator extends RecordEvaluator
 	 */
 	public function thisElement($args) {
 		return array2df($this->getElement());
+	}
+	
+	
+	// Manual ordering of elements
+	
+	/**
+	 * Returns some JS code which fills the choosePosition drop-down used when manually ordering elements in the list
+	 * FuncExp signature : <code>ctlManualElementOrderingJS(positionFs,nextIdFs,choosePositionFs,groupLogExp,labelFx,listFilter=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) positionFs: FieldSelector|String. The field in the Element holding the position number. Field should by of type Numerics.
+	 * - Arg(1) nextIdFs: FieldSelector|String. The field in the Element holding the next Element ID. Field should be of type Strings.
+	 * - Arg(2) choosePositionFs: FieldSelector|String. The current choosePosition drop-down field. Should be of type Attributs.
+	 * - Arg(3) groupLogExp: LogExp. In group log exp specifying the search space in which manual ordering of elements take place.
+	 * - Arg(4) labelFx: FieldSelector|FuncExp. An Element FieldSelector or a FuncExp calculating the label which should be put into the choosePosition drop-down
+	 * - Arg(5) listFilter: ListFilter. An optional ListFilter used to filter the search space on a specific subset of elements.
+	 *@see https://resource.wigii.org/#Public/WigiiCfgPattern/item/1911
+	 *@return String the JS code used to initialize the ChoosePosition drop-down when manually ordering elements
+	 */
+	public function ctlManualElementOrderingJS($args) {
+		// restricts flow on Add, Edit or Copy.
+		switch($this->getCurrentFlowName()) {
+			case ElementEvaluator::ELEMENT_FLOW_ADD:
+			case ElementEvaluator::ELEMENT_FLOW_EDIT:
+			case ElementEvaluator::ELEMENT_FLOW_COPY:
+				break;
+			default: return;
+		}
+		// checks arguments
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<5) throw new FuncExpEvalException('ctlManualElementOrderingJS takes at least 5 arguments positionFs,nextIdFs,choosePositionFs,groupLogExp,labelFx', FuncExpEvalException::INVALID_ARGUMENT);
+		$positionFs = $args[0];
+		if(!($positionFs instanceof FieldSelector)) {
+			$positionFs = $this->evaluateArg($args[0]);
+			if(empty($positionFs)) throw new FuncExpEvalException('positionFs should be a non null FieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
+			if(!($positionFs instanceof FieldSelector)) $positionFs = fs($positionFs);
+		}
+		$nextIdFs = $args[1];
+		if(!($nextIdFs instanceof FieldSelector)) {
+			$nextIdFs = $this->evaluateArg($args[1]);
+			if(empty($nextIdFs)) throw new FuncExpEvalException('nextIdFs should be a non null FieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
+			if(!($nextIdFs instanceof FieldSelector)) $nextIdFs = fs($nextIdFs);
+		}
+		$choosePositionFs = $args[2];
+		if(!($choosePositionFs instanceof FieldSelector)) {
+			$choosePositionFs = $this->evaluateArg($args[2]);
+			if(empty($choosePositionFs)) throw new FuncExpEvalException('choosePositionFs should be a non null FieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
+			if(!($choosePositionFs instanceof FieldSelector)) $choosePositionFs = fs($choosePositionFs);
+		}
+		$groupLogExp = $this->evaluateArg($args[3]);
+		$labelFx = $args[4];
+		if($nArgs>5) {
+			$lf = $this->evaluateArg($args[5]);
+			if(!($lf instanceof ListFilter)) throw new FuncExpEvalException('listFilter should be a non null instance of ListFilter', FuncExpEvalException::INVALID_ARGUMENT);
+		}
+		else $lf = ListFilter::createInstance();
+	
+		// Prepares FieldSelectorList
+		$fsl = $lf->getFieldSelectorList();
+		if(!isset($fsl)) {
+			$fsl = FieldSelectorListArrayImpl::createInstance();
+			$lf->setFieldSelectorList($fsl);
+		}
+		if(!$fsl->containsFieldSelector($positionFs->getFieldName())) $fsl->addFieldSelectorInstance($positionFs);
+		if(!$fsl->containsFieldSelector($nextIdFs->getFieldName())) $fsl->addFieldSelectorInstance($nextIdFs);
+		if($labelFx instanceof FieldSelector && !$fsl->containsFieldSelector($labelFx->getFieldName())) $fsl->addFieldSelectorInstance($labelFx);
+		elseif($labelFx instanceof FuncExp) $labelFx->getDependencies($fsl);
+	
+		// Prepares sorting by position
+		$lf->setFieldSortingKeyList(fskl(fsk($positionFs->getFieldName(),'value')));
+	
+		// gets the ChoosePosition drop-down as html
+		$choosePosition = sel($this->getPrincipal(), elementPList($groupLogExp,$lf),
+				dfasl(
+						/* add missing links to next element */
+						dfas('CallbackDFA','initializeContext',array('nextIdFs'=>$nextIdFs),
+								'setProcessDataChunkCallback',function($data,$callbackDFA){
+									$currentElement = $data->getDbEntity();
+									$previousElement = $callbackDFA->getValueInContext('previousElement');
+									$nextIdFs = $callbackDFA->getValueInContext('nextIdFs');
+									// stores first element
+									if(!isset($previousElement)) {
+										$callbackDFA->setValueInContext('previousElement',$currentElement);
+									}
+									else {
+										$previousElement->setDynamicAttribute('nextIdChanged',ElementDynAttrMutableValueImpl::createInstance(false));
+										// else if previous element does not link to current element, then corrects nextId field
+										if($previousElement->getFieldValue($nextIdFs->getFieldName()) != $currentElement->getId()) {
+											$previousElement->setFieldValue($currentElement->getId(), $nextIdFs->getFieldName());
+											// marks element as changed to make it persisted.
+											$previousElement->setDynamicAttributeValue('nextIdChanged',true);
+											// if previousElement equals current element in Form, then updates nextId in Form to allow drop-down sync
+											if($previousElement->getId() == $this->getElement()->getId()) {
+												$this->getElement()->setFieldValue($previousElement->getFieldValue($nextIdFs->getFieldName()),$nextIdFs->getFieldName());
+											}
+										}
+										// stores currentElement as new previousElement
+										$callbackDFA->setValueInContext('previousElement',$currentElement);
+										// pushes previousElement down in stream
+										$callbackDFA->writeResultToOutput($previousElement);
+									}
+								},
+								'setEndOfStreamCallback',function($callbackDFA){
+									// updates last element if needed
+									$previousElement = $callbackDFA->getValueInContext('previousElement');
+									$nextIdFs = $callbackDFA->getValueInContext('nextIdFs');
+									if(isset($previousElement)) {
+										$previousElement->setDynamicAttribute('nextIdChanged',ElementDynAttrMutableValueImpl::createInstance(false));
+										if($previousElement->getFieldValue($nextIdFs->getFieldName()) != 'last') {
+											$previousElement->setFieldValue('last', $nextIdFs->getFieldName());
+											// marks element as changed to make it persisted.
+											$previousElement->setDynamicAttributeValue('nextIdChanged',true);
+											// if previousElement equals current element in Form, then updates nextId in Form to allow drop-down sync
+											if($previousElement->getId() == $this->getElement()->getId()) {
+												$this->getElement()->setFieldValue($previousElement->getFieldValue($nextIdFs->getFieldName()),$nextIdFs->getFieldName());
+											}
+										}
+										// pushes previousElement down in stream
+										$callbackDFA->writeResultToOutput($previousElement);
+									}
+								}),
+								/* persists elements which have missing link added */
+								dfas('ElementDFA','setFieldSelectorList',fsl($nextIdFs),'setMode',3,'setDecisionMethod',function($element,$dataFlowContext){
+									if($element->getDynamicAttributeValue('nextIdChanged')) return 1;
+									else return 5;
+								},'setIgnoreLockedElements',true),
+								/* creates drop-down (filters current element) */
+								dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('ctlIf',fx('neq',fs_e('id'),$this->getElement()->getId()),fx('concat',fx('htmlStartTag','option','value',fs_e('id')),fx('str_replace',"'","\\'",$labelFx),fx('htmlEndTag','option')))),
+								dfas('StringBufferDFA')
+		)
+		);
+		// Builds next article drop-down and syncs with current next ID
+		if(isset($choosePosition)) {
+			$nextId = $this->getElement()->getFieldValue($nextIdFs->getFieldName());
+			return '(function(){$("#$$idForm$$_'.$choosePositionFs->getFieldName().'_value_select").append('."'".$choosePosition."'".')'.($nextId?".val('$nextId')":'').';})();';
+		}
+	}
+	
+	/**
+	 * Calculates the position of the element based on the chosen position in the drop-down.
+	 * FuncExp signature : <code>ctlManualElementOrdering(positionFS,nextIdFS,groupLogExp,listFilter=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) positionFs: FieldSelector|String. The field in the Element holding the position number. Field should by of type Numerics.
+	 * - Arg(1) nextIdFs: FieldSelector|String. The field in the Element holding the next Element ID. Field should be of type Strings.
+	 * - Arg(2) groupLogExp: LogExp. In group log exp specifying the search space in which manual ordering of elements take place.
+	 * - Arg(3) listFilter: ListFilter. An optional ListFilter used to filter the search space on a specific subset of elements.
+	 *@see https://resource.wigii.org/#Public/WigiiCfgPattern/item/1911
+	 *@return String the choosePosition drop-down value
+	 */
+	public function ctlManualElementOrdering($args) {
+		// checks arguments
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<3) throw new FuncExpEvalException('ctlManualElementOrdering takes at least 3 arguments positionFs,nextIdFs,groupLogExp', FuncExpEvalException::INVALID_ARGUMENT);
+		$positionFs = $args[0];
+		if(!($positionFs instanceof FieldSelector)) {
+			$positionFs = $this->evaluateArg($args[0]);
+			if(empty($positionFs)) throw new FuncExpEvalException('positionFs should be a non null FieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
+			if(!($positionFs instanceof FieldSelector)) $positionFs = fs($positionFs);
+		}
+		$nextIdFs = $args[1];
+		if(!($nextIdFs instanceof FieldSelector)) {
+			$nextIdFs = $this->evaluateArg($args[1]);
+			if(empty($nextIdFs)) throw new FuncExpEvalException('nextIdFs should be a non null FieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
+			if(!($nextIdFs instanceof FieldSelector)) $nextIdFs = fs($nextIdFs);
+		}
+		$groupLogExp = $this->evaluateArg($args[2]);
+	
+		$currentElement = $this->getElement();
+		if($currentElement->isNew()) $currentId = 'new';
+		else $currentId = $currentElement->getId();
+	
+		// gets next element position
+		$nextId = $this->getCurrentFieldValue();
+		if($nextId!='last') {
+			$nextPos = sel($this->getPrincipal(),elementP($nextId,fsl($positionFs)),
+					dfasl(dfas('MapElement2ValueDFA','setElement2ValueFuncExp',$positionFs))
+			);
+		}
+		else $nextPos = 10000;
+	
+		// Prepares ListFilter
+		if($nArgs>3) {
+			$lf = $this->evaluateArg($args[3]);
+			if(!($lf instanceof ListFilter)) throw new FuncExpEvalException('listFilter should be a non null instance of ListFilter', FuncExpEvalException::INVALID_ARGUMENT);
+		}
+		else $lf = ListFilter::createInstance();
+		$lf->setPageSize(1);
+		$lf->setDesiredPageNumber(1);
+	
+		// Prepares FieldSelectorList
+		$fsl = $lf->getFieldSelectorList();
+		if(!isset($fsl)) {
+			$fsl = FieldSelectorListArrayImpl::createInstance();
+			$lf->setFieldSelectorList($fsl);
+		}
+		if(!$fsl->containsFieldSelector($positionFs->getFieldName())) $fsl->addFieldSelectorInstance($positionFs);
+		if(!$fsl->containsFieldSelector($nextIdFs->getFieldName())) $fsl->addFieldSelectorInstance($nextIdFs);
+	
+		// Prepares sorting by position (DESC)
+		$lf->setFieldSortingKeyList(fskl(fsk($positionFs->getFieldName(),'value',false)));
+	
+		// Prepares filter by position max
+		$lx = $lf->getFieldSelectorLogExp();
+		$lxPos = lxSm($positionFs,$nextPos);
+		if(isset($lx)) $lx = lxAnd($lx,$lxPos);
+		else $lx = $lxPos;
+		$lf->setFieldSelectorLogExp($lx);
+	
+		// calculates the position if not already done or if next ID changed
+		if($currentElement->getFieldValue($positionFs->getFieldName()) == null || $currentElement->getFieldValue($nextIdFs->getFieldName()) != $nextId) {
+			// retrieves previous element
+			$prevPos = sel($this->getPrincipal(), elementPList($groupLogExp,$lf), dfasl(
+					/* updates contentNextId link to current element */
+					dfas('ElementSetterDFA','setCalculatedFieldSelectorMap',cfsMap(cfs($nextIdFs,$currentId))),
+					dfas('ElementDFA','setFieldSelectorList',fsl($nextIdFs),'setMode','1','setIgnoreLockedElements',true),
+					/* and returns position */
+					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',$positionFs)
+			)
+			);
+				
+			// calculates element position (compacts at the end to let more space at the beginning)
+			$currentElement->setFieldValue(0.25*$prevPos+0.75*$nextPos, $positionFs->getFieldName());
+			// stores next ID
+			$currentElement->setFieldValue($nextId, $nextIdFs->getFieldName());
+		}
+		return 'last';
 	}
 }

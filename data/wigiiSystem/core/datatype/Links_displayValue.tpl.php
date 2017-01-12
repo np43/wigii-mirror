@@ -48,11 +48,12 @@ else {
 
 $this->put($strValue);
 
-// add button
+// add button (only if not readonly and not disabled)
 $trashBinPrefix = (string)$this->getConfigService()->getParameter($this->getP(), null, "deletedSubElementsLinkNamePrefix");
 if(!empty($trashBinPrefix) && strpos($field->getFieldName(), $trashBinPrefix)!==0 && 
 		!$this->isForPrint() && !$this->isForExternalAccess() && !$this->isForNotification() &&
-		$linkType == Links::LINKS_TYPE_SUBITEM){
+		$linkType == Links::LINKS_TYPE_SUBITEM &&
+		!$readonly && !$disabled){
 	$this->put('<div class="addNewSubElement ui-corner-all Green" style="font-weight: bold; float: right; margin: 0 4px; padding: 2px 4px" >+ <font class="H">'.$this->t("addElementButton").'</font></div>');
 	$this->addJsCode("setListenerToAddSubItem('".$fieldId."', '".$this->getRecord()->getId()."', '".$fieldName."');");
 }

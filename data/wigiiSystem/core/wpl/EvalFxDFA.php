@@ -23,7 +23,9 @@
 
 /**
  * A data flow activity which evaluates a flow of FuncExp using a FuncExpVM and a set of modules.
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 04 September 2014
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class EvalFxDFA implements DataFlowActivity
 {			
@@ -84,6 +86,7 @@ class EvalFxDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		$this->vm = ServiceProvider::getFuncExpVM($dataFlowContext->getPrincipal(), null, $this->getFuncExpVMClassName());
 		// configures the vm
 		if(isset($this->vmModules)) $this->vm->useModules($this->vmModules);

@@ -64,6 +64,7 @@ class ExternalAccessViewFormExecutor extends DetailElementFormExecutor {
 		$fe->setExternalAccessFieldname($fieldName);
 		$fe->setExternalAccessFieldXml($fieldXml);
 		$fe->setExternalAccessLevel($externalAccessLevel);
+		$fe->getTrm()->setExternalAccessLevel($externalAccessLevel);
 		$fe->setExternalAccessEndDate($externalAccessEndDate);
 		$fe->setGroupSubscriptionRecord($groupSubscriptionRecord);
 		return $fe;

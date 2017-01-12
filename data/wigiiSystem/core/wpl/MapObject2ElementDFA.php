@@ -23,7 +23,9 @@
 
 /**
  * A data flow activity which maps PHP stdClass instances or Array of arrays to elements
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 6 décembre 2013
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 {			
@@ -278,6 +280,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		if(!isset($this->inGroupLogExp) && !isset($this->groupId) && !isset($this->linkSelector)) throw new DataFlowServiceException("No in group log exp or group id or link selector have been set to define where to fetch elements, add one using the 'setInGroupLogExp' or 'setGroupId' or 'setLinkSelector' method.", DataFlowServiceException::CONFIGURATION_ERROR);
 
 		// builds field selector list by merging provided field selector list and

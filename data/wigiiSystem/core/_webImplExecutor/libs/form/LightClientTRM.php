@@ -19,14 +19,53 @@
  *  @author     <http://www.wigii.org/system>      Wigii.org 
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
- */ 
-
+ */
 
 /**
- * wigii version
+ * Light Client Template Record Manager implementation
+ * Created by Medair (CWE,LMA) on 16.12.2016
  */
-define("VERSION_NUMBER", "4.404");
-define("REVISION_NUMBER", "2148");
-define("ASSET_REVISION_NUMBER", "2148"); //this number will be the one used to load wigii_...js and wigii_...css
-define("VERSION_TYPE", "");
-define("VERSION_LABEL", "Wigii system, " . VERSION_TYPE . " v." . VERSION_NUMBER." R".REVISION_NUMBER."-A".ASSET_REVISION_NUMBER);
+class LightClientTRM extends TemplateRecordManager {
+
+	
+	// Dependency injection
+	
+	private $_debugLogger;
+	private $_executionSink;
+	private function debugLogger()
+	{
+		if(!isset($this->_debugLogger))
+		{
+			$this->_debugLogger = DebugLogger::getInstance("LightClientTRM");
+		}
+		return $this->_debugLogger;
+	}
+	private function executionSink()
+	{
+		if(!isset($this->_executionSink))
+		{
+			$this->_executionSink = ExecutionSink::getInstance("LightClientTRM");
+		}
+		return $this->_executionSink;
+	}
+	
+	
+	
+	// Object lifecycle
+	
+	/**
+	 * @return LightClientTRM
+	 */	
+	public static function createInstance() {
+		$returnValue = parent::createInstance();
+		return $returnValue;
+	}
+
+	
+	// Implementation
+	
+	/* to do */
+}
+
+
+

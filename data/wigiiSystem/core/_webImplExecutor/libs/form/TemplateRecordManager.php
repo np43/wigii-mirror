@@ -25,7 +25,7 @@
  * Main HTML renderer helper class. Helps rendering Element Form and Detail, using Element XML configuration.
  * Created on 3 dec. 09 by LWR
  * Updated on 23 march 10 by LWR
- * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair in 2016-2017 for maintenance purposes (see SVN log for details)
  */
 class TemplateRecordManager extends Model {
 
@@ -45,6 +45,10 @@ class TemplateRecordManager extends Model {
 	public function isForExternalAccess(){ return $this->isForExternalAccess; }
 	public function setForExternalAccess($enable){ $this->isForExternalAccess = $enable; return $this; }
 
+	private $externalAccessLevel;
+	public function getExternalAccessLevel(){ return $this->externalAccessLevel; }
+	public function setExternalAccessLevel($var){ $this->externalAccessLevel = $var; }
+	
 	private $isForListView;
 	public function isForListView(){ return $this->isForListView; }
 	public function setForListView($enable){ $this->isForListView = $enable; return $this; }
@@ -68,15 +72,19 @@ class TemplateRecordManager extends Model {
 	public function getRecord(){ return $this->record; }
 	public function setRecord($record){
 		$this->record = $record;
-		if($record->getAttachedRecord() && is_a($record->getAttachedRecord(), "Element") && $record->getAttachedRecord()->isSubElement()){
+		if(isset($record) && $record->getAttachedRecord() && is_a($record->getAttachedRecord(), "Element") && $record->getAttachedRecord()->isSubElement()){
 			$this->getTranslationService()->setSubExecutionModule($record->getAttachedRecord()->getModule());
-		} else if(is_a($record, "Element") && $record->isSubElement()){
+		} else if(isset($record) && is_a($record, "Element") && $record->isSubElement()){
 			$this->getTranslationService()->setSubExecutionModule($record->getModule());
 		}
 		else $this->getTranslationService()->resetSubExecutionModule();
 		return $this;
 	}
 
+	private $formExecutor;
+	public function getFormExecutor() {return $this->formExecutor;}
+	public function setFormExecutor($formExecutor) {$this->formExecutor = $formExecutor;}
+	
 	private $_debugLogger;
 	private function debugLogger() {
 		if(!isset($this->_debugLogger)) $this->_debugLogger = DebugLogger::getInstance("TemplateRecordManager");
@@ -537,17 +545,16 @@ class TemplateRecordManager extends Model {
 		// else subitem or link
 		else {	
 			$elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+			$elementPList->setElementIsReadonly($elementIsReadonly);
 			$elementPList->actOnBeforeAddElementP($p);
 			if($linkType == Links::LINKS_TYPE_SUBITEM) {
-				/*TODO: if(!asyncload)*/ $nb = $elS->getSubElementsForField($p, $element->getId(), $linkName, $elementPList, $listFilter);
+				$nb = $elS->getSubElementsForField($p, $element->getId(), $linkName, $elementPList, $listFilter);
 			}
-			else {
-				/* not implemented */
-			}
+			//else : not implemented.
+			
 			$elementPList->actOnFinishAddElementP($p, ($listFilter->isPaged() ? $listFilter->getTotalNumberOfObjects() : $nb), $nb, $listFilter->getPageSize(), $width);
-			//TODO: if(asyncLoad) $this->addJsCode("$('#".$previewListId." .refresh').click()");
 		}	
-		$this->getSessionAdminService()->storeData($elS, $previewListId."_".$this->getExecutionService()->getCrtContext(), array($element->getId(), $linkName, (string)$fieldXml['linkType'], $listFilter, $elementIsBlocked, $query));
+		$this->getSessionAdminService()->storeData($elS, $previewListId."_".$this->getExecutionService()->getCrtContext(), array($element->getId(), $linkName, (string)$fieldXml['linkType'], $listFilter, $elementIsBlocked, $query, $elementIsReadonly));
 		
 		$this->put('</div>');
 

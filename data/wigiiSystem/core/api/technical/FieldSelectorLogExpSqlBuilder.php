@@ -25,6 +25,7 @@
  * MySql Where Clause builder based on a LogExp based on FieldSelectors
  * This class should be subclassed to work properly.
  * Created by CWE on 22 déc. 09
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class FieldSelectorLogExpSqlBuilder extends MySqlQueryBuilder implements LogExpVisitor
 {
@@ -119,7 +120,13 @@ class FieldSelectorLogExpSqlBuilder extends MySqlQueryBuilder implements LogExpV
 	{
 		throw new MySqlQueryBuilderException("subclass should implement this method", MySqlQueryBuilderException::UNSUPPORTED_OPERATION);
 	}
-
+	
+	/**
+	 * @return Boolean returns true if this query builder supports sys info fields. Returns null if no information is available, returns false if known as unsupported. Defaults to null.
+	 */
+	public function supportsSysInformation() {
+		return null;
+	}
 
 	public function setTableForDelete($tableName)
 	{
@@ -133,6 +140,10 @@ class FieldSelectorLogExpSqlBuilder extends MySqlQueryBuilder implements LogExpV
 		$this->updateOrDelete = true;
 	}
 
+	public function updateSysUser($principal, $timestamp=null) {
+		if($this->supportsSysInformation()!==false) parent::updateSysUser($principal, $timestamp);
+	}
+	
 	// LogExp visitor implementation
 
 	public function actOnAndExp($andLogExp)

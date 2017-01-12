@@ -732,7 +732,7 @@ groupHtmlContentPreview:Cover page:Page de couverture:::::::::
 groupHtmlContent_help:Setup a cover page:Ajouter une page de couverture:::::::
 groupNew:New:Nouveau:::::::::
 groupNewCopy:Copy:Copier:::::::::
-groupNewCopy_help:Create a new copy of this #group#. The groupname needs to be changed.:Créer un nouvelle copie de #thisGroup#. Le nom de #ofGroup# devra être modifié.:::::::::
+groupNewCopy_help:Create a new copy of this #group#. The groupname needs to be changed.:Créer un nouvelle copie de #thisGroup#. Le nom #ofGroup# devra être modifié.:::::::::
 groupNew_help:Create a new #group#:Créer un nouveau #-group#:::::::::
 groupParent:Parent #group#:#Group# parent:::::::::
 groupPortal:External webpage:Page web externe:::::::::
@@ -744,7 +744,7 @@ groupCsvPublishPreview:Publish CSV:Publier en CSV:::::::::
 groupCsvRawPublishPreview:Publish CSV (RAW):Publier en CSV (RAW):::::::::
 groupCsvBackupPublishPreview:Publish in CSV for backup:Publier en CSV for backup:::::::::
 groupXmlPublish_help:Define public links to allow other applications access to the #group# content.:Défini des liens publique qui permet à d'autres applications d'accéder au contenu de #thisGroup#.:::::::::
-groupname:#Group# name:Nom du #group#:::::::::
+groupname:#Group# name:Nom du #-group#:::::::::
 groupNames:#Groups#:#Groups#:::::::::
 historicOfElement:History #ofElement#:Historique #ofElement#:::::::::
 elementAdditionalInformation:Additional information #ofElement#:Information additionnelle #ofElement#:::::::::
@@ -1080,7 +1080,7 @@ subFoldersList:return to sub#-groups# list:retour à la liste des sous-#-groups#
 elementLocked:#Element# is currently under modification.:#Element# est actuellement en train d'être modifié.:::::::::
 elementLockedExplanation:An other user has open #thisElement# and is doing a modification. Please try later.:Un autre utilisateur a ouvert #thisElement# et est en train d'effectuer des modifications. Veuillez réessayer plus tard.:::::::::
 thoseElementsAreLocked:The following #-elements# are locked.:#Elements# suivants sont vérouillés.:
-thoseElementsAreLockedExpl:An other user is currently modifying the listed #-elements#. Please remove them from the current selection to proceed.:Un autre utilisateur est actuellement en train de modifier #elements# listés. Veuillez les enleveer de votre sélection pour continuer.:
+thoseElementsAreLockedExpl:An other user is currently modifying the listed #-elements#. Please remove them from the current selection to proceed.:Un autre utilisateur est actuellement en train de modifier #elements# listés. Veuillez les enlever de votre sélection pour continuer.:
 selectAtLeastOneElement:Select at least one #element#:Sélectionner au moins #anElement#:::::::::
 elementsSelected:#-elements# selected:#-elements# sélectionnés:::::::::
 multipleDialogTitle:Summary:Résumé::::::
@@ -1704,6 +1704,7 @@ boxFileDownloading:Your file is beeing prepared to be downloaded from Box.com...
 boxFileUploading:Your file is beeing uploaded to Box.com...:Votre fichier est en cours de téléchargement vers Box.com...:::::::::
 boxFile:File is located into Box folder:Le fichier est stocké dans le dossier Box:::::::::
 boxFileFolder:File will be uploaded in Box in the folder:Le fichier va être sauvegardé sur Box dans le dossier:::::::::
+boxFileOpen:Click <u>here</u> to open in Box using your account:Cliquez <u>ici</u> pour ouvrir dans Box avec votre compte:::::::::
 
 cmsAnchorTop:top:haut:::::::::
 cmsNoTitleAvailable:No title available in :Pas de titre traduit en :::::::::

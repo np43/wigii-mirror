@@ -25,6 +25,7 @@
  * MySql database technical facade
  * Created by CWE on 23 juin 09
  * Modified by Medair (ACA) on August 10th 2016 to use mysqli driver instead of deprecated mysql. 
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class MySqlFacade
 {
@@ -496,20 +497,20 @@ class MySqlFacade
 	}
 
 	/**
-	 * Updates the value of a field in a table
-	 * principal: principal running the update
-	 * fieldSelector: field selector representing the field to update in the database (logical field)
-	 * tableName: table name on which to do the update
-	 * fsLogExp: field selector log exp to select the records for which to update the field
-	 * newValue: the new value to be updated
-	 * updateOp: update operation, see constants above. One of SUPDOP_SET, SUPDOP_ADD, SUPDOP_CAT, SUPDOP_DEL
-	 * fsLogExpSqlBuilder: field selector log exp sql builder to build sql query for select and update
-	 * idFieldSelector: field selector representing id column
-	 * cnxSettings a DbConnectionSettings object with everything needed to connect to the database
-	 * readSep: separator regExp used in preg_split when reading existing values in database
-	 * writeSep: separator to be used when adding new value to existing field
-	 * returns the number of records updated
-	 * throws MySqlFacadeException in case of error
+	 * Updates the value of a field in a table.
+	 * @param Principal $principal principal running the update
+	 * @param FieldSelector $fieldSelector field selector representing the field to update in the database (logical field)
+	 * @param String $tableName table name on which to do the update
+	 * @param LogExp $fsLogExp field selector log exp to select the records for which to update the field
+	 * @param String $newValue the new value to be updated
+	 * @param String $updateOp update operation, see constants above. One of SUPDOP_SET, SUPDOP_ADD, SUPDOP_CAT, SUPDOP_DEL
+	 * @param FieldSelectorLogExpSqlBuilder $fsLogExpSqlBuilder field selector log exp sql builder to build sql query for select and update
+	 * @param FieldSelector $idFieldSelector field selector representing id column
+	 * @param DbConnectionSettings $cnxSettings a DbConnectionSettings object with everything needed to connect to the database
+	 * @param String readSep separator regExp used in preg_split when reading existing values in database
+	 * @param String writeSep separator to be used when adding new value to existing field
+	 * @return the number of records updated
+	 * @throws MySqlFacadeException in case of error
 	 */
 	public function updateField($principal, $fieldSelector, $tableName, $fsLogExp,
 								$newValue, $updateOp, $fsLogExpSqlBuilder, $idFieldSelector, $cnxSettings,
@@ -525,8 +526,8 @@ class MySqlFacade
 				$updateOp != SUPDOP_ADD &&
 				$updateOp != SUPDOP_DEL &&
 				$updateOp != SUPDOP_CAT) throw new MySqlFacadeException("updateOp should be one of SET,ADD,CAT or DEL", MySqlFacadeException::INVALID_ARGUMENT);
-			if(is_null($fsLogExpSqlBuilder)) throw new MySqlFacadeException("fsLogExpSqlBuilder cannot be null, should be one of SET,ADD,CAT or DEL", MySqlFacadeException::INVALID_ARGUMENT);
-			if(is_null($idFieldSelector)) throw new MySqlFacadeException("idFieldSelector cannot be null, should be one of SET,ADD,CAT or DEL", MySqlFacadeException::INVALID_ARGUMENT);
+			if(is_null($fsLogExpSqlBuilder)) throw new MySqlFacadeException("fsLogExpSqlBuilder should be a non null instance of FieldSelectorLogExpSqlBuilder", MySqlFacadeException::INVALID_ARGUMENT);
+			if(is_null($idFieldSelector)) throw new MySqlFacadeException("idFieldSelector cannot be null", MySqlFacadeException::INVALID_ARGUMENT);
 
 			// if operator is SET then updates in one shot
 			if($updateOp == SUPDOP_SET)
@@ -537,6 +538,7 @@ class MySqlFacade
 				$selectedField = $fsLogExpSqlBuilder->getSqlColumnNameForFieldSelector($fieldSelector);
 				$fieldSelectorSqlType = $fsLogExpSqlBuilder->getSqlDataTypeForFieldSelector($fieldSelector);
 				$fsLogExpSqlBuilder->updateValue($selectedField, $newValue, $fieldSelectorSqlType);
+				if($fsLogExpSqlBuilder->supportsSysInformation()) $fsLogExpSqlBuilder->updateSysUser($principal);
 				$fsLogExpSqlBuilder->setWhereClauseFieldSelectorLogExp($fsLogExp);
 				$sql = $fsLogExpSqlBuilder->getSql();
 				if(!is_null($sql)) $returnValue = $this->update($principal, $sql, $cnxSettings); else $returnValue = 0;
@@ -578,6 +580,7 @@ class MySqlFacade
 						$fsLogExpSqlBuilder->reset();
 						$fsLogExpSqlBuilder->setTableForUpdate($tableName);
 						$fsLogExpSqlBuilder->updateValueIfChanged($selectedField, $newVal, $val, $fieldSelectorSqlType);
+						if($fsLogExpSqlBuilder->supportsSysInformation()) $fsLogExpSqlBuilder->updateSysUser($principal);
 						$fsLogExpSqlBuilder->setWhereClauseSingleId($idField, $id, $idFieldSqlType);
 						$sql = $fsLogExpSqlBuilder->getSql();
 						if(!is_null($sql)) $returnValue += $this->update($principal, $sql, $cnxSettings);

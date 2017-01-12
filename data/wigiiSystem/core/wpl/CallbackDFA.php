@@ -24,7 +24,9 @@
 /**
  * A data flow activity which delegates stream processing to callbacks :
  * or a PHP closure or a specified method on an object.
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 14 février 2014
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  */
 class CallbackDFA implements DataFlowActivity
 {
@@ -171,7 +173,8 @@ class CallbackDFA implements DataFlowActivity
 	
 	// stream data event handling
 	
-	public function startOfStream($dataFlowContext) {		
+	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		$this->dataFlowContext = $dataFlowContext;
 		if(isset($this->startOfStreamCallback)) $this->startOfStreamCallback->invoke($this);
 	}
@@ -185,7 +188,8 @@ class CallbackDFA implements DataFlowActivity
 	
 	// single data event handling
 	
-	public function processWholeData($data, $dataFlowContext) {		
+	public function processWholeData($data, $dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		if(isset($this->processWholeDataCallback)) {
 			$this->dataFlowContext = $dataFlowContext;
 			$this->processWholeDataCallback->invoke($data, $this);

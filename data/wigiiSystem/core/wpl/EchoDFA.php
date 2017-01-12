@@ -23,7 +23,9 @@
 
 /**
  * A data flow activity which echoes the data
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 18.05.2016
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class EchoDFA implements DataFlowActivity
 {
@@ -36,7 +38,9 @@ class EchoDFA implements DataFlowActivity
 	
 	// stream data event handling
 	
-	public function startOfStream($dataFlowContext) {/* nothing to do */}
+	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
+	}
 	public function processDataChunk($data, $dataFlowContext) {
 		echo $data;
 	}
@@ -46,6 +50,7 @@ class EchoDFA implements DataFlowActivity
 	// single data event handling
 	
 	public function processWholeData($data, $dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		echo $data;
 	}	
 }

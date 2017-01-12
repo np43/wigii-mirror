@@ -38,7 +38,7 @@
 		Group_selectAllGroupsOnFirstLoad="0"
 		Group_selectAllGroupsOnSearch="1"
 		Group_enableDynamicConfig="1"
-		Group_enablePortal="0"
+		Group_enablePortal="1"
 		Group_enableSubscription="0"
 		Group_enableXmlPublish="0"
 		nbOfLevelToExpandOnInit="2"
@@ -59,7 +59,8 @@
 		<fields>
 			<feedback_email type="Emails" require="1" ignoreNotification="1" />
 			<feedback_for type="Attributs" require="1" >
-				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				<attribute email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				<attribute checked="1" redirect="author" >onElement<label_l01>Owner</label_l01><label_l02>Référant</label_l02></attribute>
 			</feedback_for>
 			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
 			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
@@ -87,6 +88,8 @@
 				<attribute disabled="1">none</attribute>
 				<attribute>content<label_l01>Article</label_l01><label_l02>Article</label_l02></attribute>
 				<attribute>siteMap<label_l01>Site Map</label_l01><label_l02>Site Map</label_l02></attribute>
+				<attribute>logo<label_l01>Logo</label_l01><label_l02>Logo</label_l02></attribute>
+				<attribute>menu<label_l01>Menu</label_l01><label_l02>Menu</label_l02></attribute>
 				<attribute>intro<label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></attribute>
 				<attribute>footer<label_l01>Page footer</label_l01><label_l02>Pied de page</label_l02></attribute>
 				<attribute>image<label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></attribute>	
@@ -94,8 +97,23 @@
 				<attribute>js<label_l01>JS code</label_l01><label_l02>Code JS</label_l02></attribute>
 			</contentType>
 			<groupSiteMap groupStart="1"><label_l01>Site Map</label_l01><label_l02>Site Map</label_l02></groupSiteMap>
-				<siteUrl enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1" defaultExp='concat("/")'><label_l01>Access URL</label_l01><label_l02>URL d&apos;accès</label_l02></siteUrl>
-				<folderId enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1" defaultExp='cfgCurrentGroup("id")'><label_l01>Folder ID</label_l01><label_l02>ID Dossier</label_l02></folderId>					
+				<siteUrl enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='concat("/")'><label_l01>Access URL</label_l01><label_l02>URL d&apos;accès</label_l02></siteUrl>
+				<folderId enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='cfgCurrentGroup("id")'><label_l01>Folder ID</label_l01><label_l02>ID Dossier</label_l02></folderId>					
+				<forceHeight labelWidth="480" enableDynamicAttributes="1"  excelExport="auto" type="Booleans" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1"><label_l01>Force article min-height to match page height</label_l01><label_l02>Forcer la hauteur minimum des articles égale à la hauteur de la page</label_l02></forceHeight>
+				<forceHeightFirst labelWidth="480" enableDynamicAttributes="1"  excelExport="auto" type="Booleans" require='0' defaultExp='checked' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1"><label_l01>Force first article min-height to match page height</label_l01><label_l02>Forcer la hauteur minimum du premier article égale à la hauteur de la page</label_l02></forceHeightFirst>
+				<freetext onlyInForm="1"><label_l01>The following options must all be filled with CSS style syntax.</label_l01><label_l02>Les options suivantes doivent toutes être remplie en respectant la syntaxe css.</label_l02></freetext>
+				<marginWidth labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='11%'><label_l01>Margin</label_l01><label_l02>Marge</label_l02></marginWidth>
+				<logoTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='666666'><label_l01>Text color after logo</label_l01><label_l02>Couleur du texte après le logo</label_l02></logoTextColor>
+				<logoTextSize labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='22px'><label_l01>Text size after logo</label_l01><label_l02>Taille du texte après le logo</label_l02></logoTextSize>
+				<menuBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='cccccc'><label_l01>Background color of menu</label_l01><label_l02>Couleur du menu</label_l02></menuBgColor>
+				<menuTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='ffffff'><label_l01>Text color of menu</label_l01><label_l02>Couleur du texte du menu</label_l02></menuTextColor>
+				<menuTextHoverColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='5c523d'><label_l01>Active text color of menu</label_l01><label_l02>Couleur du texte du menu actif</label_l02></menuTextHoverColor>
+				<titleTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='696969'><label_l01>Text color of title</label_l01><label_l02>Couleur du texte des titres</label_l02></titleTextColor>
+				<titleTextSize labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='24px'><label_l01>Text size of title</label_l01><label_l02>Taille de texte des titres</label_l02></titleTextSize>
+				<footerBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='696969'><label_l01>Background color of footer</label_l01><label_l02>Couleur du pied de page</label_l02></footerBgColor>
+				<footerTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='ffffff'><label_l01>Text color of footer</label_l01><label_l02>Couleur du texte du pied de page</label_l02></footerTextColor>
+				<linkTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='646EFF'><label_l01>Text color of links</label_l01><label_l02>Couleur du texte des liens</label_l02></linkTextColor>
+				<oddArticleBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='ebecff'><label_l01>Background color of odd articles</label_l01><label_l02>Couleur de fond des articles impaires</label_l02></oddArticleBgColor>
 				<supportedLanguage enableDynamicAttributes="1"  excelExport="auto" type="MultipleAttributs" useCheckboxes="1" useMultipleColumn='2' require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1">
 					<label_l01>Supported languages</label_l01><label_l02>Langues supportées</label_l02>
 					<attribute >l01<label>English</label></attribute>
@@ -107,15 +125,22 @@
 					<attribute checked="1">l02<label>Français</label></attribute>
 				</defaultLanguage>			
 			<groupSiteMap groupEnd="1" expand="1"/>
+			<groupLogo groupStart="1"><label_l01>Logo</label_l01><label_l02>Logo</label_l02></groupLogo>
+				<contentLogo enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"logo")' disabled='notNullAndNotEq(contentType,"logo")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" noLabel="1" ><label_l01>Logo</label_l01><label_l02>Logo</label_l02></contentLogo>
+			<groupLogo groupEnd="1" expand="1"/>
+			<groupMenu groupStart="1"><label_l01>Menu</label_l01><label_l02>Menu</label_l02></groupMenu>
+				<contentMenu enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"menu")' disabled='notNullAndNotEq(contentType,"menu")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" noLabel="1" ><label_l01>Menu : (create only a bullet list with links)</label_l01><label_l02>Menu : (veuillez créer seulement une liste à puce avec des liens)</label_l02></contentMenu>
+			<groupMenu groupEnd="1" expand="1"/>
 			<groupIntro groupStart="1"><label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></groupIntro>
 				<siteTitle enableDynamicAttributes="1" excelExport="auto" type="Varchars" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1"><label_l01>Browser title</label_l01><label_l02>Titre du navigateur</label_l02></siteTitle>
 				<contentIntro enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Page header</label_l01><label_l02>En-tête de la page</label_l02></contentIntro>
 			<groupIntro groupEnd="1" expand="1"/>
 			<groupContent groupStart="1"><label_l01>Article</label_l01><label_l02>Article</label_l02></groupContent>
-				<choosePosition enableDynamicAttributes="1" excelExport="auto" type="Attributs" require='eq(contentType,"content")' readonly='isNotNull(contentPosition)' allowNewValues='1' disabled='notNullAndNotEq(contentType,"content")' expand="1" jsCodeInFormExp='ctlIf(logIn(ctlCurrentFlow(),"element-add","element-copy"), cms_authoringLoadChoosePosition())' onlyInForm="1"><label_l01>Insert before</label_l01><label_l02>Insérer avant</label_l02>
-					<attribute>10000<label_l01>the footer, at the end</label_l01><label_l02>avant le pied de page, à la fin</label_l02></attribute>
-				</choosePosition>		
-				<contentPosition excelExport="auto" type="Numerics" require="0" hidden="1" clearOnCopy="1"><label_l01>Position</label_l01><label_l02>Position</label_l02></contentPosition>				
+				<contentPosition excelExport="auto" type="Numerics" require="0" hidden="1" clearOnCopy="1"><label_l01>Position</label_l01><label_l02>Position</label_l02></contentPosition>
+				<contentNextId excelExport="auto" type="Strings" require="0" hidden="1" clearOnCopy="1"><label_l01>Next Article ID</label_l01><label_l02>ID de l'article suivant</label_l02></contentNextId>
+				<choosePosition enableDynamicAttributes="1" excelExport="auto" type="Attributs" require='eq(contentType,"content")' allowNewValues='1' disabled='notNullAndNotEq(contentType,"content")' expand="1" jsCodeInFormExp='ctlIf(logIn(ctlCurrentFlow(),"element-edit","element-add","element-copy"), cms_authoringLoadChoosePosition())' onlyInForm="1"><label_l01>Insert before</label_l01><label_l02>Insérer avant</label_l02>
+					<attribute>last<label_l01>the footer, at the end</label_l01><label_l02>avant le pied de page, à la fin</label_l02></attribute>
+				</choosePosition>						
 				<contentTitle enableDynamicAttributes="1" excelExport="auto" type="Texts" require='eq(contentType,"content")' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" fullToolbarHtmlArea="1" isInLine="1"><label_l01>Title</label_l01><label_l02>Titre</label_l02></contentTitle>
 				<contentHTML enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"content")' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentHTML>
 			<groupContent groupEnd="1" expand="1"/>

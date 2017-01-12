@@ -35,7 +35,9 @@
  * Where step=1=actOnTreeNode, step=2=actAfterTreeNode
  * See interface TreeInDepthVisitor for details about generated events.
  *
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 18 mars 2014
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class SubElementTreeInDepthVisitorDFA implements DataFlowActivity, TreeInDepthVisitor, ElementPList
 {	
@@ -195,6 +197,7 @@ class SubElementTreeInDepthVisitorDFA implements DataFlowActivity, TreeInDepthVi
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		// checks the presence of a GroupBasedWigiiApiClient		
 		// in that case, takes the provided element service instance
 		$this->apiClient = $dataFlowContext->getAttribute('GroupBasedWigiiApiClient');

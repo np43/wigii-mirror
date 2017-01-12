@@ -34,8 +34,10 @@
  * The supported opening modes are w, a, x and c (see php fopen function)
  * An optional setter to force text mode (t option in php fopen function), default is always binary.
  * This DataFlowActivity generates one single output which is the complete file path to the written file
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * 
  * Created by CWE on 27 juin 2013
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class FileOutputStreamDFA implements DataFlowActivity
 {		
@@ -152,6 +154,7 @@ class FileOutputStreamDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		if(is_null($this->fileName) || $this->fileName == '') throw new DataFlowServiceException("file name has not been initialized", DataFlowServiceException::CONFIGURATION_ERROR);
 		
 		// creates files directory if does not exist

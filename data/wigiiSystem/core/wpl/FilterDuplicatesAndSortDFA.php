@@ -26,7 +26,9 @@
  * The resulting flow can be sorted by the logical keys used to filter duplicates. 
  * This implementation uses the php in memory array sort method.
  * In order to do statistics, it can also provide the distribution of the objects in the flow.
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 24 March 2014
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class FilterDuplicatesAndSortDFA implements DataFlowActivity
 {
@@ -156,6 +158,7 @@ class FilterDuplicatesAndSortDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		if(isset($this->objectClass)) {
 			if(!isset($this->objectSelectorMethod)) $this->objectSelectorMethod=$this->getDefaultObjectSelectorMethod($this->objectClass);
 			if(!isset($this->objectSortByMethod)) $this->objectSortByMethod=$this->getDefaultObjectSortyByMethod($this->objectClass);	

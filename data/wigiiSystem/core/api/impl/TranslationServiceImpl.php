@@ -27,6 +27,7 @@
  * the dictionary is stored in session.
  * Created by LWE on 16 juil. 09
  * Modified by CWE on 24 mars 2015 to store the dictionary in shared memory into the db
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class TranslationServiceImpl implements TranslationService {
 
@@ -389,8 +390,8 @@ class TranslationServiceImpl implements TranslationService {
 		}
 
 		//if no xmlNode, or xmlNode was not successful look in the dictionary
-		if(empty($returnValue)){
-			$dicoKey = $this->getDictionaryKey($principal);
+		$dicoKey = $this->getDictionaryKey($principal);
+		if(empty($returnValue)){			
 			if(!isset($this->dictionary) || !isset($this->dictionary[$dicoKey])){
 				$this->setDictionary($principal);
 			}
@@ -426,8 +427,15 @@ class TranslationServiceImpl implements TranslationService {
 				if(($i % 2)!=0){
 					if(strstr($token, "lement")!==false){
 						$token .= $this->getExecutionModule()->getModuleName();
-					}
+					}					
 					$temp = $this->dictionary[$dicoKey]["#".$token."#"][$lang];
+					// Checks through all languages if still empty
+					if(empty($temp)) {
+						foreach($this->language_installed as $tempLang=>$langLabel){
+							$temp = $this->dictionary[$dicoKey]["#".$token."#"][$tempLang];
+							if(!empty($temp)) break;
+						}
+					}
 //					eput($token); echo "|";
 //					eput($dicoKey); echo "|";
 //					eput($this->dictionary[$dicoKey]["#elements#"]); echo "|";

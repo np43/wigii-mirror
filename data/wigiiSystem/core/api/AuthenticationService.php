@@ -21,16 +21,21 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* wigii system authentication service interface
+/** 
+ * wigii system authentication service interface
  * Created by CWE on 1 juin 09
  * Modified by LWR on 29 july (refactoring in applied service with mainPrincipal concept)
+ * Modified by Medair (LMA) on 08.12.2016 to enable wrapping password as ValueObject instance to hide password value in stack-trace.
  */
 interface AuthenticationService
 {
 	/**
 	 * Authenticate this user. If successfull, the main principal is matched to this user
 	 * rights. Else, the main principal is not changed.
-	 * throws AuthenticationServiceException in case of error
+	 * @param String $username the username for the login
+	 * @param String|ValueObject $password the password used for login (clear password). Can be either a String or wrapped into a ValueObject.
+	 * @param String $clientName Wigii client name to connect to.
+	 * @throws AuthenticationServiceException in case of error
 	 * @return Principal the main principal
 	 */
 	public function login($username, $password, $clientName);
@@ -79,9 +84,9 @@ interface AuthenticationService
 
 	/**
 	 * Try to authenticate a username on a pop3 server.
-	 * @param $username string
-	 * @param $password string
-	 * @param $useSLL = false, boolean, if true use an SSL connection with the server
+	 * @param String $username
+	 * @param String|ValueObject $password
+	 * @param Boolean $useSLL = false, if true use an SSL connection with the server
 	 * @return boolean, true if authentication success. Debug message are written to
 	 * explain the reason of unsuccessful authentication.
 	 */

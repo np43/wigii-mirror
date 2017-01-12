@@ -24,6 +24,8 @@
 /**
  * Wigii Objects created or fetched by FuncExp
  * Created by CWE on 5 decembre 2013
+ * Modified by Medair on 04.11.2016 to integrate QlikSense and Box functions
+ * Modified by Medair (CWE,LMA) on 08.12.2016 to hide password argument in login function and to protect against Cross Site Scripting
  */
 class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 {
@@ -230,6 +232,21 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $this->configS;
 	}
 	
+	private $qlikSenseFE;
+	public function setQlikSenseFormExecutor($qlikSenseFormExecutor)
+	{
+		$this->qlikSenseFE = $qlikSenseFormExecutor;
+	}
+	protected function getQlikSenseFormExecutor()
+	{
+		// autowired
+		if(!isset($this->qlikSenseFE))
+		{
+			$this->qlikSenseFE = TechnicalServiceProvider::getQlikSenseFormExecutor();
+		}
+		return $this->qlikSenseFE;
+	}
+	
 	// FieldSelector builder
 
 	/**
@@ -263,11 +280,14 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * @return FuncExp returns a FuncExp instance wrapping the FieldSelector that will ask the translation.
 	 */
 	public function fs_t($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('The fs_t function takes at least one argument which is the fieldName', FuncExpEvalException::INVALID_ARGUMENT);
-		return $this->getFuncExpBuilder()->fs_t($this->evaluateArg($args[0]),
+		$returnValue = $this->getFuncExpBuilder()->fs_t($this->evaluateArg($args[0]),
 			($nArgs > 1 ? $this->evaluateArg($args[1]) : null),
 			($nArgs > 2 ? $this->evaluateArg($args[2]) : null));
+		if($isOriginPublic) $returnValue->setOriginIsPublic();
+		return $returnValue;
 	}
 
 	/**
@@ -764,9 +784,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * @return FuncExp
 	 */
 	public function strlx2fx($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('The strlx2fx function takes one argument', FuncExpEvalException::INVALID_ARGUMENT);
-		return $this->getFuncExpBuilder()->strlx2fx($this->evaluateArg($args[0]));
+		$returnValue = $this->getFuncExpBuilder()->strlx2fx($this->evaluateArg($args[0]));
+		if($isOriginPublic) $returnValue->setOriginIsPublic();
+		return $returnValue;
 	}
 
 	/**
@@ -920,10 +943,13 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * The call of group(12345,"A") will select and/or create the group A under the group with ID 12345, and returns its ID.
 	 * The call of group(".") will returns the ID of the current selected group.
 	 * The call of group(".", "A") will select and/or create the group A under the current group and return its ID.
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return int selected group ID.
 	 * @throws GroupAdminServiceException if start point is not accessible or if group cannot be created.
 	 */
 	public function group($args) {
+		$this->assertFxOriginIsNotPublic();
 		$this->debugLogger()->logBeginOperation('group');
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('The group function takes at least one argument which is starting group ID or "." or ".."', FuncExpEvalException::INVALID_ARGUMENT);
@@ -1637,8 +1663,11 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>adminCreateRoleByWigiiNamespace(wigiiBPLParam)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) wigiiBPLParam: WigiiBPLParameter. The Wigii business process parameters as defined in the WigiiBPL::adminCreateRoleByWigiiNamespace method.
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 */
 	public function adminCreateRoleByWigiiNamespace($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('The adminCreateRoleByWigiiNamespace function takes at least one argument which is the WigiiBPLParameter', FuncExpEvalException::INVALID_ARGUMENT);
 		$parameter = $this->evaluateArg($args[0]);
@@ -1686,9 +1715,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	/**
 	 * Returns true if public login is enabled for the current client
 	 * FuncExp signature : <code>adminIsPublicAccessEnabled()</code>
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return boolean
 	 */
 	public function adminIsPublicAccessEnabled($args) {
+		$this->assertFxOriginIsNotPublic();
 		$authS = $this->getAuthenticationService();
 		if($authS instanceof AuthenticationServiceWebImpl) {
 			return $authS->isPublicAccessEnabledForClient($this->getPrincipal()->getWigiiNamespace()->getClient()->getClientName());
@@ -1709,8 +1741,10 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 *   'cfgAttributeExp': clears one specific calculated drop-down
 	 * - Arg(1) key: String|FuncExp. Optional cache key name if supported by the cache type.
 	 * If cache type is 'cfgAttributeExp', then the key is mandatory and has to be the AttributeExp FuncExp used to populate the drop-down.
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 */
 	public function ctlClearCache($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<1) throw new FuncExpEvalException('The ctlClearCache takes at least one argument which is the cache type', FuncExpEvalException::INVALID_ARGUMENT);
 		$type=$this->evaluateArg($args[0]);
@@ -1757,8 +1791,11 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>log(message)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) message: String. The message to log.
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 */
 	public function sysLog($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('The sysLog function takes at least one argument which is the message', FuncExpEvalException::INVALID_ARGUMENT);
 	
@@ -1794,9 +1831,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * If 'forFile' then gives root url to access static content,
 	 * elseif 'forClient' then gives root url to access to current CLIENT static content
 	 * if null then gives access to site root. 
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String
 	 */
 	public function sysSiteRootUrl($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs>0) $area = $this->evaluateArg($args[0]);
 		else $area = '';
@@ -1820,9 +1860,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>sysExecParameter(index)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) index: Int. The parameter index 0..n. 
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String|Array if index is specified, returns the parameter value, else returns an array with all parameters.
 	 */
 	public function sysExecParameter($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs>0) $index = $this->evaluateArg($args[0]);
 		return ServiceProvider::getExecutionService()->getCrtParameters($index);
@@ -1834,9 +1877,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * Where arguments are :
 	 * - Arg(0) returnAttribute: String. The name of the attribute to return. If object returns the WigiiNamespace instance.
 	 * Defaults to url which returns the WigiiNamespace url.
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String|WigiiNamespace the current WigiiNamespace attribute or object
 	 */
 	public function sysCrtWigiiNamespace($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs=$this->getNumberOfArgs($args);
 		if($nArgs>0) $returnAttribute=$this->evaluateArg($args[0]);
 		else $returnAttribute='url';
@@ -1866,9 +1912,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * Where arguments are :
 	 * - Arg(0) returnAttribute: String. The name of the attribute to return. If object returns the Module instance.
 	 * Defaults to url which returns the Module url.
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String|Module the current Module attribute or object
 	 */
 	public function sysCrtModule($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs=$this->getNumberOfArgs($args);
 		if($nArgs>0) $returnAttribute=$this->evaluateArg($args[0]);
 		else $returnAttribute='url';
@@ -1895,9 +1944,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	/**
 	 * Returns an array containing the IDs of the elements currently beeing selected
 	 * FuncExp signature : <code>sysMultipleSelection()</code><br/>
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return Array an array with the element IDs or an empty array if no multiple selection
 	 */
 	public function sysMultipleSelection($args) {
+		$this->assertFxOriginIsNotPublic();
 		$lc = ServiceProvider::getWigiiBPL()->getListContext($this->getPrincipal());
 		if(isset($lc) && $lc->isMultipleSelection()) return $lc->getMultipleSelection();
 		else return array();
@@ -1927,7 +1979,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			// logout only if not MinimalPrincipal
 			if(!$authS->isMainPrincipalMinimal()) $authS->logout();
 			// login
-			$currentPrincipal = $authS->login($username, $password, $currentPrincipal->getWigiiNamespace()->getClient()->getClientName());
+			$currentPrincipal = $authS->login($username, ValueObject::createInstance($password), $currentPrincipal->getWigiiNamespace()->getClient()->getClientName());
 			// password expiration check
 			if ($currentPrincipal->passwordExpired()) {
 				if ($currentPrincipal->canModifyRealUserPassword()) {
@@ -2063,5 +2115,38 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			}
 			else echo $element->getFieldValue($fieldName, "content");		
 		}
+	}
+	
+	
+	// Box integration
+	
+	/**
+	 * Checks if a given file path refers to a Box file
+	 * Only checks path syntax, does not query Box.com
+	 * FuncExp signature : <code>boxIsPathCorrect(filePath)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) filePath: String. The path of the file to check if it relates to a Box file
+	 * @return boolean true if file has a path equal to box://... else false
+	 */
+	public function boxIsPathCorrect($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) {
+			return (strpos($this->evaluateArg($args[0]), "box://")!==false); 
+		}
+		else throw new FuncExpEvalException('boxIsPathCorrect takes at least one argument which is a file path', FuncExpEvalException::INVALID_ARGUMENT);
+	}
+	
+	// QlikSense integration
+	
+	/**
+	 * Returns the complete http url to access the linked QlikSense server
+	 * FuncExp signature : <code>qlikSenseUrl()</code><br/>
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * @return String qlikSense url with ending slash, combining QlikSense base Url and virtual proxy, as defined in QlikSense_config.xml
+	 */
+	public function qlikSenseUrl($args) {
+		$this->assertFxOriginIsNotPublic();
+		return $this->getQlikSenseFormExecutor()->getQlikSenseUrl();
 	}
 }

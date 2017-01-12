@@ -23,7 +23,9 @@
 
 /**
  * An data flow activity which renders an ElementPList as html
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 8.7.2015
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class ElementPListHtmlRendererDFA implements DataFlowActivity
 {	
@@ -113,6 +115,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		$this->debugLogger()->write('startOfStream');
 		$this->generateHtml = $this->outputEnabled || !($this->redirectIfOneElement||$this->redirectIfOneGroup);
 		$html = null;

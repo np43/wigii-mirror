@@ -64,6 +64,7 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 		$fe->setExternalAccessFieldname($fieldName);
 		$fe->setExternalAccessFieldXml($fieldXml);
 		$fe->setExternalAccessLevel($externalAccessLevel);
+		$fe->getTrm()->setExternalAccessLevel($externalAccessLevel);
 		$fe->setExternalAccessEndDate($externalAccessEndDate);
 		$fe->setGroupSubscriptionRecord($groupSubscriptionRecord);
 
@@ -178,18 +179,21 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 			$emailCustomBody = $subR->getFieldValue("subscriptionConfEmailText");
 			$emailCustomBody = $emailCustomBody[$transS->getLanguage()];
 			if($emailCustomBody){
+				//if no access is provided in the email message, then close external access
+				if(strpos($emailCustomBody, '$access$')!==false) $accessLevel = Emails::EXTERNAL_ACCESS_EDIT;
+				elseif(strpos($emailCustomBody, '$accessRead$')!==false) $accessLevel = Emails::EXTERNAL_ACCESS_VIEW;
+				else $accessLevel = Emails::EXTERNAL_ACCESS_STOP;
+				
 				//if access is provided in the email message, then open access limited to subscriptionPeriodEndDate
-				if(	strpos($emailCustomBody, '$access$')!==false){
+				if($accessLevel!=Emails::EXTERNAL_ACCESS_STOP){
 					if($subR->getFieldValue("subscriptionPeriod", "endDate")){
 						$this->getRecord()->setFieldValue(strtotime($subR->getFieldValue("subscriptionPeriod", "endDate")." 23:59:00"), $emailFieldName, "externalAccessEndDate");
 					} else {
 						$this->getRecord()->setFieldValue($oldRecord->getFieldValue($emailFieldName, "externalAccessEndDate"), $emailFieldName, "externalAccessEndDate");
 					}
-					$this->getRecord()->setFieldValue(Emails::EXTERNAL_ACCESS_EDIT, $emailFieldName, "externalAccessLevel");
-				} else {
-					//if no access is provided in the email message, then close external access
-					$this->getRecord()->setFieldValue(Emails::EXTERNAL_ACCESS_STOP, $emailFieldName, "externalAccessLevel");
+					
 				}
+				$this->getRecord()->setFieldValue($accessLevel, $emailFieldName, "externalAccessLevel");
 				//hidden fields are not available in the record if the email has not changed, so reload from previous email.
 				if(!$this->getRecord()->getWigiiBag()->isChanged($emailFieldName)){
 					$this->getRecord()->setFieldValue($oldRecord->getFieldValue($emailFieldName, "externalConfigGroup"), $emailFieldName, "externalConfigGroup");
@@ -240,6 +244,7 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 			$mergeData[$emailValue]['$confirmation$']= $elS->getEmailValidationLinkFromCode($p, $this->getRecord()->getFieldValue($emailFieldName, "proofKey"))."/".$transS->getLanguage();
 			$mergeData[$emailValue]['$unsubscribe$']= $elS->getEmailUnsubscribeLinkFromCode($p, $this->getRecord()->getFieldValue($emailFieldName, "proofKey"))."/".$transS->getLanguage();
 			$mergeData[$emailValue]['$access$']= $elS->getExternalAccessLinkFromCode($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $this->getRecord()->getFieldValue($emailFieldName, "externalCode")).($this->getRecord()->getFieldValue($emailFieldName, "externalAccessLevel")==Emails::EXTERNAL_ACCESS_EDIT ? "/edit" : "/view")."/".$transS->getLanguage();
+			$mergeData[$emailValue]['$accessRead$']= $elS->getExternalAccessLinkFromCode($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $this->getRecord()->getFieldValue($emailFieldName, "externalCode"))."/view"."/".$transS->getLanguage();
 			$templatePath = $this->getWigiiExecutor()->getConfigurationContext()->getTemplatePath($p, $exec->getCrtModule(), Activity::createInstance("BaseEmail", $exec->getCrtModule()));
 			$body = $emailCustomBody;
 			ob_start();

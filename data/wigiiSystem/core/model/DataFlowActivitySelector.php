@@ -24,11 +24,13 @@
 /**
  * A data flow activity selector
  * Created by CWE on 28 mai 2013
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  */
 class DataFlowActivitySelector
 {
 	private $className;
 	private $parameters = array();
+	private $originPublic;
 	
 	/**
 	 * Creates a instance of a DataFlowActivitySelector
@@ -78,4 +80,14 @@ class DataFlowActivitySelector
 		if(is_null($parameterName)) throw new DataFlowServiceException("parameterName cannot be null", DataFlowServiceException::INVALID_ARGUMENT);
 		return $this->parameters[$parameterName];
 	}
+	
+	/**
+	 * Marks this DataFlowActivitySelector as originating from Public space. Cannot be undone.
+	 * Once origin is marked as public, then DataFlowService or any DataFlowActivity implementation are free to stop execution with an DataFlowServiceException::FORBIDDEN (403)
+	 */
+	public function setOriginIsPublic() {$this->originPublic = true;}
+	/**
+	 * @return Boolean returns true if this DataFlowActivitySelector has been marked as originating from Public space, else false.
+	 */
+	public function isOriginPublic() {return $this->originPublic;}
 }

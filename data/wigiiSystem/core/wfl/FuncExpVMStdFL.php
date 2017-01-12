@@ -25,7 +25,8 @@
  * The Func Exp VM Standard Library
  * Created by CWE on 1er octobre 2013
  * Modified by CWE on 14 octobre 2013
- * Modified by Medair on 12.07.2016
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
+ * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 class FuncExpVMStdFL extends FuncExpVMAbstractFL
 {
@@ -111,6 +112,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * If true then instructs the iterator to go recursively down, else only iterates first level. See FuncExpIterator for more details.
 	 */
 	public function gen($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 2) throw new FuncExpEvalException('For the generator function the number of arguments should be 2: a FuncExpIterator and a DataFlowActivitySelectorList', FuncExpEvalException::INVALID_ARGUMENT);
 		// gets func exp iterator
@@ -133,7 +135,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 					$dfasl = $this->evaluateArg($args[1]);
 					if(isset($dfasl) && !($dfasl instanceof DataFlowActivitySelectorList)) throw new FuncExpEvalException('second argument should evaluate to a valid DataFlowActivitySelectorList instance', FuncExpEvalException::INVALID_ARGUMENT);
 				}
-
+				
 				// gets stepInto optional arg
 				if($nArgs > 2 && isset($args[2])) {
 					$stepInto = $this->evaluateArg($args[2]);
@@ -148,6 +150,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 				$streamExists = isset($iterator);
 				$dfs = $this->getDataFlowService();
 				if($dataFlowExists) {
+					if($isOriginPublic) $dfasl->setOriginIsPublic();
 					// if more than one data chunk then opens stream
 					if($streamExists) {
 						$dfCtx = $dfs->startStream($this->getPrincipal(), $dfasl);
@@ -187,6 +190,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return FuncExpIterator a FuncExpIterator instance to browse through the list.
 	 */
 	public function genQuantity($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1 || empty($args[0]) || !($args[0] instanceof FuncExp)) throw new FuncExpEvalException("the genQuantity funcexp takes two arguments: a constructor which is a FuncExp and a quantity which is an integer", FuncExpEvalException::INVALID_ARGUMENT);
 		$constructor = $args[0];
@@ -206,6 +210,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 				$orderedConstructor->addArgument($ordinal);
 			}
 			else $orderedConstructor = $constructor;
+			if($isOriginPublic) $orderedConstructor->setOriginIsPublic();
 			return $this->getFuncExpVMServiceProvider()->getFuncExpIteratorForRecursiveCall($this->evaluateArg($orderedConstructor),
 			array($constructor, $quantity-1, $ordinal+1));
 		}
@@ -223,6 +228,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return FuncExpIterator a FuncExpIterator instance to browse through the list.
 	 */
 	public function genIfTrue($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 2 || empty($args[0]) || !($args[0] instanceof FuncExp)
 		|| empty($args[1]) || !($args[1] instanceof FuncExp)) throw new FuncExpEvalException("the genQuantity funcexp takes two arguments of type FuncExp: a constructor and a condition", FuncExpEvalException::INVALID_ARGUMENT);
@@ -240,6 +246,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 				$orderedConstructor->addArgument($ordinal);
 			}
 			else $orderedConstructor = $constructor;
+			if($isOriginPublic) $orderedConstructor->setOriginIsPublic();
 			return $this->getFuncExpVMServiceProvider()->getFuncExpIteratorForRecursiveCall($this->evaluateArg($orderedConstructor),
 			array($constructor, $condition, $ordinal+1));
 		}
@@ -258,9 +265,12 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return Any optionally returns some data if the last stage of the data flows writes some output.
 	 */
 	public function sel($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 2 || empty($args[0]) || empty($args[1])) throw new FuncExpEvalException("the sel funcexp takes two arguments : a DataFlowDumpable object and a DataFlowActivitySelectorList", FuncExpEvalException::INVALID_ARGUMENT);
-		return $this->getFuncExpBuilder()->sel($this->getPrincipal(), $this->evaluateArg($args[0]), $this->evaluateArg($args[1]));
+		$dfasl = $this->evaluateArg($args[1]);
+		if(isset($dfasl) && $isOriginPublic) $dfasl->setOriginIsPublic();
+		return $this->getFuncExpBuilder()->sel($this->getPrincipal(), $this->evaluateArg($args[0]), $dfasl);
 	}
 
 	// Aggregators
@@ -593,6 +603,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * or <code>fx(funcExp)</code>
 	 */
 	public function fx($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		$returnValue = null;
 		// if we have only one funcexp returns it
@@ -607,6 +618,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 				$returnValue->addArgument($args[$i]);
 			}
 		}
+		if(isset($returnValue) && $isOriginPublic) $returnValue->setOriginIsPublic();
 		return $returnValue;
 	}
 
@@ -701,9 +713,14 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return FuncExp
 	 */
 	public function str2fx($args) {
-		$nArgs = $this->getNumberOfArgs($args);
+		$isOriginPublic = $this->isFxOriginPublic();
+		$nArgs = $this->getNumberOfArgs($args);		
+		
 		if($nArgs < 1) throw new FuncExpEvalException('The str2fx function takes one argument', FuncExpEvalException::INVALID_ARGUMENT);
-		return $this->getFuncExpBuilder()->str2fx(stripslashes($this->evaluateArg($args[0])));
+		$returnValue = $this->getFuncExpBuilder()->str2fx(stripslashes($this->evaluateArg($args[0])));
+		// propagates public origin to new parsed function
+		if($isOriginPublic && $returnValue instanceof FuncExp) $returnValue->setOriginIsPublic();
+		return $returnValue;
 	}
 
 	/**
@@ -755,19 +772,24 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		else return '';
 	}
 	/**
-	 * Returns a Base 64 Url representation of given Object converted to its FuncExp equivalent<br/>
+	 * Deserializes an object which has been serialized using obj2base64url<br/>
 	 * FuncExp signature : <code>base64url2obj(str)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) str: A serialized Object using the obj2base64url function
 	 * @return Any the deserialized object
 	 */
 	public function base64url2obj($args) {
-		$nArgs = $this->getNumberOfArgs($args);
+		$isOriginPublic = $this->isFxOriginPublic();
+		$nArgs = $this->getNumberOfArgs($args);		
+		
 		if($nArgs > 0) {
 			$obj = $this->evaluateArg($args[0]);
 			if(!empty($obj)) {
 				$obj = base64url_decode($obj);
 				$obj = $this->getFieldSelectorFuncExpParser()->createFuncExpFromString($obj);
+				// propagates public origin to new parsed function
+				if($isOriginPublic && $obj instanceof FuncExp) $obj->setOriginIsPublic();
+				// evaluates Func Exp
 				return $this->evaluateFuncExp($obj);
 			}			
 			else return null;
@@ -790,6 +812,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return DataFlowActivitySelector a DataFlowActivitySelector instance
 	 */
 	public function dfasfx($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		if($this->getNumberOfArgs($args) < 1 ||
 			empty($args[0]) ||
 			!($args[0] instanceof FuncExp)) throw new FuncExpEvalException("funcExp dfasfx takes at least one argument which should be a non null instance of a FuncExp", FuncExpEvalException::INVALID_ARGUMENT);
@@ -798,6 +821,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		// forks the current vm (except parent evaluator)
 		// and sets it as the func exp evaluator to be used by the FuncExpDFA
 		$returnValue->setDataFlowActivityParameter('setFuncExpEvaluator', ServiceProvider::getFuncExpVM($this->getPrincipal(), null, get_class($this->getFuncExpVM())));
+		if($isOriginPublic) $returnValue->setOriginIsPublic();
 		return $returnValue;
 	}
 	/**
@@ -815,6 +839,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return DataFlowActivitySelectorList a DataFlowActivitySelectorList instance
 	 */
 	public function dfaslfx($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		$returnValue = null;
 		if($nArgs > 0) {
@@ -832,7 +857,8 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 					$returnValue->addDataFlowActivitySelectorInstance($dfas);
 				}
 			}
-		}
+		}		
+		if(isset($returnValue) && $isOriginPublic) $returnValue->setOriginIsPublic();
 		return $returnValue;
 	}
 	/**
@@ -845,6 +871,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return DataFlowActivitySelector a DataFlowActivitySelector instance
 	 */
 	public function dfas($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1 || empty($args[0])) throw new FuncExpEvalException("func exp should have at least one non null argument which is the class name", FuncExpEvalException::INVALID_ARGUMENT);
 		// gets class name
@@ -869,6 +896,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 			$returnValue->setDataFlowActivityParameter($paramName, $paramValue);
 			$i++;
 		}
+		if($isOriginPublic) $returnValue->setOriginIsPublic();
 		return $returnValue;
 	}
 	/**
@@ -879,6 +907,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return DataFlowActivitySelectorList a DataFlowActivitySelectorList instance
 	 */
 	public function dfasl($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		$returnValue = null;
 		if($nArgs > 0) {
@@ -892,6 +921,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 				}
 			}
 		}
+		if(isset($returnValue) && $isOriginPublic) $returnValue->setOriginIsPublic();
 		return $returnValue;
 	}
 
@@ -901,7 +931,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) dfasl1: evaluates to an object of type DataFlowActivitySelectorList
 	 * - Arg(1..n) dfaslI: evaluates to an object of type DataFlowActivitySelectorList
-	 * @return DataFlowSelectorList returns dfasl1 instance with the content of dfasli appended.
+	 * @return DataFlowActivitySelectorList returns dfasl1 instance with the content of dfasli appended.
 	 */
 	public function appendDfasl($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1172,14 +1202,17 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	
 	/**
 	 * Calls a method on an object.<br/>
-	 * FuncExp signature is: <code>oVal(obj, methodName, arg1, arg2, ...)</code><br/>
+	 * FuncExp signature is: <code>oCall(obj, methodName, arg1, arg2, ...)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) obj: Object. Evaluates to the object on which to call the method
 	 * - Arg(1) methodName: String. The name of the method to call on the Object
 	 * - Arg(2..n) argI: Any. Method arguments
-	 *  @return Any the method return value
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * @return Any the method return value
 	 */
 	public function oCall($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<2) throw new FuncExpEvalException('oCall takes at least two arguments which are the object and the method to be called on the object', FuncExpEvalException::INVALID_ARGUMENT);
 		$obj = $this->evaluateArg($args[0]);
@@ -1894,9 +1927,12 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * - Arg(0) tagName: String. The name of the html tag, for example "div" or "p"
 	 * - Arg(1,3,5,...) keyI: String. An html attribute name, for example "class"
 	 * - Arg(2,4,6,...) valueI: String. An html attribute value, for example "ui-dialog"	
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String
 	 */
 	public function htmlStartTag($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<1) throw new FuncExpEvalException("htmlStartTag func exp takes at least one argument which is the html tagName", FuncExpEvalException::INVALID_ARGUMENT);
 		$tagName = $this->evaluateArg($args[0]);
@@ -1926,9 +1962,12 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * FuncExp signature : <code>htmlEndTag(tagName)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) tagName: String. The name of the html tag, for example "div" or "p"
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String
 	 */
 	public function htmlEndTag($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<1) throw new FuncExpEvalException("htmlStartTag func exp takes at least one argument which is the html tagName", FuncExpEvalException::INVALID_ARGUMENT);
 		$tagName = $this->evaluateArg($args[0]);
@@ -1942,6 +1981,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) multiplier : optional argument. Evaluates to a positive integer which indicates the number of time
 	 * the nbsp html entity must be repeated. Default is one time.
+	 * @return String
 	 */
 	public function htmlNbsp($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1953,7 +1993,9 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	
 	/**
 	 * Returns an html quot entity
-	 * @return string
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * @return String
 	 */
 	public function htmlQuot($args) {
 		return '&quot;';
@@ -1993,9 +2035,12 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * - Arg(0) baseUrl : String. The hierarchical part of the url (sheme://host/path)
 	 * - Arg(1,3,5,...) keyI: String. The query key
 	 * - Arg(2,4,6,...) valueI: String. The query value
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String. Calling htmlUrlQuery(baseUrl,key1,value1,key2,value2) will return baseUrl?key1=value1&key2=value2
 	 */	
 	public function htmlUrlQuery($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<1) throw new FuncExpEvalException("htmlUrlQuery func exp takes at least one argument which is the base url", FuncExpEvalException::INVALID_ARGUMENT);
 		$baseUrl = $this->evaluateArg($args[0]);
@@ -2023,9 +2068,12 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	
 	/**
 	 * Returns an html document headeer
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String
 	 */
 	public function htmlHeader($args) {
+		$this->assertFxOriginIsNotPublic();
 		return '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
 	} 
 		
@@ -2075,9 +2123,12 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * FuncExp signature : <code>txt2html(str)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) str : the string to be converted
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String the String html compatible.
 	 */
 	public function txt2html($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		$returnValue = '';
 		if($nArgs > 0) {

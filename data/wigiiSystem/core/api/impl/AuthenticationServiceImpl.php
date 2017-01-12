@@ -21,9 +21,11 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* wigii AuthenticationService implementation
+/**
+ * wigii AuthenticationService implementation
  * Created by CWE on 2 juin 09
  * Modified by CWE on 5 sept 2013 to take advantage of the Principal bindToRole and bindToRealUser methods
+ * Modified by Medair (LMA) on 08.12.2016 to enable wrapping password as ValueObject instance to hide password value in stack-trace.
  */
 class AuthenticationServiceImpl implements AuthenticationService
 {
@@ -214,14 +216,14 @@ class AuthenticationServiceImpl implements AuthenticationService
 		$this->mainPrincipal = $principal;
 		$this->getSessionAdminService()->storeData($this,"mainPrincipal", $this->mainPrincipal);
 	}
-
-	/**
-	 * Authenticate this user. If successfull, the main principal is matched to this user
-	 * rights. Else, the main principal is not changed.
-	 * throws AuthenticationServiceException in case of error
-	 * @return Principal the main principal
-	 */
+	
 	public function login($username, $password, $clientName){
+		
+		//Decode the $password if it's an instance of ValueObject
+		if($password instanceof ValueObject){
+			$password = $password->getValue();
+		}
+		
 		$this->executionSink()->publishStartOperation("login");
 		$returnValue = null;
 		try
@@ -233,7 +235,8 @@ class AuthenticationServiceImpl implements AuthenticationService
 			if(!$this->isMainPrincipalMinimal()){
 				throw new AuthenticationServiceException('A login is attempted and the main principal is not a Minimal Principal. Logout before login.',AuthenticationServiceException::NOT_MINIMAL_PRINCIPAL);
 			}
-			$returnValue = $this->authenticate($username, $password, $clientName, false);
+			
+			$returnValue = $this->authenticate($username, ValueObject::createInstance($password), $clientName, false); //The password is converted in ValueObject
 			//register this principal to make it valid
 			$this->registerPrincipal($returnValue);
 			//if authentication successfull then store this principal in the mainPrincipal
@@ -475,12 +478,18 @@ class AuthenticationServiceImpl implements AuthenticationService
 
 	/**
 	 * Try to authenticate a username on a pop3 server.
-	 * Throw AuthenticationServiceException if unsuccessful
-	 * @param $username string
-	 * @param $password string
-	 * @param $useSLL = false, boolean, if true use an SSL connection with the server
+	 * @param String $username
+	 * @param String|ValueObject $password 
+	 * @param Boolean $useSLL = false, if true use an SSL connection with the server
+	 * @throws AuthenticationServiceException if unsuccessful
 	 */
 	public function authenticateWithPop3($username, $password, $server, $useSSL = false){
+		
+		//Decode the $password if it's an instance of ValueObject
+		if($password instanceof ValueObject){
+			$password = $password->getValue();
+		}
+		
 		$this->executionSink()->publishStartOperation("authenticateWithPop3");
 		try
 		{
@@ -578,8 +587,8 @@ class AuthenticationServiceImpl implements AuthenticationService
 
 	/**
 	 * This method is a factorisation to allow inheritance on this specific part
-	 * @param $p AuthenticationServicePrincipal
-	 * @param $password, is not used in this implementation
+	 * @param AuthenticationServicePrincipal $p 
+	 * @param String|ValueObject $password, is not used in this implementation
 	 * @param $postFix, is not used in this implementation
 	 */
 	protected function findUserForClient($p, $username, $password, $postFix, $client){
@@ -588,7 +597,7 @@ class AuthenticationServiceImpl implements AuthenticationService
 	/**
 	 * Authenticates a user given its username and password and returns a Principal object
 	 * username: user name
-	 * password: user password / or null in case of public authentication
+	 * password: user password / or null in case of public authentication. Can be ValueObject to hide the password
 	 * clientName: client for which the user wants to be autenticated
 	 * isPublic = false, if true then do the authentication for a public user
 	 * throws AuthenticationServiceException in case of error
@@ -596,6 +605,12 @@ class AuthenticationServiceImpl implements AuthenticationService
 	 */
 	protected function authenticate($username, $password, $clientName, $isPublic = false)
 	{
+		
+		//Decode the password if it's an instance of ValueObject
+		if($password instanceof ValueObject){
+			$password = $password->getValue();
+		}
+		
 		$p = $this->getAuthenticationServicePrincipal();
 		// gets the client based on its client name
 		$client = $this->getClientAdminService()->getClient($p, $clientName);
@@ -635,7 +650,7 @@ class AuthenticationServiceImpl implements AuthenticationService
 		}
 
 		// does the user exist in the database ?
-		$user = $this->findUserForClient($p, $username, $password, $postFix, $client);
+		$user = $this->findUserForClient($p, $username, ValueObject::createInstance($password), $postFix, $client);
 
 		//if no user with this name si found
 		if(!isset($user)) throw new AuthenticationServiceException('User '.$username." dosen't exist for client ".$client->getClientName(), AuthenticationServiceException::INVALID_USERNAME);
@@ -643,10 +658,11 @@ class AuthenticationServiceImpl implements AuthenticationService
 		$userd = $user->getDetail();
 
 		//if a user is found, then begin the authentification checks
-
+		
 		//check if the user is blacklisted
 		if(!$this->isNotBlacklisted($user)) throw new AuthenticationServiceException('User '.$username." is unauthorized in Admin config file for client ".$client->getClientName(), AuthenticationServiceException::FORBIDDEN);
-
+		
+		
 		if(!$isPublic){
 			//check if the user has not failed to login in to often
 			if(!$this->checkLoginFailureFrequency($user)) throw new AuthenticationServiceException('User '.$username." has currently a login failure frequency to high for this client ".$client->getClientName(), AuthenticationServiceException::WAIT);
@@ -654,7 +670,7 @@ class AuthenticationServiceImpl implements AuthenticationService
 			//check the login
 			try {
 				$this->debugLogger()->write("try to authenticate with: ".$user->getUsername());
-				$this->doAuthenticate($user, $password, $postFix, $userd->getAuthenticationMethod());
+				$this->doAuthenticate($user, ValueObject::createInstance($password), $postFix, $userd->getAuthenticationMethod()); //Password convert in valueObject
 			} catch (AuthenticationServiceException $authE){
 				$userd->setInfo_nbFailedLogin($userd->getInfo_nbFailedLogin() + 1);
 				$userd->setInfo_lastFailedLogin(time());
@@ -729,11 +745,18 @@ class AuthenticationServiceImpl implements AuthenticationService
 	 * throw exception if authentication failed
 	 */
 	protected function doAuthenticate($user, $password, $postFix, $authenticationMethod){
+				
+		//Decode the password from ValueObject
+		if($password instanceof ValueObject){
+			$password = $password->getValue();
+		}
+		
 		$p = $this->getAuthenticationServicePrincipal();
 		//do the user authentication
 		switch ($authenticationMethod){
 			case "usual":
-				$this->doUsualAuthentication($user, $password);
+				//Add the convertion of $password into a ValueObject to prevent the show in the stacktrace
+				$this->doUsualAuthentication($user, ValueObject::createInstance($password));
 				break;
 			case "pop3SSL":
 				$useSSL = true;
@@ -748,7 +771,8 @@ class AuthenticationServiceImpl implements AuthenticationService
 				} else {
 					$defaultEmailPostfix = null;
 				}
-				$this->authenticateWithPop3($user->getUsername().($postFix ? "" : $defaultEmailPostfix), $password, $server, $useSSL);
+				//Add the convertion of $password into a ValueObject to prevent the show in the stacktrace
+				$this->authenticateWithPop3($user->getUsername().($postFix ? "" : $defaultEmailPostfix), ValueObject::createInstance($password), $server, $useSSL);
 				break;
 			default:
 				throw new AuthenticationServiceException('Incorrect authentication method: '.$authenticationMethod.' for user: '.$user->gerUsername()." for client: ".$user->getWigiiNamespace()->getClient()->getClientName(), AuthenticationServiceException::INVALID_ARGUMENT);
@@ -757,6 +781,12 @@ class AuthenticationServiceImpl implements AuthenticationService
 	}
 
 	protected function doUsualAuthentication($user, $password){
+		
+		//Decode the password if it has been encode in an ObjectValue
+		if($password instanceof ValueObject){
+			$password = $password->getValue();
+		}
+		
 		if($user->getDetail()->getPassword() != md5($password)){
 			throw new AuthenticationServiceException('Incorrect password for user: '.$user->getUsername()." for client: ".$user->getWigiiNamespace()->getClient()->getClientName(), AuthenticationServiceException::INVALID_PASSWORD);
 			$this->debugLogger()->write('Incorrect password for user: '.$user->getUsername()." for client: ".$user->getWigiiNamespace()->getClient()->getClientName());

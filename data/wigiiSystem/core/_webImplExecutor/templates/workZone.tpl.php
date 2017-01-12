@@ -48,7 +48,7 @@ switch($exec->getCrtModule()->getModuleName()){
 			//asynch call groupPanel --> this allow caching and accelerate rendering
 			//$exec->addJsCode($exec->getCurrentUpdateJsCode($p, 'groupPanel', 'display/groupPanel'));
 		?></div><?
-		if($this->isWorkzoneViewDocked()) {
+		// 20.12.2016 Medair (LMA): moved elementDialog div to allow workzone docking
 		?><div id="dockingContainer" style=""><?
 		?><div id="moduleView" class="docked"><?
 			if($exec->getIsUpdating() && !$displayOnlyStructure) $this->includeTemplateModuleView($p, $exec);
@@ -58,14 +58,14 @@ switch($exec->getCrtModule()->getModuleName()){
 		?><div class="collapse SB grayFont"><span>&laquo;</span></div><?
 		?><div id='elementDialog' class='elementDialog docked'></div><?
 		?></div><?
-		}
+		/*
 		else {		
 		?><div id="moduleView"><?
 			if($exec->getIsUpdating() && !$displayOnlyStructure) $this->includeTemplateModuleView($p, $exec);
 			//asynch call module view --> this allow caching and accelerate rendering
 			//$exec->addJsCode($exec->getCurrentUpdateJsCode($p, 'moduleView', 'display/moduleView'));
 		?></div><?		
-		}
+		*/
 }
 
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end workzone.tpl.php"] = microtime(true);

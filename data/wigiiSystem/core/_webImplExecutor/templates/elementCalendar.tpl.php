@@ -152,7 +152,7 @@ if(!$url){ //display list only if no url
 		}
 		$exec->addJsCode("" .
 				"if($('#searchBar .toolbarBox .outlook').length!=0){ $('#searchBar .toolbarBox .outlook').remove(); }" .
-				"$('#searchBar .toolbarBox').append('<div class=\"outlook L H ui-corner-all".($outlookButtonEnabled ? "" : " disabledR ")."\" title=\"$outlookHelp\" style=\"font-weight:bold;background-color:#fff;padding-bottom:5px;\">".$transS->h($p, "showInOutlookButton")."</div>')" .
+				"$('#searchBar .toolbarBox').append('<div class=\"outlook L H ui-corner-all".($outlookButtonEnabled ? "" : " disabledR ")."\" title=\"$outlookHelp\" style=\"font-weight:bold;background-color:#fff;padding-bottom:5px;\"><span class=\"showInOutlookText\">".$transS->h($p, "showInOutlookButton")."<span></div>')" .
 				";");
 		if($outlookButtonEnabled){
 			$exec->addJsCode("" .
@@ -165,7 +165,20 @@ if(!$url){ //display list only if no url
 						"<p style=\"margin-bottom:10px;\">$expl</p>" .
 					"</div>" .
 					"');" .
-				"setListenersToMenu('searchBar .toolbarBox .outlook', 'outlookMenu', null, null);" .
+				//New function to show the outlookMenu without use the generic function
+				//This function show the element when your click on and if you click again, the element is hidden. You can use the cross too to hidden the element.
+				"$('#searchBar .toolbarBox .outlook .showInOutlookText').click(function() {
+					if($('#outlookMenu').css('display') == 'none') {
+						$('#outlookMenu').fadeIn();
+					} else {
+						$('#outlookMenu').fadeOut();
+					}
+					$('#outlookMenu input').select();
+				});".
+				"$('#searchBar .toolbarBox .SBB .exit').click(function() {
+					$('#outlookMenu').fadeOut();
+				});".
+				//"setListenersToMenu('searchBar .toolbarBox .outlook', 'outlookMenu', null, null);" .
 				" ");
 		}
 

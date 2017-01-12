@@ -328,6 +328,23 @@ class FuncExpVM implements FuncExpEvaluator {
 		return $this->getObjectInScope($this->getScopeKeyForVMValue('currentFuncExp'), false);
 	}
 	
+	/**
+	 * Asserts that current FuncExp beeing evaluated does not originate from public space.
+	 * @throws FuncExpEvalException with code FORBIDDEN (403) if current FuncExp is marked as public.
+	 */
+	public function assertFxOriginIsNotPublic() {
+		$currentFx = $this->getCurrentEvaluatingFuncExp();		
+		if($currentFx instanceof FuncExp && $currentFx->isOriginPublic()) throw new FuncExpEvalException("FuncExp '".$currentFx->getName()."' originates from public space and is not authorized to be executed.", FuncExpEvalException::FORBIDDEN);
+	}
+	
+	/**
+	 * @return Boolean returns true if current FuncExp beeing evaluated originates from public space, null if unknown, false if not.
+	 */
+	public function isFxOriginPublic() {
+		$currentFx = $this->getCurrentEvaluatingFuncExp();
+		if($currentFx instanceof FuncExp) return $currentFx->isOriginPublic();
+	}
+	
 	// Introspection
 	
 	/**

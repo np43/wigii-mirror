@@ -49,11 +49,11 @@ if($lc->getGroupPList()->count()==1){
 $crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 $crtModule = $exec->getCrtModule()->getModuleUrl();
 
-//$lc->setDesiredPageNumber(1);
-//$pageSize = (int)$configS->getParameter($p, $exec->getCrtModule(), "listPageSize");
-//if($pageSize == null) $pageSize = 250; //default value
-//$lc->setPageSize($pageSize);
-$lc->resetPagination();
+$lc->setDesiredPageNumber(1);
+$pageSize = (int)$configS->getParameter($p, $exec->getCrtModule(), "listPageSize");
+if($pageSize == null) $pageSize = 250; //default value
+$lc->setPageSize($pageSize);
+//$lc->resetPagination();
 
 
 //Hide searchbox when parameters is equal to 

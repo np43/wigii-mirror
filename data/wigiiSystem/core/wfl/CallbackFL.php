@@ -24,6 +24,7 @@
 /**
  * A FuncExp library which enables to callback PHP code from within a func exp context 
  * Created by CWE on 20 octobre 2014
+ * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  */
 class CallbackFL extends FuncExpVMAbstractFL
 {
@@ -85,10 +86,13 @@ class CallbackFL extends FuncExpVMAbstractFL
 	 * - principal: Principal, the principal executing the function
 	 * - valarg1, ..., valargn: Any, the function arguments (already evaluated).
 	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return Any the return value of the callback is returned as the return value of this func exp.
 	 */
 	public function callbackFx($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
+		
 		if($nArgs < 2) throw new FuncExpEvalException('callbackFx takes at least two arguments: the callback and the calling style.', FuncExpEvalException::INVALID_ARGUMENT);
 		$callback = $args[0];
 		if(!($callback instanceof CallableObject)) {

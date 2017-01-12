@@ -24,12 +24,14 @@
 /**
  * Function Expression
  * Created by CWE on 13 avr. 10
+ * Updated by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting 
  */
 class FuncExp extends Model
 {
 	private $arguments;
 	private $name;
-
+	private $originPublic;
+	
 	public static function createInstance($name, $arguments=null)
 	{
 		$returnValue = new self();
@@ -49,11 +51,36 @@ class FuncExp extends Model
 	}
 
 	/**
+	 * Marks this FuncExp tree as originating from Public space. Cannot be undone.
+	 * Once origin is marked as public, then FuncExpVM or any FuncExp implementation are free to stop execution with an FuncExpEvalException::FORBIDDEN (403)
+	 */
+	public function setOriginIsPublic() {
+		if(!$this->originPublic) {
+			$this->originPublic = true;
+			// goes down the tree of arguments recursively and marks the FuncExp as public
+			if(!empty($this->arguments)) {
+				foreach($this->arguments as $arg) {
+					if($arg instanceof FuncExp) $arg->setOriginIsPublic();
+				}
+			}
+		}
+	}	
+	/**
+	 * @return Boolean returns true if this FuncExp tree has been marked as originating from Public space, else false.
+	 */
+	public function isOriginPublic() {
+		return $this->originPublic;
+	}
+	
+	/**
 	 * Adds an argument to the function
 	 * arg can be a FuncExp, an object, a FieldSelector or a literal (string, array, number, etc)
 	 */
 	public function addArgument($arg)
 	{
+		// marks origin as public if needed
+		if($this->originPublic && $arg instanceof FuncExp) $arg->setOriginIsPublic();
+		// adds argument to list
 		$this->arguments[] = $arg;
 	}
 	public function getArguments()
@@ -65,6 +92,13 @@ class FuncExp extends Model
 		if(isset($arguments))
 		{
 			if(!is_array($arguments)) throw new ServiceException("arguments should be an array", ServiceException::INVALID_ARGUMENT);
+			// marks arguments as public if needed
+			if($this->originPublic) {
+				foreach($arguments as $arg) {
+					if($arg instanceof FuncExp) $arg->setOriginIsPublic();
+				}
+			}
+			// stores arguments
 			$this->arguments = $arguments;
 		}
 		else $this->arguments = array();

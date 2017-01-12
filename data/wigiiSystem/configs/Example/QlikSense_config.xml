@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QlikSense>
+	<!-- 
+	<parameters 
+		includeUserRolesOnLogin='0'
+		userRolesSeparator='|'
+		userRolesIncludeNamespace='1'
+		serverCertificateFileName='QlikSense_Wigii_certificate.pem'
+	/>
+	-->	
+	
+	<!-- QlikSense pipe configuration -->
+	<qlikSenseUrl>https://qliksense.xxxx.org:xxxx</qlikSenseUrl>
+	<virtualProxy>wigii</virtualProxy>
+	
+	<!-- Logical Directory grouping users and referenced in security rules on QlikSense server -->
+	<userDirectory>WIGII</userDirectory>
+	
+	<!-- QlikSense technical user to request a webticket -->
+	<qlikSenseTecUser>qlikviewuser</qlikSenseTecUser>
+	<qlikSenseTecUser_Directory>XXXXORG</qlikSenseTecUser_Directory>
+
+</QlikSense>

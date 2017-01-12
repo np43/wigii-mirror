@@ -23,7 +23,9 @@
 
 /**
  * A Debugger data flow activity
+ * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 28 novembre 2013
+ * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  */
 class DebuggerDFA implements DataFlowActivity
 {	
@@ -41,6 +43,7 @@ class DebuggerDFA implements DataFlowActivity
 	// stream data event handling
 	
 	public function startOfStream($dataFlowContext) {
+		$dataFlowContext->assertOriginIsNotPublic();
 		$this->debugger = DebugLogger::getInstance("DataFlow_".$dataFlowContext->getContextId());
 		$this->debugger->write("start of stream");
 	}
