@@ -14,8 +14,8 @@
  *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
  *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  @copyright  Copyright (c) 2016  Wigii.org
- *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @copyright  Copyright (c) 2016-2017  Wigii.org
+ *  @author     <http://www.wigii.org/system/libs>      Wigii.org 
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
@@ -238,9 +238,17 @@
 			self.className = 'HtmlEmitter';
 			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className;
 			self.options = {};
+			self.context = {};
+			self.impl = {};
+			self.modelers = [];
+			self.children = {};
 			
 			if(!output) output = $('body');
 			else output = $(output);
+			
+			// Properties
+			
+			self.$ = function() {return output;};
 			
 			// Configuration
 			
@@ -250,6 +258,21 @@
 				return self.options.emittedClass;
 			}
 			
+			/**
+			 * Adds a modeler to the list of modelers and calls it on this instance and all its children.
+			 *@param Function modeler a function used to model this instance. Function signature is modeler(this).
+			 */
+			self.addModeler = function(modeler) {
+				self.modelers.push(modeler);
+				modeler(self);
+				if(self.children) {
+					for(var i=0;i<self.children.length;i++) {
+						self.children[i].addModeler(modeler);
+					}
+				}
+				return self;
+			};
+			
 			// HTML emitting functions
 			
 			/**
@@ -257,42 +280,49 @@
 			 */
 			self.put = function(str){
 				self.htmlTree.append(str);
+				return self;
 			};
 			/**
 			 * Emits a <h1> start tag
 			 */
 			self.startH1 = function(cssClass){
 				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('h1','class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
+				return self;
 			};
 			/**
 			 * Emits a </h1> end tag
 			 */
 			self.endH1 = function(){
 				output.append(self.htmlTree.pop('</h1>'));				
+				return self;
 			};
 			/**
 			 * Emits a <p> start tag
 			 */
 			self.startP = function(cssClass){
 				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('p','class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
+				return self;
 			};
 			/**
 			 * Emits a </p> end tag
 			 */
 			self.endP = function(){
 				output.append(self.htmlTree.pop('</p>'));				
+				return self;
 			};
 			/**
 			 * Emits a <span> start tag
 			 */
 			self.startSpan = function(cssClass){
 				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('span','class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
+				return self;
 			};
 			/**
 			 * Emits a </span> end tag
 			 */
 			self.endSpan = function(){
-				output.append(self.htmlTree.pop('</span>'));				
+				output.append(self.htmlTree.pop('</span>'));
+				return self;
 			};
 			/**
 			 * Emits a span with a given color for text and background.
@@ -301,12 +331,14 @@
 			self.startColor = function(color,backgroundColor,cssClass) {
 				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('span','class',self.emittedClass()+(cssClass?' '+cssClass:''),
 				'style', 'color:'+color+';'+(backgroundColor?'margin:0.05em;padding:0.03em 0.1em;border-style:solid;border-radius:0.2em;background-color:'+backgroundColor+';border-color:'+color+';':'')).html());
+				return self;
 			};
 			/**
 			 * Emits end of colored span
 			 */
 			self.endColor = function() {
 				output.append(self.htmlTree.pop('</span>'));	
+				return self;
 			};	
 			/**
 			 * Emits a div which has a delay before displaying
@@ -315,6 +347,7 @@
 			self.startDelay = function(delay,cssClass) {
 				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('div','class',self.emittedClass()+(cssClass?' '+cssClass:''),
 				'style', 'display:none;','data-ncd-delay',delay).html());
+				return self;
 			};
 			/**
 			 * Closes delayed div
@@ -322,6 +355,7 @@
 			self.endDelay = function() {
 				var delayedDiv = output.append(self.htmlTree.pop('</div>')).children().last();
 				delayedDiv.delay(delayedDiv.attr('data-ncd-delay')*1000).fadeIn(700);	
+				return self;
 			};
 			
 			/**
@@ -332,6 +366,7 @@
 				self.htmlTree.append(label);
 				var b = output.append(self.htmlTree.pop('</button>')).children().last();
 				if($.isFunction(onClick) && b) b.off().click(onClick);				
+				return self;
 			};
 			/**
 			 * Creates and emits a Grid with the given number of rows and cols
@@ -351,6 +386,31 @@
 			self.createTextInput = function() {
 				return new wigiiNcd.TextInput(self);
 			};
+			/**
+			 * Creates or returns a div inside the current container.
+			 *@param String id HTML ID for the created div or to select the inner div.
+			 *@param String cssClass additional class name to add to the created div
+			 *@return wigiiNcd.HtmlEmitter returns a wigiiNcd HtmlEmitter instance ready to interact with the specified div
+			 */
+			self.div = function(id,cssClass) {
+				var returnValue = self.children[id];
+				if(!returnValue) {
+					self.putHtml(wigiiNcd.getHtmlBuilder()
+						.putStartTag('div','class',self.emittedClass()+(cssClass?' '+cssClass:''), "id", id)
+						.putEndTag('div')
+						.html());
+					returnValue = wigiiNcd.getHtmlEmitter(output.find('#'+id));
+					// models child HTMLEmitter if some modelers exists
+					if(self.modelers) {
+						for(var i=0;i<self.modelers.length;i++) {
+							returnValue.addModeler(self.modelers[i]);
+						}
+					}
+					// stores child in children list
+					self.children[id] = returnValue;
+				}
+				return returnValue;
+			};
 			
 			// Control functions
 			
@@ -358,19 +418,24 @@
 			 * Resets container
 			 */
 			self.reset = function() {
+				self.children = {};
+				self.context = {};
 				output.empty();
+				return self;
 			};
 			/**
 			 * Clears all errors from container
 			 */
 			self.clearErrors = function() {				
 				output.find('p.'+self.emittedClass()+'-error').remove();
+				return self;
 			};
 			/**
 			 * Ends current HTML emitting session and controls stack
 			 */
 			self.end = function() {
 				output.append(self.htmlTree.pop(''));
+				return self;
 			};
 			/**
 			 * Publishes any catched exception
@@ -381,12 +446,14 @@
 				.implode(' : ',exception.name,exception.message.replace(/</g,'&lt;').replace(/>/g,'&gt;'))
 				.putEndTag('p');	
 				output.append(htmlb.html());
+				return self;
 			};
 			/**
 			 * Emits some well formed HTML (should be used to link other components)
 			 */
 			self.putHtml = function(html) {
 				output.append(html);
+				return self;
 			};
 			
 			// HTML tree check
@@ -869,6 +936,218 @@
 			};
 		};
 		
+		/**
+		 * NCD Grid Turtle
+		 *@param wigiiNcd.Grid grid the underlying Grid on which the turtle lives
+		 *@param String headColor HTML color code for turtle head (defaults to red)
+		 *@param String tailColor HTML color code for turtle tail (defaults to blue)
+		 */
+		wigiiNcd.GridTurtle = function(grid,headColor,tailColor) {
+			var self = this;
+			headColor = headColor || 'red';
+			tailColor = tailColor || 'blue';
+			if(!grid) throw wigiiNcd.createServiceException('grid cannot be null',wigiiNcd.errorCodes.INVALID_ARGUMENT);
+			
+			self.context = {};
+			self.start = function(x,y,direction) {
+				direction = direction || 'N';
+				switch(direction) {
+					case 'N':
+					case 'S':
+					case 'E':
+					case 'W': 
+						self.context.direction = direction; 
+						break;
+					default: throw wigiiNcd.createServiceException("invalid direction '"+direction+"'",wigiiNcd.errorCodes.INVALID_ARGUMENT);
+				}
+				if(grid.cell(x,y)) {
+					self.context.x = x; self.context.y = y;
+				}
+				else throw wigiiNcd.createServiceException("invalid start coordinates ("+x+","+y+")",wigiiNcd.errorCodes.INVALID_ARGUMENT);
+				self.show();
+			};
+			self.moveForward = function() {
+				// Calculates next cell
+				var nextC;
+				switch(self.context.direction) {
+					case 'N':
+						nextC = grid.cell(self.context.x,self.context.y).up(true);
+						break;
+					case 'S':
+						nextC = grid.cell(self.context.x,self.context.y).down(true);
+						break;
+					case 'E':
+						nextC = grid.cell(self.context.x,self.context.y).right(true);
+						break;
+					case 'W':
+						nextC = grid.cell(self.context.x,self.context.y).left(true);
+						break;
+					default: throw wigiiNcd.createServiceException("Not started. Call start function first.",wigiiNcd.errorCodes.INVALID_STATE);
+				}
+				// Updates context and paints
+				self.context.x = nextC.x();
+				self.context.y = nextC.y();
+				self.show();
+			};
+			self.moveForwardAndLeft = function() {
+				// Calculates next cell
+				var nextC;
+				switch(self.context.direction) {
+					case 'N':
+						nextC = grid.cell(self.context.x,self.context.y).up(true).left(true);
+						break;
+					case 'S':
+						nextC = grid.cell(self.context.x,self.context.y).down(true).right(true);
+						break;
+					case 'E':
+						nextC = grid.cell(self.context.x,self.context.y).right(true).up(true);
+						break;
+					case 'W':
+						nextC = grid.cell(self.context.x,self.context.y).left(true).down(true);
+						break;
+					default: throw wigiiNcd.createServiceException("Not started. Call start function first.",wigiiNcd.errorCodes.INVALID_STATE);
+				}
+				// Updates context and paints
+				self.context.x = nextC.x();
+				self.context.y = nextC.y();
+				self.show();
+			};
+			self.moveForwardAndRight = function() {
+				// Calculates next cell
+				var nextC;
+				switch(self.context.direction) {
+					case 'N':
+						nextC = grid.cell(self.context.x,self.context.y).up(true).right(true);
+						break;
+					case 'S':
+						nextC = grid.cell(self.context.x,self.context.y).down(true).left(true);
+						break;
+					case 'E':
+						nextC = grid.cell(self.context.x,self.context.y).right(true).down(true);
+						break;
+					case 'W':
+						nextC = grid.cell(self.context.x,self.context.y).left(true).up(true);
+						break;
+					default: throw wigiiNcd.createServiceException("Not started. Call start function first.",wigiiNcd.errorCodes.INVALID_STATE);
+				}
+				// Updates context and paints
+				self.context.x = nextC.x();
+				self.context.y = nextC.y();
+				self.show();
+			};
+			self.turnBack = function() {
+				// returns itself
+				switch(self.context.direction) {
+					case 'N':
+						self.context.direction = 'S';
+						break;
+					case 'S':
+						self.context.direction = 'N';
+						break;
+					case 'E':
+						self.context.direction = 'W';
+						break;
+					case 'W':
+						self.context.direction = 'E';
+						break;
+					default: throw wigiiNcd.createServiceException("Not started. Call start function first.",wigiiNcd.errorCodes.INVALID_STATE);
+				}
+				self.show();
+			};
+			self.turnLeft = function() {
+				// turn left
+				switch(self.context.direction) {
+					case 'N':
+						self.context.direction = 'W';
+						break;
+					case 'S':
+						self.context.direction = 'E';
+						break;
+					case 'E':
+						self.context.direction = 'N';
+						break;
+					case 'W':
+						self.context.direction = 'S';
+						break;
+					default: throw wigiiNcd.createServiceException("Not started. Call start function first.",wigiiNcd.errorCodes.INVALID_STATE);
+				}
+				self.show();
+			};
+			self.turnRight = function() {
+				// turn right
+				switch(self.context.direction) {
+					case 'N':
+						self.context.direction = 'E';
+						break;
+					case 'S':
+						self.context.direction = 'W';
+						break;
+					case 'E':
+						self.context.direction = 'S';
+						break;
+					case 'W':
+						self.context.direction = 'N';
+						break;
+					default: throw wigiiNcd.createServiceException("Not started. Call start function first.",wigiiNcd.errorCodes.INVALID_STATE);
+				}
+				self.show();
+			};
+			
+			self.previous = {x:undefined,y:undefined,text:undefined,color:undefined};
+			self.show = function() {
+				// Restores previous cell text and color
+				var c;
+				if(self.previous.x !== undefined && self.previous.y !== undefined) {
+					c = grid.cell(self.previous.x, self.previous.y);
+					/*
+					if(self.previous.text !== undefined) c.text(self.previous.text); else c.text(' ');
+					if(self.previous.color !== undefined) c.color(self.previous.color); else c.color('white');
+					*/
+					c.text(' ').color(tailColor);
+				}
+				c = grid.cell(self.context.x,self.context.y);
+				// Saves previous cell text and color
+				self.previous.x = self.context.x;
+				self.previous.y = self.context.y;
+				self.previous.text = c.text();
+				self.previous.color = c.color();
+				// Displays head
+				var headTxt = '';
+				switch(self.context.direction) {
+				case 'N': headTxt = '&#9650;'; break;
+				case 'S': headTxt = '&#9660;'; break;
+				case 'W': headTxt = '&#9664;'; break;
+				case 'E': headTxt = '&#9654;'; break;
+				}
+				c.text(headTxt).color(headColor);
+			};	
+			self.grid = function(){return grid;};
+			self.currentCell = function() {return grid.cell(self.context.x,self.context.y);};
+			self.cell = function(x,y) {
+				var e1x=0,e1y=0,e2x=0,e2y=0;
+				switch(self.context.direction) {
+					case 'N':
+						e1x=-1;e1y=0;e2x=0;e2y=1;
+						break;
+					case 'S':
+						e1x=1;e1y=0;e2x=0;e2y=-1;
+						break;
+					case 'E':
+						e1x=0;e1y=1;e2x=1;e2y=0;
+						break;
+					case 'W':
+						e1x=0;e1y=-1;e2x=-1;e2y=0;
+						break;
+					default: throw wigiiNcd.createServiceException("Not started. Call start function first.",wigiiNcd.errorCodes.INVALID_STATE);
+				}
+				var rx = (self.context.x+x*e1x+y*e1y)%grid.nRows();
+				if(rx < 0) rx = grid.nRows()+rx;
+				var ry = (self.context.y+x*e2x+y*e2y)%grid.nCols();
+				if(ry < 0) ry = grid.nCols()+ry;
+				return grid.cell(rx, ry);
+			};
+		};
+		
 		// Service providing
 		
 		/**
@@ -906,11 +1185,31 @@
 		wigiiNcd.createServiceException = function(message,code,previous) {
 			return new wigiiNcd.ServiceException(message, code, previous);
 		};
-		
+		/**
+		 * @return String Converts anything to a compatible Fx string
+		 */
+		wigiiNcd.obj2FxString = function(obj) {			
+			var objType = $.type(obj);
+			if(objType==="function") {
+				if($.isFunction(obj.toFxString)) return obj.toFxString();
+				else return obj.toString();
+			}
+			else if(objType==="number") return obj;
+			else if(objType==="boolean") return obj.toString();
+			else if(objType==="string") return '"'+obj.replace(/"/g,'\\"')+'"';
+			else if(objType==="object") return "JSON.parse('"+JSON.stringify(obj)+"')";
+			else return '"'+obj.toString()+'"';
+		};
+		/**
+		 * @return Object Converts an Fx string back to its object representation
+		 */
+		wigiiNcd.fxString2obj = function(str) {			
+			if(str) return eval(str);
+		};
 		/**
 		 * @return String returns the Wigii NCD version number
 		 */
-		wigiiNcd.version = function() {return "1.0";};
+		wigiiNcd.version = function() {return "1.1";};
 	},	
 	// Default WigiiNCD instance
 	wigiiNcdInstance = new WigiiNcd(),
