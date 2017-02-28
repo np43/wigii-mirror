@@ -1,0 +1,63 @@
+{% extends 'template.twig' %}
+
+{% block content %}
+	<div>
+		<div class="mainDetails col-md-12">
+          <h3 style="float:left">Project Details</h3>
+          {% if(scenario == 'update') %}
+              <div class="btn-group" role="group" aria-label="..." style="margin-top:15px; margin-left:10px;">
+                  <button type="button" class="btn btn-default">Save</button>
+                  <button type="button" class="btn btn-default">Cancel</button>
+              </div>
+          {% endif %}
+        </div>
+	</div>
+	<div class="content-details">
+		
+		<!-- Mobile menu -->
+		<div class="col-md-2 visible-xs sidebar">
+            <ul class="nav nav-pills" role="tablist">
+        		<li>
+        			<a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="true">
+                      Menu <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                    	{% for group in level1  %}
+                            <li><a href="#{{ group.labelNoSpace }}" aria-controls="{{ group.labelNoSpace }}" role="tab" data-toggle="tab" >{{ group.label|raw }}</a></li>
+                    	{% endfor %}
+                    </ul>
+        		</li>
+        	</ul>
+        </div>
+        
+        <!-- Desktop menu -->
+        <div class="col-md-1 hidden-xs sidebar">
+            <ul class="nav nav-pills nav-stacked nav-tabs" role="tablist">
+            	{% for group in level1 %}
+                	<li role="presentation" {{ (loop.first)?'class="active"':'' }}>
+                		<a href="#{{ group.labelNoSpace }}" aria-controls="{{ group.labelNoSpace }}" role="tab" data-toggle="tab" >{{ group.label|raw }}</a>
+                	</li>
+            	{% endfor %}
+            </ul>
+        </div>
+        <div class="col-sm-8 col-sm-offset-3 col-md-8 main">
+        	<div class="tab-content">
+            	{% for group in level1 %}
+                   	<div role="tabpanel" class="tab-pane fade {{ (loop.first)?'in active':'' }}" id="{{ group.labelNoSpace }}">
+                   	 <div class="col-md-2 col-md-offset-1 sidebar" style="float:left;">
+                   	 	{{ fields.subMenu(group.childs, subgroup) }}
+                    </div>
+                   	<h1></h1>
+                   		{% if(subgroup == false) %}
+                   		    {{ fields.showContent(group.childs) }}
+                   		{% else %}
+                   			{{ fields.content(group.childs) }}
+                   		{% endif %}
+                   	</div>
+                {% endfor %}
+        	</div>
+            
+
+		</div>
+    </div>
+{% endblock %}

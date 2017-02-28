@@ -215,6 +215,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "getMyRolesWithoutDetail":
 					case "getUserWithoutDetail":
 					case "changeOwnPassword":
+					case "changeOwnEmail":
 					case "calculateAllMergedRoles":
 						$this->assertPrincipalHasAttachedUser($principal);
 						return null; /* principal gets no special rights */

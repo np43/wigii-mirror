@@ -299,6 +299,7 @@ __cacheJS = new Object();
 __cacheKeep = new Object();
 //checkAnyOpenItem checks that in the whole dom there is no form.
 //other wise the check is done only within the id
+foundInCache=false;
 function updateThroughCache(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCache, noOpenItemCheck){
 	if (arguments.length<4) checkAnyOpenItem = false;
 	if (arguments.length<5) informIfFoundInCache = false;
@@ -320,7 +321,7 @@ function updateThroughCache(id, lookupPath, url, checkAnyOpenItem, informIfFound
 	} else if(id=="elementDialog"){
 		currentElementDialogViewCacheKey = lookupPath;
 	}
-	r = null; c= null; foundInCache = false;
+	var r = null; var c= null; foundInCache = false;
 	if(lookupPath){
 		r = getCache(id, lookupPath);
 		if(r) foundInCache = true;
@@ -337,8 +338,11 @@ function updateThroughCache(id, lookupPath, url, checkAnyOpenItem, informIfFound
 			foundInCacheUpdate(url);
 		}
 		if(c){
+			// make sure that foundInCache is still true when ready function is executed
+			c = '$(document).ready(function(){foundInCache=true;});'+c;
 			eval(c);
 		}
+		foundInCache=false;
 	} else {
 		update(url, true);
 	}

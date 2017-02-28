@@ -1,0 +1,87 @@
+
+*********************
+JQuery
+*********************
+
+change in :jquery-ui-1.7.2.custom.min.js
+----------------------------------------
+	remove the bottom containement constraint when dragging windows.
+	99999 /*(a(e.containment=="document"?document:window).height()||document.body.parentNode.scrollHeight)-this.helperProportions.height-this.margins.top*/
+	
+change in :jquery-ui-1.8.14.custom.min.js	
+	999999 replace (d(a.containment=="document"?document:window).height()||document.body.parentNode.scrollHeight)-this.helperProportions.height-this.margins.top
+	
+	
+change in :jquery-ui-1.8.23.custom.min.js	
+	999999 replace (a(b.containment=="document"?document:window).height()||document.body.parentNode.scrollHeight)-this.helperProportions.height-this.margins.top	
+
+
+change in : jquery-ui-1.10.3.custom.min.js
+	999999 replace e(window).scrollTop()+(e(window).height()||document.body.parentNode.scrollHeight)-this.helperProportions.height-this.margins.top
+and	999999 replace (e(document).height()||document.body.parentNode.scrollHeight)-this.helperProportions.height-this.margins.top
+
+
+change in : jquery-ui-1.11.0.min.js
+	999999 replace e(window).scrollTop()+(e(window).height()||a.body.parentNode.scrollHeight)-this.helperProportions.height-this.margins.top
+	999999 replace (e(a).height()||a.body.parentNode.scrollHeight)-this.helperProportions.height-this.margins.top
+
+
+change in : jquery-ui-1.12.1.js
+	999999 replace ( $( document ).height() || document.body.parentNode.scrollHeight ) -
+					this.helperProportions.height - this.margins.top
+
+
+----- other changes --------
+
+-----
+
+allow any merge fields in links: change in htmlpurifier-4.5.0.lite/library/HTMLPurifier/AttrDef/URI/Host.php
+change done for the WigiiSystem implementation:
+character $ must be allowed in URI in order to use Wigii email mergeData fields
+$a   = '[a-z]';     // alpha 			changed to	//	$a   = '[$a-z]';     // alpha
+$an  = '[a-z0-9]';  // alphanum 		changed to	//	$an  = '[$a-z0-9]';  // alphanum
+$and = '[a-z0-9-]'; // alphanum | "-"	changed to	//	$and = '[$a-z0-9-]'; // alphanum | "-"
+
+-----
+
+update jquery.blockUI.js baseZ: 1000 to baseZ: 99999
+
+
+----- CKEditor changes --------
+
+Copy contents.css in contents2.css
+- add  in contents2.css
+	.cke_editable p { margin:0px; font-family:arial; font-size:small;line-height:normal; }
+	body.cke_editable { margin:10px; }
+	body.cke_editable[contenteditable="false"] { background-color:#ecf3fe; }
+
+- remove any other text formating in this file
+- rename the file: contents2.css
+
+- add in theme.css.php
+	.cke_inner .cke_bottom { padding:0px 3px; }
+	.cke_inner .cke_path { margin:0px; }
+	.cke_inner .cke_path_empty { padding:0px; }
+	.cke_inner .cke_path_item { padding: 1px 4px; }
+	.cke_inner .cke_resizer { margin-top:3px; margin-right:0px; }
+	.cke_inner .cke_toolbox_collapser.cke_toolbox_collapser_min { margin: 0px 2px; }
+	.cke_inner .cke_bottom { position:static; }
+
+change in ckeditor.js
+- replace contents.css with contents2.css
+
+this rename is necessary (I don't understand why) to make the effects change.
+
+Add plugins:
+autogrow
+wordcount (warning, I've updated the source code of this plugin to prevent issues when editor is empty)
+copy the folder adapters in the root of the CKEditor folder. This enable jQuery integration. Ensure to call the ckeditor.../adapters/jquery.js in header.tpl.php
+
+-- Adding custom templates:
+- create a CKTemplates.js file in the Client folder, which contains the template definition
+
+update in header.php the correct reference to the ckeditor folder
+
+
+
+

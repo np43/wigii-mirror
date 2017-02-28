@@ -51,7 +51,7 @@ Option Explicit
 Public Function LT_Selection(T As LogTable, _
                              constraints As Range, parameters As Range, _
                              destination As Range) As LogTable
-    Dim i As Integer, j As Integer, R As Integer, c As Integer
+    Dim i As Integer, j As Integer, r As Integer, c As Integer
     Dim data As Range
     Dim res As Boolean
     
@@ -60,7 +60,7 @@ Public Function LT_Selection(T As LogTable, _
         Exit Function
     End If
     
-    R = 0 'Row counter
+    r = 0 'Row counter
     c = T.colCount
     Set data = T.data
     For i = 1 To T.rowCount
@@ -76,16 +76,16 @@ Public Function LT_Selection(T As LogTable, _
         Loop
         If res Then
             'Copies the row in the destination range
-            With destination.Offset(R, 0)
+            With destination.Offset(r, 0)
                 .Worksheet.Range(.Cells(1, 1), .Cells(1, c)).Value2 = data.rows(i).Value2
             End With
-            R = R + 1
+            r = r + 1
         End If
     Next i
     'Builds the result table
-    If R > 0 Then
+    If r > 0 Then
         Set LT_Selection = New LogTable
-        LT_Selection.SetRange destination.Worksheet.Range(destination, destination.Offset(R - 1, c - 1)), False
+        LT_Selection.SetRange destination.Worksheet.Range(destination, destination.Offset(r - 1, c - 1)), False
     Else
         Set LT_Selection = Nothing
     End If
@@ -108,7 +108,7 @@ Public Function LT_Intersection(T As LogTable, mask As LogTable, col As Integer,
                                 destination As Range, _
                                 Optional tSorted As Boolean = True, Optional tSortOrder As Integer = xlAscending, _
                                 Optional mSorted As Boolean = True, Optional mSortorder As Integer = xlAscending) As LogTable
-    Dim i As Integer, R As Integer, c As Integer
+    Dim i As Integer, r As Integer, c As Integer
     Dim m As Range, d As Range, res As Range
     
     If T.IsEmpty Or mask.IsEmpty Then
@@ -118,7 +118,7 @@ Public Function LT_Intersection(T As LogTable, mask As LogTable, col As Integer,
     
     Set m = mask.data
     Set d = T.data
-    R = 0 'Row counter
+    r = 0 'Row counter
     c = T.colCount
     
     If tSorted Then
@@ -127,10 +127,10 @@ Public Function LT_Intersection(T As LogTable, mask As LogTable, col As Integer,
             Set res = T.FindDichotomy(m.Cells(i, col).Value2, col, tSortOrder)
             If Not res Is Nothing Then
                 'Copies the row in the destination range
-                With destination.Offset(R, 0)
+                With destination.Offset(r, 0)
                     .Worksheet.Range(.Cells(1, 1), .Cells(1, c)).Value2 = Intersect(res.EntireRow, d).Value2
                 End With
-                R = R + 1
+                r = r + 1
             End If
         Next i
     Else
@@ -140,10 +140,10 @@ Public Function LT_Intersection(T As LogTable, mask As LogTable, col As Integer,
                 Set res = mask.FindDichotomy(d.Cells(i, col).Value2, col, mSortorder)
                 If Not res Is Nothing Then
                     'Copies the row in the destination range
-                    With destination.Offset(R, 0)
+                    With destination.Offset(r, 0)
                         .Worksheet.Range(.Cells(1, 1), .Cells(1, c)).Value2 = d.rows(i).Value2
                     End With
-                    R = R + 1
+                    r = r + 1
                 End If
             Next i
         Else
@@ -152,19 +152,19 @@ Public Function LT_Intersection(T As LogTable, mask As LogTable, col As Integer,
                 Set res = mask.FindLinear(d.Cells(i, col).Value2, col)
                 If Not res Is Nothing Then
                     'Copies the row in the destination range
-                    With destination.Offset(R, 0)
+                    With destination.Offset(r, 0)
                         .Worksheet.Range(.Cells(1, 1), .Cells(1, c)).Value2 = d.rows(i).Value2
                     End With
-                    R = R + 1
+                    r = r + 1
                 End If
             Next i
         End If
     End If
     
     'Builds the result table
-    If R > 0 Then
+    If r > 0 Then
         Set LT_Intersection = New LogTable
-        LT_Intersection.SetRange destination.Worksheet.Range(destination, destination.Offset(R - 1, c - 1)), False
+        LT_Intersection.SetRange destination.Worksheet.Range(destination, destination.Offset(r - 1, c - 1)), False
         If tSorted And Not (mSorted And tSortOrder = mSortorder) Then
             LT_Intersection.Sort col, tSortOrder
         End If
@@ -194,9 +194,9 @@ Public Function LT_Union(T As LogTable, complement As LogTable, col As Integer, 
                          Optional tSorted As Boolean = True, Optional tSortOrder As Integer = xlAscending, _
                          Optional cSorted As Boolean = True, Optional cSortorder As Integer = xlAscending) As LogTable
     Dim compl As LogTable
-    Dim R As Integer, c As Integer
+    Dim r As Integer, c As Integer
     
-    R = 0 'Row counter
+    r = 0 'Row counter
     c = T.colCount
     If c = 0 Then
         Set LT_Union = Nothing
@@ -204,20 +204,20 @@ Public Function LT_Union(T As LogTable, complement As LogTable, col As Integer, 
     End If
     'Copies T to destination
     If Not T.IsEmpty Then
-        R = T.rowCount
+        r = T.rowCount
         With destination
-            .Worksheet.Range(.Cells(1, 1), .Cells(R, c)).Value2 = T.data.Value2
+            .Worksheet.Range(.Cells(1, 1), .Cells(r, c)).Value2 = T.data.Value2
         End With
     End If
     'Appends the complements which are not in T
-    Set compl = LT_Complementary(T, complement, col, destination.Offset(R, 0), tSorted, tSortOrder, cSorted, cSortorder)
+    Set compl = LT_Complementary(T, complement, col, destination.Offset(r, 0), tSorted, tSortOrder, cSorted, cSortorder)
     If Not compl Is Nothing Then
-        R = R + compl.rowCount
+        r = r + compl.rowCount
     End If
     'Builds the result table
-    If R > 0 Then
+    If r > 0 Then
         Set LT_Union = New LogTable
-        LT_Union.SetRange destination.Worksheet.Range(destination, destination.Offset(R - 1, c - 1)), False
+        LT_Union.SetRange destination.Worksheet.Range(destination, destination.Offset(r - 1, c - 1)), False
         If tSorted Then
             LT_Union.Sort col, tSortOrder
         End If
@@ -295,10 +295,10 @@ Public Function LT_Complementary(T As LogTable, universe As LogTable, col As Int
                                  Optional tSorted As Boolean = True, Optional tSortOrder As Integer = xlAscending, _
                                  Optional uSorted As Boolean = True, Optional uSortorder As Integer = xlAscending) As LogTable
     Dim i As Integer, j As Integer, aj As Integer, bj As Integer
-    Dim R As Integer, c As Integer
+    Dim r As Integer, c As Integer
     Dim u As Range, d As Range, res As Range
     
-    R = 0 'Row counter
+    r = 0 'Row counter
     c = T.colCount
     If (universe.IsEmpty) Or (c = 0) Then
         Set LT_Complementary = Nothing
@@ -309,9 +309,9 @@ Public Function LT_Complementary(T As LogTable, universe As LogTable, col As Int
     Set d = T.data
     'if T is empty, return universe
     If T.IsEmpty Then
-        R = universe.rowCount
+        r = universe.rowCount
         With destination
-            .Worksheet.Range(.Cells(1, 1), .Cells(R, c)).Value2 = u.Value2
+            .Worksheet.Range(.Cells(1, 1), .Cells(r, c)).Value2 = u.Value2
         End With
     'if T is not empty, return complementary of T in universe
     Else
@@ -328,10 +328,10 @@ Public Function LT_Complementary(T As LogTable, universe As LogTable, col As Int
                              (greater(u.Cells(i, col), d.Cells(aj + bj * j, col)) And uSortorder = xlDescending)
                         
                         'Copies the row in the destination range
-                        With destination.Offset(R, 0)
+                        With destination.Offset(r, 0)
                             .Worksheet.Range(.Cells(1, 1), .Cells(1, c)).Value2 = u.rows(i).Value2
                         End With
-                        R = R + 1
+                        r = r + 1
                         i = i + 1
                         If i > universe.rowCount Then
                             Exit Do
@@ -360,10 +360,10 @@ Public Function LT_Complementary(T As LogTable, universe As LogTable, col As Int
                 Loop
                 Do While i <= universe.rowCount
                     'Copies the row in the destination range
-                    With destination.Offset(R, 0)
+                    With destination.Offset(r, 0)
                         .Worksheet.Range(.Cells(1, 1), .Cells(1, c)).Value2 = u.rows(i).Value2
                     End With
-                    R = R + 1
+                    r = r + 1
                     i = i + 1
                 Loop
             Else
@@ -372,10 +372,10 @@ Public Function LT_Complementary(T As LogTable, universe As LogTable, col As Int
                     Set res = T.FindDichotomy(u.Cells(i, col).Value2, col, tSortOrder)
                     If res Is Nothing Then
                         'Copies the row in the destination range
-                        With destination.Offset(R, 0)
+                        With destination.Offset(r, 0)
                             .Worksheet.Range(.Cells(1, 1), .Cells(1, c)).Value2 = u.rows(i).Value2
                         End With
-                        R = R + 1
+                        r = r + 1
                     End If
                 Next i
             End If
@@ -385,18 +385,18 @@ Public Function LT_Complementary(T As LogTable, universe As LogTable, col As Int
                 Set res = T.FindLinear(u.Cells(i, col).Value2, col)
                 If res Is Nothing Then
                     'Copies the row in the destination range
-                    With destination.Offset(R, 0)
+                    With destination.Offset(r, 0)
                         .Worksheet.Range(.Cells(1, 1), .Cells(1, c)).Value2 = u.rows(i).Value2
                     End With
-                    R = R + 1
+                    r = r + 1
                 End If
             Next i
         End If
     End If
     'Builds the result table
-    If R > 0 Then
+    If r > 0 Then
         Set LT_Complementary = New LogTable
-        LT_Complementary.SetRange destination.Worksheet.Range(destination, destination.Offset(R - 1, c - 1)), False
+        LT_Complementary.SetRange destination.Worksheet.Range(destination, destination.Offset(r - 1, c - 1)), False
     Else
         Set LT_Complementary = Nothing
     End If
@@ -577,7 +577,7 @@ End Function
 Public Function LT_DoublesDeletion(T As LogTable, col As Integer, _
                                    destination As Range, _
                                    Optional sorted = True) As LogTable
-    Dim R As Integer, c As Integer
+    Dim r As Integer, c As Integer
     Dim i As Integer, k As Integer
     Dim v As Range
     Dim data As Range
@@ -591,9 +591,9 @@ Public Function LT_DoublesDeletion(T As LogTable, col As Integer, _
         T.Sort col
     End If
     Set data = T.data
-    R = T.rowCount: c = T.colCount
+    r = T.rowCount: c = T.colCount
     k = 0: i = 1
-    Do While i <= R
+    Do While i <= r
         Set v = data.Cells(i, col)
         
         'Copies T[i]
@@ -605,7 +605,7 @@ Public Function LT_DoublesDeletion(T As LogTable, col As Integer, _
         'Skips the doubles
         Do While equal(data.Cells(i, col), v)
             i = i + 1
-            If i > R Then
+            If i > r Then
                 Exit Do
             End If
         Loop
@@ -659,4 +659,6 @@ Private Function equal(v1 As Range, v2 As Range) As Boolean
       equal = (v1.Value2 = v2.Value2)
    End If
 End Function
+
+
 

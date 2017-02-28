@@ -74,56 +74,56 @@ End Sub
 '- Output  : ! The sheet containing the range must be active and
 '-           ! unprotected.
 '-----------------------------------------------------------------
-Public Sub Range_Format(R As Range, _
+Public Sub Range_Format(r As Range, _
                         Optional CenterData As Boolean = False, _
                         Optional HorizontalInsideBorders As Boolean = False, _
                         Optional InsideColor As Variant = xlNone)
 
     Dim ac As Range
     Set ac = ActiveCell
-    R.Select
+    r.Select
     
     'Borders
-    With R.Borders(xlEdgeLeft)
+    With r.Borders(xlEdgeLeft)
         .LineStyle = xlContinuous
         .Weight = xlThin
         .ColorIndex = xlAutomatic
     End With
-    With R.Borders(xlEdgeTop)
+    With r.Borders(xlEdgeTop)
         .LineStyle = xlContinuous
         .Weight = xlThin
         .ColorIndex = xlAutomatic
     End With
-    With R.Borders(xlEdgeBottom)
+    With r.Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
         .Weight = xlThin
         .ColorIndex = xlAutomatic
     End With
-    With R.Borders(xlEdgeRight)
+    With r.Borders(xlEdgeRight)
         .LineStyle = xlContinuous
         .Weight = xlThin
         .ColorIndex = xlAutomatic
     End With
-    If R.Columns.count > 1 Then
-        With R.Borders(xlInsideVertical)
+    If r.Columns.count > 1 Then
+        With r.Borders(xlInsideVertical)
             .LineStyle = xlContinuous
             .Weight = xlThin
             .ColorIndex = xlAutomatic
         End With
     End If
-    If (R.rows.count > 1) Then
+    If (r.rows.count > 1) Then
         If HorizontalInsideBorders Then
-            With R.Borders(xlInsideHorizontal)
+            With r.Borders(xlInsideHorizontal)
                 .LineStyle = xlContinuous
                 .Weight = xlThin
                 .ColorIndex = xlAutomatic
             End With
         Else
-            R.Borders(xlInsideHorizontal).LineStyle = xlNone
+            r.Borders(xlInsideHorizontal).LineStyle = xlNone
         End If
     End If
     'Alignement
-    With R
+    With r
         If CenterData Then
             .HorizontalAlignment = xlCenter
         Else
@@ -136,7 +136,7 @@ Public Sub Range_Format(R As Range, _
         .MergeCells = False
     End With
     'Inside color
-    R.Interior.ColorIndex = InsideColor
+    r.Interior.ColorIndex = InsideColor
     
     ac.Select
 End Sub
@@ -152,17 +152,17 @@ End Sub
 '- Input   : the range
 '- Output  : -
 '-----------------------------------------------------------------
-Public Sub Range_RegFormat(R As Range)
+Public Sub Range_RegFormat(r As Range)
   Dim bold As Integer, italic As Integer, underlined As Integer
   Dim n As Integer, ni As Integer, ni1 As Integer, ni2 As Integer, i As Integer
   Dim code As String, val As String
   
-  If VarType(R.Cells(1, 1)) <> vbString Then
+  If VarType(r.Cells(1, 1)) <> vbString Then
     Exit Sub
   End If
   
-  n = R.Cells(1, 1).Characters.count: i = 1
-  val = R.Cells(1, 1).Value2: ni = 0
+  n = r.Cells(1, 1).Characters.count: i = 1
+  val = r.Cells(1, 1).Value2: ni = 0
   ni1 = InStr(1, val, "$g")
   ni2 = InStr(1, val, "$s")
   If ni1 = 0 Or ni2 > 0 And ni2 < ni1 Then
@@ -181,7 +181,7 @@ Public Sub Range_RegFormat(R As Range)
   Else
     i = ni1
   End If
-  With R.Cells(1, 1).Characters.font
+  With r.Cells(1, 1).Characters.font
     .bold = False
     .italic = False
     .Underline = False
@@ -189,36 +189,36 @@ Public Sub Range_RegFormat(R As Range)
   bold = 0: italic = 0: underlined = 0
   
   Do While i <= n
-    code = R.Cells(1, 1).Characters(i, 2).Text
+    code = r.Cells(1, 1).Characters(i, 2).Text
     If StrComp(code, "$g") = 0 Then
-      R.Cells(1, 1).Characters(i, 2).Delete
+      r.Cells(1, 1).Characters(i, 2).Delete
       ni = ni + 2
       If bold = 0 Then
         bold = i
       Else
-        R.Cells(1, 1).Characters(bold, i - bold).font.bold = True
+        r.Cells(1, 1).Characters(bold, i - bold).font.bold = True
         bold = 0
       End If
     ElseIf StrComp(code, "$i") = 0 Then
-      R.Cells(1, 1).Characters(i, 2).Delete
+      r.Cells(1, 1).Characters(i, 2).Delete
       ni = ni + 2
       If italic = 0 Then
         italic = i
       Else
-        R.Cells(1, 1).Characters(italic, i - italic).font.italic = True
+        r.Cells(1, 1).Characters(italic, i - italic).font.italic = True
         italic = 0
       End If
     ElseIf StrComp(code, "$s") = 0 Then
-      R.Cells(1, 1).Characters(i, 2).Delete
+      r.Cells(1, 1).Characters(i, 2).Delete
       ni = ni + 2
       If underlined = 0 Then
         underlined = i
       Else
-        R.Cells(1, 1).Characters(underlined, i - underlined).font.Underline = True
+        r.Cells(1, 1).Characters(underlined, i - underlined).font.Underline = True
         underlined = 0
       End If
     ElseIf StrComp(code, "$$") = 0 Then
-      R.Cells(1, 1).Characters(i, 1).Delete
+      r.Cells(1, 1).Characters(i, 1).Delete
       ni = ni + 1: i = i + 1
     Else
       MsgBox "error"
@@ -244,13 +244,13 @@ Public Sub Range_RegFormat(R As Range)
     End If
   Loop
   If bold > 0 Then
-    R.Cells(1, 1).Characters(bold, n - bold + 1).font.bold = True
+    r.Cells(1, 1).Characters(bold, n - bold + 1).font.bold = True
   End If
   If italic > 0 Then
-    R.Cells(1, 1).Characters(italic, n - italic + 1).font.italic = True
+    r.Cells(1, 1).Characters(italic, n - italic + 1).font.italic = True
   End If
   If underlined > 0 Then
-    R.Cells(1, 1).Characters(underlined, n - underlined + 1).font.Underline = True
+    r.Cells(1, 1).Characters(underlined, n - underlined + 1).font.Underline = True
   End If
 End Sub
 
@@ -267,7 +267,7 @@ End Sub
 '-           ! unprotected.
 '-           Nothing is done if the template is not valid
 '-----------------------------------------------------------------
-Public Sub Range_FormatOnTemplate(template As Range, R As Range, _
+Public Sub Range_FormatOnTemplate(template As Range, r As Range, _
                                   Optional numbers As Boolean = True, _
                                   Optional font As Boolean = True, _
                                   Optional textcolor As Boolean = True, _
@@ -277,35 +277,35 @@ Public Sub Range_FormatOnTemplate(template As Range, R As Range, _
             
         'Formats the numbers :
         If numbers Then
-            R.NumberFormat = template.NumberFormat
+            r.NumberFormat = template.NumberFormat
         End If
         
         'Formats the font :
         If font Then
-            R.font.name = template.font.name
-            R.font.FontStyle = template.font.FontStyle
-            R.font.Size = template.font.Size
-            R.font.Strikethrough = template.font.Strikethrough
-            R.font.Superscript = template.font.Superscript
-            R.font.Subscript = template.font.Subscript
-            R.font.OutlineFont = template.font.OutlineFont
-            R.font.Shadow = template.font.Shadow
-            R.font.Underline = template.font.Underline
+            r.font.name = template.font.name
+            r.font.FontStyle = template.font.FontStyle
+            r.font.Size = template.font.Size
+            r.font.Strikethrough = template.font.Strikethrough
+            r.font.Superscript = template.font.Superscript
+            r.font.Subscript = template.font.Subscript
+            r.font.OutlineFont = template.font.OutlineFont
+            r.font.Shadow = template.font.Shadow
+            r.font.Underline = template.font.Underline
         End If
         
         'Formats the text color :
         If textcolor Then
-            R.Cells.font.ColorIndex = template.font.ColorIndex
+            r.Cells.font.ColorIndex = template.font.ColorIndex
         End If
         
         'Formats the alignment :
         If alignment Then
-            R.HorizontalAlignment = template.HorizontalAlignment
-            R.VerticalAlignment = template.VerticalAlignment
-            R.WrapText = template.WrapText
-            R.Orientation = template.Orientation
-            R.ShrinkToFit = template.ShrinkToFit
-            R.MergeCells = template.MergeCells
+            r.HorizontalAlignment = template.HorizontalAlignment
+            r.VerticalAlignment = template.VerticalAlignment
+            r.WrapText = template.WrapText
+            r.Orientation = template.Orientation
+            r.ShrinkToFit = template.ShrinkToFit
+            r.MergeCells = template.MergeCells
         End If
     End If
 End Sub
@@ -317,17 +317,17 @@ End Sub
 '- Input   : the range
 '- Output  : -
 '-----------------------------------------------------------------
-Public Sub Range_Change2Hyperlink(R As Range)
+Public Sub Range_Change2Hyperlink(r As Range)
    Dim addr As String
    
-   addr = LCase(CStr(R.Cells(1, 1).Value2))
+   addr = LCase(CStr(r.Cells(1, 1).Value2))
    If Len(addr) > 0 Then
       If (InStr(1, addr, "@") > 0) And (InStr(1, addr, "mailto:") = 0) Then
-         R.Cells(1, 1).Hyperlinks.Add R.Cells(1, 1), "mailto:" & addr
+         r.Cells(1, 1).Hyperlinks.Add r.Cells(1, 1), "mailto:" & addr
       ElseIf (InStr(1, addr, "http://") = 0) And (InStr(1, addr, "www") > 0) Then
-         R.Cells(1, 1).Hyperlinks.Add R.Cells(1, 1), "http://" & addr
+         r.Cells(1, 1).Hyperlinks.Add r.Cells(1, 1), "http://" & addr
       Else
-         R.Cells(1, 1).Hyperlinks.Add R.Cells(1, 1), addr
+         r.Cells(1, 1).Hyperlinks.Add r.Cells(1, 1), addr
       End If
    End If
 End Sub
@@ -339,19 +339,19 @@ End Sub
 '- Input   : the range
 '- Output  : only support <b>, <i> and <u> tags.
 '-----------------------------------------------------------------
-Public Sub Range_HtmlFormat(R As Range)
+Public Sub Range_HtmlFormat(r As Range)
   Dim bold As Integer, italic As Integer, underlined As Integer
   Dim n As Integer, ni As Integer, ni1 As Integer, ni2 As Integer, i As Integer
   Dim code As String, val As String
   
-  If VarType(R) <> vbString Then
+  If VarType(r) <> vbString Then
     Exit Sub
   End If
   
-  Range_FilterHtmlTags R
+  Range_FilterHtmlTags r
   
-  n = R.Characters.count: i = 1
-  val = R.Value2: ni = 0
+  n = r.Characters.count: i = 1
+  val = r.Value2: ni = 0
   ni1 = InStr(1, val, "<b>", vbTextCompare)
   ni2 = InStr(1, val, "<u>", vbTextCompare)
   If ni1 = 0 Or ni2 > 0 And ni2 < ni1 Then
@@ -366,7 +366,7 @@ Public Sub Range_HtmlFormat(R As Range)
   Else
     i = ni1
   End If
-  With R.Characters.font
+  With r.Characters.font
     .bold = False
     .italic = False
     .Underline = False
@@ -374,26 +374,26 @@ Public Sub Range_HtmlFormat(R As Range)
   bold = 0: italic = 0: underlined = 0
   
   Do While i <= n
-    code = R.Characters(i, 3).Text
+    code = r.Characters(i, 3).Text
     If StrComp(code, "<b>", vbTextCompare) = 0 Then
       If bold = 0 Then
         bold = i + 3
       Else
-        R.Characters(bold, i - bold).font.bold = True
+        r.Characters(bold, i - bold).font.bold = True
         bold = 0
       End If
     ElseIf StrComp(code, "<i>", vbTextCompare) = 0 Then
       If italic = 0 Then
         italic = i + 3
       Else
-        R.Characters(italic, i - italic).font.italic = True
+        r.Characters(italic, i - italic).font.italic = True
         italic = 0
       End If
     ElseIf StrComp(code, "<u>", vbTextCompare) = 0 Then
       If underlined = 0 Then
         underlined = i + 3
       Else
-        R.Characters(underlined, i - underlined).font.Underline = True
+        r.Characters(underlined, i - underlined).font.Underline = True
         underlined = 0
       End If
     Else
@@ -416,40 +416,40 @@ Public Sub Range_HtmlFormat(R As Range)
     End If
   Loop
   If bold > 0 Then
-    R.Characters(bold, n - bold + 1).font.bold = True
+    r.Characters(bold, n - bold + 1).font.bold = True
   End If
   If italic > 0 Then
-    R.Characters(italic, n - italic + 1).font.italic = True
+    r.Characters(italic, n - italic + 1).font.italic = True
   End If
   If underlined > 0 Then
-    R.Characters(underlined, n - underlined + 1).font.Underline = True
+    r.Characters(underlined, n - underlined + 1).font.Underline = True
   End If
   'deletes html tags
-  Range_FilterHtmlFormatTags R
+  Range_FilterHtmlFormatTags r
 End Sub
 
-Private Sub Range_FilterHtmlTags(R As Range)
-   R.Value2 = Replace(R.Value2, "</b>", "<b>", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "</i>", "<i>", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "</u>", "<u>", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "<br>", vbLf, Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "<br/>", vbLf, Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "<html>", "", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "</html>", "", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "<body>", "", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "</body>", "", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "</font>", "", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "&lt;", "<", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "&gt;", ">", Compare:=vbTextCompare)
-   R.Value2 = Replace(R.Value2, "&amp;", "&", Compare:=vbTextCompare)
-   Range_FilterHtmlStartTagWithAttributes R, "font"
+Private Sub Range_FilterHtmlTags(r As Range)
+   r.Value2 = Replace(r.Value2, "</b>", "<b>", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "</i>", "<i>", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "</u>", "<u>", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "<br>", vbLf, Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "<br/>", vbLf, Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "<html>", "", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "</html>", "", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "<body>", "", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "</body>", "", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "</font>", "", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "&lt;", "<", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "&gt;", ">", Compare:=vbTextCompare)
+   r.Value2 = Replace(r.Value2, "&amp;", "&", Compare:=vbTextCompare)
+   Range_FilterHtmlStartTagWithAttributes r, "font"
 End Sub
 
-Private Sub Range_FilterHtmlStartTagWithAttributes(R As Range, tagName As String)
+Private Sub Range_FilterHtmlStartTagWithAttributes(r As Range, tagName As String)
    Dim tag As String
    Dim i As Integer, j As Integer
    Dim s As String
-   s = R.Value2
+   s = r.Value2
    tag = "<" & tagName
    i = InStr(1, s, tag, vbTextCompare)
    Do While i > 0
@@ -459,14 +459,14 @@ Private Sub Range_FilterHtmlStartTagWithAttributes(R As Range, tagName As String
       End If
       i = InStr(1, s, tag, vbTextCompare)
    Loop
-   R.Value2 = s
+   r.Value2 = s
 End Sub
 
-Private Sub Range_FilterHtmlFormatTags(R As Range)
+Private Sub Range_FilterHtmlFormatTags(r As Range)
    Dim i As Integer
-   i = InStr(1, R.Value2, "<b>", vbTextCompare)
+   i = InStr(1, r.Value2, "<b>", vbTextCompare)
    Do While i > 0
-      R.Characters(i, 3).Delete
-      i = InStr(i, R.Value2, "<b>", vbTextCompare)
+      r.Characters(i, 3).Delete
+      i = InStr(i, r.Value2, "<b>", vbTextCompare)
    Loop
 End Sub

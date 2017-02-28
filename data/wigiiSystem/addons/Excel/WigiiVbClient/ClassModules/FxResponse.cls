@@ -28,7 +28,9 @@ Attribute VB_Exposed = False
 '*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
 '*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
 '*/
-
+'-
+' Created by Medair in June 2016
+'-
 '-------------------------------------------------------------
 '- FX RESPONSE
 '-------------------------------------------------------------
@@ -150,6 +152,7 @@ Private Sub ParseXML(body As String)
         pXmlError = True
     End If
 End Sub
+
 
 
 

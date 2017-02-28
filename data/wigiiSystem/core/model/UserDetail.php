@@ -35,6 +35,7 @@ class UserDetail extends Model
 	private $passwordLife;
 	private $passwordDate;
 	private $description;
+	private $email;
 
 	private $authenticationMethod;
 	private $authenticationServer;
@@ -69,6 +70,7 @@ class UserDetail extends Model
 			if(isset($array["passwordLength"])) $u->setPasswordLength($array["passwordLength"]);
 			if(isset($array["passwordLife"])) $u->setPasswordLife($array["passwordLife"]);
 			if(isset($array["passwordDate"])) $u->setPasswordDate($array["passwordDate"]);
+			if(isset($array["email"])) $u->setEmail($array["email"], 'value');
 			if(isset($array["description"])) $u->setDescription($array["description"]);
 			if(isset($array["authenticationServer"])) $u->setAuthenticationServer($array["authenticationServer"]);
 			if(isset($array["authenticationMethod"])) $u->setAuthenticationMethod($array["authenticationMethod"]);
@@ -104,8 +106,15 @@ class UserDetail extends Model
 	public function getAttribute($fieldSelector)
 	{
 		if(is_null($fieldSelector)) throw new UserAdminServiceException("fieldSelector cannot be null", UserAdminServiceException::INVALID_ARGUMENT);
-		if(is_object($fieldSelector)) $fName = $fieldSelector->getFieldName();
-		else $fName = $fieldSelector;
+		if(is_object($fieldSelector)) {
+			$fName = $fieldSelector->getFieldName();
+			$subFName = $fieldSelector->getSubFieldName();
+		}
+		else {
+			$fName = $fieldSelector;
+			$subFName = null;
+		}
+		
 		switch($fName)
 		{
 			case "password" : 				return $this->getPassword();
@@ -113,6 +122,7 @@ class UserDetail extends Model
 			case "passwordLength" :			return $this->getPasswordLength();
 			case "passwordLife" : 			return $this->getPasswordLife();
 			case "passwordDate" : 			return $this->getPasswordDate();
+			case "email" :					return $this->getEmail($subFName);
 			case "description" : 			return $this->getDescription();
 			case "canModifyOwnPassword" :	return $this->canModifyOwnPassword();
 			case "moduleAccess" : 			return $this->getModuleAccess();
@@ -146,6 +156,7 @@ class UserDetail extends Model
 		if(is_null($fieldSelector)) throw new UserAdminServiceException("fieldSelector cannot be null", UserAdminServiceException::INVALID_ARGUMENT);
 		if(is_object($fieldSelector)) $fName = $fieldSelector->getFieldName();
 		else $fName = $fieldSelector;
+		$subFName = $fieldSelector->getSubFieldName();
 		switch($fName)
 		{
 			case "password" : 				return $this->setPassword($value);
@@ -154,6 +165,7 @@ class UserDetail extends Model
 			case "passwordLife" : 			return $this->setPasswordLife($value);
 			case "passwordDate" : 			return $this->setPasswordDate($value);
 			case "description" : 			return $this->setDescription($value);
+			case "email" :					return $this->setEmail($value, $subFName);
 			case "canModifyOwnPassword" :	return $this->setCanModifyOwnPassword($value);
 			case "moduleAccess" : 			return $this->setModuleAccess($value);
 			case "userCreator" : 			return $this->setUserCreator($value);
@@ -206,6 +218,14 @@ class UserDetail extends Model
 	public function getDescription()
 	{
 		return $this->description;
+	}
+	/**
+	 * Gets the User email
+	 * @param String $subFieldName email subfield name. If not defined, uses value subfield.
+	 */
+	public function getEmail($subFieldName=null) {
+		if(isset($this->email)) return $this->email[($subFieldName)?$subFieldName:'value'];
+		else return null;
 	}
 	public function getAuthenticationMethod()
 	{
@@ -470,6 +490,21 @@ class UserDetail extends Model
 	public function setDescription($var)
 	{
 		$this->description = $this->formatValue($var);
+	}
+	/**
+	 * Sets the User email
+	 * @param String $value email value or email subfield value
+	 * @param String $subFieldName email subfield name. If not defined, uses value subfield.
+	 */
+	public function setEmail($value, $subFieldName=null) {
+		if(!isset($this->email)) $this->email = array();
+		$this->email[($subFieldName)?$subFieldName:'value'] = $value;		
+		if($subFieldName == null || $subFieldName == 'value') {		
+			$newProofKey = ServiceProvider::getElementService()->getEmailValidationCode($p, $value);
+			$this->email['proofKey'] = $newProofKey;
+			$this->email['proof'] = null;
+			$this->email['proofStatus'] = 0;
+		}
 	}
 	public function setAuthenticationMethod($var)
 	{

@@ -108,6 +108,8 @@ class CSV2ObjectDFA implements DataFlowActivity
 			}
 			//replace double " with one
 			$item2 = str_replace('""', '"', $item2);
+			// trim header
+			$item2 = trim($item2);
 			// replaces new line codes with new lines
 			$item2 = str_replace('\n', "\n", $item2);
 			$r2[$item2] = $pos++;

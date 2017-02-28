@@ -79,7 +79,7 @@ class DetailElementFormExecutor extends FormExecutor {
 		$crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 		$crtModule = $exec->getCrtModule()->getModuleUrl();
 		if($elementP->getRights()->canWriteElement() || $element->isSubElement()){
-			?><div class="T" href="#<?=$element->getId();?>" style="width:<?=$this->getTotalWidth()+$this->getCorrectionWidth();?>px;"><?
+			?><div class="T" href="#<?=$element->getId();?>" style="width:100%;"><?
 			if($elementP->getRights()->canWriteElement()){
 				$enableElementState = $this->computeEnableElementState($p, $exec, $elementP);
 				//edit

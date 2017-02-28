@@ -168,9 +168,9 @@ End Property
 '- Input   : the new range, use first row for header (true) or not
 '- Output  : -
 '------------------------------------------------------------------
-Public Sub SetRange(R As Range, withHeader As Boolean)
-    Set trange = R
-    If withHeader And Not (R Is Nothing) Then
+Public Sub SetRange(r As Range, withHeader As Boolean)
+    Set trange = r
+    If withHeader And Not (r Is Nothing) Then
         theader = True
     Else
         theader = False
@@ -186,24 +186,24 @@ End Sub
 '- Output  : -
 '-------------------------------------------------------------
 Public Sub Resize(nbrows As Integer, nbcols As Integer)
-    Dim R As Integer, c As Integer
+    Dim r As Integer, c As Integer
     
     If trange Is Nothing Then
         Exit Sub
     End If
-    R = nbrows + Me.rowCount
+    r = nbrows + Me.rowCount
     c = nbcols + Me.colCount
     
     If theader Then
-        If (R >= 0) And (c > 0) Then
+        If (r >= 0) And (c > 0) Then
             With trange
-                Set trange = .Worksheet.Range(.Cells(1, 1), .Cells(1 + R, c))
+                Set trange = .Worksheet.Range(.Cells(1, 1), .Cells(1 + r, c))
             End With
         End If
     Else
-        If (R > 0) And (c > 0) Then
+        If (r > 0) And (c > 0) Then
             With trange
-                Set trange = .Worksheet.Range(.Cells(1, 1), .Cells(R, c))
+                Set trange = .Worksheet.Range(.Cells(1, 1), .Cells(r, c))
             End With
         End If
     End If
@@ -218,21 +218,21 @@ End Sub
 '-           ! the range must not be in table !
 '- Output  : the new table (the current one is not changed)
 '-------------------------------------------------------------
-Public Function CopyTo(R As Range, Optional withHeader As Boolean = True) As LogTable
+Public Function CopyTo(r As Range, Optional withHeader As Boolean = True) As LogTable
     Dim result As New LogTable
         
-    If Not withHeader And Me.HasHeader And Not R Is Nothing Then
+    If Not withHeader And Me.HasHeader And Not r Is Nothing Then
         If Me.IsEmpty Then
             Set CopyTo = Nothing
         Else
-            With R
+            With r
                 result.SetRange .Worksheet.Range(.Cells(1, 1), .Cells(Me.rowCount, Me.colCount)), False
             End With
             result.Range.Value2 = Me.data.Value2
             Set CopyTo = result
         End If
-    ElseIf Not R Is Nothing And Not trange Is Nothing Then
-        With R
+    ElseIf Not r Is Nothing And Not trange Is Nothing Then
+        With r
             result.SetRange .Worksheet.Range(.Cells(1, 1), .Cells(trange.rows.count, trange.Columns.count)), theader
         End With
         result.Range.Value2 = trange.Value2
@@ -253,11 +253,11 @@ End Function
 '-           the number of columns to copy
 '- Output  : the new table
 '-------------------------------------------------------------
-Public Function SpecificCopy(R As Range, colmap() As Integer, nbcol As Integer) As LogTable
+Public Function SpecificCopy(r As Range, colmap() As Integer, nbcol As Integer) As LogTable
     Dim result As New LogTable
     Dim i As Integer, n As Integer
     
-    If (Not R Is Nothing) And _
+    If (Not r Is Nothing) And _
        (Not trange Is Nothing) And _
        (nbcol > 0) Then
     
@@ -267,7 +267,7 @@ Public Function SpecificCopy(R As Range, colmap() As Integer, nbcol As Integer) 
             n = nbcol
         End If
         'Constructs the result table
-        With R
+        With r
             result.SetRange .Worksheet.Range(.Cells(1, 1), .Cells(trange.rows.count, n)), theader
         End With
         'Copies the data
@@ -522,4 +522,6 @@ Public Function SelectDataFromRow(columnName As String, rowNumber As Integer) As
         SelectDataFromRow = ""
     End If
 End Function
+
+
 

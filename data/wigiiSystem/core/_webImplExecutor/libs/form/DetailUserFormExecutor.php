@@ -190,6 +190,8 @@ class DetailUserFormExecutor extends FormExecutor {
 //			$record->setFieldValue($temp, "getGroupCreator");
 		}
 		$record->setFieldValue($user->getDetail()->getDescription(), "description");
+		
+		$record->setFieldValue($user->getDetail()->getEmail(), "email");
 
 
 		//ConfigEdit

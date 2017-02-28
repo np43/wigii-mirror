@@ -1,0 +1,55 @@
+{% macro show(field, class) %}
+      {{ field.fieldRenderer|raw }}
+{% endmacro %}
+
+{% macro subMenu(menu, subgroup) %}
+	<!-- Nav tabs (Desktop) -->
+	<ul class="nav nav-pills nav-stacked nav-tabs hidden-xs" role="tablist">
+    	{% for subgroup in menu  %}
+    	    {% if(subgroup.dataType == 'group') %}
+            	<li role="presentation" {{ (loop.first)?'class="active"':'' }}><a href="#{{ subgroup.labelNoSpace }}" aria-controls="home" role="tab" data-toggle="tab">{{ subgroup.label }}</a></li>
+    		{% endif %}
+    	{% endfor %}
+    	{% if (subgroup == false) %}
+    		<p>There is no subgroup in this element</p>
+    	{% endif %}
+	</ul>
+	<!-- Nav tabs (Mobile) -->
+	<ul class="nav nav-pills visible-xs" role="tablist">
+		<li>
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="true">
+              Sub Menu <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+            	{% for subgroup in menu  %}
+            		{% if(subGroup.dataType == 'group') %}
+                    	<li role="presentation" {{ (loop.first)?'class="active"':'' }}><a href="#{{ subgroup.labelNoSpace }}" aria-controls="home" role="tab" data-toggle="tab">{{ subgroup.label }}</a></li>
+            		{% endif %}
+            	{% endfor %}
+            </ul>
+		</li>
+	</ul>
+{% endmacro %}
+
+{% macro content(menu) %}
+	<!-- Tab panes -->
+	<div class="tab-content">
+		{% for subgroup in menu  %}
+			<div role="tabpanel" class="tab-pane {{ (loop.first)?'active':'' }}" id="{{ subgroup.labelNoSpace }}">
+    			<h1>{{ subgroup.label }}</h1>
+    			<p>{{ _self.showContent(subgroup.childs) }}</p>
+			</div>
+		{% endfor %}
+	</div>
+{% endmacro %}
+
+{% macro showContent(content) %}
+	{% for c in content %}
+		{% if (c.dataType != 'group') %}
+		    {{ c.fieldRenderer|raw }}
+		{% else %}
+			<h3>{{ c.label }}</h3>
+			{{ _self.showContent(c.childs) }}
+		{% endif %}
+	{% endfor %}
+{% endmacro %}

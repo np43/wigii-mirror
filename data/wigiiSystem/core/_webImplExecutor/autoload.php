@@ -67,6 +67,10 @@ require_once(CORE_PATH."api/libs/vendor/autoload.php");
 // include HTMLPurify library to prevent any XSS injection in html areas
 require_once(CORE_PATH."_webImplExecutor/libs/htmlpurifier-4.5.0-lite/library/HTMLPurifier.auto.php");
 
+// Include Twig Library for the templating and configure the loader
+require_once(CORE_PATH.'_webImplExecutor/libs/Twig/Autoloader.php');
+Twig_Autoloader::register();
+
 // registers Wigii classes autoload function
 spl_autoload_register('wigii_autoload');
 

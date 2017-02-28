@@ -190,7 +190,7 @@ adds for making work the navBar
 	position:absolute;
 	z-index:0;
 	left:0px;
-	height:28px;
+	height:auto;
 	width:100%;
 	margin-top:0px;
 }

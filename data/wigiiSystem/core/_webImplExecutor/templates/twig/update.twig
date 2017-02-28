@@ -1,0 +1,47 @@
+{% extends 'template.twig' %}
+
+{% block content %}
+	<div>
+		<div class="mainDetails col-md-12">
+          <h3>Update project details</h3>
+        </div>
+	</div>
+	<div class="content-details">
+		
+		<!-- Mobile menu -->
+		<div class="col-md-2 visible-xs sidebar">
+            <ul class="nav nav-pills">
+            	{% for group in groups %}
+                	<li role="presentation">
+                		<a href="#">{{ group }}</a>
+                	</li>
+            	{% endfor %}
+            </ul>
+        </div>
+        
+        <!-- Desktop menu -->
+        <div class="col-md-2 hidden-xs sidebar">
+            <ul class="nav nav-pills nav-stacked nav-tabs" role="tablist">
+            	{% for group in groups %}
+                	<li role="presentation" {{ (loop.first)?'class="active"':'' }}>
+                		<a href="#{{ group.labelNoSpace }}" aria-controls="{{ group.labelNoSpace }}" role="tab" data-toggle="tab" >{{ group.label }}</a>
+                	</li>
+            	{% endfor %}
+            </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        	<div class="tab-content">
+            	{% for key, group in groups %}
+                   	<div role="tabpanel" class="tab-pane fade {{ (loop.first)?'in active':'' }}" id="{{ group.labelNoSpace }}">
+                   	<h1>{{ group.label }}</h1>
+                   		{% for field in attribute(arbo, key)  %}
+                   			{{ fields.input(field) }}<br />
+                   		{% endfor %}
+                   	</div>
+                {% endfor %}
+        	</div>
+            
+
+		</div>
+    </div>
+{% endblock %}

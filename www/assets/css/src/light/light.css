@@ -1,0 +1,69 @@
+@CHARSET "ISO-8859-1";
+
+.navbar {
+	background-image: url("images/Medair_Intranet_28.png");
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-color: #f9ebb2 !important;
+}
+
+.sidebar {
+	position: fixed !important;
+	left: 0;
+	z-index: 1000;
+	display: block;
+	padding: 20px;
+	overflow-x: hidden;
+	overflow-y:auto;
+	background-color: #f5f5f5;
+	border-right: 1px solid #eee;
+	height: 100%;
+}
+
+.nav-sidebar {
+	margin-right: -21px;
+    margin-bottom: 20px;
+    margin-left: -20px;
+}
+
+.navbar ul.nav li a:hover {
+	color: black;
+}
+
+.mainDetails {
+	position: fixed !important;
+	margin-top: 51px;
+	height: 50px;
+	width: 100%;
+	z-index: 2000;
+	background: -moz-linear-gradient(top,  rgba(255,255,255,1) 0%, rgba(255,255,255,1) 83%, rgba(255,255,255,0) 100%);
+	background: -webkit-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(255,255,255,1) 83%,rgba(255,255,255,0) 100%);
+	background: linear-gradient(to bottom,  rgba(255,255,255,1) 0%,rgba(255,255,255,1) 83%,rgba(255,255,255,0) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#00ffffff',GradientType=0 );
+
+	
+}
+
+.content-details {
+	position: relative;
+	margin-top:101px;
+}
+
+
+.field .label {
+	text-align: left;
+	width: 25%;
+	color: grey; 
+	font-size: 12pt;
+}
+
+.field {
+	float: left;
+	width: 100%;
+}
+
+.label {
+	white-space: normal;
+	width: 200px;
+}
+

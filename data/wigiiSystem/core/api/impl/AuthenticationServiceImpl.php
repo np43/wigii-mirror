@@ -511,18 +511,18 @@ class AuthenticationServiceImpl implements AuthenticationService
 
 			//Clear the POP server's Banner Text.
 			//eg.. '+OK Welcome to <server name> etc etc'
-			$trash = fgets($fp, 128); // Trash to hold the banner
+			$trash = fgets($fp); // Trash to hold the banner
 
 			fwrite($fp, "USER $PHP_AUTH_USER\r\n"); // POP3 USER CMD
 
-			$user = fgets($fp, 128);
+			$user = fgets($fp);
 			$user = preg_replace("#\n#", "", $user);
 
 			$returnValue = false;
 			if (preg_match("#^\+OK(.+)#", $user)) {
 
 				fwrite($fp, "PASS $PHP_AUTH_PW\r\n"); // POP3 PASS CMD
-				$pass = fgets($fp, 128);
+				$pass = fgets($fp);
 				$pass = preg_replace("#\n#", "", $pass);
 
 				if (preg_match("#^\+OK(.+)#", $pass)) {

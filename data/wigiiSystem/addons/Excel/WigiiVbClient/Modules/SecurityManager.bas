@@ -236,13 +236,13 @@ End Function
 '-           or if the sheet is not registered in the SM
 '-------------------------------------------------------------
 Public Sub SM_UnprotectSheet(s As Worksheet)
-   Dim R As Range
+   Dim r As Range
    
    If Not isSheetProtected(s) Then
       Exit Sub
    End If
-   Set R = accessControlTable.LogTable.FindDichotomy(s.name, 1)
-   If Not R Is Nothing Then
+   Set r = accessControlTable.LogTable.FindDichotomy(s.name, 1)
+   If Not r Is Nothing Then
       unprotectSheet s
    End If
 End Sub
@@ -257,14 +257,14 @@ End Sub
 '-           or if the sheet is not registered in the SM
 '-------------------------------------------------------------
 Public Sub SM_ProtectSheet(s As Worksheet)
-   Dim R As Range
+   Dim r As Range
    
    If isSheetProtected(s) Then
    '   Exit Sub
    End If
-   Set R = accessControlTable.LogTable.FindDichotomy(s.name, 1)
-   If Not R Is Nothing And modePlusOne - 1 > 0 Then
-      If R.Offset(0, modePlusOne - 1).Value2 Then
+   Set r = accessControlTable.LogTable.FindDichotomy(s.name, 1)
+   If Not r Is Nothing And modePlusOne - 1 > 0 Then
+      If r.Offset(0, modePlusOne - 1).Value2 Then
          protectSheet s
       End If
    End If
@@ -317,36 +317,42 @@ End Function
 '            This overwrites a sheet if it already exists
 '- Input   : The sheet name
 '- Output  : The worksheet added
+'- Postcondition: The worksheet is copied and not moved.
 '-------------------------------------------------------------
 Public Function SM_ImportSheet(sheet As Worksheet) As Worksheet
     Dim newSheet As Worksheet
+    Dim sheetName As String
     
-    If Not SM_isManagedSheet(sheet.name) Then
-        If SheetExists(sheet.name) Then
-            Call SM_RemoveSheet(ThisWorkbook.Sheets(sheet.name))
+    sheetName = sheet.name
+    If Not SM_isManagedSheet(sheetName) Then
+        If SheetExists(sheetName) Then
+            Call SM_RemoveSheet(ThisWorkbook.Sheets(sheetName))
         End If
     End If
     
     Call unprotectWorkbook
     sheet.Copy after:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count)
-    Set newSheet = ThisWorkbook.Sheets(sheet.name)
+    
+    Set newSheet = ThisWorkbook.Sheets(sheetName)
     Call SM_ProtectSheet(newSheet)
     Call protectWorkbook
     
     Set SM_ImportSheet = newSheet
-
 End Function
 '-------------------------------------------------------------
 '- SM_IMPORTSHEETS
 '-------------------------------------------------------------
 '- Purpose : Programatically import a set of sheets to thisWorkbook
 '- Input   : The sheet names as an array of strings, the workbook to import from
-'- Output  : The worksheet added, or the named sheet if it already exists
+'- Output  : -
+'- Postcondition: The sheets are moved from source workbook to preserve refs
 '-------------------------------------------------------------
 Public Sub SM_ImportSheets(sheetNames() As String, fromWorkbook As Workbook)
     Dim newSheet As Worksheet
     Dim sheetName As Variant
-
+    Dim sheetCount As Long
+    
+    sheetCount = 0
     For Each sheetName In sheetNames()
         'overwrite if it is not managed
         If Not SM_isManagedSheet(CStr(sheetName)) Then
@@ -354,17 +360,21 @@ Public Sub SM_ImportSheets(sheetNames() As String, fromWorkbook As Workbook)
                 Call SM_RemoveSheet(ThisWorkbook.Sheets(CStr(sheetName)))
             End If
         End If
+        sheetCount = sheetCount + 1
     Next
     
     Call unprotectWorkbook
-    fromWorkbook.Sheets(sheetNames()).Copy after:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count)
+    'Moves sheets from workbook to this workbook, adds an empty sheet if source workbook if empty
+    If sheetCount = fromWorkbook.Sheets.count Then
+        fromWorkbook.Sheets.Add
+    End If
+    fromWorkbook.Sheets(sheetNames()).Move after:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count)
    
     For Each sheetName In sheetNames()
         Call SM_ProtectSheet(ThisWorkbook.Sheets(CStr(sheetName))) ' if it is a managed sheet we protect it
     Next
     
     Call protectWorkbook
-    
 End Sub
 
 '-------------------------------------------------------------
@@ -535,3 +545,5 @@ Public Function SheetExists(shtName As String, Optional wb As Workbook) As Boole
      On Error GoTo 0
      SheetExists = Not sht Is Nothing
  End Function
+
+

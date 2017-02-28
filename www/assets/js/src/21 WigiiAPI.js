@@ -742,8 +742,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						wigiiApi.positionBox({pageX:anchorOffset.left,pageY:anchorOffset.top}, options, options);
 						// make position relative to anchor
 						options.top = options.top+scrollTop-anchorOffset.top;				
-						options.left = options.left+scrollLeft-anchorOffset.left;					
+						options.left = options.left+scrollLeft-anchorOffset.left;
 						options.relativeToAnchor=true;
+						
+						//We must add 20px to the left in case where you have a scroolbar
+						options.left = options.left-20;
 					}
 					else {
 						options.relativeToAnchor=false;

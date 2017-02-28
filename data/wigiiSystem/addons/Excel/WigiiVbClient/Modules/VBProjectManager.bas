@@ -80,13 +80,13 @@ Private Sub VBPM_exportVbComponent(vbCompo As Variant, fileExtension As String, 
    If fso Is Nothing Then
       Set fso = New Scripting.FileSystemObject
    End If
-   Dim filename As String
-   filename = folderPath & "\" & vbCompo.name & fileExtension
-   If fso.FileExists(filename) Then
-      fso.DeleteFile filename
+   Dim FileName As String
+   FileName = folderPath & "\" & vbCompo.name & fileExtension
+   If fso.FileExists(FileName) Then
+      fso.DeleteFile FileName
    End If
    VBPM_createFolder folderPath, fso
-   vbCompo.export filename
+   vbCompo.export FileName
    Set fso = Nothing
 End Sub
 Private Sub VBPM_createFolder(folderPath As String, Optional fso As Scripting.FileSystemObject = Nothing)
@@ -113,3 +113,4 @@ Private Sub VBPM_createFolder(folderPath As String, Optional fso As Scripting.Fi
    Next i
    Set fso = Nothing
 End Sub
+

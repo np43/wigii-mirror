@@ -293,7 +293,7 @@ class UserAdminServiceImpl implements UserAdminService
 		// autowired
 		if(!isset($this->fslForUser))
 		{
-			$this->fslForUser = FieldSelectorListArrayImpl::createInstance();
+			$this->fslForUser = FieldSelectorListArrayImpl::createInstance(true,false);
 			$this->fillFieldSelectorListForUser($this->fslForUser);
 		}
 		return $this->fslForUser;
@@ -314,6 +314,10 @@ class UserAdminServiceImpl implements UserAdminService
 		if(!$fieldSelectorList->containsFieldSelector('passwordLength')) $fieldSelectorList->addFieldSelector('passwordLength');
 		if(!$fieldSelectorList->containsFieldSelector('passwordLife')) $fieldSelectorList->addFieldSelector('passwordLife');
 		if(!$fieldSelectorList->containsFieldSelector('passwordDate')) $fieldSelectorList->addFieldSelector('passwordDate');
+		if(!$fieldSelectorList->containsFieldSelector('email', 'value')) $fieldSelectorList->addFieldSelector('email','value');
+		if(!$fieldSelectorList->containsFieldSelector('email', 'proofKey')) $fieldSelectorList->addFieldSelector('email', 'proofKey');
+		if(!$fieldSelectorList->containsFieldSelector('email', 'proof')) $fieldSelectorList->addFieldSelector('email', 'proof');
+		if(!$fieldSelectorList->containsFieldSelector('email', 'proofStatus')) $fieldSelectorList->addFieldSelector('email', 'proofStatus');		
 		if(!$fieldSelectorList->containsFieldSelector('description')) $fieldSelectorList->addFieldSelector('description');
 		if(!$fieldSelectorList->containsFieldSelector('sys_date')) $fieldSelectorList->addFieldSelector('sys_date');
 		if(!$fieldSelectorList->containsFieldSelector('sys_creationDate')) $fieldSelectorList->addFieldSelector('sys_creationDate');
@@ -1283,7 +1287,7 @@ where $id_user";
 		$id_user_owner = $sqlB->formatBinExp('UU.id_user_owner', '=', $principalId, MySqlQueryBuilder::SQLTYPE_INT);
 		$isOwner = $sqlB->formatBinExp('UU.isOwner', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN); //add by LWR
 		$isInPrincipalWigiiNamespace = $sqlB->formatBinExp('U.wigiiNamespace', '=', $principal->getWigiiNamespace()->getWigiiNamespaceName(), MySqlQueryBuilder::SQLTYPE_VARCHAR); //add by LWR
-		return "SELECT ".$this->getSqlColumnsForUser('U', $fieldSelectorList).",
+		return "SELCET ".$this->getSqlColumnsForUser('U', $fieldSelectorList).",
 case when
 	UU.id_user_owner is not null
 	".($principal->isReadAllUsersInWigiiNamespace()? " or $isInPrincipalWigiiNamespace " : "")."
@@ -3177,6 +3181,87 @@ WHERE (
 		return $sqlB->getSql();
 	}
 
+	public function changeOwnEmail($principal, $email)
+	{
+		$this->executionSink()->publishStartOperation("changeOwnEmail", $principal);
+		try
+		{
+			// checks authorization
+			if($principal->isPlayingRole()){
+				$realUser = $principal->getRealUser();
+			} else {
+				$realUser = $principal->getAttachedUser();
+			}
+			$this->assertPrincipalAuthorizedForchangeOwnEmail($principal, $realUser);
+			
+			$userD = $realUser->getDetail();
+	
+			$mySqlF = $this->getMySqlFacade();
+			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
+	
+			//keep old values for rollback
+			$origEmail = $userD->getEmail();
+			
+			if($origEmail === $email){
+				return;
+			}
+			
+			//set new values:
+			$userD->setEmail($email);
+	
+			if($this->getMySqlFacade()->update($principal,
+					$this->getSqlForchangeOwnEmail($realUser, $email),
+					$dbCS) < 1){
+						//rollback
+						$userD->setEmail($origEmail);
+						throw new UserAdminServiceException("Problem when saving email for ".$realUser->getUsername(), UserAdminServiceException::UNEXPECTED_ERROR);
+			}
+		}
+		catch (UserAdminServiceException $gaE){
+			$this->executionSink()->publishEndOperationOnError("changeOwnEmail", $gaE, $principal);
+			throw $gaE;
+		}
+		catch (AuthorizationServiceException $asE){
+			$this->executionSink()->publishEndOperationOnError("changeOwnEmail", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			$this->executionSink()->publishEndOperationOnError("changeOwnEmail", $e, $principal);
+			throw new UserAdminServiceException('',UserAdminServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("changeOwnEmail", $principal);
+	}
+	protected function assertPrincipalAuthorizedForchangeOwnEmail($principal, $realUser)
+	{
+		if(is_null($principal)) throw new UserAdminServiceException('principal can not be null', UserAdminServiceException::INVALID_ARGUMENT);
+		if(is_null($realUser)) throw new UserAdminServiceException('realUser can not be null', UserAdminServiceException::INVALID_ARGUMENT);
+		$autoS = $this->getAuthorizationService();
+		// checks general authorization
+		$autoS->assertPrincipalAuthorized($principal, "UserAdminService", "changeOwnEmail");
+		// checks real user integrity
+		if($principal->getRealUserId() != $realUser->getId()) $autoS->fail($principal, "principal real user id (".$principal->getRealUserId().") does not match attached real user id (".$realUser->getId().")");
+	}
+	protected function getSqlForchangeOwnEmail($user, $email){
+		if(is_null($user)) throw new UserAdminServiceException('user can not be null', UserAdminServiceException::INVALID_ARGUMENT);
+		if(is_null($email)) throw new UserAdminServiceException('email can not be null', UserAdminServiceException::INVALID_ARGUMENT);
+		$userD = $user->getDetail();
+		if(is_null($userD)) throw new UserAdminServiceException('user detail can not be null', UserAdminServiceException::INVALID_ARGUMENT);
+	
+		$sqlB = $this->getMySqlFacade()->getSqlBuilder();
+		$sqlB->setTableForUpdate('Users');
+		$sqlB->updateValue('email', $userD->getEmail(), MySqlQueryBuilder::SQLTYPE_VARCHAR);
+		$sqlB->updateValue('emailProofKey', $userD->getEmail('proofKey'), MySqlQueryBuilder::SQLTYPE_VARCHAR);
+		$sqlB->updateValue('emailProof', $userD->getEmail('proof'), MySqlQueryBuilder::SQLTYPE_VARCHAR);
+		$sqlB->updateValue('emailProofStatus', $userD->getEmail('proofStatus'), MySqlQueryBuilder::SQLTYPE_VARCHAR);
+	
+		$whereIdUser = $sqlB->formatBinExp("id_user", '=', $user->getId(), MySqlQueryBuilder::SQLTYPE_INT);
+	
+		$sqlB->setWhereClause("$whereIdUser");
+	
+		return $sqlB->getSql();
+	}
+	
 	public function persistUserLoginInformation($principal, $user)
 	{
 		$this->executionSink()->publishStartOperation("persistUserLoginInformation", $principal);
@@ -4007,6 +4092,7 @@ class UserWhereClauseBuilderForSelectUsers extends FieldSelectorLogExpSqlBuilder
 	{
 		if(is_null($fieldSelector)) throw new UserAdminServiceException("fieldSelector cannot be null", UserAdminServiceException::INVALID_ARGUMENT);
 		$fName = $fieldSelector->getFieldName();
+		$subFName = $fieldSelector->getSubFieldName();
 		switch($fName)
 		{
 			case "id": 						return "id_user";
@@ -4019,6 +4105,17 @@ class UserWhereClauseBuilderForSelectUsers extends FieldSelectorLogExpSqlBuilder
 			case "passwordLength" : 		return "passwordLength";
 			case "passwordLife" : 			return "passwordLife";
 			case "passwordDate" : 			return "passwordDate";
+			case "email" :
+				if($subFName === null){
+					return "email";
+				}
+				switch($subFName)
+				{
+					case "value" :			return "email";
+					case "proofKey" :		return "emailProofKey";
+					case "proof" :			return "emailProof";
+					case "proofStatus" :	return "emailProofStatus";
+				}
 			case "description" : 			return "description";
 			case "sys_date" : 				return "sys_date";
 			case "sys_creationDate" : 		return "sys_creationDate";
@@ -4058,6 +4155,7 @@ class UserWhereClauseBuilderForSelectUsers extends FieldSelectorLogExpSqlBuilder
 	{
 		if(is_null($fieldSelector)) throw new UserAdminServiceException("fieldSelector cannot be null", UserAdminServiceException::INVALID_ARGUMENT);
 		$fName = $fieldSelector->getFieldName();
+		$subFName = $fieldSelector->getSubFieldName();
 		switch($fName)
 		{
 			case "id": 						return MySqlQueryBuilder::SQLTYPE_INT;
@@ -4070,6 +4168,14 @@ class UserWhereClauseBuilderForSelectUsers extends FieldSelectorLogExpSqlBuilder
 			case "passwordLength" : 		return MySqlQueryBuilder::SQLTYPE_INT;
 			case "passwordLife" : 			return MySqlQueryBuilder::SQLTYPE_INT;
 			case "passwordDate" : 			return MySqlQueryBuilder::SQLTYPE_INT;
+			case "email" :
+				switch($subFName)
+				{
+					case "value" :			return MySqlQueryBuilder::SQLTYPE_VARCHAR;
+					case "proofKey" :		return MySqlQueryBuilder::SQLTYPE_VARCHAR;
+					case "proof" :			return MySqlQueryBuilder::SQLTYPE_VARCHAR;
+					case "proofStatus" :	return MySqlQueryBuilder::SQLTYPE_INT;
+				}
 			case "description" : 			return MySqlQueryBuilder::SQLTYPE_TEXT;
 			case "sys_date" : 				return MySqlQueryBuilder::SQLTYPE_INT;
 			case "sys_creationDate" : 		return MySqlQueryBuilder::SQLTYPE_INT;

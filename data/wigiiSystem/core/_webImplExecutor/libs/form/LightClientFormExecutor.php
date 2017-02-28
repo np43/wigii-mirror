@@ -67,8 +67,27 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 		$trm = LightClientTRM::createInstance();
 		$trm->setConfigService($this->getConfigService());
 		$trm->clear();
+		$trm->setOutputEnabled(false);
 		return $trm;
 	}
+	
+	/*
+	public function setTrm($trm){ $this->templateRecordManager = $trm; }
+	public function getTrm(){ return $this->trm; }
+	public function setRecord($record) {
+		if(!isset($this->templateRecordManager)){
+			$this->templateRecordManager = $this->createTrmInstance();
+		}
+		$this->templateRecordManager->reset($record);
+	}
+	public function getRecord() {
+		if(isset($this->templateRecordManager))
+			return $this->getTrm()->getRecord();
+			else return null;
+	}
+	
+	*/
+	
 
 	/**
 	 * @return String returns the name of the current flow in which this element is evaluated.
@@ -235,12 +254,21 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 		
 	public function displayElementDetail($p,$exec) {
 		$trm = $this->getTrm();
+		
+		$trm->initTwig('read');
+		
+		echo $trm->getHtmlAndClean();
+		
+		//$exec->addJsCode($detailR->getJsCodeAfterShow());
+		
+		/*
 		$detailR = $trm->getDetailRenderer();
 		
 		$detailR->resetJsCodeAfterShow();
 		$trm->displayRemainingDetails();
 		
 		$exec->addJsCode($detailR->getJsCodeAfterShow());		
+		//*/
 	}	
 	public function displayElementForm($p,$exec) {
 		$trm = $this->getTrm();
@@ -249,11 +277,13 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 		$formR->resetJsCodeAfterShow();
 		$trm->openForm($this->getFormId(), $this->getSubmitUrl(), $this->getTotalWidth(), false);
 		$formR->displayFormErrors();
-		$trm->displayRemainingForms();
+		echo $trm->getHtmlAndClean();
+		$trm->initTwig('update');
+		echo $trm->getHtmlAndClean();
 		$trm->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog(), $trm->t("cancel"));
-
 		$trm->addJsCodeAfterFormIsShown($this->getFormId());
-		$exec->addJsCode($formR->getJsCodeAfterShow());			
+		echo $trm->getHtmlAndClean();
+		$exec->addJsCode($formR->getJsCodeAfterShow());	
 	}
 }
 

@@ -38,7 +38,11 @@ function resize_groupPanel(){
 	fb = $('#footerBar');
 	gpT = $('#groupPanel>.keepNotify');
 	if(resize_groupPanel_i.length>0){
-		resize_groupPanel_i.height($(window).height() - getTopHeight(true) - fb.outerHeight() - gpT.outerHeight()-20);
+		if(typeof gpT.outerHeight() != "undefined"){
+			resize_groupPanel_i.height($(window).height() - getTopHeight(true) - fb.outerHeight() - gpT.outerHeight()-20);
+		}else{
+			resize_groupPanel_i.height($(window).height() - getTopHeight(true) - fb.outerHeight() -20);
+		}
 //		if($('#groupPanel>ul:hidden').length){
 //			var tempH = $('#moduleView').height();
 //			var tempPad = tempH / 2 -30;
@@ -71,6 +75,12 @@ function ElementPListRows_makeHeaders(){
 function resize_elementList(){
 	if(isWorkzoneViewMode() && crtModuleName!='Admin' && !$('#elementDialog').hasClass('ui-dialog-content')) resize_workzoneViewDocked();
 
+	//resizing of the iframe if it's present (It's the case in qlik report)
+	resize_iframe_i = $('#moduleView iframe');
+	if(resize_iframe_i.height()>0){
+		resize_iframe_i.height($(window).height() - getTopHeight(true) - fb.outerHeight());
+	}
+	
 	resize_elementList_i = $('#moduleView>div.list>div.dataList');
 	fb = $('#footerBar');
 	if(resize_elementList_i.length>0){
@@ -90,8 +100,7 @@ function resize_elementList(){
 		} else {
 			$('#moduleView div.nbItemsInList').css('margin-top', '-25px');
 		}
-
-		resize_elementList_i.height($(window).height() - getTopHeight(true) - $('#moduleView > .dataZone.list > .headerList').outerHeight() - fb.outerHeight());
+		resize_elementList_i.height($(window).height() - getTopHeight(true) - $('#moduleView > .dataZone.list > .headerList').outerHeight() - $('#moduleView #indicators').height() - fb.outerHeight());
 
 		$('#moduleView .list .dataList').unbind('scroll').scroll(function(){
 			$('#moduleView>div.list .headerList').css('margin-left', -$(this).scrollLeft());
@@ -2185,7 +2194,7 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 	});
 }
 
-function hrefWithSiteroot2js(domIdToCheck, targetDomId){	
+function hrefWithSiteroot2js(domIdToCheck, targetDomId){
 	$('#'+domIdToCheck+' a[href^="'+SITE_ROOT+'"]').each(function(){
 		$(this).click(function(){
 			if($(this).attr('target') != '_blank'){
@@ -2223,6 +2232,11 @@ function resize_navigateMenu(){
 	if(resize_navigateMenu_i.length>0){
 		//2*12 because navR and navL have margin -12
 		resize_navigateMenu_i.width($(window).width()-$('#userMenu').outerWidth()-$('#navigationBar .navR').outerWidth()-$('#navigationBar .navL').outerWidth()-1);
+	}
+	//Change the margin when the submenu bar is resizing - 23.01.2017 (LMA)
+	var resize_subMenu = $('.sf-navbar li.selected ul');
+	if(resize_subMenu.height() != null && resize_subMenu.height() > 0){
+		$('#workZone').css('margin-top', resize_subMenu.height()-28);
 	}
 }
 $(window).resize(resize_navigateMenu);
@@ -2307,6 +2321,7 @@ function setListenerToNavigateMenu(){
 	;
 	//Create a delai for hide submenu in navigationBar
 	$("#navigateMenu li.with-ul").on("mouseenter", function() {
+		navMenu.eq(index).removeClass("delai-navbar");
 		if(!$(this).hasClass("selected")){
 			var navMenu = $("#navigateMenu li.with-ul");
 			var currentLi = navMenu.index(this);
@@ -3494,7 +3509,7 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 }
 function resize_calendar(){
 	if($('#moduleView .calendar').length>0){
-		$('#moduleView .calendar').height($('#groupPanel').height() - parseInt($('#moduleView .calendar').css('margin-top'),10));
+		$('#moduleView .calendar').height($('#groupPanel').height() - parseInt($('#moduleView .calendar').css('margin-top'),10) - $('#moduleView #indicators').height());
 		$('#moduleView .calendar').fullCalendar('option', 'height', $('#moduleView .calendar').height());
 	}
 }
@@ -3531,7 +3546,7 @@ function resize_blog(){
 		var blogWidth = Math.floor((modViewWidth-6-10) / crtBlogViewNbOfColumns); //contains margin 1x + rounding
 		blogWidth = blogWidth - 42 - 2; //padding 2x, border 2x, margin 1x + rounding
 		$('#moduleView>div.blog div.el:not(.max)').width(blogWidth);
-		$('#moduleView>div.blog .dataBlog').height($(window).height()-$('#moduleView>div.blog .dataBlog').position().top - fb.outerHeight()-3);
+		$('#moduleView>div.blog .dataBlog').height($(window).height()-$('#moduleView>div.blog .dataBlog').position().top - fb.outerHeight()-3 - $('#moduleView #indicators').height());
 	}
 }
 
@@ -3666,6 +3681,7 @@ function resize_scrollArea(keepScrollPosition){
 		if(keepScrollPosition) elementPreviousTop = ((element.find('#scrollElement').length == 1) ? element.find('#scrollElement').scrollTop() : element.scrollTop());
 		var typeOfDialog = ((element.find('div.T').length == 0) ? "neighbour" : "children");
 		if(typeOfDialog == 'neighbour'){
+			var oldHeight = element.css("height");
 			element.css("height","");
 			if(element.next().hasClass('scrollGradient'))
 				element.next().css("display", "none");
@@ -3674,6 +3690,10 @@ function resize_scrollArea(keepScrollPosition){
 			.next().css("display", "none");
 		}
 		addScrollWithShadow(elementName, elementPreviousTop);
+		
+		if(isWorkzoneViewMode()){
+			element.css("height",oldHeight);
+		}
 	}
 }
 

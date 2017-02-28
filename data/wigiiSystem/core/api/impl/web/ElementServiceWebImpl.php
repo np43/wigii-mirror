@@ -348,7 +348,8 @@ class ElementServiceWebImpl extends ElementServiceImpl
 		$uAS = ServiceProvider::getUserAdminService();
 
 		$labelWidth -= 5; //5px is in the padding of the cell;
-		?><div class="elementHistoric"><?
+		?><div style="clear:both;height:40px;"></div>
+		<div class="elementHistoric"><?
 			?><div class="label collapsed SBB"><?=$transS->t($p, "elementAdditionalInformation");?></div><?
 			?><table style="display:none;" width="<?=$totalWidth;?>"><?
 

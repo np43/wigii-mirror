@@ -5174,13 +5174,7 @@ invalidCompleteCache();
 				$totalWidth = 850;
 				$labelWidth = 250;
 
-				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("userDetail"), $exec->getCrtModule());
-				//get the user email
-				if($userEditRec->getFieldList()->doesFieldExist('principalEmail')) {
-					$userInfo = str2array($userP->getUser()->getDetail()->getInfo_lastSessionContext());
-					//put the email in userEditrec
-					$userEditRec->setFieldValue($userInfo['generalContext']['email'], 'principalEmail');
-				}
+				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("userDetail"), $exec->getCrtModule());				
 				//$this->throwEvent()->readElement(PWithElement::createInstance($p, $element));
 				$form = $this->createDetailUserFormExecutor(ServiceProvider :: getModuleAdminService()->getModule($p, $workingModuleName), $userP, $userEditRec, "detailUser_form", null);
 				$form->setCorrectionWidth(26);
@@ -5266,13 +5260,7 @@ invalidCompleteCache();
 					break;
 				//eput($user->displayDebug());
 
-				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance((!$user->isRole() ? "userEdit" : "roleEdit")), $exec->getCrtModule());	
-				//get the user email
-				if($userEditRec->getFieldList()->doesFieldExist('principalEmail')) {
-					$userInfo = str2array($userP->getUser()->getDetail()->getInfo_lastSessionContext());
-					//put the email in userEditrec
-					$userEditRec->setFieldValue($userInfo['generalContext']['email'], 'principalEmail');
-				}
+				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance((!$user->isRole() ? "userEdit" : "roleEdit")), $exec->getCrtModule());					
 				$this->createAccessAndFolderCreatorForm($user, $p, $userEditRec);
 
 				//set url to refresh on done, depending on context
@@ -7933,7 +7921,12 @@ onUpdateErrorCounter = 0;
 
 					$url = SITE_ROOT_forFileUrl.$uploadfile; //CLIENT_WEB_URL."camera_icon.png";
 					$msg = "";
-					$output = '<html><body><script type="text/javascript">window.parent.CKEDITOR.tools.callFunction('.$callback.', "'.$url.'","'.$msg.'");</script></body></html>';
+					if($param['responseType'] == 'json'){
+						$output = array('uploaded' => 1,'fileName' => $fileData["tmp_name"],'url' => $url);
+						$output = json_encode($output);
+					} else{
+						$output = '<html><body><script type="text/javascript">window.parent.CKEDITOR.tools.callFunction('.$callback.', "'.$url.'","'.$msg.'");</script></body></html>';
+					}
 					echo $output;
 				}
 

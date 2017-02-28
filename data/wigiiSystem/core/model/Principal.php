@@ -736,10 +736,25 @@ class Principal extends Model
 	}
 	public function setValueInGeneralContext($key, $value){
 		if(!isset($this->generalContext)) $this->generalContext = array();
-		$this->generalContext[$key] = $value;
+		if($key == 'email') {
+			ServiceProvider::getUserAdminService()->changeOwnEmail($this, $value);
+		}else{
+			$this->generalContext[$key] = $value;
+		}
 	}
 	public function getValueInGeneralContext($key){
 		if(!isset($this->generalContext)) return null;
+		if($key == 'email') {
+			$realUser = $this->getRealUser();
+			if(isset($realUser)){
+				$email = $realUser->getDetail()->getEmail();
+				if($email){
+					return $email;
+				}else {
+					return $this->generalContext[$key];
+				}
+			}
+		}
 		return $this->generalContext[$key];
 	}
 	public function setValueInRoleContext($key, $value){

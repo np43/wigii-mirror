@@ -117,7 +117,7 @@ End Function
 '-         -2 : invalid file path
 '-------------------------------------------------------------
 Public Function FM_getWorkbook(FID As Integer, Output As Workbook) As Integer
-   Dim R As Range
+   Dim r As Range
    Dim events As Boolean
    Dim errorNumber As Integer
    Dim lastActiveWb As Workbook
@@ -131,11 +131,11 @@ Public Function FM_getWorkbook(FID As Integer, Output As Workbook) As Integer
       Exit Function
    End If
       
-   Set R = fileIndex.LogTable.data.Cells(FID - FIDglobalBase + 1, 1)
+   Set r = fileIndex.LogTable.data.Cells(FID - FIDglobalBase + 1, 1)
    
    'Looks if the workbook is already open
    errorNumber = 1
-   Set Output = Workbooks(R.Offset(0, 1).Value2)
+   Set Output = Workbooks(r.Offset(0, 1).Value2)
    errorNumber = 0
    FM_openWorkbook = 0
    Exit Function
@@ -146,7 +146,7 @@ openWorkbook:
    Application.EnableEvents = False
    Set lastActiveWb = ActiveWorkbook
    errorNumber = 2
-   Set Output = Workbooks.Open(R.Offset(0, 2).Value2 & "\" & R.Offset(0, 1).Value2, _
+   Set Output = Workbooks.Open(r.Offset(0, 2).Value2 & "\" & r.Offset(0, 1).Value2, _
                                0, False, notify:=False)
    errorNumber = 0
    lastActiveWb.Activate

@@ -29,11 +29,11 @@
 //* SMTP parameters */
 //*******************
 define ("SMTP_host", "mail.xxx.xx");
-define ("SMTP_userame", "mailer@xxx.xx");
+define ("SMTP_username", "mailer@xxx.xx");
 define ("SMTP_password", "xxx");
 define ("SMTP_ssl", "tls"); 						//SMTP_ssl:  "" : tls : ssl
 define ("SMTP_port", "587"); 						//SMTP_port: tls=25/587 : ssl=465
-define ("SMTP_auth", "plain"); 						//SMTP_auth: plain : logic : crammd5
+define ("SMTP_auth", "plain"); 						//SMTP_auth: plain : login: crammd5
 define ("EmailService_maxRecipients", 15);			//Max number of recipients per email. If more, the email is splitted and duplicated
 
 //*********************

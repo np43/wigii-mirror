@@ -1,6 +1,27 @@
 Attribute VB_Name = "FxClient"
+'**
+'*  This file is part of Wigii.
+'*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+'*
+'*  Wigii is free software: you can redistribute it and/or modify it
+'*  under the terms of the GNU General Public License as published by
+'*  the Free Software Foundation, either version 3 of the License,
+'*  or (at your option) any later version.
+'*
+'*  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+'*  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+'*  See the GNU General Public License for more details.
+'*
+'*  A copy of the GNU General Public License is available in the Readme folder of the source code.
+'*  If not, see <http://www.gnu.org/licenses/>.
+'*
+'*  @copyright  Copyright (c) 2016  Wigii.org
+'*  @author     <http://www.wigii.org/system>      Wigii.org
+'*  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+'*  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+'*/
 '-
-' Created by Medair
+' Created by Medair in June 2016
 '-
 '----------------------------------------------------------------------------
 '- FX CLIENT
@@ -54,13 +75,13 @@ End Sub
 '          : String postData   - Optional post data to send
 '            (non binary)
 '- Output  : FxResponse object that contains the response or
-'            error from the Wiggii service
+'            error from the Wigii service
 '-------------------------------------------------------------
 Public Function FX_Call(operation As String, Optional postData As String) As FxResponse
     Dim url As String
     Dim response As FxResponse
         
-    url = FX_UrlFromOpreration(operation)
+    url = FX_UrlFromOperation(operation)
 ''
 '    Debug.Print operation
 '    Debug.Print url
@@ -72,15 +93,19 @@ Public Function FX_Call(operation As String, Optional postData As String) As FxR
 End Function
 
 '-------------------------------------------------------------
-'- FX_UrlFromOpreration
+'- FX_UrlFromOperation
 '-------------------------------------------------------------
 '- Purpose : Create a full Url from a given fx operation
 '- Input   : String operation - The fx command to send
 '- Output  : String Url       - The full URL to the Wigii
 '                               endpoint
 '-------------------------------------------------------------
-Public Function FX_UrlFromOpreration(operation As String) As String
-    FX_UrlFromOpreration = HostURL & Base64URLEncodeString(operation)
+Public Function FX_UrlFromOperation(operation As String) As String
+    If operation <> "" Then
+        FX_UrlFromOperation = HostURL & Base64URLEncodeString(operation)
+    Else
+        FX_UrlFromOperation = HostURL
+    End If
 End Function
 
 '-------------------------------------------------------------
@@ -116,7 +141,7 @@ Public Function FX_DataCall(operation As String, Optional ErrorMessagePrefix As 
     Set response = FX_Call(operation)
         
     If response.HasError Then
-        If showErrors Then MsgBox ErrorMessagePrefix & ": " & response.ErrorMessage, vbCritical, "Portfolio Communiation Failure"
+        If showErrors Then MsgBox ErrorMessagePrefix & ": " & response.ErrorMessage, vbCritical, "Wigii server Communication Failure"
         End
     End If
 
@@ -136,7 +161,7 @@ End Function
 Public Function FX_PostFile(operation As String, sFileName As String) As FxResponse
     Dim url As String
     
-    url = FX_UrlFromOpreration(operation)
+    url = FX_UrlFromOperation(operation)
     
     Set FX_PostFile = FX_PostBinaryFile(url, sFileName)
 
@@ -182,17 +207,16 @@ Private Function FX_Request(operationUrl As String, Optional postData As String)
     Dim response As FxResponse
     Dim httpMethod As String
     
-    If IsMissing(postData) Then
+    If IsMissing(postData) Or postData = "" Then
         httpMethod = "GET"
     Else
         httpMethod = "POST"
     End If
-    
+       
     Set response = New FxResponse
-        
-    Do While status <> "200" And retries < MAXRETRIES
-        On Error GoTo 0
-        With CreateObject("Microsoft.XMLHTTP")
+      With CreateObject("Microsoft.XMLHTTP")
+         Do While status <> "200" And retries < MAXRETRIES
+            'On Error GoTo 0
             .Open httpMethod, operationUrl, False
             .SetRequestHeader "Content-Type", "text/plain;Charset=UTF-8;"
             .SetRequestHeader "Cache-Control", "no-cache, no-store"
@@ -206,9 +230,13 @@ Private Function FX_Request(operationUrl As String, Optional postData As String)
             Else
             .Send
             End If
+            
+            DoEvents
 
             responseBody = .ResponseText
             status = .status
+            retries = retries + 1
+            Loop
         End With
         If status = "200" Then
             response.responseBody = responseBody
@@ -221,9 +249,8 @@ Private Function FX_Request(operationUrl As String, Optional postData As String)
         Else
             Debug.Print status & " for http request"
         End If
-            retries = retries + 1
-    Loop
-    
+
+    DoEvents
     response.ErrorMessage = "Unable to contact server. Please try again later"
     Set FX_Request = response
 End Function
@@ -286,3 +313,5 @@ End Function
 Private Function FX_pvToByteArray(sText As String) As Byte()
     FX_pvToByteArray = VBA.StrConv(sText, vbFromUnicode)
 End Function
+
+

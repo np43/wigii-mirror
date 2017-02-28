@@ -464,3 +464,15 @@ div.fieldset > h1:after {
  .linkBox:hover{
  	text-decoration: underline !important;
  }
+ 
+ #elementDialog .T {
+	width: 100% !important;
+}
+
+/**
+ * Remove the border in case of multilanguage tab
+ */
+ 
+ .ui-widget.ui-widget-content.multilanguage{
+ 	border: none;
+ }

@@ -23,7 +23,7 @@
 
 /**
  * Created on 23 nov. 09 by LWR
- * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair in 2016-2017 for maintenance purposes (see SVN log for details)
  */
 
 class EmailServiceWebImpl implements EmailService {
@@ -485,34 +485,6 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 ");
 
 			return $nbJobAdded;
-
-			/**
-			 * old send method, send was done directly without asynchronus job
-			 * the email object model was storing attachement with the direct file content
-			 */
-//
-//			$config = array();
-//			$config["ssl"] = SMTP_ssl;
-//			$config["port"] = SMTP_port;
-//			$config["auth"] = SMTP_auth;
-//
-//			$config["username"] = SMTP_userame;
-//			$config["password"] = SMTP_password;
-//
-//			//setup the plain text with the html data
-//			if($mail->getBodyText()==null){
-//				$processedBody = html_entity_decode($mail->getBodyHtmlForDb(), ENT_COMPAT, 'UTF-8');
-//				$processedBody = setHtml($processedBody);
-//				$mail->setBodyText($processedBody);
-//			}
-//
-//			require_once('Zend/Mail/Transport/Smtp.php');
-//			require_once('Zend/Mail/Protocol/Smtp/Auth/Plain.php');
-//			$tr = new Zend_Mail_Transport_Smtp(SMTP_host, $config);
-//			$mail->send($tr);
-//
-//			$emailId = $this->persistEmail($principal, $mail, "sent");
-
 		}
 		catch(Exception $e)
 		{
@@ -566,10 +538,13 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 				$config["port"] = SMTP_port;
 				$config["auth"] = SMTP_auth;
 
-				$config["username"] = SMTP_userame;
+				if(defined("SMTP_username")) $config["username"] = SMTP_username; // fixed typo to username
+				else $config["username"] = SMTP_userame; // old missspelled constant userame, kept for backward compatibility
 				$config["password"] = SMTP_password;
 				require_once('Zend/Mail/Transport/Smtp.php');
 				require_once('Zend/Mail/Protocol/Smtp/Auth/Plain.php');
+				require_once('Zend/Mail/Protocol/Smtp/Auth/Login.php');
+				require_once('Zend/Mail/Protocol/Smtp/Auth/Crammd5.php');
 				$tr = new Zend_Mail_Transport_Smtp(SMTP_host, $config);
 
 				$succeed = array();

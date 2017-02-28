@@ -329,7 +329,7 @@ class EditUserFormExecutor extends FormExecutor {
 		
 	protected function actOnCheckedRecord($p, $exec) {
 		$userAS = ServiceProvider::getUserAdminService();
-		$fsl = FieldSelectorListArrayImpl::createInstance(false);
+		$fsl = FieldSelectorListArrayImpl::createInstance(false,false);
 		$userAS->fillFieldSelectorListForUserEdit($fsl);
 		$userD = $this->getUserP()->getUser()->getDetail();
 		$userEditRec = $this->getRecord();
@@ -403,11 +403,11 @@ class EditUserFormExecutor extends FormExecutor {
 		$userAS->fillFieldSelectorListForUserAdminRights($fsl);
 
 		//save email
-		if($userEditRec->getFieldList()->doesFieldExist('principalEmail')) {
-			$userInfo = str2array($userD->getInfo_lastSessionContext());
-			$userInfo['generalContext']['email'] = $userEditRec->getFieldValue('principalEmail');
-			$userD->setInfo_lastSessionContext(array2str($userInfo));
-			$fsl->addFieldSelector('info_lastSessionContext');
+		if($userEditRec->getFieldList()->doesFieldExist('email')) {
+			//$userInfo = str2array($userD->getInfo_lastSessionContext());
+			//$userInfo['generalContext']['email'] = $userEditRec->getFieldValue('principalEmail');
+			//$userD->setInfo_lastSessionContext(array2str($userInfo));
+			$userD->setEmail($userEditRec->getFieldValue('email'));
 		}
 		
 		// CWE 03.02.2016 adds 
@@ -506,6 +506,7 @@ class EditUserFormExecutor extends FormExecutor {
 				if($groupCreator!=null) $groupCreator = array_keys($groupCreator);
 				$userEditRec->setFieldValue($groupCreator, "getGroupCreator");
 				
+				$userEditRec->setFieldValue($user->getDetail()->getEmail(), "email");
 				$userEditRec->setFieldValue($user->getDetail()->getDescription(), "description");
 				$userEditRec->setFieldValue(($user->getDetail()->canModifyOwnPassword() ? true : null), "canModifyOwnPassword");
 				$userEditRec->setFieldValue(($user->getDetail()->getPassword()!=null ? str_repeat("*", ($user->getDetail()->getPasswordLength() ? $user->getDetail()->getPasswordLength() : 4)): ""), "password");

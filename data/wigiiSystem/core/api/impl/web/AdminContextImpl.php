@@ -350,6 +350,7 @@ class AdminContextImpl extends Model implements AdminContext {
 		$fsl->addFieldSelector("username");
 		$fsl->addFieldSelector("wigiiNamespace");
 		$fsl->addFieldSelector("description");
+		$fsl->addFieldSelector("email");
 
 		$expId = TechnicalServiceProvider::getSearchBarOrLogExpParser()->createLogExpOnCriteria($fslId, implode(" ", $filterOnId));
 		$textLogExp = TechnicalServiceProvider::getSearchBarOrLogExpParser()->createLogExpOnCriteria($fsl, $tempTextSearch);

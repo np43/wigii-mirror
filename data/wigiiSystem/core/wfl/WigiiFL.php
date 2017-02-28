@@ -1861,11 +1861,9 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * Where arguments are :
 	 * - Arg(0) index: Int. The parameter index 0..n. 
 	 * 
-	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return String|Array if index is specified, returns the parameter value, else returns an array with all parameters.
 	 */
 	public function sysExecParameter($args) {
-		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs>0) $index = $this->evaluateArg($args[0]);
 		return ServiceProvider::getExecutionService()->getCrtParameters($index);

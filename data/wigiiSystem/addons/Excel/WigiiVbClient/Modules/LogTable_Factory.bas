@@ -143,78 +143,6 @@ Public Sub LTFact_DestroyTable(table As LogTable)
     End If
 End Sub
 
-'------------------------------------------------------------------
-'- LTFACT_CREATEFROMSQL
-'------------------------------------------------------------------
-'- Purpose : Creates a log table as a result of an SQL query
-'- Input   : the connection string, the sql query
-'-           if disconnectFromQueryTable then does not keep underlying querytable
-'- Output  : nothing in case of error or the table.
-'------------------------------------------------------------------
-Public Function LTFact_CreateFromSql(connectionString As String, sql As String, Optional disconnectFromQueryTable As Boolean = True) As LogTable
-   Set LTFact_CreateFromSql = Nothing
-   'opens unbounded table
-   Dim dest As Range
-   Set dest = LTFact_CreateUnbounded()
-   If dest Is Nothing Then Exit Function
-   'fetches query
-   ES_log sql, "LogTable_Factory", "LTFact_CreateFromSql"
-   Dim qt As QueryTable
-   Set qt = dest.Worksheet.QueryTables.Add(connectionString, dest, sql)
-   'registers unbounded and creates log table
-   If Not qt Is Nothing Then
-      On Error Resume Next
-      Dim ok As Boolean
-      ok = qt.Refresh(False)
-      On Error GoTo 0
-      'checks that table is not empty
-      Dim thirdRowEmpty As Boolean
-      thirdRowEmpty = False
-      If ok Then
-         With qt.ResultRange
-            If .rows.count = 3 Then
-               'only two rows of data and all empty ?
-               Dim n As Integer, i As Integer
-               Dim foundSomething As Boolean
-               foundSomething = False
-               thirdRowEmpty = True
-               n = .Columns.count
-               For i = 1 To n
-                  If CStr(.Cells(2, i).Value2) <> "" Then
-                     foundSomething = True
-                  End If
-                  If CStr(.Cells(3, i).Value2) <> "" Then
-                     foundSomething = True
-                     thirdRowEmpty = False
-                     Exit For
-                  End If
-               Next i
-               ok = foundSomething
-            End If
-         End With
-      End If
-      If ok Then
-         Set LTFact_CreateFromSql = New LogTable
-         LTFact_CreateFromSql.SetQueryTable qt
-         If disconnectFromQueryTable And thirdRowEmpty Then
-            LTFact_CreateFromSql.Resize -1, 0
-         End If
-         LTFact_RegisterUnbounded LTFact_CreateFromSql.Range.rows.count
-         'Disconnects query table
-         If disconnectFromQueryTable And Not qt Is Nothing And Not thirdRowEmpty Then
-            LTFact_CreateFromSql.SetQueryTable Nothing
-            qt.Delete
-         End If
-      Else
-         LTFact_RegisterUnbounded 0
-         If Not qt Is Nothing Then
-            qt.Delete
-         End If
-      End If
-   Else
-      LTFact_RegisterUnbounded 0
-   End If
-End Function
 
 '------------------------------------------------------------------
 '- LTFACT_CREATEFROMREGULARXML
@@ -270,4 +198,6 @@ Public Function LTFact_CreateFromRegXml(xDoc As MSXML2.DOMDocument) As LogTable
             
     Set LTFact_CreateFromRegXml = dest
 End Function
+
+
 

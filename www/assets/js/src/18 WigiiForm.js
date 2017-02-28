@@ -36,15 +36,15 @@ function getBasicCKEditorToolbar(){
 }
 function getMediumCKEditorToolbar(){
 	return [
-		['Templates','Maximize','-','PasteText','PasteFromWord'],['NumberedList','BulletedList','Outdent','Indent' ],['Link', 'Image','Table','HorizontalRule','-','Source','Scayt' ],'/',
-		[ 'Format','FontSize','Bold','Italic','Underline','TextColor','Strike','SpecialChar','-','RemoveFormat'],['JustifyLeft','JustifyCenter','JustifyRight']
+		['Templates','Maximize','-','PasteText','RemoveFormat'],['NumberedList','BulletedList','Outdent','Indent' ],['Link', 'Image','Table','HorizontalRule','-','Source','Scayt' ],'/',
+		[ 'Format','FontSize','Bold','Italic','Underline','TextColor','BGColor','Strike','SpecialChar'],['JustifyLeft','JustifyCenter','JustifyRight']
 		];
 }
 function getFullCKEditorToolbar(){
 	//version 4
 	return [
 		[ 'Source','-','Templates','Preview','Maximize' ],
-		[ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo' ],
+		[ 'Cut','Copy','Paste','PasteText','RemoveFormat','-','Undo','Redo' ],
 		[ 'Find','Replace','-','SelectAll','-','Scayt','About' ],
 		'/',
 		[ 'NumberedList','BulletedList','-','Outdent','Indent','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock' ],
@@ -52,43 +52,8 @@ function getFullCKEditorToolbar(){
 		'/',
 		[ 'Format','FontSize' ],
 		[ 'TextColor','BGColor' ],
-		[ 'Bold','Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ]
+		[ 'Bold','Italic','Underline','Strike','Subscript','Superscript' ]
 		];
-	//version 3.6
-	return [
-		//'Save','NewPage','Print' are removed
-		[ 'Source','-','DocProps','Preview','-','Templates' ],
-		[ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo' ],
-		[ 'Find','Replace','-','SelectAll','-','SpellChecker', 'Scayt' ],
-		[ 'Maximize', 'ShowBlocks','-','About' ],
-		//[ 'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField' ],
-		'/',
-		[ 'Bold','Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ],
-		[ 'NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote','CreateDiv','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'], //removed '-','BidiLtr','BidiRtl'
-		[ 'Link','Unlink','Anchor' ],
-		'/',
-		[ 'Styles','Format','Font','FontSize' ],
-		[ 'TextColor','BGColor' ],
-		[ 'Image','Table','HorizontalRule','SpecialChar','Iframe' ] //remove 'Flash','Smiley','PageBreak'
-		];
-	//version 3.5
-	return [
-		['Source','-','Templates', '-', 'Preview','Print'],
-		['Cut','Copy','Paste','PasteText','PasteFromWord','SpellChecker', 'Scayt'],
-		['Undo','Redo','-','Find','Replace','-','SelectAll','RemoveFormat'],
-		['BidiLtr', 'BidiRtl'],
-		['ShowBlocks'],
-		//[ 'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField' ],
-		'/',
-		['Bold','Italic','Underline','Strike','-','Subscript','Superscript'],
-		['NumberedList','BulletedList','-','Outdent','Indent','Blockquote'],
-		['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
-		['Image','Flash','Table','HorizontalRule','Smiley','SpecialChar','PageBreak','Iframe'],
-		'/',
-		['Styles','Format','Font','FontSize'],
-		['TextColor','BGColor'],
-		['Link','Unlink','Anchor'],['About']
-	];
 }
 
 function boxChooseFile(inputBoxFileId, inputFileId, inputNameId, inputPathId, SITE_ROOT_forFileUrl){
@@ -443,7 +408,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 			});
 		}
 		if($(this).hasClass('difH')){
-			height = $(this).height();
+			height = $(this).height()-40;
 		} else {
 			extraPlugins = ""
 			if(options.extraPlugins) extraPlugins = options.extraPlugins+',';
@@ -483,6 +448,9 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 					$(this.element.$).blur();
 				});
 			}, options);
+		
+		$(window).resize();
+		
 		//instance = $(this).ckeditorGet();
 //		instance.on('keydown', function(){ l = $(this).closest('div.field').find('.label'); if(l.find(':input:first').length){ l.find(':input:first').attr('checked',true); } });
 	});
@@ -616,7 +584,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	$(formId+' div.field').mouseleave(function(e){
 		$(this).find(".addinfo").hide();
 	});
-	if(isWorkzoneViewMode) addScrollWithShadow($(formId).parent().prop("id"));	
+	if(isWorkzoneViewMode()) addScrollWithShadow($(formId).parent().prop("id"));	
 }
 
 function convertTimestamps(obj){
@@ -1313,6 +1281,12 @@ function setListenerForAutoSave(formId, submitUrlForAutoSave, labelAutoSaveTrigg
 		crtActiveCKEditor = this;
 	});
 
+	CKEDITOR.on('instanceReady', function(evt) {
+	    var editor = evt.editor;
+	    editor.on('focus', function(e) {
+	        crtActiveCKEditor = $('#'+formId+' #' + e.editor.name);
+	    });
+	});
 	
 	// select2 dropdowns event for autosave : http://code.runnable.com/UmuP-67-dQlIAAFU/events-in-select2-for-jquery
 	
@@ -1438,5 +1412,9 @@ function domElementHasWigiiService(selector, serviceName){
 	}
 	return false;
 }
+
+//$(document).ready(function(){
+//	$(".chosen-select").chosen({width: '350px'});
+//});
 
 

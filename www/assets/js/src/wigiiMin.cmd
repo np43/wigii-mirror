@@ -1,5 +1,5 @@
 SET /p V=Revision number: 
-cd D:\lwr\Medair\Wigii\4 - Development\wigii.ch\3-Construction\trunk\www\assets\js\src
+cd C:\Users\Developer\Documents\Dev\Wigii-trunk\www\assets\js\src
 
 del ..\wigii_%v%.js
 copy NUL ..\wigii_%v%.js

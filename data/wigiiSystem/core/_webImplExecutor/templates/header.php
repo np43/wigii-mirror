@@ -126,9 +126,9 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 </script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/js/wigii_<?=ASSET_REVISION_NUMBER;?>.js"></script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>swfobject.js"></script>
-<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.4.3/ckeditor.js"></script>
-<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.4.3/config.js"></script>
-<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.4.3/adapters/jquery.js"></script>
+<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.6.2/ckeditor.js"></script>
+<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.6.2/config.js"></script>
+<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.6.2/adapters/jquery.js"></script>
 <?// Enables Box integration
 if(TechnicalServiceProvider::getBoxServiceFormExecutor()->isBoxEnabled()) {
 ?>

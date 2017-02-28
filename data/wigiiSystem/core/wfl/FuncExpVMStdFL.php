@@ -2180,6 +2180,40 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 		return $returnValue;
 	}
+	
+	/**
+	 * Implodes only unique values. (filters duplicates)
+	 * FuncExp signature: <code>implodeUnique(sep, val1, val2, ..., valn)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) sep: Evaluates to a String which is the separator to use between the values
+	 * - Arg(1..n) valI: Evaluates to any value that can be converted to a String.
+	 * If evaluates to an array, then first implodes the array using the given separator.
+	 * @return String the imploded string
+	 */
+	public function implodeUnique($args) {
+		if($this->getNumberOfArgs($args) < 1) throw new FuncExpEvalException("args should have at least one value which is the separator", FuncExpEvalException::INVALID_ARGUMENT);
+		$returnValue = array(); $i = 0; $s = ", ";		
+		foreach($args as $v)
+		{
+			if($i == 0)
+			{
+				$s = $this->evaluateArg($v);
+				$i++;
+			}
+			else
+			{
+				$tv = $this->evaluateArg($v);
+				if($tv!=null){
+					if(is_array($tv)) $returnValue = array_merge($returnValue, $tv);
+					else $returnValue[] = $tv;
+					$i++;
+				}
+			}
+		}
+		$returnValue = array_unique($returnValue,SORT_REGULAR);
+		if(!empty($returnValue)) return implode($s,$returnValue);
+		else return '';
+	}
 
 	/**
 	 * Concatenates the arguments, returns null if no arg
@@ -2215,7 +2249,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		else $str = '';
 		if(!empty($str)) return $prefix.$str;
 		else return '';
-	}
+	}	
 	
 	/**
 	 * Creates an array from a list of values represented as a string
