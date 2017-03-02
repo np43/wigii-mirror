@@ -295,6 +295,14 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 
 	/**
+	 * Returns the FuncExpVMServiceProvider to use
+	 */
+	protected function getFuncExpVMServiceProvider() {
+		if($this->callingFuncExpEvaluator instanceof FuncExpVM) return $this->callingFuncExpEvaluator->getFuncExpVMServiceProvider();
+		else throw new FuncExpEvalException('cannot return the FuncExpVMServiceProvider in this context', FuncExpEvalException::INVALID_STATE);
+	}
+	
+	/**
 	 * Processes current Field funcExp evaluation result
 	 * If result is not an array, then stores result as field value
 	 * else, assumes that the array are matching pairs of (subfieldname => value)

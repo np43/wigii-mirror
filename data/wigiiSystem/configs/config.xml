@@ -212,6 +212,7 @@
 			<rolename type="Strings" require="1" expand="1"/>
 			<rolePasswordLife type="Strings" require="0" help="passworLife_help" expand="1"/>
 			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" height="100" expand="1"/>
+			<email type="Emails" expand="1" noAutofill="1" hidden="1"/>
 			<authenticationMethod type="Attributs" require="0" hidden="1">
 				<attribute>usual</attribute>
 				<attribute>pop3</attribute>

@@ -2321,7 +2321,7 @@ function setListenerToNavigateMenu(){
 	;
 	//Create a delai for hide submenu in navigationBar
 	$("#navigateMenu li.with-ul").on("mouseenter", function() {
-		navMenu.eq(index).removeClass("delai-navbar");
+		$(this).removeClass("delai-navbar");
 		if(!$(this).hasClass("selected")){
 			var navMenu = $("#navigateMenu li.with-ul");
 			var currentLi = navMenu.index(this);

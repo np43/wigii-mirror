@@ -429,7 +429,7 @@ class NotificationService implements MultiplexedEvent {
 					$fieldXml = $field->getXml();
 				} else $field = null;
 				if(isset($xmlHeader) && $xmlHeader["hidden"]=="1" && $xmlHeader["notIgnoreNotification"]!="1") continue;
-				if(isset($xmlHeader) && $xmlHeader["ignoreNotification"]=="1") continue;
+				if(isset($xmlHeader) && $xmlHeader["ignoreNotification"]=="1" && $fieldXml["notIgnoreNotification"]!="1") continue;
 				if(isset($fieldXml) && $fieldXml["ignoreNotification"]=="1") continue;
 
 				$val = $trm->formatValueFromFS($fs, $rec, false, false);
