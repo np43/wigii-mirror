@@ -623,13 +623,8 @@ function matrixResize(id){
 	mR.css('max-width', m.width()*0.5);
 
 	//resize the corner
-	if(jQuery.browser.msie && version <= 7.0){
-		corn.width(mR.width()+10);
-		corn.height(mC.height()+5);
-	} else {
 		corn.width(mR.width()+5);
 		corn.height(mC.height()+5);
-	}
 
 	//resize the colHeaders container
 	mC.width(totalW-corn.outerWidth()-10);
@@ -641,42 +636,22 @@ function matrixResize(id){
 	mR.css('margin-bottom', '30px');
 
 	//resize the matrixItem
-	if(jQuery.browser.msie && version <= 7.0){
-		mI.width(mC.width());
-		mI.height(mR.height()+5);
-	} else {
 		mI.width(mC.width()-1);
 		mI.height(mR.height());
-	}
 
 	//place the scrollZones
-	if(jQuery.browser.msie && version <= 7.0){
-		sR.height(mC.height()+5+mI.height()+10);
-	} else {
 		sR.height(mC.height()+mI.height()+5);
-	}
 	sR.css('top', mC.offset().top+5);
 	sR.css('left', mC.offset().left+mC.outerWidth()-sR.outerWidth()-5);
-	if(jQuery.browser.msie && version <= 7.0){
-		sL.height(mC.height()+5+mI.height()+10);
-	} else {
 		sL.height(mC.height()+mI.height()+5);
-	}
 	sL.css('top', sR.css('top'));
 	sL.css('left', mC.offset().left+5);
 
-	if(jQuery.browser.msie && version <= 7.0){
-		sU.width(mR.width()+5+mI.width()+10);
-	} else {
 		sU.width(mR.width()+mI.width()+5);
-	}
 	sU.css('top', mR.offset().top);
 	sU.css('left', 5);
-	if(jQuery.browser.msie && version <= 7.0){
-		sD.width(mR.width()+5+mI.width()+10);
-	} else {
 		sD.width(mR.width()+mI.width()+5);
-	}
+
 	sD.css('top', mR.offset().top+mR.outerHeight() - sD.outerHeight()-5);
 	sD.css('left', sU.css('left'));
 

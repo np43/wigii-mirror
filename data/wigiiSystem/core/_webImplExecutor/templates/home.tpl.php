@@ -102,7 +102,7 @@ if($exec->getIdAnswer()!="workZone"){
 		?><div id="quickStartTabs" class="introduction" style="padding-top:13px;display:table;"><ul style="border-color:#D0D2DA;"><?
 			echo implode("", $tabs);
 		?></ul></div><?
-		$exec->addJsCode("if(!(jQuery.browser.msie && version < 8.0)){ $('#quickStartTabs').tabs(); }");
+		$exec->addJsCode("if(!(browserName == 'msie' && version < 8.0)){ $('#quickStartTabs').tabs(); }");
 		if(count($tabs)==1){
 			$exec->addJsCode("$('#quickStartTabs ul.ui-tabs-nav').hide().next().css('padding-top', '24px');");
 		}

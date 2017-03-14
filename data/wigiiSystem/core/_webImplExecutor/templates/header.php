@@ -194,11 +194,33 @@ wigii().context.isWorkzoneViewDocked = <?= ($this->isWorkzoneViewDocked()?'true'
 <?
 //Browser detection, at each refresh, the browser and window height is refreshed
 ?>
+/*
 version = parseFloat(jQuery.browser.version.split(".").slice(0,2).join("."));
 if(jQuery.browser.msie) browserName = "msie";
 else if(jQuery.browser.mozilla) browserName = "mozilla";
 else if(jQuery.browser.safari) browserName = "safari";
 else browserName = "other";
+*/
+if (navigator.userAgent.search("MSIE") >= 0) {
+	browserName = "msie";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
+else if (navigator.userAgent.search("Firefox") >= 0) {
+	browserName = "mozilla";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
+else if (navigator.userAgent.search("Safari") >= 0 && navigator.userAgent.search("Chrome") < 0) {
+	browserName = "safari";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
+else if (navigator.userAgent.search("Chrome") >= 0){
+	browserName = "chrome";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
+else{
+	browserName = "other";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
 <?
 
 // Wigii light client
@@ -292,7 +314,7 @@ update('<?=EMPTY_ANSWER_ID_URL; ?>/<?=WigiiNamespace::EMPTY_NAMESPACE_URL; ?>/<?
 //add a listener on windows unload to put in the wigii_anchor the last content of #
 //this allow to reload the page having directly the correct hash tag in the cookie
 ?>
-$(window).unload(function(){
+$(window).on("unload", function(){
 crtHash = window.location.hash;
 if(crtHash==''){ crtHash = '#'; }
 $.cookie('wigii_anchor', crtHash,  { path: '/' });
@@ -301,7 +323,7 @@ $.cookie('wigii_anchor', crtHash,  { path: '/' });
 //Incompatible browser are alerted only the first time
 if($exec->getBrowserName()==null){
 ?>
-if((jQuery.browser.msie && version < 7.0) ||(jQuery.browser.mozilla && version < 1.8)||(jQuery.browser.safari && version < 522.1)){
+if((browserName == "msie" && version < 7.0) ||(browserName == "mozilla" && version < 1.8)||(browserName == "safari" && version < 522.1)){
 alert('Unsupported browser, please upgrade to a recent browser.\n\nThe system may not work properly.\n\nWe advise you to upgrade to the latest Firefox browser: http://www.mozilla.org/firefox/\n\nTo find out what is your navigator name and version please go on:\n<?=SITE_ROOT;?>incompatibleBrowser.php');}
 <? }
 

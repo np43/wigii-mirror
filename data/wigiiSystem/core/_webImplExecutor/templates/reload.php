@@ -47,11 +47,33 @@ reload
 	exit;
 }
 ?>
+/*
 version = parseFloat(jQuery.browser.version.split(".").slice(0,2).join("."));
 if(jQuery.browser.msie) browserName = "msie";
 else if(jQuery.browser.mozilla) browserName = "mozilla";
 else if(jQuery.browser.safari) browserName = "safari";
 else browserName = "other";
+*/
+if (navigator.userAgent.search("MSIE") >= 0) {
+	browserName = "msie";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
+else if (navigator.userAgent.search("Firefox") >= 0) {
+	browserName = "mozilla";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
+else if (navigator.userAgent.search("Safari") >= 0 && navigator.userAgent.search("Chrome") < 0) {
+	browserName = "safari";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
+else if (navigator.userAgent.search("Chrome") >= 0){
+	browserName = "chrome";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
+else{
+	browserName = "other";
+	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
+}
 <?
 //wigii_anchor cookie reload process and check
 ?>

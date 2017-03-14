@@ -2623,7 +2623,6 @@ invalidCompleteCache();
 		$this->throwEvent()->updateElement(PWithElementWithGroupPList::createInstance($p, $element, ($configS->getGroupPList($p, $exec->getCrtModule())->count()==1 ? $configS->getGroupPList($p, $exec->getCrtModule()) : null)));
 
 		$message = str_replace(array("\n",'"','&quot;'), array('<br />','\\"','\"'), $message);
-		fput($message);
 		if($isFromExternalAccess){
 			$exec->addJsCode("$('#externalAccessView_form__$fieldName div.value').prepend(\"".$message."\");");
 		} else if($elementDialogId=="moduleView"){

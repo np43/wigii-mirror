@@ -236,8 +236,10 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 		
 		// computes the missing values
 		$missingValues=array();
-		foreach($val as $k) {
-			if($existingKeys[$k] == null && $k) $missingValues[$k]=$k;
+		if(!empty($val)) {
+			foreach($val as $k) {
+				if($existingKeys[$k] == null && $k) $missingValues[$k]=$k;
+			}
 		}
 		
 		if(!empty($missingValues)) {

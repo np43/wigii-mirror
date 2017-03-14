@@ -210,6 +210,27 @@ class FormChecker implements FieldListVisitor {
 					$ff->addErrorToField($transS->h($p, "mustToUploadAtLeastOneFile"), $fieldName);
 				}
 			}
+			// Medair (CWE) 2017.03.14: expects file details, but checks that posted file date is newer than element file date
+			// an inversion could happen if autosave is active, because autosave posting is concurrent to click on OK button.
+			else {
+				$postingDate = $get[$fieldName."_date"];
+				if($postingDate) $postingDate = strtotime($postingDate);
+				else $postingDate = 0;
+				$fileDate = $recBag->getValue($ff->getRecord()->getId(), $dataTypeName, $fieldName, "date");
+				if($fileDate) $fileDate = strtotime($fileDate);
+				else $fileDate = 0;
+				// clears obsolete posted data
+				if($postingDate < $fileDate) {
+					unset($get[$fieldName."_size"]);
+					unset($get[$fieldName."_type"]);
+					unset($get[$fieldName."_mime"]);
+					unset($get[$fieldName."_date"]);
+					unset($get[$fieldName."_user"]);
+					unset($get[$fieldName."_username"]);
+					
+				}
+				
+			}
 			//if no Active JS on file field, then prefill the name with the originalFilename
 			//this is defined in FormExecutor when treating the upload process
 			if($fieldParams["noActiveJSInPublic"]=="1" && !$get[$fieldName."_name"]){

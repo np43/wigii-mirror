@@ -67,8 +67,7 @@ ElementPListRows_scrollWidth = 17;
 //those variables are filled in ElementPListRowsForElementList.php at the end of the method makeHeader
 function ElementPListRows_makeHeaders(){
 	//17 is the scroll bar size
-	if(jQuery.browser.msie && version <= 7.0) cor = 2;
-	else cor = 0;
+	cor = 0;
 	$('#moduleView .list .headerList>div.noWidth').width(Math.max(75, parseInt(($('#moduleView .list').width()-ElementPListRows_scrollWidth-ElementPListRows_makeHeaders_getTotalWidth-(cor*ElementPListRows_makeHeaders_getNb))/ElementPListRows_makeHeaders_getNbNoWidth)-ElementPListRows_makeHeaders_totalPaddingInCol));
 	$('#moduleView .list .headerList>div:last').css('padding-right', ElementPListRows_scrollWidth+'px'); //to cover the space of the vertical scroll
 }
@@ -1064,9 +1063,6 @@ function setListenersToGroupPanel(doYouWantToRemoveYouMultipleSelectionText){
 	setListenersToGroupTree('#groupPanel');
 
 	//add click on collapse div
-	if((jQuery.browser.msie && parseFloat(jQuery.browser.version.split(".").slice(0,2).join(".")) == 9.0)){
-		$('#groupPanel>.collapse').remove();
-	} else {
 		$('#groupPanel>.collapse').click(function(){
 			$("#groupPanel").data('userClickCollapse',true);
 			if($('#groupPanel>ul#group_0:hidden').length){
@@ -1084,7 +1080,6 @@ function setListenersToGroupPanel(doYouWantToRemoveYouMultipleSelectionText){
 			resize_coverPage();
 			resize_portal();
 		});
-	}
 	
 	$('#dockingContainer>.collapse').click(function(){
 //	$('#dockingContainer>.collapse span').click(function(){

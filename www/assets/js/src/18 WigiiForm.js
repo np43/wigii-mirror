@@ -441,7 +441,9 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 					t.next().hide();
 				}
 				this.on('focus', function() {
-					$(this.element.$).focus();
+					//$(this.element.$).focus();
+					//crtActiveCKEditor = this.element.$;
+					$(this.element.$).triggerHandler('focus');
 				});
 				//this event is then fired on the textarea it self. This allow autoSave to be trigged on blur
 				this.on('blur', function() {
@@ -455,12 +457,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 //		instance.on('keydown', function(){ l = $(this).closest('div.field').find('.label'); if(l.find(':input:first').length){ l.find(':input:first').attr('checked',true); } });
 	});
 
-	//disable elastic in IE7 + 8 if public form
-	if(jQuery.browser.msie && version < 9.0 && $('#workZone').length==0){
-		$(formId+' textarea:not(.noWrap):not(.noElastic)').css('height',50);
-	} else {
-		autosize($(formId+' textarea:not(.noWrap):not(.noElastic)').css('max-height',450).css('min-height',30));
-	}
+	autosize($(formId+' textarea:not(.noWrap):not(.noElastic)').css('max-height',450).css('min-height',30));
 
 	$(formId+' textarea.noWrap').css('overflow','auto').tabby();
 	$(formId+' :input:enabled:not([readonly]):first').focus();
@@ -1281,13 +1278,14 @@ function setListenerForAutoSave(formId, submitUrlForAutoSave, labelAutoSaveTrigg
 		crtActiveCKEditor = this;
 	});
 
-	CKEDITOR.on('instanceReady', function(evt) {
-	    var editor = evt.editor;
-	    editor.on('focus', function(e) {
-	        crtActiveCKEditor = $('#'+formId+' #' + e.editor.name);
-	    });
-	});
-	
+//	CKEDITOR.on('instanceReady', function(evt) {
+//	    var editor = evt.editor;
+//	    editor.on('focus', function(e) {
+//	        //crtActiveCKEditor = $('#'+formId+' #' + e.editor.name);
+//	    	crtActiveCKEditor = this;
+//	    });
+//	});
+//	
 	// select2 dropdowns event for autosave : http://code.runnable.com/UmuP-67-dQlIAAFU/events-in-select2-for-jquery
 	
 	//launch auto saving evey 30 seconds
