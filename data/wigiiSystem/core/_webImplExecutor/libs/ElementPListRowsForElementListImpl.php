@@ -22,8 +22,8 @@
  */
 
 /*
- * Created 25 July 2011
- * by LWR
+ * Created 25 July 2011 by LWR
+ * Changed by Medair (LMA) on 28.03.2017: Improved findOnlyDuplicate to compute groupBy in DB instead of php
  */
 
 class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExecutor {
@@ -69,6 +69,7 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 		$elPl->isGroupedBy = $listContext->getGroupBy();
 		$elPl->crtGroupByValue = $listContext->getGroupByItemCurrentValue();
 		$elPl->nbOfHeaders = $listContext->getCrtViewParams('ElementPListRows_makeHeaders_getNb');
+        if($elPl->getListContext()->isGroupByOnlyDuplicates())trim(strtoupper($elPl->crtGroupByValue));
 		if(!$elPl->nbOfHeaders) $elPl->nbOfHeaders=0;
 		return $elPl;
 	}
@@ -107,19 +108,26 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 	private $previousGroupByValue = null;
 	private $groupByFS = null;
 	private $shouldRecalculateMultipleElementState = false;
-	public function addElementP($elementP){
+    public function addElementP($elementP){
 
-		//if only duplicates then keep in memory the last one and display only if groupBy value is the same...
+		/*
+		 * Changed by Medair (LMA) on 28.03.2017: Improved findOnlyDuplicate to compute groupBy in DB instead of php
+		 */
+        //DEPRECATED if only duplicates then keep in memory the last one and display only if groupBy value is the same...
 		//WARNING, ensure that manual paging has not been activated in getSelectedElementsInGroups to
 		//prevent error when displaying the results. As duplicates should not return too much of result not having paging issues
 		//should not make any problem
+        /*
 		if($this->getListContext()->isGroupByOnlyDuplicates() && $this->previousElement !== $elementP){
 			if(!isset($this->groupByFS)) $this->groupByFS = $this->getListContext()->getGroupByItemFieldSelector();
-//			fput($this->groupByFS);
-//			fput($elementP->getElement()->getFieldList());
 			$crtGroupByValue = $elementP->getElement()->getFieldValue($this->groupByFS->getFieldName(), $this->groupByFS->getSubFieldName());
-			if($crtGroupByValue == null) return;
+			$this->previousGroupByValue = $crtGroupByValue;
+            $this->previousGroupByValue = trim(strtoupper($this->previousGroupByValue));
+            $crtGroupByValue = trim(strtoupper($crtGroupByValue));
 
+			if($crtGroupByValue == null){
+			    return;
+            }
 			if($this->previousGroupByValue == $crtGroupByValue && $this->previousElement){
 				$this->addElementP($this->previousElement);
 				$this->previousElement = null;
@@ -130,6 +138,7 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 				return;
 			}
 		}
+        //**/
 
 		// CWE 2014.07.15: piece of code pushed down into the beginElement method in order to
 		// use the calculated element state.
@@ -240,7 +249,10 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 				if($fieldSelector){
 					$crtGroupByValue = $this->getTrm()->formatValueFromFS($fieldSelector, $element, true);
 				}
-
+				//We put all groupBy in upper case in case of a find duplicate
+				if($this->getListContext()->isGroupByOnlyDuplicates()){
+                    $crtGroupByValue = trim(strtoupper($crtGroupByValue));
+                }
 				if($this->crtGroupByValue != $crtGroupByValue){
 					$this->crtGroupByValue = $crtGroupByValue;
 					$this->getListContext()->setGroupByItemCurrentValue($crtGroupByValue);
@@ -538,7 +550,9 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 		}
 		if($this->getListContext()->isMultipleSelection()){
 			if($this->shouldRecalculateMultipleElementState) $this->getListContext()->computeMultipleElementStateInt();
-			$this->getExec()->addRequests("multipleDialog/".$this->getExec()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$this->getExec()->getCrtModule()->getModuleName()."/element/displayMultipleDialog");
+			if(!$this->doOnlyRows){
+				$this->getExec()->addRequests("multipleDialog/".$this->getExec()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$this->getExec()->getCrtModule()->getModuleName()."/element/displayMultipleDialog");
+			}		
 		}
 		if(!$this->doOnlyRows && $this->tableBegan){
 			?></tbody></table></div><?

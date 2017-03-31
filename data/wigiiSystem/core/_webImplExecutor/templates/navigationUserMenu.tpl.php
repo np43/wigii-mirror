@@ -131,9 +131,11 @@ if(!isset($config)) $config = $this->getConfigurationContext();
 			?></li><?
 
 			//add indicators
+                $responseDiv = 'elementDialog';
+                if($this->isWorkzoneViewDocked()) $responseDiv = 'confirmationDialog';
 			?><li id="userMenuAddIndicators" class="notHome"><?
 				?><a href="#" <?
-					?>onclick="update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/addIndicator'); return false;"<?
+					?>onclick="update('<?= $responseDiv ?>/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/addIndicator'); return false;"<?
 					?>><? echo $transS->t($p, "addIndicatorMenuItem");?></a><?
 			?></li><?
 

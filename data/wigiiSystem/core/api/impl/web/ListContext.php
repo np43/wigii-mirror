@@ -159,6 +159,10 @@ class ListContext extends ListFilter {
 	private $groupBy;
 	private $ascendingSort;
 	private $searchBar;
+	private $groupByAscending;
+	
+	public function getGroupByAscending() { return $this->groupByAscending; }
+	public function setGroupByAscending($ascending) { $this->groupByAscending = $ascending; }
 
 
 	public static function createInstance($p, $module, $configS)
@@ -235,8 +239,8 @@ class ListContext extends ListFilter {
 			$this->setGroupLogExp($logExp);
 		}
 		//eput($this->getFieldSelectorLogExp()->displayDebug());
-	}	
-	
+	}
+
 	/**********************************************
 	 * CrtSelectedItem / MultipleSelection part
 	 * ********************************************
@@ -652,17 +656,19 @@ class ListContext extends ListFilter {
 	public function setGroupBy($key, $onlyShowDuplicates=false){
 		//groupBy can be set to null, this case dosen't mean we want to have the defaultGroupyByKey
 		//but means we don't want to do any groupBy
-		if($key ==="reset" && method_exists($this->getFieldSelectorList(), "getDefaultGroupByKey")){
+		$ascending = true;
+        if($key ==="reset" && method_exists($this->getFieldSelectorList(), "getDefaultGroupByKey")){
 			$key = $this->getFieldSelectorList()->getDefaultGroupByKey();
+			$ascending = $this->getFieldSelectorList()->getDefaultGroupByAscending();
 		}
 
 		$this->groupBy = $key;
-
+		$this->setGroupByAscending($ascending);
 		$this->addGroupBySortingKey();
 		$this->addSortBySortingKey();
 		$this->setGroupByOnlyDuplicates($onlyShowDuplicates);
 	}
-	protected function setGroupByOnlyDuplicates($var){
+	public function setGroupByOnlyDuplicates($var){
 		$this->resetDuplicatesIds();
 		$this->onlyShowDuplicates = $var;
 	}
@@ -680,6 +686,15 @@ class ListContext extends ListFilter {
 		$this->duplicatesElementEnableState[$id] = $elementEnableState;
 		if(!isset($this->duplicatesElementState)) $this->duplicatesElementState = array();
 		$this->duplicatesElementState[$id] = $elementState;
+	}
+	/**
+	 * Sets the duplicates Ids list
+	 * @param Array|ValueListArrayImpl $ids
+	 */
+	public function setDuplicatesIds($ids) {
+		if(is_array($ids)) $this->duplicatesIds = $ids;
+		elseif($ids instanceof ValueListArrayImpl) $this->duplicatesIds = $ids->getListIterator();
+		elseif(!empty($ids)) throw new ListContextException('Unsupported list of ids: should be an array or ValueListArrayImpl', ListContextException::INVALID_ARGUMENT);
 	}
 	public function getDuplicatesIds(){
 		return $this->duplicatesIds;
@@ -884,7 +899,7 @@ class ListContext extends ListFilter {
 		try { $this->addLogExpOnTextGroupSearch($p, $wigiiExecutor); }
 		catch (StringTokenizerException $e) { throw new ListContextException($e->getMessage(), ListContextException::INVALID_TextGroupFilter); }
 
-		$this->setGroupBy($this->getGroupBy(),$this->isGroupByOnlyDuplicates());
+		//$this->setGroupBy($this->getGroupBy()/*,$this->isGroupByOnlyDuplicates()*/);
 		$this->setSortedBy();
 
 //		eput($this->getFieldSelectorLogExp());

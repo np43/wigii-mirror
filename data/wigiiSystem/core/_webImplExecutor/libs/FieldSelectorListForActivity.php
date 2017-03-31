@@ -55,6 +55,7 @@ class FieldSelectorListForActivity extends FieldSelectorListArrayWebImpl impleme
 	private $defaultSortingKey = null;
 	private $defaultSortingAscending = true;
 	private $defaultGroupByKey = null;
+	private $defaultGroupByAscending = true;
 	//during the add of the field we directly create the headers
 	//like this we can manage also the specialFields
 	public function addField($field, $subFieldName=null){
@@ -82,6 +83,7 @@ class FieldSelectorListForActivity extends FieldSelectorListArrayWebImpl impleme
 		}
 		if($xml["isDefaultGroupByKey"]=="1"){
 			$this->setDefaultGroupByKey($key);
+			$this->setDefaultGroupByAscending(!stripos($xml["defaultSorted"], "desc")!==false);
 		}
 		if($addFieldSelectorSysInfoSubFieldsXml && $this->addSysInfoFields){
 			$this->addFieldSelectorSysInfoSubFieldsXml($field->getFieldName(), $xml);
@@ -124,6 +126,8 @@ class FieldSelectorListForActivity extends FieldSelectorListArrayWebImpl impleme
 	public function getDefaultSortingAscending(){ return $this->defaultSortingAscending; }
 	public function setDefaultGroupByKey($key){ $this->defaultGroupByKey = $key; }
 	public function getDefaultGroupByKey(){ return $this->defaultGroupByKey; }
+	public function setDefaultGroupByAscending($ascending) { $this->defaultGroupByAscending = $ascending; }
+	public function getDefaultGroupByAscending() { return $this->defaultGroupByAscending; }
 
 }
 

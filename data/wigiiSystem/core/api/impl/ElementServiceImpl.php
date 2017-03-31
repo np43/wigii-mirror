@@ -2347,7 +2347,192 @@ group by tmp1.id_group";
 	protected function getSqlForCountAllElementsInGroups($sqlForGetAllElementsInGroups) {
 		return "select count(countE.Eid) from (".$sqlForGetAllElementsInGroups.") as countE";
 	}
-
+	
+	public function findDuplicatesFromSelectedElementsInGroups($principal, $inGroupLogExp, $duplicateKey, $elementIds, $listFilter=null) {
+		$this->executionSink()->publishStartOperation("findDuplicatesFromSelectedElementsInGroups", $principal);
+		$eltQP = null;
+		try
+		{
+			if(is_null($inGroupLogExp)) throw new ElementServiceException('inGroupLogExp can not be null', ElementServiceException::INVALID_ARGUMENT);
+			if(is_null($duplicateKey)) throw new ElementServiceException('duplicateKey can not be null', ElementServiceException::INVALID_ARGUMENT);
+			
+			// gets groupList
+			$gAS = $this->getGroupAdminServiceImpl();
+			$groupSelectionLogExp = $gAS->convertInGroupLogExp2GroupLogExp($inGroupLogExp);
+			$groupList = GroupListArrayImpl::createInstance();
+			$gAS->getSelectedGroupsWithoutDetail($principal, $groupSelectionLogExp, $groupList);
+		
+			// checks if ingrouplogexp is a single instance of LogExpInGroup
+			// if yes, then redirects the call to getAllElementsInGroups with the grouplist
+			if($inGroupLogExp instanceof LogExpInGroup) {
+				$returnValue = $this->findDuplicatesFromAllElementsInGroups($principal, $groupList, $duplicateKey, $elementIds, $inGroupLogExp->includeChildrenGroups(), $listFilter);
+			}
+			// else continues.
+			else
+			{
+				// checks authorization
+				$pRights = $this->assertPrincipalAuthorizedForGetSelectedElementsInGroups($principal, $groupList);
+				$pRightsFromDb = !isset($pRights);
+		
+				$returnValue = null;
+		
+				// initializes pagination, sorting, etc.
+				$fieldSelectorList = fsl(fs_e('id'), $duplicateKey);
+				$fieldSelectorLogExp = null;
+				$fieldSortingKeyList = null;
+				$configGroupList = null;
+				$queryPaged = false;
+				if(isset($listFilter))
+				{
+					//$fieldSelectorList = $listFilter->getFieldSelectorList();
+					$fieldSelectorLogExp = $listFilter->getFieldSelectorLogExp();
+					//$fieldSortingKeyList = $listFilter->getFieldSortingKeyList();
+					$configGroupList = $listFilter->getConfigGroupList();
+				}
+				if($configGroupList == null){
+					$configGroupList = $groupList;
+				}
+		
+				// element in group selection
+				$elementInGroupSqlB = $this->getSqlBuilderForSelectElementsInGroups($inGroupLogExp);
+		
+				// computes effective field list
+				$eltQP = $this->getElementQueryPlanner(MySqlFacade::Q_SELECTALL, $this->getReservedSqlJoinsForGetSelectedElementsInGroups($elementInGroupSqlB, $pRightsFromDb),
+						$fieldSelectorList, $fieldSelectorLogExp, $fieldSortingKeyList);
+		
+				if($eltQP->areFieldSelected())
+				{
+					$cS = $this->getConfigService();
+					// if ConfigService supports method unselectSubElementConfig
+					// then unselects any previous sub element config
+					if($this->subElementConfigSupport['unselectSubElementConfig']) $cS->unselectSubElementConfig($principal);
+					$cS->getGroupsFields($principal, $configGroupList, null, $eltQP);
+				}
+		
+				// gets elements
+				$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
+				$n = $eltQP->getNumberOfQueries();
+				$strategy = $eltQP->getQueryStrategy();
+				$mysqlF = $this->getMySqlFacade();
+				if($n > 1 || $strategy != ElementQueryPlanner::QSTRATEGY_JOIN) {
+					throw new ElementServiceException('unsupported query strategy for finding duplicated elements', ElementServiceException::UNSUPPORTED_OPERATION);
+				}
+		
+				if($n == 1) {
+                    $elementSqlBuilder = $this->getSqlBuilderForGetSelectedElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb);
+                    $duplicateKey = $elementSqlBuilder->encodeFieldNameForSelect($duplicateKey->getFieldName(), (is_null($duplicateKey->getSubFieldName())?'value':$duplicateKey->getSubFieldName()));
+					$returnValue = $mysqlF->selectAll($principal,
+							$this->getSqlForFindDuplicatesOfAllElementsInGroups($eltQP->getSql(0, $elementSqlBuilder), $duplicateKey),
+							$dbCS, ValueListMapper::createInstance($elementIds, 'Eid'));
+				}
+				else $returnValue = 0;
+				$eltQP->freeMemory();
+			}
+		}
+		catch(ElementServiceException $ese)
+		{
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("findDuplicatesFromSelectedElementsInGroups", $ese, $principal);
+			throw $ese;
+		}
+		catch (AuthorizationServiceException $asE){
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("findDuplicatesFromSelectedElementsInGroups", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("findDuplicatesFromSelectedElementsInGroups", $e, $principal);
+			throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("findDuplicatesFromSelectedElementsInGroups", $principal);
+		return $returnValue;
+	}
+		
+	public function findDuplicatesFromAllElementsInGroups($principal, $groupList, $duplicateKey, $elementIds, $includeChildrenGroups=true, $listFilter=null) {
+		$this->executionSink()->publishStartOperation("findDuplicatesFromAllElementsInGroups", $principal);
+		$eltQP = null;
+		try
+		{
+			// checks authorization
+			$pRights = $this->assertPrincipalAuthorizedForGetAllElementsInGroups($principal, $groupList);
+			$pRightsFromDb = !isset($pRights);
+		
+			$returnValue = null;
+		
+			// initializes pagination, sorting, etc.
+			$fieldSelectorList = fsl(fs_e('id'), $duplicateKey);
+			$fieldSelectorLogExp = null;
+			$fieldSortingKeyList = null;
+			$configGroupList = null;
+			$queryPaged = false;
+			if(isset($listFilter))
+			{
+				//$fieldSelectorList = $listFilter->getFieldSelectorList();
+				$fieldSelectorLogExp = $listFilter->getFieldSelectorLogExp();
+				//$fieldSortingKeyList = $listFilter->getFieldSortingKeyList();
+				$configGroupList = $listFilter->getConfigGroupList();
+			}
+			if($configGroupList == null){
+				$configGroupList = $groupList;
+			}
+		
+			// computes effective field list
+			$eltQP = $this->getElementQueryPlanner(MySqlFacade::Q_SELECTALL, $this->getReservedSqlJoinsForGetAllElementsInGroups(),
+					$fieldSelectorList, $fieldSelectorLogExp, $fieldSortingKeyList);
+			if($eltQP->areFieldSelected())
+			{
+				$cS = $this->getConfigService();
+				// if ConfigService supports method unselectSubElementConfig
+				// then unselects any previous sub element config
+				if($this->subElementConfigSupport['unselectSubElementConfig']) $cS->unselectSubElementConfig($principal);
+				$cS->getGroupsFields($principal, $configGroupList, null, $eltQP);
+			}
+		
+			// gets elements
+			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
+			$n = $eltQP->getNumberOfQueries();
+			$strategy = $eltQP->getQueryStrategy();
+			$mysqlF = $this->getMySqlFacade();
+			if($n > 1 || $strategy != ElementQueryPlanner::QSTRATEGY_JOIN) {
+				throw new ElementServiceException('unsupported query strategy for find duplicated elements', ElementServiceException::UNSUPPORTED_OPERATION);
+			}
+			if($n == 1) {
+			    $elementSqlBuilder = $this->getSqlBuilderForGetAllElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups);
+			    $duplicateKey = $elementSqlBuilder->encodeFieldNameForSelect($duplicateKey->getFieldName(), (is_null($duplicateKey->getSubFieldName())?'value':$duplicateKey->getSubFieldName()));
+				$returnValue = $mysqlF->selectAll($principal,
+                        $this->getSqlForFindDuplicatesOfAllElementsInGroups($eltQP->getSql(0, $elementSqlBuilder), $duplicateKey),
+						$dbCS, ValueListMapper::createInstance($elementIds, 'Eid'));
+			}
+			else $returnValue = 0;
+			$eltQP->freeMemory();
+		}
+		catch(ElementServiceException $ese)
+		{
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("findDuplicatesFromAllElementsInGroups", $ese, $principal);
+			throw $ese;
+		}
+		catch (AuthorizationServiceException $asE){
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("findDuplicatesFromAllElementsInGroups", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("findDuplicatesFromAllElementsInGroups", $e, $principal);
+			throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("findDuplicatesFromAllElementsInGroups", $principal);
+		return $returnValue;
+	}
+	protected function getSqlForFindDuplicatesOfAllElementsInGroups($sqlForGetAllElementsInGroups, $duplicateKey) {
+	    $returnValue = "SELECT r.Eid FROM (". $sqlForGetAllElementsInGroups. ") r WHERE r.". $duplicateKey. " IN (SELECT result.". $duplicateKey. " FROM (". $sqlForGetAllElementsInGroups. ") result GROUP BY result.". $duplicateKey. " HAVING count(result.". $duplicateKey. ") > 1)";
+	    return $returnValue;
+	}
+	
 	public function fillElement($principal, $element, $fieldSelectorList=null)
 	{
 		$this->executionSink()->publishStartOperation("fillElement", $principal);
@@ -3502,6 +3687,52 @@ order by isParent DESC
 
 		return $sqlB->getSql();
 	}
+	
+	public function moveMultipleElement($rootPrincipal, $principal, $elementPAList, $groupIds){
+		$this->executionSink()->publishStartOperation("moveMultipleElement", $principal);
+		
+		try{
+			if(is_null($groupIds)) throw new ElementServiceException("groupIds cannot be null", ElementServiceException::INVALID_ARGUMENT);
+		
+			// checks authorization
+			$this->assertPrincipalAuthorizedForShareMultipleElement($rootPrincipal, $principal, $elementPAList);
+			
+			// updates element shares
+			if(!is_array($groupIds))
+			{
+				$groupIds = array($groupIds => $groupIds);
+			}
+			$groupAS = $this->getGroupAdminServiceImpl();
+			$fsl = $groupAS->getFieldSelectorListForGroupWithoutDetail();
+			$mySqlF = $this->getMySqlFacade();
+			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
+			$groupPList = GroupListAdvancedImpl::createInstance(false);
+			$listFilter = ListFilter::createInstance();
+			$groupLogExp = LogExp::createInExp(FieldSelector::createInstance("id"), $groupIds);
+			$listFilter->setFieldSelectorLogExp($groupLogExp);
+			$listFilter->setFieldSelectorList($fsl);
+			$groupAS->getSelectedGroups($principal, $listFilter, $groupPList);
+			
+			//fput($groupIds);
+			
+		}
+		catch (ElementServiceException $ese){
+			$this->executionSink()->publishEndOperationOnError("moveMultipleElement", $ese, $principal);
+			throw $ese;
+		}
+		catch (AuthorizationServiceException $asE){
+			$this->executionSink()->publishEndOperationOnError("moveMultipleElement", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			$this->executionSink()->publishEndOperationOnError("moveMultipleElement", $e, $principal);
+			throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("moveMultipleElement", $principal);
+		return $returnValue;
+		
+	}
 
 	public function removeMultipleElementSharing($rootPrincipal, $principal, $elementPAList, $groupIds, $preventRemovingLastSharingInWritableGroup=true){
 		if($preventRemovingLastSharingInWritableGroup){
@@ -4132,6 +4363,78 @@ order by isParent DESC
 		$this->executionSink()->publishEndOperation("unshareElement", $principal);
 		return $returnValue;
 	}
+	
+	public function moveElement($principal, $elementId, $groupId)
+	{	
+		$this->executionSink()->publishStartOperation("moveElement", $principal);
+		
+		try {
+			if(is_null($groupId)) throw new ElementServiceException("groupId cannot be null", ElementServiceException::INVALID_ARGUMENT);
+			
+			//fetches elementP
+			$elementP = $this->getElementPWithoutFields($principal, $elementId);
+			if(is_null($elementP)) throw new ElementServiceException("element $elementId does not exists in database", ElementServiceException::INVALID_ARGUMENT);
+			$element = $elementP->getElement();
+			
+			// checks authorization
+			$this->assertPrincipalAuthorizedForMoveElement($principal, $elementP);
+			
+			$groupAS = $this->getGroupAdminServiceImpl();
+			$fsl = $groupAS->getFieldSelectorListForGroupWithoutDetail();
+			$mySqlF = $this->getMySqlFacade();
+			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
+			$returnValue = 0;
+			
+			// fetches groupP
+			$groupP = $groupAS->getGroup($principal, $groupId, $fsl);
+			
+			//retreive groupPList to unshare
+			$groupPList = GroupListAdvancedImpl::createInstance();
+			$this->getAllGroupsContainingElement($principal, $element, $groupPList,lf($fsl,
+				lxAnd(lxNotEq(fs('id'),$groupId), lxEq(fs('wigiiNamespace'),$groupP->getGroup()->getWigiiNamespace()->getWigiiNamespaceName()))
+			));
+			
+			
+			//Move element
+			if(isset($groupP))
+			{
+				// checks if principal has rights to share element in this group
+				if($this->checkPrincipalAuthorizedToMoveElementInGroup($principal, $element, $groupP))
+				{
+					$changes = $mySqlF->update($principal,
+							$this->getSqlForUpdateElementGroup($elementId, $groupId),
+							$dbCS);
+					if($changes > 0) $returnValue ++;
+				}
+				unset($groupP);
+				
+				//Unshare all elements
+				if(!empty($groupPList->getGroupIds())){
+					
+					$changes = $mySqlF->delete($principal, $this->getSqlForDeleteMultipleElementSharing($principal, $elementP->getId(), $groupPList->getGroupIds()), $dbCS);
+				}					
+			}
+			
+			
+			
+		}
+		catch (ElementServiceException $ese){
+			$this->executionSink()->publishEndOperationOnError("moveElement", $ese, $principal);
+			throw $ese;
+		}
+		catch (AuthorizationServiceException $asE){
+			$this->executionSink()->publishEndOperationOnError("moveElement", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			$this->executionSink()->publishEndOperationOnError("moveElement", $e, $principal);
+			throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("moveElement", $principal);
+		return $returnValue;
+	}
+	
 	protected function assertPrincipalAuthorizedForUnshareElement($principal, $elementP)
 	{
 		if(is_null($principal)) throw new ElementServiceException('principal can not be null', ElementServiceException::INVALID_ARGUMENT);
@@ -4152,6 +4455,53 @@ order by isParent DESC
 			$autoS->fail($principal, 'has no right to unshare element '.$element->getId());
 		}
 	}
+	
+	/**
+	 * Returns true if authorized to move element in group else false
+	 */
+	protected function checkPrincipalAuthorizedToMoveElementInGroup($principal, $element, $groupP)
+	{
+		if(is_null($principal)) throw new ElementServiceException('principal can not be null', ElementServiceException::INVALID_ARGUMENT);
+		$moduleE = $element->getModule();
+		if(is_null($moduleE)) throw new ElementServiceException('element->module can not be null', ElementServiceException::INVALID_ARGUMENT);
+		if(is_null($groupP)) throw new ElementServiceException('groupP can not be null', ElementServiceException::INVALID_ARGUMENT);
+		$group = $groupP->getGroup();
+		$moduleG = $group->getModule();
+		if(is_null($moduleG)) throw new ElementServiceException('group->module can not be null', ElementServiceException::INVALID_ARGUMENT);
+	
+		// checks that element module and group module matches
+		if($moduleE !== $moduleG) throw new ElementServiceException('group module and element module are not equal', ElementServiceException::INVALID_ARGUMENT);
+	
+		// checks rights on Group
+		$pRights = $groupP->getRights();
+		if(!isset($pRights) || !($pRights->canWriteElement() || ($element->getSys_creationUser()==$principal->getRealUserId() && $pRights->canShareElement())))
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	protected function assertPrincipalAuthorizedForMoveElement($principal, $elementP)
+	{
+		if(is_null($principal)) throw new ElementServiceException('principal can not be null', ElementServiceException::INVALID_ARGUMENT);
+		if(is_null($elementP)) throw new ElementServiceException('elementP can not be null', ElementServiceException::INVALID_ARGUMENT);
+		$element = $elementP->getElement();
+		$module = $element->getModule();
+		if(is_null($module)) throw new ElementServiceException('element->module can not be null', ElementServiceException::INVALID_ARGUMENT);
+	
+		$autoS = $this->getAuthorizationService();
+		// checks general authorization
+		$autoS->assertPrincipalAuthorized($principal, "ElementService", "moveElement");
+		// checks module access
+		if(!$autoS->isRootPrincipal($principal) && is_null($principal->getModuleAccess($module))) $autoS->fail($principal, 'has no access to module '.$module->getModuleName());
+		// checks rights on Element
+		$pRights = $elementP->getRights();
+		if(!isset($pRights) || !$pRights->canWriteElement())
+		{
+			$autoS->fail($principal, 'has no right to move element '.$element->getId());
+		}
+	}
+	
 	/**
 	 * Returns true if authorized to unshare element from group else false
 	 */

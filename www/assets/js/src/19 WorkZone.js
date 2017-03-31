@@ -99,7 +99,12 @@ function resize_elementList(){
 		} else {
 			$('#moduleView div.nbItemsInList').css('margin-top', '-25px');
 		}
-		resize_elementList_i.height($(window).height() - getTopHeight(true) - $('#moduleView > .dataZone.list > .headerList').outerHeight() - $('#moduleView #indicators').height() - fb.outerHeight());
+		if($('.Red').height() > 0){
+            resize_elementList_i.height($(window).height() - getTopHeight(true) - $('#moduleView > .dataZone.list > .headerList').outerHeight() - $('#moduleView #indicators').height() - fb.outerHeight() - 26);
+		}
+		else{
+			resize_elementList_i.height($(window).height() - getTopHeight(true) - $('#moduleView > .dataZone.list > .headerList').outerHeight() - $('#moduleView #indicators').height() - fb.outerHeight());
+        }
 
 		$('#moduleView .list .dataList').unbind('scroll').scroll(function(){
 			$('#moduleView>div.list .headerList').css('margin-left', -$(this).scrollLeft());
@@ -1941,7 +1946,7 @@ function setListenersToLoadMoreLines(action, selector, appendToSelector){
 					$(appendToSelector).append(data);
 
 					if(jsCode){
-						eval(jsCode.replace('<script id="JSCode" type="text/javascript" > $(document).ready(function(){ ', '').replace('}); </script>', ''));
+                        eval(jsCode.replace('<script id="JSCode" type="text/javascript" > $(document).ready(function(){ ', '').replace('}); </script>', ''));
 					}
 
 					//update the cache content

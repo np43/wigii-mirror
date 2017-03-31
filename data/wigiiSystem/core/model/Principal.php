@@ -738,6 +738,7 @@ class Principal extends Model
 		if(!isset($this->generalContext)) $this->generalContext = array();
 		if($key == 'email') {
 			ServiceProvider::getUserAdminService()->changeOwnEmail($this, $value);
+			unset($this->generalContext[$key]);
 		}else{
 			$this->generalContext[$key] = $value;
 		}

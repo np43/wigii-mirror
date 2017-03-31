@@ -344,6 +344,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "insertElement":
 					case "shareElement":
 					case "unshareElement":
+					case "moveElement":
 					case "doElementsExist":
 					case "evaluateElementList":
 					case "evaluateSelectedElementsInGroups":

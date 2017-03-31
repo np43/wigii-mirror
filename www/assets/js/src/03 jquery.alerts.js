@@ -19,6 +19,7 @@
 //
 //		1.01 - Fixed bug where unbinding would destroy all resize events
 //
+//
 // License:
 // 
 // This plugin is dual-licensed under the GNU General Public License and the MIT License and
@@ -28,6 +29,7 @@
 /**
  * changes done by LWR to adapt for WigiiProject
  * add yescancel
+ * 
  * 14.03.2017 - Changed done by Medair (LMA) Remove check using Browser
  */
 (function($) {

@@ -70,7 +70,7 @@ define("TEMPORARYUNZIPFORVIEWINGFILE_lifetime", 60 * 60 * 12); //number of secon
 /**
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * !! WARNING 
- * !! Everything from this part of the index file shoudl not be edited
+ * !! Everything from this part of the index file should not be edited
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 

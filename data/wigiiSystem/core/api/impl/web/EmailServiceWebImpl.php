@@ -539,7 +539,7 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 				$config["auth"] = SMTP_auth;
 
 				if(defined("SMTP_username")) $config["username"] = SMTP_username; // fixed typo to username
-				else $config["username"] = SMTP_userame; // old missspelled constant userame, kept for backward compatibility
+				else $config["username"] = SMTP_userame; // old misspelled constant userame, kept for backward compatibility
 				$config["password"] = SMTP_password;
 				require_once('Zend/Mail/Transport/Smtp.php');
 				require_once('Zend/Mail/Protocol/Smtp/Auth/Plain.php');
@@ -650,6 +650,7 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 
 	public function getEmailInstanceFromRow($principal, $dbRow){
 		if($dbRow){
+			//$this->debugLogger()->logBeginOperation("getEmailInstanceFromRow");
 			$mail = $this->getEmailInstance($dbRow["charset"]);
 			$mail->setOnlyforDb(false);
 			$mail->setStatus($dbRow["status"]);
@@ -681,10 +682,61 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 					}
 				}
 			}
-			if($dbRow["replyTo"]!=null){
-				$mail->setReplyTo($dbRow["replyTo"]);
+			
+			
+			// Medair (CWE) 27.03.2017 if EmailService_sendOnBehalfOfUser is defined then doesn't use the user's email address as sender's email,
+			// but uses the SMTP account as sender. User's email is put into the reply-to header.
+			if(defined("EmailService_sendOnBehalfOfUser") && EmailService_sendOnBehalfOfUser) {
+				// except if notification then always uses direct sending
+				if($dbRow["from"] == (string)$this->getConfigService()->getParameter($principal, null, 'emailNotificationFrom')) {
+					//$this->debugLogger()->write("Sending notification from ".$dbRow["from"]);
+					$mail->setFrom($dbRow["from"]);
+				}
+				// except if user's email is defined as an Authorized direct sender, then puts the user's email directly in the from
+				elseif(defined("EmailService_authorizedDirectSenders") && strpos(EmailService_authorizedDirectSenders, $dbRow["from"])!==false) {
+					//$this->debugLogger()->write("Authorized direct sender: ".$dbRow["from"]);
+					if($dbRow["replyTo"]!=null){
+						$mail->setReplyTo($dbRow["replyTo"]);
+					}
+					$mail->setFrom($dbRow["from"]);
+				}				 
+				// else wraps it into the reply-to header.
+				else {
+					// defines from label as "sender's email via Service Name" or "sender's email via siteTitle"
+					if(defined("EmailService_sendOnBehalfServiceName") && EmailService_sendOnBehalfServiceName) $fromLabel = EmailService_sendOnBehalfServiceName;
+					else $fromLabel = (string)$this->getConfigService()->getParameter($principal, null, 'siteTitle');					
+					$fromLabel = $dbRow["from"]." via ".$fromLabel;
+					//$this->debugLogger()->write("Wrapping user's email: ".$fromLabel);
+						
+					// defines from address to emailingFrom config parameter or SMTP account if not defined
+					$from = (string)$this->getConfigService()->getParameter($principal, null, 'emailingFrom');
+					if(empty($from)) {
+						if(defined("SMTP_username")) $from = SMTP_username; // fixed typo to username
+						else $from = SMTP_userame; // old misspelled constant userame, kept for backward compatibility
+					}
+					$mail->setFrom($from, $fromLabel);
+					
+					
+					// puts user's email in reply-to header, except if reply-to is already specified.
+					if($dbRow["replyTo"]!=null){
+						$mail->setReplyTo($dbRow["replyTo"]);
+					}
+					else $mail->setReplyTo($dbRow["from"]);
+						
+					// Medair (CWE) 27.03.2017: return-path is not set in order to avoid Spam filter blocking.
+					// therefore bouncing email cannot be catched back by sender if not a direct sender.
+					//$mail->setReturnPath($dbRow["from"]);
+				}
 			}
-			$mail->setFrom($dbRow["from"]);
+			// else sends the email with a from address equal to user's email.
+			else {
+				//$this->debugLogger()->write("Direct sending with user's email: ".$dbRow["from"]);
+				if($dbRow["replyTo"]!=null){
+					$mail->setReplyTo($dbRow["replyTo"]);
+				}
+				$mail->setFrom($dbRow["from"]);
+			}
+			
 			$mail->setSubject($dbRow["subject"]);
 			$mail->setBodyHtml($dbRow["bodyHtml"]);
 			$mail->setBodyText($dbRow["bodyText"]);
@@ -704,7 +756,8 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 					}
 				}
 			}
-
+			//$this->debugLogger()->write($mail->displayDebug());
+			//$this->debugLogger()->logEndOperation("getEmailInstanceFromRow");
 			return $mail;
 		}
 		return null;

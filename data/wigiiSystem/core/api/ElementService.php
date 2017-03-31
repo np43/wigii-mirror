@@ -176,6 +176,32 @@ interface ElementService
 	 */
 	public function countAllElementsInGroups($principal, $groupList, $includeChildrenGroups=true, $listFilter=null);
 	
+	
+	/**
+	 * Finds all duplicated elements in selected groups, for a given field selector and fills a list of Element IDs
+	 * @param Principal principal: authenticated user performing the operation
+	 * @param InGroupLogExp inGroupLogExp: a logical expression composed of LogExpInGroup and LogExpNotInGroup expressing element in group belonging and group selection
+	 * @param FieldSelector duplicateKey field selector specifying the element field on which to calculate duplicates
+	 * @param ValueList elementIds given ValueList to be filled with the found duplicated elements Ids
+	 * @param ListFilter listFilter: filter on the list; filters columns, does pagination and sorting
+	 * @return the number of duplicates found
+	 * @throws ElementServiceException if an error occurs
+	 */
+	public function findDuplicatesFromSelectedElementsInGroups($principal, $inGroupLogExp, $duplicateKey, $elementIds, $listFilter=null);
+	
+	/**
+	 * Finds all duplicated elements in selected groups, for a given field selector and fills a list of Element IDs
+	 * @param Principal principal authenticated user performing the operation
+	 * @param GroupList groupList the group list from which we want to retrieve elements
+	 * @param FieldSelector duplicateKey field selector specifying the element field on which to calculate duplicates
+	 * @param ValueList elementIds given ValueList to be filled with the found duplicated elements Ids
+	 * @param Boolean includeChildrenGroups if true then includes also elements in children groups accessible by principal
+	 * @param ListFilter listFilter filter on the list; filters columns, does pagination and sorting
+	 * @return the number of duplicates found
+	 * @throws ElementServiceException if an error occurs
+	 */
+	public function findDuplicatesFromAllElementsInGroups($principal, $groupList, $duplicateKey, $elementIds, $includeChildrenGroups=true, $listFilter=null);	
+	
 	/**
 	 * Gets or refreshes an element with data from the database.
 	 * principal: authenticated user performing the operation
@@ -279,6 +305,16 @@ interface ElementService
 	 * returns total number of changes
 	 */
 	public function unshareElement($principal, $elementId, $groupIds, $preventRemovingLastSharingInWritableGroup=true);
+	
+	/**
+	 * Move element to provided group
+	 * principal: authenticated user performing the operation
+	 * elementId: element database id from which to retrieve the element to share
+	 * groupIds: an array of Group IDs with which the element is shared
+	 * throws ElementServiceException if an error occurs
+	 * returns total number of changes
+	 */
+	public function moveElement($principal, $elementId, $groupId);
 
 	/**
 	 * Updates the elements sharing to match exactly the list of provided groups

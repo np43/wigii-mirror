@@ -35,6 +35,12 @@ define ("SMTP_ssl", "tls"); 						//SMTP_ssl:  "" : tls : ssl
 define ("SMTP_port", "587"); 						//SMTP_port: tls=25/587 : ssl=465
 define ("SMTP_auth", "plain"); 						//SMTP_auth: plain : login: crammd5
 define ("EmailService_maxRecipients", 15);			//Max number of recipients per email. If more, the email is splitted and duplicated
+// Medair 27.03.2017: EmailService_sendOnBehalfOfUser: true or false or undefined 
+// if true, SMTP account will always send emails from address defined in emailingFrom (default as reply@xxx.xx) with real sender's email set into reply-to header.
+// else if false or not defined, SMTP account will send emails using sender's email directly set into the from header (this option can be blocked by server or anti-spam filters)
+//define ("EmailService_sendOnBehalfOfUser", true);    
+//define ("EmailService_authorizedDirectSenders", "user1@xxx.xx, user2@xxx.xx"); // If EmailService_sendOnBehalfOfUser=true, then defines an optional list of emails authorized to be used by the SMTP account to directly send from.
+//define ("EmailService_sendOnBehalfServiceName", "Wigii system"); // If EmailService_sendOnBehalfOfUser=true, then defines the name of the service through which the email is posted on behalf of the user. By default, takes the siteTitle.
 
 //*********************
 //* Emails parameters */
@@ -66,6 +72,15 @@ define ("PASSWORD_minLength", 3);
  * Additional programmatic configuration
  *****************************************/
 if(!TEST_ON) {
+	//ServiceProvider::getConfigService()->setDumpConfig(true);
+	ServiceProvider::getClientAdminService()->configureMonitoring(ObjectConfigurator::createInstance(array('monitorFatalError' => true)));
+	
 	// Medair 16.08.2016: if Files uploads to Box then show a warning message displaying in which box folder file is uploaded. (useful for testing and dev environments)
 	//ServiceProvider::configureClass('BoxServiceFormExecutor', ObjectConfigurator::createInstance(array('setShowWarningIfBoxUpload' => true)));
+	
+	// Configures FuncExpVM modules
+	//ServiceProvider::configureClass('FuncExpVM', ObjectConfigurator::createInstance(array('setBootstrapModules' => array('GeometryCliFL', 'Geometry2DFL'))));
+	
+	// Enables Approval system for non admin users
+	//ServiceProvider::configureClass('ElementPolicyEvaluatorBaseImpl', ObjectConfigurator::createInstance(array('enableApprovalForNonAdminUser' => true)));
 }

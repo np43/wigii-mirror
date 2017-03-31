@@ -1648,8 +1648,8 @@ class WigiiCoreExecutor {
 			//if looking for duplicates then remove manual paging. Only duplicates will be displayed, that means
 			//a display paged will be more than a db page
 			if($listContext->isGroupByOnlyDuplicates()){
-				$desiredPage = null;
-				$pageSize = null;
+				//$desiredPage = null;
+				//$pageSize = null;
 				$groupLogExp = $listContext->getGroupLogExp();
 				// remove trashbin if exists
 				$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
@@ -1666,6 +1666,28 @@ class WigiiCoreExecutor {
 						}
 					}
 				}
+				
+				// Medair 20.03.2017: computes duplicate Ids and filters on duplicated element
+                $duplicatedIds = $listContext->getDuplicatesIds();
+                if(empty($duplicatedIds)) {
+                    $duplicatedIds = ValueListArrayImpl::createInstance();
+                    $elS->findDuplicatesFromSelectedElementsInGroups($p, $groupLogExp, $listContext->getGroupByItemFieldSelector(), $duplicatedIds);
+                    $duplicatedIds = $duplicatedIds->getListIterator();
+                    $listContext->setDuplicatesIds($duplicatedIds);
+                }
+                // adds filter on duplicate Ids
+                $lx = $listContext->getFieldSelectorLogExp();
+                if(!empty($duplicatedIds)) {
+                    if(isset($lx)) $lx = lxAnd(lxIn(fs_e('id'), $duplicatedIds), $lx);
+                    else $lx = lxIn(fs_e('id'), $duplicatedIds);
+                }
+                //if no duplicate generate negative where clause to show an empty list
+                else {
+                    if(isset($lx)) $lx = lxAnd(lxEq(fs_e('id'), null), $lx);
+                    else $lx = lxEq(fs_e('id'), null);
+                }
+                $listContext->setFieldSelectorLogExp($lx);
+
 			}
 			else {
 				$groupLogExp = $listContext->getGroupLogExp();
@@ -1678,7 +1700,7 @@ class WigiiCoreExecutor {
 		} else {
 			$nbRow = 0;
 		}
-	
+
 		//$nbRow = $elementPList->getTotalNumberOfElements();
 		$total = $listContext->getTotalNumberOfObjects();
 		//manual paging since V4
@@ -1689,7 +1711,7 @@ class WigiiCoreExecutor {
 		} else {
 			$nbRow = $pageSize;
 		}
-		*/		
+		*/
 		$elementPList->actOnFinishAddElementP($total);
 	
 		$this->setTempTotalElementsIdsForListView($elementPList->getTotalElementsIds());
@@ -1770,8 +1792,8 @@ class WigiiCoreExecutor {
 			//if looking for duplicates then remove manual paging. Only duplicates will be displayed, that means
 			//a display paged will be more than a db page
 			if($listContext->isGroupByOnlyDuplicates()){
-				$desiredPage = null;
-				$pageSize = null;
+				//$desiredPage = null;
+				//$pageSize = null;
 				$groupLogExp = $listContext->getGroupLogExp();
 				// remove trashbin if exists
 				$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
@@ -1788,6 +1810,26 @@ class WigiiCoreExecutor {
 						}
 					}
 				}
+				// Medair 20.03.2017: computes duplicate Ids and filters on duplicated elements
+                $duplicatedIds = $listContext->getDuplicatesIds();
+                if(empty($duplicatedIds)) {
+                    $duplicatedIds = ValueListArrayImpl::createInstance();
+                    $elS->findDuplicatesFromSelectedElementsInGroups($p, $groupLogExp, $listContext->getGroupByItemFieldSelector(), $duplicatedIds);
+                    $duplicatedIds = $duplicatedIds->getListIterator();
+                    $listContext->setDuplicatesIds($duplicatedIds);
+                }
+                // adds filter on duplicate Ids
+                $lx = $listContext->getFieldSelectorLogExp();
+                if(!empty($duplicatedIds)) {
+                    if(isset($lx)) $lx = lxAnd(lxIn(fs_e('id'), $duplicatedIds), $lx);
+                    else $lx = lxIn(fs_e('id'), $duplicatedIds);
+                }
+                //if no duplicate generate negative where clause to show an empty list
+                else {
+                    if(isset($lx)) $lx = lxAnd(lxEq(fs_e('id'), null), $lx);
+                    else $lx = lxEq(fs_e('id'), null);
+                }
+                $listContext->setFieldSelectorLogExp($lx);
 			}
 			else {
 				$groupLogExp = $listContext->getGroupLogExp();
@@ -8684,6 +8726,9 @@ onUpdateErrorCounter = 0;
 				$this->throwEvent()->selectGroup(PWithGroupPList::createInstance($p, $groupList));
 
 				$lc->setGroupPList($groupList, $withChildren);
+				//Medair (LMA, CWE) 28.03.2017
+                // Reset showOnlyDuplicates on folder navigation
+				$lc->setGroupByOnlyDuplicates(false);
 				$this->getConfigurationContext()->setGroupPList($p, $exec->getCrtModule(), $groupList, $withChildren);
 
 				//persist context in DB;

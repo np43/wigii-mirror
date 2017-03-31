@@ -21,9 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created 25 July 2011
- * by LWR
+/**
+ * Created 25 July 2011 by LWR
+ * Changed by Medair (LMA) on 28.03.2017: Improved findOnlyDuplicate to compute groupBy in DB instead of php
+ *
  */
 
 class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExecutor {
@@ -80,6 +81,7 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		$elPl->setListContext($listContext);
 		$elPl->isGroupedBy = $listContext->getGroupBy();
 		$elPl->crtGroupByValue = $listContext->getGroupByItemCurrentValue();
+        if($elPl->getListContext()->isGroupByOnlyDuplicates())trim(strtoupper($elPl->crtGroupByValue));
 		return $elPl;
 	}
 
@@ -121,15 +123,21 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		$rm = $this->getTRM();
 		$p = $this->getP();
 
-		//if only duplicates then keep in memory the last one and display only if groupBy value is the same...
+		/*
+		 * Changed by Medair (LMA) on 28.03.2017: Improved findOnlyDuplicate to compute groupBy in DB instead of php
+		 */
+		//DEPRECATED if only duplicates then keep in memory the last one and display only if groupBy value is the same...
 		//WARNING, ensure that manual paging has not been activated in getSelectedElementsInGroups to
 		//prevent error when displaying the results. As duplicates should not return too much of result not having paging issues
 		//should not make any problem
+        /*
 		if($this->getListContext()->isGroupByOnlyDuplicates() && $this->previousElement !== $elementP){
 			if(!isset($this->groupByFS)) $this->groupByFS = $this->getListContext()->getGroupByItemFieldSelector();
 //			fput($this->groupByFS);
 //			fput($elementP->getElement()->getFieldList());
 			$crtGroupByValue = $elementP->getElement()->getFieldValue($this->groupByFS->getFieldName(), $this->groupByFS->getSubFieldName());
+			$this->previousGroupByValue = $crtGroupByValue;
+
 			if($crtGroupByValue == null) return;
 
 			if($this->previousGroupByValue == $crtGroupByValue && $this->previousElement){
@@ -142,6 +150,7 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 				return;
 			}
 		}
+        //*/
 
 		$this->globalNb++;
 
@@ -187,6 +196,7 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 					$crtGroupByValue = $rm->formatValueFromFS($fieldSelector, $element, true);
 				}
 
+				if($this->getListContext()->isGroupByOnlyDuplicates()) $crtGroupByValue = trim(strtoupper($crtGroupByValue));
 				if($this->crtGroupByValue != $crtGroupByValue){
 					$this->crtGroupByValue = $crtGroupByValue;
 					$this->getListContext()->setGroupByItemCurrentValue($crtGroupByValue);
@@ -732,7 +742,9 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		}
 		if($this->getListContext()->isMultipleSelection()){
 			if($this->shouldRecalculateMultipleElementState) $this->getListContext()->computeMultipleElementStateInt();
-			$this->getExec()->addRequests("multipleDialog/".$this->getExec()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$this->getExec()->getCrtModule()->getModuleName()."/element/displayMultipleDialog");
+			if(!$this->doOnlyRows){
+				$this->getExec()->addRequests("multipleDialog/".$this->getExec()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$this->getExec()->getCrtModule()->getModuleName()."/element/displayMultipleDialog");
+			}
 		}
 		if(!$this->doOnlyRows){
 			?></div><?
