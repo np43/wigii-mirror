@@ -1436,6 +1436,7 @@ confirmationEmailSubject:Thank you for your subscription!:Merci pour votre inscr
 emailIsValidated:This email was confirmed by his owner.:Cet email a été confirmé par son propriétaire.:::::::::
 emailIsNotValidated:This email address is not confirmed by his owner.:Cette adresse email n'a pas été confirmée par son propriétaire.:::::::::
 confirmationLinkIsMandatoryForLegalReason:For legal reason you must add in the confirmation email a confirmation link to prove the subscriber is the owner of the email.:Pour des raisons légales vous devez ajouter un lien de confirmation afin de prouver que la personne inscrite soit bien l'auteur de l'adresse email.::::::
+unsubscribeLinkIsMandatoryForLegalReason:For legal reason you must add in the email an unsubscribe link to allow the owner of the email to remove himself.:Pour des raisons légales vous devez ajouter un lien de désinscription afin de permettre à l'auteur de l'adresse email de se désinscrire.::::::
 validateEmailFromCodeDone:Email address confirmation done:Confirmation de l'adresse email effectuée:E-mail Adresse bestätigt::::::::
 validateEmailFromCodeThankYouText:Thank you for confirming your email address.:Merci d'avoir confirmé votre adresse email.:Danke für die Bestätigung Ihrer E-mail Adresse.::::::::
 unsubscribeEmailFromCodeDone:Email address has been successfully unsubscribed.:L'adresse email a été désinscrite.:::::::::

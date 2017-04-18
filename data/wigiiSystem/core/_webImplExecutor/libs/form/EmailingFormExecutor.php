@@ -439,6 +439,11 @@ class EmailingFormExecutor extends FormExecutor {
 				$tempLabel[] = implode(($emailLabels["labelSep"][$emailFieldname] ? $emailLabels["labelSep"][$emailFieldname] : " "), $lab);
 			}
 		}
+		
+		$confirmation = $transS->h($p, "Emails_proofKeyLink");
+		$unsubscribe = $transS->h($p, "Emails_proofKeyUnsubscribeLink");
+		$access = $transS->h($p, "Emails_externalCodeLink");
+		
 		//remove duplicates and implode
 		if($tempLabel){
 			$label = implode(" / ", array_combine($tempLabel, $tempLabel));
@@ -464,6 +469,7 @@ class EmailingFormExecutor extends FormExecutor {
 		//$access = $transS->h($p, "Emails_externalCodeLink");
 		if($label || $other1 || $other2 || $other3 || $confirmation || $unsubscribe || $access){
 			$code = '$("#'.$this->getFormId().' #Emailing_form__message>.label").append(\'';
+			$code .= '<div class="R">'.$transS->h($p, "unsubscribeLinkIsMandatoryForLegalReason")."</div>";
 			$code .= '<div style="margin:3px 0px 3px 0px;">'.$transS->h($p, "availableMailMergeField").":&nbsp;";
 			if($label) $code .= '<span class="H G SBIB ui-corner-all" title="'.'$label$'.'">&nbsp;'.str_replace(" ", "&nbsp;", $label)."&nbsp;</span> ";
 			if($other1) $code .= '<span class="H G SBIB ui-corner-all" title="'.'$other1$'.'">&nbsp;'.str_replace(" ", "&nbsp;", $other1)."&nbsp;</span> ";
