@@ -23,9 +23,8 @@
 
 /**
  * Created on 23 nov. 09 by LWR
- * Modified by Medair in 2016-2017 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) 04.04.2017 to implement sendOnBehalfOfUser and authorizedDirectSenders.
  */
-
 class EmailServiceWebImpl implements EmailService {
 
 	private $_debugLogger;
@@ -692,8 +691,8 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 					//$this->debugLogger()->write("Sending notification from ".$dbRow["from"]);
 					$mail->setFrom($dbRow["from"]);
 				}
-				// except if user's email is defined as an Authorized direct sender, then puts the user's email directly in the from
-				elseif(defined("EmailService_authorizedDirectSenders") && strpos(EmailService_authorizedDirectSenders, $dbRow["from"])!==false) {
+				// except if user's email is defined as an Authorized direct sender, then puts the user's email directly in the from				
+				elseif($this->isEmailAuthorizedDirectSender($principal, $dbRow["from"], $dbRow["realUsername"])) {
 					//$this->debugLogger()->write("Authorized direct sender: ".$dbRow["from"]);
 					if($dbRow["replyTo"]!=null){
 						$mail->setReplyTo($dbRow["replyTo"]);
@@ -763,6 +762,41 @@ if(!globalCronJobsStopper) { cronJobsWorkingFunction(); }
 		return null;
 	}
 
+	/**
+	 * Checks if the given email address is defined as an authorized direct sender
+	 * @param Principal $principal current principal
+	 * @param String $email email address to check for authorization
+	 * @param String $realUsername real username to check for authorization
+	 * @return Boolean returns true if email address is an authorized direct sender, else false.
+	 * @throws AuthorizationServiceException::NOT_ALLOWED if email is an authorized direct sender, but realUsername doesn't match.
+	 */
+	public function isEmailAuthorizedDirectSender($principal,$email,$realUsername) {
+	    $returnValue = false;
+	    $this->debugLogger()->logBeginOperation('isEmailAuthorizedDirectSender');	    
+	    $email = trim($email);
+	    if(empty($email)) return false;
+	    // 1. gets Admin/Emailing XML activity
+	    $emailingActivity = $this->getConfigService()->ma($principal,Module::ADMIN_MODULE,Activity::createInstance('Emailing'));
+	    if($emailingActivity) {
+	        // 2. checks for user's matching the given email
+	        $users = $emailingActivity->xpath("authorizedDirectSenders/user[contains(@email,'".$email."')]");	        
+	        // 3. if username is defined, check the matching realUsername
+	        if($users !== false && !empty($users)) {
+	            foreach($users as $user) {
+	                // if username matches or no username then authorized sender
+	                $username = (string)$user['username'];
+	                if(!$username || $username == $realUsername) {
+	                    $returnValue = true;
+	                    break;
+	                }
+	            }
+	            // if no found user matches, then throws AuthorizationException::NOT_ALLOWED
+	            if(!$returnValue) throw new AuthorizationServiceException("User $realUsername is not allowed to send emails from $email", AuthorizationServiceException::NOT_ALLOWED);
+	        }
+	    }	    
+	    $this->debugLogger()->logEndOperation('isEmailAuthorizedDirectSender');
+	    return $returnValue;
+	}
 	/**
 	 * Lock element or list of element
 	 * @param object: Element or ElementPList or ElementList

@@ -2674,7 +2674,7 @@ group by tmp1.id_group";
 		$pRightsOnRoot = $rootElementP->getRights();
 		//check read rights on root element
 		if($pRightsOnRoot == null){
-			$autoS->fail($principal, 'has no right to get a sub element of element '.$rootElementP->getId());
+		    $this->getAuthorizationService()->fail($principal, 'has no right to get a sub element of element '.$rootElementP->getId());
 		}
 		return $pRightsOnRoot;
 	}
@@ -4398,7 +4398,7 @@ order by isParent DESC
 			//Move element
 			if(isset($groupP))
 			{
-				// checks if principal has rights to share element in this group
+				// checks if principal has rights to move element in this group
 				if($this->checkPrincipalAuthorizedToMoveElementInGroup($principal, $element, $groupP))
 				{
 					$changes = $mySqlF->update($principal,
@@ -4409,9 +4409,9 @@ order by isParent DESC
 				unset($groupP);
 				
 				//Unshare all elements
-				if(!empty($groupPList->getGroupIds())){
-					
-					$changes = $mySqlF->delete($principal, $this->getSqlForDeleteMultipleElementSharing($principal, $elementP->getId(), $groupPList->getGroupIds()), $dbCS);
+				$groupIds = $groupPList->getGroupIds();
+				if(!empty($groupIds)){					
+				    $changes = $mySqlF->delete($principal, $this->getSqlForDeleteMultipleElementSharing($principal, $elementP->getId(), $groupIds), $dbCS);
 				}					
 			}
 			

@@ -168,11 +168,20 @@ class EditElementFormExecutor extends FormExecutor {
 
 		if($this->getState() == "persistAndNotify"){
 			//validate the email
+		    $fromEmail= $this->getWigiiExecutor()->getNotificationService()->getNotificationEmailInputValue();
 			//if the email is empty (because of no notification needed, validation works)
-			if(	!validateEmail($this->getWigiiExecutor()->getNotificationService()->getNotificationEmailInputValue())
-				|| !validateEmails($this->getWigiiExecutor()->getNotificationService()->getNotificationToInputValue())
-				){
+			if(	!validateEmail($fromEmail) || !validateEmails($this->getWigiiExecutor()->getNotificationService()->getNotificationToInputValue())){
 				$this->setState("addMessageToNotification");
+			}
+			// Medair (CWE) 04.04.2017 checks for authorized direct sender
+			elseif(defined("EmailService_sendOnBehalfOfUser") && EmailService_sendOnBehalfOfUser) {
+			    try { 
+			        $this->getWigiiExecutor()->getEmailService()->isEmailAuthorizedDirectSender($p,$fromEmail,$p->getRealUsername());
+			    }
+			    catch(AuthorizationServiceException $ase) {
+			        if($ase->getCode() == AuthorizationServiceException::NOT_ALLOWED) $this->setState("addMessageToNotification");
+			        else throw $ase;
+			    }
 			}
 		}
 		if(!$this->hasError() && $this->getState()=="check"){
@@ -474,10 +483,21 @@ class EditElementFormExecutor extends FormExecutor {
 			$oldGids = array_diff_key ( $oldGids, $orgNew );
 		}
 		
+		$moveId = $this->getRecord()->getMoveGroupInRecord();
+		if($moveId) {
+			$moveId = $this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $moveId, $this->getRecord());
+		}
+
 		$this->getWigiiExecutor ()->getNotificationService ()->blockNotificationPostingValue ();
-		if ($newGids) {
-			$this->executionSink ()->log ( "Share element in " . $newGids );
-			$elS->shareElement ( $this->getRootPrincipal (), $this->getRecord ()->getId (), $newGids );
+		if ($newGids || $moveId) {
+			if($moveId){
+				$this->executionSink ()->log ( "Move element in " . $moveId );
+				$elS->moveElement ( $this->getRootPrincipal (), $this->getRecord ()->getId (), $moveId );
+				$newGids[$moveId] = $moveId;
+			} else{
+				$this->executionSink ()->log ( "Share element in " . $newGids );
+				$elS->shareElement ( $this->getRootPrincipal (), $this->getRecord ()->getId (), $newGids );
+			}
 			$gpl = GroupListArrayImpl::createInstance ();
 			ServiceProvider::getGroupAdminService ()->getGroupsWithoutDetail ( $p, $newGids, $gpl );
 			foreach ( $gpl->getListIterator () as $group ) {

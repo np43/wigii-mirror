@@ -38,8 +38,7 @@ define ("EmailService_maxRecipients", 15);			//Max number of recipients per emai
 // Medair 27.03.2017: EmailService_sendOnBehalfOfUser: true or false or undefined 
 // if true, SMTP account will always send emails from address defined in emailingFrom (default as reply@xxx.xx) with real sender's email set into reply-to header.
 // else if false or not defined, SMTP account will send emails using sender's email directly set into the from header (this option can be blocked by server or anti-spam filters)
-//define ("EmailService_sendOnBehalfOfUser", true);    
-//define ("EmailService_authorizedDirectSenders", "user1@xxx.xx, user2@xxx.xx"); // If EmailService_sendOnBehalfOfUser=true, then defines an optional list of emails authorized to be used by the SMTP account to directly send from.
+//define ("EmailService_sendOnBehalfOfUser", true); 
 //define ("EmailService_sendOnBehalfServiceName", "Wigii system"); // If EmailService_sendOnBehalfOfUser=true, then defines the name of the service through which the email is posted on behalf of the user. By default, takes the siteTitle.
 
 //*********************

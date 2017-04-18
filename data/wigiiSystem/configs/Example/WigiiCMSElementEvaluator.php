@@ -24,8 +24,10 @@
 /**
  * Wigii CMS module Element evaluator
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016
- * Updated by Lionel Weber on 05.10.2016
+ * Updated by Wigii.org (Lionel Weber) on 05.10.2016
  * Updated by Weber wwigii-system.net for Wigii.org on 15.11.2016
+ * Updated by Wigii.org (Camille Weber) on 15.01.2017 to allow publication of html files through the link elementId.html
+ * Updated by Wigii.org (Camille Weber) on 03.04.2017 to personalize site META information
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {		
@@ -428,6 +430,21 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				$title = $intro->getFieldValue('siteTitle');
 				if(is_array($title)) $title = $title[$language];
 				$options->setValue('title',$title);
+				$metaDescription = $intro->getFieldValue('metaDescription');
+				if(is_array($metaDescription)) $metaDescription = $metaDescription[$language];
+				$options->setValue('metaDescription',$metaDescription);
+				$metaKeywords = $intro->getFieldValue('metaKeywords');
+				if(is_array($metaKeywords)) $metaKeywords = $metaKeywords[$language];
+				$options->setValue('metaKeywords',$metaKeywords);
+				$metaAuthor = $intro->getFieldValue('metaAuthor');
+				if(is_array($metaAuthor)) $metaAuthor = $metaAuthor[$language];
+				$options->setValue('metaAuthor',$metaAuthor);
+				$introBgColor = $intro->getFieldValue('introBgColor');
+				$options->setValue('introBgColor',$introBgColor);
+				$introBgAlpha = $intro->getFieldValue('introBgAlpha');
+				$options->setValue('introBgAlpha',$introBgAlpha);
+				$imgIntroBG = $intro->getFieldValue('imgIntroBG','url');
+				$options->setValue('imgIntroBG',$imgIntroBG);
 				$intro = $intro->getFieldValue('contentIntro');
 				if(is_array($intro)) $intro = $intro[$language];
 			}
@@ -472,6 +489,9 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$linkTextColor = $siteMap->getFieldValue('linkTextColor');				
 			if(!isset($linkTextColor)) $linkTextColor="646eff";
 			$options->setValue('linkTextColor',$linkTextColor);
+			$evenArticleBgColor = $siteMap->getFieldValue('evenArticleBgColor');				
+			if(!isset($evenArticleBgColor)) $evenArticleBgColor="fff";
+			$options->setValue('evenArticleBgColor',$evenArticleBgColor);
 			$oddArticleBgColor = $siteMap->getFieldValue('oddArticleBgColor');				
 			if(!isset($oddArticleBgColor)) $oddArticleBgColor="ebecff";
 			$options->setValue('oddArticleBgColor',$oddArticleBgColor);
@@ -498,13 +518,13 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// renders article content
 			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)), 
 				lf(
-					fsl(fs('contentTitle'),fs('contentHTML')),
+					fsl(fs('contentTitle'),fs('contentHTML'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
 					lxAnd(lxEq(fs('contentType'),'content'),lxEq(fs('status'),'published')),
 					fskl(fsk('contentPosition'))
 				)),
 				dfasl(
 				dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('concat',
-					fx('htmlStartTag','div','class','wigii-cms'),"\n",
+					fx('htmlStartTag','div','class','wigii-cms','style',fx('oCall',$this,'cms_getArticleStyle',fs_e('this'))),"\n",
 						fx('htmlStartTag','div','class','wigii-cms title', 'id', fs_e('id')), 
 							fx('htmlStartTag','div', 'class', 'wigii-cms title-content'),
 								fx('first',fx('getAttr',fs('contentTitle'),$language),
@@ -541,7 +561,50 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$this->executionSink()->publishEndOperation("cms_getContent", $principal);
 		return $returnValue;
 	}
+	/**
+	 * Generates a String used as an inline Style for the given article
+	 *@param Element $article
+	 *@return String inline Style for the article
+	 */
+	public function cms_getArticleStyle($article) {
+		$returnValue = '';
+		if(isset($article)) {
+			// background-color
+			$s = $article->getFieldValue('articleBgColor');
+			if($s){
+				if(strlen($s)>3) list($r, $g, $b) = sscanf($s, "%02x%02x%02x");
+				else list($r, $g, $b) = sscanf($s, "%1x%1x%1x");
+				$returnValue .= 'background-color: rgba('.$r.', '.$g.', '.$b.', ';
+				// opacity
+				$s = $article->getFieldValue('articleBgAlpha');
+				if($s) $returnValue .= $s;
+				else $returnValue .= '1';
+				$returnValue .= ');';
+			}
+			// background-image
+			$s = $article->getFieldValue('imgArticleBG','url');
+			if($s) $returnValue .= "background:url('".$s."') no-repeat center center; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover; background-size: cover;";
+		}
+		return $returnValue;
+	}
 	protected function cms_composeHeader($options,$logo,$menu,$intro) {
+		$style = '';
+		// background-color
+		$s = $options->getValue('introBgColor');
+		if($s){
+			if(strlen($s)>3) list($r, $g, $b) = sscanf($s, "%02x%02x%02x");
+			else list($r, $g, $b) = sscanf($s, "%1x%1x%1x");
+			$style .= 'background-color: rgba('.$r.', '.$g.', '.$b.', ';
+			// opacity
+			$s = $options->getValue('introBgAlpha');
+			if($s) $style .= $s;
+			else $style .= '1';
+			$style .= ');';
+		}
+		// background-image
+		$s = $options->getValue('imgIntroBG');
+		if($s) $style .= "background:url('".$s."') no-repeat center center; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover; background-size: cover;";
+
 		return $this->cms_getHtmlHeader($options)."\n<body>".'<div class="wigii-globalContainer">'."\n".
 				(empty($logo)&&empty($menu)?' ':'<div class="wigii-menu">').
 				(empty($logo)?' ':'<div id="wigii-logo">'.$logo.'</div>').
@@ -549,7 +612,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				(empty($logo)&&empty($menu)?' ':'</div>').
 				'<!-- top anchor -->'.
 				'<div id="top" ></div><div style="clear:both;"></div>'.
-				'<div class="wigii-cms">'."\n".
+				'<div class="wigii-cms" style="'.$style.'">'."\n".
 				'<div class="wigii-cms title"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
 				'<div class="wigii-cms content">'.(empty($intro)?' ':$intro).'</div>'."\n".
 				'</div>';
@@ -565,6 +628,7 @@ $(document).ready(function(){
 		if(enableArticleResize) {  $("div.wigii-globalContainer>div.wigii-cms:not(.wigii-footer)").css("min-height",$(window).height()-$("div.wigii-menu").outerHeight()); }
 		if(enableFirstArticleResize) {  $("div.wigii-globalContainer>div.wigii-cms:not(.wigii-footer):first").css("min-height",$(window).height()-$("div.wigii-menu").outerHeight()); }
 		$("div.wigii-globalContainer>div.wigii-cms:not(.wigii-footer):last").css("min-height",$(window).height()-$("div.wigii-menu").outerHeight()-$("div.wigii-footer").outerHeight()-1);
+		$("div.wigii-cms div.middle").each(function(){ $(this).css("margin-top", Math.max(0,($(window).height()-$("div.wigii-menu").outerHeight()-$(this).parent().outerHeight())/2)); });
 		$("div.wigii-cms div.bottom").each(function(){ $(this).css("margin-top", Math.max(0,$(window).height()-$("div.wigii-menu").outerHeight()-$(this).parent().prev().outerHeight()-$(this).parent().outerHeight()-46)); });
 	}
 	function scrollToHash(e){
@@ -605,7 +669,7 @@ $(document).ready(function(){
 			}
 			/* if hash tag exist in the page */
 			if($(hash).length){
-				scrollTo = $(hash).offset().top-$("div.wigii-menu").outerHeight();
+				scrollTo = $(hash).offset().top-$("div.wigii-menu").outerHeight()-10;
 				$("html, body").animate({
 							scrollTop: scrollTo
 					}, 800, function(){
@@ -640,7 +704,7 @@ $(document).ready(function(){
 	 */
 	protected function cms_getIntro($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
-				lf(fsl(fs('siteTitle'),fs('contentIntro')),
+				lf(fsl(fs('siteTitle'),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG','url')),
 				lxAnd(lxEq(fs('contentType'),'intro'),lxEq(fs('status'),'published')),
 				null,1,1)),
 				dfasl(dfas("NullDFA")));
@@ -744,8 +808,15 @@ $(document).ready(function(){
 		$url = $options->getValue('url');
 		$language = $options->getValue('language');
 		$css = $this->cms_getHtmlStyles($options);
+		$titleAndMeta = '';
 		$title = $options->getValue('title');
 		if(isset($title)) $title = '<title>'.$title.'</title>';
+		$metaDescription = $options->getValue('metaDescription');
+		if(isset($metaDescription)) $metaDescription = '<meta name="description" content="'.str_replace('"','',$metaDescription).'"/>'."\n";
+		$metaKeywords = $options->getValue('metaKeywords');
+		if(isset($metaKeywords)) $metaKeywords = '<meta name="keywords" content="'.str_replace('"','',$metaKeywords).'"/>'."\n";
+		$metaAuthor = $options->getValue('metaAuthor');
+		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";
 		$returnValue = <<<HTMLHEAD
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
@@ -774,11 +845,9 @@ $(document).ready(function(){
 <html>
 <head>
 <base href="$url" />
-$title
-<meta name="Copyright" content="Source Code: 2016 Wigii.org" />
-<meta name="License" content="GNU GPL 3.0" />
-<meta name="Generator" content="Wigii-system" />
-<meta name="Description" content="Wigii is a web based system allowing management of any kind of data (contact, document, calendar, and any custom types). Find out documentation on http://www.wigii-system.net" />
+$title 
+$metaDescription $metaKeywords $metaAuthor
+<meta name="generator" content="Wigii-system   http://www.wigii-system.net" />
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
@@ -805,6 +874,7 @@ HTMLHEAD;
 		$footerBgColor = $options->getValue("footerBgColor");
 		$footerTextColor = $options->getValue("footerTextColor");
 		$linkTextColor = $options->getValue("linkTextColor");
+		$evenArticleBgColor = $options->getValue("evenArticleBgColor");
 		$oddArticleBgColor = $options->getValue("oddArticleBgColor");
 		
 		$returnValue = <<<HTMLCSS
@@ -813,14 +883,14 @@ a 								{ text-decoration: none;}
 a:hover 						{ text-decoration: underline; }
 div.wigii-globalContainer 		{ min-height:100%; }
 div.wigii-globalContainer>div.wigii-cms
-								{ padding-top:10px; padding-bottom:30px; }
+								{ padding-top:10px; padding-bottom:30px; border-bottom:2px solid #fff; }
 div.wigii-cms 					{ width:100%; box-sizing:border-box; }
 div.wigii-cms.title-content 	{ float:left; width:80%; }
 div.wigii-cms.a-top 			{ float:right; width:20%; margin-top:24px; margin-bottom:24px; font-size:small; text-align:right; }
 div.wigii-cms.content 			{ clear:left; margin:0px; }
 div.wigii-cms.content p			{ margin-top:6px; margin-bottom:6px; }
 div.wigii-globalContainer>div.wigii-footer.wigii-cms.content 
-								{ position:absolute; width:100%; font-size:small; padding-top:10px; padding-bottom:10px; }
+								{ position:absolute; width:100%; font-size:small; padding-top:10px; padding-bottom:10px;border-bottom:none; }
 div.wigii-footer p 				{ margin:0px; padding:0px; }
 div.wigii-menu 					{ z-index:1;padding:10px 0px; position:fixed; width:100%; @media (max-height:600px) { padding-top:1px; padding-bottom:1px; } }
 div.wigii-menu #wigii-logo 		{ padding-left:-10px; margin-top:0px; float:left; }
@@ -856,6 +926,7 @@ div.wigii-cms.content { padding-left:$marginWidth; padding-right:$marginWidth; }
 /* color of links in article*/
 a { color: #$linkTextColor; }
 /* background-color of odd articles */
+div.wigii-globalContainer>div.wigii-cms:nth-child(even) { background-color:#$evenArticleBgColor; /* #FFF; */}
 div.wigii-globalContainer>div.wigii-cms:nth-child(odd) { background-color:#$oddArticleBgColor; /* #646EFF; */}
 HTMLCSS;
 		$customCSS = $options->getValue('css');
@@ -897,7 +968,7 @@ HTMLCSS;
 	 */
 	protected function cms_getSiteMap($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
-				lf(fsl(fs('siteUrl'),fs('forceHeight'),fs('forceHeightFirst'),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('oddArticleBgColor'),fs('supportedLanguage'),fs('defaultLanguage')),
+				lf(fsl(fs('siteUrl'),fs('forceHeight'),fs('forceHeightFirst'),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs('supportedLanguage'),fs('defaultLanguage')),
 				lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')),
 				null,1,1)),
 				dfasl(dfas("NullDFA")));
@@ -956,41 +1027,82 @@ HTMLCSS;
 			$groupId = $this->evaluateFuncExp(fx('cms_getGroupIdForUrl',$folderPath),$this);
 			if(empty($groupId)) throw new FuncExpEvalException("No file found at $url", FuncExpEvalException::NOT_FOUND);
 			
-			// retrieves element
-			$fieldName = 'contentImage';
-			$fslForFetch = FieldSelectorListArrayImpl::createInstance();
-			$fslForFetch->addFieldSelector($fieldName, "path");
-			$fslForFetch->addFieldSelector($fieldName, "name");
-			$fslForFetch->addFieldSelector($fieldName, "size");
-			$fslForFetch->addFieldSelector($fieldName, "type");
-			$fslForFetch->addFieldSelector($fieldName, "mime");
-			$fslForFetch->addFieldSelector($fieldName, "date");
-			//$fslForFetch->addFieldSelector($fieldName, "user");
-			//$fslForFetch->addFieldSelector($fieldName, "username");
-			//$fslForFetch->addFieldSelector($fieldName, "version");
-			//$fslForFetch->addFieldSelector($fieldName, "thumbnail");
-			$fslForFetch->addFieldSelector($fieldName, "content");
-			//$fslForFetch->addFieldSelector($fieldName, "textContent");
-			
-			$element = sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
-				lf($fslForFetch,
-				lxAnd(lxEq(fs($fieldName,'name'),$fileName),lxEq(fs($fieldName,'type'),$fileExt),lxEq(fs('status'),'published')),
-				null,1,1)),
-				dfasl(dfas("NullDFA")));			
-			
-			// dumps file content
-			if($element) {
-				$element = $element->getDbEntity();
-				$s = $element->getFieldValue($fieldName,'mime');
-				if($s) header('Content-type: '.$s);
-				$s = $element->getFieldValue($fieldName,'size');
-				if($s) header('Content-Length: '.$s);
+			// Fetches files of type HTML through the pattern elementId.html
+			if($fileExt == '.html') {
+				// retrieves element based on ID
+				$fieldName = 'contentImage';
+				$fslForFetch = FieldSelectorListArrayImpl::createInstance();
+				$fslForFetch->addFieldSelector($fieldName, "path");
+				//$fslForFetch->addFieldSelector($fieldName, "name");
+				$fslForFetch->addFieldSelector($fieldName, "size");
+				//$fslForFetch->addFieldSelector($fieldName, "type");
+				//$fslForFetch->addFieldSelector($fieldName, "mime");
+				//$fslForFetch->addFieldSelector($fieldName, "date");
+				//$fslForFetch->addFieldSelector($fieldName, "user");
+				//$fslForFetch->addFieldSelector($fieldName, "username");
+				//$fslForFetch->addFieldSelector($fieldName, "version");
+				//$fslForFetch->addFieldSelector($fieldName, "thumbnail");
+				$fslForFetch->addFieldSelector($fieldName, "content");
+				//$fslForFetch->addFieldSelector($fieldName, "textContent");
 				
-				$path = FILES_PATH.$element->getFieldValue($fieldName, "path");
-				if(!file_exists($path)) echo $element->getFieldValue($fieldName, "content");
-				else readfile($path);
+				$element = sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
+					lf($fslForFetch,
+					lxAnd(lxEq(fs_e('id'),$fileName),lxEq(fs($fieldName,'type'),'.nohtml.txt'),lxEq(fs('status'),'published')),
+					null,1,1)),
+					dfasl(dfas("NullDFA")));			
+				
+				// dumps file content
+				if($element) {
+					$element = $element->getDbEntity();
+					$s = 'text/html';
+					if($s) header('Content-type: '.$s);
+					$s = $element->getFieldValue($fieldName,'size');
+					if($s) header('Content-Length: '.$s);
+					
+					$path = FILES_PATH.$element->getFieldValue($fieldName, "path");
+					if(!file_exists($path)) echo $element->getFieldValue($fieldName, "content");
+					else readfile($path);
+				}
+				else throw new FuncExpEvalException("No file found at $url", FuncExpEvalException::NOT_FOUND);
 			}
-			else throw new FuncExpEvalException("No file found at $url", FuncExpEvalException::NOT_FOUND);
+			// Else fetches standard File according to mime
+			else {
+				// retrieves element
+				$fieldName = 'contentImage';
+				$fslForFetch = FieldSelectorListArrayImpl::createInstance();
+				$fslForFetch->addFieldSelector($fieldName, "path");
+				$fslForFetch->addFieldSelector($fieldName, "name");
+				$fslForFetch->addFieldSelector($fieldName, "size");
+				$fslForFetch->addFieldSelector($fieldName, "type");
+				$fslForFetch->addFieldSelector($fieldName, "mime");
+				$fslForFetch->addFieldSelector($fieldName, "date");
+				//$fslForFetch->addFieldSelector($fieldName, "user");
+				//$fslForFetch->addFieldSelector($fieldName, "username");
+				//$fslForFetch->addFieldSelector($fieldName, "version");
+				//$fslForFetch->addFieldSelector($fieldName, "thumbnail");
+				$fslForFetch->addFieldSelector($fieldName, "content");
+				//$fslForFetch->addFieldSelector($fieldName, "textContent");
+				
+				$element = sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
+					lf($fslForFetch,
+					lxAnd(lxEq(fs($fieldName,'name'),$fileName),lxEq(fs($fieldName,'type'),$fileExt),lxEq(fs('status'),'published')),
+					null,1,1)),
+					dfasl(dfas("NullDFA")));			
+				
+				// dumps file content
+				if($element) {
+					$element = $element->getDbEntity();
+					$s = $element->getFieldValue($fieldName,'mime');
+					if($s) header('Content-type: '.$s);
+					$s = $element->getFieldValue($fieldName,'size');
+					if($s) header('Content-Length: '.$s);
+					
+					$path = FILES_PATH.$element->getFieldValue($fieldName, "path");
+					if(!file_exists($path)) echo $element->getFieldValue($fieldName, "content");
+					else readfile($path);
+				}
+				else throw new FuncExpEvalException("No file found at $url", FuncExpEvalException::NOT_FOUND);
+			}			
 		}
 		catch(Exception $e) {
 			$this->executionSink()->publishEndOperationOnError("cms_getFile", $e, $principal);
@@ -1020,9 +1132,9 @@ HTMLCSS;
 	protected function getFslForContentType($contentType) {
 		$returnValue = null;
 		switch($contentType) {
-			case "content": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentHTML")); break;
-			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("forceHeight"),fs("forceHeightFirst"),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('oddArticleBgColor'),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
-			case "intro": $returnValue = fsl(fs("siteTitle"),fs("contentIntro")); break;
+			case "content": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentHTML"),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG'),fs('imgArticleBG','url')); break;
+			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("forceHeight"),fs("forceHeightFirst"),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
+			case "intro": $returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs("contentIntro"),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); break;
 			case "logo": $returnValue = fsl(fs("contentLogo")); break;
 			case "menu": $returnValue = fsl(fs("contentMenu")); break;
 			case "image": $returnValue = fsl(fs("contentImage")); break;

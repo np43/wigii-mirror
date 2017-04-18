@@ -156,16 +156,13 @@ class ListContext extends ListFilter {
 	private $multipleElementStateArr;
 	private $allHaveWriteRights;
 	private $sortedBy;
+    private $ascendingSort;
 	private $groupBy;
-	private $ascendingSort;
-	private $searchBar;
-	private $groupByAscending;
-	
-	public function getGroupByAscending() { return $this->groupByAscending; }
-	public function setGroupByAscending($ascending) { $this->groupByAscending = $ascending; }
+    private $defaultGroupByKey;
+	private $defaultGroupByAscending;
+    private $searchBar;
 
-
-	public static function createInstance($p, $module, $configS)
+    public static function createInstance($p, $module, $configS)
 	{
 		$returnValue = new self();
 		$returnValue->setCrtView($returnValue->getDefaultView($p, $module, $configS));
@@ -653,17 +650,24 @@ class ListContext extends ListFilter {
 	private $duplicatesIds = null;
 	private $duplicatesElementEnableState = null;
 	private $duplicatesElementState = null;
-	public function setGroupBy($key, $onlyShowDuplicates=false){
+
+    /**
+     * @param $key
+     * @param bool $onlyShowDuplicates
+     */
+    public function setGroupBy($key, $onlyShowDuplicates=false){
 		//groupBy can be set to null, this case dosen't mean we want to have the defaultGroupyByKey
 		//but means we don't want to do any groupBy
-		$ascending = true;
-        if($key ==="reset" && method_exists($this->getFieldSelectorList(), "getDefaultGroupByKey")){
-			$key = $this->getFieldSelectorList()->getDefaultGroupByKey();
-			$ascending = $this->getFieldSelectorList()->getDefaultGroupByAscending();
-		}
+        if($key ==="reset") {
+            if(method_exists($this->getFieldSelectorList(), "getDefaultGroupByKey")) {
+                $this->defaultGroupByKey = $this->getFieldSelectorList()->getDefaultGroupByKey();
+                $this->defaultGroupByAscending = $this->getFieldSelectorList()->getDefaultGroupByAscending();
+                $key = $this->defaultGroupByKey;
+            }
+            else $key = null;
+        }
 
 		$this->groupBy = $key;
-		$this->setGroupByAscending($ascending);
 		$this->addGroupBySortingKey();
 		$this->addSortBySortingKey();
 		$this->setGroupByOnlyDuplicates($onlyShowDuplicates);
@@ -731,16 +735,24 @@ class ListContext extends ListFilter {
 
 			if($this->getGroupBy() == $this->getSortedBy()) $ascending = $this->isAscending();
 			else {
-				$ascending = true;
-				//exception for dates
-				switch($groupByFS->getSubFieldName()){
-					case "begDate":
-					case "date":
-					case "sys_date":
-					case "sys_creationDate":
-						$ascending = false;
-						break;
-				}
+			    /*
+			     * 1.  if groupByKey == defaultGroupByKeyKey then $ascending = defaultGroupByKeyAscending
+			     * ----2.  else if groupByKey is defined in GroupBy activity then $ascending = (groupBy->fields->{groupByKey}->defaultSorted != DESC)
+			     * 3.  else keep default logic (ascending = true except if date)
+			     */
+                if($this->getGroupBy() == $this->defaultGroupByKey) $ascending = $this->defaultGroupByAscending;
+                else {
+                    $ascending = true;
+                    //exception for dates
+                    switch ($groupByFS->getSubFieldName()) {
+                        case "begDate":
+                        case "date":
+                        case "sys_date":
+                        case "sys_creationDate":
+                            $ascending = false;
+                            break;
+                    }
+                }
 			}
 
 			if($groupByFS->isElementAttributeSelector()){

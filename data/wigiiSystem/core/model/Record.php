@@ -202,12 +202,12 @@ abstract class Record extends DbEntityInstance
 						if(is_array($forValue)){
 							$forValue = implode("\" or text()=\"", $forValue); //$tempRes;
 						}
-						$gids= $fxml->xpath("attribute[@idGroup and (text()=\"$forValue\") and @idGroup!=\"\"]/attribute::idGroup");
+						$gids= $fxml->xpath("attribute[@idGroup and (text()=\"$forValue\") and @idGroup!=\"\" and not(@movePriority)]/attribute::idGroup");
 						if($gids)  $gids = implode(";",$gids);
 					} else if($dt == "Booleans"){
 						$forValue = $this->getFieldValue($fieldName);
 						if($forValue){
-							if($fxml["idGroup"] != null){
+							if($fxml["idGroup"] != null && !$fxml["movePriority"]){
 								$gids = (string)$fxml["idGroup"];
 							}
 						}
@@ -217,6 +217,63 @@ abstract class Record extends DbEntityInstance
 			}
 		}
 	}
+	
+	
+	public function getMoveGroupInRecord(){
+		$priorityMax = null;
+		$gidMax = null;
+		foreach($this->getFieldList()->getListIterator() as $fieldName=>$f){
+			if($f->getDataType() != null){
+				$fxml = $f->getXml();
+				$dt = $f->getDataType()->getDataTypeName();
+				if($dt == "Attributs" || $dt == "MultipleAttributs"){
+					$forValue = $this->getFieldValue($fieldName);
+					if($forValue == null) continue; //empty value cause a simpleXml path warning
+					if(is_array($forValue)){
+						$forValue = implode("\" or text()=\"", $forValue); //$tempRes;
+					}
+					$result= $fxml->xpath("attribute[@movePriority and (text()=\"$forValue\")]/attribute::idGroup");
+					$gids = array();
+					foreach($result as $gid){
+						$gids[] = (string)$gid;
+					}
+					
+					$result= $fxml->xpath("attribute[@movePriority and (text()=\"$forValue\")]/attribute::movePriority");
+					foreach($result as $index=>$prio) {
+						$prio = (string)$prio;
+						if(!isset($priorityMax)) {
+							$priorityMax = $prio;
+							$gidMax = $gids[$index];
+						}
+						elseif($prio > $priorityMax) {
+							$priorityMax = $prio;
+							$gidMax = $gids[$index];
+						}
+					}
+										
+					//$combine = array_combine($gids, $priority);
+				} else if($dt == "Booleans"){
+					$forValue = $this->getFieldValue($fieldName);
+					if($forValue){
+						if($fxml["idGroup"] != null){
+							$gids = (string)$fxml["idGroup"];
+						}
+					}
+					$prio = (string)$fxml["movePriority"];
+					if(!isset($priorityMax)) {
+						$priorityMax = $prio;
+						$gidMax = $gids;
+					}
+					elseif($prio > $priorityMax) {
+						$priorityMax = $prio;
+						$gidMax = $gids;
+					}
+				}				
+			}
+		}
+		return $gidMax;
+	}
+	
 	/**
 	 * Fill the valueList with the idGroups found in any attribute that are not selected
 	 * in the multiple edit record. Used in: EditMultipleElementFormExecutor.php

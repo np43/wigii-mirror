@@ -27,7 +27,7 @@
  * Created by CWE on 17 avr. 10
  * Modified by CWE on 07 mars 2014 to activate by default the FuncExpVM when evaluating a record.
  * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
- * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) on 07.04.2017 to allow dynamic change of principal only by rootPrincipal
  */
 class RecordEvaluator implements FuncExpEvaluator
 {
@@ -121,6 +121,25 @@ class RecordEvaluator implements FuncExpEvaluator
 		$this->record = $record;
 	}
 
+	/**
+	 * Changes the current principal to a new one.
+	 * This can only be done by the Root principal
+	 * @param Principal rootPrincipal instance of root principal to check for authorization
+	 * @param Principal $newPrincipal the new principal instance that should replace the current principal
+	 */
+	public function changePrincipal($rootPrincipal, $newPrincipal) {
+	    if($newPrincipal !== $this->principal) {
+    	    $this->debugLogger()->logBeginOperation('changePrincipal');
+    	    if(!isset($newPrincipal)) throw new RecordException('newPrincipal cannot be null', RecordException::INVALID_ARGUMENT);	    
+    	    // checks for authorization
+    	    ServiceProvider::getAuthorizationService()->assertPrincipalAuthorized($rootPrincipal, 'RecordEvaluator', 'changePrincipal');
+    	    // checks that Principal is valid
+    	    ServiceProvider::getAuthenticationService()->assertPrincipalValid($newPrincipal);
+    	    $this->principal = $newPrincipal;
+    	    $this->debugLogger()->logEndOperation('changePrincipal');
+	    }
+	}
+	
 	// dependency injection
 
 	private $funcExpVMClassName;
@@ -371,7 +390,13 @@ class RecordEvaluator implements FuncExpEvaluator
 	{
 		return $this->principal;
 	}
-
+	/**
+	 * @return Boolean returns true if Principal is set in RecordEvaluator context.
+	 */
+    public function hasPrincipal() {
+        return isset($this->principal);
+    }
+    
 	/**
 	 * Returns the field currently evaluated
 	 */

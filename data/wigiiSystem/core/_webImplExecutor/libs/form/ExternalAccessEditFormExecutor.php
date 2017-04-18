@@ -222,19 +222,19 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 			$crtLabel = $crtOther1 = $crtOther2 = $crtOther3 = null;
 			if($emailFieldXml["label1"]!="" || $emailFieldXml["label2"]!="" || $emailFieldXml["label3"]!=""){
 				$labelConstruction = array();
-				if((string)$emailFieldXml["label1"]) $labelConstruction[] = $this->getRecord()->getFieldValue((string)$emailFieldXml["label1"]);
-				if((string)$emailFieldXml["label2"]) $labelConstruction[] = $this->getRecord()->getFieldValue((string)$emailFieldXml["label2"]);
-				if((string)$emailFieldXml["label3"]) $labelConstruction[] = $this->getRecord()->getFieldValue((string)$emailFieldXml["label3"]);
+				if((string)$emailFieldXml["label1"]) $labelConstruction[] = $this->formatValueForMailMerge((string)$emailFieldXml["label1"]);
+				if((string)$emailFieldXml["label2"]) $labelConstruction[] = $this->formatValueForMailMerge((string)$emailFieldXml["label2"]);
+				if((string)$emailFieldXml["label3"]) $labelConstruction[] = $this->formatValueForMailMerge((string)$emailFieldXml["label3"]);
 				$crtLabel = implode(((string)$emailFieldXml["labelSep"] ? (string)$emailFieldXml["labelSep"] : " "), $labelConstruction);
 			}
 			if($emailFieldXml["other1"]!=""){
-				$crtOther1 = $this->getRecord()->getFieldValue((string)$emailFieldXml["other1"]);
+				$crtOther1 = $this->formatValueForMailMerge((string)$emailFieldXml["other1"]);
 			}
 			if($emailFieldXml["other2"]!=""){
-				$crtOther2 = $this->getRecord()->getFieldValue((string)$emailFieldXml["other2"]);
+				$crtOther2 = $this->formatValueForMailMerge((string)$emailFieldXml["other2"]);
 			}
 			if($emailFieldXml["other3"]!=""){
-				$crtOther3 = $this->getRecord()->getFieldValue((string)$emailFieldXml["other3"]);
+				$crtOther3 = $this->formatValueForMailMerge((string)$emailFieldXml["other3"]);
 			}
 			$mergeData[$emailValue]['$label$'] = $crtLabel;
 			$mergeData[$emailValue]['$other1$']=$crtOther1;
@@ -311,6 +311,31 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 			$this->realoadAfterCheckedRecord($p, $exec);
 		}
 	}
+
+    /**
+     * This function format the value used in mailmerge
+     *
+     * @param $fieldName
+     * @return mixed
+     */
+    private function formatValueForMailMerge($fieldName) {
+        // Get Field object from Field name
+        $field = $this->getRecord()->getFieldList()->getField($fieldName);
+        $typeName = $field->getDataType()->getDataTypeName();
+
+        // Check data type attached to Field then return either the formatted value or the value if it is another datatype
+        switch ($typeName){
+            case "Attributs":
+                return Attributs::formatDisplay($this->getRecord()->getFieldValue($fieldName), $field);
+                break;
+            case "MultipleAttributs":
+                return MultipleAttributs::formatDisplay($this->getRecord()->getFieldValue($fieldName), $field);
+                break;
+            default:
+                return $this->getRecord()->getFieldValue($fieldName);
+                break;
+        }
+    }
 
 	protected function doRenderForm($p, $exec){
 		$transS = ServiceProvider::getTranslationService();

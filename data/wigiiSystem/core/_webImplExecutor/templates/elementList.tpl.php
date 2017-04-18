@@ -196,7 +196,7 @@ if(!$url){ //display list only if no url
 		$groupByOptions = array();
 		if($configS->ma($p, $exec->getCrtModule(), $groupByActivity)){
 			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather activity config"] = microtime(true);
-			$fieldSelectorList = FieldSelectorListForActivity :: createInstance(false, false); //no issue if double time the same
+			$fieldSelectorList = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
 			$fieldSelectorList->setSelectedLanguages(array ($transS->getLanguage() => $transS->getLanguage()));
 			$configS->getFields($p, $exec->getCrtModule(), $groupByActivity, $fieldSelectorList);
 			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);

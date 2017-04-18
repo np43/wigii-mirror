@@ -165,7 +165,15 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 		}
 		else $fslForUpdate = $fsl;
 		
-		$elS->insertElement($p, $this->getRecord(), $this->getGroupIdInWhichToAdd($p, $exec), $fslForUpdate);
+		$moveId = $this->getRecord()->getMoveGroupInRecord();
+		if($moveId) $moveId = $this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $moveId, $this->getRecord());
+		
+		
+		if($moveId){
+			$elS->insertElement($p, $this->getRecord(), $moveId, $fslForUpdate);
+		}else{
+			$elS->insertElement($p, $this->getRecord(), $this->getGroupIdInWhichToAdd($p, $exec), $fslForUpdate);
+		}
 		$this->updateFilesOnDisk($p, $exec, $storeFileInWigiiBag, null, true);
 
 		if($this->getState()=="persistAndSkipNotify"){
@@ -173,22 +181,24 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 		}
 		$this->getWigiiExecutor()->throwEvent()->insertElement(PWithElementWithGroupPList::createInstance($p, $this->getRecord(), $groupPList));
 
+		//authosharing is done only if no moveId defined
 		//autosharing defined in configuration are done on groups that could be not writable
 		//lookup if any selected attribut idGroup
-		$gids = ValueListArrayMapper::createInstance(true, ValueListArrayMapper::Natural_Separators, true);
-		$this->getRecord()->getLinkedIdGroupInRecord($p, $gids);
-		if($gids && !$gids->isEmpty()){
-			$elS->shareElement($this->getRootPrincipal(), $this->getRecord()->getId(), $gids->getListIterator());
-			$gpl = GroupListArrayImpl::createInstance();
-			$groupAS->getGroupsWithoutDetail($p, $gids->getListIterator(), $gpl);
-			$this->getWigiiExecutor()->getNotificationService()->blockNotificationPostingValue();
-			foreach($gpl->getListIterator() as $group){
-				//notification here do not follow the skipNotification as it is a sharing notification and not an update notification
-				$this->getWigiiExecutor()->throwEvent()->shareElement(PWithElementWithGroup :: createInstance($p, $this->getRecord(), $group));
-			}
-			$this->getWigiiExecutor()->getNotificationService()->unblockNotificationPostingValue();
-		}
-
+        if(!$moveId) {
+            $gids = ValueListArrayMapper::createInstance(true, ValueListArrayMapper::Natural_Separators, true);
+            $this->getRecord()->getLinkedIdGroupInRecord($p, $gids);
+            if($gids && !$gids->isEmpty()){
+                $elS->shareElement($this->getRootPrincipal(), $this->getRecord()->getId(), $gids->getListIterator());
+                $gpl = GroupListArrayImpl::createInstance();
+                $groupAS->getGroupsWithoutDetail($p, $gids->getListIterator(), $gpl);
+                $this->getWigiiExecutor()->getNotificationService()->blockNotificationPostingValue();
+                foreach($gpl->getListIterator() as $group){
+                    //notification here do not follow the skipNotification as it is a sharing notification and not an update notification
+                    $this->getWigiiExecutor()->throwEvent()->shareElement(PWithElementWithGroup :: createInstance($p, $this->getRecord(), $group));
+                }
+                $this->getWigiiExecutor()->getNotificationService()->unblockNotificationPostingValue();
+            }
+        }
 		$elS->unlock($p, $this->getRecord());
 
 		$this->endActOnCheckedRecord($p, $exec);

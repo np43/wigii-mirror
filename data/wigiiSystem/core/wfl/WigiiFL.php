@@ -26,6 +26,7 @@
  * Created by CWE on 5 decembre 2013
  * Modified by Medair on 04.11.2016 to integrate QlikSense and Box functions
  * Modified by Medair (CWE,LMA) on 08.12.2016 to hide password argument in login function and to protect against Cross Site Scripting
+ * Modified by Medair (CWE) on 07.04.2017 to keep current namespace on re-login.
  */
 class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 {
@@ -1977,6 +1978,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			// logout only if not MinimalPrincipal
 			if(!$authS->isMainPrincipalMinimal()) $authS->logout();
 			// login
+			$currentWigiiNamespace = $currentPrincipal->getWigiiNamespace();
 			$currentPrincipal = $authS->login($username, ValueObject::createInstance($password), $currentPrincipal->getWigiiNamespace()->getClient()->getClientName());
 			// password expiration check
 			if ($currentPrincipal->passwordExpired()) {
@@ -1990,6 +1992,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			$this->getUserAdminService()->calculateAllMergedRoles($currentPrincipal);
 			// refetches all roles
 			$currentPrincipal->refetchAllRoles();
+			// binds back to current namespace
+			$currentPrincipal->bindToWigiiNamespace($currentWigiiNamespace);
 			// changes FuncExpVM principal
 			$this->getFuncExpVM()->setPrincipal($currentPrincipal);
 			return true;

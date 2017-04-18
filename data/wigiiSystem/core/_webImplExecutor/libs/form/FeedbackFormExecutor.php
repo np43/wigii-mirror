@@ -314,7 +314,20 @@ class FeedbackFormExecutor extends FormExecutor {
 		}
 	}
 
-	protected function doSpecificCheck($p, $exec){}
+	protected function doSpecificCheck($p, $exec){
+	    // Medair (CWE) 04.04.2017 checks for authorized direct sender
+	    if(defined("EmailService_sendOnBehalfOfUser") && EmailService_sendOnBehalfOfUser) {
+	        try {
+	            $this->getWigiiExecutor()->getEmailService()->isEmailAuthorizedDirectSender($p,$this->getRecord()->getFieldValue("feedback_email"),$p->getRealUsername());
+	        }
+	        catch(AuthorizationServiceException $ase) {
+	            if($ase->getCode() == AuthorizationServiceException::NOT_ALLOWED) {
+	                $this->addErrorToField(ServiceProvider::getTranslationService()->t($p,'unauthorizedSender'), "feedback_email");
+	            }
+	            else throw $ase;
+	        }
+	    }	    
+	}
 
 	protected function doRenderForm($p, $exec){
 		//add lookup

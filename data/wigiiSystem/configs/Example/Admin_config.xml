@@ -22,4 +22,17 @@
 		-->
 	</users>
 	
+	<!-- Medair (CWE) 04.04.2017 : If EmailService_sendOnBehalfOfUser = true, then defines an optional list of emails authorized to be used by the SMTP account to directly send from. --> 
+	<!-- If a username is defined, then the EmailService only sends from the given email address if the email message was created by the associated user -->
+	<!-- Else the email message is not sent and has an error status -->
+	<!-- 
+	<Emailing>
+		<authorizedDirectSenders>
+			<user email="user1@xxx.xx" username="user1" />
+			<user email="user2@xxx.xx" username="user2" />
+			<user email="user3@xxx.xx, user3_1@xxx.xx" username="user3" />
+			<user email="group1@xxx.xx, group2@xxx.xx" />
+		</authorizedDirectSenders>
+	</Emailing>	
+	-->
 </admin>

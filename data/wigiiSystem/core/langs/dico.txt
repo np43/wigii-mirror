@@ -1146,6 +1146,7 @@ closeAndSave:Close & Save:Fermer & Sauver:::::::
 
 invalidDate:Invalid date:Date invalide:::::::
 invalidEmail:Invalid email address:Adresse email invalide:::::::
+unauthorizedEmail:You are not authorized to use this email address:Vous n'êtes pas authorisé à utiliser cette adresse mail.:::::::::
 invalidEmails:One of the email address is invalid:Une des adresse email est invalide:::::::
 invalidNumber:Invalid number:Nombre invalide:::::::
 exceedBlobsLimit:Text is too long, please reduce it of $$chars$$ characters. (Actual size is $$size$$, max allowed size is $$allowed$$):Le texte est trop long et doit être raccourci de $$chars$$ caractères. (La taille actuelle est $$size$$, la taille maximum autorisée est $$allowed$$):::::::
@@ -1235,22 +1236,9 @@ addNotificationEmailSubject:Subject:Objet:::::::::
 addNotificationEmailFrom:From:De:::::::::
 addNotificationEmailTo:To:A:::::::::
 subscribedEmails:Subscribed email list:Liste des emails inscrits:::::::::
-invalidEmailFromOrTo:Invalid email, please check emails in "From" and "To".:Email invalide, veuillez contrôler les emails "De" et "A".:
+invalidEmailFromOrTo:Invalid or unauthorized email, please check emails in "From" and "To".:Email invalide ou non-authorisé, veuillez contrôler les emails "De" et "A".:::::::::
+unauthorizedSender:You are not authorized to send from this email address:Vous n'êtes pas authorisé à envoyer un email depuis cette adresse.:::::::::
 someElementsHasBeenPreventedToBeOrphans:You have not specified a destination #group# for some #-elements# and unticked their current #group# location. This way #thoseElements# will become inaccessible. Please ensure that the #-elements# have at least one destination #group#.:Vous n'avez pas spécifié #aGroup# de destination pour certain #elements# et avez décocher leur #-group#. #ThoseElements# deviendraient par conséquent innaccessibles. Veuillez vous assurer que #elements# ont au moins #aGroup# de destination.::::
-
-ToBeRemoved:!!!-----------------------------------------:::::::
-thoseElementsAreAddedInGroups:#ThoseElements# are added in #groups#:#ThoseElements# sont ajoutés dans #groups#:::::::::
-thoseElementsAreRemovedFromGroups:#ThoseElements# are removed from #groups#:#ThoseElements# sont supprimé des #-groups#:::::::::
-thoseElementsAreSettedInGroups:#ThoseElements# are defined with the #groups#:#ThoseElements# sont défini avec #groups#:::::::::
-thoseElementsWhereInGroups:#ThoseElements# where in #groups#:#ThoseElements# étaient dans #groups#:::::::::
-thoseElementsAreUpdated:#ThoseElements# are updated:#ThoseElements# sont mis-à-jour:::::::::
-thoseElementsStateChanged:The state of #thoseElements# has changed:Le statu de #thoseElements# a changé:::::::::
-thoseElementsAreDeleted:#ThoseElements# are deleted:#ThoseElements# sont effacés:::::::::
-thoseElementsAreMovedInModuleGroup:#ThoseElements# are moved in tab:#ThoseElements# sont déplacer dans l'onglet:::::::::
-thoseElementsAreMovedFromModule:#ThoseElements# are moved from tab:#ThoseElements# sont déplacer depuis l'onglet:::::::::
-newElementsInGroup:#ThoseElements# are imported in #group#:#ThoseElements# sont importés dans #group#:::::::::
-ToBeRemoved:!!!-----------------------------------------:::::::
-
 hasImportedThoseElementsInGroup:has imported the following #elements# in #group#:a importé #elements# suivants dans #group#:::::::
 hasAddedThoseElementsInGroup:has added the following #elements# in #group#:a ajouté #elements# suivants dans #group#:::::::::
 hasRemovedThoseElementsFromGroup:has removed the following #elements# from #group#:a supprimé #elements# suivants du #-group#:::::::::
@@ -1321,9 +1309,9 @@ notificationWigiiNamespaceFrom:Notification from:Notification depuis:::::::::
 compulsoryFieldOtherwiseEmptyOtherEmailFields:You must fill this field if one of the confirmation email fields is filled.:Vous devez remplir ce champ si un des champs de l'email de confirmation est rempli.:::::::::
 
 
-groupSubscription:Subscription form parameters:Paramêtres du formulaire d'inscription:::::::::
+groupSubscription:Subscription form parameters:Paramètres du formulaire d'inscription:::::::::
 groupSubscriptionPreview:Subscription form details:Détails du formulaire d'inscription:::::::::
-groupSubscription_help:Subscription form parameters:Paramêtres du formulaire d'inscription:::::::::
+groupSubscription_help:Subscription form parameters:Paramètres du formulaire d'inscription:::::::::
 enableGroupSubscription:Publish the form:Publier le formulaire:::::::::
 maxSubscriptionNb:Maximum number of subscriptions:Nombre maximum d'inscription:::::::::
 subscriptionBackgroundColorCode:Background color:Couleur du fond:::::::::
@@ -1546,7 +1534,7 @@ cm_deleteGroup:Delete #group#:Supprimer #group#:::::::
 cm_emptyGroup:Empty #group#:Vider #group#:::::::
 cm_portal:Link to a web address:Lier à une adresse web:::::::
 cm_htmlContent:Edit cover page:Modifier la page de couverture:::::::
-cm_subscription:Subscription form parameters:Paramêtres du formulaire d'inscription:::::::::
+cm_subscription:Subscription form parameters:Paramètres du formulaire d'inscription:::::::::
 cm_groupDetail:#Group# properties:Propriété du #-group#::::::
 cm_xmlPublish:Publish #group#:Publier #group#:::::::::
 cm_emailNotification:Edit notification email list:Modifier la liste des emails de notification:::::::::

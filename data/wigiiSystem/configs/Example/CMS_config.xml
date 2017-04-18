@@ -59,8 +59,7 @@
 		<fields>
 			<feedback_email type="Emails" require="1" ignoreNotification="1" />
 			<feedback_for type="Attributs" require="1" >
-				<attribute email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
-				<attribute checked="1" redirect="author" >onElement<label_l01>Owner</label_l01><label_l02>Référant</label_l02></attribute>
+				<attribute email="support@xxx.xx" checked="1">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
 			</feedback_for>
 			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
 			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
@@ -113,6 +112,7 @@
 				<footerBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='696969'><label_l01>Background color of footer</label_l01><label_l02>Couleur du pied de page</label_l02></footerBgColor>
 				<footerTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='ffffff'><label_l01>Text color of footer</label_l01><label_l02>Couleur du texte du pied de page</label_l02></footerTextColor>
 				<linkTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='646EFF'><label_l01>Text color of links</label_l01><label_l02>Couleur du texte des liens</label_l02></linkTextColor>
+				<evenArticleBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='ffffff'><label_l01>Background color of even articles</label_l01><label_l02>Couleur de fond des articles paires</label_l02></evenArticleBgColor>
 				<oddArticleBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='ebecff'><label_l01>Background color of odd articles</label_l01><label_l02>Couleur de fond des articles impaires</label_l02></oddArticleBgColor>
 				<supportedLanguage enableDynamicAttributes="1"  excelExport="auto" type="MultipleAttributs" useCheckboxes="1" useMultipleColumn='2' require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="1">
 					<label_l01>Supported languages</label_l01><label_l02>Langues supportées</label_l02>
@@ -132,8 +132,14 @@
 				<contentMenu enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"menu")' disabled='notNullAndNotEq(contentType,"menu")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" noLabel="1" ><label_l01>Menu : (create only a bullet list with links)</label_l01><label_l02>Menu : (veuillez créer seulement une liste à puce avec des liens)</label_l02></contentMenu>
 			<groupMenu groupEnd="1" expand="1"/>
 			<groupIntro groupStart="1"><label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></groupIntro>
+				<contentIntro enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Introduction content</label_l01><label_l02>Contenu de l'introduction</label_l02></contentIntro>
 				<siteTitle enableDynamicAttributes="1" excelExport="auto" type="Varchars" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1"><label_l01>Browser title</label_l01><label_l02>Titre du navigateur</label_l02></siteTitle>
-				<contentIntro enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Page header</label_l01><label_l02>En-tête de la page</label_l02></contentIntro>
+				<metaDescription enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Description of the page for search engines</label_l01><label_l02>Description de la page pour les moteurs de recherche</label_l02></metaDescription>
+				<metaKeywords enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Keywords</label_l01><label_l02>Mots-clés</label_l02></metaKeywords>
+				<metaAuthor enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Author and copyright</label_l01><label_l02>Auteur et copyright</label_l02></metaAuthor>				
+				<introBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="0" ><label_l01>Background color of the introduction</label_l01><label_l02>Couleur de fond de l'intro</label_l02></introBgColor>
+				<introBgAlpha labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="0" ><label_l01>Background opacity of the intro (0=transp. 1=opac)</label_l01><label_l02>Opacité du fond de l'intro (0=transp. 1=opaque)</label_l02></introBgAlpha>
+				<imgIntroBG enableDynamicAttributes="1"  excelExport="auto" type="Urls" onlyUrl="1" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Background image url</label_l01><label_l02>Url pour image de fond</label_l02></imgIntroBG>
 			<groupIntro groupEnd="1" expand="1"/>
 			<groupContent groupStart="1"><label_l01>Article</label_l01><label_l02>Article</label_l02></groupContent>
 				<contentPosition excelExport="auto" type="Numerics" require="0" hidden="1" clearOnCopy="1"><label_l01>Position</label_l01><label_l02>Position</label_l02></contentPosition>
@@ -143,6 +149,9 @@
 				</choosePosition>						
 				<contentTitle enableDynamicAttributes="1" excelExport="auto" type="Texts" require='eq(contentType,"content")' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" fullToolbarHtmlArea="1" isInLine="1"><label_l01>Title</label_l01><label_l02>Titre</label_l02></contentTitle>
 				<contentHTML enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"content")' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentHTML>
+				<articleBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"content")' expand="1" isInLine="0" ><label_l01>Background color of this article</label_l01><label_l02>Couleur de fond de cet article</label_l02></articleBgColor>
+				<articleBgAlpha labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='notNullAndNotEq(contentType,"content")' expand="1" isInLine="0" ><label_l01>Background opacity of the article(0=transp. 1=opac)</label_l01><label_l02>Opacité du fond de l'article (0=transp. 1=opaque)</label_l02></articleBgAlpha>
+				<imgArticleBG enableDynamicAttributes="1"  excelExport="auto" type="Urls" onlyUrl="1" require='0' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Background image url</label_l01><label_l02>Url pour image de fond</label_l02></imgArticleBG>
 			<groupContent groupEnd="1" expand="1"/>
 			<groupImage groupStart="1"><label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></groupImage>
 				<contentImage enableDynamicAttributes="1"  excelExport="auto" type="Files" require='eq(contentType,"image")' disabled='notNullAndNotEq(contentType,"image")' expand="1" displayContentInDetail="1" noLabel="1"><label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></contentImage>

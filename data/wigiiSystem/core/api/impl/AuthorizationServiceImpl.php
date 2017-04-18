@@ -428,6 +428,14 @@ class AuthorizationServiceImpl implements AuthorizationService
 						return null; /* principal gets no special rights */
 				}
 				break;
+			case "RecordEvaluator":
+			    switch($methodName)
+			    {
+			        case "changePrincipal":	
+			            $this->assertPrincipalIsRoot($principal);
+			            return null; /* principal gets no special rights */
+			    }
+			    break;
 		}
 		// by default authorization service refuses grant
 		throw new AuthorizationServiceException('unknown service and method, can not grant authorization', AuthorizationServiceException::FORBIDDEN);

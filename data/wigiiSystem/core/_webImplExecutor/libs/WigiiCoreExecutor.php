@@ -1740,7 +1740,7 @@ class WigiiCoreExecutor {
 		$elS = ServiceProvider :: getElementService();
 	
 		//update the listContext to match to the blogView parameter
-		$fsl = FieldSelectorListForActivity :: createInstance(false, false, false); //no issue if double time the same
+		$fsl = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
 		$fsl->setSelectedLanguages(array (
 				$transS->getLanguage() => $transS->getLanguage()));
 		$configS->getFields($p, $exec->getCrtModule(), Activity :: createInstance("blogView"), $fsl);
@@ -6954,7 +6954,20 @@ onUpdateErrorCounter = 0;
 					}
 				echo $transS->t($p, "keepNotifiedTitle");
 				echo ExecutionServiceImpl :: answerParamSeparator;
-				$emailIsValid = validateEmail($pEmail);
+				$emailIsValid = validateEmail($pEmail); $unauthorizedEmail = false;
+				// Medair (CWE) 11.04.2017 checks for authorized direct sender
+				if($pEmail && $emailIsValid && defined("EmailService_sendOnBehalfOfUser") && EmailService_sendOnBehalfOfUser) {
+				    try {
+				        $this->getEmailService()->isEmailAuthorizedDirectSender($p,$pEmail,$p->getRealUsername());
+				    }
+				    catch(AuthorizationServiceException $ase) {
+				        if($ase->getCode() == AuthorizationServiceException::NOT_ALLOWED) {
+				            $unauthorizedEmail = true;
+				            $emailIsValid = false;
+				        }
+				        else throw $ase;
+				    }
+				}
 				if ($pEmail && $emailIsValid) {
 					echo "emailAdressIsDefined";
 					echo ExecutionServiceImpl :: answerParamSeparator;
@@ -6974,8 +6987,8 @@ onUpdateErrorCounter = 0;
 				} else {
 					echo "defineANewEmailAdress";
 					echo ExecutionServiceImpl :: answerParamSeparator;
-					if (($exec->getCrtAction() == "setKeepNotifiedEmail") || !$emailIsValid) {
-						echo '<span class="error">' . $transS->t($p, "invalidEmail") . '</span><br />';
+					if (($exec->getCrtAction() == "setKeepNotifiedEmail") || !$emailIsValid) {					    
+					    echo '<span class="error">' . ($unauthorizedEmail ? $transS->t($p, "unauthorizedEmail"): $transS->t($p, "invalidEmail")) . '</span><br />';
 					}
 					echo '<label for="KeepNotifiedEmailInput" >' . $transS->t($p, "keepNotifiedEmailInputLabel") . '</label><br /><input id="KeepNotifiedEmailInput" type="text" value="' . $pEmail . '" />';
 					$exec->addJsCode("$('#organizeDialog #KeepNotifiedEmailInput').focus().keydown(function(e){if(e.keyCode == 13){ $('#organizeDialog').closest('.ui-dialog').find('.ui-dialog-buttonpane .ok').click(); e.stopPropagation(); }});");

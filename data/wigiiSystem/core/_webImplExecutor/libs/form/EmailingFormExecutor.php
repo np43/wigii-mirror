@@ -285,12 +285,25 @@ class EmailingFormExecutor extends FormExecutor {
 	}
 
 	protected function doSpecificCheck($p, $exec){
+	    $configS = $this->getWigiiExecutor()->getConfigurationContext();
+	    $transS = ServiceProvider::getTranslationService();	    
+	    $rec = $this->getRecord();
+	    
+	    // Medair (CWE) 04.04.2017 checks for authorized direct sender
+	    if(defined("EmailService_sendOnBehalfOfUser") && EmailService_sendOnBehalfOfUser) {
+	        try {
+	            $this->getWigiiExecutor()->getEmailService()->isEmailAuthorizedDirectSender($p,$rec->getFieldValue("from_email"),$p->getRealUsername());
+	        }
+	        catch(AuthorizationServiceException $ase) {
+	            if($ase->getCode() == AuthorizationServiceException::NOT_ALLOWED) {
+	                $this->addErrorToField($transS->t($p,'unauthorizedSender'), "from_email");
+	            }
+	            else throw $ase;
+	        }
+	    }
+		
 		//check that total file size are not above a certain amount
-		$configS = $this->getWigiiExecutor()->getConfigurationContext();
-		$transS = ServiceProvider::getTranslationService();
-		$size = 0;
-		$rec = $this->getRecord();
-
+	    $size = 0;
 		foreach($rec->getFieldList()->getListIterator() as $field){
 			if($field->getDataType() && $field->getDataType()->getDataTypeName()=="Files"){
 				$size += (int)$rec->getFieldValue($field->getFieldName(), "size");

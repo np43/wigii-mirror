@@ -24,6 +24,7 @@
 /**
  * A virtual machine which evaluates functional expressions using pluggable modules.
  * Created by CWE on 23 juillet 2013
+ * Modified by Medair (CWE) on 07.04.2017 to propagate change of principal to parent evaluator (if possible)
  */
 class FuncExpVM implements FuncExpEvaluator {	
 	private $_debugLogger;
@@ -144,6 +145,10 @@ class FuncExpVM implements FuncExpEvaluator {
 	 */
 	public function setPrincipal($principal) {
 		$this->principal = $principal;
+		// Medair (CWE) 07.04.2017: propagates change of principal to parent evaluator 
+		if($this->parentFuncExpEvaluator instanceof RecordEvaluator && $this->parentFuncExpEvaluator->hasPrincipal()) {
+		    $this->parentFuncExpEvaluator->changePrincipal($this->getRootPrincipal(), $principal);
+		}		
 	}
 	/**
 	 * Returns the Principal that has been attached to this FuncExp VM

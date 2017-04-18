@@ -308,11 +308,11 @@ interface ElementService
 	
 	/**
 	 * Move element to provided group
-	 * principal: authenticated user performing the operation
-	 * elementId: element database id from which to retrieve the element to share
-	 * groupIds: an array of Group IDs with which the element is shared
-	 * throws ElementServiceException if an error occurs
-	 * returns total number of changes
+	 *@param Principal $principal authenticated user performing the operation
+	 *@param int $elementId element database id from which to retrieve the element to move
+	 *@param $groupId a group id to which the element is moved
+	 *@throws ElementServiceException if an error occurs
+	 *@returns total number of changes
 	 */
 	public function moveElement($principal, $elementId, $groupId);
 

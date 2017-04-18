@@ -52,10 +52,10 @@ class ValueListLinkedIdGroupImpl extends ValueListArrayMapper implements FieldLi
 			$dt = $field->getDataType()->getDataTypeName();
 			$gids = array();
 			if($dt == "Attributs" || $dt == "MultipleAttributs"){
-				$gids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\"]/attribute::idGroup");
+				$gids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\" and not(@movePriority)]/attribute::idGroup");
 				if($gids)  $gids = implode(";",$gids);
 			} else if($dt == "Booleans"){
-				if($fxml["idGroup"] != null){
+				if($fxml["idGroup"] != null && !$fxml["movePriority"]){
 					$gids = (string)$fxml["idGroup"];
 				}
 			}
