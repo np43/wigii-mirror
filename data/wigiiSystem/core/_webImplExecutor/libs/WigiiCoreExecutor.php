@@ -2846,7 +2846,7 @@ invalidCompleteCache();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
 		$emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and @enableForEmailing='1' and not(@hidden='1')]");
 		if(!$emailFields){
-			$emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and not(@hidden='1')]");
+			$emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and @enableForEmailing!='0' and not(@hidden='1')]");
 		}
 		$this->executionSink()->publishEndOperation("canCrtModuleEmailing");
 
@@ -2996,7 +2996,7 @@ invalidCompleteCache();
 
 		$emailField = $this->getConfigurationContext()->gf($p, $group)->xpath("*[@type='Emails' and @enableForEmailing='1']");
 		if (!$emailField)
-			$emailField = $this->getConfigurationContext()->gf($p, $group)->xpath("*[@type='Emails']");
+			$emailField = $this->getConfigurationContext()->gf($p, $group)->xpath("*[@type='Emails' and @enableForEmailing!='0']");
 		if ($emailField) {
 			$emailField = $emailField[0]->getName();
 		}
