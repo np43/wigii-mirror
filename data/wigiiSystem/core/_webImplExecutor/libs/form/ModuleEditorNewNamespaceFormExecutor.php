@@ -48,6 +48,7 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 		$transS = ServiceProvider::getTranslationService();
 		$userAS = ServiceProvider::getUserAdminService();
 		$wNAS = ServiceProvider::getWigiiNamespaceAdminService();
+		$argValid = TechnicalServiceProvider::getArgValidator();
 		$rec = $this->getRecord();
 
 		$wigiiNamespaceName = $rec->getFieldValue("moduleEditorNewNamespaceName");
@@ -55,11 +56,11 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 		$username = $rec->getFieldValue("username");
 
 		//check the syntax of the wigiiNamespace name
-		if($wigiiNamespaceName && !ArgValidator::checkAlphaNumSpaceDashUnderscorePoint($wigiiNamespaceName, 2, 64)){
+		if($wigiiNamespaceName && !$argValid->checkAlphaNumSpaceDashUnderscorePoint($wigiiNamespaceName, 2, 64)){
 			$this->addErrorToField($transS->h($p, "wigiiNamespaceWrongFormat"), "moduleEditorNewNamespaceName");
 		}
 		//check the syntax of the username
-		if($username && !ArgValidator::checkNoSpecialCharsString($username, USERNAME_minLength, USERNAME_maxLength, false)){
+		if($username && !$argValid->checkNoSpecialCharsString($username, USERNAME_minLength, USERNAME_maxLength, false)){
 			$this->addErrorToField($transS->h($p, "usernameWrongFormat"), "username");
 		}
 		//check that the namespace is not existing
@@ -179,9 +180,10 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 			}
 			$namespaceConfigFile = $configS->getModuleConfigFilename($p, $module, $wigiiNamespace);
 			$fileContent =  $generalConfig->asXml();
-			//lookup for funcExp="expression"
-			//this should be replaced with funcExp='expression' to prevent xml parsing errors
-			$fileContent = preg_replace('/funcExp="(.*)"/', 'funcExp=\'$1\'', $fileContent);
+			//lookup for ...Exp="expression"
+			//this should be replaced with ...Exp='expression' to prevent xml parsing errors (funcExp, defaultExp, etc)
+			//in addition the content are coded with htmlentities, so after the first replacement html:_entity_decode is needed
+			$fileContent = html_entity_decode(preg_replace('/Exp="(.[^"]*)"/', 'Exp=\'$1\'', $fileContent),ENT_QUOTES);
 			file_put_contents($namespaceConfigFile,$fileContent);
 		}
 

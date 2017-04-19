@@ -60,9 +60,6 @@ class ArgValidator
 			return preg_match('/^[A-Za-z0-9\@\._\-\s]{'.$minChars.','.$maxChars.'}$/', $string);
 		}
 	}
-	public function checkAlphaNumSpaceDashUnderscorePoint($string, $minChars, $maxChars){
-		return preg_match('/^[A-Za-z0-9\._\-\s]{'.$minChars.','.$maxChars.'}$/', $string);
-	}
 
 	/**
 	 * Asserts NoSpecialCharsString.
@@ -74,6 +71,30 @@ class ArgValidator
 		$val = ArgValidator::getInstance();
 		$val->assert($val->checkNoSpecialCharsString($string, $minChars, $maxChars, $acceptAccent), $failMessage, $errCode);
 	}
+	
+	/**
+	 * Check qu'un string ne contient pas de caractère spéciaux et qu'il a une longueur correcte
+	 * accepte les espaces les - et les _ et les .
+	 * par rapport à des valeurs Min et Max.
+	 * @param string $string chaine de caractère à checker
+	 * @param int $minChars nombre minimal de caractères pour la chaine
+	 * @param int $maxChars nombre maximal de caractères pour la chaine
+	 * @return bool true si la chaine est correcte
+	 */
+	public function checkAlphaNumSpaceDashUnderscorePoint($string, $minChars, $maxChars){
+		return preg_match('/^[A-Za-z0-9\._\-\s]{'.$minChars.','.$maxChars.'}$/', $string);
+	}
+	/**
+	 * Asserts AlphaNumSpaceDashUnderscorePoint.
+	 * failMessage: exception message if AlphaNumSpaceDashUnderscorePoint is not ok.
+	 * throws ServiceException with INVALID_ARGUMENT if AlphaNumSpaceDashUnderscorePoint is not ok.
+	 */
+	public static function assertAlphaNumSpaceDashUnderscorePoint($failMessage, $string, $minChars, $maxChars, $errCode=null)
+	{
+		$val = ArgValidator::getInstance();
+		$val->assert($val->checkAlphaNumSpaceDashUnderscorePoint($string, $minChars, $maxChars), $failMessage, $errCode);
+	}
+	
 
 	/**
 	 * Checks that a string length is bounded between minChars and maxChars
