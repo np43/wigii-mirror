@@ -1242,6 +1242,30 @@ class RecordEvaluator implements FuncExpEvaluator
 		if(isset($form) && $form->hasError()) return false;
 		else return true;
 	}
+	/**
+	 * Tries to evaluate given argument, catches any exception and displays message as an error attached to currrent field
+	 * FuncExp signature : <code>ctlException2FieldError(calculatedValue)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) calculatedValue: Any. The calculated value to return after evaluation
+	 * @return Any the calculated value or null if an error occured. Call FuncExp ctlCheckNoError to check if attached FormExecutor has some errors.
+	 */
+	public function ctlException2FieldError($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new RecordException('ctlException2FieldError func exp takes one argument: the expression to evaluate and for which to catch any exceptions', RecordException::INVALID_ARGUMENT);
+	    $form = $this->getFormExecutor();
+	    if(isset($form)) {
+	        // evaluates expression
+	        try { return $this->evaluateArg($args[0]); }
+	        // catches any exception
+	        catch(Exception $e) {
+	            // and displays message as Field error
+	            if($e instanceof ServiceException) $e = $e->getWigiiRootException();
+	            $form->addErrorToField($e->getMessage(), $this->getCurrentField()->getFieldName());
+	        }	        
+	    }
+	    // else if no attached FormExecutor then evaluates the expression "as-is"
+	    else return $this->evaluateArg($args[0]);
+	}
 	
 	/**
 	 * Adds an error message to a field in the record.

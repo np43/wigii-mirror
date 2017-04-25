@@ -21,9 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 6/07/2012
- * by LWR
+/**
+ * Wigii Admin Module configuration editor
+ * Created on 6/07/2012 by LWR
+ * Modified by Wigii.org (LWR) on 19.04.2017 to allow Wigii Namespace creator wizard to handle configuration files containing FuncExp.
  */
 class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 
@@ -180,10 +181,9 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 			}
 			$namespaceConfigFile = $configS->getModuleConfigFilename($p, $module, $wigiiNamespace);
 			$fileContent =  $generalConfig->asXml();
-			//lookup for ...Exp="expression"
-			//this should be replaced with ...Exp='expression' to prevent xml parsing errors (funcExp, defaultExp, etc)
-			//in addition the content are coded with htmlentities, so after the first replacement html:_entity_decode is needed
-			$fileContent = html_entity_decode(preg_replace('/Exp="(.[^"]*)"/', 'Exp=\'$1\'', $fileContent),ENT_QUOTES);
+			// Puts all FuncExp into single quotes, then call html_entity_decode.
+			// A FuncExp is a string having parenthesis and no quotes inside.			
+			$fileContent = html_entity_decode(preg_replace('/="([^"\']+[(][^"\']*[)][^"\']*)"/', '=\'$1\'', $fileContent),ENT_QUOTES);
 			file_put_contents($namespaceConfigFile,$fileContent);
 		}
 

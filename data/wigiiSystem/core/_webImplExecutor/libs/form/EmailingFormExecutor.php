@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 15 sept. 09
- * by LWR
+/**
+ * Created on 15 sept. 09 by LWR
+ * Updated by Medair in 2017 for maintenance purposes (see SVN log for details)
  */
 class EmailingFormExecutor extends FormExecutor {
 
@@ -439,11 +439,6 @@ class EmailingFormExecutor extends FormExecutor {
 				$tempLabel[] = implode(($emailLabels["labelSep"][$emailFieldname] ? $emailLabels["labelSep"][$emailFieldname] : " "), $lab);
 			}
 		}
-		
-		$confirmation = $transS->h($p, "Emails_proofKeyLink");
-		$unsubscribe = $transS->h($p, "Emails_proofKeyUnsubscribeLink");
-		$access = $transS->h($p, "Emails_externalCodeLink");
-		
 		//remove duplicates and implode
 		if($tempLabel){
 			$label = implode(" / ", array_combine($tempLabel, $tempLabel));
@@ -464,9 +459,10 @@ class EmailingFormExecutor extends FormExecutor {
 			foreach($emailLabels["other3"] as $emailFieldname=>$val) $other3[$val] = $transS->h($p, $val, $fieldList->getField($val)->getXml());
 			$other3 = implode(" / ", $other3);
 		}
-		//hide the confirmation mail merge and the access mail merge has there are not userfriendly
-		//$confirmation = $transS->h($p, "Emails_proofKeyLink");
-		//$access = $transS->h($p, "Emails_externalCodeLink");
+		// Wigii.org (LWR) 19.04.2017 show legal warning for emailings and propose email confirmation, unsubscription and external access tags
+		$confirmation = $transS->h($p, "Emails_proofKeyLink");
+		$unsubscribe = $transS->h($p, "Emails_proofKeyUnsubscribeLink");
+		$access = $transS->h($p, "Emails_externalCodeLink");
 		if($label || $other1 || $other2 || $other3 || $confirmation || $unsubscribe || $access){
 			$code = '$("#'.$this->getFormId().' #Emailing_form__message>.label").append(\'';
 			$code .= '<div class="R">'.$transS->h($p, "unsubscribeLinkIsMandatoryForLegalReason")."</div>";

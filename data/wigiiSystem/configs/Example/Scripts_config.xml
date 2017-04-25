@@ -87,7 +87,7 @@
 			<name excelExport="auto" type="Strings" require="1" expand="1" ><label_l01>Name</label_l01><label_l02>Nom</label_l02></name>
 			<description excelExport="auto" type="Blobs" require="0" htmlArea="1" activateHtmlArea="1" mediumToolbarHtmlArea="1" isInLine="1" forceCollapse="1" height="300"><label_l01>Description</label_l01><label_l02>Description</label_l02></description>
 			<script excelExport="auto" type="Blobs" require="0" isInLine="1" htmlArea="0" noWrap="1" height="400" expand="1" forceNotification="1" displayContentInNotification="1"
-				funcExp='ctlIgnoreReturnValue(ctlCondSeq(logOr(ctlFieldHasChanged(script),logIn(ctlCurrentFlow(),"element-add","element-copy")),										
+				funcExp='ctlIgnoreReturnValue(ctlIf(isNotNull(script),ctlException2FieldError(str2fx(script))), ctlCondSeq(logOr(ctlFieldHasChanged(script),logIn(ctlCurrentFlow(),"element-add","element-copy")),										
 					setVal(scriptHistory.name, name),
 					setVal(scriptHistory.date,txtDate()),
 					setVal(scriptHistory.user,sysUser()),
@@ -118,6 +118,13 @@
 
 		<groupRight groupStart="1" noFieldset="1" noLabel="1" labelWidth="100" totalWidth="300" class="fieldGroupRight" />
 			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="0" height="450" funcExp='trackHistory(scriptStatus)' clearOnCopy="1"><label_l01>Execution Comments</label_l01><label_l02>Journal d&apos;exécution</label_l02></comments>
+			<callableUrl excelExport="auto" type="Blobs" readonly="0" isInLine="1" expand="1"
+				funcExp='ctlIf(logAnd(isNotNull(script),ctlCheckNoError()),concat(sysSiteRootUrl(), sysCrtWigiiNamespace(), "/", sysCrtModule(), "/fx/", str2fxBase64url(script)))'
+				jsCodeInDetail="$('#$$idForm$$__callableUrl').css('cursor', 'pointer').click(function() {displayLink('#$$idForm$$__callableUrl', $('#$$idForm$$__callableUrl div.value div').text(), 55, -120)});"
+				>
+				<label_l01><p><b>Callable URL</b></p><p><i>Put this URL into a browser to execute the script</i></p></label_l01>
+				<label_l02><p><b>URL exécutable</b></p><p><i>Appelez cette URL depuis un navigateur pour exécuter le scripte.</i></p></label_l02>
+			</callableUrl>			
 			<integratedFile excelExport="none" type="Files" require="0" keepHistory="8" htmlArea="1" ><label_l01>Write some instructions</label_l01><label_l02>Ecrire des instructions</label_l02></integratedFile>
 			<file excelExport="none" type="Files" require="0" keepHistory="8" ><label_l01>or upload a documentation file</label_l01><label_l02>ou ajouter un fichier de documentation</label_l02></file>		
 		<groupRight groupEnd="1" expand="1" noFieldset="1" />		

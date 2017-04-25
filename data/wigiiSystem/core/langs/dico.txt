@@ -1706,9 +1706,24 @@ CMS:Web Content:Contenu Web:::::::::
 #-elementsCMS#:web contents:contenus web:::::::
 #ElementCMS#:Web content:Le contenu web:::::::::
 #ThisElementCMS#:This web content:Ce contenu web:::::::
-#thoseElementsCMS#:those web contens:ces contenus web:::::::
+#thoseElementsCMS#:those web contents:ces contenus web:::::::
 #thisElementCMS#:this web content:ce contenu web:::::::
 #ThoseElementsCMS#:Those web contents:Ces contenus web:::::::
 #elementsCMS#:web contents:les contenu web:::::::
 #ofElementCMS#:of the web content:du contenu web:::::::
 #ofElementsCMS#:of web contents:des contenus web:::::::
+
+Scripts:Scripts:Scripte:::::::::
+#anElementScripts#:a script:un scripte:::::::::
+#elementScripts#:script:le scripte:::::::::
+#theElementScripts#:the script:le scripte:::::::::
+#-elementScripts#:script:scripte:::::::
+#-elementsScripts#:scripts:scriptes:::::::
+#ElementScripts#:Script:Le scripte:::::::::
+#ThisElementScripts#:This script:Ce scripte:::::::
+#thoseElementsScripts#:those scripts:ces scriptes:::::::
+#thisElementScripts#:this script:ce scripte:::::::
+#ThoseElementsScripts#:Those scripts:Ces scriptes:::::::
+#elementsScripts#:scripts:les scripte:::::::
+#ofElementScripts#:of the script:du scripte:::::::
+#ofElementsScripts#:of scripts:des scriptes:::::::

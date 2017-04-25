@@ -30,6 +30,7 @@
  * 4. Serialize to xml entity ELEMENT_LIST given as a stream of Elements
  * 5. Serialize to xml entity ELEMENT_LIST given as a single object ElementList
  * Created by CWE on 28 mai 2013
+ * Updated by Medair in 2017 for maintenance purpose (see SVN log for details)
  */
 class WplXmlWriterDFA implements DataFlowActivity
 {
@@ -230,7 +231,8 @@ class WplXmlWriterDFA implements DataFlowActivity
 	public function processWholeData($data, $dataFlowContext) {
 		switch($this->entityType) {
 			case self::ENTITY_TYPE_RECORD:
-				$wigiiXmlWriter = $this->getWigiiXmlWriterDFAOF($dataFlowContext);					
+				$wigiiXmlWriter = $this->getWigiiXmlWriterDFAOF($dataFlowContext);
+				if($data instanceof DbEntity) $data = $data->getDbEntity();	
 				$this->writeRecord($wigiiXmlWriter, $data, $this->writeConfig, $this->fieldSelectorList);
 				break;
 			case self::ENTITY_TYPE_STDCLASS:

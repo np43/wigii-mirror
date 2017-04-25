@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 15 sept. 09
- * by LWR
+/**
+ * Created on 15 sept. 09 by LWR
+ * Updated by Medair in 2017 for maintenance purpose (see SVN log for details)
  */
 class EditUserFormExecutor extends FormExecutor {
 
@@ -280,7 +280,8 @@ class EditUserFormExecutor extends FormExecutor {
 			 $user->getDetail()->setGroupCreator($moduleArray);
 			 }*/
 		}
-
+		$user->getDetail()->setModuleAccess($moduleAccess);
+		
 		$user->getDetail()->setCanModifyOwnPassword($userEditRec->getFieldValue("canModifyOwnPassword"));
 		//if a life is setted and was not setted before and the passwordDate is null, then
 		//add today to the password date.
@@ -343,6 +344,8 @@ class EditUserFormExecutor extends FormExecutor {
 		*/
 		if($p->isWigiiNamespaceCreator()){
 			// prepares moduleAccess based on ticked boxes and add module field
+		    $moduleAccess = $userD->getModuleAccess();
+		    if($moduleAccess==null) $moduleAccess = array();
 			if($userEditRec->getFieldValue('addModuleAccess')!=null) {
 				$addModule = ServiceProvider::getModuleAdminService()->formatModuleArray($p, $userEditRec->getFieldValue('addModuleAccess'));
 				foreach ($addModule as $module){
@@ -353,8 +356,7 @@ class EditUserFormExecutor extends FormExecutor {
 							$this->createModuleFile($p, $module, $templateFilePath, $configS->getClientConfigFolderPath($p));
 						}
 					}
-				}
-				if($moduleAccess==null) $moduleAccess = array();
+				}				
 				$moduleAccess = array_merge($moduleAccess, $addModule);
 				$userD->setModuleAccess($moduleAccess);
 				// adds root group creator on new modules

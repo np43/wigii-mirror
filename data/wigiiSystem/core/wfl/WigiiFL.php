@@ -26,7 +26,7 @@
  * Created by CWE on 5 decembre 2013
  * Modified by Medair on 04.11.2016 to integrate QlikSense and Box functions
  * Modified by Medair (CWE,LMA) on 08.12.2016 to hide password argument in login function and to protect against Cross Site Scripting
- * Modified by Medair (CWE) on 07.04.2017 to keep current namespace on re-login.
+ * Modified by Medair (CWE) on 25.04.2017 to keep current namespace on re-login and ensure role list is synced with Web UI.
  */
 class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 {
@@ -1988,10 +1988,13 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 					throw new AuthenticationServiceException($currentPrincipal->getUserlabel() . " user is expired.", AuthenticationServiceException :: EXPIRED_PRINCIPAL);
 				}
 			}
+			$userAS = $this->getUserAdminService();
 			// calculates merged roles
-			$this->getUserAdminService()->calculateAllMergedRoles($currentPrincipal);
+			$userAS->calculateAllMergedRoles($currentPrincipal);			
 			// refetches all roles
-			$currentPrincipal->refetchAllRoles();
+			$defaultWigiiNamespace = (string)$this->getConfigService()->getParameter($currentPrincipal, null, "defaultWigiiNamespace");
+			if(!$defaultWigiiNamespace) $defaultWigiiNamespace = $currentPrincipal->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+			$currentPrincipal->refetchAllRoles($userAS->getListFilterForNavigationBar(), UserListForNavigationBarImpl::createInstance($defaultWigiiNamespace));			
 			// binds back to current namespace
 			$currentPrincipal->bindToWigiiNamespace($currentWigiiNamespace);
 			// changes FuncExpVM principal

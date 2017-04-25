@@ -724,6 +724,16 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	}
 
 	/**
+	 * Converts a string to a FuncExp and then to its Base 64 Url representation
+	 * Calls fx2base64url(str2fx(str))
+	 * FuncExp signature : <code>str2fxBase64url(str)</code><br/>
+	 * @return FuncExp
+	 */
+    public function str2fxBase64url($args) {
+        return $this->evaluateFuncExp(fx('fx2base64url',$this->str2fx($args)));
+    }
+    
+	/**
 	 * Returns a string representation of the input argument<br/>
 	 * FuncExp signature : <code>fx2str(f)</code><br/>
 	 * Where arguments are :

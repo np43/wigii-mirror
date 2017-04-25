@@ -21,16 +21,15 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 12 oct. 09
- * by LWR
+/**
+ * Created on 12 oct. 09 by LWR
+ * Modified by Medair (CWE) 21.04.2017 to handled defaultGroupBy sorting order
  */
-
 class FieldSelectorListForActivity extends FieldSelectorListArrayWebImpl implements FieldList {
 
 	protected $forceValueSubfieldIfnotdefined;
 
-	//by default do not retrieve SysInfo Fields
+	//by default retrieves SysInfo Fields
 	//by default if a field is defined without subfield all the subfields are took
 	public static function createInstance($errorOnDuplicate=true, $addSysInfoFields=true, $forceValueSubfieldIfnotdefined=false)
 	{
@@ -69,8 +68,8 @@ class FieldSelectorListForActivity extends FieldSelectorListArrayWebImpl impleme
 			$f = (string)$xml["field"];
 			$sub = (string)$xml["subField"];
 			if($sub) $subFieldName = $sub;
-			else if($this->forceValueSubfieldIfnotdefined) $subFieldName = "value";
-			//else $subFieldName = "value"; //add this to prevent the selection of sys fields in the db query
+			// Medair (CWE) 21.04.2017: Force subfield value if used as a default group by key to ensure correct sorting.
+			else if($this->forceValueSubfieldIfnotdefined || $xml["isDefaultGroupByKey"]=="1") $subFieldName = "value";
 			if($subFieldName) $addFieldSelectorSysInfoSubFieldsXml = true;
 			$key = $this->addFieldSelector($f, $subFieldName);
 		} else {

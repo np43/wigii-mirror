@@ -94,6 +94,7 @@ class WigiiCoreExecutor {
 		//lookup on http://www.php.net/manual/en/function.register-shutdown-function.php and search for the keyword 'relative'
 		$cwd = str_replace(str_replace("../", "", IMPL_PATH)."libs", "", str_replace("\\", "/", dirname(__FILE__)));
 		if(file_exists($cwd."www")) chdir($cwd."www");
+		else if(file_exists($cwd."web/wigii")) chdir($cwd."web/wigii");
 		else if(file_exists($cwd."web")) chdir($cwd."web");
 		if($error !== NULL && ($error["type"]==E_ERROR || $error["type"]==E_PARSE || $error["type"]==E_USER_ERROR || $error["type"]==E_RECOVERABLE_ERROR)) {
 			$errorLabel=array(E_ERROR=>'Fatal Error',E_PARSE=>'Parse Error',E_USER_ERROR=>'User Error',E_RECOVERABLE_ERROR=>'Recoverable Error');
@@ -1570,7 +1571,7 @@ class WigiiCoreExecutor {
 		$elS = ServiceProvider :: getElementService();
 	
 		//update the listContext to match to the listView parameter
-		$fsl = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
+		$fsl = FieldSelectorListForActivity :: createInstance(false, false, false); //no issue if double time the same
 		$fsl->setSelectedLanguages(array (
 				$transS->getLanguage() => $transS->getLanguage()));
 		$configS->getFields($p, $exec->getCrtModule(), Activity :: createInstance("listView"), $fsl);
@@ -1593,7 +1594,7 @@ class WigiiCoreExecutor {
 					$fsl->addFieldSelector($field->getFieldName(), "externalAccessEndDate");
 					$fsl->addFieldSelector($field->getFieldName(), "value");
 				}
-				if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Files") {
+				elseif ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Files") {
 					//if Files then take all the subfields, there are usefull to display download, dates, size, etc.
 					$fsl->addFieldSelector($field->getFieldName(), "name");
 					$fsl->addFieldSelector($field->getFieldName(), "type");
@@ -1740,7 +1741,7 @@ class WigiiCoreExecutor {
 		$elS = ServiceProvider :: getElementService();
 	
 		//update the listContext to match to the blogView parameter
-		$fsl = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
+		$fsl = FieldSelectorListForActivity :: createInstance(false, false, false); //no issue if double time the same
 		$fsl->setSelectedLanguages(array (
 				$transS->getLanguage() => $transS->getLanguage()));
 		$configS->getFields($p, $exec->getCrtModule(), Activity :: createInstance("blogView"), $fsl);
@@ -1750,6 +1751,32 @@ class WigiiCoreExecutor {
 		foreach ($fieldList->getListIterator() as $field) {
 			if ($field->isCalculated() && $field->shouldCalculateOnFetch() && ($fsl->containsField($field->getFieldName()) || ($listContext->getGroupByItemFieldSelector() != null && $listContext->getGroupByItemFieldSelector()->getFieldName() == $field->getFieldName()))) {
 				$field->getFuncExpDependencies($fsl);
+			}
+			
+			if($fsl->containsField($field->getFieldName())) {
+			    if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Emails") {
+			        //if Emails then take all the subfields, there are usefull to display confirmation status, etc.
+			        $fsl->addFieldSelector($field->getFieldName(), "proofStatus");
+			        $fsl->addFieldSelector($field->getFieldName(), "proofKey");
+			        $fsl->addFieldSelector($field->getFieldName(), "proof");
+			        $fsl->addFieldSelector($field->getFieldName(), "externalConfigGroup");
+			        $fsl->addFieldSelector($field->getFieldName(), "externalAccessLevel");
+			        $fsl->addFieldSelector($field->getFieldName(), "externalCode");
+			        $fsl->addFieldSelector($field->getFieldName(), "externalAccessEndDate");
+			        $fsl->addFieldSelector($field->getFieldName(), "value");
+			    }
+			    elseif ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Files") {			        
+			        //if Files then take all the subfields, there are usefull to display download, dates, size, etc.
+			        $fsl->addFieldSelector($field->getFieldName(), "name");
+			        $fsl->addFieldSelector($field->getFieldName(), "type");
+			        $fsl->addFieldSelector($field->getFieldName(), "size");
+			        $fsl->addFieldSelector($field->getFieldName(), "mime");
+			        $fsl->addFieldSelector($field->getFieldName(), "date");
+			        $fsl->addFieldSelector($field->getFieldName(), "user");
+			        $fsl->addFieldSelector($field->getFieldName(), "username");
+			        $fsl->addFieldSelector($field->getFieldName(), "version");
+			        $fsl->addFieldSelector($field->getFieldName(), "textContent");
+			    }			    
 			}
 		}
 	
@@ -2664,7 +2691,7 @@ invalidCompleteCache();
 		}
 		$this->throwEvent()->updateElement(PWithElementWithGroupPList::createInstance($p, $element, ($configS->getGroupPList($p, $exec->getCrtModule())->count()==1 ? $configS->getGroupPList($p, $exec->getCrtModule()) : null)));
 
-		$message = str_replace(array("\n",'"','&quot;'), array('<br />','\\"','\"'), $message);
+		$message = str_replace(array("\n",'"','&quot;'), array('<br />','\\"','\"'), stripslashes($message));
 		if($isFromExternalAccess){
 			$exec->addJsCode("$('#externalAccessView_form__$fieldName div.value').prepend(\"".$message."\");");
 		} else if($elementDialogId=="moduleView"){
@@ -2845,8 +2872,8 @@ invalidCompleteCache();
 		$configS = $this->getConfigurationContext();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
 		$emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and @enableForEmailing='1' and not(@hidden='1')]");
-		if(!$emailFields){
-			$emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and @enableForEmailing!='0' and not(@hidden='1')]");
+		if(!$emailFields){			
+		    $emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and not(@enableForEmailing='0') and not(@hidden='1')]");
 		}
 		$this->executionSink()->publishEndOperation("canCrtModuleEmailing");
 
@@ -2996,7 +3023,7 @@ invalidCompleteCache();
 
 		$emailField = $this->getConfigurationContext()->gf($p, $group)->xpath("*[@type='Emails' and @enableForEmailing='1']");
 		if (!$emailField)
-			$emailField = $this->getConfigurationContext()->gf($p, $group)->xpath("*[@type='Emails' and @enableForEmailing!='0']");
+			$emailField = $this->getConfigurationContext()->gf($p, $group)->xpath("*[@type='Emails' and not(@enableForEmailing='0')]");
 		if ($emailField) {
 			$emailField = $emailField[0]->getName();
 		}

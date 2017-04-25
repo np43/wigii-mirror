@@ -25,6 +25,7 @@
 /**
  * Argument validator
  * Created by CWE on 7 sept. 09
+ * Updated by Wigii.org (LWR) on 18.04.2017 to be compatible with PHP 5.6
  */
 class ArgValidator
 {
