@@ -23,7 +23,7 @@
 
 /**
  * Created on 12 april 2010 by LWR
- * Updated by Medair (LMA) on 7 dec 2016 - Correct a bug with quote in number
+ * Updated by Medair (CWE) on 28.04.2017 - Added parsing checks on Numbers and Floats
  */
 class ImportElementInFormExecutor extends FormExecutor implements ElementDataTypeSubfieldVisitor {
 
@@ -341,105 +341,97 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 						$nb++;
 //						eput($el->getAttribute($fs));
 //						eput("\n");
-					} else {
-						//verify language fields:
-						if($multilanguage){
+                    // verify language fields:
+					} else if($multilanguage){
 							$temp = array_slice($dataRow, $pos-1, count($this->languageInstalled));
 							if(count($temp) == count($this->languageInstalled)){ //if not the case, that means the format is incorrect, this
 								$temp = array_combine($this->languageInstalled, $temp);
 								$el->setFieldValue(str_replace('\n', "\n", $temp), $fs->getFieldName(), $fs->getSubFieldName());
 							}
 							$nb = $nb + count($this->languageInstalled);
-						//verify MultipleAttributes management
-						} else if($dataTypeName=="MultipleAttributs" && ($fs->getSubFieldName() == "value" || $fs->getSubFieldName() == "")){
-							$temp = explode(", ", $dataRow[$pos-1]);
-							$nb++;
-							$temp = array_combine($temp, $temp);
-							$el->setFieldValue($temp, $fs->getFieldName(), $fs->getSubFieldName());
-						//calculate special email subfields
-						} else if ($dataTypeName == "Emails") {									
-							if(!$fs->getSubFieldName() || $fs->getSubFieldName() == "value") {
-								$newValue = str_replace('\n', "\n", $dataRow[$pos -1]);
-								
-								// value
-								$el->setFieldValue($newValue, $fs->getFieldName(), "value");
-								$nb++;
-								
-								// proofKey
-								$subPos = $this->headers[$fs->getFieldName() . " proofKey"];
-								if($subPos) {
-									// takes proofKey value in CSV if exists
-									if($dataRow[$subPos -1]!=null) $el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proofKey");
-									// if empty but column present, then forces recalculation
-									else $el->setFieldValue($elS->getEmailValidationCode($p, $newValue), $fs->getFieldName(), "proofKey");
-									$nb++;
-								}
-								else $el->setFieldValue($elS->getEmailValidationCode($p, $newValue), $fs->getFieldName(), "proofKey");
-								// proofStatus
-								$subPos = $this->headers[$fs->getFieldName() . " proofStatus"]; 
-								if($subPos) {
-									// takes proofStatus from CSV file if present (can be forced to null or 0 if CSV has subfield present but empty)
-									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proofStatus");
-									$nb++;
-								}
-								else $el->setFieldValue(0, $fs->getFieldName(), "proofStatus");
-								// proof
-								$subPos = $this->headers[$fs->getFieldName() . " proof"];
-								if($subPos) {
-									// takes proof from CSV file if present (can be forced to null if CSV has subfield present but empty)
-									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proof");
-									$nb++;
-								}
-								else $el->setFieldValue(null, $fs->getFieldName(), "proof");
-								// externalConfigGroup
-								$subPos = $this->headers[$fs->getFieldName() . " externalConfigGroup"];
-								if($subPos) {
-									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalConfigGroup");
-									$nb++;
-								}
-								else $el->setFieldValue(null, $fs->getFieldName(), "externalConfigGroup");
-								// externalAccessLevel
-								$subPos = $this->headers[$fs->getFieldName() . " externalAccessLevel"];
-								if($subPos) {
-									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalAccessLevel");
-									$nb++;
-								}
-								else $el->setFieldValue(0, $fs->getFieldName(), "externalAccessLevel");
-								// externalAccessEndDate
-								$subPos = $this->headers[$fs->getFieldName() . " externalAccessEndDate"];
-								if($subPos) {
-									$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalAccessEndDate");
-									$nb++;
-								}
-								else $el->setFieldValue(null, $fs->getFieldName(), "externalAccessEndDate");
-								// externalCode
-								$subPos = $this->headers[$fs->getFieldName() . " externalCode"];
-								if($subPos) {
-									// takes externalCode value in CSV if exists
-									if($dataRow[$subPos -1]!=null) $el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalCode");
-									// if empty but column present, then forces recalculation
-									else $el->setFieldValue($elS->getEmailExternalCode($p, $el->getId(), $fs->getFieldName(), $newValue), $fs->getFieldName(), "externalCode");
-									$nb++;
-								}
-								else $el->setFieldValue($elS->getEmailExternalCode($p, $el->getId(), $fs->getFieldName(), $newValue), $fs->getFieldName(), "externalCode");
-							}	
-						} else {
-							//normal
-							$el->setFieldValue(str_replace('\n', "\n", $dataRow[$pos-1]), $fs->getFieldName(), $fs->getSubFieldName());
+					//verify MultipleAttributes management
+					} else if($dataTypeName=="MultipleAttributs" && ($fs->getSubFieldName() == "value" || $fs->getSubFieldName() == "")){
+						$temp = explode(", ", $dataRow[$pos-1]);
+						$nb++;
+						$temp = array_combine($temp, $temp);
+						$el->setFieldValue($temp, $fs->getFieldName(), $fs->getSubFieldName());
+					//calculate special email subfields
+					} else if ($dataTypeName == "Emails") {
+					   // Medair (CWE) 01.05.2017: treats all subfields when reading first email column
+					   if(!$fs->getSubFieldName() || $fs->getSubFieldName() == "value") {
+						$newValue = str_replace('\n', "\n", $dataRow[$pos -1]);
+						
+						// value
+						$el->setFieldValue($newValue, $fs->getFieldName(), "value");
+						$nb++;
+						
+						// proofKey
+						$subPos = $this->headers[$fs->getFieldName() . " proofKey"];
+						if($subPos) {
+							// takes proofKey value in CSV if exists
+							if($dataRow[$subPos -1]!=null) $el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proofKey");
+							// if empty but column present, then forces recalculation
+							else $el->setFieldValue($elS->getEmailValidationCode($p, $newValue), $fs->getFieldName(), "proofKey");
 							$nb++;
 						}
-					}
-					//If the datatype is Numerics we remove all caracters which is not number
-					if($dataTypeName === 'Numerics' || $dataTypeName === 'Floats'){
-						//Get the value of the element
-						$elementValue = $el->getFieldValue($fs->getFieldName());
-						//Remove the simple quote if present in the number
-						$newElementValue = preg_replace('#\'#', '', $elementValue);
-						//Set again the field with the correct value
-						$el->setFieldValue($newElementValue, $fs->getFieldName());
-						
-						//eput(var_dump($newElementValue));
-					}
+						else $el->setFieldValue($elS->getEmailValidationCode($p, $newValue), $fs->getFieldName(), "proofKey");
+						// proofStatus
+						$subPos = $this->headers[$fs->getFieldName() . " proofStatus"]; 
+						if($subPos) {
+							// takes proofStatus from CSV file if present (can be forced to null or 0 if CSV has subfield present but empty)
+							$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proofStatus");
+							$nb++;
+						}
+						else $el->setFieldValue(0, $fs->getFieldName(), "proofStatus");
+						// proof
+						$subPos = $this->headers[$fs->getFieldName() . " proof"];
+						if($subPos) {
+							// takes proof from CSV file if present (can be forced to null if CSV has subfield present but empty)
+							$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "proof");
+							$nb++;
+						}
+						else $el->setFieldValue(null, $fs->getFieldName(), "proof");
+						// externalConfigGroup
+						$subPos = $this->headers[$fs->getFieldName() . " externalConfigGroup"];
+						if($subPos) {
+							$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalConfigGroup");
+							$nb++;
+						}
+						else $el->setFieldValue(null, $fs->getFieldName(), "externalConfigGroup");
+						// externalAccessLevel
+						$subPos = $this->headers[$fs->getFieldName() . " externalAccessLevel"];
+						if($subPos) {
+							$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalAccessLevel");
+							$nb++;
+						}
+						else $el->setFieldValue(0, $fs->getFieldName(), "externalAccessLevel");
+						// externalAccessEndDate
+						$subPos = $this->headers[$fs->getFieldName() . " externalAccessEndDate"];
+						if($subPos) {
+							$el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalAccessEndDate");
+							$nb++;
+						}
+						else $el->setFieldValue(null, $fs->getFieldName(), "externalAccessEndDate");
+						// externalCode
+						$subPos = $this->headers[$fs->getFieldName() . " externalCode"];
+						if($subPos) {
+							// takes externalCode value in CSV if exists
+							if($dataRow[$subPos -1]!=null) $el->setFieldValue(str_replace('\n', "\n", $dataRow[$subPos -1]), $fs->getFieldName(), "externalCode");
+							// if empty but column present, then forces recalculation
+							else $el->setFieldValue($elS->getEmailExternalCode($p, $el->getId(), $fs->getFieldName(), $newValue), $fs->getFieldName(), "externalCode");
+							$nb++;
+						}
+						else $el->setFieldValue($elS->getEmailExternalCode($p, $el->getId(), $fs->getFieldName(), $newValue), $fs->getFieldName(), "externalCode");	
+					   }
+				    // If the datatype is Numerics or Floats we remove all characters which are not numbers
+			        } else if($dataTypeName === 'Numerics' || $dataTypeName === 'Floats') {
+				        $el->setFieldValue(preg_replace("/[^-0-9.]/","", $dataRow[$pos -1]), $fs->getFieldName(), $fs->getSubFieldName());
+				        if($fs->getSubFieldName()!="value" && $this->headers[$fs->getFieldName() . " ".$fs->getSubFieldName()] || $fs->getSubFieldName()=="value" && ($this->headers[$fs->getFieldName()] || $this->headers[$fs->getFieldName()." value"])) $nb++;
+				    //normal
+				    } else {							
+						$el->setFieldValue(str_replace('\n', "\n", $dataRow[$pos-1]), $fs->getFieldName(), $fs->getSubFieldName());
+						$nb++;
+					}									
 				} catch (ServiceException $e){
 					$errorInLine[$lineNb] .= " !Exception ".$e->getCode()." ".$e->getMessage();
 				}

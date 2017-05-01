@@ -68,8 +68,8 @@ class FieldSelectorListForActivity extends FieldSelectorListArrayWebImpl impleme
 			$f = (string)$xml["field"];
 			$sub = (string)$xml["subField"];
 			if($sub) $subFieldName = $sub;
-			// Medair (CWE) 21.04.2017: Force subfield value if used as a default group by key to ensure correct sorting.
-			else if($this->forceValueSubfieldIfnotdefined || $xml["isDefaultGroupByKey"]=="1") $subFieldName = "value";
+			// Medair (CWE) 01.05.2017: Force subfield value if used as a default group by key or default sorting key to ensure correct sorting.
+			else if($this->forceValueSubfieldIfnotdefined || $xml["isDefaultGroupByKey"]=="1" || $xml["isDefaultSortingKey"]=="1") $subFieldName = "value";
 			if($subFieldName) $addFieldSelectorSysInfoSubFieldsXml = true;
 			$key = $this->addFieldSelector($f, $subFieldName);
 		} else {

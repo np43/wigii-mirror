@@ -1571,7 +1571,7 @@ class WigiiCoreExecutor {
 		$elS = ServiceProvider :: getElementService();
 	
 		//update the listContext to match to the listView parameter
-		$fsl = FieldSelectorListForActivity :: createInstance(false, false, false); //no issue if double time the same
+		$fsl = FieldSelectorListForActivity :: createInstance(false, false, true); // Medair (CWE) 01.05.2017 forces subfield value to allow sorting by clicking on headers
 		$fsl->setSelectedLanguages(array (
 				$transS->getLanguage() => $transS->getLanguage()));
 		$configS->getFields($p, $exec->getCrtModule(), Activity :: createInstance("listView"), $fsl);
@@ -9527,7 +9527,9 @@ onUpdateErrorCounter = 0;
 				$elementId = $exec->getCrtParameters(1);
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 
-				if ($elementId != "multiple" && ($exec->getCrtParameters(0) == "detail" || 
+				// single element management
+				if ($elementId != "multiple" && 
+				        ($exec->getCrtParameters(0) == "detail" || 
 						$exec->getCrtParameters(0) == "print" || 
 						$exec->getCrtParameters(0) == "manageEmail" || 
 						$exec->getCrtParameters(0) == "addJournalItem" || 
@@ -9605,7 +9607,9 @@ onUpdateErrorCounter = 0;
 						$fileFields = $configS->mf($p, $element->getModule())->xpath("*[@type='Files'] | *[@type='Blobs' and @htmlArea='1'] | *[@type='Texts' and @htmlArea='1']");
 					} else $fileFields = null;
 					
-				} else if ($elementId == "multiple" && (
+				} 
+				// multiple element management
+				else if ($elementId == "multiple" && (
 							($exec->getCrtParameters(0) == "delete" && $_POST["action"]!=null) ||
 							($exec->getCrtParameters(0) == "edit" && $_POST["action"]!=null) ||
 							($exec->getCrtParameters(0) == "transfer" && $_POST["action"]!=null) ||
@@ -9654,9 +9658,7 @@ onUpdateErrorCounter = 0;
 								($dataTypeName == "MultipleAttributs" && $fieldXml->xpath("child::attribute[@email]"))
 								) {
 								//if the fieldSelector is already defined with a subfield
-								//then remove the fieldSelector and add this general one
-								//if the fieldSelector is already defined with a subfield
-								//then remove the fieldSelector and add this general one
+								//then remove the fieldSelector and add this general one								
 								if ($fsl->containsField($fieldName)) {
 									$fsl->removesField($fieldName);
 								}
