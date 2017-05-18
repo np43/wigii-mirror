@@ -1,3 +1,6 @@
+public .elementDialog *{
+	box-sizing: border-box;
+}
 
 .elementDialog.docked {
 	display: none;

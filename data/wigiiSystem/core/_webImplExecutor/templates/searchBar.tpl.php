@@ -28,7 +28,7 @@
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 if(!isset($sessAS)) $sessAS = ServiceProvider::getSessionAdminService();
 if(!isset($lc)) $lc = $lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
-?><div class="firstBox"><?
+?><div class="firstBox" style="width:100%; max-width:700px;"><?
 	?><input class="SBIB R" type="text" <?
 	?>name="<?=ListContext::TextSearchField;?>" value="<?=$lc->getTextSearch();?>" /><?
 	?><div class="searchButtons SBIB"><span id="filtersButton" class="grayFont H" <?

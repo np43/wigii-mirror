@@ -2141,7 +2141,7 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 			needToResize = false;
 		};
 		var height = $('#searchBar .firstBox').after('<div class="middleBox"></div>').css('display','none').height();
-		middleBox = $('#searchBar .middleBox').height(height);
+		middleBox = $('#searchBar .middleBox').height('auto');
 		middleBox.append($('#elementDialog .T').addClass('docked').css({'width':''}));
 		$('#searchBar .toolbarBox').hide();
 		resize_groupPanel();
@@ -3761,5 +3761,5 @@ function initMiddleBox(keepExistingBox){
 	if(middleBox.find('div.T').length==0) middleBox.append('<div class=\"T docked\"></div>');
 	
 	var height = $('#searchBar .firstBox').height();
-	return $('#searchBar .middleBox').height(height);
+	return $('#searchBar .middleBox').css('height', 'auto');
 }

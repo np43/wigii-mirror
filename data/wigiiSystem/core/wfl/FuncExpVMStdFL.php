@@ -100,6 +100,18 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		return $this->fxParser;
 	}
 
+	private $translationService;
+	public function setTranslationService($translationService){
+	    $this->translationService = $translationService;
+	}
+	protected function getTranslationService(){
+	    //autowired
+	    if(!isset($this->translationService)){
+	        $this->translationService = ServiceProvider::getTranslationService();
+	    }
+	    return $this->translationService;
+	}
+		
 	// Generators
 
 	/**
@@ -1928,6 +1940,19 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 */
 	public function txtAmp($args) {
 		return '&';
+	}
+	
+	/**
+	 * Returns the translation of a key using the Wigii dictionary and the current language of the user
+	 * FuncExp signature : <code>txtDico(key)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) key : a defined entry in the dictionary.
+	 * @return String the translated key or the key itself if no entry is defined in the dictionary	 
+	 */
+	public function txtDico($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtDico takes one argument which is the key to lookup into the dictionary', FuncExpEvalException::INVALID_ARGUMENT);
+	    return $this->getTranslationService()->t($this->getPrincipal(), $this->evaluateArg($args[0]));
 	}
 	
 	/**

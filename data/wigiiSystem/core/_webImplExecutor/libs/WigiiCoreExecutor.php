@@ -1352,7 +1352,23 @@ class WigiiCoreExecutor {
 					elementDialogButtons.last().click(function(){".$okJsCode."});
 					elementDialogButtons.first().click(function(){".$cancelJsCode . ' ' . $closeJsCode . ' actOnCancelDialog("' . $domId . '");  ' . ($scrollTopOnEnd ? ' $(window).scrollTop(0); ' : '')." manageWorkzoneViewDocked('hide')});
 					if(!$('#scrollElement').children().first().hasClass('elementDetail')) $('#scrollElement').children().first().css('position','relative');
-			");
+			".
+                '$("#scrollElement").css("max-width", "'. ($width + 17). 'px");
+                $("#scrollElement").css("width", "100%");
+                margin = (($(window).width()-'. ($width + 17). ')/2);
+                 $(".ui-dialog").css("left", margin+"px");
+                $(window).resize(function(){
+                    if($(window).width() < ' . ($width + 17) . '){
+                        $(".ui-dialog").css("left", "0px");
+                        $(".ui-dialog").css("width", "100%");
+                        $(".ui-dialog").css("max-width", '. ($width + 17). ');
+                    }else{
+                        margin = (($(window).width()-'. ($width + 17). ')/2);
+                        $(".ui-dialog").css("left", margin+"px");
+                        $(".ui-dialog").css("width", '. ($width + 17). ');
+                        
+                    }
+                 });');
 			return true;
 		}		
 		
@@ -1377,7 +1393,7 @@ class WigiiCoreExecutor {
 				'}' .
 				'],' .
 				'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
-				'title: "' . $dialogTitle . '", width:' . ($width+17) . ', position: myPosition,' .
+				'title: "' . $dialogTitle . '", width: "100%", position: myPosition,' .
 				'closeOnEscape: true, resizable:false, ' .
 				'' . ($modal ? 'modal:true, ' : '') . '' .
 				'beforeClose: function(){ if(checkOpenItem("' . $domId . '")){ return false; } else { ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '");} },' .
@@ -1386,6 +1402,54 @@ class WigiiCoreExecutor {
 				'	$("#' . $domId . '").css("height",getElementDialogScrollHeight("neighbour", $("#elementDialog"))).css("overflow-x","auto");' .
 				'};'.
 				'resize_scrollArea();');
+
+		        $exec->addJsCode( '
+		        ariaForm = "[aria-describedBy=\"' . $domId . '\"]";
+		        
+		        margin = (($(window).width()-'. ($width + 17). ')/2);
+                $(ariaForm).css("left", margin+"px");
+                $(ariaForm).css("top", "0px");
+                $(ariaForm).css("width", "100%");
+                $(ariaForm).css("max-width", '. ($width + 17). ');
+        
+                if($(window).width() < ' . ($width + 17) . '){
+                    $(ariaForm).css("left", "0px");
+                    $(ariaForm).css("top", "0px");
+                    $(ariaForm).css("width", "100%");
+                    $(ariaForm).css("max-width", '. ($width + 17). ');
+                }else{
+                    margin = (($(window).width()-'. ($width + 17). ')/2);
+                    $(ariaForm).css("top", "0px");
+                    $(ariaForm).css("left", margin+"px");
+                }
+        
+                $(window).resize(function(){
+                    if($(window).width() < ' . ($width + 17) . '){
+                        $(ariaForm).css("left", "0px");
+                        $(ariaForm).css("top", "0px");
+                        $(ariaForm).css("width", "100%");
+                        $(ariaForm).css("max-width", '. ($width + 17). ');
+                    }else{
+                        margin = (($(window).width()-'. ($width + 17). ')/2);
+                        $(ariaForm).css("width", "100%");
+                        $(ariaForm).css("top", "0px");
+                        $(ariaForm).css("left", margin+"px");
+                    }
+                    if("'. $domId.'" == "multipleDialog"){
+                        margin = ($(window).width()-($(ariaForm).width()+23));
+                        marginTop = ($(window).height()-($(ariaForm).height()+17));
+                        $(ariaForm).css("left", margin+"px");
+                        $(ariaForm).css("top", marginTop+"px");
+                     }
+                });
+                
+                 if("'. $domId.'" == "multipleDialog"){
+                    margin = ($(window).width()-($(ariaForm).width()+23));
+                    marginTop = ($(window).height()-($(ariaForm).height()+4));
+                    $(ariaForm).css("left", margin+"px");
+                    $(ariaForm).css("top", marginTop+"px");
+                 }
+                ');
 		/*$exec->addJsCode('$("#elementDialog")
 				.css("height",window.innerHeight-$("#elementDialog").prev().outerHeight(true)-$("#elementDialog").next().outerHeight(true)-30)
 				.css("overflow-x","auto")
@@ -1456,8 +1520,36 @@ class WigiiCoreExecutor {
 				'' . ($modal ? 'modal:true, ' : '') . '' .
 				'beforeClose: function(){ if(checkOpenItem("' . $domId . '")){ return false; } else { ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '");} }' .
 				'}).dialog("moveToTop");' .
-				' $(".elementDialog").css("float","none") ' .
-				'');
+				' $(".elementDialog").css("float","none"); ' .
+				''.
+        'margin = (($(window).width()-'. ($width + 17). ')/2);
+        ariaForm3B = "[aria-describedBy=\"' . $domId . '\"]";
+        $(ariaForm3B).css("left", margin+"px");
+        $(ariaForm3B).css("width", "100%");
+        $(ariaForm3B).css("max-width", '. ($width + 17). ');
+
+
+        if($(window).width() < ' . ($width + 17) . '){
+            $(ariaForm3B).css("left", "0px");
+            $(ariaForm3B).css("width", "100%");
+            $(ariaForm3B).css("max-width", '. ($width + 17). ');
+        }else{
+            margin = (($(window).width()-'. ($width + 17). ')/2);
+            $(ariaForm3B).css("left", margin+"px");
+        }
+
+        $(window).resize(function(){
+            if($(window).width() < ' . ($width + 17) . '){
+                $(ariaForm3B).css("left", "0px");
+                $(ariaForm3B).css("width", "100%");
+                $(ariaForm3B).css("max-width", '. ($width + 17). ');
+            }else{
+                margin = (($(window).width()-'. ($width + 17). ')/2);
+                $(ariaForm3B).css("left", margin+"px");
+                $(ariaForm3B).css("width", '. ($width + 17). ');
+            }
+        });
+        ');
 		if ($dialogTitle == null) {
 			$exec->addJsCode(' $("#' . $domId . '").prev().css("display","none"); ');
 		}
@@ -1467,23 +1559,56 @@ class WigiiCoreExecutor {
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
 		
 		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
-			$exec->addJsCode("					
+			$exec->addJsCode("
 				if($('#elementDialog').is(':ui-dialog')) {
 					$('#elementDialog').dialog('destroy');
 				}
-				manageWorkzoneViewDocked('show',".$this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "elementTotalWidth").");
-			");	
+				manageWorkzoneViewDocked('show',".$this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "elementTotalWidth").");".
+				'$("#scrollElement").css("max-width", "'. ($width + 17). 'px");
+                $("#scrollElement").css("width", "100%");
+			');
 			return true;
 		}
 		$exec->addJsCode('' .
 				'myPosition = dialogPos["' . $domId . '"]; if(myPosition == null){ myPosition = { my : "center", at: "center" }; }' .
 				'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
 				'title: "' . $dialogTitle . '", width:' . ($width + 17) . ', position: myPosition,' .
-				'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
+            'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
 				'beforeClose: function(){ ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '"); $(this).dialog("destroy"); $(window).scrollTop(0); },' .
 				'closeOnEscape: true, resizable:false' .
 				'}).dialog("moveToTop")'.
-				'; ');
+				'; '.
+            '
+            aria = "[aria-describedBy=\"'.$domId .'\"]";
+		        
+            margin = (($(window).width()-'. ($width + 17). ')/2);
+                  $(aria).css("left", margin+"px");
+                  $(aria).css("width", "100%");
+                  $(aria).css("max-width", '. ($width + 17). ');
+                  
+                  
+                  if($(window).width() < ' . ($width + 17) . '){
+                        $(aria).css("left", "0px");
+                        $(aria).css("top", "0px");
+                        $(aria).css("width", "100%");
+                        $(aria).css("max-width", '. ($width + 17). ');
+                    }else{
+                        margin = (($(window).width()-'. ($width + 17). ')/2);
+                        $(aria).css("left", margin+"px");
+                    }
+                  
+            $(window).resize(function(){
+                    if($(window).width() < ' . ($width + 17) . '){
+                        $(aria).css("left", "0px");
+                        $(aria).css("top", "0px");
+                        $(aria).css("width", "100%");
+                        $(aria).css("max-width", '. ($width + 17). ');
+                    }else{
+                        margin = (($(window).width()-'. ($width + 17). ')/2);
+                        $(aria).css("left", margin+"px");
+                        $(".ui-dialog").css("width", '. ($width + 17). ');
+                    }
+                 });');
 		$exec->addJsCode('addScrollWithShadow("elementDialog");
 						resize_scrollArea();');
 		if ($dialogTitle == null) {
@@ -1509,7 +1634,7 @@ class WigiiCoreExecutor {
 		$minWidth = trim((string)$moduleViewXml['minWidth']);
 		
 		if(empty($minWidth) || strtoupper($minWidth) == 'NULL') $minWidth = 100;
-		
+
 		$exec->addJsCode("
 			$('#groupPanel').data('GroupListCollapsed',".$GroupListCollapsed.");
 			$('#moduleView').data('minWidth',".(integer)$minWidth.").data('ListViewCollapsed',".$ListViewCollapsed.");
@@ -2194,7 +2319,8 @@ class WigiiCoreExecutor {
 	}
 	//COMMON Templates
 	protected function includeTemplateAll($p, $exec){
-		include(TEMPLATE_PATH . "all.tpl.php");
+	    if(defined(WEB2_IMPL)) include(TEMPLATE_PATH . "baseGrid.tpl.php");
+        else include(TEMPLATE_PATH . "all.tpl.php");
 	}
 	protected function includeTemplateFooterBar($p, $exec){
 		include(TEMPLATE_PATH . "footerBar.tpl.php");
@@ -3887,13 +4013,14 @@ invalidCompleteCache();
 			case "exportAndDownload" :
 			case "getXmlFeed" :
 			case "downloadFromExternalAccess" :
+			case "downloadFromExternalAccess" :
 			case "getNextElementInList" :
 			case "getNextElementInBlog" :
 			case "getNextElementInPreviewList" :
 			case "getCalendarEvents" :
 				//			case "JSON":
 				//			case "PDF":
-				//			case "Excel":
+				//			case "Excel"
 				//			case "XML":
 				//			case "CSVRaw":
 				//			case "CSVPretty":
@@ -3917,6 +4044,26 @@ invalidCompleteCache();
 				return false;
 		}
 	}
+
+    /**
+     * Return true if the current action requires a responsive HTML rendering
+     * Typcally used in the public access to be compatible with mobile
+     */
+    public function shouldBeResponsive($action) {
+        $exec = ServiceProvider :: getExecutionService();
+        switch ($action) {
+            case "newSubscription" :
+            case "externalAccess" :
+            case "externalAccessRequest" :
+                return true;
+                break;
+            case "element":
+                if($exec->getCrtParameters(0) == "print") return true;
+                break;
+            default :
+                return false;
+        }
+    }
 	
 	protected function doAutoLoginIfNeeded() {
 		$this->executionSink()->publishStartOperation("doAutoLoginIfNeeded");
@@ -5998,8 +6145,17 @@ onUpdateErrorCounter = 0;
 					break;
 				}
 
-				$totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
-				$labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
+                if($configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic")){
+                    $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic");
+                }else{
+                    $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
+                }
+                if($labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic")){
+                    $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic");
+                }else{
+                    $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
+                }
+
 				if (!$exec->getIsUpdating()) {
 					$action = "mainDiv/" . $exec->getCrtRequest();
 				} else {
@@ -6304,9 +6460,16 @@ onUpdateErrorCounter = 0;
 					break;
 				}
 				//eput($record);
-
-				$totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
-				$labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
+                if($configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic")){
+                    $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic");
+                }else{
+                    $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
+                }
+                if($labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic")){
+                    $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic");
+                }else{
+                    $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
+                }
 				if (!$exec->getIsUpdating()) {
 					$action = "mainDiv/" . $exec->getCrtRequest();
 				} else {
@@ -7158,7 +7321,7 @@ onUpdateErrorCounter = 0;
 					ServiceProvider :: getElementService()->fillElement($p, $el);
 					$feedbackRec->attachRecord($el);
 
-					$this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList")->setCrtSelecteditem($el->getId());
+					$this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList")->setCrtSelectedItem($el->getId());
 				} else {
 					if ($configS->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable") != "1"){
 						throw new ServiceException("Module " . $exec->getCrtModule()->getModuleName() . " is not configured to send feedbacks on system.", ServiceException :: FORBIDDEN);
@@ -7193,6 +7356,7 @@ onUpdateErrorCounter = 0;
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				//			$form->setDottedLineSeparatorBetweenField(true);
+
 
 
 				$state = "start";
@@ -7239,7 +7403,7 @@ onUpdateErrorCounter = 0;
 					//ask for confirmation
 					?><img src="<?=SITE_ROOT_forFileUrl."images/icones/tango/32x32/status/not-known.png";?>" style="float:left;margin:5px 15px 15px 15px;" /><?
 
-					echo '<div style="width:'.($totalWidth-100).'px;margin:5px;float:left;">'. $transS->t($p, "areYouSureUnsubscribeEmails").'</div><div class="clear"></div>';
+					echo '<div style="width: 100%; max-width:'.($totalWidth-100).'px;margin:5px;float:left;">'. $transS->t($p, "areYouSureUnsubscribeEmails").'</div><div class="clear"></div>';
 					$this->openAsDialogForm($exec->getIdAnswer(), $totalWidth, "update('elementDialog/" .
 					$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/unsubscribeEmails/doUnsubscribeEmails');", $transS->t($p, "unsubscribeEmails"), $transS->t($p, "ok"), $transS->t($p, "cancel"));
 				} elseif($exec->getCrtParameters(0) == "doUnsubscribeEmails") {
@@ -7541,6 +7705,49 @@ onUpdateErrorCounter = 0;
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				//			$form->setDottedLineSeparatorBetweenField(true);
+                $domId = 'changePasswordDialog';
+                $exec->addJsCode('' .
+                    'myPosition = dialogPos["' . $domId . '"]; if(myPosition == null){ myPosition = { my : "center", at: "center" }; }' .
+                    'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
+                    'title: "' . $dialogTitle . '", width:' . ($width + 17) . ', position: myPosition,' .
+                    'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
+                    'beforeClose: function(){ ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '"); $(this).dialog("destroy"); $(window).scrollTop(0); },' .
+                    'closeOnEscape: true, resizable:false' .
+                    '}).dialog("moveToTop")'.
+                    '; '.
+                    '
+            aria = "[aria-describedBy=\"'.$domId .'\"]";
+            
+            width = "450";
+		        
+            margin = (($(window).width()-width)/2);
+                  $(aria).css("left", margin+"px");
+                  $(aria).css("width", "100%");
+                  $(aria).css("max-width", width);
+                  
+                  
+                  if($(window).width() < width){
+                        $(aria).css("left", "0px");
+                        $(aria).css("top", "0px");
+                        $(aria).css("width", "100%");
+                        $(aria).css("max-width", width);
+                    }else{
+                        margin = (($(window).width()-width)/2);
+                        $(aria).css("left", margin+"px");
+                    }
+                  
+            $(window).resize(function(){
+                    if($(window).width() < width){
+                        $(aria).css("left", "0px");
+                        $(aria).css("top", "0px");
+                        $(aria).css("width", "100%");
+                        $(aria).css("max-width", width);
+                    }else{
+                        margin = (($(window).width()-width)/2);
+                        $(aria).css("left", margin+"px");
+                        $(aria).css("width", width);
+                    }
+                 });');
 
 				$state = "start";
 				if ($_POST["action"] != null)
@@ -9521,8 +9728,20 @@ onUpdateErrorCounter = 0;
 				if (!isset ($transS))
 					$transS = ServiceProvider :: getTranslationService();
 
-				$totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
-				$labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
+                $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
+                $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
+                /*
+				$exec->addJS('
+				widthElement = $("#elementDialog").width();
+				
+				if(widthElement < '.$totalWidth.'){
+				    width = '.$totalWidth.';
+				}else{
+				    width = widthElement;
+				}
+				
+				');
+    //*/
 
 				$elementId = $exec->getCrtParameters(1);
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
@@ -9598,15 +9817,12 @@ onUpdateErrorCounter = 0;
 					if ($exec->getCrtParameters(0) == "detail") {
 						$elS->unLock($p, DbEntityInstance :: createInstance($elementId));
 					}
-					
 					//add element to the current selected element in list context
 					$this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList")->setCrtSelectedItem($elementId);
-
-					//on delete we need the file fields to do file management
+                    //on delete we need the file fields to do file management
 					if ($exec->getCrtParameters(0) == "delete") {
 						$fileFields = $configS->mf($p, $element->getModule())->xpath("*[@type='Files'] | *[@type='Blobs' and @htmlArea='1'] | *[@type='Texts' and @htmlArea='1']");
 					} else $fileFields = null;
-					
 				} 
 				// multiple element management
 				else if ($elementId == "multiple" && (
@@ -9762,7 +9978,7 @@ onUpdateErrorCounter = 0;
 							$this->throwEvent()->readElement(PWithElement :: createInstance($p, $element));
 							if($exec->getCrtParameters(0)=="detail"){
 								$form = $this->createDetailElementFormExecutor($element, $elementP, "detailElement_form", null);
-								$form->setCorrectionWidth(26);
+								//$form->setCorrectionWidth(26); //Commented by medair (LMA) No longer applicable with width to 100%
 							} else {
 								$form = $this->createPrintElementFormExecutor($element, $elementP, "detailElement_form", null);
 							}

@@ -109,7 +109,7 @@ class SelectSearchBarFieldList implements FieldList {
 		//create a select with the attribute of the xml
 		$style = "";
 		$width = $fieldXml["width"];
-		if($width != null) $style .= "width:".$width."px;";
+		if($width != null) $style .= "width: 100%; max-width:".$width."px;";
 
 		if($fieldXml["type"] == "groupFilter"){
 

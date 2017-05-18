@@ -79,9 +79,9 @@ class FieldRenderer extends Model {
 		$fieldClass = (string)$fieldXml["class"];
 		//open fieldGroup div
 		if((string)$fieldXml["totalWidth"]!=null){
-			$style = "width:".((string)$fieldXml["totalWidth"])."px;";
+			$style = "width: 100%; max-width:".((string)$fieldXml["totalWidth"])."px;";
 		} else {
-			$style = "width:".($this->getTotalWidth())."px;";
+			$style = "width: 100%; max-width:".($this->getTotalWidth())."px;";
 		}
 		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" >');
 
@@ -92,7 +92,8 @@ class FieldRenderer extends Model {
 			} else {
 				$labelWidth = ($this->getIsInLineWidth()-20);
 			}
-			$style = "width:".$labelWidth."px;";
+
+            $style = "width: 100%; max-width:".$labelWidth."px;";
 			$rm->put('<div class="label" style="'.$style.'" >');
 			if($fieldXml["displayAsTitle"]=="1") $rm->put('<h4>');
 			$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage());
@@ -104,12 +105,14 @@ class FieldRenderer extends Model {
 		$rm->put('<div id="'.$idField.'_group" ');
 		$rm->put('class="value fieldGroup SBIB ui-corner-all'.($fieldXml["noFieldset"] =="1" ? ' noFieldset ' : '').'" ');
 		//add in CSS background-color:#fff; position:relative;margin-left:20px;margin-top:0px;margin-bottom:5px;padding:4px;
-		//or border-bottom-width:2px;border-bottom-style:solid;border-top-width:2px;border-top-style:solid;
+		//or border-bottom
+        //-width:2px;border-bottom-style:solid;border-top-width:2px;border-top-style:solid;
 		//+10 when noFieldset is to take advantage of the unused margin-right
+        //$padding = ($rm->isForExternalAccess())?'padding-right: 20px;':'';
 		if((string)$fieldXml["totalWidth"]!=null){
-			$rm->put('style="width:'.(($fieldXml["noFieldset"]=="1" ? (string)$fieldXml["totalWidth"]+10 : ((string)$fieldXml["totalWidth"]-$this->getFieldGroupParentOffset()-10-4))).'px;"'); //-10 is for left padding, 4 is for the two borders of 4 px;
+			$rm->put('style="'. $padding. ' width: 100%; max-width:'.(($fieldXml["noFieldset"]=="1" ? (string)$fieldXml["totalWidth"]+10 : ((string)$fieldXml["totalWidth"]-$this->getFieldGroupParentOffset()-10-4))).'px;"'); //-10 is for left padding, 4 is for the two borders of 4 px;
 		} else {
-			$rm->put('style="width:'.(($fieldXml["noFieldset"]=="1" ? $this->getIsInLineWidth()+10 : ($this->getIsInLineWidth()-10-4))).'px;"'); //-10 is for left padding, 4 is for the two borders of 4 px;
+            $rm->put('style="'. $padding.  ' width: 100%; max-width:'.(($fieldXml["noFieldset"]=="1" ? $this->getIsInLineWidth()+10 : ($this->getIsInLineWidth()-10-4))).'px;"'); //-10 is for left padding, 4 is for the two borders of 4 px;
 		}
 		$rm->put('>');
 
@@ -177,7 +180,8 @@ class FieldRenderer extends Model {
 		//define the useMultiplecolumn
 		if(($fieldGroupXml["groupStart"]=="1" || $fieldGroupXml["groupEnd"]=="1") && $useMultipleColumn){
 			//take in consideration the margin-right of 10 for each column except the last one
-			$totalWidth = floor(($totalWidth-(($useMultipleColumn-1)*10)) / $useMultipleColumn);
+			//$totalWidth = floor(($totalWidth-(($useMultipleColumn-1)*10)) / $useMultipleColumn);
+            $totalWidth = floor(($totalWidth-(($useMultipleColumn)*10)) / $useMultipleColumn);
 		}
 
 		if($labelWidth == null) $labelWidth = floor($totalWidth * ($parentLabelWidth / $parentTotalWidth));

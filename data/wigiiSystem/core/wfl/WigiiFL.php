@@ -26,7 +26,7 @@
  * Created by CWE on 5 decembre 2013
  * Modified by Medair on 04.11.2016 to integrate QlikSense and Box functions
  * Modified by Medair (CWE,LMA) on 08.12.2016 to hide password argument in login function and to protect against Cross Site Scripting
- * Modified by Medair (CWE) on 25.04.2017 to keep current namespace on re-login and ensure role list is synced with Web UI.
+ * Modified by Medair (CWE) on 25.04.2017 to keep current namespace on re-login and ensure role list is synced with Web UI. 
  */
 class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 {
@@ -1941,6 +1941,49 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}
 	
 	/**
+	 * Returns the ID Answer of the current request beeing processed
+	 * FuncExp signature : <code>sysCrtIdAnswer()</code><br/>
+	 *
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * @return String the ExecutionService ID Answer
+	 */
+	public function sysCrtIdAnswer($args) {
+	    $this->assertFxOriginIsNotPublic();
+	    return ServiceProvider::getExecutionService()->getIdAnswer();
+	}
+	
+	/**
+	 * Queues some waiting requests to be executed on server side.
+	 * FuncExp signature : <code>sysAddRequests(url1, url2, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0..n) urlN: String|Array. A Wigii URL ready to be executed or an array of urls.
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * @return String the ExecutionService ID Answer
+	 */
+	public function sysAddRequests($args) {
+	    $this->assertFxOriginIsNotPublic();
+	    $nArgs = $this->getNumberOfArgs($args);	    
+	    if($nArgs > 0) {
+	        $exec = ServiceProvider::getExecutionService();
+    	    for($i = 0; $i < $nArgs; $i++) {
+    	        $url = $this->evaluateArg($args[$i]);
+    	        if(!empty($url)) {    	            
+    	            if(is_array($url)) {
+    	                foreach($url as $subUrl) {
+    	                    $exec->addRequests($subUrl);
+    	                }
+    	            }
+    	            else {
+    	                $exec->addRequests($url);
+    	            }
+    	            if($_POST["action"] != null) unset($_POST["action"]); 
+    	        }
+    	    }
+	    }
+	}
+	
+	/**
 	 * Returns an array containing the IDs of the elements currently beeing selected
 	 * FuncExp signature : <code>sysMultipleSelection()</code><br/>
 	 * 
@@ -2028,7 +2071,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	public function sysUsername($args) {
 		return $this->getPrincipal()->getRealUsername();
 	}
-	
+		
 	/**
 	 * Returns current user id (real user) or user object or principal object. Defaults to user id.
 	 * FuncExp signature : <code>sysUser(returnAttribute=id|object|principal)</code>
@@ -2047,6 +2090,78 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			case 'principal': return $principal;
 			default: throw new FuncExpEvalException("invalid return attribute '$returnAttribute', should be one of id, object or principal", FuncExpEvalException::INVALID_ARGUMENT);
 		}
+	}
+	
+	/**
+	 * Checks if current user has one of the specified roles, given by name.
+	 * FuncExp signature : <code>sysUserHasRole(roleName1,roleName2, ...) || sysUserHasRole(roleNames,wigiiNamespaces)</code>
+	 * Where arguments are :
+	 * For first syntax :
+	 * - Arg(0..n) roleNameI: String. The complete role name (name@wigiiNamespaceName) to be checked.
+	 * Or in second syntax:
+	 * - Arg(0) roleNames: Array|String. One role name or an array of role names, withou WigiiNamespace suffix
+	 * - Arg(1) wigiiNamespaces: Array. An array of WigiiNamespaces (Names or Objects) to combine with the given role names.
+	 * @example 
+	 *  sysUserHasRole('PM@Projects','PM@Logistics') returns true if User is PM at Projects OR PM at Logistics
+	 *  To build some conjunction, use the logAnd FuncExp:
+	 *  logAnd(sysUserHasRole('PM@Projects'), sysUserHasRole('PM@Logistics')) returns true if User is PM at Projects AND PM at Logistics
+	 *  sysUserHasRole('PM',array('Projects','Logistics'))  returns true if User is PM at Projects OR PM at Logistics
+	 * @return Boolean returns true if User has specified role.
+	 */
+	public function sysUserHasRole($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException('sysUserHasRole takes at least one argument which is a role name', FuncExpEvalException::INVALID_ARGUMENT);
+	    
+	    // 1. Builds list of roles to check based on arguments
+	    $rolesToCheck = array();
+	    $roleNames = $this->evaluateArg($args[0]);
+	    if($nArgs>1) $wigiiNamespaces = $this->evaluateArg($args[1]);
+	    else $wigiiNamespaces = null;
+	    // checks for second syntax 
+	    if(is_array($wigiiNamespaces) || is_array($roleNames)) {
+	        if(!is_array($wigiiNamespaces)) $wigiiNamespaces = array($wigiiNamespaces);
+	        if(!is_array($roleNames)) $roleNames = array($roleNames);
+	        // Builds cross product of roleName X wigiiNamespace
+	        foreach($wigiiNamespaces as $wigiiNamespace) {
+	            if($wigiiNamespace instanceof WigiiNamespace) $wigiiNamespace = $wigiiNamespace->getWigiiNamespaceName();
+	            foreach($roleNames as $roleName) {
+	                $roleName = ($wigiiNamespace?$roleName.'@'.$wigiiNamespace:$roleName);
+	                $rolesToCheck[$roleName] = $roleName;
+	            }
+	        }	        
+	    }
+	    // else first syntax
+	    else {
+	        $rolesToCheck[$roleNames] = $roleNames; // first argument
+	        if($nArgs>1) $rolesToCheck[$wigiiNamespaces] = $wigiiNamespaces; // second argument
+	        // more arguments
+	        if($nArgs>2) {
+	            for($i=2;$i<$nArgs;$i++) {
+	                $role = $this->evaluateArg($args[$i]);
+	                $rolesToCheck[$role] = $role;
+	            }
+	        }
+	    }
+	    
+	    // 2. Ensures to have Principal role list loaded
+	    $p = $this->getPrincipal();
+	    if(!($p->getRoleListener() instanceof UserList)) {
+	        $defaultWigiiNamespace = (string)$this->getConfigService()->getParameter($p, null, "defaultWigiiNamespace");
+	        if(!$defaultWigiiNamespace) $defaultWigiiNamespace = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+	        $p->refetchAllRoles($this->getUserAdminService()->getListFilterForNavigationBar(), UserListForNavigationBarImpl::createInstance($defaultWigiiNamespace));	
+	    }
+	    
+	    // 3. Checks existence of roles into Principal role list
+	    // builds a role name index
+	    $pRoles = array();
+	    foreach($p->getRoleListener()->getListIterator() as $role) {
+	        $pRoles[$role->getUsername()] = $role;
+	    }
+	    // tries to find matching roles
+	    foreach($rolesToCheck as $role) {
+	        if($pRoles[$role]) return true;
+	    }
+	    return false;
 	}
 	
 	/**

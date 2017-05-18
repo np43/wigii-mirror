@@ -41,7 +41,7 @@ if($fieldXml["isMultiple"]=="1"){
 		$this->put($val.'&nbsp;'.$menu.$proofStatusImg.$externalAccessLevel);
 	} else {
 		$this->put('<div style="');
-		if($parentWidth != null) $this->put(' float:left; width:'.$parentWidth.'px; ');
+		if($parentWidth != null) $this->put(' float:left; width: 100%; max-width:'.$parentWidth.'px; ');
 		$this->put(' max-height:150px; overflow-y:auto; ');
 		$this->put('" >');
 		$this->put($val);

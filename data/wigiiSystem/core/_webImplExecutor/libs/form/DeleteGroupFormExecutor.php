@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 18 sept 13
- * by LWR
+/**
+ * Created on 18 sept 13 by LWR
+ * Modified by Medair (CWE) on 18.05.2017 to prevent deletion of group is not empty and an Element_beforeDeleteExp is defined.
  */
 class DeleteGroupFormExecutor extends FormExecutor {
 
@@ -50,10 +50,61 @@ class DeleteGroupFormExecutor extends FormExecutor {
 		return $fe;
 	}
 
+	protected $beforeDeleteExpResult = null;
+	
 	protected function doSpecificCheck($p, $exec){
-		//no special check is required
+	    if(!$this->hasError() && $this->getState()=="check"){
+	        $this->beforeDeleteExpResult = null;
+	        $configS = $this->getWigiiExecutor()->getConfigurationContext();
+	        // if delete folder and content, then checks if deletion of elements is conditioned by an Element_beforeDeleteExp
+	        if($this->getRecord()->getFieldValue("deleteGroupOption")=="deleteChildrenAndContent") {
+    	        $beforeDeleteExp = (string)$configS->getParameter($p, $this->getGroupP()->getGroup()->getModule(), "Element_beforeDeleteExp");	        
+    	        $beforeDeleteExp = $this->evaluateBeforeDeleteExp($p, $exec, $beforeDeleteExp);	        
+    	        if(!$beforeDeleteExp->okToDelete) {
+    	            $this->beforeDeleteExpResult = $beforeDeleteExp;
+    	            $this->addStateError();
+    	        }
+	        }
+	    }
 	}
 
+	/**
+	 * Evaluates the Element_beforeDeleteExp and returns an object authorizing or not the deletion and an optional error message.
+	 * @param Principal $p current principal running the deletion process
+	 * @param ExecutionService $exec current ExecutionService instance
+	 * @param String $beforeDeleteExp beforeDeleteExp FuncExp or 0 or 1.
+	 * @throws Exception in case of error
+	 * @return StdClass of the form {okToDelete: Boolean, message: String}
+	 */
+	protected function evaluateBeforeDeleteExp($p,$exec,$beforeDeleteExp) {
+	    $transS = ServiceProvider::getTranslationService();
+	    $returnValue = null;
+	    
+	    // null expression always resolves to true
+	    if($beforeDeleteExp == null) $returnValue = true;
+	    // if 0, then deletion of folder is allowed only if empty.
+	    // elseif($beforeDeleteExp === '0') $returnValue = false;
+	    // and 1 to true
+	    elseif($beforeDeleteExp === '1') $returnValue = true;
+	    // else should be a FuncExp.
+	    else {
+	        // for group deletion, don't evaluate beforeDeleteExp on each elements, but authorizes group deletion only if empty
+	        $returnValue = (ServiceProvider::getElementService()->countSelectedElementsInGroups($p,
+	            lxInGR(lxEq(fs('id'), $this->getGroupP()->getGroup()->getId())),
+	            lf(fsl(fs_e('id')))) == 0);
+	    }
+	    // returns the resolved expression
+	    if(!($returnValue instanceof stdClass)) {
+	        // if evaluates to true, then OK to delete.
+	        if($returnValue) $returnValue = (object)array('okToDelete'=>true,'message'=>null);
+	        // else KO to delete and adds a default message
+	        else $returnValue = (object)array('okToDelete'=>false,'message'=>$transS->t($p, "groupCannotBeDeletedExplanation"));
+	    }
+	    // adds default message if explanation is missing
+	    elseif(!$returnValue->okToDelete && !$returnValue->message) $returnValue->message = $transS->t($p, "groupCannotBeDeletedExplanation");
+	    return $returnValue;
+	}
+	
 	protected function actOnCheckedRecord($p, $exec) {
 
 		$groupAS = ServiceProvider::getGroupAdminService();
@@ -175,36 +226,43 @@ class DeleteGroupFormExecutor extends FormExecutor {
 		$state = $this->getState();
 
 		//fill values on start
-		if($state=="start"){
-			if ($group->getGroupParentId() == null) {
-				$exec->addJsCode("" .
-					"$('#deleteGroup_form_deleteGroupOption_value_moveChildrenAndContentToParent_radio').attr('disabled', true);" .
-					"$('#deleteGroup_form_deleteGroupOption_value_deleteChildrenAndContent_radio').attr('checked', true);");
-				$explanation = $transS->t($p, "rootGroupThenDeleteChildrenAndContentExplanation");
-			} else {
-				$exec->addJsCode("$('#deleteGroup_form_deleteGroupOption_value_moveChildrenAndContentToParent_radio').attr('checked', true);");
-				$explanation = $transS->t($p, "moveChildrenAndContentToParentExplanation");
-			}
-		}
+		if ($group->getGroupParentId() == null) {
+			$exec->addJsCode("" .
+				"$('#deleteGroup_form_deleteGroupOption_value_moveChildrenAndContentToParent_radio').attr('disabled', true);" .
+				"$('#deleteGroup_form_deleteGroupOption_value_deleteChildrenAndContent_radio').attr('checked', true);");
+			$explanation = $transS->t($p, "rootGroupThenDeleteChildrenAndContentExplanation");
+		} else {
+		    if($state=="start") $exec->addJsCode("$('#deleteGroup_form_deleteGroupOption_value_moveChildrenAndContentToParent_radio').attr('checked', true);");
+			$explanation = $transS->t($p, "moveChildrenAndContentToParentExplanation");
+		}		
 
 		$this->getTrm()->setState($this->getState());
 		$this->getTrm()->setFormRenderer($this->getFormRenderer());
 
 		$this->getTrm()->openForm($this->getFormId(), $this->getSubmitUrl(), $this->getTotalWidth(), $this->isDialog());
 
-		?><img src="<?=SITE_ROOT_forFileUrl."images/icones/tango/48x48/status/not-known.png";?>" style="float:left;margin:0px 5px 0px 0px;"/><?
-
-		echo '<span style="line-height:1.7;">';
-		echo $transS->t($p, "areYouSureDeleteGroup");
-		echo "<br>";
-		echo "<b>" . ($wigiiNamespace ? $wigiiNamespace . " : " : "") . $group->getGroupname() . "</b>";
-		echo '</span>';
-		echo "<br>";
-
+		// Medair (CWE) 18.05.2017: displays error message coming from Element_beforeDeleteExp if defined
+		if($this->hasError() && $this->beforeDeleteExpResult && !$this->beforeDeleteExpResult->okToDelete) {
+		    echo '<div style="margin-top:15px;padding-left:45px;position:relative;">';
+		    ?><img src="<?=SITE_ROOT_forFileUrl."images/icones/tango/32x32/emblems/emblem-unreadable.png";?>" style="left:0;position:absolute;margin-right:15px;margin-bottom:15px;" /><?
+		  echo '<div><b>'.$transS->t($p, "groupCannotBeDeleted").':</b><br/><br />';
+		  echo $this->beforeDeleteExpResult->message."</div></div><br /><br />";	
+		}
+		else {		   
+    		?><img src="<?=SITE_ROOT_forFileUrl."images/icones/tango/48x48/status/not-known.png";?>" style="float:left;margin:0px 5px 0px 0px;"/><?
+    
+    		echo '<span style="line-height:1.7;">';
+    		echo $transS->t($p, "areYouSureDeleteGroup");
+    		echo "<br>";
+    		echo "<b>" . ($wigiiNamespace ? $wigiiNamespace . " : " : "") . $group->getGroupname() . "</b>";
+    		echo '</span>';
+    		echo "<br>";
+		}
+    	
 		$this->getTrm()->displayRemainingForms();
-
-		?><div class="explanation" style="float:left;"><?=$explanation;?></div><?
-
+    
+   		?><div class="explanation" style="float:left;"><?=$explanation;?></div><?
+		
 		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog());
 
 		$cancelJsCode = "update('NoAnswer/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/unlock/group/".$group->getId().(array_pop(explode("/",$this->getSubmitUrl()))=="groupPanel" ? "/groupPanel" : "")."');";

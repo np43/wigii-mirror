@@ -33,11 +33,11 @@ $val = $this->formatValueFromRecord($fieldName, null, $this->getRecord());
 
 if($fieldXml["displayOnRightSide"]!="1"){
 	if((string)$fieldXml["height"]!=null && (string)$fieldXml["height"] != "0" && !$this->isForNotification() && !$this->isForPrint()){
-		$this->put('<div style="width:'.($parentWidth).'px;height:'.$fieldXml["height"].'px;overflow-y:auto;overflow-x:auto;" >');
+		$this->put('<div style="width: 100%; max-width:'.($parentWidth).'px;height:'.$fieldXml["height"].'px;overflow-y:auto;overflow-x:auto;" >');
 	} else if($this->isForPrint() && !$this->isForNotification()){
-		$this->put('<div style="width:auto;overflow-y:visible;height:auto;overflow-x:auto;" >');
+		$this->put('<div style="width: 100%; max-width:auto;overflow-y:visible;height:auto;overflow-x:auto;" >');
 	} elseif (!$this->isForNotification()){
-		$this->put('<div style="width:'.($parentWidth).'px;overflow-y:auto;overflow-x:auto;height:auto;overflow-x:auto;" >');
+		$this->put('<div style="width:100%;max-width:'.($parentWidth).'px;overflow-y:auto;overflow-x:auto;height:auto;" >');
 	}
 }
 if($fieldXml["htmlArea"] == "1"){

@@ -161,7 +161,7 @@ if(!$url){ //display list only if no url
 					"<div class=\"cm SBB\" id=\"outlookMenu\" style=\"display:none;font-weight:normal;\" >" .
 						"<div class=\"exit SBB\">x</div>" .
 						"<p style=\"margin-top:10px;\">$intro</p>" .
-						"<p><input type=\"text\" style=\"float:none;margin:0px;padding:2px;width:400px;\" value=\"$outlookUrl\" /></p>" .
+						"<p><input type=\"text\" style=\"float:none;margin:0px;padding:2px;width: 100%; max-width:400px;\" value=\"$outlookUrl\" /></p>" .
 						"<p style=\"margin-bottom:10px;\">$expl</p>" .
 					"</div>" .
 					"');" .

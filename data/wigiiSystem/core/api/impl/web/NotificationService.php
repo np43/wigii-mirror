@@ -1130,21 +1130,21 @@ class NotificationService implements MultiplexedEvent {
 		//if there is already values, that means an error occurs in the email validation
 		if($this->getNotificationEmailInputValue()){
 			//if the field is already filled, that means an error occurs, display invalidEmail message
-			?><div class="label" style="width:<?=$totalWidth;?>px; clear:left;" ><?
+			?><div class="label" style="width: 100%; max-width:<?=$totalWidth;?>px; clear:left;" ><?
 				?><img class="icon" src="<?=SITE_ROOT_forFileUrl;?>images/icones/tango/22x22/emblems/emblem-unreadable.png" /><?
 				?><label class="R"><?=$this->getTranslationService()->t($p, "invalidEmailFromOrTo");?></label><?
 			?></div><?
 		}
 		//20 is about label padding
-		?><div class="label" style="width:<?=$labelWidth-20;?>px; clear:left; " ><?
+		?><div class="label" style="width: 100%; max-width:<?=$labelWidth-20;?>px; clear:left; " ><?
 			?><label for="id<?=$this->getNotificationEmailInputName();?>" ><?=$this->getTranslationService()->t($p, "addNotificationEmailFrom");?></label></div><?
-		?><div class="value" style="width:<?=$valueWidth;?>px;"  ><?
-			?><input id="id<?=$this->getNotificationEmailInputName();?>" name="<?=$this->getNotificationEmailInputName();?>" class="" style="width:<?=$valueWidth-5;?>px;" value="<?=($this->getNotificationEmailInputValue() ? $this->getNotificationEmailInputValue() : $p->getValueInGeneralContext("email"));?>" /><?
+		?><div class="value" style="width: 100%; max-width:<?=$valueWidth;?>px;"  ><?
+			?><input id="id<?=$this->getNotificationEmailInputName();?>" name="<?=$this->getNotificationEmailInputName();?>" class="" style="width: 100%; max-width:<?=$valueWidth-5;?>px;" value="<?=($this->getNotificationEmailInputValue() ? $this->getNotificationEmailInputValue() : $p->getValueInGeneralContext("email"));?>" /><?
 		?></div><?
 		//20 is about label padding
-		?><div class="label" style="width:<?=$labelWidth-20;?>px; clear:left; " ><?
+		?><div class="label" style="width: 100%; max-width:<?=$labelWidth-20;?>px; clear:left; " ><?
 			?><label for="id<?=$this->getNotificationToInputName();?>" ><?=$this->getTranslationService()->t($p, "addNotificationEmailTo");?></label></div><?
-		?><div class="value" style="width:<?=$valueWidth;?>px;"  ><?
+		?><div class="value" style="width: 100%; max-width:<?=$valueWidth;?>px;"  ><?
 			if($this->getNotificationToInputValue()){
 				$recipients = $this->getNotificationToInputValue();
 			} else {
@@ -1156,14 +1156,14 @@ class NotificationService implements MultiplexedEvent {
 					$recipients = null;
 				}
 			}
-			?><textarea class="difH noElastic" id="id<?=$this->getNotificationToInputName();?>" name="<?=$this->getNotificationToInputName();?>" style="width:<?=$valueWidth-5;?>px;height:50px;" ><?=$recipients;?></textarea><?
+			?><textarea class="difH noElastic" id="id<?=$this->getNotificationToInputName();?>" name="<?=$this->getNotificationToInputName();?>" style="width: 100%; max-width:<?=$valueWidth-5;?>px;height:50px;box-sizing: border-box;" ><?=$recipients;?></textarea><?
 		?></div><?
 		//20 is about label padding
-		?><div class="label" style="width:<?=$labelWidth-20?>px; clear:left; " ><?
+		?><div class="label" style="width: 100%; max-width:<?=$labelWidth-20?>px; clear:left; " ><?
 			//no error is possible here
 			?><label for="id<?=$this->getNotificationSubjectInputName();?>" ><?=$this->getTranslationService()->t($p, "addNotificationEmailSubject");?></label></div><?
-		?><div class="value" style="width:<?=$valueWidth;?>px;" ><?
-			?><input id="id<?=$this->getNotificationSubjectInputName();?>" name="<?=$this->getNotificationSubjectInputName();?>" class="" style="width:<?=$valueWidth-5;?>px;" value="<?=($this->getNotificationSubjectInputValue() ? $this->getNotificationSubjectInputValue() : $this->getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj));?>" /><?
+		?><div class="value" style="width: 100%; max-width:<?=$valueWidth;?>px;" ><?
+			?><input id="id<?=$this->getNotificationSubjectInputName();?>" name="<?=$this->getNotificationSubjectInputName();?>" class="" style="width: 100%; max-width:<?=$valueWidth-5;?>px;" value="<?=($this->getNotificationSubjectInputValue() ? $this->getNotificationSubjectInputValue() : $this->getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj));?>" /><?
 		?></div><?
 		//add file attachements if defined
 		if($entityName =="Element" && ($eventName=="update" || $eventName=="insert")){
@@ -1185,8 +1185,8 @@ class NotificationService implements MultiplexedEvent {
 			echo '</p>';
 		}
 		?><div class="clear"></div><?
-		?><div class="value" style="width:<?=$totalWidth;?>px; clear:left; " ><?
-			?><textarea id="id<?=$this->getNotificationMessageInputName();?>" name="<?=$this->getNotificationMessageInputName();?>" class="htmlArea" style="width:<?=$totalWidth-5;?>px;" ><?=($this->getNotificationMessageInputValue() ? $this->getNotificationMessageInputValue() : $this->getInitialMessageContent($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList));?></textarea><?
+		?><div class="value" style="width: 100%; max-width:<?=$totalWidth;?>px; clear:left; " ><?
+			?><textarea id="id<?=$this->getNotificationMessageInputName();?>" name="<?=$this->getNotificationMessageInputName();?>" class="htmlArea" style="width: 100%; max-width:<?=$totalWidth-5;?>px;box-sizing: border-box;" ><?=($this->getNotificationMessageInputValue() ? $this->getNotificationMessageInputValue() : $this->getInitialMessageContent($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList));?></textarea><?
 		?></div><?
 	}
 	protected function displayNotificationMessage($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList=null){

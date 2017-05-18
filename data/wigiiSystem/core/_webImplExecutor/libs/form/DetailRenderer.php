@@ -45,7 +45,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		}
 		return $this->_executionSink;
 	}
-	
+
 	private $templateRecordManager;
 	protected function setTemplateRecordManager($templateRecordManager){ $this->templateRecordManager = $templateRecordManager; }
 	protected function getTemplateRecordManager(){ return $this->templateRecordManager; }
@@ -225,7 +225,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		if($dataType && $rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName())) $this->setCrtFieldGroupIsFilled();
 
 		//open field div
-		$style = "width:".$this->getTotalWidth()."px;";
+		$style = "width: 100%; max-width:".$this->getTotalWidth()."px;";
 		if($fieldXml["noMargin"]=="1"){
 			$style .= "margin-right:0px;";
 		}
@@ -253,7 +253,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			} else {
 				$labelWidth = $this->getLabelWidth()-20;
 			}
-			$style = "width:".$labelWidth."px;$noPadding";
+			$style = "width: 100%; max-width:".$labelWidth."px;$noPadding";
 			if($dataTypeName=="Files"){
 				$style .= "text-align:center;";
 			}
@@ -274,9 +274,9 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		} else if((($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1") || $dataType==null || $fieldXml["noLabel"] =="1"){
 			$valueWidth = $this->getIsInLineWidth();
 		} else {
-			$valueWidth = $this->getValueWidth();
+			$valueWidth = $this->getValueWidth()-20; //remove 20px to prevent the return to line
 		}
-		$style = "width:".$valueWidth."px;";
+		$style = "width: 100%; max-width:".$valueWidth."px;";
 		$class = "";
 		if($dataType!=null){
 			if($dataTypeName == "Blobs" ||
@@ -297,7 +297,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		}
 		//for print we don't limit the width to prevent hidding some information
 		if($rm->isForPrint() && $dataType!= null && ($dataTypeName=="Blobs" || ($dataTypeName=="Files" && $fieldXml["htmlArea"] && $fieldXml["displayContentInDetail"]))){
-			$style = preg_replace('/width:(.*)px/', "", $style);
+			$style = preg_replace('/width: 100%; max-width:(.*)px/', "", $style);
 			$valueWidth =null;
 		}
 		$rm->put('<div class="'.$class.'" style="'.$style.'" >');

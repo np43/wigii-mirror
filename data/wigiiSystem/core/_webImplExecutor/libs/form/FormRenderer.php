@@ -154,7 +154,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 
 		//before any field display if the form contains error
 		if($this->first && $rm->getRecord()->getWigiiBag()->hasErrors()){
-			$rm->put('<div class="fieldError" style="border-top-style:none;border-bottom-style:dotted;font-weight:bold;padding-bottom:10px;margin-bottom:5px;width:'.($this->getTotalWidth()).'px;">');
+			$rm->put('<div class="fieldError" style="border-top-style:none;border-bottom-style:dotted;font-weight:bold;padding-bottom:10px;margin-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;">');
 			if($rm->isForExternalAccess()){
 				$rm->put($transS->t($p, "errorSummary").":<br />");
 				foreach($rm->getRecord()->getWigiiBag()->getErrors() as $tempFieldName=>$tempError){
@@ -230,7 +230,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if($fieldXml["groupStart"]=="1"){
 			$this->enterFieldGroup($rm, $fieldXml, $fieldName, $idField);
 			if(!empty($error)){
-				$rm->put('<div class="fieldError" style="width:'.($this->getIsInLineWidth()).'px;">'.$error.'</div>');
+				$rm->put('<div class="fieldError" style="width: 100%; max-width:'.($this->getIsInLineWidth()).'px;">'.$error.'</div>');
 			}
 			return;
 		} else if($fieldXml["groupEnd"]=="1"){
@@ -289,7 +289,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			unset($html2text);
 			$help = ' title="'.$help.'" ';
 		}
-		$style = "width:".$this->getTotalWidth()."px;";
+            $style = "width: 100%; max-width:".$this->getTotalWidth()."px;padding-right:5px; margin-right:0px;";
 		if($fieldXml["noMargin"]=="1"){
 			$style .= "margin-right:0px;";
 		}
@@ -299,7 +299,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			if($additionalInformations) $rm->put('<div class="addinfo ui-corner-all SBIB">'.$additionalInformations.'</div>');
 		}
 		if(!empty($error)){
-			$rm->put('<div class="fieldError" style="width:'.($this->getIsInLineWidth()).'px;">'.$error.'</div>');
+			$rm->put('<div class="fieldError" style="width: 100%; max-width:'.($this->getIsInLineWidth()).'px;">'.$error.'</div>');
 		}
 
 		//display label
@@ -321,7 +321,11 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			} else {
 				$labelWidth = $this->getLabelWidth()-20;
 			}
-			$style = "width:".$labelWidth."px;$noPadding";
+			if($fieldName == 'stayConnected'){
+                $style = "width:auto;$noPadding";
+            }else{
+			    $style = "width: 100%; max-width:".$labelWidth."px;$noPadding";
+            }
 			$rm->put('<div class="label" style="'.$style.'" >');
 			//if multiple mode then add multiple check box
 			if($this->isMultiple()){
@@ -387,7 +391,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			$rm->put('</div>');
 			if($isCollapse){
 				$rm->put('<div class="addC d" style="');
-				$rm->put('width:'.($this->getValueWidth()).'px;');
+				$rm->put('width: 100%; max-width:'.($this->getValueWidth()).'px;');
 				$rm->put('"><span>+</span> <u>');
 				$rm->put($rm->t("cickToAdd".$dataTypeName."Content"));
 				$rm->put('</u></div>');
@@ -398,9 +402,14 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if($dataType==null || ($countSubFields > 1 || $fieldXml["isInLine"] =="1" || $fieldXml["noLabel"] =="1")){
 			$valueWidth = $this->getIsInLineWidth();
 		} else {
-			$valueWidth = $this->getValueWidth();
-		}
-		$style = "width:".$valueWidth."px;";
+            $valueWidth = $this->getValueWidth();
+        }
+        $useMultipleColumn = (int)(string)$fieldXml["useMultipleColumn"];
+		if($useMultipleColumn>0){
+            $style = "width: 100%; max-width:".$valueWidth."px;";
+        } else {
+            $style = "width: 100%; max-width:".$valueWidth."px;";
+        }
 		if($dataType != null){
 			$class = "value";
 		} else {

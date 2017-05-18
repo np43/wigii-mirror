@@ -26,6 +26,7 @@
  * that does the job. This script can be run only after the initial Wigii Base script succeeded.
  * The first part of this script is commented and is an example of what should be added
  * at the start of the QlikScript that include this one.
+ * Modified by Medair (LWR,SSA) in 2017 for maintenance purposes.
  */
 
 

@@ -24,6 +24,7 @@
 /**
  * WigiiBag for Extraction of Ids and rights implementation
  * Modified by CWE on 15.07.2014 to add calculation of Element enable status if ElementPolicyEvaluator is injected.
+ * Modified by Medair (ACA,CWE) on 16.05.2017 to hide delete button in multiple selection if enableDeleteOnlyForAdmin and not admin or if Element_beforeDeleteExp=0
  */
 
 class ElementIdsListWebImpl extends ObjectListArrayImpl implements ElementPList {
@@ -33,6 +34,7 @@ class ElementIdsListWebImpl extends ObjectListArrayImpl implements ElementPList 
 	private $elementEnableState;
 	private $elementEnableStateConfig;
 	private $principal;
+	private $configS;
 	
 	public function reset() {
 		parent::reset();
@@ -41,6 +43,7 @@ class ElementIdsListWebImpl extends ObjectListArrayImpl implements ElementPList 
 		unset($this->elementEnableState);
 		unset($this->elementEnableStateConfig);
 		unset($this->principal);
+		unset($this->configS);
 		$this->computeElementPolicy = false;
 	}
 	
@@ -93,9 +96,11 @@ class ElementIdsListWebImpl extends ObjectListArrayImpl implements ElementPList 
 				'Element_enableDismissedStatus' => $configS->getParameter($principal, $module, 'Element_enableDismissedStatus')=="1",
 				'Element_enableArchivedStatus' => $configS->getParameter($principal, $module, 'Element_enableArchivedStatus')=="1",
 				'Element_enableDeprecatedStatus' => $configS->getParameter($principal, $module, 'Element_enableDeprecatedStatus')=="1",
-				'Element_enableHiddenStatus' => $configS->getParameter($principal, $module, 'Element_enableHiddenStatus')=="1"
+				'Element_enableHiddenStatus' => $configS->getParameter($principal, $module, 'Element_enableHiddenStatus')=="1",
+		        'Element_enableHiddenDelete' => $configS->getParameter($principal, $module, 'enableDeleteOnlyForAdmin')=="1" || ((string)$configS->getParameter($principal, $module, 'Element_beforeDeleteExp')==="0")
 		);
 		$this->principal = $principal;
+		$this->configS = $configS;
 	}
 	
 	public function addElementP($elementP){
@@ -119,6 +124,7 @@ class ElementIdsListWebImpl extends ObjectListArrayImpl implements ElementPList 
 			$elementP->enableElementState_archived($this->elementEnableStateConfig['Element_enableArchivedStatus']);
 			$elementP->enableElementState_deprecated($this->elementEnableStateConfig['Element_enableDeprecatedStatus']);
 			$elementP->enableElementState_hidden($this->elementEnableStateConfig['Element_enableHiddenStatus']);
+			$elementP->enableElementState_delete($this->elementEnableStateConfig['Element_enableHiddenDelete'] && (!$elementP->getRights()->canModify() || ((string)$this->configS->getParameter($this->principal, $elementP->getElement()->getModule(), 'Element_beforeDeleteExp')==="0")));
 			
 			// updates policy using the ElementPolicyEvaluator
 			if(isset($this->elementPolicyEvaluator)) $this->elementPolicyEvaluator->computeEnableElementState($this->principal, $elementP);

@@ -246,7 +246,9 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		}
 		return $this->labelWidth;
 	}
-	public function setLabelWidth($width) { $this->labelWidth = $width; }
+	public function setLabelWidth($width) {
+	    $this->labelWidth = $width;
+	}
 	private $totalWidth;
 	public function getTotalWidth() {
 		if(!isset($this->totalWidth)){
@@ -254,7 +256,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		}
 		return $this->totalWidth;
 	}
-	public function setTotalWidth($width) { $this->totalWidth = $width-$this->getCorrectionWidth(); }
+	public function setTotalWidth($width) {$this->totalWidth = $width-$this->getCorrectionWidth(); }
 	private $correctionWidth;
 	public function getCorrectionWidth() {return $this->correctionWidth; }
 	public function setCorrectionWidth($width) { $this->correctionWidth = $width; }

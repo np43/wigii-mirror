@@ -20,12 +20,6 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-*.*, * {
-	padding:0px;
-	margin:0px;
-	border:none;
-}
-
 html {
 	padding:0px;
 	margin:0px;

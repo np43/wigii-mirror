@@ -439,7 +439,7 @@ class TemplateRecordManager extends Model {
 		$this->setForPreviewList(true);
 
 		$previewListId = 'previewList_'.$element->getId()."_".$linkName;
-		$this->put('<div class="SBIB ui-corner-all preview" id="'.$previewListId.'" style="overflow-x:auto;width:'.$width.'px;'.($fieldXml['expand']=="0" ? 'display:none;' : '').'">');
+		$this->put('<div class="SBIB ui-corner-all preview" id="'.$previewListId.'" style="overflow-x:auto;width: 100%; max-width:'.$width.'px;'.($fieldXml['expand']=="0" ? 'display:none;' : '').'">');
 
 		$elementIsBlocked = $element->isState_blocked();
 		// checks if parent is blocked
@@ -680,7 +680,7 @@ class TemplateRecordManager extends Model {
 			$isaFieldSelectorFromActivity = is_a($fsl, "FieldSelectorListForActivity");
 
 			$firstElement = true;
-			if($parentWidth!=null) $parentWidth = "width:".$parentWidth."px;";
+			if($parentWidth!=null) $parentWidth = "width: 100%; max-width:".$parentWidth."px;";
 			$this->put('<TABLE class="'.$tableClass.'" style="'.$parentWidth.' '.$tableStyle.'" >');
 			$nb = 0;
 			$nbCol = 0;
@@ -954,18 +954,18 @@ class TemplateRecordManager extends Model {
 	public function getCaptchaHTML($formExecutor){
 		if(!$formExecutor->protectWithCaptcha()) return;
 
-		$this->put('<div id="'.$formExecutor->getFormId().'_captcha" class="field" style="width:'.$formExecutor->getTotalWidth().'px;padding-bottom:10px;" >');
+		$this->put('<div id="'.$formExecutor->getFormId().'_captcha" class="field" style="width: 100%; max-width:'.$formExecutor->getTotalWidth().'px;padding-bottom:10px;" >');
 
 		$error = $this->getRecord()->getWigiiBag()->getError("captcha_code");
 		if(!empty($error)){
-			$this->put('<div class="fieldError" style="width:'.((int)$formExecutor->getFormRenderer()->getTotalWidth()).'px;">'.$this->t($error).'</div><div class="clear"></div>');
+			$this->put('<div class="fieldError" style="width: 100%; max-width:'.((int)$formExecutor->getFormRenderer()->getTotalWidth()).'px;">'.$this->t($error).'</div><div class="clear"></div>');
 			$error = '<img  class="icon" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/emblems/emblem-unreadable.png" />&nbsp;';
 		}
 
-		$this->put('<div class="label" style="width:'.((int)$formExecutor->getFormRenderer()->getLabelWidth()).'px;">');
+		$this->put('<div class="label" style="width: 100%; max-width:'.((int)$formExecutor->getFormRenderer()->getLabelWidth()).'px;">');
 		$this->put('<img src="'.SITE_ROOT.'NoWigiiNamespace/NoModule/download/captcha?sid='.md5(uniqid(time())).'" alt="CAPTCHA Image" />');
 		$this->put('</div>');
-		$this->put('<div class="input input_captcha">* '.$error.$this->getTranslationService()->t($this->getP(), "pleaseEnterCode").'<br><input type="text" name="captcha_code" style="width:150px;margin-top:8px;" maxlength="4" /></div>');
+		$this->put('<div class="input input_captcha">* '.$error.$this->getTranslationService()->t($this->getP(), "pleaseEnterCode").'<br><input type="text" name="captcha_code" style="width: 100%; max-width:150px;margin-top:8px;" maxlength="4" /></div>');
 		$this->put('</div><div class="clear"></div>');
 	}
 	public function validateCaptcha($formExecutor){
@@ -1067,7 +1067,7 @@ class TemplateRecordManager extends Model {
 		if($value){
 			if($value[0]!="#"){
 				$value = "#".$value;
-				return '<div style="float:left;height:15px;width:25px;background-color:'.$value.';"></div>';
+				return '<div style="float:left;height:15px;width: 100%; max-width:25px;background-color:'.$value.';"></div>';
 			}
 		}
 		return "";
@@ -1962,7 +1962,7 @@ class TemplateRecordManager extends Model {
 							$value = '<a href="'.$value.'" target="'.$target.'" ><font>'.$name.'</font></a>';
 							$value .= '</div>'; //end value div
 							$value .= '<div style="float:left;padding-bottom:5px;padding-top:-5px;">'; //open a new div in field
-							$value .= '<a class="SBB" href="'.$src.'" style="float:left;width:'.$width.'px;height:300px;" id="'.$mediaId.'"></a>';
+							$value .= '<a class="SBB" href="'.$src.'" style="float:left;width: 100%; max-width:'.$width.'px;height:300px;" id="'.$mediaId.'"></a>';
 							$this->getExecutionService()->addJsCode("displayVideoPlayer('$mediaId');");
 						} else {
 							$value = '<a href="'.$value.'" target="'.$target.'" ><font>'.$name.'</font></a>';

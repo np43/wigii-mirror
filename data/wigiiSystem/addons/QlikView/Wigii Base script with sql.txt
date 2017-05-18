@@ -20,9 +20,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * This file contains a QlikView script that allows to extract from a Wigii database structure
- * all the necessary data. The extraction is done in csv and in qvd
+/* This QlikView Script is the first part of a mechanism designed to speed up the legacy Portfolio Wigii Base extractor process 
+ * meant to extract from a Wigii database structure all the necessary data. The extraction is done in csv and in qvd.
+ * The main improvement brought by the Wigii Extractor Script Portfolio is the possibility to record in the sql.qvd file 
+ * all the necessary information to build mysql queries allowing to build the portfolio qvds directly from the wigii database.
  * The first part of this script is commented and is an example of what should be added
  * at the start of the QlikScript that include this one.
  * Modified by Medair (LWR,SSA) in 2017 for maintenance purposes.
@@ -347,7 +348,8 @@ drop field id_group from Elements2;
 //reduce [Elements to only one id_element/wigiinamespace pair]
 NoConcatenate [tempE]:
 LOAD Distinct *
-Resident [Elements2];
+Resident [Elements2]
+order by id_element;
 DROP Table [Elements];
 DROP Table [Elements2];
 RENAME Table [tempE] to [Elements];
@@ -1263,6 +1265,13 @@ Let vFieldListLength=peek('nmf.counter',-1,'Namespace - Module - Field');
 let vCrtNamespace = '';
 let vCrtModule = '';
 let valueLabel = '';
+let forSqlTable = '';
+let rpnr =0;
+SQL:
+Load * INLINE [
+	sql
+	];
+
 FOR i=1 TO $(vFieldListLength)
 	
 	//peek fieldname, and datatype
@@ -1278,9 +1287,17 @@ FOR i=1 TO $(vFieldListLength)
 		
 		//store previous table
 		if '' <> '$(vCrtNamespace)' or '' <> '$(vCrtModule)' then
+			
 			STORE [$(vCrtNamespace).$(vCrtModule)] into [$(vCrtNamespace).$(vCrtModule)].qvd;
 			//STORE [$(vCrtNamespace).$(vCrtModule)] into [$(vCrtNamespace).$(vCrtModule)].csv (txt); 
 			DROP table [$(vCrtNamespace).$(vCrtModule)];
+                        let rpnr =$(rpnr) + 1;
+			
+			/*SQL:
+			load '$(forSqlTable)' as sql
+			AutoGenerate 1;*/
+
+			//let forSqlTable = '';
 		ENDIF
 		
 		//prefix all the element subfield with el.
@@ -1304,43 +1321,188 @@ FOR i=1 TO $(vFieldListLength)
 	endif
 
 	let noOfFields =  NoOfFields('$(vDatatype)');
-        let VField = '';	
+        let VField = '';
+        let VSqlField = '';	
 	//check if field requires sys fields or not
 	if exists('sys.key', '$(vWigiiNamespace)-$(vModule)-$(vFieldname)') then
 		let cols = ''; //'value as [$(valueLabel)]';
+                let sqlcols= ''; // for the sql query purpose
 		for j=4 to $(noOfFields)
-                    vField = FieldName($(j) ,'$(vDatatype)');
+                    vField = FieldName($(j) ,'$(vDatatype)')
 			if '$(cols)' <> '' then
 				cols = '$(cols), '; //add a coma + space
+                                sqlcols = '$(sqlcols), '; 
 			ENDIF
 			if FieldName($(j) ,'$(vDatatype)') = '$(vDatatype).value' then
 				//if value, then only fieldname
 				cols = '$(cols)'&FieldName($(j) ,'$(vDatatype)')&' as [$(valueLabel)]';
+				VSqlField = '`F'&'$(vFieldname)'& Left('$(vDatatype)',3)&'`.value';
+				if '$(vDatatype)' = 'Varchars' then
+				VSqlField = '$(VSqlField)'& '_l01';
+				endif
+				if '$(vDatatype)' = 'Dates' then
+                                VSqlField = 'date_format('& '$(VSqlField)'&','& chr(39) &'$(vDateFormat) $(vTimeFormat)'& chr(39) & ')';
+				endif
+				if '$(vDatatype)' = 'Times' then
+                                VSqlField = 'time_format('& '$(VSqlField)'&','& chr(39) &'$(vTimeFormat)'& chr(39) & ')';
+				endif
+				if '$(vDatatype)' = 'Attributs' or '$(vDatatype)' = 'MultipleAttributs' then
+				VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'english'& chr(39) & ','& chr(39) &'English'& chr(39) &')';
+				VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'french'& chr(39) & ','& chr(39) &'French'& chr(39) &')';
+					if '$(vDatatype)' = 'Attributs' then
+					VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'none'& chr(39) & ','& chr(39) &''& chr(39) &')';
+					endif
+					if '$(vDatatype)' = 'MultipleAttributs' then
+					VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &';'& chr(39) & ','& chr(39) &','& chr(39) &')';
+					VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'XAGU___XAGU'& chr(39) & ','& chr(39) &'; '& chr(39) &')';
+					endif
+				endif
+				sqlcols = '$(sqlcols)'&'$(VSqlField)' &' as `$(valueLabel)`';
 			else
 				//if other subfield, then subfield name
 				cols = '$(cols)'&FieldName($(j) ,'$(vDatatype)')&' as [$(valueLabel) '&trim(Right('$(vField)',len('$(vField)')-index('$(vField)','.')))&']';
+				if '$(vField)' = '$(vDatatype).year' then
+				VSqlField = 'year(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.value)';
+				elseif '$(vField)' = '$(vDatatype).month' then
+				VSqlField = 'left(monthname(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.value),3)';
+				elseif '$(vField)' = '$(vDatatype).day' then
+				VSqlField = 'day(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.value)';
+				elseif '$(vField)' = '$(vDatatype).begTime' then
+				VSqlField = 'time_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begTime,'& chr(39)& '$(vTimeFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).endTime' then
+				VSqlField = 'time_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endTime,'& chr(39)& '$(vTimeFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).begDate' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate,'& chr(39)& '$(vDateFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).endDate' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate,'& chr(39)& '$(vDateFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).start' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate `F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begTime,'& chr(39)& '$(vDateFormat) $(vTimeFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).end' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate `F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endTime,'& chr(39)& '$(vDateFormat) $(vTimeFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).startYear' then
+				VSqlField = 'year(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate)';
+				elseif '$(vField)' = '$(vDatatype).startMonth' then
+				VSqlField = 'left(monthname(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate),3)';
+				elseif '$(vField)' = '$(vDatatype).begDay' then
+				VSqlField = 'day(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate)';
+				elseif '$(vField)' = '$(vDatatype).endYear' then
+				VSqlField = 'year(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate)';
+				elseif '$(vField)' = '$(vDatatype).endMonth' then
+				VSqlField = 'left(monthname(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate),3)';
+				elseif '$(vField)' = '$(vDatatype).endDay' then
+				VSqlField = 'day(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate)';
+				elseif '$(vField)' = '$(vDatatype).date' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.date,'& chr(39)& '$(vDateFormat) $(vTimeFormat)' & chr(39) & ')';
+				else
+				VSqlField = '`F'&'$(vFieldname)'& Left('$(vDatatype)',3)&'`.'& trim(Right('$(vField)',len('$(vField)')-index('$(vField)','.')));
+				endif
+
+
+				sqlcols = '$(sqlcols)'& '$(VSqlField)' &' as `$(valueLabel) '&trim(Right('$(vField)',len('$(vField)')-index('$(vField)','.')))&'`';
 			endif
 			
 		NEXT
 	//check if there is more value fields than value
 	elseif $(noOfFields) > 10 then
 		let cols = ''; //'value as [$(valueLabel)]';
+		let sqlcols= ''; // for the sql query purpose
 		for j=4 to $(noOfFields)-6
                 vField = FieldName($(j) ,'$(vDatatype)');
 			if '$(cols)' <> '' then
 				cols = '$(cols), '; //add a coma + space
+				sqlcols = '$(sqlcols), '; 
 			ENDIF
 			if FieldName($(j) ,'$(vDatatype)') = '$(vDatatype).value' then
 				//if value, then only fieldname
 				cols = '$(cols)'&FieldName($(j) ,'$(vDatatype)')&' as [$(valueLabel)]';
+				VSqlField = '`F'&'$(vFieldname)'& Left('$(vDatatype)',3)&'`.value';
+				if '$(vDatatype)' = 'Varchars' then
+				VSqlField = '$(VSqlField)'& '_l01';
+				endif
+				if '$(vDatatype)' = 'Dates' then
+                                VSqlField = 'date_format('& '$(VSqlField)'&','& chr(39) &'$(vDateFormat) $(vTimeFormat)'& chr(39) & ')';
+				endif
+				if '$(vDatatype)' = 'Times' then
+                                VSqlField = 'time_format('& '$(VSqlField)'&','& chr(39) &'$(vTimeFormat)'& chr(39) & ')';
+				endif
+				if '$(vDatatype)' = 'Attributs' or '$(vDatatype)' = 'MultipleAttributs' then
+				VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'english'& chr(39) & ','& chr(39) &'English'& chr(39) &')';
+				VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'french'& chr(39) & ','& chr(39) &'French'& chr(39) &')';
+					if '$(vDatatype)' = 'Attributs' then
+					VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'none'& chr(39) & ','& chr(39) &''& chr(39) &')';
+					endif
+					if '$(vDatatype)' = 'MultipleAttributs' then
+					VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &';'& chr(39) & ','& chr(39) &','& chr(39) &')';
+					VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'XAGU___XAGU'& chr(39) & ','& chr(39) &'; '& chr(39) &')';
+					endif
+				endif
+				sqlcols = '$(sqlcols)'&'$(VSqlField)' &' as `$(valueLabel)`';
 			else
 				//if other subfield, then subfield name
 				cols = '$(cols)'&FieldName($(j) ,'$(vDatatype)')&' as [$(valueLabel) '&trim(Right('$(vField)',len('$(vField)')-index('$(vField)','.')))&']';
+				if '$(vField)' = '$(vDatatype).year' then
+				VSqlField = 'year(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.value)';
+				elseif '$(vField)' = '$(vDatatype).month' then
+				VSqlField = 'left(monthname(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.value),3)';
+				elseif '$(vField)' = '$(vDatatype).day' then
+				VSqlField = 'day(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.value)';
+				elseif '$(vField)' = '$(vDatatype).begTime' then
+				VSqlField = 'time_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begTime,'& chr(39)& '$(vTimeFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).endTime' then
+				VSqlField = 'time_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endTime,'& chr(39)& '$(vTimeFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).begDate' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate,'& chr(39)& '$(vDateFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).endDate' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate,'& chr(39)& '$(vDateFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).start' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate `F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begTime,'& chr(39)& '$(vDateFormat) $(vTimeFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).end' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate `F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endTime,'& chr(39)& '$(vDateFormat) $(vTimeFormat)'& chr(39) & ')';
+				elseif '$(vField)' = '$(vDatatype).startYear' then
+				VSqlField = 'year(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate)';
+				elseif '$(vField)' = '$(vDatatype).startMonth' then
+				VSqlField = 'left(monthname(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate),3)';
+				elseif '$(vField)' = '$(vDatatype).begDay' then
+				VSqlField = 'day(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.begDate)';
+				elseif '$(vField)' = '$(vDatatype).endYear' then
+				VSqlField = 'year(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate)';
+				elseif '$(vField)' = '$(vDatatype).endMonth' then
+				VSqlField = 'left(monthname(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate),3)';
+				elseif '$(vField)' = '$(vDatatype).endDay' then
+				VSqlField = 'day(`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.endDate)';
+				elseif '$(vField)' = '$(vDatatype).date' then
+				VSqlField = 'date_format('&'`F$(vFieldname)'& Left('$(vDatatype)',3)&'`.date,'& chr(39)& '$(vDateFormat) $(vTimeFormat)' & chr(39) & ')';
+				else
+				VSqlField = '`F'&'$(vFieldname)'& Left('$(vDatatype)',3)&'`.'& trim(Right('$(vField)',len('$(vField)')-index('$(vField)','.')));
+				endif
+
+
+				sqlcols = '$(sqlcols)'& '$(VSqlField)' &' as `$(valueLabel) '&trim(Right('$(vField)',len('$(vField)')-index('$(vField)','.')))&'`';
 			endif
 			
 		NEXT
 	ELSE
 		let cols = '$(vDatatype).value as [$(valueLabel)]';
+		VSqlField = '`F'&'$(vFieldname)'& Left('$(vDatatype)',3)&'`.value';
+		if '$(vDatatype)' = 'Dates' then
+                VSqlField = 'date_format('& '$(VSqlField)'&','& chr(39) &'$(vDateFormat) $(vTimeFormat)'& chr(39) & ')';
+		endif
+		if '$(vDatatype)' = 'Times' then
+                VSqlField = 'time_format('& '$(VSqlField)'&','& chr(39) &'$(vTimeFormat)'& chr(39) & ')';
+		endif
+		if '$(vDatatype)' = 'Attributs' or '$(vDatatype)' = 'MultipleAttributs' then
+		VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'english'& chr(39) & ','& chr(39) &'English'& chr(39) &')';
+		VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'french'& chr(39) & ','& chr(39) &'French'& chr(39) &')';
+			if '$(vDatatype)' = 'Attributs' then
+			VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'none'& chr(39) & ','& chr(39) &''& chr(39) &')';
+			endif
+			if '$(vDatatype)' = 'MultipleAttributs' then
+			VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &';'& chr(39) & ','& chr(39) &','& chr(39) &')';
+			VSqlField = 'replace('& '$(VSqlField)'&','& chr(39) &'XAGU___XAGU'& chr(39) & ','& chr(39) &'; '& chr(39) &')';
+			endif
+		endif
+		let sqlcols ='$(VSqlField)' &' as `$(valueLabel)`';
+                //let sqlcols = '`F$(vFieldname)`.value as `$(valueLabel)`';
 	endif
 	
 	//load only the values
@@ -1350,7 +1512,15 @@ FOR i=1 TO $(vFieldListLength)
 		$(cols)
 	Resident [$(vDatatype)]
 	Where [$(vDatatype).field] = '$(vFieldname)';
+	/*if '$(forSqlTable)' <> '' then
+        forSqlTable = '$(forSqlTable); ';
+        endif*/
 	
+	forSqlTable = /*forSqlTable&*/ '$(vWigiiNamespace)'&'|'&'$(vModule)'&'|'&'$(vFieldname)'&'|'&'$(vDatatype)'&'|'&'$(sqlcols)';
+        SQL:
+	load '$(forSqlTable)' as sql
+	AutoGenerate 1;
+
 	vCrtNamespace = '$(vWigiiNamespace)';
 	vCrtModule = '$(vModule)';
 NEXT
@@ -1363,7 +1533,11 @@ if '' <> '$(vCrtNamespace)' or '' <> '$(vCrtModule)' then
 ENDIF
 
 
-
+/*SQL:
+load '$(forSqlTable)' as sql
+AutoGenerate 1;*/
+store SQL into sql.qvd;
+//drop table SQL;
 
 
 ///$tab Cleanup

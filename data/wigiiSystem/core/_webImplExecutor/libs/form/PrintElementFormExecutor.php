@@ -53,8 +53,23 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 		$element = $this->getRecord();
 		$elementP = $this->getElementP();
 
+		//Change the responsive div if it's print or screen (may 2017 by Medair (LMA))
+        ?>
+            <style>
+                div#<?=$this->getFormId(); ?> {
+                    width: 100%;
+                    max-width:<?=$this->getTotalWidth();?>px;
+                }
+                @media print {
+                    div#<?=$this->getFormId(); ?> {
+                        width:<?=$this->getTotalWidth();?>px;
+                    }
+                }
+
+            </style>
+        <?php
 		//limit the elementDetail width to the TotalWidth with overflow=visible
-		?><div id="<?=$this->getFormId(); ?>" class="elementDetail" style="width:<?=$this->getTotalWidth();?>px;" ><?
+		?><div id="<?=$this->getFormId(); ?>" class="elementDetail"><?
 		$enableElementState = $this->computeEnableElementState($p, $exec, $elementP);
 		if($element->isState_locked()){
 			echo '<fieldset class="isPlayingRole ui-corner-all" style="border-color:#CC4B4B;" ><legend class="ui-corner-all" style="background-color:#CC4B4B;" >';
@@ -82,7 +97,7 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 			echo '</legend>';
 //			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.$this->getTotalWidth().'px;" >'.nl2br($info["message"]).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.$this->getTotalWidth().'px;" >'.nl2br($info["message"]).'</div>';
 			}
 		}
 		if($element->isState_blocked() && $elementP->isEnabledElementState_blocked()){
@@ -112,7 +127,7 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 			//			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			//			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 		if($element->isState_dismissed()){
@@ -142,7 +157,7 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 			//			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			//			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 		if($element->isState_finalized()){
@@ -171,7 +186,7 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 			//			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			//			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 		if($element->isState_approved()){
@@ -201,7 +216,7 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 			//			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			//			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}		
 		if($element->isState_deprecated()){
@@ -230,7 +245,7 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 //			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 //			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 

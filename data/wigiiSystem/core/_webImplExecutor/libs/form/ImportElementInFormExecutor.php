@@ -518,7 +518,7 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 			if($this->languageInstalled != null) echo $transS->t($p, "importInMultilanguageExplanation")." : ".implode(", ", $transS->getVisibleLanguage())."<br /><br />";
 			echo $transS->t($p, "importInFilesExplanation")."<br /><br />";
 			echo $transS->t($p, "importInDataValidationExplanation")."<br /><br />";
-			echo $transS->t($p, "importAvailableHeaders").':<br /><textarea class="noElastic" readonly="readonly" style="height:50px;width:'.$this->getTotalWidth().'px;overflow-y:scroll;overflow-x:hidden;">'.implode($defaultSeparator." ", $this->keptHeaders)."</textarea>";
+			echo $transS->t($p, "importAvailableHeaders").':<br /><textarea class="noElastic" readonly="readonly" style="height:50px;width: 100%; max-width:'.$this->getTotalWidth().'px;overflow-y:scroll;overflow-x:hidden;">'.implode($defaultSeparator." ", $this->keptHeaders)."</textarea>";
 			echo '</font>';
 		}
 

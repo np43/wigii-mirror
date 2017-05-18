@@ -1,0 +1,606 @@
+﻿/**
+ *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+ */
+ 
+/*
+ * This QlikView Script is the second part of a mechanism designed to speed up the legacy Portfolio Wigii Base extractor process 
+ * meant to extract from a Wigii database structure all the necessary data. The extraction is done in csv and in qvd.
+ * The  Wigii Base Script Portfolio loops through the sql.qvd file to build mysql queries allowing to build the portfolio qvds 
+ * directly from the wigii database.
+ * The first part of this script is commented and is an example of what should be added
+ * at the start of the QlikScript that include this one.
+ * Modified by Medair (LWR,SSA) in 2017 for maintenance purposes.
+ */
+
+
+//PLEASE incorporate the following section into your Qlik script and change the values as necessary
+/*************
+
+//General format settings
+SET ThousandSep="'";
+SET DecimalSep='.';
+SET MoneyThousandSep="'";
+SET MoneyDecimalSep='.';
+SET MoneyFormat='$#''##0;-$#''##0';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD/MM/YYYY';
+SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+
+//connect to Wigii (please configure your local ODBC connection with this name
+ODBC CONNECT32 TO Wigii;
+
+//Database name:
+LET vWigiiDb = 'wigii';
+
+//Trashbin folder name filter: define false() to not filter, default is '*trashbin*'
+//all the folders matching this expression + all the folders contained in those folders will be removed from the data model
+LET vWildCardTrashbinFilter = '*trashbin*';
+
+//to rebuild the complete qvd's define this variable to 0, else define this variable as (now()-25569)*86400 - (2*3600) - (nb of hours *3600)
+//the -25569)*86400 is to convert to unix timestamp, the - (2*3600) is because it seem that the timestamp is in front of two hours of real time
+//LET vLastUpdate = (now()-25569)*86400 - (2*3600) - (4*3600); //load any change since last 4 hours
+
+//Parameters to define the filename of Dictionnary and Filter. Default is Dico.xls and Filters.xls
+LET vDico = 'Dico.xlsx';
+LET vFilter = 'Filters.xlsx';
+
+//END of section to incorporate
+*******************/
+
+/*[Elements]:
+Load *;
+SQL
+select 
+EL2.id_element as id_element,
+GR1.wigiiNamespace as wigiiNamespace,
+EL2.modulename as modulename
+
+FROM (select EL1.id_element as id_element,
+       EG1.id_group,
+       EL1.modulename as modulename
+
+FROM (SELECT E3.*, if(subE.id_element_root IS NULL,E3.id_element,subE.id_element_root) as id_element_root, subE.modulename_root, subE.linkName_root, 
+
+EParent.modulename as modulename_parent
+FROM `$(vWigiiDb)`.Elements AS E3 
+LEFT JOIN (
+	SELECT EE2.id_element as id_element, EE2.id_element_owner as id_element_root, E2.modulename as modulename_root, EE2.linkName as linkName_root
+	FROM `$(vWigiiDb)`.Elements_Elements AS EE2 
+	INNER JOIN (
+		SELECT EE.id_element as id_element, min(EE.id_elements_elements) as id_elements_elements 
+		FROM `$(vWigiiDb)`.Elements_Elements AS EE 
+		WHERE EE.linkType = 'subitem' 
+		GROUP BY EE.id_element
+		) AS rootLink ON rootLink.id_elements_elements = EE2.id_elements_elements
+	INNER JOIN `$(vWigiiDb)`.Elements E2 ON E2.id_element = EE2.id_element_owner
+	) AS subE ON subE.id_element = E3.id_element AND E3.id_element_parent IS NOT NULL
+LEFT JOIN `$(vWigiiDb)`.Elements AS EParent ON EParent.id_element = E3.id_element_parent
+WHERE E3.sys_date >  $(vLastUpdate)) as EL1
+
+Right JOIN  
+(SELECT id_element as id_element_root,
+    id_group
+FROM `$(vWigiiDb)`.`Elements_Groups`) as EG1 on EG1.id_element_root = EL1.id_element_root) as EL2
+
+LEFT JOIN (SELECT id_group, wigiiNamespace 
+FROM `$(vWigiiDb)`.Groups
+where sys_date > $(vLastUpdate)) as GR1 on GR1.id_group = EL2.id_group;
+store [Elements] into Elements_Test.qvd (qvd);
+Drop Table Elements;
+
+EXIT script;*/
+//load fields for a set of namespace and modules
+IF NOT isNull(fileSize('$(vFilter)')) THEN
+	[Filters]:
+	LOAD *, RowNo() as f.counter;
+	LOAD f.wigiiNamespace, 
+	     f.modulename
+	FROM
+	[$(vFilter)]
+	(ooxml, embedded labels, table is Filters);
+
+
+	[Sys_fields]:
+	LOAD *, sys.wigiiNamespace&'-'&sys.modulename&'-'&sys.fieldname as sys.key, RowNo() as sys.counter;
+	LOAD sys.wigiiNamespace, 
+	     sys.modulename,
+	     sys.fieldname
+	FROM
+	[$(vFilter)]
+	(ooxml, embedded labels, table is Sys_fields);
+	
+else
+	[Filters]:
+	LOAD *, RowNo() as f.counter;
+	LOAD * INLINE [
+	    f.wigiiNamespace, f.modulename
+	];
+
+	[Sys_fields]:
+	LOAD *, sys.wigiiNamespace&'-'&sys.modulename&'-'&sys.fieldname as sys.key, RowNo() as f.counter;
+	LOAD * INLINE [
+	    sys.wigiiNamespace, sys.modulename, sys.fieldname
+	];
+endif
+
+
+///$tab Wigii Structure Tables
+//**************************
+// Wigii strucute table
+// script MUST run before the Wigii DT script in order to interpret correctly the exist id_element
+//**************************
+
+//
+[Groups]:
+LOAD `id_group`,
+    groupname,
+    modulename as groupModulename,
+    wigiiNamespace as groupWigiiNamespace,
+    description,
+    portal,
+    htmlContent,
+    `id_group_parent`,
+    subscription,
+    emailNotification,
+    xmlPublish,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+SQL SELECT *
+FROM `$(vWigiiDb)`.Groups;
+//where sys_date > $(vLastUpdate);
+
+//complete with unchanged data
+/*IF $(vLastUpdate)>0 then
+	LOAD * FROM [Groups.qvd] (qvd) WHERE NOT EXISTS(`id_group`);
+ENDIF*/
+
+STORE [Groups] into Groups.qvd(qvd);
+//drop table [Groups];
+
+[Groups_Groups]:
+LOAD `id_group`,
+    id_group_owner
+    ;
+SQL SELECT *
+FROM `$(vWigiiDb)`.Groups_Groups
+;
+
+STORE [Groups_Groups] into Groups_Groups.qvd(qvd);
+//drop table [Groups_Groups];
+
+//
+[Elements]:
+LOAD if(IsNull(`id_element_root`), `id_element`, `id_element_root`) as `id_element_root`,
+	`id_element`,
+	`id_element_parent`,
+    modulename,
+    modulename_parent,
+	if(IsNull(`id_element_root`), `modulename`, `modulename_root`) as `modulename_root`,
+	if(IsNull(`id_element_root`), `linkName`, `linkName_root`) as `linkName_root`,
+    linkName,
+    peerId,
+    version,
+    tags,
+    `state_locked`,
+    `state_lockedInfo`,
+    subField(subField(`state_lockedInfo`, '##_|1_##',1),'##_&1_##',2) as state_lockedRealUsername,
+    subField(subField(`state_lockedInfo`, '##_|1_##',8),'##_&1_##',2) as state_lockedMessage,
+    date(((subField(subField(`state_lockedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_lockedDate,
+    `state_important1`,
+    `state_important1Info`,
+    subField(subField(`state_important1Info`, '##_|1_##',1),'##_&1_##',2) as state_important1RealUsername,
+    subField(subField(`state_important1Info`, '##_|1_##',8),'##_&1_##',2) as state_important1Message,
+    date(((subField(subField(`state_important1Info`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_important1Date,
+    `state_important2`,
+    `state_important2Info`,
+    subField(subField(`state_important2Info`, '##_|1_##',1),'##_&1_##',2) as state_important2RealUsername,
+    subField(subField(`state_important2Info`, '##_|1_##',8),'##_&1_##',2) as state_important2Message,
+    date(((subField(subField(`state_important2Info`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_important2Date,
+    `state_hidden`,
+    `state_hiddenInfo`,
+    subField(subField(`state_hiddenInfo`, '##_|1_##',1),'##_&1_##',2) as state_hiddenRealUsername,
+    subField(subField(`state_hiddenInfo`, '##_|1_##',8),'##_&1_##',2) as state_hiddenMessage,
+    date(((subField(subField(`state_hiddenInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_hiddenDate,
+    `state_archived`,
+    `state_archivedInfo`,
+    subField(subField(`state_archivedInfo`, '##_|1_##',1),'##_&1_##',2) as state_archivedRealUsername,
+    subField(subField(`state_archivedInfo`, '##_|1_##',8),'##_&1_##',2) as state_archivedMessage,
+    date(((subField(subField(`state_archivedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_archivedDate,
+    `state_deprecated`,
+    `state_deprecatedInfo`,
+    subField(subField(`state_deprecatedInfo`, '##_|1_##',1),'##_&1_##',2) as state_deprecatedRealUsername,
+    subField(subField(`state_deprecatedInfo`, '##_|1_##',8),'##_&1_##',2) as state_deprecatedMessage,
+    date(((subField(subField(`state_deprecatedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_deprecatedDate,
+    `state_finalized`,
+    `state_finalizedInfo`,
+    subField(subField(`state_finalizedInfo`, '##_|1_##',1),'##_&1_##',2) as state_finalizedRealUsername,
+    subField(subField(`state_finalizedInfo`, '##_|1_##',8),'##_&1_##',2) as state_finalizedMessage,
+    date(((subField(subField(`state_finalizedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_finalizedDate,
+    `state_approved`,
+    `state_approvedInfo`,
+    subField(subField(`state_approvedInfo`, '##_|1_##',1),'##_&1_##',2) as state_approvedRealUsername,
+    subField(subField(`state_approvedInfo`, '##_|1_##',8),'##_&1_##',2) as state_approvedMessage,
+    date(((subField(subField(`state_approvedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_approvedDate,
+    `state_dismissed`,
+    `state_dismissedInfo`,
+    subField(subField(`state_dismissedInfo`, '##_|1_##',1),'##_&1_##',2) as state_dismissedRealUsername,
+    subField(subField(`state_dismissedInfo`, '##_|1_##',8),'##_&1_##',2) as state_dismissedMessage,
+    date(((subField(subField(`state_dismissedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_dismissedDate,
+    `state_blocked`,
+    `state_blockedInfo`,
+    subField(subField(`state_blockedInfo`, '##_|1_##',1),'##_&1_##',2) as state_blockedRealUsername,
+    subField(subField(`state_blockedInfo`, '##_|1_##',8),'##_&1_##',2) as state_blockedMessage,
+    date(((subField(subField(`state_blockedInfo`, '##_|1_##',7),'##_&1_##',2)+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as state_blockedDate,
+    `sys_creationUser`,
+    `sys_creationUsername`,
+    date(((`sys_creationDate`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)') as `sys_creationDate`,
+    `sys_user`,
+    `sys_username`,
+    date(((`sys_date`+2*3600)/ 86400 + 25569), '$(DateFormat) $(TimeFormat)')  as `sys_date`
+    ;
+SQL 
+SELECT E3.*, subE.id_element_root, subE.modulename_root, subE.linkName_root, EParent.modulename as modulename_parent
+FROM `$(vWigiiDb)`.Elements AS E3 
+LEFT JOIN (
+	SELECT EE2.id_element as id_element, EE2.id_element_owner as id_element_root, E2.modulename as modulename_root, EE2.linkName as linkName_root
+	FROM `$(vWigiiDb)`.Elements_Elements AS EE2 
+	INNER JOIN (
+		SELECT EE.id_element as id_element, min(EE.id_elements_elements) as id_elements_elements 
+		FROM `$(vWigiiDb)`.Elements_Elements AS EE 
+		WHERE EE.linkType = 'subitem' 
+		GROUP BY EE.id_element
+		) AS rootLink ON rootLink.id_elements_elements = EE2.id_elements_elements
+	INNER JOIN `$(vWigiiDb)`.Elements E2 ON E2.id_element = EE2.id_element_owner
+	) AS subE ON subE.id_element = E3.id_element AND E3.id_element_parent IS NOT NULL
+LEFT JOIN `$(vWigiiDb)`.Elements AS EParent ON EParent.id_element = E3.id_element_parent
+WHERE E3.sys_date > $(vLastUpdate);
+
+
+
+//complete with unchanged data
+/*IF $(vLastUpdate)>0 then
+	LOAD * FROM [Elements.qvd] (qvd) WHERE NOT EXISTS(`id_element`);
+ENDIF*/
+
+STORE [Elements] into Elements.qvd(qvd);
+
+//
+[Element Group pairing]:
+LOAD `id_element_group`,
+    `id_element` as `id_element_root`,
+    `id_group`;
+SQL SELECT *
+FROM `$(vWigiiDb)`.`Elements_Groups`;
+STORE [Element Group pairing] into Elements_Groups.qvd(qvd);
+//drop table [Element Group pairing];
+
+
+NoConcatenate [Elements2]:
+Load * Resident [Elements];
+Right Join LOAD
+	id_element_root,
+	id_group
+Resident [Element Group pairing];
+//add wigiiNamespace
+Left Join load
+	id_group,
+	groupWigiiNamespace as wigiiNamespace
+Resident Groups;
+
+drop field id_group from Elements2;
+
+//reduce [Elements to only one id_element/wigiinamespace pair]
+NoConcatenate [tempE]:
+LOAD Distinct *
+Resident [Elements2]
+order by id_element;
+DROP Table [Elements];
+DROP Table [Elements2];
+RENAME Table [tempE] to [Elements];
+
+///$tab Reduction
+
+
+//remove trashbin folders and sub groups
+
+if(isNull(vWildCardTrashbinFilter)) then
+	LET vWildCardTrashbinFilter = '*trashbin*';
+end if
+
+if(vWildCardTrashbinFilter <> False()) then
+	//lookup trashbin and folders in trashbin
+	NoConcatenate [trashGroups]:
+	LOAD id_group as idTrashGroup //, groupname
+	Resident [Groups]
+	Where 
+	//*** !! WARNING
+	//filter out any Group named *trashbin*
+	WildMatch(groupname, '$(vWildCardTrashbinFilter)')
+	;
+	//include all the children of those folders
+	Concatenate (trashGroups) load id_group as idTrashGroup
+	Resident Groups_Groups
+	where Exists(idTrashGroup, id_group_owner);
+
+ELSE
+	[trashGroups]:
+	LOAD * INLINE [
+	    idTrashbinFilter
+	    -1
+	];
+
+
+ENDIF
+
+//reduce Groups
+[tempGroups]:
+Left Keep LOAD *, RowNo() as Groups.counter
+Resident [Groups]
+Where exists(f.wigiiNamespace, groupWigiiNamespace) and Exists(f.modulename, groupModulename) 
+//remove any trash folders or folders in trash
+and not Exists(idTrashGroup, id_group);
+DROP Table [Groups];
+RENAME Table [tempGroups] to [Groups];
+	
+//reduce Element Group paring
+[tempElementGroupPairing]:
+Left Keep LOAD *
+Resident [Element Group pairing]
+Where exists(id_group);
+DROP Table [Element Group pairing];
+RENAME Table [tempElementGroupPairing] to [Element Group pairing];
+
+//reduce Elements
+[tempElements]:
+Left Keep LOAD *, RowNo() as Elements.counter
+Resident [Elements]
+Where exists(id_element_root) and exists(f.wigiiNamespace, wigiiNamespace) and Exists(f.modulename, modulename) and (isNull(linkName) or not(WildMatch(linkName, '__deleted_*')) or linkName='');
+DROP Table [Elements];
+RENAME Table [tempElements] to [Elements];
+
+//Drop table [Elements];
+
+
+
+
+
+
+///$tab Namespace - Module Tables
+//**************************
+// Create one table per Namespace - Module
+//**************************
+
+NOConcatenate SQLTABLE:
+Load subfield(sql,'|',1) as wigiiNamespace,
+     subfield(sql,'|',2) as modulename,
+     subfield(sql,'|',3) as fieldname,
+     subfield(sql,'|',4) as datatype,
+     subfield(sql,'|',5) as column,
+     RowNo() as counter
+From [sql.qvd] (qvd);
+
+Let vFieldListLength=peek('counter',-1,'SQLTABLE');
+
+let vCrtNamespace = '';
+let vCrtModule = '';
+let vlastfield = '';
+//let valueLabel = '';
+//let forSqlTable = '';
+let p =1;
+let j =0;
+
+//Preparing the queries that will run on the wigii database
+//We fetch all the data even those pertaining to the deleted groups since they will  filtered out once 
+//left joined to the Elements table.
+
+let sqlquery = '';
+let sqlstart = 'select distinct el.id_element as `el.id_element`';
+let sqlfrom = 'From (select distinct 
+EL2.id_element as id_element,
+GR1.wigiiNamespace as wigiiNamespace,
+EL2.modulename as modulename
+
+FROM (select EL1.id_element as id_element,
+       EG1.id_group,
+       EL1.modulename as modulename
+
+FROM (SELECT E3.*, if(subE.id_element_root IS NULL,E3.id_element,subE.id_element_root) as id_element_root, subE.modulename_root, subE.linkName_root, 
+
+EParent.modulename as modulename_parent
+FROM `$(vWigiiDb)`.Elements AS E3 
+LEFT JOIN (
+	SELECT EE2.id_element as id_element, EE2.id_element_owner as id_element_root, E2.modulename as modulename_root, EE2.linkName as linkName_root
+	FROM `$(vWigiiDb)`.Elements_Elements AS EE2 
+	INNER JOIN (
+		SELECT EE.id_element as id_element, min(EE.id_elements_elements) as id_elements_elements 
+		FROM `$(vWigiiDb)`.Elements_Elements AS EE 
+		WHERE EE.linkType = '& chr(39) & 'subitem' & chr(39) & ' 
+		GROUP BY EE.id_element
+		) AS rootLink ON rootLink.id_elements_elements = EE2.id_elements_elements
+	INNER JOIN `$(vWigiiDb)`.Elements E2 ON E2.id_element = EE2.id_element_owner
+	) AS subE ON subE.id_element = E3.id_element AND E3.id_element_parent IS NOT NULL
+LEFT JOIN `$(vWigiiDb)`.Elements AS EParent ON EParent.id_element = E3.id_element_parent
+WHERE E3.sys_date >  $(vLastUpdate)) as EL1
+
+Right JOIN  
+(SELECT id_element as id_element_root,
+    id_group
+FROM `$(vWigiiDb)`.`Elements_Groups`) as EG1 on EG1.id_element_root = EL1.id_element_root) as EL2
+
+LEFT JOIN (SELECT id_group, wigiiNamespace 
+FROM `$(vWigiiDb)`.Groups
+/*where sys_date > $(vLastUpdate)*/) as GR1 on GR1.id_group = EL2.id_group';
+
+
+FOR i=1 TO $(vFieldListLength)
+	
+	//peek fieldname, and datatype
+	LET vWigiiNamespace = peek('wigiiNamespace', $(i)-1,'SQLTABLE');
+	LET vModule = peek('modulename', $(i)-1,'SQLTABLE');
+	LET vFieldname = peek('fieldname', $(i)-1,'SQLTABLE');
+	LET vDatatype = trim(peek('datatype', $(i)-1,'SQLTABLE'));
+        LET vcol = peek('column', $(i)-1,'SQLTABLE');
+        
+	if '$(vFieldname)' = 'Firstname' then
+        let vFieldname = 'firstName';
+        endif
+	if '$(vFieldname)' = 'Lastname' then
+        let vFieldname = 'lastName';
+        endif
+	
+	//New namespace and module -> create new table
+	if '$(vWigiiNamespace)' <> '$(vCrtNamespace)' or '$(vModule)' <> '$(vCrtModule)' then
+		//Save the last query pertaining to the previous WigiiNamespace/Module
+		let sqlquery$(p) = '$(sqlcol)' & chr(10) & chr(10) & '$(sqlq)'& ';';
+		
+		//store previous table
+		if '' <> '$(vCrtNamespace)' or  '' <> '$(vCrtModule)'  then
+
+			//Trace *ceci est un test*;
+
+			//let sqlquery$(p) = '$(sqlcol)' & chr(10) & chr(10) & '$(sqlq)'/*& ';'*/;
+			//loop through all the saved query and left join their results to the Elements table in order to 
+			// the complete [WigiiNamespace.Module] table 
+			For k=1 TO $(p)
+        		let vtable = '$(vlastfield)' & '$(k)';
+                        let vquery = '$(sqlquery$(k))';
+			[$(vtable)]:
+        		Left join 
+        		LOAD *;
+        		SQL
+        		//$(sqlquery$(k))
+			$(vquery);
+        		NEXT
+        		if ($(vLastUpdate)>0) then
+
+        		LOAD * FROM [$(vCrtNamespace).$(vCrtModule)].qvd (qvd) WHERE NOT EXISTS(`el.id_element`);
+
+        		end if
+
+			STORE [$(vCrtNamespace).$(vCrtModule)] into ./$(vCrtNamespace).$(vCrtModule).qvd;
+			//STORE [$(vCrtNamespace).$(vCrtModule)] into [$(vCrtNamespace).$(vCrtModule)].csv (txt);
+			DROP table [$(vCrtNamespace).$(vCrtModule)];
+
+		end if
+		
+		//prefix all the element subfield with el.
+		QUALIFY *;
+		NoConcatenate [el]:
+		LOAD * 
+		Resident [Elements]
+		WHERE wigiiNamespace = '$(vWigiiNamespace)' and modulename = '$(vModule)';
+		UNQUALIFY *;
+		//rename the table el to $(vWigiiNamespace).$(vModule)
+		rename Table [el] to [$(vWigiiNamespace).$(vModule)];
+                let j = 0;
+                let p = 1;
+		let sqlcol = '$(sqlstart)';
+                let sqlq = '$(sqlfrom)' & chr(10) & chr(10) & ' where GR1.wigiiNamespace = '& chr(39)&'$(vWigiiNamespace)'&chr(39)& ' and EL2.modulename = '&chr(39)&'$(vModule)'&chr(39)& ') as el';
+                //Trace '*helloa*';
+	end if
+        //Trace '*hellob*';
+	/*Handling the 61 left joins limit in the wigii database*/
+        if $(j) = 59 then
+        let j = 0;
+	//Saving the mysql query number p 
+        let sqlquery$(p) = '$(sqlcol)' & chr(10) & chr(10) & '$(sqlq)'& ';';
+	//initializing the query number p+1
+        let sqlcol = '$(sqlstart)';
+        let sqlq = '$(sqlfrom)' & chr(10) & chr(10) & ' where GR1.wigiiNamespace = '& chr(39)&'$(vWigiiNamespace)'&chr(39)& ' and EL2.modulename = '& chr(39)&'$(vModule)'&chr(39)& ') as el';
+        let p = $(p) + 1;
+	//Trace '*hellod*';
+        end if
+
+	/*Building the mysql query*/
+        let j = $(j) + 1;
+        //if ''<>'$(sqlcol)' then
+        let sqlcol = '$(sqlcol),' & chr(10) & chr(10);
+	//Trace '*helloc*';
+        //endif
+	// the display part of the query
+        let sqlcol = '$(sqlcol)' & ' $(vcol)';
+
+	// The conditions part of the query
+        let sqlq = '$(sqlq)' & chr(10) & chr(10) & ' Left join '& '`$(vWigiiDb)`.$(vDatatype)'& ' as `F$(vFieldname)'& Left('$(vDatatype)',3)&'` ';
+        let sqlq = '$(sqlq)' & ' on `F$(vFieldname)'& Left('$(vDatatype)',3)&'`.id_element = el.id_element and `F$(vFieldname)'& Left('$(vDatatype)',3)&'`.field = '& chr(39) & '$(vFieldname)'& chr(39);
+	// condition dropped to handle field updates
+        //let sqlq = '$(sqlq)' & ' and `F$(vFieldname)'& Left('$(vDatatype)',3)&'`.sys_date > $(vLastUpdate)';
+	
+
+
+	vCrtNamespace = '$(vWigiiNamespace)';
+	vCrtModule = '$(vModule)';
+        vlastfield = '$(vFieldname)';
+NEXT
+
+//store the last table
+if '' <> '$(vCrtNamespace)' or '' <> '$(vCrtModule)' then
+
+	let sqlquery$(p) = '$(sqlcol)' & chr(10) & chr(10) & '$(sqlq)'/*& ';'*/;
+	For k=1 TO $(p)
+        let vtable = '$(vlastfield)' & '$(k)';
+	let vquery = '$(sqlquery$(k))';
+	[$(vtable)]:
+        Left join 
+        LOAD *;
+        SQL
+        $(vquery);
+        NEXT
+        if ($(vLastUpdate)>0) then
+
+        LOAD * FROM [$(vCrtNamespace).$(vCrtModule)].qvd (qvd) WHERE NOT EXISTS(`el.id_element`);
+
+        endif
+
+	STORE [$(vCrtNamespace).$(vCrtModule)] into ./$(vCrtNamespace).$(vCrtModule).qvd;
+	//STORE [$(vCrtNamespace).$(vCrtModule)] into [$(vCrtNamespace).$(vCrtModule)].csv (txt);
+	DROP table [$(vCrtNamespace).$(vCrtModule)];
+
+ENDIF
+
+
+
+
+
+///$tab Cleanup
+//cleanup of Wigii tables
+//Drop Tables Groups, Groups_Groups, Elements, [Element Group pairing], Addresses, Attributs, Blobs, Booleans, Dates, Emails, Files, Floats, Links, MultipleAttributs, Numerics, Strings, Texts, TimeRanges, Times, Urls, Varchars;
+Drop Tables Groups, Groups_Groups, Elements, [Element Group pairing];
+//cleanup of Field list
+//Drop Table [Field list];
+
+
+
+///$tab Exit
+
+//Groups, Elements, [Element Group pairing], 
+//Drop Tables Addresses, Attributs, Blobs, Booleans, Dates, Emails, Files, Floats, Links, MultipleAttributs, Numerics, Strings, Texts, TimeRanges, Times, Urls, Varchars;
+//drop Fields sys_user, sys_creationUser, sys_username, sys_creationUsername, sys_date, sys_creationDate;
+EXIT Script;
+
+

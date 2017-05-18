@@ -151,12 +151,12 @@ class ExportCSVFormExecutor extends ExportFormExecutor {
 		$this->getTrm()->displayRemainingForms("csvFormat");
 
 		//display the export format icons
-		?><div class="field" style="width:<?=$this->getTotalWidth();?>px;" ><?
+		?><div class="field" style="width: 100%; max-width:<?=$this->getTotalWidth();?>px;" ><?
 		$first = true; //we select by default the first option
 				$nbOptions = count($this->getRecord()->getFieldList()->getField("csvFormat")->getXml()->attribute);
 		foreach($this->getRecord()->getFieldList()->getField("csvFormat")->getXml()->attribute as $format){
 				$margin = ($this->getTotalWidth()-(20*$nbOptions)-($nbOptions*100))/($nbOptions+1);
-				?><div class="label <?=($first ? "S" : "");?>" style="cursor:pointer;width:100px;margin-left:<?=$margin;?>px;text-align:center;"<?
+				?><div class="label <?=($first ? "S" : "");?>" style="cursor:pointer;width: 100%; max-width:100px;margin-left:<?=$margin;?>px;text-align:center;"<?
 					?>onmouseover="showHelp(this, '<?=$transS->h($p, $format."IconHelp");?>');" <?
 					?>onmouseout="hideHelp();" <?
 					?>onclick="$('#<?=$this->getFormId();?>_csvFormat_value_select').val('<?=$format;?>'); $(this).parent().find('.S').removeClass('S');$(this).addClass('S');" <?

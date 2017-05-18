@@ -24,6 +24,7 @@
 /**
  * Fetches an existing element and pushes it into a data flow
  * Created by CWE on 28 janvier 2014
+ * Modified by Medair (CWE) on 28.04.2017 to attach stamped ElementInfo on fetch 
  */
 class ElementPDataFlowConnector implements DataFlowDumpable
 {
@@ -38,7 +39,8 @@ class ElementPDataFlowConnector implements DataFlowDumpable
 	}	
 	public function freeMemory() {
 		unset($this->eltId);
-		unset($this->configSel);		
+		unset($this->configSel);
+		unset($this->authoSStamp);
 		$this->lockedForUse = false;	
 	}
 		
@@ -94,6 +96,26 @@ class ElementPDataFlowConnector implements DataFlowDumpable
 			$this->wigiiNamespaceAS = ServiceProvider::getWigiiNamespaceAdminService();
 		}
 		return $this->wigiiNamespaceAS;
+	}
+	
+	private $authoS;
+	public function setAuthorizationService($authorizationService)
+	{
+	    $this->authoS = $authorizationService;
+	}
+	protected function getAuthorizationService()
+	{
+	    // autowired
+	    if(!isset($this->authoS))
+	    {
+	        $this->authoS = ServiceProvider::getAuthorizationService();
+	    }
+	    return $this->authoS;
+	}
+	
+	private $authoSStamp;
+	public function setAuthorizationServiceStamp($stamp) {
+	    $this->authoSStamp = $stamp;
 	}
 	
 	// Configuration
@@ -175,6 +197,8 @@ class ElementPDataFlowConnector implements DataFlowDumpable
 		$element = $this->createElementInstance();
 		$element->setId($this->eltId);		
 		$element = $eltS->fillElement($principal, $element, $this->fieldSelectorList);
+		// extracts element info and stamps it
+		if(isset($element) && $this->getAuthorizationService()->getStamp($this, "setAuthorizationServiceStamp")) $element->computeElementInfo($principal,null,$this->authoSStamp);
 		// sets dataflow context
 		$dataFlowContext->setAttribute('GroupBasedWigiiApiClient', $apiClient, true);
 		if(isset($this->fieldSelectorList))$dataFlowContext->setAttribute('FieldSelectorList', $this->fieldSelectorList);

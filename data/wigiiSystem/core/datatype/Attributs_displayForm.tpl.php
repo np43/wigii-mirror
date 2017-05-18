@@ -35,9 +35,9 @@ $fieldXml = $field->getXml();
 //defining width if existant
 if($parentWidth != null){
 	if($fieldXml["flex"]=="1"){
-		$valueWidth = " width:".($parentWidth-6)."px; ";  //select we don't need to make it smaller
+		$valueWidth = " width: 100%; max-width:".($parentWidth-6)."px; ";  //select we don't need to make it smaller
 	} else {
-		$valueWidth = " width:".($parentWidth-1)."px; ";  //select we don't need to make it smaller
+		$valueWidth = " width: 100%; max-width:".($parentWidth-1)."px; ";  //select we don't need to make it smaller
 	}
 }
 
@@ -79,7 +79,7 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 		//the radioButton is before the text of the option
 		//the width of the checkbox is valueWidth / useMultipleColumn if defined
 		if($useMultipleColumn>0){
-			$this->put('<div style="float:left; width:'.(($parentWidth-5)/$useMultipleColumn).'px;" >');
+			$this->put('<div style="float:left; width: 100%; max-width:'.(($parentWidth-5)/$useMultipleColumn).'px;" >');
 		}
 		$inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.str_replace(" ", "_", (string)$attribute).'_'.($inputType==null?$inputNode:$inputType);
 
@@ -110,7 +110,7 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 			}
 			if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
 			else $labelWidth = ($parentWidth-30);									
-			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;width:'.$labelWidth.'px;">'.$label.'</div></label>');			
+			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;width: 100%; max-width:'.$labelWidth.'px;">'.$label.'</div></label>');
 		}
 		if($useMultipleColumn>0){
 			$this->put('</div>');

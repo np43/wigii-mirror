@@ -26,6 +26,7 @@
  * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 6 décembre 2013
  * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
+ * Modified by Medair (CWE) on 28.04.2017 to attach stamped ElementInfo on fetch
  */
 class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 {			
@@ -55,6 +56,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 		unset($this->object2ElementMappingMethod);
 		unset($this->object2ElementMap);
 		unset($this->fieldMappingMethod);
+		unset($this->authoSStamp);
 		$this->nElements = 0;	
 	}
 	
@@ -125,6 +127,26 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 			$this->wigiiNamespaceAS = ServiceProvider::getWigiiNamespaceAdminService();
 		}
 		return $this->wigiiNamespaceAS;
+	}
+	
+	private $authoS;
+	public function setAuthorizationService($authorizationService)
+	{
+	    $this->authoS = $authorizationService;
+	}
+	protected function getAuthorizationService()
+	{
+	    // autowired
+	    if(!isset($this->authoS))
+	    {
+	        $this->authoS = ServiceProvider::getAuthorizationService();
+	    }
+	    return $this->authoS;
+	}
+	
+	private $authoSStamp;
+	public function setAuthorizationServiceStamp($stamp) {
+	    $this->authoSStamp = $stamp;
 	}
 	
 	// configuration
@@ -704,6 +726,10 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	// ElementPList implementation		
 	
 	public function addElementP($elementP) {
+	    // extracts element info and stamps it
+	    if(!$this->authoSStamp) $this->getAuthorizationService()->getStamp($this, "setAuthorizationServiceStamp");
+	    if($this->authoSStamp) $elementP->computeElementInfo($this->dataFlowContext->getPrincipal(),null,$this->authoSStamp);
+	    
 		// maps the element to the object
 		// using the closure if defined
 		if(isset($this->object2ElementMappingMethod)) $this->object2ElementMappingMethod->invoke($this->data, $elementP, $this->dataFlowContext);   

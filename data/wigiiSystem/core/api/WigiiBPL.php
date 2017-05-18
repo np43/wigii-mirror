@@ -1466,7 +1466,10 @@ class WigiiBPL
 			$oldElement = $this->getWigiiExecutor()->createElementForForm($principal, $element->getModule(), $element->getId());
 			$oldElement = $elS->fillElement($principal, $oldElement,$fslForUpdate);
 			if(!isset($oldElement)) throw new WigiiBPLException('Element with ID '.$element->getId().' is not accessible to user '.$principal->getRealUsername().' or Element does not exist in database', WigiiBPLException::INVALID_PARAMETER);
-			$oldElement=$oldElement->getDbEntity();			
+			$isBlocked = $oldElement->isParentElementState_blocked();
+			$oldElement=$oldElement->getDbEntity();
+			// Prevents updating a File of a blocked element
+			if($isBlocked || $oldElement->isState_blocked()) throw new WigiiBPLException('Element with ID '.$element->getId().' is blocked and cannot be updated.', WigiiBPLException::NOT_ALLOWED);
 			// moves temp file to wigii bag if needed
 			$storeFileInWigiiBag = ($this->getConfigService()->getParameter ($principal, null, "storeFileContentIntoDatabase" ) == "1");
 			if($storeFileInWigiiBag) $fe->moveTempFileToWigiiBag($element, $field);

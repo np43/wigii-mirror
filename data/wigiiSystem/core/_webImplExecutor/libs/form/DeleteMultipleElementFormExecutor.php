@@ -21,9 +21,11 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 18 sept. 13
- * by LWR
+/**
+ * Created on 18 sept. 13 by LWR
+ * Modified by Medair (CWE) on 15.05.2017 : 
+ * - to not delete shared images in CKEditor 
+ * - condition the delete of elements based on a logical expression defined in Element_beforeDeleteExp
  */
 class DeleteMultipleElementFormExecutor extends DeleteElementFormExecutor {
 
@@ -115,6 +117,114 @@ class DeleteMultipleElementFormExecutor extends DeleteElementFormExecutor {
 		return $finalGroupPList;
 	}
 
+	protected function setState($state){
+	    if($state == 'confirmPartialDeletion' || 
+	        $state == 'partialDeletionConfirmed') {
+	       $this->executionSink()->log("set state from: ".$this->state." to ".$state);
+	       
+	       if($state == 'confirmPartialDeletion') $this->addStateError(); //this state cannot allow to end the loop	 
+	       
+	       $this->state = $state;
+	    }
+	    else parent::setState($state);	   
+	}
+	protected function goToNextState(){	    
+	    switch($this->getState()){
+	        case "confirmPartialDeletion": $this->setState("partialDeletionConfirmed"); break;
+	        case "partialDeletionConfirmed": $this->setState("check"); break;	      
+	        default: parent::goToNextState();
+	    }
+	    return $this->getState();
+	}
+	protected function doSpecificCheck($p, $exec){
+	    if(!$this->hasError()){
+	        // checks if a deletion is conditioned by an Element_beforeDeleteExp
+	        $this->beforeDeleteExpResult = null;
+	        $configS = $this->getWigiiExecutor()->getConfigurationContext();
+	        $beforeDeleteExp = (string)$configS->getParameter($p, $exec->getCrtModule(), "Element_beforeDeleteExp");
+	        $beforeDeleteExp = $this->evaluateBeforeDeleteExp($p, $exec, $beforeDeleteExp);
+	        if(!$beforeDeleteExp->okToDelete) {
+	            $this->beforeDeleteExpResult = $beforeDeleteExp;
+	            // if all elements are blocked, then shows error message
+	            if($this->getElementPAList()->count() == 0) $this->addStateError();
+	            // else if partially blocked, then asks for partial deletion
+	            elseif($this->getState()=='check') $this->setState('confirmPartialDeletion');
+	        }
+	        if($this->getState()=='partialDeletionConfirmed') $this->goToNextState();
+	    }	    
+	    // calls parent checks
+	    parent::doSpecificCheck($p, $exec);
+	}
+	
+	/**
+	 * Evaluates the Element_beforeDeleteExp and returns an object authorizing or not the deletion and an optional error message.
+	 * @param Principal $p current principal running the deletion process
+	 * @param ExecutionService $exec current ExecutionService instance
+	 * @param String $beforeDeleteExp beforeDeleteExp FuncExp or 0 or 1.
+	 * @throws Exception in case of error
+	 * @return StdClass of the form {okToDelete: Boolean, message: String, nbBlockedElements: Integer}
+	 * nbBlockedElements: contains the number of elements which can not be deleted
+	 * The attached ElementPAList is filtered to keep only deletable elements.
+	 */
+	protected function evaluateBeforeDeleteExp($p,$exec,$beforeDeleteExp) {
+	    $transS = ServiceProvider::getTranslationService();
+	    $returnValue = null;
+	    
+	    // A new list of Elements for which deletion is allowed.
+	    $deletableElements = ElementPAdvancedListArrayImpl::createInstance();
+	    
+	    // null expression always resolves to true
+	    if($beforeDeleteExp == null) $returnValue = true;
+	    // else converts 0 to false
+	    elseif($beforeDeleteExp === '0') $returnValue = false;
+	    // and 1 to true
+	    elseif($beforeDeleteExp === '1') $returnValue = true;
+	    // else should be a FuncExp.
+	    else {
+	        // if the FuncExp has a syntax error or fails to execute, then deletion is blocked and exception message is added to standard message.
+	        try {
+	            $beforeDeleteExp = str2fx($beforeDeleteExp);
+	            // evaluates beforeDeleteExp against each selected elements
+	            $returnValue = (object)array('okToDelete'=>true,'message'=>null);
+	            foreach($this->getElementPAList()->getListIterator() as $elementP) {
+	                $singleResult = $this->getWigiiExecutor()->evaluateFuncExp($p, $exec, $beforeDeleteExp, $elementP->getDbEntity());
+	                $okToDelete = false;
+	                if($singleResult instanceof stdClass) {
+	                    $returnValue->okToDelete = $returnValue->okToDelete && $singleResult->okToDelete;
+	                    if(!$returnValue->message) $returnValue->message = $singleResult->message;
+	                    $okToDelete = $singleResult->okToDelete;
+	                }
+	                else {
+	                    $returnValue->okToDelete = $returnValue->okToDelete && $singleResult;
+	                    $okToDelete = $singleResult;
+	                }
+	                // if okToDelete then stores element in deletableElements PA List
+	                if($okToDelete) $deletableElements->addElementP($elementP);
+	            }
+	        }
+	        catch(Exception $e) {
+	            if($e instanceof ServiceException) $e = $e->getWigiiRootException();
+	            $returnValue = (object)array('okToDelete'=>false,'message'=>$e->getMessage().$transS->t($p, "elementCannotBeDeletedEvaluationError"));
+	        }
+	    }
+	    // returns the resolved expression
+	    if(!($returnValue instanceof stdClass)) {
+	        // if evaluates to true, then OK to delete.
+	        if($returnValue) $returnValue = (object)array('okToDelete'=>true,'message'=>null);
+	        // else KO to delete and adds a default message
+	        else $returnValue = (object)array('okToDelete'=>false,'message'=>$transS->t($p, "elementCannotBeDeletedExplanation"));
+	    }
+	    // adds default message if explanation is missing
+	    elseif(!$returnValue->okToDelete && !$returnValue->message) $returnValue->message = $transS->t($p, "elementCannotBeDeletedExplanation");
+	    
+	    // if some elements are not deletable, then replaces existing list of elements by filtered one.
+	    if(!$returnValue->okToDelete) {
+	        $returnValue->nbBlockedElements = $this->getElementPAList()->count() - $deletableElements->count();
+	        $this->setElementPAList($deletableElements);
+	    }
+	    return $returnValue;
+	}
+	
 	protected function actOnCheckedRecord($p, $exec) {
 		$elS = ServiceProvider::getElementService();
 		$groupAS = ServiceProvider::getGroupAdminService();
@@ -225,7 +335,7 @@ class DeleteMultipleElementFormExecutor extends DeleteElementFormExecutor {
 
 		$this->getWigiiExecutor()->unLockEntity($p, $exec, null, "elements", $elementPAList);
 
-		//remove any history files even if not in config
+		//remove any history files even if not in config		
 		foreach ($elementPAList->getListIterator() as $elementP) {
 			$element = $elementP->getElement();
 			if ($remainingElements != null && $remainingElements[$element->getId()] != null){
@@ -247,21 +357,22 @@ class DeleteMultipleElementFormExecutor extends DeleteElementFormExecutor {
 					if ($remainingElements != null && $remainingElements[$element->getId()] != null)
 						continue;
 					//eput("\ntodo: delete ".FILES_PATH.$element->getFieldValue($fieldName, "path"));
-					//for any file field we try to do the delete, no check on parameters
-					//delete any CLIENT_WEB_PATH."imageForHtmlEditor/*.*" which are not in the new text
 
 					if($fieldXml["type"] == "Files"){
-						//delete possible integrated files in online form
+					    /* Medair (CWE) 05.05.2017: do not delete anymore images in CKEditor to avoid loosing any shared images into other elements
 						$match = array();
 						preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $element->getFieldValue($fieldName, "textContent"), $match);
 						if($match && $match[0]) foreach($match[0] as $tempPath) @unlink($tempPath);
-
+                        */
+					    
 						if (isImage($element->getFieldValue($fieldName, "mime")) && (!@ unlink(FILES_PATH . "tn_" . $element->getFieldValue($fieldName, "path"))))
 							$this->executionSink()->log("Unable to delete the thumbnail:" . FILES_PATH . "tn_" . $element->getFieldValue($fieldName, "path"));
 						if (!@ unlink(FILES_PATH . $element->getFieldValue($fieldName, "path")))
 							$this->executionSink()->log("Unable to delete the upload file:" . FILES_PATH . $element->getFieldValue($fieldName, "path"));
 
-					} else if ($fieldXml["type"] == "Blobs"){
+					} 
+					/* Medair (CWE) 05.05.2017: do not delete anymore images in CKEditor to avoid loosing any shared images into other elements
+					else if ($fieldXml["type"] == "Blobs"){
 						$match = array();
 						preg_match_all("(".CLIENT_WEB_PATH."imageForHtmlEditor/[^/]*\.[a-zA-Z]*)", $element->getFieldValue($fieldName, "value"), $match);
 						if($match && $match[0]) foreach($match[0] as $tempPath) @unlink($tempPath);
@@ -277,11 +388,17 @@ class DeleteMultipleElementFormExecutor extends DeleteElementFormExecutor {
 							foreach($match as $key=>$mat) if($mat && $mat[0]) foreach($mat[0] as $tempPath) @unlink($tempPath);
 						}
 					}
+					*/
 				}
 			}
 		}
 	}
 
+	protected function getCancelJsCode($p, $exec, $state){
+	    $cancelJsCode = null;
+	    return $cancelJsCode;
+	}
+	
 	protected function isNotificationNeededForElement($p, $exec){
 		//if not throw a NotificationServiceException::NO_NOTIFICATION_NEEDED catched in doSpecificCheck
 		$this->getWigiiExecutor()->getNotificationService()->isNotificationNeededForMultipleElement($p, $exec->getCrtModule(), "delete");
@@ -324,11 +441,31 @@ class DeleteMultipleElementFormExecutor extends DeleteElementFormExecutor {
 		$this->getTrm()->openForm($this->getFormId(), $this->getSubmitUrl(), $this->getTotalWidth(), ($idAnswer=="mainDiv" ? false : $this->isDialog()));
 
 		$this->renderInForm($p, $exec, $state);
-
-		?><img src="<?=SITE_ROOT_forFileUrl."images/icones/tango/32x32/status/not-known.png";?>" style="float:left;margin:5px 15px 15px 15px;" /><?
-
-		echo '<span style="float:left;margin:15px 15px 15px 0px;">'. $transS->t($p, "areYouSureDeleteElements")."</span><br /><br />";
-
+		
+		// Medair (CWE) 15.05.2017: displays error message coming from Element_beforeDeleteExp if defined
+		if($state == 'confirmPartialDeletion') {
+		    echo '<div style="margin-top:15px;padding-left:45px;position:relative;">';
+		    ?><img src="<?=SITE_ROOT_forFileUrl."images/icones/tango/32x32/status/important.png";?>" style="left:0;position:absolute;margin-right:15px;margin-bottom:15px;" /><?
+		 
+		  if($this->beforeDeleteExpResult->nbBlockedElements>1) echo '<div><b>'.$this->beforeDeleteExpResult->nbBlockedElements.' '.$transS->t($p, "someElementsCannotBeDeleted").':</b><br/><br />';
+		  else echo '<div><b>'.$this->beforeDeleteExpResult->nbBlockedElements.' '.$transS->t($p, "oneElementCannotBeDeleted").':</b><br/><br />';		  
+		  
+		  echo $this->beforeDeleteExpResult->message."<br /><br /><br />";
+		  echo $transS->t($p, "areYouSureDeleteOtherSelectedElements")."</div></div><br /><br />";
+		}
+		elseif($this->hasError() && $this->beforeDeleteExpResult && !$this->beforeDeleteExpResult->okToDelete) {
+		    echo '<div style="margin-top:15px;padding-left:45px;position:relative;">';
+		    ?><img src="<?=SITE_ROOT_forFileUrl."images/icones/tango/32x32/emblems/emblem-unreadable.png";?>" style="left:0;position:absolute;margin-right:15px;margin-bottom:15px;" /><?
+		  
+		  if($this->getElementPAList()->count() > 1) echo '<div><b>'.$transS->t($p, "elementsCannotBeDeleted").':</b><br/><br />';
+		  else echo '<div><b>'.$transS->t($p, "elementCannotBeDeleted").':</b><br/><br />';
+		  echo $this->beforeDeleteExpResult->message."</div></div><br /><br />";
+		}
+		else {
+		  ?><img src="<?=SITE_ROOT_forFileUrl."images/icones/tango/32x32/status/not-known.png";?>" style="float:left;margin:5px 15px 15px 15px;" /><?
+		  echo '<span style="float:left;margin:15px 15px 15px 0px;">'. $transS->t($p, "areYouSureDeleteElements")."</span><br /><br />";
+		}				
+		
 		$this->getTrm()->displayRemainingForms();
 
 		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog(), $transS->t($p, "cancel"));

@@ -94,7 +94,7 @@ class ExternalAccessRequestFormExecutor extends FormExecutor {
 		$emailS->send($p, $email);
 
 		echo '<div class="public public'.str_replace(" ", "_", $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()).'" style="';
-		if($this->getTotalWidth()) echo ' width:'.$this->getTotalWidth().'px; ';
+		if($this->getTotalWidth()) echo ' width: 100%; max-width:'.$this->getTotalWidth().'px; ';
 		echo ' display:table; ';
 		echo ' margin-right:auto; margin-left:auto; padding:20px; background-color:#fff; ';
 		echo ' " >';
@@ -186,7 +186,7 @@ class ExternalAccessRequestFormExecutor extends FormExecutor {
 		$this->getTrm()->setState($this->getState());
 
 		echo '<div style="';
-		if($this->getTotalWidth()) echo ' width:'.$this->getTotalWidth().'px; ';
+		if($this->getTotalWidth()) echo ' width: 100%; max-width:'.$this->getTotalWidth().'px; ';
 		if($this->isDialog()) echo ' float:left; ';
 		echo ' margin-right:auto; margin-left:auto; padding:20px; background-color:#fff; ';
 		echo ' " >';

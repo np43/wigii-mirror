@@ -49,7 +49,7 @@ if($isNotExpanded){
 	$this->put(' display:none; ');
 }
 if($parentWidth != null){
-	$this->put(' width:'.($parentWidth-5).'px; float:left; ');
+	$this->put(' width: 100%; max-width:'.($parentWidth-5).'px; float:left; ');
 	if($fieldXml["isInLine"]=="1") $this->put(' clear:left; ');
 }
 $this->put('">');
@@ -65,9 +65,9 @@ foreach ($visibleLanguage as $idLang=>$languageLabel){
 	$tab .= "<div id='".$id."_value_".$idLang."' >";
 	//since jquery ui 1.10 no more need of this launchHtmlArea button
 	if(false && $fieldXml["htmlArea"]=="1" && $fieldXml["activateHtmlArea"]!="1") {
-		$tab .= '<div style="width:18px; height:18px; border: 1px solid #AAA; clear:both; padding:2px; background:#FFFFFF url('.SITE_ROOT_forFileUrl.'/assets/css/jHtmlArea_Toolbar_Group_BG.png) repeat-x scroll 0 0;"><div class="launchHtmlArea" style=" width:16px; height:16px; cursor:pointer; background:url('.SITE_ROOT_forFileUrl.'/assets/css/jHtmlArea.png) no-repeat scroll -16px -500px; background-position:-192px 0px;"></div></div>';
+		$tab .= '<div style="width: 100%; max-width:18px; height:18px; border: 1px solid #AAA; clear:both; padding:2px; background:#FFFFFF url('.SITE_ROOT_forFileUrl.'/assets/css/jHtmlArea_Toolbar_Group_BG.png) repeat-x scroll 0 0;"><div class="launchHtmlArea" style=" width: 100%; max-width:width:16px; height:16px; cursor:pointer; background:url('.SITE_ROOT_forFileUrl.'/assets/css/jHtmlArea.png) no-repeat scroll -16px -500px; background-position:-192px 0px;"></div></div>';
 	}
-	$tab .= "<div class='value' style='width:".($parentWidth)."px;'><textarea id='".$id."_value_".$idLang."_textarea' name='".$fieldName."_value[".$idLang."]' ";
+	$tab .= "<div class='value' style='width: 100%; max-width:".($parentWidth)."px;box-sizing: border-box;'><textarea id='".$id."_value_".$idLang."_textarea' name='".$fieldName."_value[".$idLang."]' ";
 	$tab .= ' class="';
 	if($readonly) $tab .= 'removeDisableOnSubmit ';
 	if($fieldXml["htmlArea"]=="1") $tab .= 'htmlArea ';
@@ -78,7 +78,7 @@ foreach ($visibleLanguage as $idLang=>$languageLabel){
 	if($fieldXml["height"]!=null) $this->put('difH ');
 	$tab .= '" ';
 	if($disabled || $readonly) $tab .=' disabled ';
-	$tab .=' style="width:'.($parentWidth-17).'px; max-height:'.$height.'px; overflow-y:auto; ';
+	$tab .=' style="width: 100%; max-width:'.($parentWidth-17).'px; max-height:'.$height.'px; overflow-y:auto;box-sizing: border-box;';
 	if($readonly || $disabled) $tab .='color:#a9a9a9; background-color:#E3E3E3;';
 	$tab .='" >';
 //	$tab .= str_replace('<', '&lt;', str_replace('>', '&gt;', $this->doFormatForHtmlText($val[$idLang])));

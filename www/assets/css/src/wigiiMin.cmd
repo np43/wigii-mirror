@@ -1,5 +1,5 @@
-SET /p V=Revision number: 
-cd C:\Users\Developer\Documents\Dev\Wigii-trunk\www\assets\css\src
+SET /p V=Revision number:
+cd C:\Users\hq0511lm\Documents\Dev\Wigii-trunk-new\www\assets\css\src
 
 del ..\wigii_%v%.css
 copy NUL ..\wigii_%v%.css

@@ -53,6 +53,9 @@ if($exec->getIdAnswer()!='groupPanel' && $exec->getIsUpdating()){ //!$exec->getI
 	$trashbinID = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
 	if(empty($trashbinID)) $trashbinID = null;
 	
+	// gets Element_beforeDeleteExp
+	$beforeDeleteExp = (string)$configS->getParameter($p, $exec->getCrtModule(), 'Element_beforeDeleteExp');
+	
 	/**
 	 * group panel context menu
 	 */
@@ -71,7 +74,8 @@ if($exec->getIdAnswer()!='groupPanel' && $exec->getIsUpdating()){ //!$exec->getI
 		// empty group is possible only if there is a trashbin until proper recursive deletion of files is coded (ticket 12796)
 		// empty group is possible as soon as write right are on folder (in that case, deletes only content and not subfolders)
 		// if enableDeleteOnlyForAdmin then empty group is possible only for admin
-		if($trashbinID) {
+		// if Element_beforeDeleteExp is defined in configuration, then empty group is not authorized, except if explicitely set to 1
+		if($trashbinID && ($beforeDeleteExp==null || $beforeDeleteExp==='1')) {
 		?><div id="cm_emptyGroup" class="<?=($configS->getParameter($p, $exec->getCrtModule(), 'enableDeleteOnlyForAdmin')=='1'?'admin':'write')?> H fB"><?=$transS->t($p, "cm_emptyGroup");?>...</div><?
 		}
 		?><div id="cm_deleteGroup" class="admin H fB <?=$protectLevel1;?>"><?=$transS->t($p, "cm_deleteGroup");?>...</div><?

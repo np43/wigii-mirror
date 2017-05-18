@@ -1,3 +1,7 @@
+public form * {
+	box-sizing: border-box;
+}
+
 form div.field div.label {
 	padding-top:7px;
 }
@@ -48,7 +52,22 @@ form select.filled + span.select2 {
 	margin-right: 10px;
 }
 
+@media screen and (min-width: 0px) and (max-width: 800px) {
+	.hidden-small{
+		width: 0px;
+		display: none;
+	}
+}
 
+#addSubscription_form_captcha div.label {
+	max-width: 250px !important;
+}
+
+/*
+form input.hasDatepicker {
+	width: 100% !important;
+}
+*/
 
 
 

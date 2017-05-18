@@ -108,7 +108,7 @@ if($exec->getIdAnswer()!="workZone"){
 		}
 	}
 
-	?><div id="Container<?=Module::HOME_MODULE;?>" style="padding-left:50px;padding-right:50px;width:<?=($homePageNbColumn*110)+10;?>px;"><?
+	?><div id="Container<?=Module::HOME_MODULE;?>" style="padding-left:50px;padding-right:50px;width: 100%; max-width:<?=($homePageNbColumn*110)+10;?>px;"><?
 		$title = $transS->t($p, "homePageTitle".$defaultWigiiNamespace);
 		if($title == "homePageTitle".$defaultWigiiNamespace) $title = $transS->t($p, "homePageTitle");
 		$introduction = $transS->t($p, "homePageIntroduction".$defaultWigiiNamespace);

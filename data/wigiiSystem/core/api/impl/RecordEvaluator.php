@@ -683,6 +683,22 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 
 	/**
+	 * Returns the translation of the label of a field as defined in the configuration file
+	 * FuncExp signature : <code>txtLabel(fs)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fs : FieldSelector. A given field in the Record.
+	 * @return String the translated label of the field
+	 */
+	public function txtLabel($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1 || !($args[0] instanceof FieldSelector)) throw new RecordException('txtLabel takes one argument which a FieldSelector pointing to a valid Field in the Record', RecordException::INVALID_ARGUMENT);
+	    $field = $this->getRecord();
+	    if(!$field) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
+	    $field = $field->getFieldList()->getField($args[0]->getFieldName());
+	    return ServiceProvider::getTranslationService()->t($this->getPrincipal(), $field->getFieldName(),$field->getXml());
+	}
+	
+	/**
 	 * Returns the first argument which is not null,
 	 * returns null if no arg or all are null
 	 */
@@ -1400,6 +1416,76 @@ class RecordEvaluator implements FuncExpEvaluator
 			}		
 		}
 		return $returnValue;
+	}
+	
+	/**
+	 * An expression compatible with the Element_beforeDeleteExp parameter. 
+	 * By default blocks any deletion of elements by displaying a custom message, except if a given expression evaluates to true. 
+	 * FuncExp signature : <code>ctlAuthorizeDeletion(exp,msg)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) exp: FuncExp|LogExp. A Functional Expression which should evaluate to a boolean or a Logical Expression evaluated against the Record candidate to be deleted.
+	 * If expression returns true, then deletion is possible, else deletion is blocked and msg is displayed to end user.
+	 * - Arg(1) msg: String. The message displayed to the user if deletion is blocked.
+	 * @return stdClass returns a StdClass of the form {okToDelete:true|false,message:msg} compatible with the Element_beforeDeleteExp parameter
+	 */
+	public function ctlAuthorizeDeletion($args) {
+	    $nArgs=$this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new FuncExpEvalException('ctlAuthorizeDeletion takes at least two arguments which are the expression to authorize deletion and the custom message displayed if deletion is blocked.', FuncExpEvalException::INVALID_ARGUMENT);
+	    // Checks if element can be deleted
+	    $okToDelete = $this->evaluateArg($args[0]);
+	    // if expression is an instance of LogExp then evaluates it against the Record
+	    if($okToDelete instanceof LogExp) {
+	        $okToDelete = TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($this->getRecord(), $okToDelete);
+	    }
+	    // if not Ok to delete, then displays custom message
+	    if(!$okToDelete) $returnValue = (object)array("okToDelete"=>false,"message"=>$this->evaluateArg($args[1]));	    
+	    else $returnValue = (object)array("okToDelete"=>true,"message"=>null);
+	    return $returnValue;
+	}
+	
+	/**
+	 * An expression compatible with the Element_beforeDeleteExp parameter.
+	 * By default, if user has write access, allows any deletion of elements, except if one of the specified expression evaluates positively.
+	 * In that case, displays the associated prevention message to the user.
+	 * FuncExp signature : <code>ctlPreventDeletion(exp1,msg1,exp2,msg2,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0,2,...,2n) exp: FuncExp|LogExp. A Functional Expression which should evaluate to a boolean or a Logical Expression evaluated against the Record candidate to be deleted.
+	 * If one expression returns true, then deletion is blocked and associated message is displayed to end user, if all expressions are false, then deletion is possible.
+	 * - Arg(1,3,...2n+1) msg: String. The message displayed to the user if deletion is blocked.
+	 * @return stdClass returns a StdClass of the form {okToDelete:true|false,message:msg} compatible with the Element_beforeDeleteExp parameter
+	 */
+	public function ctlPreventDeletion($args) {
+	    $nArgs=$this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new FuncExpEvalException('ctlPreventDeletion takes at least two arguments which are the expression to block deletion and the custom message displayed as an explanation.', FuncExpEvalException::INVALID_ARGUMENT);
+	    // Checks if deletion should be blocked 
+	    $koToDelete = $this->evaluateArg($args[0]);
+	    // if expression is an instance of LogExp then evaluates it against the Record
+	    if($koToDelete instanceof LogExp) {
+	        $koToDelete = TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($this->getRecord(), $koToDelete);
+	    }
+	    // Deletion is blocked, show explanation
+	    if($koToDelete) {
+	        return (object)array("okToDelete"=>false,"message"=>$this->evaluateArg($args[1]));
+	    }
+	    // Checks other expressions
+	    $i = 2;
+	    while($i < $nArgs) {
+	        $koToDelete = $this->evaluateArg($args[$i]);
+	        // if expression is an instance of LogExp then evaluates it against the Record
+	        if($koToDelete instanceof LogExp) {
+	            $koToDelete = TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($this->getRecord(), $koToDelete);
+	        }
+	        // Deletion is blocked, show explanation
+	        if($koToDelete) {
+	            $i++;
+	            if($i < $nArgs) return (object)array("okToDelete"=>false,"message"=>$this->evaluateArg($args[$i]));
+	            else return (object)array("okToDelete"=>false,"message"=>null);
+	        }
+	        // else moves to next expression
+	        else $i+=2;	        
+	    }
+	    // no blocking expression, ok to delete.
+	    return (object)array("okToDelete"=>true,"message"=>null);
 	}
 	
 	/**

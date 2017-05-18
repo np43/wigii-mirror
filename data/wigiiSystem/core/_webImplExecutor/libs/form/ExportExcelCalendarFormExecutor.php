@@ -157,12 +157,12 @@ class ExportExcelCalendarFormExecutor extends ExportFormExecutor {
 		$this->getTrm()->displayRemainingForms("excelCalendarTemplate");
 
 		//display the export format icons
-		?><div class="field" style="width:<?=$this->getTotalWidth();?>px;" ><?
+		?><div class="field" style="width: 100%; max-width:<?=$this->getTotalWidth();?>px;" ><?
 		$first = true; //we select by default the first option
 		$nbOptions = count($this->getRecord()->getFieldList()->getField("excelCalendarTemplate")->getXml()->attribute);
 		foreach($this->getRecord()->getFieldList()->getField("excelCalendarTemplate")->getXml()->attribute as $format){
 				$margin = ($this->getTotalWidth()-5-($nbOptions*100))/($nbOptions+1);
-				?><div class="label <?=($first ? "S" : "");?>" style="cursor:pointer;width:100px;margin-left:<?=$margin;?>px;text-align:center;"<?
+				?><div class="label <?=($first ? "S" : "");?>" style="cursor:pointer;width: 100%; max-width:100px;margin-left:<?=$margin;?>px;text-align:center;"<?
 					?>onmouseover="showHelp(this, '<?=$transS->h($p, $format."IconHelp");?>');" <?
 					?>onmouseout="hideHelp();" <?
 					?>onclick="$('#<?=$this->getFormId();?>_excelCalendarTemplate_value_select').val('<?=$format;?>'); $(this).parent().find('.S').removeClass('S');$(this).addClass('S');" <?

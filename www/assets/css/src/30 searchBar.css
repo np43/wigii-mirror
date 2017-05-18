@@ -18,7 +18,8 @@
 	padding:2px;
 	padding-right:0px;
 	border-right-width:0px;
-	width:403px;
+	width: 100%;
+	max-width:403px;
 	margin:0px;
 	float:left;
 }

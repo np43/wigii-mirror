@@ -233,7 +233,7 @@ class EditElementFormExecutor extends FormExecutor {
 		//disable the cache of the element --> to realod change on next request
 		$exec->invalidCache($p, 'elementDialog', "selectElementDetail",  "element/detail/".$this->getRecord()->getId());
 		if(!$this->getRecord()->isSubElement()){
-			$this->getListContext()->setCrtSelecteditem($this->getRecord()->getId());
+		    $this->getListContext()->setCrtSelectedItem($this->getRecord()->getId());
 		}
 		//No more reorder after change, this is peinful for the user! $this->getListContext()->setSortedBy("sys_date", false);
 
@@ -602,7 +602,7 @@ class EditElementFormExecutor extends FormExecutor {
 			//disable the cache of the element --> to reload change on next request
 			$cancelJsCode .= $exec->getInvalidCacheJsCode($p, 'elementDialog', "selectElementDetail",  "element/detail/".$this->getRecord()->getId());
 			if(!$isSubElement && isset($elementListContext)){
-				$elementListContext->setCrtSelecteditem($this->getRecord()->getId());
+			    $elementListContext->setCrtSelectedItem($this->getRecord()->getId());
 			}
 
 			if($exec->getIdAnswer()!="mainDiv"){

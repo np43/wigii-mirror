@@ -51,7 +51,7 @@ if($this->isForNotification()){
 	$this->put('<div id="'.$id.'_tabs" class="multilanguage" style="');
 
 	if($parentWidth != null){
-		$this->put(' width:'.$parentWidth.'px; float:left; ');
+		$this->put(' width: 100%; max-width:'.$parentWidth.'px; float:left; ');
 		if($fieldXml["isInLine"]=="1") $this->put(' clear:left; ');
 	}
 	$this->put('">');
@@ -67,7 +67,7 @@ if($this->isForNotification()){
 		} else {
 			$tempVal = $val[$idLang];
 		}
-		$tab .= "<div class='value' style='padding-top:5px;width:".($parentWidth-12)."px;' >".$tempVal."</div>";
+		$tab .= "<div class='value' style='padding-top:5px;width: 100%; max-width:".($parentWidth-12)."px;' >".$tempVal."</div>";
 		$tab .= "</div>";
 		$texts[] = $tab;
 	}

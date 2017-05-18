@@ -114,7 +114,7 @@ class LoginFormExecutor extends FormExecutor {
 
 		if($roleList->isEmpty() && $p->getModuleAccess()==null) {
 			//if no role, then login failed
-			echo '<div class="fieldError" style="width:'.((int)$this->getFormRenderer()->getTotalWidth()).'px;">'.$transS->t($p, "noModuleAccessDefined").'</div><div class="clear"></div>';
+			echo '<div class="fieldError" style="width: 100%; max-width:'.((int)$this->getFormRenderer()->getTotalWidth()).'px;">'.$transS->t($p, "noModuleAccessDefined").'</div><div class="clear"></div>';
 			$this->addStateError();
 			$authS->logout();
 			$p = $authS->getMainPrincipal();
@@ -210,15 +210,20 @@ class LoginFormExecutor extends FormExecutor {
 				$exec->addJsCode("" .
 					"$('#loginForm #login_form__username').after($('#loginForm #login_form__stayConnected'));" .
 					"$('#login_form__stayConnected .value').width(30).after($('#login_form__stayConnected .label'));" .
-					"$('#loginForm #login_form__stayConnected').width('auto').find('.label').width('auto');" .
 					"$('#loginForm #login_form__password').css('clear','left').after($('#loginForm button'));" .
 					"$('#loginForm button').css('float','left');" .
 					"$('#loginForm div.publicFormBorder').remove();" .
+                    "$('#login_form__username').css('width', '". $this->getTotalWidth(). "');".
+                    "$('#login_form__username').css('max-width', '');".
+                    "$('#login_form__password').css('width', '". $this->getTotalWidth(). "');".
+                    "$('#login_form__password').css('max-width', '');".
+                    "$('#login_form__stayConnected').css('width', '". ($this->getTotalWidth()-300). "');".
+                    "$('#login_form__stayConnected').css('max-width', '');".
 					"");
 			} else {
 				$exec->addJsCode("" .
 					"$('#loginForm').width('100%');" .
-					"$('#login_form').width(".$this->getTotalWidth().");" .
+					"$('#login_form').css('max-width', '".$this->getTotalWidth()."');" .
 					//CWE 03.02.2016: keep errors in red instead of rCompanyColor "$('#loginForm .label, #loginForm a, #loginForm .fieldError').css('color', '$rCompanyColor');" .
 					"$('#loginForm .label, #loginForm a').css('color', '$rCompanyColor');" .
 					"$('#loginForm .fieldError').css('font-weight','bold').css('color','$rCompanyColor').css('border-width','2px').css('border-bottom-style','solid').css('border-color', 'red');" .

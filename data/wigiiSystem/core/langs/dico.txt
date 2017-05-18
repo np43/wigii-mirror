@@ -514,6 +514,7 @@ allElementsAvaible:All #elements#:Tous #elements:::::::::
 areYouSureDeleteFile:Are you sure you want to delete this file?:Etes-vous sûre de vouloir effacer ce fichier?:::::::::
 areYouSureDeleteElement:Are you sure you want to delete #thisElement#?:Etes-vous sûre de vouloir effacer #thisElement#?:::::::::
 areYouSureDeleteElements:Are you sure you want to delete these #-elements#?:Etes-vous sûre de vouloir effacer ces #-elements#?:::::::::
+areYouSureDeleteOtherSelectedElements:Are you sure you want to delete the other selected #-elements#?:Etes-vous sûre de vouloir effacer les autres #-elements# sélectionnés?:::::::::
 areYouSureDeleteGroup:Are you sure you want to delete the #-group#\::Etes-vous sûr de vouloir supprimer #group#\::::::::::
 areYouSureEmptyGroup:Are you sure you want to delete the content of the #-group#\::Etes-vous sûr de vouloir supprimer le contenu du #-group#\::::::::::
 areYouSureDeleteUser:Are you sure you want to delete this user?:Etes-vous sûr de vouloir supprimer cet utilisateur?:::::::::
@@ -722,6 +723,8 @@ deleteGroupOption:Please choose one option\::Veuillez séléctionner une option\
 groupDelete_help:Delete #group# and all content.:Supprime #group# et tout le contenu.:::::::::
 groupEmpty:Empty:Vider:::::::::
 groupEmpty_help:Delete #group# content.:Supprime tout le contenu du #-group#.:::::::::
+groupCannotBeDeleted:#TheGroup# is not empty and cannot be deleted:#TheGroup# n'est pas vide et ne peut pas être supprimé:::::::::
+groupCannotBeDeletedExplanation:Contained elements logical state prevents you deleting it. Please check the <b>Element_beforeDeleteExp</b> parameter into the module configuration.:L'état logique des éléments contenus empêche leur suppression. Veuillez vérifier le paramètre <b>Element_beforeDeleteExp</b> dans la configuration du module:::::::::
 groupDetail:#Group# properties:Propriétés #ofGroup#:::::::::
 groupEdit:Edit:Modifier:::::::::
 groupEdit_help:Edit #group# details:Modifie les détails du #-group#:::::::::
@@ -1191,6 +1194,12 @@ elementNotFound:#Element# is deleted:#Element# est effacé:::::::::
 elementNotFoundExplanation:#ThisElement# is no more available.:#ThisElement# n'est plus disponible.:::::::::
 elementUnreachable:Unreachable #thisElement#:Impossible d'atteindre #thisElement#:::::::::
 elementUnreachableExplanation:Contact your administrator to get access rights.:Veuillez contacter votre administrateur pour obtenir les droits d'accès.:::::::::
+elementCannotBeDeleted:#Element# cannot be deleted:#Element# ne peut pas être supprimé:::::::::
+elementsCannotBeDeleted:#ThoseElements# cannot be deleted:#ThoseElements# ne peuvent pas être supprimés:::::::::
+someElementsCannotBeDeleted:#-elements# cannot be deleted, because:#-elements# ne peuvent pas être supprimés, car:::::::::
+oneElementCannotBeDeleted:#-element# cannot be deleted:#-element# ne peut pas être supprimé:::::::::
+elementCannotBeDeletedExplanation:#Element# logical state prevents you deleting it. Please check the <b>Element_beforeDeleteExp</b> parameter into the module configuration.:L'état logique #ofElement# empêche sa suppression. Veuillez vérifier le paramètre <b>Element_beforeDeleteExp</b> dans la configuration du module:::::::::
+elementCannotBeDeletedEvaluationError:<br/>Please check the <b>Element_beforeDeleteExp</b> parameter into the module configuration.:<br/>Veuillez vérifier le paramètre <b>Element_beforeDeleteExp</b> dans la configuration du module:::::::::
 
 switchToRoleToFoundDocument:#Element# not found.:#Element# introuvable.:::::::
 switchToRoleToFoundDocumentExplanation:You may be able to find #thisElement# by switching to one of the following spaces.:Vous pourriez trouver #thisElement# en naviguant vers un de ces espaces.:::::::

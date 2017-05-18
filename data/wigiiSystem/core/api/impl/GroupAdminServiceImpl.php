@@ -1568,7 +1568,7 @@ order by G2.id_group_parent, G2.wigiiNamespace, G2.groupname";
 				if(isset($groupDetail)) {
 					$n = $this->getElementService()->countSelectedElementsInGroups($principal, 
 							lxInGR(lxEq(fs('id'), $groupId)),
-							lf(null, lxEq(fs_e('state_blocked'), true)));
+					    lf(fsl(fs_e('id')), lxEq(fs_e('state_blocked'), true)));
 					$groupDetail->setNumberOfBlockedElements($n);
 				}
 			}

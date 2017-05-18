@@ -442,7 +442,7 @@ a.H {
 .disabled,
 input:disabled, textarea:disabled, option:disabled, optgroup:disabled, select:disabled:disabled
 {
-  color:#<?=$goButton;?>; /* $disabled; */
+  color:#666; /* $disabled; */
   background-color:#<?=$disabled;?>; /* $disabled; */
   cursor:default;
 }

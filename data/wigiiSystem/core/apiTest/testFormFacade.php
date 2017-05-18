@@ -29,7 +29,7 @@
 
 ?>
 <div id='FormFacadegetElementForm' style='background-color:#ddd; display:none; '></div><div style='clear:both;'></div>
-<div id="FormFacadegetContactFormButton" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width:200px; text-align:center; padding:5px;">Get Contact form!</div>
+<div id="FormFacadegetContactFormButton" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width: 100%; max-width:200px; text-align:center; padding:5px;">Get Contact form!</div>
 <script type="text/javascript" >
 $('#FormFacadegetContactFormButton').click(function(){
 	update("FormFacadegetElementForm/E-library/Contacts/getElementForm");
@@ -39,7 +39,7 @@ $('#FormFacadegetContactFormButton').click(function(){
 
 ?>
 <div id='FormFacadegetElementForm2' style='background-color:#ddd; display:none; '></div><div style='clear:both;'></div>
-<div id="FormFacadegetContactFormButton2" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width:200px; text-align:center; padding:5px;">Change Blobs</div>
+<div id="FormFacadegetContactFormButton2" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width: 100%; max-width:200px; text-align:center; padding:5px;">Change Blobs</div>
 <script type="text/javascript" >
 $('#FormFacadegetContactFormButton2').click(function(){
 	update("FormFacadegetElementForm2/E-library/Contacts/changeBlobs/100122");
@@ -49,7 +49,7 @@ $('#FormFacadegetContactFormButton2').click(function(){
 
 ?>
 <div id='FormFacadegetLoginForm' style='background-color:#ddd; display:none; '></div><div style='clear:both;'></div>
-<div id="FormFacadegetLoginFormButton" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width:200px; text-align:center; padding:5px;">Login in!</div>
+<div id="FormFacadegetLoginFormButton" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width: 100%; max-width:200px; text-align:center; padding:5px;">Login in!</div>
 <script type="text/javascript" >
 $('#FormFacadegetLoginFormButton').click(function(){
 	update("FormFacadegetLoginForm/E-library/Filemanager/getLoginForm");
@@ -58,7 +58,7 @@ $('#FormFacadegetLoginFormButton').click(function(){
 <?
 
 ?>
-<div id="FormFacadegetMainPrincipal" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width:200px; text-align:center; padding:5px;">Get Actual Main Principal</div>
+<div id="FormFacadegetMainPrincipal" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width: 100%; max-width:200px; text-align:center; padding:5px;">Get Actual Main Principal</div>
 <script type="text/javascript" >
 $('#FormFacadegetMainPrincipal').click(function(){
 	update("Alert/E-library/Filemanager/getMainPrincipal");

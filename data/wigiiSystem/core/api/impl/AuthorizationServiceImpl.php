@@ -25,6 +25,7 @@
  * Wigii AuthorizationService implementation
  * Created by CWE on 9 août 09
  * Modified by CWE on 23.09.2014 to add stamping support.
+ * Modified by Medair (CWE) on 28.04.2017 to activate stamping on standard DataFlow sources
  */
 class AuthorizationServiceImpl implements AuthorizationService
 {
@@ -525,10 +526,16 @@ class AuthorizationServiceImpl implements AuthorizationService
 	 * Checks if the given class is authorized to get stamps.
 	 * @param String $className the class name to check for authorization
 	 * @return boolean returns true if authorized, else false.
-	 * By default, no classes can get stamps.
 	 */
 	protected function isClassAuthorizedToGetStamp($className) {
-		return false;
+	    switch($className) {
+	        case "ElementPListDataFlowConnector":
+	        case "ElementPDataFlowConnector":
+	        case "MapObject2ElementDFA":
+	           return true; 
+	           break;
+	        default: return false;
+	    }		
 	}
 	
 	protected function createStamp($id, $microTime) {

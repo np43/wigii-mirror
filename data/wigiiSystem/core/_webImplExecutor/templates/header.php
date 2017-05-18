@@ -73,7 +73,7 @@ if($exec->getCrtAction()=="element"){
 }
 ?></title>
 <base href="<? echo SITE_ROOT; ?>" />
-<meta name="Copyright" content="Source Code: 2016 Wigii.org" />
+<meta name="Copyright" content="Source Code: 2017 Wigii.org" />
 <meta name="License" content="GNU GPL 3.0" />
 <meta name="Generator" content="Wigii-system" />
 <meta name="Description" content="Wigii is a web based system allowing management of any kind of data (contact, document, calendar, and any custom types). Find out documentation on http://www.wigii-system.net" />
@@ -82,6 +82,11 @@ if(defined("PREVENT_INDEXING") && PREVENT_INDEXING){
 ?>
 <meta name="robots" content="noindex" />
 <?
+}
+if($this->shouldBeResponsive($exec->getCrtAction())) {
+    echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1,maximum-scale=1, user-scalable=yes\">";
+}else{
+    echo "<meta name=\"viewport\" content=\"height=device-height, width=800px, initial-scale=1,maximum-scale=1, user-scalable=yes\">";
 }
 ?>
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
@@ -321,11 +326,13 @@ $.cookie('wigii_anchor', crtHash,  { path: '/' });
 });
 <?
 //Incompatible browser are alerted only the first time
+/*
 if($exec->getBrowserName()==null){
 ?>
 if((browserName == "msie" && version < 7.0) ||(browserName == "mozilla" && version < 1.8)||(browserName == "safari" && version < 522.1)){
 alert('Unsupported browser, please upgrade to a recent browser.\n\nThe system may not work properly.\n\nWe advise you to upgrade to the latest Firefox browser: http://www.mozilla.org/firefox/\n\nTo find out what is your navigator name and version please go on:\n<?=SITE_ROOT;?>incompatibleBrowser.php');}
 <? }
+*/
 
 // closeStandardsDialogs functions
 ?>
@@ -421,7 +428,13 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 $('#systemConsole').css('display','none').resizable({handles:'e,w',stop:function(event,ui){$(this).css('height','auto');}}).draggable({cursor:'crosshair',handle:'.header'});
 </script>
 <div id="updateRequests"></div>
-<div id="mainDiv">
+    <?
+    if($this->shouldBeResponsive($exec->getCrtAction())) {
+        echo '<div id="mainDiv" style="margin-left: 40px;margin-right: 40px;">';
+    }else{
+        echo "<div id=\"mainDiv\">";
+    }
+    ?>
 <?
 }
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end header.php"] = microtime(true);

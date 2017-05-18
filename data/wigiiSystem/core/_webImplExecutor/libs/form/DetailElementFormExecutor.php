@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 15 sept. 09
- * by LWR
+/**
+ * Created on 15 sept. 09 by LWR
+ * Modified by Medair (ACA, CWE) on 16.05.2017 to hide delete button if enableDeleteOnlyForAdmin and not admin or if Element_beforeDeleteExp=0
  */
 class DetailElementFormExecutor extends FormExecutor {
 
@@ -79,7 +79,7 @@ class DetailElementFormExecutor extends FormExecutor {
 		$crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 		$crtModule = $exec->getCrtModule()->getModuleUrl();
 		if($elementP->getRights()->canWriteElement() || $element->isSubElement()){
-			?><div class="T" href="#<?=$element->getId();?>" style="width:100%;"><?
+			?><div class="T" href="#<?=$element->getId();?>" style="width: 100%; max-width:100%;"><?
 			if($elementP->getRights()->canWriteElement()){
 				$enableElementState = $this->computeEnableElementState($p, $exec, $elementP);
 				//edit
@@ -156,7 +156,8 @@ class DetailElementFormExecutor extends FormExecutor {
 				//delete
 				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked() || $parentReadonly) &&
 					($config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && $elementP->getRights()->canModify() ||
-					 $config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')!="1")) {
+					 $config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')!="1") &&
+					 ((string)$config->getParameter($p, $exec->getCrtModule(),'Element_beforeDeleteExp')!=="0")) {
 					?><div class="H el_delete"><?=$transS->t($p, "delete");?></div><?
 				}
 			}
@@ -169,9 +170,9 @@ class DetailElementFormExecutor extends FormExecutor {
 		}
 		//add a div here for can scroll all content except the menu above
 		?><div id="scrollElement" style="<?=(!$this->isWorkzoneViewDocked())? 'overflow:auto;':''?> "><?
-		?><div id="<?=$this->getFormId(); ?>" class="elementDetail" ><?
+		?><div id="<?=$this->getFormId(); ?>" class="elementDetail" style="width: 100%;"><?
 		if($element->isState_locked()){
-			echo '<fieldset class="isPlayingRole ui-corner-all" style="border-color:#CC4B4B;" ><legend class="ui-corner-all" style="background-color:#CC4B4B;" >';
+			echo '<fieldset class="isPlayingRole ui-corner-all" style="border-color:#cc0004;" ><legend class="ui-corner-all" style="background-color:#CC4B4B;" >';
  			echo '<img alt="locked" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/emblems/emblem-locked.png" style="vertical-align:middle;" />&nbsp;';
 			$info = $element->getArrayState_lockedInfo();
 			if(is_array($info)){
@@ -196,7 +197,7 @@ class DetailElementFormExecutor extends FormExecutor {
 			echo '</legend>';
 //			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.$this->getTotalWidth().'px;" >'.nl2br($info["message"]).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.$this->getTotalWidth().'px;" >'.nl2br($info["message"]).'</div>';
 			}
 		}
 		if($element->isState_blocked() && $elementP->isEnabledElementState_blocked()){
@@ -226,7 +227,7 @@ class DetailElementFormExecutor extends FormExecutor {
 			//			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			//			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 		if($element->isState_dismissed()){
@@ -256,7 +257,7 @@ class DetailElementFormExecutor extends FormExecutor {
 			//			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			//			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 		if($element->isState_finalized()){
@@ -285,7 +286,7 @@ class DetailElementFormExecutor extends FormExecutor {
 			//			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			//			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 		if($element->isState_approved()){
@@ -315,7 +316,7 @@ class DetailElementFormExecutor extends FormExecutor {
 			//			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 			//			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 		if($element->isState_deprecated()){
@@ -344,7 +345,7 @@ class DetailElementFormExecutor extends FormExecutor {
 //			$this->setTotalWidth($this->getTotalWidth()+$this->getCorrectionWidth()-15);
 //			$this->setTotalWidth($this->getTotalWidth()-15);
 			if(is_array($info) && $info["message"]!=null){
-				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
+				echo '<div class="field" style="border-bottom:1px #86A6B7 dotted; margin-top:2px; margin-bottom:5px;padding-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;" >'.nl2br($transS->t($p, $info["message"])).'</div>';
 			}
 		}
 

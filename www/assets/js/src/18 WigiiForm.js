@@ -532,11 +532,6 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	$(formId+' div.label').click(function(){ $(':input:visible:first', $(this).next()).select(); } );
 	$(formId+' .addC').nextAll().hide();
 	$(formId+' .addC').click(function(){
-		if($(this).width()!=$(this).next().width()){
-			newTempWidth = $(this).prev().width()+$(this).width();
-			//resize label to full size
-			$(this).prev().width(newTempWidth+'px');
-		}
 		$(this).hide();
 		//show the field
 		$(this).next().show();
@@ -546,7 +541,8 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 		$(this).next().children('.ui-tabs').show();
 		//htmlArea management
 		$(this).next().children('.cke').show();
-
+		//add a width of 100% to label
+        $(this).prev().css('width', '100%');
 		//.find('>:not(.timeZone)').show();
 		$(this).next().find(':input:first').focus();
 	});
@@ -752,6 +748,9 @@ function actOnDisplayOnRightSide(elementDialogId, fieldId, journalItemWidth, tot
 	if($('#mainDiv .public').length && $('#mainDiv .public form').length==0){
 		$('#elementRightSide div.value').css('max-height', ((($('#mainDiv .public table td.center>div.center').height()) / $('#elementRightSide div.value').length)-30)+'px').css('overflow-y','scroll');
 	}
+
+	//Remove max-width
+	$('.ui-dialog').css('max-width', '');
 
 //	$('#elementRightSide').unbind('load').bind('load', function(){
 //		alert($(this).find('.value').length);

@@ -47,7 +47,7 @@ if($this->isForNotification()){
 			} else {
 				$path = SITE_ROOT_forFileUrl."images/preview/prev.18.avi.png";
 				$this->put('<img style="margin-right:5px;float:left;" src="'.$path.'" />');
-				$this->put('<font style="margin-top:2px;float:left;width:'.($parentWidth-25).'px;">'.$this->t($fieldName, $field->getXml())."</font>");
+				$this->put('<font style="margin-top:2px;float:left;width: 100%; max-width:'.($parentWidth-25).'px;">'.$this->t($fieldName, $field->getXml())."</font>");
 			}
 		} else {
 			//embeded video
@@ -59,7 +59,7 @@ if($this->isForNotification()){
 			$path = SITE_ROOT_forFileUrl."images/preview/prev.46.htm.png";
 			//if the size of label is smaller than usual, define a width
 			if($parentWidth && $parentWidth<(100-20)){
-				$style = 'style="width:'.$parentWidth.'px;"';
+				$style = 'style="width: 100%; max-width:'.$parentWidth.'px;"';
 			} else {
 				$style = 'style="margin-left:'.(($parentWidth-46)/2).'px; margin-bottom:5px;"';
 			}
@@ -67,7 +67,7 @@ if($this->isForNotification()){
 		} else {
 			$path = SITE_ROOT_forFileUrl."images/preview/prev.18.htm.png";
 			$this->put('<img style="margin-right:5px;float:left;" src="'.$path.'" />');
-			$this->put('<font style="margin-top:2px;float:left;width:'.($parentWidth-25).'px;">'.$this->t($fieldName, $field->getXml())."</font>");
+			$this->put('<font style="margin-top:2px;float:left;width: 100%; max-width:'.($parentWidth-25).'px;">'.$this->t($fieldName, $field->getXml())."</font>");
 		}
 
 		//standard link

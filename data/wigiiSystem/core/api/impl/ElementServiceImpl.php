@@ -6556,7 +6556,7 @@ where $subElementId and EE.linkType = 'subitem' order by EE.id_elements_elements
 
 		// sys user info
 		$timestamp = $sqlB->formatBinExp('sys_date', '=', $timestamp, MySqlQueryBuilder::SQLTYPE_INT);
-		$userId = $sqlB->formatBinExp('sys_user', '=', $userId, MySqlQueryBuilder::SQLTYPE_INT);
+		$userId = ($userId == null ? 'sys_user = NULL' : $sqlB->formatBinExp('sys_user', '=', $userId, MySqlQueryBuilder::SQLTYPE_INT));
 		$userName = $sqlB->formatBinExp('sys_username', '=', $userName, MySqlQueryBuilder::SQLTYPE_VARCHAR);
 
 		// creates query list

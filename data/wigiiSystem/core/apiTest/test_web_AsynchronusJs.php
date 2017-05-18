@@ -27,7 +27,7 @@
  */
 
 ?>
-<div id="clickMe" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width:200px; text-align:center; padding:5px;">Generate an execution log!</div>
+<div id="clickMe" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width: 100%; max-width:200px; text-align:center; padding:5px;">Generate an execution log!</div>
 <script type="text/javascript" >
 $('#clickMe').click(function(){
 	update("NoAnswer/E-library/Filemanager/createTestLog");
@@ -35,7 +35,7 @@ $('#clickMe').click(function(){
 </script>
 <?
 ?>
-<div id="clickMe1" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width:200px; text-align:center; padding:5px;">Generate an exception!</div>
+<div id="clickMe1" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width: 100%; max-width:200px; text-align:center; padding:5px;">Generate an exception!</div>
 <script type="text/javascript" >
 $('#clickMe1').click(function(){
 	update("NoAnswer/E-library/Filemanager/getExceptionTest");
@@ -43,7 +43,7 @@ $('#clickMe1').click(function(){
 </script>
 <?
 ?>
-<div id="clickMe2" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width:200px; text-align:center; padding:5px;">Change my text</div>
+<div id="clickMe2" style="cursor:pointer; border:#000 solid 1px; background-color:#ccc; color:#000; font-weight:bold; width: 100%; max-width:200px; text-align:center; padding:5px;">Change my text</div>
 <script type="text/javascript" >
 $('#clickMe2').click(function(){
 	update("clickMe2/E-library/Filemanager/getTime");

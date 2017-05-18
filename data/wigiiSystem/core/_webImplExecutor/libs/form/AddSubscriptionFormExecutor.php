@@ -300,7 +300,7 @@ class AddSubscriptionFormExecutor extends AddElementFormExecutor {
 //		}
 
 		echo '<div class="public public'.str_replace(" ", "_", $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()).'" style="';
-		if($this->getTotalWidth()) echo ' width:'.$this->getTotalWidth().'px; ';
+		if($this->getTotalWidth()) echo ' width: 100%; max-width:'.$this->getTotalWidth().'px; ';
 		if($this->isDialog()) echo ' float:left; ';
 		echo ' margin-right:auto; margin-left:auto; padding:20px; background-color:#fff; ';
 		echo ' " >';

@@ -76,7 +76,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	$src = SITE_ROOT.$ssrc;
 
 	//file details
-	$this->put('<div class="fdet" style="'.($this->isForNotification() ? 'margin-top:5px;' : '').'width:'.$parentWidth.'px;" >');
+	$this->put('<div class="fdet" style="'.($this->isForNotification() ? 'margin-top:5px;' : '').'width: 100%; max-width:'.$parentWidth.'px;" >');
 
 	if($fieldXml["displayLabel"]=="1") $this->put('<font class="grayFont" >'.$this->t($fieldName, $field->getXml()).':</font><br />');
 	$this->put('<img class="prev" style="vertical-align:top;" src="'.SITE_ROOT_forFileUrl."images/preview/prev.18.html.png".'" />&nbsp;&nbsp;');
@@ -96,7 +96,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	$this->put('</div><div class="clear"></div><br />');
 
 	if(!$this->isForNotification() && !$this->isForPrint()){
-		$this->put('<div style="width:'.($parentWidth).'px;overflow-y:auto;overflow-x:auto;" >');
+		$this->put('<div style="width: 100%; max-width:'.($parentWidth).'px;overflow-y:auto;overflow-x:auto;" >');
 	}
 
 	//content
@@ -143,7 +143,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 
 
 	//filename and date
-	if(!$this->isForNotification()) $this->put('<div class="fdet '.($isSmall ? 'small' : '').'" style="'.($fieldXml["displayPreviewOnly"]=="1" ? 'font-weight:normal;' : '').'width:'.$parentWidth.'px;" >');
+	if(!$this->isForNotification()) $this->put('<div class="fdet '.($isSmall ? 'small' : '').'" style="'.($fieldXml["displayPreviewOnly"]=="1" ? 'font-weight:normal;' : '').'width: 100%; max-width:'.$parentWidth.'px;" >');
 	if($fieldXml["displayLabel"]=="1") $this->put('<font class="grayFont" >'.$this->t($fieldName, $field->getXml()).':</font><br />');
 	if(!$this->isForNotification()) $this->put('<a class="H fileDownload" style="white-space:normal;" href="#" target="_self">');
 	$this->put($name.$type);
@@ -369,7 +369,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 			case ".wav":
 			case ".wma":
 				//flowplayer
-				$this->put('<a href="'.$src.'/test'.$type.'" style="float:left;margin-top:5px;width:'.$parentWidth.'px;height:26px" id="'.$mediaId.'"></a>');
+				$this->put('<a href="'.$src.'/test'.$type.'" style="float:left;margin-top:5px;width: 100%; max-width:'.$parentWidth.'px;height:26px" id="'.$mediaId.'"></a>');
 				$exec->addJsCode("displayAudioPlayer('$mediaId');");
 				break;
 			case ".flv":
@@ -381,7 +381,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 //				//flowplayer
 				$this->put('</div>'); //end value div, to begin a full width player
 				$this->put('<div style="float:left;padding-bottom:5px;padding-top:-5px;">'); //open a new div in field
-				$this->put('<a class="SBB" href="'.$src.'/test'.$type.'" style="float:left;width:'.$width.'px;height:300px;" id="'.$mediaId.'"></a>');
+				$this->put('<a class="SBB" href="'.$src.'/test'.$type.'" style="float:left;width: 100%; max-width:'.$width.'px;height:300px;" id="'.$mediaId.'"></a>');
 				$exec->addJsCode("displayVideoPlayer('$mediaId');");
 				break;
 		}

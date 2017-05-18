@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 23.04.2015
- * by CWE
+/**
+ * Created on 23.04.2015 by CWE
+ * Modified by Medair (ACA,CWE) on 16.05.2017 to not authorize action if enableDeleteOnlyForAdmin and not admin or if conditional deletion is active (Element_beforeDeleteExp is defined).
  */
 class EmptyGroupFormExecutor extends FormExecutor {
 
@@ -69,6 +69,9 @@ class EmptyGroupFormExecutor extends FormExecutor {
 		// Empty group is not authorized if user has no admin right and enableDeleteOnlyForAdmin=1
 		if(!($this->getGroupP()->getRights() && $this->getGroupP()->getRights()->canModify()) 
 				&& $configS->getGroupParameter($p, $group, 'enableDeleteOnlyForAdmin')=='1') throw new AuthorizationServiceException("cannot delete elements in non admin groups.", AuthorizationServiceException::FORBIDDEN);
+		// Empty group is not authorized if Element_beforeDeleteExp is defined in configuration
+		$beforeDeleteExp = (string)$configS->getGroupParameter($p, $group, 'Element_beforeDeleteExp');
+		if($beforeDeleteExp!=null && $beforeDeleteExp!=='1') throw new AuthorizationServiceException("cannot delete elements if Element_beforeDeleteExp is defined in configuration.", AuthorizationServiceException::FORBIDDEN);
 		// if trashbin exists and user doesn't want to keep content, then moves group to trashbin
 		$trashBinGroupId = (string)$configS->getParameter($p, $group->getModule(), "trashBinGroup");
 		$groupAS->deleteGroupContent($this->getRootPrincipal(), $p, $group->getId(), $trashBinGroupId);

@@ -154,7 +154,7 @@ class RowListForLatestElementImpl extends ElementPListWebImplWithWigiiExecutor {
 			}
 			$value = $temp;
 		}
-		?><td><div<?=($class ? ' class="'.$class.'" ' : '');?><?=($width ? ' style="width:'.$width.'px;" ' : '');?>><?=$value;?></div></td><?
+		?><td><div<?=($class ? ' class="'.$class.'" ' : '');?><?=($width ? ' style="width: 100%; max-width:'.$width.'px;" ' : '');?>><?=$value;?></div></td><?
 	}
 
 	public function actOnBeforeAddElementP(){

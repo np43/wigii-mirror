@@ -25,6 +25,7 @@
  * A list of ElementP, selected from the database, using the ElementService,
  * and which are pushed into a DataFlow
  * Created by CWE on 23 novembre 2013
+ * Modified by Medair (CWE) on 28.04.2017 to attach stamped ElementInfo on fetch
  */
 class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 {
@@ -58,6 +59,7 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		$this->nElements = 0;	
 		$this->lockedForUse = false;	
 		unset($this->extApiClient);
+		unset($this->authoSStamp);
 	}
 		
 	public function isLockedForUse() {
@@ -120,6 +122,26 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 	 */	
 	public function setGroupBasedWigiiApiClient($apiClient) {
 		$this->injectedApiClient = $apiClient;
+	}
+	
+	private $authoS;
+	public function setAuthorizationService($authorizationService)
+	{
+	    $this->authoS = $authorizationService;
+	}
+	protected function getAuthorizationService()
+	{
+	    // autowired
+	    if(!isset($this->authoS))
+	    {
+	        $this->authoS = ServiceProvider::getAuthorizationService();
+	    }
+	    return $this->authoS;
+	}
+	
+	private $authoSStamp;
+	public function setAuthorizationServiceStamp($stamp) {
+	    $this->authoSStamp = $stamp;
 	}
 	
 	// Configuration
@@ -315,6 +337,10 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		if($this->startEltNumber == 0 ||
 			$this->startEltNumber <= $this->currentEltNumber && 
 			$this->currentEltNumber < $this->endEltNumber) {
+			// extracts element info and stamps it
+			if(!$this->authoSStamp) $this->getAuthorizationService()->getStamp($this, "setAuthorizationServiceStamp");
+			if($this->authoSStamp) $elementP->computeElementInfo($this->dataFlowContext->getPrincipal(),null,$this->authoSStamp);
+			// pushes down to data flow
 			$this->dataFlowService->processDataChunk($elementP, $this->dataFlowContext);
 		}
 	}

@@ -425,8 +425,7 @@ class SubElementInMemoryList extends Model implements ObjectList
 					/* persists sub element in db */
 					dfas('ElementDFA',
 						'setMode', ElementDFA::MODE_MIXED,
-						'setDecisionMethod', CallableObject::createInstance('choosePersistAction', $this),
-						'setPutInTrashBin', true
+						'setDecisionMethod', CallableObject::createInstance('choosePersistAction', $this)
 					),
 					dfas('ArrayBuffer')
 				);

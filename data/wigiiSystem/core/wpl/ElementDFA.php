@@ -27,6 +27,11 @@
  * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 21 novembre 2013
  * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
+ * Modified by Medair (CWE) on 18.05.2017 to :
+ * - always use the trashbin. Real deletion should be configured by explicit subclass.
+ * - ensure to have a valid attached ElementInfo before updating or deleting elements.
+ * - check if element is not blocked before updating or deleting it.
+ * - check that if an Element_beforeDeleteExp parameter is defined, then deletion is authorized
  */
 class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 {	
@@ -40,12 +45,13 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 	public function reset() {
 		$this->freeMemory();
 		$this->reloadElementAfterInsert = true;		
-		$this->putInTrashBin = false;
+		$this->putInTrashBin = true;
 	}	
 	public function freeMemory() {
 		unset($this->mode);
 		unset($this->decisionMethod);
 		unset($this->eltS); /* unsets injected element service because it can come from the data flow context */		
+		unset($this->configS); /* unsets injected config service because it can come from the data flow context */
 		unset($this->apiClient);
 		unset($this->apiClientSupportsSubitems);
 		unset($this->groupId);
@@ -76,6 +82,21 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 		return $this->eltS;
 	}	
 	
+	private $configS;
+	public function setConfigService($configService)
+	{
+	    $this->configS = $configService;
+	}
+	protected function getConfigService()
+	{
+	    // autowired
+	    if(!isset($this->configS))
+	    {
+	        $this->configS = ServiceProvider::getConfigService();
+	    }
+	    return $this->configS;
+	}
+	
 	private $gAS;
 	public function setGroupAdminService($groupAdminService) {
 		$this->gAS = $groupAdminService;
@@ -94,6 +115,33 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 	}
 	protected function getRootPrincipal() {
 		return $this->rootPrincipal;
+	}
+	
+	private $authoS;
+	public function setAuthorizationService($authorizationService)
+	{
+	    $this->authoS = $authorizationService;
+	}
+	protected function getAuthorizationService()
+	{
+	    // autowired
+	    if(!isset($this->authoS))
+	    {
+	        $this->authoS = ServiceProvider::getAuthorizationService();
+	    }
+	    return $this->authoS;
+	}
+	
+	private $translationService;
+	public function setTranslationService($translationService){
+	    $this->translationService = $translationService;
+	}
+	protected function getTranslationService(){
+	    //autowired
+	    if(!isset($this->translationService)){
+	        $this->translationService = ServiceProvider::getTranslationService();
+	    }
+	    return $this->translationService;
 	}
 	
 	// configuration
@@ -176,8 +224,8 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 	
 	private $ignoreLockedElements;
 	/**
-	 * If true, then locked elements are ignored when deleting or updating.
-	 * Else, an AuthorizationServiceException::OBJECT_IS_LOCKED is thrown when trying to update or delete locked elements.
+	 * If true, then locked or blocked elements are ignored when deleting or updating.
+	 * Else, an AuthorizationServiceException::OBJECT_IS_LOCKED or AuthorizationServiceException::NOT_ALLOWED is thrown when trying to update or delete locked or blocked elements.
 	 * False by default.	 
 	 */
 	public function setIgnoreLockedElements($bool) {
@@ -199,9 +247,9 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 	private $putInTrashBin;
 	/**
 	 * If true, then deleted elements are put into the trashbin if defined in the configuration (works also for subelements).
-	 * Else elements are deleted normally. Defaults to false.
+	 * Else elements are deleted normally. By default always uses the trashbin. Only subclass could redefine this parameter.
 	 */
-	public function setPutInTrashBin($bool) {
+	protected function setPutInTrashBin($bool) {
 		$this->putInTrashBin = $bool;
 	}
 	
@@ -221,8 +269,9 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 		}
 		
 		// checks the presence of a GroupBasedWigiiApiClient
-		// in that case, takes the provided element service instance
+		// in that case, takes the provided element service and config service instances
 		if(!isset($this->eltS) && isset($this->apiClient)) $this->setElementService($this->apiClient->getElementService());
+		if(!isset($this->configS) && isset($this->apiClient)) $this->setConfigService($this->apiClient->getConfigService());
 
 		// if mode PERSIST or MIXED, then checks for groupId and/or linkSelector, if not set, 
 		// then tries to fetch it from the dataflow context
@@ -250,6 +299,7 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 		
 		// extracts the element
 		$element = $data->getDbEntity();		
+		$elementIsNew = $element->isNew();
 		
 		// gets FieldSelectorList in configuration or context
 		$fieldSelectorList = $this->fieldSelectorList;
@@ -258,17 +308,32 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 		}
 		// clones FieldSelectorList to include sys info fields
 		if(isset($fieldSelectorList)) $fieldSelectorList = FieldSelectorListArrayImpl::createInstance(true,true,$fieldSelectorList);
-		
+				
 		// executes the action on the current element
 		$principal = $dataFlowContext->getPrincipal();
 		switch($action) {
-			case self::MODE_PERSIST:
-				$elementIsNew = $element->isNew();
-				if($this->ignoreLockedElements) {
-					try {$element = $this->doPersistElement($principal, $element, $fieldSelectorList);}				
-					catch(AuthorizationServiceException $ase) {if($ase->getCode() != AuthorizationServiceException::OBJECT_IS_LOCKED) throw $ase;}
+			case self::MODE_PERSIST:			    	   
+			    // if new, then inserts
+			    if($elementIsNew) {
+    				if($this->ignoreLockedElements) {
+    					try {$element = $this->doPersistElement($principal, $element, $fieldSelectorList);}				
+    					catch(AuthorizationServiceException $ase) {if($ase->getCode() != AuthorizationServiceException::OBJECT_IS_LOCKED) throw $ase;}
+    				}
+    				else $element = $this->doPersistElement($principal, $element, $fieldSelectorList);
+			    }
+				// if element already exists in database, then checks validity of its ElementInfo and prevents updating if blocked
+				else {
+				    if($this->isElementBlocked($element)) {
+				        if(!$this->ignoreLockedElements) throw new AuthorizationServiceException("Cannot update an element having status blocked.", AuthorizationServiceException::NOT_ALLOWED);
+				    }
+				    else {
+				        if($this->ignoreLockedElements) {
+				            try {$element = $this->doPersistElement($principal, $element, $fieldSelectorList);}
+				            catch(AuthorizationServiceException $ase) {if($ase->getCode() != AuthorizationServiceException::OBJECT_IS_LOCKED) throw $ase;}
+				        }
+				        else $element = $this->doPersistElement($principal, $element, $fieldSelectorList);
+				    }
 				}
-				else $element = $this->doPersistElement($principal, $element, $fieldSelectorList);
 				// pushes the element further
 				if(!$dataFlowContext->isCurrentStepTheLastStep()) {
 					// if element has been inserted, then reads again from the database
@@ -295,11 +360,35 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 				}
 				break;
 			case self::MODE_DELETE:
-				if($this->ignoreLockedElements) {
-					try {$this->doDeleteElement($principal, $element);}				
-					catch(AuthorizationServiceException $ase) {if($ase->getCode() != AuthorizationServiceException::OBJECT_IS_LOCKED) throw $ase;}
-				}
-				else $this->doDeleteElement($principal, $element);
+			    // ignores new elements
+			    if(!$elementIsNew) {
+			        // if element already exists in database, then checks validity of its ElementInfo and prevents deleting if blocked
+			        if($this->isElementBlocked($element)) {
+			            if(!$this->ignoreLockedElements) throw new AuthorizationServiceException("Cannot delete an element having status blocked.", AuthorizationServiceException::NOT_ALLOWED);
+			        }
+			        else {
+			            // if enableDeleteOnlyForAdmin=1, then prevents deleting element if current principal is not admin
+			            if($this->getConfigService()->getParameter($principal, $element->getModule(), 'enableDeleteOnlyForAdmin') == "1" && !$this->isPrincipalAdmin($element, $dataFlowContext)) {
+			                if(!$this->ignoreLockedElements) throw new AuthorizationServiceException("Element can only be deleted by Administrators.", AuthorizationServiceException::NOT_ALLOWED);
+			            }
+			            else {
+			                // checks if an Element_beforeDeleteExp is defined in configuration and checks if deletion is possible
+			                $beforeDeleteExp = (string)$this->getConfigService()->getParameter($principal, $element->getModule(), "Element_beforeDeleteExp");
+			                $beforeDeleteExp = $this->evaluateBeforeDeleteExp($element,$dataFlowContext, $beforeDeleteExp);
+			                if(!$beforeDeleteExp->okToDelete) {
+			                    if(!$this->ignoreLockedElements) throw new AuthorizationServiceException("Element cannot be deleted: ".$beforeDeleteExp->message, AuthorizationServiceException::NOT_ALLOWED);
+			                }			                
+			                // else standard deletion of non-locked elements
+			                else {
+                				if($this->ignoreLockedElements) {
+                					try {$this->doDeleteElement($principal, $element);}				
+                					catch(AuthorizationServiceException $ase) {if($ase->getCode() != AuthorizationServiceException::OBJECT_IS_LOCKED) throw $ase;}
+                				}
+                				else $this->doDeleteElement($principal, $element);
+			                }
+			            }
+			        }
+			    }
 				break;
 			case self::MODE_IGNORE:
 				if(!$dataFlowContext->isCurrentStepTheLastStep()) $dataFlowContext->writeResultToOutput($data,$this);
@@ -435,7 +524,7 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 		
 		// if not defined then calculates trashbin Id
 		if(!isset($returnValue)) {
-			$configS = $this->apiClient->getConfigService();
+			$configS = $this->getConfigService();
 			
 			if($element->isSubElement()) {
 				$trashBinPrefix = (string)$configS->getParameter($principal, null, "deletedSubElementsLinkNamePrefix");
@@ -534,5 +623,107 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 			$elS->updateSys_dateToNow($principal, array($elementId=>$elementId));
 			if($removeSharingIds) $elS->unshareElement($this->getRootPrincipal(), $elementId, $removeSharingIds, false);
 		}
+	}
+	
+	/**
+	 * Verifies if an element is blocked. It verifies the attached ElementInfo validity and return the isElementBlocked attribute
+	 * @param Element $element a valid Element for which the ElementInfo has been calculated.
+	 */
+	protected function isElementBlocked($element) {
+	    // verifies ElementInfo validity
+	    if(!isset($element)) throw new DataFlowServiceException('Element cannnot be null', DataFlowServiceException::INVALID_ARGUMENT);	    
+	    $elementInfo = $element->getElementInfo();
+	    if(!isset($elementInfo)) throw new DataFlowServiceException('Element has no valid ElementInfo attached to it. Please use a trusted source of data.', DataFlowServiceException::DATA_INTEGRITY_ERROR);
+	    if(!$this->getAuthorizationService()->isStampValid($elementInfo->getAuthorizationServiceStamp())) throw new DataFlowServiceException('Element has no valid ElementInfo attached to it. Please use a trusted source of data.', DataFlowServiceException::DATA_INTEGRITY_ERROR);
+	    // checks if element is blocked
+	    return $elementInfo->isElementBlocked();
+	}
+	
+	/**
+	 * Verifies if the principal who fetched the element has admin rights on the folder containing the element.
+	 * It verifies the attached ElementInfo validity and return the isReaderAdmin attribute.
+	 * @param Element $element a valid Element for which the ElementInfo has been calculated.
+	 * @param DataFlowContext $dataFlowContext the current data flow context to retrieve current principal
+	 */
+	protected function isPrincipalAdmin($element, $dataFlowContext) {
+	    // verifies ElementInfo validity
+	    if(!isset($element)) throw new DataFlowServiceException('Element cannnot be null', DataFlowServiceException::INVALID_ARGUMENT);
+	    $elementInfo = $element->getElementInfo();
+	    if(!isset($elementInfo)) throw new DataFlowServiceException('Element has no valid ElementInfo attached to it. Please use a trusted source of data.', DataFlowServiceException::DATA_INTEGRITY_ERROR);
+	    if(!$this->getAuthorizationService()->isStampValid($elementInfo->getAuthorizationServiceStamp())) throw new DataFlowServiceException('Element has no valid ElementInfo attached to it. Please use a trusted source of data.', DataFlowServiceException::DATA_INTEGRITY_ERROR);
+	    
+	    $principal = $dataFlowContext->getPrincipal();
+	    // if current principal is root then gives admin rights
+	    if($this->getAuthorizationService()->isRootPrincipal($principal)) return true;
+	    // else current principal should be the element reader and isReaderAdmin should be true
+	    else return ($elementInfo->getReaderUsername() == $principal->getUsername() && $elementInfo->isReaderAdmin());
+	}
+	
+	/**
+	 * Returns an instance of a FuncExpEvaluator configured for the context of the given Element.
+	 * @param Element $element the current element for which to get a FuncExpEvaluator
+	 * @param DataFlowContext $dataFlowContext the current data flow context to retrieve current principal and ConfigService
+	 * @return FuncExpEvaluator
+	 */
+	protected function getFuncExpEvaluator($element, $dataFlowContext) {
+	    if(!isset($element)) throw new DataFlowServiceException('element cannot be null', DataFlowServiceException::INVALID_ARGUMENT);
+	    if(!isset($dataFlowContext)) throw new DataFlowServiceException('dataFlowContext cannot be null', DataFlowServiceException::INVALID_ARGUMENT);
+	    $p = $dataFlowContext->getPrincipal();
+	    
+	    // gets ElementEvaluator
+	    $evaluatorClassName = (string)$this->getConfigService()->getParameter($p, $element->getModule(), "Element_evaluator");
+	    $evaluator = ServiceProvider::getElementEvaluator($p, $evaluatorClassName);
+	    // injects the context
+	    $evaluator->setContext($p, $element);
+	    // gets vm
+	    $returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
+	    $returnValue->setFreeParentEvaluatorOnFreeMemory(true);
+	    return $returnValue;
+	}
+	
+	/**
+	 * Evaluates the Element_beforeDeleteExp and returns an object authorizing or not the deletion and an optional error message.
+	 * @param Element $element the current element for which to get a FuncExpEvaluator
+	 * @param DataFlowContext $dataFlowContext the current data flow context to retrieve current principal and ConfigService
+	 * @param String $beforeDeleteExp beforeDeleteExp FuncExp or 0 or 1.
+	 * @throws Exception in case of error
+	 * @return StdClass of the form {okToDelete: Boolean, message: String}
+	 */
+	protected function evaluateBeforeDeleteExp($element,$dataFlowContext,$beforeDeleteExp) {
+	    $transS = $this->getTranslationService();
+	    $returnValue = null;
+	    
+	    // null expression always resolves to true
+	    if($beforeDeleteExp == null) $returnValue = true;
+	    // else converts 0 to false
+	    elseif($beforeDeleteExp === '0') $returnValue = false;
+	    // and 1 to true
+	    elseif($beforeDeleteExp === '1') $returnValue = true;
+	    // else should be a FuncExp.
+	    else {
+	        // if the FuncExp has a syntax error or fails to execute, then deletion is blocked and exception message is added to standard message.
+	        $fxEval = null;
+	        try {
+	            $beforeDeleteExp = str2fx($beforeDeleteExp);
+	            $fxEval = $this->getFuncExpEvaluator($element, $dataFlowContext);
+	            $returnValue = $fxEval->evaluateFuncExp($beforeDeleteExp,$this);
+	            $fxEval->freeMemory();	            
+	        }
+	        catch(Exception $e) {
+	            if(isset($fxEval)) $fxEval->freeMemory();
+	            if($e instanceof ServiceException) $e = $e->getWigiiRootException();
+	            $returnValue = (object)array('okToDelete'=>false,'message'=>$e->getMessage().$transS->t($p, "elementCannotBeDeletedEvaluationError"));
+	        }
+	    }
+	    // returns the resolved expression
+	    if(!($returnValue instanceof stdClass)) {
+	        // if evaluates to true, then OK to delete.
+	        if($returnValue) $returnValue = (object)array('okToDelete'=>true,'message'=>null);
+	        // else KO to delete and adds a default message
+	        else $returnValue = (object)array('okToDelete'=>false,'message'=>$transS->t($p, "elementCannotBeDeletedExplanation"));
+	    }
+	    // adds default message if explanation is missing
+	    elseif(!$returnValue->okToDelete && !$returnValue->message) $returnValue->message = $transS->t($p, "elementCannotBeDeletedExplanation");
+	    return $returnValue;
 	}
 }

@@ -33,7 +33,7 @@ if(!isset($configS)) $configS = $this->getConfigurationContext();
 
 $wakeupTimer = 1000*60*3; //"3min";
 $postponeTimer = 1000*60*15; //"15min";
-?><div id="footerBar" class="F" ><?
+?><div id="footerBar" class="F" style="overflow: hidden;"><?
 
 	if(false){ //with full html explaning what this is
 	?><span id="wigiiVersionLabel"  UNSELECTABLE="on" style=" -moz-user-select: none; -khtml-user-select: none; unselectable:on; user-select: none; " ondblclick="update('<?=EMPTY_ANSWER_ID_URL;?>/<?=WigiiNamespace::EMPTY_NAMESPACE_URL;?>/<?=Module::EMPTY_MODULE_URL;?>/toggleSysConsole', function(){ $('#systemConsole').toggle(); });" ><?

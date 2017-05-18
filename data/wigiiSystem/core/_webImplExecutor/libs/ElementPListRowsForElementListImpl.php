@@ -21,9 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
+/**
  * Created 25 July 2011 by LWR
  * Changed by Medair (LMA) on 28.03.2017: Improved findOnlyDuplicate to compute groupBy in DB instead of php
+ * Modified by Medair (ACA, CWE) on 16.05.2017 to hide delete button in contextual menu if enableDeleteOnlyForAdmin and not admin or if Element_beforeDeleteExp=0
  */
 
 class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExecutor {
@@ -309,10 +310,10 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 	private $enableElementStateConfigCache = null;
 	protected function computeEnableElementState($elementP) {
 		$p = $this->getP();
+		$configS = $this->getWigiiExecutor()->getConfigurationContext();
 		// creates config cache if not already done
 		if(!isset($this->enableElementStateConfigCache)) {
-			$m =  $this->getExec()->getCrtModule();
-			$configS = $this->getWigiiExecutor()->getConfigurationContext();
+			$m =  $this->getExec()->getCrtModule();			
 			$this->enableElementStateConfigCache = array(
 				'Element_enableLockedStatus' => $configS->getParameter($p, $m, 'Element_enableLockedStatus')=="1",
 				'Element_enableBlockedStatus' => $configS->getParameter($p, $m, 'Element_enableBlockedStatus')=="1",
@@ -324,7 +325,7 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 				'Element_enableArchivedStatus' => $configS->getParameter($p, $m, 'Element_enableArchivedStatus')=="1",
 				'Element_enableDeprecatedStatus' => $configS->getParameter($p, $m, 'Element_enableDeprecatedStatus')=="1",
 				'Element_enableHiddenStatus' => $configS->getParameter($p, $m, 'Element_enableHiddenStatus')=="1",
-				'Element_enableHiddenDelete' => $configS->getParameter($p, $m, 'enableDeleteOnlyForAdmin')=="1"
+			    'Element_enableHiddenDelete' => $configS->getParameter($p, $m, 'enableDeleteOnlyForAdmin')=="1" || ((string)$configS->getParameter($p, $m, 'Element_beforeDeleteExp')==="0")
 			);
 		}
 
@@ -339,7 +340,7 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 		$elementP->enableElementState_archived($this->enableElementStateConfigCache['Element_enableArchivedStatus']);
 		$elementP->enableElementState_deprecated($this->enableElementStateConfigCache['Element_enableDeprecatedStatus']);
 		$elementP->enableElementState_hidden($this->enableElementStateConfigCache['Element_enableHiddenStatus']);
-		$elementP->enableElementState_delete($this->enableElementStateConfigCache['Element_enableHiddenDelete'] && !$elementP->getRights()->canModify());
+		$elementP->enableElementState_delete($this->enableElementStateConfigCache['Element_enableHiddenDelete'] && (!$elementP->getRights()->canModify() || ((string)$configS->getParameter($p, $elementP->getElement()->getModule(), 'Element_beforeDeleteExp')==="0")));
 
 		// updates policy using the ElementPolicyEvaluator
 		$policyEval = $this->getElementPolicyEvaluator();

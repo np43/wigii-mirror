@@ -19,12 +19,18 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-
+ 
 /*
  * This file contains a QlikView script that allows to extract from a Wigii database structure
  * all the necessary data. The extraction is done in csv and in qvd
+ * The first part of this script is commented and is an example of what should be added
+ * at the start of the QlikScript that include this one.
+ * Modified by Medair (LWR,SSA) in 2017 for maintenance purposes.
  */
 
+
+//PLEASE incorporate the following section into your Qlik script and change the values as necessary
+/*************
 
 //General format settings
 SET ThousandSep="'";
@@ -37,6 +43,9 @@ SET DateFormat='DD/MM/YYYY';
 SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
 SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
 SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+
+//END of section to incorporate
+*******************/
 
 
 ///$tab Filters

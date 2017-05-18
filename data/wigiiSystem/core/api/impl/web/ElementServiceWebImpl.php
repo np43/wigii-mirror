@@ -226,9 +226,9 @@ class ElementServiceWebImpl extends ElementServiceImpl
 			$element->isState_hidden()
 			){
 
-			?><div class="elementStates field fieldBorder" style="padding-top:5px;width:<?=$totalWidth;?>px;" ><?
-				?><div class="label" style="width:<?=($labelWidth-20);?>px;" ><?=$transS->t($p, "elementStates");?></div><?
-				?><div class="value" style="padding-left:0px;width:<?=$totalWidth-$labelWidth;?>px;" ><?
+			?><div class="elementStates field fieldBorder" style="padding-top:5px;width: 100%; max-width:<?=$totalWidth;?>px;" ><?
+				?><div class="label" style="width: 100%; max-width:<?=($labelWidth-20);?>px;" ><?=$transS->t($p, "elementStates");?></div><?
+				?><div class="value" style="padding-left:0px;width: 100%; max-width:<?=$totalWidth-$labelWidth;?>px;" ><?
 					echo $this->getElementStateAsHtml($p, $element);
 				?></div><?
 			?></div><?
@@ -246,9 +246,9 @@ class ElementServiceWebImpl extends ElementServiceImpl
 		$transS = ServiceProvider::getTranslationService();
 		$paths = $this->getGroupsPathContainingElement($p, $element);
 		if($paths){
-			?><div class="field fieldBorder elementGroups" style="<?=($totalWidth ? 'width:'.$totalWidth.'px;' : '');?>" ><?
-				?><div class="label" style="clear:both;<?=($totalWidth ? 'width:'.($totalWidth-20).'px;' : '');?>" ><?=($title ? $title : $transS->t($p, "itemShownInFolders") );?></div><?
-				?><div class="value" style="padding-left:0px;clear:both;<?=($totalWidth ? 'width:'.$totalWidth.'px;' : '');?>" ><?
+			?><div class="field fieldBorder elementGroups" style="<?=($totalWidth ? 'width: 100%; max-width:'.$totalWidth.'px;' : '');?>" ><?
+				?><div class="label" style="clear:both;<?=($totalWidth ? 'width: 100%; max-width:'.($totalWidth-20).'px;' : '');?>" ><?=($title ? $title : $transS->t($p, "itemShownInFolders") );?></div><?
+				?><div class="value" style="padding-left:0px;clear:both;<?=($totalWidth ? 'width: 100%; max-width:'.$totalWidth.'px;' : '');?>" ><?
 					foreach($paths as $groupId=>$path){
 						if($isNotification){
 							?><div><img src="<?=SITE_ROOT_forFileUrl;?>images/icones/22x22/iconfolder22x22.png" style="vertical-align:middle;margin-right:5px;margin-bottom:5px;" /><a class="H" style="font-weight:normal;" href="<?=$this->getGroupAdminServiceImpl()->getUrlForGroup($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $groupId);?>"><?=implode(" / ", $path);?> /</a></div><?
@@ -271,9 +271,9 @@ class ElementServiceWebImpl extends ElementServiceImpl
 		$transS = ServiceProvider::getTranslationService();
 		$paths = $this->getGroupAdminServiceImpl()->getGroupsPath($p, $groupPList);
 		if($paths){
-			?><div class="field fieldBorder elementGroups" style="width:<?=$totalWidth;?>px;" ><?
-				?><div class="label" style="clear:both;width:<?=($totalWidth-20);?>px;" ><?=($title ? $title : $transS->t($p, "itemShownInFolders") );?></div><?
-				?><div class="value" style="padding-left:0px;clear:both;width:<?=$totalWidth;?>px;" ><?
+			?><div class="field fieldBorder elementGroups" style="width: 100%; max-width:<?=$totalWidth;?>px;" ><?
+				?><div class="label" style="clear:both;width: 100%; max-width:<?=($totalWidth-20);?>px;" ><?=($title ? $title : $transS->t($p, "itemShownInFolders") );?></div><?
+				?><div class="value" style="padding-left:0px;clear:both;width: 100%; max-width:<?=$totalWidth;?>px;" ><?
 					foreach($paths as $groupId=>$path){
 						if($isNotification){
 							?><div><img src="<?=SITE_ROOT_forFileUrl;?>images/icones/22x22/iconfolder22x22.png" style="vertical-align:middle;margin-right:5px;margin-bottom:5px;" /><a class="H" style="font-weight:normal;" href="<?=$this->getGroupAdminServiceImpl()->getUrlForGroup($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $groupId)?>"><?=implode(" / ", $path);?> /</a></div><?
@@ -351,7 +351,7 @@ class ElementServiceWebImpl extends ElementServiceImpl
 		?><div style="clear:both;height:40px;"></div>
 		<div class="elementHistoric"><?
 			?><div class="label collapsed SBB"><?=$transS->t($p, "elementAdditionalInformation");?></div><?
-			?><table style="display:none;" width="<?=$totalWidth;?>"><?
+			?><table style="display:none;width:100%;max-width:<?=$totalWidth;?>px"><?
 
 				if(!$element->isSubElement()) {
 					//display groups

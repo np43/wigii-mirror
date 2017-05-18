@@ -33,8 +33,8 @@ $dtXml = $field->getDataType()->getXml();
 if($parentWidth != null && $labelWidth != null){
 	$inputWithDatePickerWidth = $parentWidth-$labelWidth-5-40;
 	$halfInputWidth = ((($parentWidth)/2)-5)-30;
-	$valueWidth = " width:".($parentWidth-$labelWidth-5)."px; ";
-	$labelWidth = " width:".($labelWidth)."px; ";
+	$valueWidth = " width: 100%; max-width:".($parentWidth-$labelWidth-5)."px; ";
+	$labelWidth = " width: 100%; max-width:".($labelWidth)."px; ";
 }
 
 //defining readOnly or disabled

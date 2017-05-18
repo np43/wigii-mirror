@@ -52,10 +52,12 @@ class ElementInfo extends Model
 		if($elementP instanceof ElementP) {
 			$element = $elementP->getElement();
 			$pRights = $elementP->getRights();
+			$isBlocked = $elementP->isParentElementState_blocked() || $element->isState_blocked();
 		}
 		else {
 			$element = $elementP;
 			$pRights = null;
+			$isBlocked = $element->isState_blocked();
 		}
 		if($principal instanceof Principal) {
 			$readerUsername = $principal->getUsername();
@@ -71,8 +73,9 @@ class ElementInfo extends Model
 			'canWriteElement' => (isset($pRights) ? $pRights->canWriteElement() : null),
 			'readerUsername' => $readerUsername,
 			'readerUserId' => $readerUserId,
+		    'isReaderAdmin' => (isset($pRights) ? $pRights->canModify() : null),
 			'readDate' => time(),
-			'state_blocked' => $element->isState_blocked(),
+			'state_blocked' => $isBlocked,
 			'elementConfigInfo' => (isset($groupList) ? 
 					($groupList instanceof ElementConfigInfo ? $groupList : ElementConfigInfo::createInstance($groupList)) : 
 					ElementConfigInfo::createInstance($element->getModule()))
@@ -121,6 +124,14 @@ class ElementInfo extends Model
 	public function getReaderUserId() {
 		if(isset($this->elementInfo)) return $this->elementInfo['readerUserId'];
 		else return null;
+	}
+	
+	/**
+	 * Returns true if the principal who fetched the element has admin rights on the folder containing the element
+	 */
+	public function isReaderAdmin() {
+	    if(isset($this->elementInfo)) return $this->elementInfo['isReaderAdmin'];
+	    else return null;
 	}
 	
 	/**
