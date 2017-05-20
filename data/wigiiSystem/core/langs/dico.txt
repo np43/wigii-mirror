@@ -1262,6 +1262,19 @@ hasMovedThoseElementsInModuleGroup:has moved the following #elements# in tab:a d
 inGroup:in #group#:dans #group#::::::::
 thoseElementsWhereChangedWith:The following changes have been made:Les changements suivant sont effecutés:::::::::
 
+addedBy:is added by:est ajouté par:::::::::
+updatedBy:is updated by:est modifié par:::::::::
+deletedBy:is deleted by:est effacé par:::::::::
+setStateBy:state set by:est mis à jour par:::::::::
+stateOfElement:#Element# state:Le statut #ofElement#:::::::::
+sharedBy:is moved by:est déplacé par:::::::::
+unsharedBy:is removed by:est enlevé par:::::::::
+toRootElement:to:à:::::::::
+inGroup:in #group#:dans #group#:::::::::
+toGroups:to #group#(s):dans les #-groups#:::::::::
+fromGroups:from #group#(s):des #-groups#:::::::::
+fromGroup:from #group#:#ofGroup#:::::::::
+
 hasAddedAnElementInGroup:has added the following #element# in #group#:a ajouté #element# suivant dans #group#:::::
 hasAddedAnElementToRootElement:has added #anElement# to:a ajouté #anElement# à:::::
 hasUpdatedThisElement:has updated the following #element#:a mis-à-jour #element# suivant:::::::::
