@@ -136,7 +136,10 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		//if field is hidden, or onlyInForm, or onlyInWrite with a none writable record, or not in Public and principal is public -> skip it
 		if(($isPublicPrincipal && $fieldXml["notInPublic"]=="1")) return;
 		if((!$isPublicPrincipal && $fieldXml["onlyInPublic"]=="1")) return;
-		if($rm->getRecord()->getWigiiBag()->isHidden($fieldName) || $fieldXml["onlyInForm"]=="1") return;
+		if($rm->isForPrint() && $fieldXml["notInPrint"]=="1") return;
+		if($rm->isForPrint() && $fieldXml["notHiddenInPrint"]!="1" && $rm->getRecord()->getWigiiBag()->isHidden($fieldName)) return;
+		if(!$rm->isForPrint() && $rm->getRecord()->getWigiiBag()->isHidden($fieldName)) return;
+		if($fieldXml["onlyInForm"]=="1") return;
 		if($fieldXml["onlyInWrite"]=="1" && $this->getRecordIsWritable()===false) return;
 
 		//if no value then do not display, except:
