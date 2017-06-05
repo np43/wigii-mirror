@@ -1330,7 +1330,6 @@ notificationWigiiNamespaceFrom:Notification from:Notification depuis:::::::::
 
 compulsoryFieldOtherwiseEmptyOtherEmailFields:You must fill this field if one of the confirmation email fields is filled.:Vous devez remplir ce champ si un des champs de l'email de confirmation est rempli.:::::::::
 
-
 groupSubscription:Subscription form parameters:Paramètres du formulaire d'inscription:::::::::
 groupSubscriptionPreview:Subscription form details:Détails du formulaire d'inscription:::::::::
 groupSubscription_help:Subscription form parameters:Paramètres du formulaire d'inscription:::::::::
@@ -1339,7 +1338,7 @@ maxSubscriptionNb:Maximum number of subscriptions:Nombre maximum d'inscription::
 subscriptionBackgroundColorCode:Background color:Couleur du fond:::::::::
 subscriptionEndMessageAddin:Customize confirmation message:Personnalisez le message de confirmation:
 subscriptionClosingMessageAddin:Additional message after expiration:Message aditionnel après expiration:::::::::
-subscriptionConfEmail:<h4>Confirmation email</h4><div>(leave blank to not send any email confirmation)<br><br></div>:<h4>Email de confirmation</h4><div>(laisser les champs vide pour ne pas envoyer d'eamil de confirmation)<br><br></div>:::::::::
+subscriptionConfEmail:<h4>Confirmation email</h4><div>(leave blank to not send any email confirmation)<br><br></div>:<h4>Email de confirmation</h4><div>(laisser les champs vide pour ne pas envoyer d'email de confirmation)<br><br></div>:::::::::
 subscriptionConfEmailAttachement1:Attachment 1:Attaché 1:::::::::
 subscriptionConfEmailAttachement2:Attachment 2:Attaché 2:::::::::
 subscriptionConfEmailFrom:From:De:::::::::
