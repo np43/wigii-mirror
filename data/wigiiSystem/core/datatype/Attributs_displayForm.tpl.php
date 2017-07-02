@@ -124,7 +124,7 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 $('div#".$formId."__".$fieldName." .value input:checkbox').click(function() {
     $('div#".$formId."__".$fieldName." .value input:checkbox').attr('checked', false);" .
     ($allowUnchek
-    		? "if($(this).val()==radioButtonClick_$inputId){ $(this).attr('checked', false); radioButtonClick_$inputId = ''; } else { $(this).attr('checked', true); radioButtonClick_$inputId = $(this).val(); }"
+    		? "if($(this).val()==radioButtonClick_".$formId.'_'.$fieldName.'_'.$subFieldName."){ $(this).attr('checked', false); radioButtonClick_".$formId.'_'.$fieldName.'_'.$subFieldName."= ''; } else { $(this).attr('checked', true); radioButtonClick_".$formId.'_'.$fieldName.'_'.$subFieldName."= $(this).val(); }"
     		: "$(this).attr('checked', true);"
     		)."
 });
@@ -132,9 +132,9 @@ $('div#".$formId."__".$fieldName." .value input:checkbox').click(function() {
 	}
 	if($allowUnchek){
 		$exec->addJsCode("
-radioButtonClick_$inputId = '';
-$('div#".$formId."__".$fieldName." .value').mouseover(function(e) { radioButtonClick_$inputId = $('input[name=$inputName]:checked').attr('value'); });
-".((string)$fieldXml["useCheckboxes"]=="1" ? "" : "$('input[name=$inputName]').click(function(e) { if($(this).val()==radioButtonClick_$inputId){ $(this).attr('checked', false); radioButtonClick_$inputId = ''; } else { radioButtonClick_$inputId = $(this).val(); } }); ")."
+radioButtonClick_".$formId.'_'.$fieldName.'_'.$subFieldName."= '';
+$('div#".$formId."__".$fieldName." .value').mouseover(function(e) { radioButtonClick_".$formId.'_'.$fieldName.'_'.$subFieldName."= $('input[name=$inputName]:checked').attr('value'); });
+				".((string)$fieldXml["useCheckboxes"]=="1" ? "" : "$('input[name=$inputName]').click(function(e) { if($(this).val()==radioButtonClick_".$formId.'_'.$fieldName.'_'.$subFieldName."){ $(this).attr('checked', false); radioButtonClick_".$formId.'_'.$fieldName.'_'.$subFieldName."= ''; } else { radioButtonClick_".$formId.'_'.$fieldName.'_'.$subFieldName."= $(this).val(); } }); ")."
 ");
 	}
 
