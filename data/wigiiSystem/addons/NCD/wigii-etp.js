@@ -115,6 +115,10 @@
 		html.impl.bouton = function(label, onClick, cssClass){html.putButton(label, onClick, cssClass); return html;};
 		html.impl.input = function(cssClass){return html.createTextArea(cssClass);};
 		html.impl.display = function(backgroundC,textC,cssClass) {return html.createTextInput(cssClass).color(backgroundC,textC);};
+		html.impl.insert = function(f) {
+			html.htmlBuilder().insert(f).emit();
+			return html;
+		};
 		// English translation
 		html.impl.button = html.impl.bouton;
 		
@@ -132,6 +136,7 @@
 		html.bouton = html.impl.bouton;
 		html.input = html.impl.input;
 		html.display = html.impl.display;
+		html.insert = html.impl.insert;
 		// English symbols
 		html.button = html.impl.button;
 	});
@@ -456,6 +461,7 @@
 				self.currentField = self.champCourant;
 				self.empty = self.vider;
 				self.delete = self.supprimer;
+				self.reset = function() {return formulaire.reset(self.index);};
 			}
 		},
 		// Selecteur
@@ -488,7 +494,12 @@
 		champExiste : function(nom) {return formulaire.no('default').champExiste(nom);},
 		champCourant : function(nom) {return formulaire.no('default').champCourant(nom);},
 		vider : function() {return formulaire.no('default').vider();},
-		supprimer : function() {return formulaire.no('default').supprimer();}
+		supprimer : function() {return formulaire.no('default').supprimer();},
+		reset : function(index) {
+			if(index===undefined) index = 'default';
+			formulaire.no(index).supprimer();
+			return formulaire.no(index);
+		}
 	};
 	
 	// Publish language
