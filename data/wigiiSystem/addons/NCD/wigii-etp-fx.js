@@ -862,6 +862,10 @@
 			gridCellFxChain.addFx(function(fxCtx){fxCtx.returnValue = fxCtx.returnValue.cellule(ligne,colonne); return fxCtx.returnValue;});
 			return gridCellFx;
 		};
+		gridCellFx.offset = function(ligne,colonne){
+			gridCellFxChain.addFx(function(fxCtx){fxCtx.returnValue = fxCtx.returnValue.offset(ligne,colonne); return fxCtx.returnValue;});
+			return gridCellFx;
+		};
 		return gridCellFx;	
 	};
 	grille.couleur = function(ligne,colonne,c) {return dynImpl_fx_s("grille.couleur",function(fxCtx){return fxCtx.html().grille.couleur;},ligne,colonne,c);}; 

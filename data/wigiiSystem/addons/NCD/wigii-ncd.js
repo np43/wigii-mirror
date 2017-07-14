@@ -971,6 +971,11 @@
 				}
 				return grid.cell(neighbour,y);
 			};
+			self.offset = function(x,y) {
+				var newX = (self.x() + x)%grid.nRows();
+				var newY = (self.y() + y)%grid.nCols();
+				return grid.cell(newX,newY);
+			};
 			self.grid = function() {
 				return grid;
 			};

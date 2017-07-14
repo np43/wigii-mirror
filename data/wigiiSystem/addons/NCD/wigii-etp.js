@@ -155,6 +155,8 @@
 			html.context.gridInstance.couleur = html.impl.grille.couleur;
 			html.context.gridInstance.texte = html.impl.grille.texte;
 			html.context.gridInstance.onclick = html.impl.grille.onclick;
+			html.context.gridInstance.nLignes = html.context.gridInstance.nRows;
+			html.context.gridInstance.nColonnes = html.context.gridInstance.nCols;
 			// Models a cell for ETP
 			html.context.gridInstance.initializeCellForEtp = function(gridCell) {
 				if(!gridCell.context.etpReady) {
@@ -165,7 +167,9 @@
 					gridCell.bas = function(){return html.context.gridInstance.initializeCellForEtp(gridCell.down(true));};
 					gridCell.haut = function(){return html.context.gridInstance.initializeCellForEtp(gridCell.up(true));};
 					gridCell.bouton = function(label,onClick) {$("#"+gridCell.id()).addClass('button');return gridCell.text(label).click(onClick);};
-					gridCell.cellule = function(ligne,colonne) {return html.impl.grille.cellule(ligne,colonne);}
+					gridCell.cellule = function(ligne,colonne) {return html.impl.grille.cellule(ligne,colonne);};
+					var offsetImpl = gridCell.offset;
+					gridCell.offset = function(ligne,colonne){return html.context.gridInstance.initializeCellForEtp(offsetImpl(ligne,colonne));};
 					gridCell.espace = {};
 					gridCell.context.etpReady = true;
 				}
@@ -199,6 +203,10 @@
 			}
 			return html.context.gridInstance;
 		}; 	
+		html.impl.grille.nLignes = function() {return html.context.gridInstance.nLignes();};
+		html.impl.grille.nColonnes = function() {return html.context.gridInstance.nColonnes();};
+		html.impl.grille.nRows = function() {return html.context.gridInstance.nRows();};
+		html.impl.grille.nCols = function() {return html.context.gridInstance.nCols();};
 		
 		// Exposes interface
 		html.grille = html.impl.grille;		
