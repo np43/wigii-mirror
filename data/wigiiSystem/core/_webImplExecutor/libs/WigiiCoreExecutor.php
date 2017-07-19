@@ -2847,42 +2847,48 @@ invalidCompleteCache();
 		if (!isset ($this->indicatorListPerModule))
 			$this->indicatorListPerModule = array ();
 		if (!isset ($this->indicatorListPerModule[$crtModule])) {
-			//uncomment the two following lines to reset the indicators of a user
-			//			$p->setValueInRoleContext("indicators_list", null);
-			//			$this->persistMainPrincipalSessionContext($p, $exec);
+			$configS = $this->getConfigurationContext();
+// 			//uncomment the two following lines to reset the indicators of a user
+// 						$p->setValueInRoleContext("indicators_list", null);
+// 						$this->persistMainPrincipalSessionContext($p, $exec);
 			$indicatorList = $p->getValueInRoleContext("indicators_list");
 			if ($indicatorList == null || $indicatorList[$crtModule] == null) {
 				$this->indicatorListPerModule[$crtModule] = IndicatorListArrayImpl :: createInstance();
-			} else
-				if (is_array($indicatorList[$crtModule])) {
-					$configS = $this->getConfigurationContext();
-					$list = IndicatorListArrayImpl :: createInstance();
-					$fl = FieldListArrayImpl :: createInstance(false, true);
-					$configS->getFields($p, $exec->getCrtModule(), null, $fl);
-					foreach ($indicatorList[$crtModule] as $indicatorId => $indicator) {
-						$fs = FieldSelector :: createInstance($indicator["fieldName"], $indicator["subFieldName"]);
-						if ($fs->isElementAttributeSelector()) {
-							$list->addIndicator($fs, null, $indicator["function"], $indicator["label"], $indicatorId);
-						} else {
-							try {
-								$field = $fl->getField($indicator["fieldName"]);
-								if (!$field)
-									continue;
-								$list->addIndicator($fs, $field->getDataType(), $indicator["function"], $indicator["label"], $indicatorId);
-							} catch (Exception $e) {
+			} else if (is_array($indicatorList[$crtModule])) {
+				$list = IndicatorListArrayImpl :: createInstance();
+				$fl = FieldListArrayImpl :: createInstance(false, true);
+				$configS->getFields($p, $exec->getCrtModule(), null, $fl);
+				foreach ($indicatorList[$crtModule] as $indicatorId => $indicator) {
+					$fs = FieldSelector :: createInstance($indicator["fieldName"], $indicator["subFieldName"]);
+					if ($fs->isElementAttributeSelector()) {
+						$list->addIndicator($fs, null, $indicator["function"], $indicator["label"], $indicatorId);
+					} else {
+						try {
+							$field = $fl->getField($indicator["fieldName"]);
+							if (!$field)
 								continue;
-							}
+							$list->addIndicator($fs, $field->getDataType(), $indicator["function"], $indicator["label"], $indicatorId);
+						} catch (Exception $e) {
+							continue;
 						}
 					}
-					$this->indicatorListPerModule[$crtModule] = $list;
-				} else {
-					$e = new ServcieException("invalid indicatorList from P context", ServiceException :: INVALID_ARGUMENT);
-					$this->executionSink()->publishEndOperationOnError("getIndicatorList", $e, $p);
-					throw $e;
 				}
+				$this->indicatorListPerModule[$crtModule] = $list;
+			} else {
+				$e = new ServcieException("invalid indicatorList from P context", ServiceException :: INVALID_ARGUMENT);
+				$this->executionSink()->publishEndOperationOnError("getIndicatorList", $e, $p);
+				throw $e;
+			}
+			//lookup if systemIndicators are defined in config
+			$indicatorListExp = (string)$configS->getParameter($p, $exec->getCrtModule(), "indicatorListExp");
+			if($indicatorListExp){
+				$systemIndicatorList = $this->evaluateFuncExp($p, $exec, str2fx($indicatorListExp));
+				if($systemIndicatorList){
+					$this->indicatorListPerModule[$crtModule]->mergeIndicatorList($systemIndicatorList);
+				}
+			}
 		}
 		$this->executionSink()->publishEndOperation("getIndicatorList");
-
 		return $this->indicatorListPerModule[$crtModule];
 	}
 
@@ -2896,8 +2902,11 @@ invalidCompleteCache();
 			$indicatorListPerModule = array ();
 		$result = array ();
 		foreach ($indicatorList->getListIterator() as $indicatorId => $indicator) {
-			$result[$indicatorId] = array (
-			"fieldName" => $indicator->getFieldSelector()->getFieldName(), "subFieldName" => $indicator->getFieldSelector()->getSubFieldName(), "function" => $indicator->getFunction(), "dataType" => ($indicator->getDataType() ? $indicator->getDataType()->getDataTypeName() : null), "label" => $indicator->getLabel(), "id" => $indicator->getId(), "timestamp" => $indicator->getTimestamp(), "value" => $indicator->getValue(),);
+			//only persit if Indicator is not a systemIndicator
+			if(!$indicator->isSystemIndicator()){
+				$result[$indicatorId] = array (
+				"fieldName" => $indicator->getFieldSelector()->getFieldName(), "subFieldName" => $indicator->getFieldSelector()->getSubFieldName(), "function" => $indicator->getFunction(), "dataType" => ($indicator->getDataType() ? $indicator->getDataType()->getDataTypeName() : null), "label" => $indicator->getLabel(), "id" => $indicator->getId(), "timestamp" => $indicator->getTimestamp(), "value" => $indicator->getValue(),);
+			}
 		}
 		$indicatorListPerModule[$exec->getCrtModule()->getModuleName()] = $result;
 		$p->setValueInRoleContext("indicators_list", $indicatorListPerModule);

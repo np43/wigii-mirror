@@ -27,6 +27,6 @@
  */
 define("VERSION_NUMBER", "4.503");
 define("REVISION_NUMBER", "2314");
-define("ASSET_REVISION_NUMBER", "2314"); //this number will be the one used to load wigii_...js and wigii_...css
+define("ASSET_REVISION_NUMBER", "2315"); //this number will be the one used to load wigii_...js and wigii_...css
 define("VERSION_TYPE", "");
 define("VERSION_LABEL", "Wigii system, " . VERSION_TYPE . " v." . VERSION_NUMBER." R".REVISION_NUMBER."-A".ASSET_REVISION_NUMBER);

@@ -39,7 +39,7 @@ $indicatorList = $this->getIndicatorList($p, $exec); //$p->getValueInRoleContext
 
 if($indicatorsAreShown && $indicatorList!=null && !$indicatorList->isEmpty()){
 	foreach($indicatorList->getListIterator() as $indicatorId=>$indicator){
-		?><div id="<?=$indicatorId;?>" class="indicator"><?
+		?><div id="<?=$indicatorId;?>" class="indicator <? echo ($indicator->isSystemIndicator()?"system" : "");?>"><?
 			echo $indicator->getLabel().": ";
 			echo '<span class="value">'.$indicator->getValue().'</span>';
 		?></div><?

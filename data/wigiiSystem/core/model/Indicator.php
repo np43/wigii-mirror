@@ -24,6 +24,7 @@
 /* A wigii Indicator
  * An indicator is a myslq function applied to a specific field in a selection of elements in groups 
  * Created by LWR on 23 February 2011
+ * Updated by LWR on 18 July 2017
  */
 class Indicator extends Model
 {
@@ -47,8 +48,9 @@ class Indicator extends Model
 	private $timestamp = null;
 	private $id = null;
 	private $label = null;
+	private $isSystemIndicator = null;
 	
-	public static function createInstance($fieldSelector, $dataType, $func, $label=null, $id=null)
+	public static function createInstance($fieldSelector, $dataType, $func, $label=null, $id=null, $isSystemIndicator=false)
 	{
 		$r = new self();
 		$r->setFieldSelector($fieldSelector);
@@ -57,24 +59,37 @@ class Indicator extends Model
 		}
 		$r->setFunction($func);
 		if($id!==null) $r->id = $id;
-		$r->reset($label);
+		$r->reset($label, $isSystemIndicator);
 		return $r;
 	}
 	
-	public function reset($label=null){
+	public function reset($label=null, $isSystemIndicator=false){
 		$this->value = null;
 		$this->timestamp = null;
+		$this->setSystemIndicator($isSystemIndicator);
 		$this->setLabel($label);
 		$this->getId();
 	}
 	
 	public function getId(){
 		if(!isset($this->id)){
-			$this->id = md5(time().($this->getFieldSelector()->isElementAttributeSelector() ? $this->getFieldSelector()->getFieldName() : $this->getDataType()->getDataTypeName()).$this->getFieldSelector()->getFieldName().$this->getFieldSelector()->getSubFieldname());
+			if($this->isSystemIndicator()){
+				//system indicator id must not be dependant from time as we need that the id remains when it is evaluated (as it is not stored in session)
+				$this->id = md5($this->getLabel().$this->getFunction().($this->getFieldSelector()->isElementAttributeSelector() ? $this->getFieldSelector()->getFieldName() : $this->getDataType()->getDataTypeName()).$this->getFieldSelector()->getFieldName().$this->getFieldSelector()->getSubFieldname());
+			} else {
+				$this->id = md5(time().($this->getFieldSelector()->isElementAttributeSelector() ? $this->getFieldSelector()->getFieldName() : $this->getDataType()->getDataTypeName()).$this->getFieldSelector()->getFieldName().$this->getFieldSelector()->getSubFieldname());
+			}
 		}
 		return $this->id;
 	}
 	
+	//system indicators are not persisted and are defined in configuration of the module
+	public function isSystemIndicator(){
+		return $this->isSystemIndicator;
+	}
+	public function setSystemIndicator($isSystemIndicator){
+		$this->isSystemIndicator = $isSystemIndicator;
+	}
 	public function getLabel(){
 		return $this->label;
 	}

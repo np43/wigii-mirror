@@ -23,6 +23,7 @@
 
 /**
  * IndicatorList array implementation
+ * Updated by LWR on 18 July 2017
  */
 class IndicatorListArrayImpl extends ObjectListArrayImpl implements IndicatorList
 {
@@ -68,6 +69,13 @@ class IndicatorListArrayImpl extends ObjectListArrayImpl implements IndicatorLis
 	
 	public function removeIndicator($id){
 		unset($this->objArray[$id]);
+	}
+	
+	/**
+	 * merge the given indicatorList to the current
+	 */
+	public function mergeIndicatorList($indicatorList){
+		$this->objArray = array_merge($this->objArray, $indicatorList->getListIterator());
 	}
 }
 

@@ -1247,7 +1247,7 @@ function setListenersToIndicator(){
 	$('#indicators .showIndicators').click(function(){
 		update('NoAnswer/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/showIndicators');
 	});
-	$('#indicators div.indicator').mouseenter(function(){
+	$('#indicators div.indicator:not(.system)').mouseenter(function(){
 		$('#indicators div.indicator .closeIndicator').stop().remove();
 		$(this).append('<div class=\"closeIndicator\" style=\"font-size:11px;float:right;padding:3px;margin-top:-8px;margin-right:-5px;margin-left:2px;cursor:pointer;display:none;\">x</div>');
 		$('.closeIndicator', this).show().click(function(){

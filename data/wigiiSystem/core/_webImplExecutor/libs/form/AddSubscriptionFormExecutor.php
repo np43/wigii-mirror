@@ -262,7 +262,7 @@ class AddSubscriptionFormExecutor extends AddElementFormExecutor {
 			$params = $exec->getCrtParameters();
 			$params = array_slice($params, 2); //first option is for language definition
 			//prefill values based on extra parameters defined in the URL
-			//as for example: http://localhost/medair/Recruitment/Contacts/newSubscription/602852/l01/first_name=Lionel/last_name=Weber
+			//as for example: http://localhost/.../.../Contacts/newSubscription/602852/l01/first_name=Lionel/last_name=Weber
 			foreach($params as $fieldDefault){
 				list($fieldname, $value) = explode("=", $fieldDefault);
 				list($fieldname, $subfieldname) = explode(".", $fieldname);

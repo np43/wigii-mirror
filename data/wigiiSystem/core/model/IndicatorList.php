@@ -24,6 +24,7 @@
 /**
  * A list of indicators
  * Created by LWR on 28 February 2011
+ * Updated by LWR on 18 July 2017
  */
 interface IndicatorList extends ObjectList
 {
@@ -48,4 +49,9 @@ interface IndicatorList extends ObjectList
 	 * remove the given indicator
 	 */
 	public function removeIndicator($id);
+	
+	/**
+	 * merge the given indicatorList to the current
+	 */
+	public function mergeIndicatorList($indicatorList);
 }
