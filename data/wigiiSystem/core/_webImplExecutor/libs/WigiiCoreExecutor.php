@@ -11265,7 +11265,7 @@ setNavigationBarInHomeState(".$configS->getParameter($p, $lastModule, "FeedbackO
 setNavigationBarNotInHomeState(".$configS->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");
 timeToScrollBack();
 " ))."
-document.title='".$configS->getParameter($p, null, "siteTitle")." - ".$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()."/".$transS->h($p, $exec->getCrtModule()->getModuleName())."';
+document.title='".$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()."/".$transS->h($p, $exec->getCrtModule()->getModuleName())." - ".$configS->getParameter($p, null, "siteTitle")."';
 ");
 				break;
 			case "switchView" :
