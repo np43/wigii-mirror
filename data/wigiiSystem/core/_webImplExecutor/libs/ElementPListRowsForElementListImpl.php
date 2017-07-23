@@ -226,6 +226,7 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 					$class .= " helpWidth help_".$xmlHeader["helpWidth"]." ";
 				}
 			}
+			
 			$this->addCell($value, $class);
 		}
 
@@ -273,6 +274,12 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 			if($this->getListContext()->getCrtSelectedItem()==$element->getId()) $class .= " S ";
 			if($this->getListContext()->isInMultipleSelection($element->getId())) $class .= " M ";
 			if($this->doOnlyRows) $class .= "new "; //to prevent resetting all rows events in JS: setListenersToRows
+			
+			//add class if classExp is defined in listView activity
+			$classExp = (string)$this->getWigiiExecutor()->getConfigurationContext()->ma($this->getP(), $this->getExec()->getCrtModule(), Activity::createInstance("listView"))["classExp"];
+			if($classExp){
+				$class .= " ".$this->getWigiiExecutor()->evaluateFuncExp($this->getP(),$this->getExec(),str2Fx($classExp),$elementP->getElement())." ";
+			}
 
 			?><tr href="#<?=$cacheLookup;?>" <?=($class ? 'class="'.$class.'" ' : '');?> <?=($element->isState_dismissed() ? 'style="text-decoration:line-through" ' : '');?> id="row_<?=$element->getId();?>"><?
 		} else {
