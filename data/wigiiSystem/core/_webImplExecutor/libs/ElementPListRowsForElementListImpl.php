@@ -276,7 +276,8 @@ class ElementPListRowsForElementListImpl extends ElementPListWebImplWithWigiiExe
 			if($this->doOnlyRows) $class .= "new "; //to prevent resetting all rows events in JS: setListenersToRows
 			
 			//add class if classExp is defined in listView activity
-			$classExp = (string)$this->getWigiiExecutor()->getConfigurationContext()->ma($this->getP(), $this->getExec()->getCrtModule(), Activity::createInstance("listView"))["classExp"];
+			$classExp = $this->getWigiiExecutor()->getConfigurationContext()->ma($this->getP(), $this->getExec()->getCrtModule(), Activity::createInstance("listView"));
+			$classExp = (string)($classExp["classExp"]);
 			if($classExp){
 				$class .= " ".$this->getWigiiExecutor()->evaluateFuncExp($this->getP(),$this->getExec(),str2Fx($classExp),$elementP->getElement())." ";
 			}
