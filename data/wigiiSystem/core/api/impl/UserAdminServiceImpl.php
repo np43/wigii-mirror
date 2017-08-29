@@ -1287,7 +1287,7 @@ where $id_user";
 		$id_user_owner = $sqlB->formatBinExp('UU.id_user_owner', '=', $principalId, MySqlQueryBuilder::SQLTYPE_INT);
 		$isOwner = $sqlB->formatBinExp('UU.isOwner', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN); //add by LWR
 		$isInPrincipalWigiiNamespace = $sqlB->formatBinExp('U.wigiiNamespace', '=', $principal->getWigiiNamespace()->getWigiiNamespaceName(), MySqlQueryBuilder::SQLTYPE_VARCHAR); //add by LWR
-		return "SELCET ".$this->getSqlColumnsForUser('U', $fieldSelectorList).",
+		return "SELECT ".$this->getSqlColumnsForUser('U', $fieldSelectorList).",
 case when
 	UU.id_user_owner is not null
 	".($principal->isReadAllUsersInWigiiNamespace()? " or $isInPrincipalWigiiNamespace " : "")."

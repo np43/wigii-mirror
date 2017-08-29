@@ -37,8 +37,9 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 {	
 	private $apiClient;
 	private $apiClientSupportsSubitems;
-	private $areWigiiEventsEnabled;
+	protected $areWigiiEventsEnabled;
 	private $wigiiEventsDispatcher;
+	protected $groupListForEvents;
 	
 	// Object lifecycle
 		
@@ -60,6 +61,7 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 		unset($this->ignoreLockedElements);
 		unset($this->areWigiiEventsEnabled);
 		unset($this->wigiiEventsDispatcher);
+		unset($this->groupListForEvents);
 		unset($this->trashbinIdCache);
 		unset($this->elementPAList);
 		unset($this->pRights);
@@ -193,7 +195,7 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 		$this->decisionMethod = CallableObject::createInstance($method, $obj); 
 	}
 	
-	private $groupId;
+	protected $groupId;
 	/**
 	 * Sets the ID of the group where to insert the elements
 	 * @param int $groupId a Group ID
@@ -438,10 +440,19 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 	 */
 	protected function doPersistElement($principal, $element, $fieldSelectorList=null) {
 		// creates wigii event if should throw events 		
-		if($this->areWigiiEventsEnabled) {						
-			if(isset($this->apiClient)) $groupList = $this->apiClient->getGroupList();			
-			else $groupList = null;
-			$wigiiEvent = PWithElementWithGroupPList::createInstance($principal, $element, $groupList);
+		if($this->areWigiiEventsEnabled) {
+		    // computes group list for events
+		    if(!isset($this->groupListForEvents)) {
+		        // if insert, then builds a group list based on group id
+		        if(isset($this->groupId)) {
+		            $this->groupListForEvents = GroupListAdvancedImpl::createInstance();
+		            $this->getGroupAdminService()->getGroupsWithoutDetail($principal, array($this->groupId=>$this->groupId), $this->groupListForEvents);
+		        }
+		        // else takes current group list from context
+		        elseif(isset($this->apiClient)) $this->groupListForEvents = $this->apiClient->getGroupList();
+		        else $this->groupListForEvents = null;
+		    }
+			$wigiiEvent = PWithElementWithGroupPList::createInstance($principal, $element, $this->groupListForEvents);
 			$wigiiEvent->setLinkSelector($this->linkSelector);
 		}		
 		

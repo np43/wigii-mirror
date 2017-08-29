@@ -351,7 +351,7 @@ class ElementServiceWebImpl extends ElementServiceImpl
 		?><div style="clear:both;height:40px;"></div>
 		<div class="elementHistoric"><?
 			?><div class="label collapsed SBB"><?=$transS->t($p, "elementAdditionalInformation");?></div><?
-			?><table style="display:none;width:100%;max-width:<?=$totalWidth;?>px"><?
+			?><table style="display:none"><? //Remove the width and max-width to prevent the width of the historic element (LMA)
 
 				if(!$element->isSubElement()) {
 					//display groups

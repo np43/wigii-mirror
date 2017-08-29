@@ -21,26 +21,58 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* TechnicalServiceProvider implementation which integrates with command line interpreter
+/**
+ * TechnicalServiceProvider implementation which integrates with command line interpreter
  * Created by CWE on 8 juin 09
+ * Modified by Medair (CWE) on 25.08.2017 to allow disabling debugger
  */
 class TechnicalServiceProviderCliImpl extends TechnicalServiceProvider
 {
-	/**
+    private $enableExecutionSink;
+    private $enableDebugLogger;
+    
+    // Service provider lifecycle
+    
+    /**
 	 * Creates new instance and registers itself in API.
 	 */
-	public static function start()
+    public static function start($enableExecutionSink=false, $enableDebugLogger=false)
 	{
 		$instance = new TechnicalServiceProviderCliImpl();
+		$instance->setEnableExecutionSink($enableExecutionSink);
+		$instance->setEnableDebugLogger($enableDebugLogger);
 		parent::registerSingleInstance($instance);		
 	}
+		
+	// Configuration
+	
+	protected function getEnableExecutionSink()
+	{
+		return $this->enableExecutionSink;
+	}
+	protected function setEnableExecutionSink($enableExecutionSink)
+	{
+		$this->enableExecutionSink = $enableExecutionSink;
+	}
+	protected function getEnableDebugLogger()
+	{
+		return $this->enableDebugLogger;
+	}
+	protected function setEnableDebugLogger($enableDebugLogger)
+	{
+		$this->enableDebugLogger = $enableDebugLogger;
+	}	
+	
+	// Service provider implementation
 	
 	/**
 	 * default as DebugLogger
 	 */
 	protected function createDebugLoggerInstance($typeName)
 	{
-		return new DebugLoggerCliImpl($typeName);
+		$returnValue = new DebugLoggerCliImpl($typeName);
+		$returnValue->setEnabled($this->getEnableDebugLogger());
+		return $returnValue;
 	}
 	
 	/**
@@ -48,7 +80,9 @@ class TechnicalServiceProviderCliImpl extends TechnicalServiceProvider
 	 */
 	protected function createExecutionSinkInstance($typeName)
 	{
-		return new ExecutionSinkCliImpl($typeName);
+		$returnValue =  new ExecutionSinkCliImpl($typeName);
+		$returnValue->setEnabled($this->getEnableExecutionSink());
+		return $returnValue;
 	}
 	
 	/**

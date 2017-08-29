@@ -30,15 +30,20 @@ class LineReaderDFA implements DataFlowActivity
 {	
 	private $partialLine;
 	private $firstChunk;
-	 
+	private $stringLiteralBuffer;
+	
 	// Object lifecycle
 		
 	public function reset() {
 		$this->freeMemory();	
 		$this->firstChunk=true;
+		$this->cutMultilineStringLiterals = false;
+		$this->escapeNewLines = false;
 	}	
 	public function freeMemory() {
 		unset($this->partialLine);
+		unset($this->encoding);
+		unset($this->stringLiteralBuffer);		
 	}
 	
 	// configuration
@@ -51,6 +56,26 @@ class LineReaderDFA implements DataFlowActivity
 	 */
 	public function setEncoding($encoding) {
 		$this->encoding = $encoding;
+	}
+	
+	private $cutMultilineStringLiterals;
+	/**
+	 * If true, then Double Quoted String literal which are multiline will be cut by lines. 
+	 * Else String literal is kept complete and inner line feeds are kept.
+	 * By default, multiline string literals are not cut.
+	 */
+	public function setCutMultilineStringLiteral($bool) {
+	    $this->cutMultilineStringLiterals = $bool;
+	}
+	
+	private $escapeNewLines;
+	/**
+	 * If true, then multine line string literals will have their line feed character encoded with a \n (this is helpful when parsing CSV files).  
+	 * Else inner line feed are kept. 
+	 * This option is ignored if cutMultilineStringLiteral is true.
+	 */
+	public function setEscapeNewLines($bool) {
+	    $this->escapeNewLines = $bool;
 	}
 	
 	// stream data event handling
@@ -70,7 +95,7 @@ class LineReaderDFA implements DataFlowActivity
 		foreach($lines as $line) {
 			// if first line, then appends previous partial line
 			if($i==1) {
-				$dataFlowContext->writeResultToOutput($this->processLine((isset($this->partialLine)?$this->partialLine.$line:$line)), $this);
+				$this->outputLine($this->processLine((isset($this->partialLine)?$this->partialLine.$line:$line)), $dataFlowContext);
 			} 
 			// if last line, stores it into partial line
 			elseif($i==$n) {
@@ -78,7 +103,7 @@ class LineReaderDFA implements DataFlowActivity
 			}
 			// else pushes line in flow
 			else {
-				$dataFlowContext->writeResultToOutput($this->processLine($line), $this);
+				$this->outputLine($this->processLine($line), $dataFlowContext);
 			}
 			$i++;
 		}
@@ -104,9 +129,41 @@ class LineReaderDFA implements DataFlowActivity
 		else $returnValue = mb_convert_encoding($returnValue, 'UTF-8', $this->encoding);
 		return $returnValue;
 	}
+	/**
+	 * Outputs the line of data into the underlying DataFlow
+	 * Re-assembles String literals if they where cut, except if cutMultilineStringLiterals is true.
+	 * @param String $line
+	 * @param DataFlowContext $dataFlowContext
+	 */
+	protected function outputLine($line, $dataFlowContext) {
+	    if($this->cutMultilineStringLiterals) $dataFlowContext->writeResultToOutput($line, $this);
+	    else {
+	        // counts the number of double quotes in the line
+	        // if odd, then a string literal is cut.
+	        if(substr_count($line, '"') % 2 > 0) {
+	            // if a partial string literal is already buffered, then closes it and dumps
+	            if($this->stringLiteralBuffer) {
+	                $dataFlowContext->writeResultToOutput($this->stringLiteralBuffer.($this->escapeNewLines?'\n':"\n").$line, $this);
+	                unset($this->stringLiteralBuffer);
+	            }
+	            // else buffers the line
+	            else $this->stringLiteralBuffer = $line;
+	        }
+	        // else if even
+	        else {
+	            // if a partial string literal is already buffered, then adds a new line and buffers
+	            if($this->stringLiteralBuffer) {
+	                $this->stringLiteralBuffer .= ($this->escapeNewLines?'\n':"\n").$line;
+	            }
+	            // else outputs the line
+	            else $dataFlowContext->writeResultToOutput($line, $this);
+	        }	        
+	    }
+	}
 	
 	public function endOfStream($dataFlowContext) {
-		if(isset($this->partialLine)) $dataFlowContext->writeResultToOutput($this->processLine($this->partialLine), $this);
+		if(isset($this->partialLine)) $this->outputLine($this->processLine($this->partialLine), $dataFlowContext);
+		if(isset($this->stringLiteralBuffer)) $dataFlowContext->writeResultToOutput($this->stringLiteralBuffer, $this);
 	}
 	
 	

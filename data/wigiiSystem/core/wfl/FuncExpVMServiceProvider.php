@@ -24,6 +24,7 @@
 /**
  * A service provider which provides contextual service instances to Func Exp implementors 
  * Created by CWE on 3 octobre 2013
+ * Modified by Medair (CWE) on 27.06.2017 to allow instanciating custom FuncExp Libraries (modules)
  */
 class FuncExpVMServiceProvider
 {	
@@ -134,6 +135,7 @@ class FuncExpVMServiceProvider
 	 * Loads a list of classes in the current context of the VM
 	 * @param Array|String $modules an array of class names or one string
 	 * @return if only one class then returns the instance of the class, else returns null
+	 * @throws AuthorizationServiceException if module class is located into the Client config folder and principal is a minimal principal.
 	 */
 	public function useModules($modules) {
 		if(empty($modules)) return null;
@@ -200,17 +202,17 @@ class FuncExpVMServiceProvider
 	
 	/**
 	 * Creates a module instance given its class name
+	 * The class can be a custom FuncExp Library.
 	 * @param String $className
 	 */
 	protected function createModuleInstance($className) {
-		$returnValue = ServiceProvider::createWigiiObject($className);
+	    $vm = $this->getFuncExpVM();
+		$returnValue = ServiceProvider::getFuncExpLibrary($vm->getPrincipal(), $className);
 		// injects FuncExpVM if needed
-		if($returnValue instanceof FuncExpVMAbstractFL) {
-			$returnValue->setFuncExpVM($this->getFuncExpVM());
-			// injects root principal if needed
-			if($returnValue instanceof RootPrincipalFL) {
-				$returnValue->setRootPrincipal($this->getRootPrincipal());
-			}
+		$returnValue->setFuncExpVM($vm);
+		// injects root principal if needed
+		if($returnValue instanceof RootPrincipalFL) {
+			$returnValue->setRootPrincipal($this->getRootPrincipal());
 		}
 		return $returnValue;
 	}

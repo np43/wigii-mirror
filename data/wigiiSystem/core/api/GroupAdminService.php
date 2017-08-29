@@ -21,7 +21,8 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* wigii Group admin service interface
+/** 
+ * Wigii Group admin service interface
  * Created by CWE on 31 mai 09
  */
 interface GroupAdminService
@@ -29,7 +30,7 @@ interface GroupAdminService
 	/**
 	 * getGroupsPath from groupPList
 	 * groupPList / groupList / array list of groups / group ids we want to display the full path
-	 * @return array[id_group]=array([id_group_parent]=>groupParentName,...,[id_group]=>[groupname]
+	 * @return Array array[id_group]=array([id_group_parent]=>groupParentName,...,[id_group]=>[groupname]
 	 * id_group represent each group id of the groupList 
 	 * if the wigiiNamespace of a group is different than the principal wigiiNamespace the groupname is prefixed with "wigiiNamespace : "
 	 * this method use a cache in a same execution.
@@ -84,7 +85,7 @@ interface GroupAdminService
 	 * Fills the valueList with the value of the fieldSelector of each groups defined
 	 * in the groupLogExp. The groupList defined with the logExp is then extended with
 	 * each child or each parent of those groups depending on the state of parentOrChildren.
-	 * @param $parentOrChildren : int, 1, 0, -1, 2 (with parent, only groupList, with children, both)
+	 * @param int $parentOrChildren 1, 0, -1, 2 (with parent, only groupList, with children, both)
 	 * WARNING, this method needs the root principal to be able to access to details of groups
 	 * without checking read rights. The principal is checked in the authorizationService.
 	 * throws GroupAdminServiceException in case of error
@@ -96,8 +97,8 @@ interface GroupAdminService
 	 * Fills the valueList with the value of the fieldSelector of each groups defined
 	 * in the GroupList. The GroupList can also be a GroupPList. The groupList is extended with
 	 * each child or each parent of those groups depending on the state of parentOrChildren.
-	 * @param $parentOrChildren : int, 1, 0, -1, 2 (with parent, only groupList, with children, both)
-	 * @param $groupLogExp: GroupLogExp filter the group selection according to logExp
+	 * @param int $parentOrChildren 1, 0, -1, 2 (with parent, only groupList, with children, both)
+	 * @param LogExp $groupLogExp filter the group selection according to logExp
 	 * WARNING, this method needs the root principal to be able to access to details of groups
 	 * without checking read rights. The principal is checked in the authorizationService.
 	 * throws GroupAdminServiceException in case of error
@@ -150,7 +151,7 @@ interface GroupAdminService
 	 * @param LogExp $childrenGroupFilterLogExp an optional LogExp used to filter the selected children groups.
 	 * @param LogExp $groupFilterLogExp an optional LogExp which filters resulting list of groups. 
 	 * @throws GroupAdminServiceException in case of error
-	 * @return the number of selected groups.
+	 * @return int the number of selected groups.
 	 */
 	public function getSelectedGroupsWithChildrenWithoutDetail($principal, $parentGroupSelectionLogExp, $groupList, $childrenGroupFilterLogExp=null, $groupFilterLogExp=null);
 
@@ -216,7 +217,7 @@ interface GroupAdminService
 	 * @param boolean $keepUserGroupRights if true, then existing User Group Rights are kept for all children groups,
 	 * else existing rights a removed. Default to false.
 	 * @throws GroupAdminServiceException in case of error.
-	 * @return the group without details, with new parent id.
+	 * @return Group the group without details, with new parent id.
 	 */
 	public function moveGroup($principal, $groupId, $newParentGroupId, $keepUserGroupRights=false);
 	

@@ -190,7 +190,7 @@ class CliExecutor {
 	 * Default starts TechnicalServiceProviderImpl
 	 */
 	protected function startTechnicalServiceProvider() {
-		TechnicalServiceProviderCliImpl :: start();
+	    TechnicalServiceProviderCliImpl :: start(DEBUG_EXECUTION_ENABLED,DEBUG_EXECUTION_ENABLED);
 	}
 	/**
 	 * Default starts ServiceProviderCliImpl
@@ -213,6 +213,16 @@ class CliExecutor {
 			if($argc < 4) $this->printUsage();
 			else {
 				$i = 1;
+				
+				// reads options
+				if($i < $argc) {
+				    // -noTrace option
+				    if($argv[$i] == '-noTrace') {
+				        /* ignores. Already interpreted in main.php */
+				        $i++;
+				    }
+				}
+				
 				// reads client name
 				if($argv[$i++] != '-c') $this->printUsage();
 				else if($i >= $argc) $this->printUsage();
@@ -312,5 +322,26 @@ class CliExecutor {
 			}
 			else throw new ServiceException("No batch definition found with name ".$batchClass, ServiceException::INVALID_ARGUMENT);
 		}		
+	}
+	
+	protected function execScript($argc, $argv, $subArgIndex) {
+	    // gets script ID
+	    if($subArgIndex >= $argc) throw new ServiceException('Script ID is missing. Usage is execScript elementId+', ServiceException::INVALID_ARGUMENT);
+	    else {
+	        // extracts the IDs of the scripts to execute
+	        $scriptIds = array_slice($argv, $subArgIndex);
+	        $principal = $this->getCurrentPrincipal();
+	        // script should be located in Setup namespace and be of module Scripts
+	        $cs = cs(ServiceProvider::getWigiiNamespaceAdminService()->getSetupWigiiNamespace($principal)->getWigiiNamespaceName(),"Scripts");
+	        
+            // execute each script in sequence
+            foreach($scriptIds as $scriptId) {
+                sel($principal, elementP($scriptId, null, $cs), dfasl(
+                    dfas("ElementSetterDFA", "setCalculatedFieldSelectorMap", cfsMap(cfs("scriptFuncExp",true))),
+                    dfas("ElementRecalcDFA"),
+                    dfas("ElementDFA", "setMode", 1)
+                ));
+            }	        
+	    }
 	}
 }

@@ -24,6 +24,7 @@
 /**
  * A callable object supporting function calls, method calls on objects and closures.
  * Created by CWE on 8 décembre 2013
+ * Medair (CWE) 04.07.2017: Fixed bug on invocation with first parameter null
  */
 class CallableObject extends Model
 {	
@@ -108,7 +109,7 @@ class CallableObject extends Model
 	 * @return Any returns the return value of the invoked method
 	 */
 	public function invoke($args=null) {
-		if(isset($args)) $argsArr = func_get_args();
+	    if(isset($args) || func_num_args() > 1) $argsArr = func_get_args();
 		else $argsArr = array();
 		return $this->invokeWithArgsArray($argsArr); 
 	}
@@ -121,7 +122,7 @@ class CallableObject extends Model
 	 * $returnValue = $co($arg1, $arg2, $arg3, ...);
 	 */
 	public function __invoke($args=null) {
-		if(isset($args)) $argsArr = func_get_args();
+	    if(isset($args) || func_num_args() > 1) $argsArr = func_get_args();
 		else $argsArr = array();
 		return $this->invokeWithArgsArray($argsArr);
 	}

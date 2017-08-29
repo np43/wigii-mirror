@@ -26,6 +26,7 @@
  * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by CWE on 28.06.2016
  * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
+ * Modified by Medair (CWE) on 05.07.2017 to automatically update FieldSelectorList present in DataFlowContext to make sure calculated fields are persisted afterwards.
  */
 class ElementRecalcDFA implements DataFlowActivity
 {			
@@ -69,7 +70,11 @@ class ElementRecalcDFA implements DataFlowActivity
 		// extracts element
 		$element = $data->getDbEntity();
 		// recalculates the values
-		ServiceProvider::getWigiiBPL()->elementEvalCalcFields($dataFlowContext->getPrincipal(), $this, wigiiBPLParam("element",$element,"fieldName",$this->fieldName));
+		ServiceProvider::getWigiiBPL()->elementEvalCalcFields($dataFlowContext->getPrincipal(), $this, wigiiBPLParam(
+		    "element",$element,
+		    "fieldName",$this->fieldName,
+		    "fslForUpdate", $dataFlowContext->getAttribute('FieldSelectorList')
+		));
 		// pushes data further down in the flow
 		$dataFlowContext->writeResultToOutput($data,$this);
 	}

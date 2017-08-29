@@ -143,7 +143,7 @@ class CallbackDFA implements DataFlowActivity
 	}
 	
 	/**
-	 * Sets a value in DataFlow context. 
+	 * Sets a value in the CallbackDFA context. 
 	 * This map is used to store some state during the execution of the data flow.
 	 * @param Scalar $key the key under which to store data
 	 * @param Any $value the value stored as state
@@ -154,7 +154,7 @@ class CallbackDFA implements DataFlowActivity
 	}
 	
 	/**
-	 * Gests a value stored in the DataFlow context.
+	 * Gets a value stored in the CallbackDFA context.
 	 * @param Scalar $key the key for which to retrieve data
 	 * @return the data or null if not defined
 	 */

@@ -27,6 +27,7 @@
  * Created by CWE on 6 décembre 2013
  * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
  * Modified by Medair (CWE) on 28.04.2017 to attach stamped ElementInfo on fetch
+ * Modified by Medair (CWE) on 05.07.2017 to fetch element only if LogExp is defined + ensure that fetched element always has all fields if no FieldSelectorList is defined
  */
 class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 {			
@@ -210,7 +211,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	/**
 	 * Sets the method that should be executed to map one specific object attribute to the element
 	 * The method signature takes one argument which is the object field value, 
-	 * a second argument which is the element and a third argument which is the principal
+	 * a second argument which is the element, a third argument which is the DataFlowContext
 	 * @param String $fieldName the object field name for which to set a closure
 	 * @param Closure|String $method a closure representing the code that should be executed or 
 	 * a string which is an object method name or a function name
@@ -224,6 +225,17 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	protected function getFieldMappingMethod($fieldName) {
 		if(isset($this->fieldMappingMethod)) return $this->fieldMappingMethod[$fieldName];
 		else return null;
+	}
+	/**
+	 * Adds a list of field mapping closures
+	 * Calls the method setFieldMappingMethod for each pair in the array.
+	 * @param Array $closureMap an array [fieldName => field mapping closure]
+	 */
+	public function addFieldMappingsMethods($closureMap) {
+        if(!is_array($closureMap)) throw new DataFlowServiceException('addFieldMappingsMethods takes an array of field mapping closures', DataFlowServiceException::INVALID_ARGUMENT);
+        foreach($closureMap as $fieldName => $closure) {
+            $this->setFieldMappingMethod($fieldName, $closure);
+        }
 	}
 	
 	private $object2ElementMap;
@@ -429,8 +441,11 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 			if(isset($this->elementSelectorMethod)) $logExp = $this->elementSelectorMethod->invoke($data, $dataFlowContext);
 			// else calls the protected method
 			else $logExp = $this->buildElementLogExp($data, $dataFlowContext);
-			// list filter
-			$lf = lf($this->calculatedFieldSelectorList, $logExp);
+			
+			// if log exp is not defined, the builds a false log exp on Element ID null in order to still get configuration setup.
+			if(is_null($logExp)) $logExp = lxAnd(lxEq(fs_e('id'),null),lxEq(fs_e('id'),false));
+			// list filter (puts calculated field selector list only if a custom field selector list has been set, else takes all fields)
+			$lf = lf((isset($this->fieldSelectorList)?$this->calculatedFieldSelectorList:null), $logExp);
 									
 			// if subitem
 			if($isSubitem) {
@@ -526,13 +541,12 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 		// if obj has a sub array attached to attribute, then maps with element subfields
 		// non matching fields/subfields are ignored
 		// pRights are ignored
-		$element = $elementP->getDbEntity();
-		$principal = $dataFlowContext->getPrincipal();
+		$element = $elementP->getDbEntity();		
 		if(isset($this->object2ElementMap)) {
-			$this->mapObject2ElementUsingMap($obj, $element, $principal, $this->object2ElementMap);
+		    $this->mapObject2ElementUsingMap($obj, $element, $dataFlowContext, $this->object2ElementMap);
 		}
 		else {
-			$this->mapObject2ElementUsingNames($obj, $element, $principal);
+		    $this->mapObject2ElementUsingNames($obj, $element, $dataFlowContext);
 		} 
 		// if not last stage in the data flow, then pushes the elementP further.
 		if(!$dataFlowContext->isCurrentStepTheLastStep()) {
@@ -540,13 +554,14 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 		}
 	}
 
-	private function mapObject2ElementUsingNames($obj, $element, $principal) {
-		$fl = $element->getFieldList();			
+	private function mapObject2ElementUsingNames($obj, $element, $dataFlowContext) {
+	    $principal = $dataFlowContext->getPrincipal();
+	    $fl = $element->getFieldList();			
 		foreach($obj as $attr => $val) {
 			// checks for the existence of a field mapping closure
 			$c = $this->getFieldMappingMethod($attr);
 			// if found, then executes it
-			if(isset($c)) $c($val, $element, $principal);
+			if(isset($c)) $c($val, $element, $dataFlowContext);
 			// else uses the default mapping based on name matching
 			else {
 				$field = $fl->doesFieldExist($attr);
@@ -593,12 +608,13 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 		}
 	}
 	
-	private function mapObject2ElementUsingMap($obj, $element, $principal, $map) {
-		foreach($obj as $attr => $val) {
+	private function mapObject2ElementUsingMap($obj, $element, $dataFlowContext, $map) {
+	    $principal = $dataFlowContext->getPrincipal();
+	    foreach($obj as $attr => $val) {
 			// checks for the existence of a field mapping closure
 			$c = $this->getFieldMappingMethod($attr);
 			// if found, then executes it
-			if(isset($c)) $c($val, $element, $principal);
+			if(isset($c)) $c($val, $element, $dataFlowContext);
 			// else uses the defined mapping
 			else {			
 				// gets mapping
@@ -732,7 +748,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	    
 		// maps the element to the object
 		// using the closure if defined
-		if(isset($this->object2ElementMappingMethod)) $this->object2ElementMappingMethod->invoke($this->data, $elementP, $this->dataFlowContext);   
+		if(isset($this->object2ElementMappingMethod)) $this->object2ElementMappingMethod->invoke($this->data, $elementP, $this);   
 		// else calls the protected method
 		else $this->mapObject2Element($this->data, $elementP, $this->dataFlowContext);		
 	}

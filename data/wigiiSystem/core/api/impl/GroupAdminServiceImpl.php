@@ -1408,7 +1408,7 @@ class GroupAdminServiceImpl implements GroupAdminService
 				}
 			}
 			$returnValue = $groupPMapper->count();
-			$groupPMapper->flush($groupPTree, $fieldSelectorList);			
+			$groupPMapper->flush($groupPTree, $fieldSelectorList);
 		}
 		catch (GroupAdminServiceException $gaE){
 			if(isset($groupPMapper)) $groupPMapper->freeMemory();
@@ -2734,33 +2734,49 @@ order by isParent DESC
 	}
 	protected function updateEmailNotificationToGroups($principal, $groupIds, $email, $updateOp){
 		$this->executionSink()->publishStartOperation("updateEmailNotificationToGroups", $principal);
+		$returnValue = 0;
 		try
 		{
 			// check validity of groupIds
 			if(!isset($groupIds)) throw new GroupAdminServiceException("groupIds cannot be null", GroupAdminServiceException::INVALID_ARGUMENT);
-			
-			$lf = $this->getListFilterForSelectGroupWithoutDetail($groupIds);
-			if($updateOp == SUPDOP_ADD){ //check the read access for add. No check is done to unsubscribe
-				$originalGroupIds = $groupIds;
-				$groupList = GroupListAdvancedImpl :: createInstance(false);
-				$this->getSelectedGroups($principal, $lf, $groupList);
-				$groupIds = $groupList->getReadGroups()->getIds();
-				if(!$groupIds) throw new GroupAdminServiceException("groupIds cannot be null. Original groupIds was: ".implode(",",$originalGroupIds).' for operator: '.$updateOp, GroupAdminServiceException::INVALID_ARGUMENT);
+			if(!empty($email)) {
+    			$lf = $this->getListFilterForSelectGroupWithoutDetail($groupIds);
+    			if($updateOp == SUPDOP_ADD){ //check the read access for add. No check is done to unsubscribe
+    				$originalGroupIds = $groupIds;
+    				$groupList = GroupListAdvancedImpl :: createInstance(false);
+    				$this->getSelectedGroups($principal, $lf, $groupList);
+    				$groupIds = $groupList->getReadGroups()->getIds();
+    				if(!$groupIds) throw new GroupAdminServiceException("groupIds cannot be null. Original groupIds was: ".implode(",",$originalGroupIds).' for operator: '.$updateOp, GroupAdminServiceException::INVALID_ARGUMENT);
+    			}
+    			// if delete, then filters only on groups having the emails to be removed.
+    			elseif($updateOp == SUPDOP_DEL) {
+    			    if(!is_array($email)) $email = preg_split("/".ValueListArrayMapper::Natural_Separators."/", $email, null, PREG_SPLIT_NO_EMPTY);
+    			    $lxEmail = null;
+    			    foreach($email as $e) {
+    			        $lx = lxLike(fs("emailNotification"),'%'.$e.'%');
+    			        if($lxEmail instanceof LogExpOr) $lxEmail->addOperand($lx);
+    			        elseif(isset($lxEmail)) $lxEmail = lxOr($lxEmail, $lx);
+    			        else $lxEmail = $lx;
+    			    }
+    			    if(isset($lxEmail)) {
+    			         $lx = $lf->getFieldSelectorLogExp();
+    			         if(isset($lx)) $lf->setFieldSelectorLogExp(lxAnd($lx,$lxEmail));
+    			         else $lf->setFieldSelectorLogExp($lxEmail);
+    			    }
+    			}
+    			// checks authorization
+    			$this->assertPrincipalAuthorizedForUpdateEmailNotificationToGroups($principal);
+    
+    			$mySqlF = $this->getMySqlFacade();
+    			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
+    			// no lock aquirement. The subscription to one email adress to receive email notification is based on a loose risk decision. We expect that there is not enough risk that the subcribtion could be rewrited in some groups that on the same time someone was editing this particular field of the group in the administration console
+    			$idFieldSelector = FieldSelector::createInstance("id");
+    			// updates notification emails
+    			$returnValue = $mySqlF->updateField($principal, fs("emailNotification"), "Groups",
+    								$lf->getFieldSelectorLogExp(),
+    								$email, $updateOp, $this->getSqlWhereClauseBuilderForSelectGroups(),
+    								$idFieldSelector, $dbCS, "/".ValueListArrayMapper::Natural_Separators."/", ", ");
 			}
-			
-			// checks authorization
-			$this->assertPrincipalAuthorizedForUpdateEmailNotificationToGroups($principal);
-
-			$mySqlF = $this->getMySqlFacade();
-			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
-			// no lock acuirement. The subscription to one email adress to receive email notification is based on a loos risk decision. We expect that there is not enough risk that the subcribtion could be rewrited in some groups that on the same time someone was editing this particular field of the group in the administration console
-			$idFieldSelector = FieldSelector::createInstance("id");
-			// updates notification emails
-			$returnValue = $mySqlF->updateField($principal, FieldSelector::createInstance("emailNotification"), "Groups",
-								$lf->getFieldSelectorLogExp(),
-								$email, $updateOp, $this->getSqlWhereClauseBuilderForSelectGroups(),
-								$idFieldSelector, $dbCS, "/".ValueListArrayMapper::Natural_Separators."/", ", ");
-			
 		}
 		catch (GroupAdminServiceException $gaE){
 			$this->executionSink()->publishEndOperationOnError("updateEmailNotificationToGroups", $gaE, $principal);

@@ -24,6 +24,7 @@
 /**
  * Wigii ClientAdminService implementation
  * Created by CWE on 12 juin 09
+ * Updated by Medair (CWE) to cache dimension values
  */
 class ClientAdminServiceImpl implements ClientAdminService
 {
@@ -43,7 +44,12 @@ class ClientAdminServiceImpl implements ClientAdminService
 	 */
 	private $clientCache;
 
-
+	/**
+	 * dimensions values cache
+	 * map dimension selector -> array of values (array key is also the value to enable lookups)
+	 */
+    private $dimensionValuesCache;
+    
 	private function debugLogger()
 	{
 		if(!isset($this->_debugLogger))
@@ -159,6 +165,29 @@ class ClientAdminServiceImpl implements ClientAdminService
 			$this->translationService = ServiceProvider::getTranslationService();
 		}
 		return $this->translationService;
+	}
+	
+	private $fxBuilder;
+	/**
+	 * Injects the FuncExpBuilder to be used
+	 * @param FuncExpBuilder $funcExpBuilder
+	 */
+	public function setFuncExpBuilder($funcExpBuilder)
+	{
+	    $this->fxBuilder = $funcExpBuilder;
+	}
+	/**
+	 * Gets the injected FuncExpBuilder
+	 * @return FuncExpBuilder
+	 */
+	protected function getFuncExpBuilder()
+	{
+	    // autowired
+	    if(!isset($this->fxBuilder))
+	    {
+	        $this->fxBuilder = TechnicalServiceProvider::getFuncExpBuilder();
+	    }
+	    return $this->fxBuilder;
 	}
 	
 	// service implementation
@@ -386,6 +415,67 @@ class ClientAdminServiceImpl implements ClientAdminService
 		else throw new ClientAdminServiceException('checkDeletedValues can only take value 1 or 2', ClientAdminServiceException::INVALID_ARGUMENT);
 	}
 	
+	
+	public function lookupDimensionValueByLabel($principal,$selector,$label) {
+	    $this->executionSink()->publishStartOperation("lookupDimensionValueByLabel", $principal);
+	    try
+	    {	        
+	        // prepares dimension data source
+	        $dimensionDS = dimension2df($selector, lxAnd(lxLike(fs('label'), "%$label%"), lxNotEq(fs_e('state_deprecated'), true)), 0);
+	        $dimensionDS->setFirstMatch(true);
+	        // looks for first matching value
+	        $returnValue = $this->getDataFlowService()->processDataSource($principal, $dimensionDS, dfasl(
+	            dfas('MapObject2ValueDFA','setObject2ValueFuncExp',fs('value'))
+	        ));	        
+	    }
+	    catch (ClientAdminServiceException $casE) {
+	        $this->executionSink()->publishEndOperationOnError("lookupDimensionValueByLabel", $casE, $principal);
+	        throw $casE;
+	    }
+	    catch(Exception $e)
+	    {
+	        $this->executionSink()->publishEndOperationOnError("lookupDimensionValueByLabel", $e, $principal);
+	        throw new ClientAdminServiceException('',ClientAdminServiceException::WRAPPING, $e);
+	    }
+	    $this->executionSink()->publishEndOperation("lookupDimensionValueByLabel", $principal);
+	    return $returnValue;
+	}
+	
+	public function getDimensionValues($principal,$selector,$includeDeprecated=false) {
+	    $this->executionSink()->publishStartOperation("getDimensionValues", $principal);
+	    try
+	    {	
+	        // 1. lookups in cache
+	        if(!isset($this->dimensionValuesCache)) $this->dimensionValuesCache = array();
+	        $dimensionKey = $this->getFuncExpBuilder()->object2strfx($selector).','.$includeDeprecated;
+	        if(isset($this->dimensionValuesCache[$dimensionKey])) {
+	            $returnValue = $this->dimensionValuesCache[$dimensionKey];
+	        }	        
+	        // 2. if not set, then fetches dimension values
+	        else {	            
+	            // filter out deprecated values
+	            if($includeDeprecated) $lx=null;
+	            else $lx = lxNotEq(fs_e('state_deprecated'), true);
+
+	            $returnValue = $this->getDataFlowService()->processDataSource($principal, dimension2df($selector,$lx,1), dfasl(
+	               dfas('ArrayBufferDFA', 'setUnpair', true, 'setKeyField', 'value')
+	            ));
+	            // if found, then caches result
+	            if(isset($returnValue)) $this->dimensionValuesCache[$dimensionKey] = $returnValue;
+	        }	        
+	    }
+	    catch (ClientAdminServiceException $casE) {
+	        $this->executionSink()->publishEndOperationOnError("getDimensionValues", $casE, $principal);
+	        throw $casE;
+	    }
+	    catch(Exception $e)
+	    {
+	        $this->executionSink()->publishEndOperationOnError("getDimensionValues", $e, $principal);
+	        throw new ClientAdminServiceException('',ClientAdminServiceException::WRAPPING, $e);
+	    }
+	    $this->executionSink()->publishEndOperation("getDimensionValues", $principal);
+	    return $returnValue;
+	}
 	
 	public function syncCfgFields($principal, $groupId, $fileName=null,
 			$checkDeletedFields=1, $markNewFieldsAsImportant=true) {

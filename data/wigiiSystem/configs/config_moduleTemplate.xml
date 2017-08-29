@@ -96,13 +96,5 @@
 				<c3 field="field3" width="200" />
 				<c6 elementAttribut="sys_date" width="75" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></c6>
 			</fields>
-		</listView>
-
-		<selectSearchBar>
-			<fields>
-				<c1 field="field4" />
-				<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
-				<e2 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e2>
-			</fields>
-		</selectSearchBar>
+		</listView>	
 </moduleName>

@@ -662,10 +662,10 @@ class NotificationService implements MultiplexedEvent {
 				$this->getTranslationService()->setSubExecutionModule($rec->getModule());
 				$elementListText .= $this->getTranslationService()->t($p, "#Element#:");				
 				$elementListText .= '<br />';
-				if($eventName=="delete") $elementListText .= $this->getButtonViewElement($p, $rec, '<u style="font-weight:normal;">'.$rec->getId()."</u>")."  ";
+				if($eventName=="delete") $elementListText .= $this->getButtonViewElement($p, $rec, '<u style="font-weight:normal;">'.$rec->getId()."</u><br/>")."  ";
 				$elementListText .= $this->getElementView($p, $rec, $trm, $fsl);
 			} else {
-				if($eventName=="delete") $elementListText .= $this->getButtonViewElement($p, $rec, '<u style="font-weight:normal;">'.$rec->getId()."</u>")."  ";
+				if($eventName=="delete") $elementListText .= $this->getButtonViewElement($p, $rec, '<u style="font-weight:normal;">'.$rec->getId()."</u><br/>")."  ";
 				$elementListText .= $this->getElementView($p, $rec, $trm, $fsl);
 			}
 			$elementListText .= '</p><p></p>';
@@ -867,13 +867,11 @@ class NotificationService implements MultiplexedEvent {
 		return ($wigiiNamespace ? $wigiiNamespace.' - ' : "").$this->getTranslationService()->t($p, $module->getModuleName()).': ';
 	}
 	protected function getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList=null){
-		/* if($rec && $rec->isSubElement()){
+		// fetches root element and aligns configuration
+	    if($rec && $rec->isSubElement()){
 			$rootElement = $this->getRootElement($p, $rec);
-			$subject = $this->getShortSubject($p, "update", $entityName, $rootElement->getModule());
-		} else {
-			$subject = $this->getShortSubject($p, $eventName, $entityName, $module);
 		}
-		*/
+		
 		if(!$p->getRealUser()){
 			$username = $this->getTranslationService()->t($p, "systemPrincipal")." ";
 		} else {
@@ -924,7 +922,7 @@ class NotificationService implements MultiplexedEvent {
 				break;
 			case "Element":
 				if($eventName=="setState") $subject .= $this->getTranslationService()->t($p, "stateOfElement");
-				else $subject = $this->getTranslationService()->t($p,"#Element#");
+				else $subject = $this->getTranslationService()->t($p,"#Element# "); //the space at the end is important in order to not return the first #Element# translation, but to do the second round with the executionModule replacement
 				$subject .= " (#".$rec->getId().") ";
 				
 				//construct the subject
@@ -954,7 +952,7 @@ class NotificationService implements MultiplexedEvent {
 					case "update":
 						$subject .= $this->getTranslationService()->t($p, "updatedBy")." ".$username;
 						if($rec->isSubElement()){
-							//delete sub element in element
+							//update sub element in element
 							//$subject .= $this->getTranslationService()->t($p, "hasUpdatedThisElementToRootElement")." ";
 							$subject .= $this->getTranslationService()->t($p, "toRootElement")." ";
 							$subModule = $this->getTranslationService()->resetSubExecutionModule();
@@ -967,7 +965,7 @@ class NotificationService implements MultiplexedEvent {
 					case "setState":
 						$subject .= $this->getTranslationService()->t($p, "setStateBy")." ".$username;
 						if($rec->isSubElement()){
-							//delete sub element in element
+							//change state of sub element in element
 							//$subject .= $this->getTranslationService()->t($p, "hasChangedThisElementStateToRootElement")." ";
 							$subject .= $this->getTranslationService()->t($p, "toRootElement")." ";
 							$subModule = $this->getTranslationService()->resetSubExecutionModule();
@@ -1000,14 +998,21 @@ class NotificationService implements MultiplexedEvent {
 						}
 						break;
 					case "restore":
-						$subject .= $this->getTranslationService()->t($p, "deletedBy")." ".$username;
+						$subject .= $this->getTranslationService()->t($p, "restoredBy")." ".$username;
 						if($rec->isSubElement()){
-							//delete sub element in element
+							//restores sub element in element
+							// when restoring sub elements, current module is parent module
+						    $parentModule = $this->getTranslationService()->resetSubExecutionModule();
+						    $this->getTranslationService()->setSubExecutionModule($rec->getModule());
+						    $subject = $this->getTranslationService()->t($p,"#Element# "); //the space at the end is important in order to not return the first #Element# translation, but to do the second round with the executionModule replacement
+						    $subject .= " (#".$rec->getId().") ";
+						    $subject .= $this->getTranslationService()->t($p, "restoredBy")." ".$username;
+						    
 							$subject .= $this->getTranslationService()->t($p, "toRootElement")." ";
 							//$subject .= $this->getTranslationService()->t($p, "hasRestoredThisElementToRootElement")." ";
 							$subModule = $this->getTranslationService()->resetSubExecutionModule();
 							$subject .= $this->getTranslationService()->t($p, "#thisElement# "); //the space at the end is important in order to not return the first #thisElement# translation, but to do the second round with the executionModule replacement
-							$this->getTranslationService()->setSubExecutionModule($subModule);
+							$this->getTranslationService()->setSubExecutionModule($parentModule);
 						} else {
 							//element is deleted
 							$subject .= $this->getTranslationService()->t($p, "toGroups")." ";
@@ -1040,8 +1045,7 @@ class NotificationService implements MultiplexedEvent {
 				}
 				break;
 		}
-		if($rec && $rec->isSubElement()){
-			$rootElement = $this->getRootElement($p, $rec);
+		if($rec && $rec->isSubElement()){			
 			$subject .= " (".substr($this->getShortSubject($p, "update", $entityName, $rootElement->getModule()),0,-2).")";
 		} else {
 			$subject .= " (".substr($this->getShortSubject($p, $eventName, $entityName, $module),0,-2).")";

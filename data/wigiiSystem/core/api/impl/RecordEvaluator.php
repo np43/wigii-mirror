@@ -28,6 +28,7 @@
  * Modified by CWE on 07 mars 2014 to activate by default the FuncExpVM when evaluating a record.
  * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  * Modified by Medair (CWE) on 07.04.2017 to allow dynamic change of principal only by rootPrincipal
+ * Modified by Medair (CWE) on 07.07.2017 to add field update helpers
  */
 class RecordEvaluator implements FuncExpEvaluator
 {
@@ -717,49 +718,49 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Returns null if no arg
 	 */
 	public function max($args){
-		if($this->getNumberOfArgs($args) > 0) {
-			$temp = array();
-			foreach($args as $arg){
-				$r = $this->evaluateArg($arg);
-				if($r != null) $temp[]=$r;
-			}
-			if($temp==null) return null;
-			return max($temp);
-		}
-		else return null;
+	    if($this->getNumberOfArgs($args) > 0) {
+	        $temp = array();
+	        foreach($args as $arg){
+	            $r = $this->evaluateArg($arg);
+	            if($r === 0 || $r != null) $temp[]=$r;
+	        }
+	        if($temp==null) return null;
+	        return max($temp);
+	    }
+	    else return null;
 	}
-
+	
 	/**
 	 * Returns the smallest argument (works with string and numbers, uses php min function)
 	 * Returns null if no arg
 	 */
 	public function min($args){
-		if($this->getNumberOfArgs($args) > 0) {
-			$temp = array();
-			foreach($args as $arg){
-				$r = $this->evaluateArg($arg);
-				if($r != null) $temp[]=$r;
-			}
-			if($temp==null) return null;
-			return min($temp);
-		}
-		else return null;
+	    if($this->getNumberOfArgs($args) > 0) {
+	        $temp = array();
+	        foreach($args as $arg){
+	            $r = $this->evaluateArg($arg);
+	            if($r === 0 || $r != null) $temp[]=$r;
+	        }
+	        if($temp==null) return null;
+	        return min($temp);
+	    }
+	    else return null;
 	}
-
+	
 	/**
 	 * Returns the number of args wich evaluate to something different from null
 	 * Return 0 if no arg.
 	 */
 	public function count($args){
-		if($this->getNumberOfArgs($args) > 0) {
-			$c = 0;
-			foreach($args as $arg) {
-				$r = $this->evaluateArg($arg);
-				if($r != null) $c++;
-			}
-			return $c;
-		}
-		else return 0;
+	    if($this->getNumberOfArgs($args) > 0) {
+	        $c = 0;
+	        foreach($args as $arg) {
+	            $r = $this->evaluateArg($arg);
+	            if($r === 0 || $r != null) $c++;
+	        }
+	        return $c;
+	    }
+	    else return 0;
 	}
 
 	/**
@@ -1322,55 +1323,14 @@ class RecordEvaluator implements FuncExpEvaluator
 		
 		if($args[0] instanceof FieldSelector) $fieldName=$args[0]->getFieldName();
 		else $fieldName = $this->evaluateArg($args[0]);
-		if(!$this->getRecord()->getFieldList()->doesFieldExist($fieldName)) throw new RecordException("fieldName '".$fieldName."' is not a valid field in the record", RecordException::INVALID_ARGUMENT);
-		
 		$comment = $this->evaluateArg($args[1]);
 		
-		$result="";
-		$fxml=$this->getRecord()->getFieldList()->getField($fieldName)->getXml();
-		$isHtmlArea = ($fxml["htmlArea"] == "1");
-		$isJournal = ($fxml["isJournal"] == "1");
-
-		$header = date("d.m.Y H:i")." ".$this->getPrincipal()->getRealUsername();
-
-		// removes html from comment if not an html area
-		if(!$isHtmlArea) {
-			$html2text = new Html2text();
-			$html2text->setHtml($comment);
-			$comment = $html2text->getText();
-// 			$html2text->clear();
-		}
-
-		if($isJournal) {
-			if($isHtmlArea) {
-				$result .= '<p style="color:#666;">&gt; ';
-				$result .= $header;
-				$result .= "</p>";
-				$result .= '<p>'.$comment.'</p>';
-				$result .= "<p>&nbsp;</p>";
-			}
-			else {
-				$result .= "> ";
-				$result .= $header;
-				$result .= "\n";
-				$result .= $comment."\n";
-				$result .= "\n";
-			}
-		}
-		else {
-			if($isHtmlArea) {
-				$result .= "<p>".$header.' '.$comment."</p>";
-				$result .= "<p>&nbsp;</p>";
-			}
-			else {
-				$result .= $header.' '.$comment."\n";
-				$result .= "\n";
-			}
-		}
+        ServiceProvider::getWigiiBPL()->elementAddComment($this->getPrincipal(), $this, wigiiBPLParam(
+            'element',$this->getRecord(),
+            'fieldName', $fieldName,
+            'comment', $comment
+        ));        
 		
-		$result .= $this->getRecord()->getFieldValue($fieldName);
-		$this->getRecord()->setFieldValue($result, $fieldName);
-
 		// if multiple edit then adds FieldSelector to FieldSelectorList for persistence
 		if($this->getFormExecutor() instanceof EditMultipleElementFormExecutor) {
 			$fsl=$this->getFormExecutor()->getFieldSelectorListForUpdate();
@@ -1555,7 +1515,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Last argument is the value to be set, all previous arguments should evaluate to field selectors.
 	 * Example: setVal(f1, f2.name, f3.city, "unknown")
 	 * will update field f1, subfields f2.name, f3.city with value "unknown"
-	 * @return the updated value
+	 * @return Scalar the updated value
 	 */
 	public function setVal($args) {
 		$n = $this->getNumberOfArgs($args);
@@ -1582,6 +1542,133 @@ class RecordEvaluator implements FuncExpEvaluator
 			if($isMultiple && !$fsl->containsFieldSelector($fs->getFieldName(), $fs->getSubFieldName())) $fsl->addFieldSelectorInstance($fs);
 		}
 		return $val;
+	}
+	
+	/**
+	 * Adds a value to a MultipleAttributs field in the wigii bag, given one or several field selectors
+	 * Last argument is the value to be added, all previous arguments should evaluate to field selectors.
+	 * Example: addVal(f1, f2, f3, "codeX")
+	 * will add MultipleAttributs value "codeX" to fields f1, f2, f3 
+	 * @return Scalar the added MultipleAttributs value
+	 */
+	public function addVal($args) {
+	    $n = $this->getNumberOfArgs($args);
+	    if($n < 2) throw new RecordException("For addVal, the number of arguments should be at least 2", RecordException::INVALID_ARGUMENT);
+	    
+	    // if multiple edit then adds FieldSelector to FieldSelectorList for persistence
+	    $isMultiple=($this->getFormExecutor() instanceof EditMultipleElementFormExecutor);
+	    if($isMultiple) {
+	        $fsl=$this->getFormExecutor()->getFieldSelectorListForUpdate();
+	    }
+	    else $fsl=null;
+	    
+	    // evaluates value
+	    $val = $this->evaluateArg($args[$n-1]);
+	    // updates each values
+	    for($i = 0; $i < $n-1; $i++) {
+	        $fs = $args[$i];
+	        if(!($fs instanceof FieldSelector)) {
+	            $fs = $this->evaluateArg($fs);
+	            if(!($fs instanceof FieldSelector)) throw new RecordException("argument $i does not evaluate to a FieldSelector", RecordException::INVALID_ARGUMENT);
+	        }
+	        if(!($this->getRecord()->getFieldList()->getField($fs->getFieldName())->getDataType() instanceof MultipleAttributs)) throw new RecordException('Field '.$fs->getFieldName()." is not of type MultipleAttributs. addVal FuncExp only works with MultipleAttributs, use setVal instead.", RecordException::INVALID_ARGUMENT);	        
+	        $currentVal = $this->getFieldValue($fs);
+	        if(is_array($currentVal)) $currentVal[$val] = $val;
+	        elseif(isset($currentVal)) $currentVal = array($currentVal=>$currentVal,$val=>$val);
+	        else $currentVal = array($val=>$val);	        
+	        $this->setFieldValue($fs, $currentVal);
+	        
+	        if($isMultiple && !$fsl->containsFieldSelector($fs->getFieldName(), $fs->getSubFieldName())) $fsl->addFieldSelectorInstance($fs);
+	    }
+	    return $val;
+	}
+	/**
+	 * Prepends a value (followed by an optional separator) to a field in the wigii bag, given one or several field selectors
+	 * Last argument is the value to prepend, all previous arguments should evaluate to field selectors.
+	 * Example: prependVal(f1, f2, f3, "val", sep)
+	 * will prepend value "val", followed by the separator to fields f1, f2, f3
+	 * Separator is put only if both value and existing field value are not null.
+	 * @return Scalar the prepend value
+	 */
+	public function prependVal($args) {
+	    $n = $this->getNumberOfArgs($args);
+	    if($n < 2) throw new RecordException("For prependVal, the number of arguments should be at least 2", RecordException::INVALID_ARGUMENT);
+	    
+	    // if multiple edit then adds FieldSelector to FieldSelectorList for persistence
+	    $isMultiple=($this->getFormExecutor() instanceof EditMultipleElementFormExecutor);
+	    if($isMultiple) {
+	        $fsl=$this->getFormExecutor()->getFieldSelectorListForUpdate();
+	    }
+	    else $fsl=null;
+	    
+	    // extracts value and separator
+	    if($args[$n-2] instanceof FieldSelector) {
+	        $val = $this->evaluateArg($args[$n-1]);
+	        $sep = '';
+	    }
+        else {            
+            $val = $this->evaluateArg($args[$n-2]);
+            $sep = $this->evaluateArg($args[$n-1]);
+        }	    
+	    
+	    // updates each values
+	    for($i = 0; $i < $n-1; $i++) {
+	        $fs = $args[$i];
+	        if(!($fs instanceof FieldSelector)) {
+	            $fs = $this->evaluateArg($fs);
+	            if(!($fs instanceof FieldSelector)) throw new RecordException("argument $i does not evaluate to a FieldSelector", RecordException::INVALID_ARGUMENT);
+	        }
+	        $currentVal = $this->getFieldValue($fs);
+	        if(!empty($sep) && (!empty($val)||$value===0) && (!empty($currentVal)||$value===0)) $this->setFieldValue($fs, $val.$sep.$currentVal);
+	        else $this->setFieldValue($fs, $val.$currentVal);
+	        
+	        if($isMultiple && !$fsl->containsFieldSelector($fs->getFieldName(), $fs->getSubFieldName())) $fsl->addFieldSelectorInstance($fs);
+	    }
+	    return $val;
+	}
+	/**
+	 * Appends a value (followed by an optional separator) to a field in the wigii bag, given one or several field selectors
+	 * Last argument is the value to append, all previous arguments should evaluate to field selectors.
+	 * Example: appendVal(f1, f2, f3, "val", sep)
+	 * will append value "val", followed by the separator to fields f1, f2, f3
+	 * Separator is put only if both value and existing field value are not null.
+	 * @return Scalar the append value
+	 */
+	public function appendVal($args) {
+	    $n = $this->getNumberOfArgs($args);
+	    if($n < 2) throw new RecordException("For appendVal, the number of arguments should be at least 2", RecordException::INVALID_ARGUMENT);
+	    
+	    // if multiple edit then adds FieldSelector to FieldSelectorList for persistence
+	    $isMultiple=($this->getFormExecutor() instanceof EditMultipleElementFormExecutor);
+	    if($isMultiple) {
+	        $fsl=$this->getFormExecutor()->getFieldSelectorListForUpdate();
+	    }
+	    else $fsl=null;
+	    
+	    // extracts value and separator
+	    if($args[$n-2] instanceof FieldSelector) {
+	        $val = $this->evaluateArg($args[$n-1]);
+	        $sep = '';
+	    }
+	    else {
+	        $val = $this->evaluateArg($args[$n-2]);
+	        $sep = $this->evaluateArg($args[$n-1]);
+	    }
+	    
+	    // updates each values
+	    for($i = 0; $i < $n-1; $i++) {
+	        $fs = $args[$i];
+	        if(!($fs instanceof FieldSelector)) {
+	            $fs = $this->evaluateArg($fs);
+	            if(!($fs instanceof FieldSelector)) throw new RecordException("argument $i does not evaluate to a FieldSelector", RecordException::INVALID_ARGUMENT);
+	        }
+	        $currentVal = $this->getFieldValue($fs);
+	        if(!empty($sep) && (!empty($val)||$value===0) && (!empty($currentVal)||$value===0)) $this->setFieldValue($fs, $currentVal.$sep.$val);
+	        else $this->setFieldValue($fs, $currentVal.$val);
+	        
+	        if($isMultiple && !$fsl->containsFieldSelector($fs->getFieldName(), $fs->getSubFieldName())) $fsl->addFieldSelectorInstance($fs);
+	    }
+	    return $val;
 	}
 	
 	/**

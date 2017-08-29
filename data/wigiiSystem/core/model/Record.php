@@ -25,6 +25,7 @@
  * A wigii Record is the parent of an element or an activity. 
  * A record is a set of fields with values.
  * Created by LWR 15 sept 09
+ * Modified by Medair (CWE) on 07.07.2017 to add field update helpers
  */
 abstract class Record extends DbEntityInstance
 {
@@ -54,14 +55,7 @@ abstract class Record extends DbEntityInstance
 	protected $attachedRecord;
 	public function getAttachedRecord(){ return $this->attachedRecord; }
 	public function attachRecord($rec){ $this->attachedRecord = $rec; }
-
-	public static function createInstance($fieldList = null, $wigiiBag = null){
-		$r = new Record();
-		if(isset($fieldList)) $r->setFieldList($fieldList);
-		if(isset($wigiiBag)) $r->setWigiiBag($wigiiBag);
-		return $r;
-	}
-
+	
 	/**
 	 * Returns the value of a field given its name
 	 * subFieldName: the dataType subfield name from which to retrieve the value. If null takes the predefined "value" subfield.
@@ -639,6 +633,46 @@ abstract class Record extends DbEntityInstance
 		}
 		return (object)$returnValue;
 	}
+	
+	/**
+	 * Adds a value to a field of type MultipleAttributs
+	 */
+	public function addValueToField($value, $fieldName) {
+	    if(is_null($value)) return;
+	    $field = $this->getFieldList()->getField($fieldName);
+	    if(!($field->getDataType() instanceof MultipleAttributs)) throw new RecordException('Field '.$fieldName." is not of type MultipleAttributs. addValueToField only works with MultipleAttributs, use setFieldValue instead.", RecordException::INVALID_ARGUMENT);
+	    $currentVal = $this->getFieldValue($fieldName);
+	    if(is_array($currentVal)) $currentVal[$value] = $value;
+	    elseif(isset($currentVal)) $currentVal = array($currentVal=>$currentVal,$value=>$value);
+	    else $currentVal = array($value=>$value);
+	    $this->setFieldValue($currentVal,$fieldName);
+	}
+	/**
+	 * Prepends a value to a field
+	 * @param Scalar $value value to prepend to the field
+	 * @param String $fieldName field name
+	 * @param String $sep optional separator that would be put between value and existing value if both are not null
+	 * @param String $subFieldName optional subfield name
+	 */
+	public function prependValueToField($value, $fieldName, $sep=null, $subFieldName=null) {
+	    if(is_null($value)) return;
+	    $currentVal = $this->getFieldValue($fieldName, $subFieldName);
+	    if(!empty($sep) && (!empty($value)||$value===0) && (!empty($currentVal)||$value===0)) $this->setFieldValue($value.$sep.$currentVal, $fieldName,$subFieldName);
+	    else $this->setFieldValue($value.$currentVal, $fieldName,$subFieldName);
+	}
+	/**
+	 * Appends a value to a field
+	 * @param Scalar $value value to append to the field
+	 * @param String $fieldName field name
+	 * @param String $sep optional separator that would be put between existing value and value if both are not null
+	 * @param String $subFieldName optional subfield name
+	 */
+	public function appendValueToField($value, $fieldName, $sep=null, $subFieldName=null) {
+	    if(is_null($value)) return;
+	    $currentVal = $this->getFieldValue($fieldName, $subFieldName);
+	    if(!empty($sep) && (!empty($value)||$value===0) && (!empty($currentVal)||$value===0)) $this->setFieldValue($currentVal.$sep.$value, $fieldName,$subFieldName);
+	    else $this->setFieldValue($currentVal.$value, $fieldName,$subFieldName);
+	}	
 }
 
 

@@ -28,12 +28,14 @@
  * Updated by Weber wwigii-system.net for Wigii.org on 15.11.2016
  * Updated by Wigii.org (Camille Weber) on 15.01.2017 to allow publication of html files through the link elementId.html
  * Updated by Wigii.org (Camille Weber) on 03.04.2017 to personalize site META information
+ * Updated by Wigii.org (Camille Weber) on 15.06.2017 to manage internal url forwarding
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {		
 	private $_debugLogger;
 	private $_executionSink;
 	private $siteMap;
+	private $forwardMap;
 	
 	// Dependency injection
 	
@@ -62,7 +64,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 	public function cms_authoringOnLoadJS($args) {
 		return '(function(){
 	var displayForm = function() {
-		$("#$$idForm$$__groupSiteMap, #$$idForm$$__groupIntro, #$$idForm$$__groupLogo, #$$idForm$$__groupMenu, #$$idForm$$__groupContent, #$$idForm$$__groupImage, #$$idForm$$__groupFooter, #$$idForm$$__groupCSS, #$$idForm$$__groupJS").hide();
+		$("#$$idForm$$__groupSiteMap, #$$idForm$$__groupIntro, #$$idForm$$__groupLogo, #$$idForm$$__groupMenu, #$$idForm$$__groupContent, #$$idForm$$__groupImage, #$$idForm$$__groupFooter, #$$idForm$$__groupCSS, #$$idForm$$__groupJS, #$$idForm$$__groupForward").hide();
 		if($("#$$idForm$$_contentType_value_select").val()=="none") $("#$$idForm$$_contentType_value_select").val("content");
 		switch($("#$$idForm$$_contentType_value_select").val()) {
 		case "content": $("#$$idForm$$__groupContent").show();break;
@@ -74,6 +76,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		case "footer": $("#$$idForm$$__groupFooter").show();break;
 		case "css": $("#$$idForm$$__groupCSS").show();break;
 		case "js": $("#$$idForm$$__groupJS").show();break;
+		case "forward": $("#$$idForm$$__groupForward").show();break;
 		}
 	};
 	$("#$$idForm$$_contentType_value_select").change(displayForm);	
@@ -170,6 +173,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		switch($contentType) {
 		case "content": $this->cms_authoringOnSaveContent(); break;
 		case "siteMap": $this->cms_auhoringOnSaveSiteMap(); break;
+		case "forward": $this->cms_auhoringOnSaveForward(); break;
 		}
 	}
 	
@@ -260,6 +264,16 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$url = $siteMap->getFieldValue('siteUrl');
 		$url = rtrim($url, "\n\t /")."/";
 		$siteMap->setFieldValue($url,'siteUrl');
+	}
+	/**
+	 * Specific authoring process when saving forward
+	 */
+	protected function cms_auhoringOnSaveForward() {
+		$forward = $this->getElement();
+		// always ensures that URL ends with a slash
+		$url = $forward->getFieldValue('fromUrl');
+		$url = rtrim($url, "\n\t /")."/";
+		$forward->setFieldValue($url,'fromUrl');
 	}
 	
 	// Content rendering
@@ -377,6 +391,55 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		return $returnValue;
 	}
 	/**
+	 * Returns the internal relative URL where to forward the current request<br/>
+	 * FuncExp signature is: <code>cms_getForwardUrlForUrl(url)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) url: String. A logical URL for which a forward url is defined
+	 * @return String. The relative URL to forward to if found, else null
+	 */
+	public function cms_getForwardUrlForUrl($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$returnValue = null;
+		$principal = $this->getPrincipal();
+		$this->executionSink()->publishStartOperation("cms_getForwardUrlForUrl", $principal);
+		try {
+			// extracts parameters
+			if($nArgs<1) throw new FuncExpEvalException('cms_getForwardUrlForUrl takes at least one argument which is the logical URL for which to look for a forward', FuncExpEvalException::INVALID_ARGUMENT);
+			$url = $this->evaluateArg($args[0]);
+			if(empty($url)) throw new FuncExpEvalException('cms_getForwardUrlForUrl takes at least one argument which is the logical URL for which to look for a forward', FuncExpEvalException::INVALID_ARGUMENT);
+			
+			$sessionAS = ServiceProvider::getSessionAdminService();
+			$forwardMapKey = 'forwardMap_'.$principal->getWigiiNamespace()->getWigiiNamespaceUrl();
+			// loads forwardMap from Session if not yet loaded
+			if(!isset($this->forwardMap)) {
+				$this->forwardMap = $sessionAS->getData($this,$forwardMapKey);
+				if(!isset($this->forwardMap)) $this->forwardMap = array();
+			}
+			// lookups forward Url from forwardMap
+			$returnValue = $this->forwardMap[$url];
+			// if not found, loads forwardMap for current WigiiNamespace
+			if(!$returnValue) {				
+				$this->forwardMap = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)), 
+					lf(fsl(fs('fromUrl'),fs('toUrl')), lxAnd(lxEq(fs('contentType'),'forward'),lxEq(fs('status'),'published')))),
+					dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','fromUrl','setValueField','toUrl'))
+				);
+				// stores forwardMap into session
+				if($this->forwardMap) {
+					$sessionAS->storeData($this,$forwardMapKey,$this->forwardMap);
+					// lookups forward Url from forwardMap
+					$returnValue = $this->forwardMap[$url];
+				}
+				else $returnValue = null;
+			}
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("cms_getForwardUrlForUrl", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("cms_getForwardUrlForUrl", $principal);
+		return $returnValue;
+	}
+	/**
 	 * Gets the content associated to the given URL<br/>
 	 * FuncExp signature is: <code>cms_getContent(url,options)</code><br/>
 	 * Where arguments are :
@@ -401,7 +464,22 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			
 			// lookups groupId associated to url
 			$groupId = $this->evaluateFuncExp(fx('cms_getGroupIdForUrl',$url),$this);
-			if(empty($groupId)) throw new FuncExpEvalException("No content found at $url", FuncExpEvalException::NOT_FOUND);			
+			// if url is not mapped to any groupId, then looks for a forward url
+			if(empty($groupId)) {
+				$forwardUrl = $this->evaluateFuncExp(fx('cms_getForwardUrlForUrl',$url),$this);
+				if(empty($forwardUrl)) throw new FuncExpEvalException("No content found at $url", FuncExpEvalException::NOT_FOUND);
+				// internally forwards request to new url
+				else {
+					$this->executionSink()->publishEndOperation("cms_getContent", $principal);
+					$parsedUrl = array();
+					$forwardUrl = explode("/",$forwardUrl);
+					foreach($forwardUrl as $url) {
+						if($url) $parsedUrl[] = $url;
+					}
+					$options->setValue('parsedUrl',$parsedUrl);
+					return $this->evaluateFuncExp(fx('cms_processUrl',$options),$this);
+				}
+			}				
 			else $options->setValue('groupId',$groupId);
 			
 			// gets site map
@@ -907,7 +985,7 @@ div#top 						{ float:left; }
 /* color and size of text in logo */
 div.wigii-menu #wigii-logo a { color: #$logoTextColor; font-size:$logoTextSize; vertical-align:bottom; }
 /* color of menu */
-div.wigii-menu { background-color:#$menuBgColor;}
+div.wigii-menu { border-bottom: 2px solid #fff; background-color:#$menuBgColor;}
 /* color of text in menu */
 div.wigii-menu a { color: #$menuTextColor; }
 div.wigii-menu a:hover, div.wigii-menu a.over { color: #$menuTextHoverColor; }
@@ -1030,6 +1108,7 @@ HTMLCSS;
 			// Fetches files of type HTML through the pattern elementId.html
 			if($fileExt == '.html') {
 				// retrieves element based on ID
+				if(!is_numeric($fileName)) throw new FuncExpEvalException("No file found at $url", FuncExpEvalException::NOT_FOUND);
 				$fieldName = 'contentImage';
 				$fslForFetch = FieldSelectorListArrayImpl::createInstance();
 				$fslForFetch->addFieldSelector($fieldName, "path");
@@ -1141,6 +1220,7 @@ HTMLCSS;
 			case "footer": $returnValue = fsl(fs("contentFooter")); break;
 			case "css": $returnValue = fsl(fs("contentCSS")); break;
 			case "js": $returnValue = fsl(fs("contentJS")); break;
+			case "forward": $returnValue = fsl(fs("fromUrl"),fs("toUrl")); break;
 		}		
 		return $returnValue;
 	}

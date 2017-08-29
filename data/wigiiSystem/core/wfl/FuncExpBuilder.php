@@ -267,10 +267,26 @@ class FuncExpBuilder {
 		elseif($obj instanceof FieldSelectorList) $returnValue = $this->fsl2fx($obj);
 		elseif($obj instanceof FieldSortingKeyList) $returnValue = $this->fskl2fx($obj);
 		elseif($obj instanceof WigiiBPLParameter) $returnValue = $this->wigiiBPLParam2fx($obj);
+		elseif($obj instanceof LogExp) {
+		    $lxFxBuilder = TechnicalServiceProvider::getFieldSelectorLogExpFuncExpBuilder();
+		    $returnValue = $lxFxBuilder->logExp2funcExp($obj);
+		    $lxFxBuilder->freeMemory();
+		}
 		elseif(method_exists($obj, 'toFx')) $returnValue = $obj->toFx();
 		elseif(method_exists($obj, '__toString')) $returnValue = (string)$obj;
 		else throw new FuncExpEvalException('cannot convert object of class '.get_class($obj).' to its FuncExp equivalent.', FuncExpEvalException::UNSUPPORTED_OPERATION);
 		return $returnValue;
+	}
+	
+	/**
+	 * Tries to convert any object to its FuncExp equivalent, and then down to a String
+	 * Or the Object exposes a toFx() method, or the object can convert to a string, or it has a specific built in conversion mechanism,
+	 * or it is unsupported.
+	 * @param Any $obj
+	 * @return String a String representation of a FuncExp able to create back the Object or its scalar equivalent
+	 */
+	public function object2strfx($obj) {
+	    return TechnicalServiceProvider::getFieldSelectorFuncExpParser()->funcExpToString($this->object2fx($obj));
 	}
 	
 	// FieldSelector builder
@@ -682,6 +698,21 @@ class FuncExpBuilder {
 	}
 	
 	/**
+	 * Constructs a LogExp to check if a FieldSelector is null
+	 * @return LogExp
+	 */
+	public function lxIsNull($arg) {
+	    return $this->lxEq($arg,null);
+	}
+	/**
+	 * Constructs a LogExp to check if a FieldSelector is not null
+	 * @return LogExp
+	 */
+	public function lxIsNotNull($arg) {
+	    return $this->lxNotEq($arg,null);
+	}
+	
+	/**
 	 * Constructs a logical SMALLER expression on the two arguments
 	 * @return LogExpBin a LogExpBin instance with operator "<"
 	 */
@@ -1029,6 +1060,57 @@ class FuncExpBuilder {
 		$returnValue->setArray($_arr);
 		if($_arr instanceof FuncExpParameter) $_arr->registerSetterMethod('setArray', $returnValue);
 		return $returnValue;	
+	}
+	
+	/**
+	 * Queries an existing table in the database and pushes the rows as StdClasses into a DataFlow.
+	 * @param String $dbTableName the db table name from which to select the rows
+	 * @param ListFilter $listFilter an optional list filter used to select the rows
+	 * @param Array $sqlTypeMap an optional array mapping a column to an SQL type. Key is the column name, value is one of MySqlQueryBuilder::SQLTYPE_* or BIGINT, DOUBLE, DECIMAL, BOOLEAN, DATE, DATETIME, INT, LONGBLOB, BLOB, TEXT, TIME, VARCHAR
+	 * By default, if column is not defined, then SQL type is mapped to VARCHAR.
+	 * @return DbTableDataFlowConnector returns a DbTableDataFlowConnector instance that can be used as a DataFlow source.
+	 */
+	public function dbTable2df($dbTableName,$listFilter=null,$sqlTypeMap=null) {
+	    $returnValue = ServiceProvider::getExclusiveAccessObject('DbTableDataFlowConnector');
+	    $returnValue->setDbTableName($dbTableName);
+	    if($dbTableName instanceof FuncExpParameter) $dbTableName->registerSetterMethod('setDbTableName', $returnValue);
+	    $returnValue->setListFilter($listFilter);
+	    if($listFilter instanceof FuncExpParameter) $listFilter->registerSetterMethod('setListFilter', $returnValue);
+	    $returnValue->setSqlTypeMap($sqlTypeMap);
+	    if($sqlTypeMap instanceof FuncExpParameter) $sqlTypeMap->registerSetterMethod('setSqlTypeMap', $returnValue);
+	    return $returnValue;	    
+	}
+	
+	/**
+	 * Selects a dimension and pushes cfgAttribut StdClasses into a DataFlow
+	 * cfgAttribut StdClasses are of the form {value, attributes, label}. See cfgAttribut FuncExp for more details.
+	 * @param String|Int|LogExp $selector The dimension selector. Can be a group id, a group name or a group log exp.
+	 * @param LogExp $attrLogExp An optional LogExp used to filter the list of attributes (for instance filtering some specific values, see module Dimensions for details about the available fields)
+	 * @param Int $sortOrder One of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label. (by default is ascending by label)
+	 * @return DimensionDataFlowConnector returns a DimensionDataFlowConnector instance that can be used as a DataFlow source.
+	 */
+	public function dimension2df($selector, $attrLogExp = null, $sortOrder = 3) {
+	    $returnValue = ServiceProvider::getExclusiveAccessObject('DimensionDataFlowConnector');
+	    $returnValue->setSelector($selector);
+	    if($selector instanceof FuncExpParameter) $selector->registerSetterMethod('setSelector', $returnValue);
+	    $returnValue->setAttrLogExp($attrLogExp);
+	    if($attrLogExp instanceof FuncExpParameter) $attrLogExp->registerSetterMethod('setAttrLogExp', $returnValue);
+	    $returnValue->setSortOrder($sortOrder);
+	    if($sortOrder instanceof FuncExpParameter) $sortOrder->registerSetterMethod('setSortOrder', $returnValue);
+	    return $returnValue;
+	}
+	
+	/**
+	 * A connector which dumps the content of an Element field of type Files into a data flow.
+	 * The content is pushed chunk by chunk. Default chunk size is 512ko.
+	 * See class ElementFileDataFlowConnector for more details.
+	 * @param Element $element element from which to dump the file content
+	 * @param String|FieldSelector $fieldName the name of the Field of type Files from which to dump the content
+	 * @param int $chunkSize optional chunk size
+	 * @return ElementFileDataFlowConnector
+	 */
+	public function elementFile2df($element, $fieldName, $chunkSize=null) {
+	    return ElementFileDataFlowConnector::createInstance($element, $fieldName, $chunkSize);
 	}
 	
 	// ListFilter builder

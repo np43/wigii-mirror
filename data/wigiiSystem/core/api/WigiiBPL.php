@@ -125,6 +125,21 @@ class WigiiBPL
 		return $this->authS;
 	}
 	
+	private $authoS;
+	public function setAuthorizationService($authorizationService)
+	{
+	    $this->authoS = $authorizationService;
+	}
+	protected function getAuthorizationService()
+	{
+	    // autowired
+	    if(!isset($this->authoS))
+	    {
+	        $this->authoS = ServiceProvider::getAuthorizationService();
+	    }
+	    return $this->authoS;
+	}	
+	
 	private $configS;
 	public function setConfigService($configService)
 	{
@@ -1118,6 +1133,35 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Checks if principal is a SuperAdmin (has at least one role with WigiiNamespaceCreator to true)
+	 * @param Principal $principal
+	 * @return boolean true if Principal is a SuperAdmin else false
+	 */
+	public function adminIsPrincipalSuperAdmin($principal) {
+	    if(!isset($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+
+	    // 1. root principal or public principal are not super admin roles
+	    if($principal->getAttachedUser() == null) return false;
+	    
+	    // 2. Ensures to have Principal role list loaded
+	    if(!($principal->getRoleListener() instanceof UserListForNavigationBarImpl)) {
+	        $defaultWigiiNamespace = (string)$this->getConfigService()->getParameter($principal, null, "defaultWigiiNamespace");
+	        if(!$defaultWigiiNamespace) $defaultWigiiNamespace = $principal->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+	        $principal->refetchAllRoles($this->getUserAdminService()->getListFilterForNavigationBar(), UserListForNavigationBarImpl::createInstance($defaultWigiiNamespace));
+	    }
+	    
+	    // 3. Checks existence of SuperAdmin role into Principal role list
+	    foreach($principal->getRoleListener()->getAdminRoleIds() as $adminId) {
+	        $adminRole = $principal->getRoleListener()->getUser($adminId);
+            // finds first super admin role
+            if($adminRole->getDetail()->isWigiiNamespaceCreator()) {
+               return true;
+            }
+        }
+	    return false;
+	}
+	
+	/**
 	 * Copies a given element to a specified folder (real copy, not sharing).
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @param Object $caller the object calling the Wigii business process.
@@ -1161,6 +1205,7 @@ class WigiiBPL
 	 * @param WigiiBPLParameter $parameter the elementEvalCalcFields business process needs the following parameters to run :
 	 * - element: Element. The filled element containing the Fields to be re-calculated
 	 * - fieldName: String|FieldSelector. Optional, one field name for which to recalculate the value.
+	 * - fslForUpdate: FieldSelectorList. Optional FieldSelectorList instance to be filled with the list of calculated fields which got updated.
 	 * - elementEvaluatorClassName: String. Optional, a specific ElementEvaluator class to use, 
 	 * if not defined takes ElementEvaluator linked to Element or current execution module.
 	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
@@ -1189,6 +1234,24 @@ class WigiiBPL
 			$evaluator = ServiceProvider::getRecordEvaluator($principal, $elementEvaluatorClassName);
 			// evaluates calculated fields
 			$evaluator->evaluateRecord($principal, $element, $field);
+			
+			// records calculated fields which where updated in provided FieldSelectorList
+			$fslForUpdate = $parameter->getValue('fslForUpdate');
+			if($fslForUpdate instanceof FieldSelectorList) {
+			    // records single calculated field
+			    if(isset($field)) {
+			        if(!$fslForUpdate->containsFieldSelector($field->getFieldName())) $fslForUpdate->addFieldSelector($field->getFieldName());
+			    }
+			    // else records all calculated fields
+			    else {
+    			    foreach($element->getFieldList()->getListIterator() as $f)
+    			    {
+    			        if($f->isCalculated() && !$f->isCalculationDisabled() && !$fslForUpdate->containsFieldSelector($f->getFieldName())) {
+    			            $fslForUpdate->addFieldSelector($f->getFieldName());
+    			        }
+    			    }
+			    }
+			}
 		}
 		catch(Exception $e) {
 			$this->executionSink()->publishEndOperationOnError("elementEvalCalcFields", $e, $principal);
@@ -1722,6 +1785,77 @@ class WigiiBPL
 			}
 		}
 		return $element;
+	}
+	
+	/**
+	 * Adds a comment to a field of type Blobs into a given Element.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementAddComment business process needs the following parameters to run :
+	 * - element: Element. The element to which to add a comment
+	 * - fieldName: String|FieldSelector. The name of the field to which to add a comment. Should be of type Blobs.
+	 * - comment: String. Evaluates to a String that will added as a comment.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return Element the element to which the comment was added
+	 */
+	public function elementAddComment($principal, $caller, $parameter, $executionSink=null) {
+	    if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	    if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	    
+	    $element = $parameter->getValue('element');
+	    if(!($element instanceof Record)) throw new WigiiBPLException('element should be a non null instance of Element', WigiiBPLException::INVALID_PARAMETER);
+	    $fieldName = $parameter->getValue('fieldName');
+	    if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+	    elseif(!isset($fieldName)) throw new WigiiBPLException('fieldName cannot be empty', WigiiBPLException::INVALID_PARAMETER);
+	    if(!$element->getFieldList()->doesFieldExist($fieldName)) throw new WigiiBPLException("fieldName '".$fieldName."' is not a valid field in the record", WigiiBPLException::INVALID_ARGUMENT);
+	    
+	    $comment = $parameter->getValue('comment');
+	    
+	    $result="";
+	    $fxml=$element->getFieldList()->getField($fieldName)->getXml();
+	    $isHtmlArea = ($fxml["htmlArea"] == "1");
+	    $isJournal = ($fxml["isJournal"] == "1");
+	    
+	    $header = date("d.m.Y H:i")." ".$principal->getRealUsername();
+	    
+	    // removes html from comment if not an html area
+	    if(!$isHtmlArea) {
+	        $html2text = new Html2text();
+	        $html2text->setHtml($comment);
+	        $comment = $html2text->getText();
+	    }
+	    
+	    if($isJournal) {
+	        if($isHtmlArea) {
+	            $result .= '<p style="color:#666;">&gt; ';
+	            $result .= $header;
+	            $result .= "</p>";
+	            $result .= '<p>'.$comment.'</p>';
+	            $result .= "<p>&nbsp;</p>";
+	        }
+	        else {
+	            $result .= "> ";
+	            $result .= $header;
+	            $result .= "\n";
+	            $result .= $comment."\n";
+	            $result .= "\n";
+	        }
+	    }
+	    else {
+	        if($isHtmlArea) {
+	            $result .= "<p>".$header.' '.$comment."</p>";
+	            $result .= "<p>&nbsp;</p>";
+	        }
+	        else {
+	            $result .= $header.' '.$comment."\n";
+	            $result .= "\n";
+	        }
+	    }
+	    
+	    $result .= $element->getFieldValue($fieldName);
+	    $element->setFieldValue($result, $fieldName);
+	    return $element;
 	}
 	
 	/**

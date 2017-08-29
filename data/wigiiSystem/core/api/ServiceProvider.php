@@ -24,6 +24,7 @@
 /** 
  * Wigii service provider
  * Created by CWE on 2 juin 09
+ * Changed by Medair(CWE) on 07.07.2017 to allow instanciating custom FuncExp libraries
  */
 class ServiceProvider
 {
@@ -344,6 +345,16 @@ class ServiceProvider
 	public static function getFuncExpVM($principal, $parentEvaluator=null, $className=null)
 	{
 		return ServiceProvider::getInstance()->getFuncExpVMInstance($principal, $parentEvaluator, $className);
+	}
+	
+	/**
+	 * Returns an instance of a FuncExp library given its className
+	 * the class can be a customized class stored in client config folder
+	 * throws ServiceProviderException if an error occurs
+	 */
+	public static function getFuncExpLibrary($principal, $className)
+	{
+	    return ServiceProvider::getInstance()->getFuncExpLibraryInstance($principal, $className);
 	}
 	
 	/**
@@ -754,6 +765,34 @@ class ServiceProvider
 	}
 	protected function getDefaultFuncExpVMClass() {
 		return "FuncExpVM";
+	}
+	
+	/**
+	 * first tries to load a standard class, if not found, then loads a custom class
+	 */
+	protected function getFuncExpLibraryInstance($principal, $className) {
+	    $returnValue = null;
+	    $custoExc = null; $stdExc = null;	    
+	    // tries to create a standard implementation class
+	    try {$returnValue = $this->createWigiiObjectInstance($className);}
+	    catch(Exception $e) {$stdExc = $e;}
+	    if($returnValue instanceof FuncExpVMAbstractFL) return $returnValue;
+	    elseif(isset($returnValue)) throw new ServiceProviderException('Class '.$className.' is not a subclass of FuncExpVMAbstractFL', ServiceProviderException::INVALID_ARGUMENT);
+	    	   	    
+	    // if not ok, then tries to create a custo class	    
+	    try {$returnValue = $this->createClientClassInstance($principal, $className);}
+	    catch(Exception $e) {$custoExc = $e;}
+	    if($returnValue instanceof FuncExpVMAbstractFL) return $returnValue;
+	    elseif(isset($returnValue)) throw new ServiceProviderException('Class '.$className.' is not a subclass of FuncExpVMAbstractFL', ServiceProviderException::INVALID_ARGUMENT);
+	    	    
+	    // not ok, then throws back error :
+	    // 1. no standard class and not authorized to instanciate custom class -> throw AuthorizationException
+	    if($custoExc instanceof AuthorizationServiceException)
+	    {
+	        throw new AuthorizationServiceException($custoExc->getMessage().". Not authorized to instanciate custom $className and standard $className does not exist.", AuthorizationServiceException::FORBIDDEN);
+	    }
+	    // 2. no standard class and failed to instanciate custom class -> ServiceProviderException
+	    throw new ServiceProviderException($custoExc->getMessage()." AND ".$stdExc->getMessage(), ServiceProviderException::INVALID_ARGUMENT);
 	}
 	
 	private $dataFlowService;

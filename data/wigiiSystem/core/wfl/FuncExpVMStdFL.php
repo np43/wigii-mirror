@@ -1293,6 +1293,44 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	public function neq($args) {
 		return !$this->eq($args);
 	}
+	
+	/**
+	 * Counts the number of equivalent classes. Ignores null values.<br/>
+	 * FuncExp signature is: <code>ctlCountEqClasses(val1, val2, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(1..n) valI: Scalar. The values to classify in equivalent classes
+	 * @example 
+	 * Checks that all filled values are different from one another (ignores non filled values).
+	 * eq(ctlCountEqClasses(v1,v2,v3)), count(v1,v2,v3))
+	 * 
+	 * If all filled, then at least two should be different
+	 * logOr(sm(count(v1,v2,v3),"3"), greq(ctlCountEqClasses(v1,v2,v3),"2"))
+	 * 
+	 * Checks that at any time, at least two filled values are different (ignores non filled values)
+	 * greq(ctlCountEqClasses(v1,v2,v3), min(count(v1,v2,v3),"2"))
+	 * 
+	 * @return int the number of equivalent classes in the population
+	 */
+	public function ctlCountEqClasses($args) {
+	    $nArgs=$this->getNumberOfArgs($args);
+	    $returnValue = 0;
+	    if($nArgs>0) {
+	        $returnValue = array();
+	        for($i=0;$i<$nArgs;$i++) {
+	            $val = $this->evaluateArg($args[$i]);
+	            if(is_array($val)) {
+	                foreach($val as $subVal) {
+	                    if(is_array($subVal)) throw new FuncExpEvalException('ctlCountEqClasses does not support array of arrays.', FuncExpEvalException::INVALID_ARGUMENT);
+	                    if($subVal===0 || $subVal!=null) $returnValue[$subVal] += 1;
+	                }
+	            }
+	            elseif($val===0 || $val!=null) $returnValue[$val] += 1;
+	        }
+	        $returnValue = count($returnValue);
+	    }
+	    return $returnValue;
+	}
+	
 	/**
 	 * Returns true if first argument is null or equal to second
 	 */
@@ -1510,6 +1548,56 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		return false;
 	}
 
+	/**
+	 * Returns the biggest argument (works with strings and numbers, uses php max function)
+	 * Returns null if no arg
+	 */
+	public function max($args){
+	    if($this->getNumberOfArgs($args) > 0) {
+	        $temp = array();
+	        foreach($args as $arg){
+	            $r = $this->evaluateArg($arg);
+	            if($r === 0 || $r != null) $temp[]=$r;
+	        }
+	        if($temp==null) return null;
+	        return max($temp);
+	    }
+	    else return null;
+	}
+	
+	/**
+	 * Returns the smallest argument (works with string and numbers, uses php min function)
+	 * Returns null if no arg
+	 */
+	public function min($args){
+	    if($this->getNumberOfArgs($args) > 0) {
+	        $temp = array();
+	        foreach($args as $arg){
+	            $r = $this->evaluateArg($arg);
+	            if($r === 0 || $r != null) $temp[]=$r;
+	        }
+	        if($temp==null) return null;
+	        return min($temp);
+	    }
+	    else return null;
+	}
+	
+	/**
+	 * Returns the number of args wich evaluate to something different from null
+	 * Return 0 if no arg.
+	 */
+	public function count($args){
+	    if($this->getNumberOfArgs($args) > 0) {
+	        $c = 0;
+	        foreach($args as $arg) {
+	            $r = $this->evaluateArg($arg);
+	            if($r === 0 || $r != null) $c++;
+	        }
+	        return $c;
+	    }
+	    else return 0;
+	}
+	
 	// Control structures
 
 	/**
@@ -1942,6 +2030,21 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		return '&';
 	}
 	
+	/**
+	 * Returns a greater than character
+	 * @return string
+	 */
+	public function txtGt($args) {
+	    return '>';
+	}
+	/**
+	 * Returns a lower than character
+	 * @return string
+	 */
+	public function txtLt($args) {
+	    return '<';
+	}
+		
 	/**
 	 * Returns the translation of a key using the Wigii dictionary and the current language of the user
 	 * FuncExp signature : <code>txtDico(key)</code><br/>

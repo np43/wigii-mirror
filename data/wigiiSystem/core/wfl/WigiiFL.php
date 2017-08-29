@@ -912,6 +912,42 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			($nArgs > 2 ? $this->evaluateArg($args[2]) : null));
 	}
 
+	/**
+	 * Fills an Element MultipleAttributs field based on matching keywords.
+	 * A MultipleAttribut value matches if it is contained in the keywords string. Comparison is case insensitive.
+	 * FuncExp signature : <code>matchElementMultipleAttibuts(element, fieldName, keywords)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) element: Element. The element in which to match a multiple attributs field with some keywords
+	 * - Arg(1) fieldName: String|FieldSelector. The field of type MultipleAttributs against wich to match the given keywords
+	 * - Arg(2) keywords: String. A string against which will be searched the MultipleAttributs values for matching.
+	 * @return Boolean returns true if some matching occured, else false.
+	 */
+	public function matchElementMultipleAttributs($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 3) throw new FuncExpEvalException('The matchElementMultipleAttributs function takes at least three arguments which is the element, the fieldName and the keywords', FuncExpEvalException::INVALID_ARGUMENT);
+	    $element = $this->evaluateArg($args[0]);
+	    if($args[1] instanceof FieldSelector) $fieldName = $args[1]->getFieldName();
+	    else $fieldName = $this->evaluateArg($args[1]);
+	    $field = $element->getFieldList()->getField($fieldName);
+	    if(!($field->getDataType() instanceof MultipleAttributs)) throw new FuncExpEvalException('Field '.$fieldName." is not of type MultipleAttributs", FuncExpEvalException::INVALID_ARGUMENT);
+	    	    
+	    $keywords = $this->evaluateArg($args[2]);
+	    $returnValue = false;
+	    if($keywords) {
+	        foreach($field->getXml()->attribute as $attribute_key => $attribute){
+	            $attribute = (string)$attribute;
+	            if($attribute != 'none') {
+	                // if attribute matches keywords, then adds it to Element field
+	                if(stripos($keywords, $attribute)!==false) {
+	                    $element->addValueToField($attribute,$fieldName);
+	                    $returnValue = true;
+	                }
+	            }
+	        }
+	    }
+	    return $returnValue;
+	}
+	
 	// GroupList builder
 
 	/**
@@ -1003,6 +1039,87 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $group->getId();
 	}
 
+	// DataFlow connectors
+	
+	/**
+	 * Queries an existing table in the database and pushes the rows as StdClasses into a DataFlow.
+	 * See method 'dbTable2df' in FuncExpBuilder class.<br/>
+	 * FuncExp signature : <code>dbTable2df(dbTableName, listFilter=null,sqlTypeMap=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) dbTableName: String. The db table name from which to select the rows
+	 * - Arg(1) listFilter: ListFilter. An optional list filter to filter the selected rows
+	 * - Arg(2) sqlTypeMap: Array. An optional array mapping a column name to its SQL type. Array is the column name, value is one of MySqlQueryBuilder::SQLTYPE_* or BIGINT, DOUBLE, DECIMAL, BOOLEAN, DATE, DATETIME, INT, LONGBLOB, BLOB, TEXT, TIME, VARCHAR
+     * By default, if column is not defined, then SQL type is mapped to VARCHAR.
+	 * @return DbTableDataFlowConnector returns a DbTableDataFlowConnector instance that can be used as a DataFlow source.
+	 */
+	public function dbTable2df($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException('The dbTable2df function takes at least one argument which is the db table name', FuncExpEvalException::INVALID_ARGUMENT);
+	    return $this->getFuncExpBuilder()->dbTable2df($this->evaluateArg($args[0]),
+	        ($nArgs > 1 ? $this->evaluateArg($args[1]) : null),
+	        ($nArgs > 2 ? $this->evaluateArg($args[2]) : null));
+	}
+	
+	
+	/**
+	 * Selects a dimension and pushes cfgAttribut StdClasses into a DataFlow
+	 * cfgAttribut StdClasses are of the form {value, attributes, label}. See cfgAttribut FuncExp for more details.
+	 * See method 'dimension2df' in FuncExpBuilder class.<br/>
+	 * FuncExp signature : <code>dimension2df(selector, attrLogExp = null, sortOrder = 3)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) selector: String|Int|LogExp. The dimension selector. Can be a group id, a group name or a group log exp.
+	 * - Arg(1) attrLogExp: LogExp. An optional LogExp used to filter the list of attributes (for instance filtering some specific values, see module Dimensions for details about the available fields)
+	 * - Arg(2) sortOrder: int. One of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label. (by default is ascending by label)
+	 * @return DimensionDataFlowConnector returns a DimensionDataFlowConnector instance that can be used as a DataFlow source.
+	 */
+	public function dimension2df($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException('The dimension2df function takes at least one argument which is the dimension selector. Can be a group id, a group name or a group log exp.', FuncExpEvalException::INVALID_ARGUMENT);
+	    return $this->getFuncExpBuilder()->dimension2df($this->evaluateArg($args[0]),
+	        ($nArgs > 1 ? $this->evaluateArg($args[1]) : null),
+	        ($nArgs > 2 ? $this->evaluateArg($args[2]) : 3));
+	}
+	
+	/**
+	 * A connector which dumps the content of an Element field of type Files into a data flow.
+	 * The content is pushed chunk by chunk. Default chunk size is 512ko.
+	 * See class ElementFileDataFlowConnector for more details.<br/>
+	 * FuncExp signature : <code>elementFile2df(element, fieldName, chunkSize=null)</code> or <code>elementFile2df(fieldName, chunkSize=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) element: Element. Element from which to dump the file content. If element is ommited, then takes current element (i.e __element.this)
+	 * - Arg(1) fieldName: String|FieldSelector. The name of the Field of type Files from which to dump the content
+	 * - Arg(2) chunkSize: Int. Optional chunk size.
+	 * @return ElementFileDataFlowConnector
+	 */
+	public function elementFile2df($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException('The elementFile2df function takes at least one argument which is field name containing the file to dump', FuncExpEvalException::INVALID_ARGUMENT);	    
+	    // if first argument is a FieldSelector assumes it represents the fieldName
+	    if($args[0] instanceof FieldSelector) {
+	        $fieldName = $args[0];
+	        $element = $this->evaluateArg(fs_e('this'));
+	        $chunkSizeIndex = 1;
+	    }
+	    // else evaluates it
+	    else {
+	        $element = $this->evaluateArg($args[0]);
+	        if(!($element instanceof Record)) {
+	            $fieldName = $element;
+	            $element = $this->evaluateArg(fs_e('this'));
+	            $chunkSizeIndex = 1;
+	        }
+	        elseif($nArgs > 1) {
+	            $fieldName = $this->evaluateArg($args[1]);
+	            $chunkSizeIndex = 2;
+	        }
+	        else throw new FuncExpEvalException('field name containing the file to dump is missing', FuncExpEvalException::INVALID_ARGUMENT);
+	    }
+	    if($nArgs > $chunkSizeIndex) $chunkSize = $this->evaluateArg($args[$chunkSizeIndex]);
+	    else $chunkSize = null;
+	    
+	    return TechnicalServiceProvider::getFuncExpBuilder()->elementFile2df($element, $fieldName, $chunkSize);
+	}
+	
 	// Configuration builder
 
 	/**
@@ -1374,24 +1491,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		}
 		$callbackDFA->writeResultToOutput($data);
 	}
-	
-	/**
-	 * Selects a group tree and returns a SimpleXmlElement compatible with attribute expressions.<br/>
-	 * FuncExp signature : <code>cfgAttrGroupTree(module=null, wigiiNamespace=null, groupLogExp=null)</code><br/>
-	 *  Where arguments are :
-	 * - Arg(0) module: String|Module. The module for which to select the groups. If not defined, uses the current module.
-	 * - Arg(1) wigiiNamespace: String|WiigiiNamespace. The wigii namespace in which to select the groups. If not defined, uses the current wigii namespace.
-	 * - Arg(2) groupLogExp: LogExp. An optional log exp to filter the selected groups.
-	 *
-	 * Example:
-	 * <someRootGroups type="MultipleAttributs"><label>Some root groups</label>
-	 * 		<attributeExp funcExp='cfgAttrGroupTree(NULL, NULL, lxEq(fs("id_group_parent"), NULL))'/>
-	 * </someRootGroups>
-	 */
-	public function cfgAttrGroupTree($args) {
-		FuncExpEvalException::throwNotImplemented();
-	}
-
+		
 	/**
 	 * Returns a SimpleXmlElement compatible with attribute expressions, which contains the visible languages in the system
 	 * See TranslationService::getVisibleLanguage

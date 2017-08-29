@@ -500,7 +500,7 @@ class DataFlowServiceImpl implements DataFlowService
 	
 	public function areWigiiEventsEnabled($dataFlowContext) {
 		$returnValue = false;
-		if($this->wigiiEventsSubscriberStackPointer > 0) { 		
+		if($this->wigiiEventsSubscriberStackPointer >= 0) { 		
 			$i = $this->dfContextWigiiEventsSubscriber[$dataFlowContext->getContextId()];
 			if($i > 0 && $i-1 <= $this->wigiiEventsSubscriberStackPointer) {
 				$returnValue = ($this->wigiiEventsSubscriberStack[$i-1] !== false);

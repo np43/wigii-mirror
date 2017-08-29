@@ -192,7 +192,8 @@ class AuthorizationServiceImpl implements AuthorizationService
 
 	public function assertPrincipalAuthorized($principal, $serviceName, $methodName)
 	{
-		switch($serviceName)
+	    if(!isset($principal)) throw new AuthorizationServiceException('principal cannot be null', AuthorizationServiceException::INVALID_ARGUMENT);
+	    switch($serviceName)
 		{
 			case "UserAdminService":
 				switch($methodName)

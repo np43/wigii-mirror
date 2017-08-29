@@ -294,6 +294,7 @@ class DataFlowContext
 	public function areWigiiEventsEnabled() {
 		if(!$this->checkedIfWigiiEventsAreEnabled) {
 			$this->wigiiEventsEnabled = $this->getDataFlowService()->areWigiiEventsEnabled($this);
+			$this->checkedIfWigiiEventsAreEnabled = true;
 		}
 		return $this->wigiiEventsEnabled;
 	}

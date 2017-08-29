@@ -1235,6 +1235,18 @@ function lxNot($arg) {return TechnicalServiceProvider::getFuncExpBuilder()->lxNo
 function lxEq($arg1, $arg2) {return TechnicalServiceProvider::getFuncExpBuilder()->lxEq($arg1, $arg2);}
 
 /**
+ * Constructs a LogExp to check if a FieldSelector is null
+ *@return LogExp
+ */
+function lxIsNull($arg) {return TechnicalServiceProvider::getFuncExpBuilder()->lxIsNull($arg);}
+
+/**
+ * Constructs a LogExp to check if a FieldSelector is not null
+ * @return LogExp
+ */
+function lxIsNotNull($arg) {return TechnicalServiceProvider::getFuncExpBuilder()->lxIsNotNull($arg);}
+
+/**
  * Constructs a logical NOTEQUAL expression on the two arguments
  * @return LogExpBin a LogExpBin instance with operator "!="
  */
@@ -1475,6 +1487,43 @@ function array2df($arr) {
 	if($nArgs > 1) $_arr = func_get_args();
 	else $_arr = $arr;
 	return TechnicalServiceProvider::getFuncExpBuilder()->array2df($_arr);
+}
+
+/**
+ * Queries an existing table in the database and pushes the rows as StdClasses into a DataFlow.
+ * @param String $dbTableName the db table name from which to select the rows
+ * @param ListFilter $listFilter an optional list filter used to select the rows
+ * @param Array $sqlTypeMap an optional array mapping a column to an SQL type. Key is the column name, value is one of MySqlQueryBuilder::SQLTYPE_* or BIGINT, DOUBLE, DECIMAL, BOOLEAN, DATE, DATETIME, INT, LONGBLOB, BLOB, TEXT, TIME, VARCHAR
+ * By default, if column is not defined, then SQL type is mapped to VARCHAR.
+ * @return DbTableDataFlowConnector returns a DbTableDataFlowConnector instance that can be used as a DataFlow source.
+ */
+function dbTable2df($dbTableName,$listFilter=null,$sqlTypeMap=null) {    
+    return TechnicalServiceProvider::getFuncExpBuilder()->dbTable2df($dbTableName,$listFilter,$sqlTypeMap);
+}
+
+/**
+ * Selects a dimension and pushes cfgAttribut StdClasses into a DataFlow
+ * cfgAttribut StdClasses are of the form {value, attributes, label}. See cfgAttribut FuncExp for more details.
+ * @param String|Int|LogExp $selector The dimension selector. Can be a group id, a group name or a group log exp.
+ * @param LogExp $attrLogExp An optional LogExp used to filter the list of attributes (for instance filtering some specific values, see module Dimensions for details about the available fields)
+ * @param Int $sortOrder One of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label. (by default is ascending by label)
+ * @return DimensionDataFlowConnector returns a DimensionDataFlowConnector instance that can be used as a DataFlow source.
+ */
+function dimension2df($selector, $attrLogExp = null, $sortOrder = 3) {
+    return TechnicalServiceProvider::getFuncExpBuilder()->dimension2df($selector, $attrLogExp, $sortOrder);
+}
+
+/**
+ * A connector which dumps the content of an Element field of type Files into a data flow.
+ * The content is pushed chunk by chunk. Default chunk size is 512ko.
+ * See class ElementFileDataFlowConnector for more details.
+ * @param Element $element element from which to dump the file content
+ * @param String|FieldSelector $fieldName the name of the Field of type Files from which to dump the content
+ * @param int $chunkSize optional chunk size
+ * @return ElementFileDataFlowConnector
+ */
+function elementFile2df($element, $fieldName, $chunkSize=null) {
+    return TechnicalServiceProvider::getFuncExpBuilder()->elementFile2df($element, $fieldName, $chunkSize);
 }
 
 /**

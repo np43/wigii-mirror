@@ -26,6 +26,7 @@
  * Created by CWE on 12 juin 09
  * Modified by CWE on 23 mars 14 to add Wigii Setup functions
  * Modified by CWE on 05.02.2016 to add Wigii Monitoring functions
+ * Modified by Medair(CWE) on 07.07.2017 to query Wigii Dimensions
  */
 interface ClientAdminService
 {
@@ -74,6 +75,25 @@ interface ClientAdminService
 	 */
 	public function syncDimension($principal, $source, $dimension, $parentGroupId=null, 
 		$checkDeletedValues=1, $markNewValuesAsImportant=true);
+	
+	/**
+	 * For a given dimension, searches for a specific value based on its label.
+	 * Only returns first non-deprecated match. To get several matches, use dimension2df Data Flow connector. 
+	 * @param Principal $principal current principal performing the operation
+	 * @param String|Int|LogExp $selector The dimension selector. Can be a group id, a group name or a group log exp.
+	 * @param String $label dimension label for which to search for a value
+	 * @return String dimension value if found, else null. If multiple matches, then takes first match.
+	 */
+	public function lookupDimensionValueByLabel($principal,$selector,$label);
+	
+	/**
+	 * Returns an array with all the values of a dimension.
+	 * @param Principal $principal current principal performing the operation
+	 * @param String|Int|LogExp $selector The dimension selector. Can be a group id, a group name or a group log exp.
+	 * @param bool $includeDeprecated if true, deprecated values will also be returned. By default they are filtered.
+	 * @return Array an array filled with the dimension values (array key is also the value to enable direct value matching)
+	 */
+	public function getDimensionValues($principal,$selector,$includeDeprecated=false);
 	
 	/**
 	 * Synchronizes the configuration fields mirror with the xml sources.

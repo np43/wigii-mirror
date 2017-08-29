@@ -59,7 +59,7 @@
 		<fields>
 			<feedback_email type="Emails" require="1" ignoreNotification="1" />
 			<feedback_for type="Attributs" require="1" >
-				<attribute email="support@xxx.xx" checked="1">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				<attribute email="support@xxx.xx" checkd="1">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
 			</feedback_for>
 			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
 			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
@@ -94,6 +94,7 @@
 				<attribute>image<label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></attribute>	
 				<attribute>css<label_l01>CSS definition</label_l01><label_l02>Définitions CSS</label_l02></attribute>
 				<attribute>js<label_l01>JS code</label_l01><label_l02>Code JS</label_l02></attribute>
+				<attribute>forward<label_l01>Forward</label_l01><label_l02>Transfert</label_l02></attribute>
 			</contentType>
 			<groupSiteMap groupStart="1"><label_l01>Site Map</label_l01><label_l02>Site Map</label_l02></groupSiteMap>
 				<siteUrl enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"siteMap")' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='concat("/")'><label_l01>Access URL</label_l01><label_l02>URL d&apos;accès</label_l02></siteUrl>
@@ -134,7 +135,7 @@
 			<groupIntro groupStart="1"><label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></groupIntro>
 				<contentIntro enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Introduction content</label_l01><label_l02>Contenu de l'introduction</label_l02></contentIntro>
 				<siteTitle enableDynamicAttributes="1" excelExport="auto" type="Varchars" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1"><label_l01>Browser title</label_l01><label_l02>Titre du navigateur</label_l02></siteTitle>
-				<metaDescription enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Description of the page for search engines</label_l01><label_l02>Description de la page pour les moteurs de recherche</label_l02></metaDescription>
+				<metaDescription enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Description of the page for search engines</label_l01><label_l02>Description de la page pour les moteurs de recherche</label_l02></metaDescription>
 				<metaKeywords enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Keywords</label_l01><label_l02>Mots-clés</label_l02></metaKeywords>
 				<metaAuthor enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Author and copyright</label_l01><label_l02>Auteur et copyright</label_l02></metaAuthor>				
 				<introBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="0" ><label_l01>Background color of the introduction</label_l01><label_l02>Couleur de fond de l'intro</label_l02></introBgColor>
@@ -164,7 +165,11 @@
 			<groupCSS groupEnd="1" expand="1"/>
 			<groupJS groupStart="1"><label_l01>JS code</label_l01><label_l02>Code JS</label_l02></groupJS>
 				<contentJS enableDynamicAttributes="1"  excelExport="auto" type="Blobs" require='eq(contentType,"js")' disabled='notNullAndNotEq(contentType,"js")' expand="1" noWrap='1' isInLine="1" noLabel="1"><label_l01>JS code</label_l01><label_l02>Code JS</label_l02></contentJS>
-			<groupJS groupEnd="1" expand="1"/>		
+			<groupJS groupEnd="1" expand="1"/>	
+			<groupForward groupStart="1"><label_l01>Forward</label_l01><label_l02>Transfert</label_l02></groupForward>
+				<fromUrl enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"forward")' disabled='notNullAndNotEq(contentType,"forward")' expand="1" isInLine="0" ><label_l01>From URL</label_l01><label_l02>Depuis l&apos;URL</label_l02></fromUrl>
+				<toUrl enableDynamicAttributes="1"  excelExport="auto" type="Blobs" require='eq(contentType,"forward")' disabled='notNullAndNotEq(contentType,"forward")' expand="1" isInLine="0" ><label_l01>To URL</label_l01><label_l02>Vers l&apos;URL</label_l02></toUrl>
+			<groupForward groupEnd="1" expand="1"/>				
 		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
 
 		<groupRight groupStart="1" noFieldset="1" noLabel="1" labelWidth="100" totalWidth="300" class="fieldGroupRight" />
@@ -175,7 +180,7 @@
 			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="0" height="400" clearOnCopy="1" funcExp='trackHistory(status)'><label_l01>Comments</label_l01><label_l02>Commentaires</label_l02></comments>
 		<groupRight groupEnd="1" expand="1" noFieldset="1" />		
 		<onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='ctlSeq(cms_authoringOnSave(),logTrue())' />
-		<contentSummary type="Strings" hidden="1" htmlArea="0" funcExp='implode(" ",siteUrl,cms_summarize(contentTitle),concat(contentImage.name,contentImage.type))'><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentSummary>
+		<contentSummary type="Strings" hidden="1" htmlArea="0" funcExp='implode(" ",siteUrl,cms_summarize(contentTitle),concat(contentImage.name,contentImage.type),implode(concat(" -",txtGt()," "),fromUrl,toUrl))'><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentSummary>
 	</fields>
 
 	<selectSearchBar>

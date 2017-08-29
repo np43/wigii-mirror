@@ -1265,26 +1265,27 @@ thoseElementsWhereChangedWith:The following changes have been made:Les changemen
 addedBy:is added by:est ajouté par:::::::::
 updatedBy:is updated by:est modifié par:::::::::
 deletedBy:is deleted by:est effacé par:::::::::
+restoredBy:is restored by:est restauré par:::::::::
 setStateBy:state set by:est mis à jour par:::::::::
 stateOfElement:#Element# state:Le statut #ofElement#:::::::::
 sharedBy:is moved by:est déplacé par:::::::::
 unsharedBy:is removed by:est enlevé par:::::::::
-toRootElement:to:à:::::::::
+toRootElement:in:dans:::::::::
 inGroup:in #group#:dans #group#:::::::::
 toGroups:to #group#(s):dans les #-groups#:::::::::
 fromGroups:from #group#(s):des #-groups#:::::::::
 fromGroup:from #group#:#ofGroup#:::::::::
 
 hasAddedAnElementInGroup:has added the following #element# in #group#:a ajouté #element# suivant dans #group#:::::
-hasAddedAnElementToRootElement:has added #anElement# to:a ajouté #anElement# à:::::
+hasAddedAnElementToRootElement:has added #anElement# in:a ajouté #anElement# dans:::::
 hasUpdatedThisElement:has updated the following #element#:a mis-à-jour #element# suivant:::::::::
-hasUpdatedThisElementToRootElement:has updated #anElement# of:a mis-à-jour #anElement# de:::::::::
+hasUpdatedThisElementToRootElement:has updated #anElement# in:a mis-à-jour #anElement# dans:::::::::
 hasChangedThisElementState:has changed the state of the following #element#:a modifié le statut #ofElement# suivant:::::::::
-hasChangedThisElementStateToRootElement:has changed the state of #anElement# of:a modifié le statut d'#anElement# de:::::::::
+hasChangedThisElementStateToRootElement:has changed the state of #anElement# in:a modifié le statut d'#anElement# dans:::::::::
 hasDeletedThisElementFromGroups:has deleted the following #element# from #group#(s)\: :a effacé #element# suivant des #-groups#\: :::::::::
 hasDeletedThisElementFromRootElement:has deleted #anElement# from:a effacé #anElement# de:::::::::
 hasRestoredThisElementToGroups:has restored the following #element# to #group#(s)\: :a restauré #element# suivant dans #groups#\: :::::::::
-hasRestoredThisElementToRootElement:has restored #anElement# to:a restauré #anElement# dans:::::::::
+hasRestoredThisElementToRootElement:has restored #anElement# in:a restauré #anElement# dans:::::::::
 hasAddedThisElementToGroup:has added the following #element# in #group#\: :a ajouté #element# suivant dans #group#\: :::::::::
 hasMovedThisElementOutOfGroup:has moved the following #element# out #ofGroup#\: :a supprimé #element# suivant #ofGroup#\: :::::::::
 viewElement:View #element#:Voir #element#:::::

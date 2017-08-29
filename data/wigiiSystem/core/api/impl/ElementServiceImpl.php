@@ -7501,7 +7501,7 @@ class ElementSqlBuilderForGetPagedElementsInGroups extends ElementSqlBuilder
 
 	public static function createInstance($principal, $groupList, $pRightsFromDb, $includeChildrenGroups)
 	{
-		$returnValue = ElementSqlBuilderForGetAllElementsInGroupsV2::createNonInitInstance();
+	    $returnValue = self::createNonInitInstance();
 		$returnValue->reset($principal, $groupList, $pRightsFromDb, $includeChildrenGroups);
 		return $returnValue;
 	}
