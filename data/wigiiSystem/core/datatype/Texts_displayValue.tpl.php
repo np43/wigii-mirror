@@ -60,6 +60,7 @@ if($this->isForNotification() || $this->isForPrint()){
 
 	$texts = array();
 	$lis = array();
+	$ind=0;
 	foreach ($visibleLanguage as $idLang=>$languageLabel){
 		$lis[] = "<li><a style='font-size:x-small;' href='#".$id."_value_".$idLang."'>".$languageLabel."</a></li>";
 		$tab = "";
@@ -72,6 +73,9 @@ if($this->isForNotification() || $this->isForPrint()){
 		$tab .= "<div class='value text' style='padding-top:5px;width: 100%; max-width:".($parentWidth)."px;margin-top:0px; max-height:".$height."px; overflow-y:auto;' >".$tempVal."</div>";
 		$tab .= "</div>";
 		$texts[] = $tab;
+		
+		if($this->getTranslationService()->getLanguage()==$idLang) $selectedTabIndex = $ind;
+		$ind++;
 	}
 
 	$this->put("<ul>".implode("", $lis)."</ul>");
@@ -79,7 +83,7 @@ if($this->isForNotification() || $this->isForPrint()){
 
 	$this->put('</div>');
 
-	$this->getExecutionService()->addJsCode("$('#".$id."_tabs').tabs().tabs('enable', '".$id."_value_".$crtLanguage."');");
+	$this->getExecutionService()->addJsCode("$('#".$id."_tabs').tabs({ active: $selectedTabIndex});");
 
 }
 

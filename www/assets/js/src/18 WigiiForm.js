@@ -376,7 +376,7 @@ function getAjaxformOption(formId){
 		error: errorOnUpdate, cache:false };
 }
 
-function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
+function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, templateFile){
 	$(formId+' textarea.htmlArea').each(function(){
 		var editorID = $(this).attr('id');
 		var instance = CKEDITOR.instances[editorID];
@@ -422,6 +422,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 
 		options = $.extend({
 				language : lang,
+				scayt_sLang: scayt_lang,
 				templates : templateFilter,
 				templates_files : [templateFile],
 				baseFloatZIndex : tempZIndex,

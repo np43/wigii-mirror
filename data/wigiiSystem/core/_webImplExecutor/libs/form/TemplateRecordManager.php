@@ -907,10 +907,10 @@ class TemplateRecordManager extends Model {
 	public function addJsCodeAfterFormIsShown($formId){
 		//do the mapping from the translation service to the ckeditor
 		switch($this->getTranslationService()->getLanguage()){
-			case "l02" : $lang = "fr"; break;
+			case "l02" : $lang = "fr"; $scayt_lang = "fr_FR"; break;
 			case "l01" :
 			default:
-				$lang = "en";
+				$lang = "en"; $scayt_lang = "en_GB"; 
 		}
 		//enterMode : CKEDITOR.ENTER_P or ENTER_BR or ENTER_DIV
 		$ckTemplateFile = null;
@@ -938,7 +938,7 @@ class TemplateRecordManager extends Model {
 		} else {
 			$ckTemplateFile = CLIENT_WEB_PATH.$ckTemplateFile;
 		}
-		$this->getExecutionService()->addJsCode("addJsCodeAfterFormIsShown('#$formId', '$lang', '$templateFilter', '$ckTemplateFile');");
+		$this->getExecutionService()->addJsCode("addJsCodeAfterFormIsShown('#$formId', '$lang', '$scayt_lang', '$templateFilter', '$ckTemplateFile');");
 	}
 
 	/**

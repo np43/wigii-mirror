@@ -88,7 +88,7 @@ if($_POST["action"] =="check"){
 }
 $this->getExecutionService()->addJsCode("
 $setCook
-$('#".$id."_tabs').tabs({ cookie: { path: '/', expires: 30 }, selected: cookie_form_".$id."_tabs, show:function(e,ui){ $.cookie('cookie_form_".$id."_tabs', ui.index); } });
+$('#".$id."_tabs').tabs({ cookie: { path: '/', expires: 30 }, active: cookie_form_".$id."_tabs, show:function(e,ui){ $.cookie('cookie_form_".$id."_tabs', ui.index); } });
 ");
 
 
