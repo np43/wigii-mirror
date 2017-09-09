@@ -2,21 +2,21 @@
 /**
  *  This file is part of Wigii.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
- *  
- *  Wigii is free software: you can redistribute it and/or modify it 
+ *
+ *  Wigii is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, 
+ *  the Free Software Foundation, either version 3 of the License,
  *  or (at your option) any later version.
- *  
- *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
- *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *  See the GNU General Public License for more details.
  *
- *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.
  *  If not, see <http://www.gnu.org/licenses/>.
  *
  *  @copyright  Copyright (c) 2016  Wigii.org
- *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @author     <http://www.wigii.org/system>      Wigii.org
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
@@ -32,7 +32,7 @@
  * Updated by Lionel Weber on 09.09.2017 to add public comment management
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
-{		
+{
 	private $_debugLogger;
 	private $_executionSink;
 	private $siteMap;
@@ -56,7 +56,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		}
 		return $this->_executionSink;
 	}
-			
+	
 	// Content authoring and publishing
 	
 	/**
@@ -80,7 +80,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		case "forward": $("#$$idForm$$__groupForward").show();break;
 		}
 	};
-	$("#$$idForm$$_contentType_value_select").change(displayForm);	
+	$("#$$idForm$$_contentType_value_select").change(displayForm);
 	displayForm();
 })();';
 	}
@@ -93,66 +93,66 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$groupId = $this->evaluateFuncExp(fx('cfgCurrentGroup','id'),$this);
 		// gets the ChoosePosition drop-down as html
 		$choosePosition = sel($this->getPrincipal(), elementPList(lxInG(lxEq(fs('id'),$groupId)),
-			lf(
-				fsl(fs('contentPosition'),fs('contentSummary'),fs('contentNextId')),
-				lxEq(fs('contentType'),'content'),
-				fskl(fsk('contentPosition','value'))
-			)), 
-			dfasl(
-				/* add missing links to next element */
-				dfas('CallbackDFA','setProcessDataChunkCallback',function($data,$callbackDFA){
-					$currentElement = $data->getDbEntity();
-					$previousElement = $callbackDFA->getValueInContext('previousElement');
-					// stores first element
-					if(!isset($previousElement)) {
-						$callbackDFA->setValueInContext('previousElement',$currentElement);
-					}					
-					else {
-						$previousElement->setDynamicAttribute('contentNextIdChanged',ElementDynAttrMutableValueImpl::createInstance(false));
-						// else if previous element does not link to current element, then corrects contentNextId field
-						if($previousElement->getFieldValue('contentNextId') != $currentElement->getId()) {
-							$previousElement->setFieldValue($currentElement->getId(), 'contentNextId');
-							// marks element as changed to make it persisted.
-							$previousElement->setDynamicAttributeValue('contentNextIdChanged',true);
-							// if previousElement equals current element in Form, then updates contentNextId in Form to allow drop-down sync
-							if($previousElement->getId() == $this->getElement()->getId()) {
-								$this->getElement()->setFieldValue($previousElement->getFieldValue('contentNextId'),'contentNextId');
+				lf(
+						fsl(fs('contentPosition'),fs('contentSummary'),fs('contentNextId')),
+						lxEq(fs('contentType'),'content'),
+						fskl(fsk('contentPosition','value'))
+						)),
+				dfasl(
+						/* add missing links to next element */
+						dfas('CallbackDFA','setProcessDataChunkCallback',function($data,$callbackDFA){
+							$currentElement = $data->getDbEntity();
+							$previousElement = $callbackDFA->getValueInContext('previousElement');
+							// stores first element
+							if(!isset($previousElement)) {
+								$callbackDFA->setValueInContext('previousElement',$currentElement);
 							}
-						}
-						// stores currentElement as new previousElement
-						$callbackDFA->setValueInContext('previousElement',$currentElement);	
-						// pushes previousElement down in stream
-						$callbackDFA->writeResultToOutput($previousElement);
-					}													
-				},
-				'setEndOfStreamCallback',function($callbackDFA){
-					// updates last element if needed
-					$previousElement = $callbackDFA->getValueInContext('previousElement');
-					if(isset($previousElement)) {
-						$previousElement->setDynamicAttribute('contentNextIdChanged',ElementDynAttrMutableValueImpl::createInstance(false));
-						if($previousElement->getFieldValue('contentNextId') != 'last') {
-							$previousElement->setFieldValue('last', 'contentNextId');
-							// marks element as changed to make it persisted.
-							$previousElement->setDynamicAttributeValue('contentNextIdChanged',true);
-							// if previousElement equals current element in Form, then updates contentNextId in Form to allow drop-down sync
-							if($previousElement->getId() == $this->getElement()->getId()) {
-								$this->getElement()->setFieldValue($previousElement->getFieldValue('contentNextId'),'contentNextId');
+							else {
+								$previousElement->setDynamicAttribute('contentNextIdChanged',ElementDynAttrMutableValueImpl::createInstance(false));
+								// else if previous element does not link to current element, then corrects contentNextId field
+								if($previousElement->getFieldValue('contentNextId') != $currentElement->getId()) {
+									$previousElement->setFieldValue($currentElement->getId(), 'contentNextId');
+									// marks element as changed to make it persisted.
+									$previousElement->setDynamicAttributeValue('contentNextIdChanged',true);
+									// if previousElement equals current element in Form, then updates contentNextId in Form to allow drop-down sync
+									if($previousElement->getId() == $this->getElement()->getId()) {
+										$this->getElement()->setFieldValue($previousElement->getFieldValue('contentNextId'),'contentNextId');
+									}
+								}
+								// stores currentElement as new previousElement
+								$callbackDFA->setValueInContext('previousElement',$currentElement);
+								// pushes previousElement down in stream
+								$callbackDFA->writeResultToOutput($previousElement);
 							}
+						},
+						'setEndOfStreamCallback',function($callbackDFA){
+						// updates last element if needed
+						$previousElement = $callbackDFA->getValueInContext('previousElement');
+						if(isset($previousElement)) {
+							$previousElement->setDynamicAttribute('contentNextIdChanged',ElementDynAttrMutableValueImpl::createInstance(false));
+							if($previousElement->getFieldValue('contentNextId') != 'last') {
+								$previousElement->setFieldValue('last', 'contentNextId');
+								// marks element as changed to make it persisted.
+								$previousElement->setDynamicAttributeValue('contentNextIdChanged',true);
+								// if previousElement equals current element in Form, then updates contentNextId in Form to allow drop-down sync
+								if($previousElement->getId() == $this->getElement()->getId()) {
+									$this->getElement()->setFieldValue($previousElement->getFieldValue('contentNextId'),'contentNextId');
+								}
+							}
+							// pushes previousElement down in stream
+							$callbackDFA->writeResultToOutput($previousElement);
 						}
-						// pushes previousElement down in stream
-						$callbackDFA->writeResultToOutput($previousElement);
-					}
-				}),
-				/* persists elements which have missing link added */
-				dfas('ElementDFA','setFieldSelectorList',fsl(fs('contentNextId')),'setMode',3,'setDecisionMethod',function($element,$dataFlowContext){
-					if($element->getDynamicAttributeValue('contentNextIdChanged')) return 1;
-					else return 5;
-				}),
-				/* creates drop-down (filters current element) */
-				dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('ctlIf',fx('neq',fs_e('id'),$this->getElement()->getId()),fx('concat',fx('htmlStartTag','option','value',fs_e('id')),fx('str_replace',"'","\\'",fs('contentSummary')),fx('htmlEndTag','option')))),
-				dfas('StringBufferDFA')
-			)
-		);
+						}),
+						/* persists elements which have missing link added */
+						dfas('ElementDFA','setFieldSelectorList',fsl(fs('contentNextId')),'setMode',3,'setDecisionMethod',function($element,$dataFlowContext){
+							if($element->getDynamicAttributeValue('contentNextIdChanged')) return 1;
+							else return 5;
+						}),
+						/* creates drop-down (filters current element) */
+						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('ctlIf',fx('neq',fs_e('id'),$this->getElement()->getId()),fx('concat',fx('htmlStartTag','option','value',fs_e('id')),fx('str_replace',"'","\\'",fs('contentSummary')),fx('htmlEndTag','option')))),
+						dfas('StringBufferDFA')
+						)
+				);
 		// Builds next article drop-down and syncs with current next ID
 		if(isset($choosePosition)) {
 			$nextId = $this->getElement()->getFieldValue('contentNextId');
@@ -172,9 +172,9 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$this->clearUnwantedFields($this->getFslForContentType($contentType));
 		// specific authoring process depending on content type
 		switch($contentType) {
-		case "content": $this->cms_authoringOnSaveContent(); break;
-		case "siteMap": $this->cms_auhoringOnSaveSiteMap(); break;
-		case "forward": $this->cms_auhoringOnSaveForward(); break;
+			case "content": $this->cms_authoringOnSaveContent(); break;
+			case "siteMap": $this->cms_auhoringOnSaveSiteMap(); break;
+			case "forward": $this->cms_auhoringOnSaveForward(); break;
 		}
 	}
 	
@@ -192,7 +192,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$txt = $this->evaluateArg($args[0]);
 			$html2text = new Html2text();
 			if(is_array($txt)) {
-				foreach($txt as $t) {					
+				foreach($txt as $t) {
 					$html2text->html2text($t);
 					$returnValue .= $html2text->get_text();
 					$html2text->clear();
@@ -222,8 +222,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$nextId = $content->getFieldValue('choosePosition');
 		if($nextId!='last') {
 			$nextPos = sel($this->getPrincipal(),elementP($nextId,fsl(fs('contentPosition'))),
-				dfasl(dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentPosition')))
-			);
+					dfasl(dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentPosition')))
+					);
 		}
 		else $nextPos = 10000;
 		
@@ -234,19 +234,19 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			
 			// retrieves previous article
 			$prevPos = sel($this->getPrincipal(), elementPList(lxInG(lxEq(fs('id'),$groupId)),
-				lf(
-					fsl(fs('contentPosition'),fs('contentNextId')),
-					lxAnd(lxEq(fs('contentType'),'content'),lxSm(fs('contentPosition'),$nextPos)),
-					fskl(fsk('contentPosition','value',false)),
-					1,1
-				)), dfasl(
-					/* updates contentNextId link to current article */
-					dfas('ElementSetterDFA','setCalculatedFieldSelectorMap',cfsMap(cfs('contentNextId',$currentId))),
-					dfas('ElementDFA','setFieldSelectorList',fsl(fs('contentNextId')),'setMode','1'),
-					/* and returns position */				
-					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentPosition'))
-				)
-			);
+					lf(
+							fsl(fs('contentPosition'),fs('contentNextId')),
+							lxAnd(lxEq(fs('contentType'),'content'),lxSm(fs('contentPosition'),$nextPos)),
+							fskl(fsk('contentPosition','value',false)),
+							1,1
+							)), dfasl(
+									/* updates contentNextId link to current article */
+									dfas('ElementSetterDFA','setCalculatedFieldSelectorMap',cfsMap(cfs('contentNextId',$currentId))),
+									dfas('ElementDFA','setFieldSelectorList',fsl(fs('contentNextId')),'setMode','1'),
+									/* and returns position */
+									dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentPosition'))
+									)
+					);
 			
 			// calculates article position (compacts at the end to let more space at the beginning)
 			$content->setFieldValue(0.25*$prevPos+0.75*$nextPos, 'contentPosition');
@@ -255,7 +255,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// resets choosePosition option
 			$content->setFieldValue('last', 'choosePosition');
 		}
-	}	
+	}
 	/**
 	 * Specific authoring process when saving site map
 	 */
@@ -293,7 +293,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$returnValue = null;
 		$principal = $this->getPrincipal();
 		$this->executionSink()->publishStartOperation("cms_processUrl", $principal);
-		try {			
+		try {
 			// extracts parameters
 			if($nArgs<1) throw new FuncExpEvalException('cms_processUrl takes at least one argument which is a WigiiBPLParameter object containing the parsedUrl array', FuncExpEvalException::INVALID_ARGUMENT);
 			$params = $this->evaluateArg($args[0]);
@@ -310,7 +310,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			}
 			else {
 				$folderPath = '/';
-				$fileName = $parsedUrl;				
+				$fileName = $parsedUrl;
 			}
 			$ext = strrpos($fileName,'.');
 			// file identified
@@ -328,12 +328,12 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				// if last parameter is a valid language then extracts it
 				if($languages[$fileName]) {
 					$params->setValue('language', $fileName);
-				}	
+				}
 				// else keeps complete folder path
 				else $folderPath .= $fileName.'/';
 				
 				$returnValue = $this->evaluateFuncExp(fx('cms_getContent',array($folderPath,$params)),$this);
-			}			
+			}
 		}
 		catch(Exception $e) {
 			$this->executionSink()->publishEndOperationOnError("cms_processUrl", $e, $principal);
@@ -370,11 +370,11 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// lookups groupId from siteMap
 			$returnValue = $this->siteMap[$url];
 			// if not found, loads SiteMap for current WigiiNamespace
-			if(!$returnValue) {				
-				$this->siteMap = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)), 
-					lf(fsl(fs('siteUrl'),fs('folderId')), lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')))),
-					dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','siteUrl','setValueField','folderId'))
-				);
+			if(!$returnValue) {
+				$this->siteMap = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)),
+						lf(fsl(fs('siteUrl'),fs('folderId')), lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')))),
+						dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','siteUrl','setValueField','folderId'))
+						);
 				// stores siteMap into session
 				if($this->siteMap) {
 					$sessionAS->storeData($this,$siteMapKey,$this->siteMap);
@@ -419,11 +419,11 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// lookups forward Url from forwardMap
 			$returnValue = $this->forwardMap[$url];
 			// if not found, loads forwardMap for current WigiiNamespace
-			if(!$returnValue) {				
-				$this->forwardMap = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)), 
-					lf(fsl(fs('fromUrl'),fs('toUrl')), lxAnd(lxEq(fs('contentType'),'forward'),lxEq(fs('status'),'published')))),
-					dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','fromUrl','setValueField','toUrl'))
-				);
+			if(!$returnValue) {
+				$this->forwardMap = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)),
+						lf(fsl(fs('fromUrl'),fs('toUrl')), lxAnd(lxEq(fs('contentType'),'forward'),lxEq(fs('status'),'published')))),
+						dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','fromUrl','setValueField','toUrl'))
+						);
 				// stores forwardMap into session
 				if($this->forwardMap) {
 					$sessionAS->storeData($this,$forwardMapKey,$this->forwardMap);
@@ -460,7 +460,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			if(empty($url)) throw new FuncExpEvalException('cms_getContent takes at least one argument which is the logical URL of the content', FuncExpEvalException::INVALID_ARGUMENT);
 			// gets options
 			if($nArgs>1) $options = $this->evaluateArg($args[1]);
-			if(!($options instanceof WigiiBPLParameter)) $options = wigiiBPLParam();			
+			if(!($options instanceof WigiiBPLParameter)) $options = wigiiBPLParam();
 			$options->setValue('url',$url);
 			
 			// lookups groupId associated to url
@@ -480,32 +480,32 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 					$options->setValue('parsedUrl',$parsedUrl);
 					return $this->evaluateFuncExp(fx('cms_processUrl',$options),$this);
 				}
-			}				
+			}
 			else $options->setValue('groupId',$groupId);
 			
 			// gets site map
 			$siteMap = $this->cms_getSiteMap($options);
-			if(!isset($siteMap)) throw new FuncExpEvalException("No content found at $url", FuncExpEvalException::NOT_FOUND);	
+			if(!isset($siteMap)) throw new FuncExpEvalException("No content found at $url", FuncExpEvalException::NOT_FOUND);
 			
 			// gets languages
 			$transS = ServiceProvider::getTranslationService();
 			$languages = $siteMap->getFieldValue('supportedLanguage');
 			if(empty($languages)) $languages = $transS->getVisibleLanguage();
-			elseif(is_array($languages)) $languages = array_intersect_key($transS->getVisibleLanguage(), $languages);			
+			elseif(is_array($languages)) $languages = array_intersect_key($transS->getVisibleLanguage(), $languages);
 			else $languages = array($languages=>$languages);
 			$options->setValue('languages',$languages);
 			
 			// gets default language
 			$language = $options->getValue('language');
 			if(!isset($language)) {
-				$language = $siteMap->getFieldValue('defaultLanguage');				
+				$language = $siteMap->getFieldValue('defaultLanguage');
 				if(!isset($language)) $language='l01';
 				$options->setValue('language',$language);
 			}
 			
 			// gets page title and intro
 			$intro = $this->cms_getIntro($options);
-			if(isset($intro)) {			
+			if(isset($intro)) {
 				$title = $intro->getFieldValue('siteTitle');
 				if(is_array($title)) $title = $title[$language];
 				$options->setValue('title',$title);
@@ -533,34 +533,34 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			}
 			
 			// gets page options
-			$forceHeight = $siteMap->getFieldValue('forceHeight');				
+			$forceHeight = $siteMap->getFieldValue('forceHeight');
 			if(!isset($forceHeight)) $forceHeight=false;
 			$options->setValue('forceHeight',$forceHeight);
-			$forceHeightFirst = $siteMap->getFieldValue('forceHeightFirst');				
+			$forceHeightFirst = $siteMap->getFieldValue('forceHeightFirst');
 			if(!isset($forceHeightFirst)) $forceHeightFirst=true;
 			$options->setValue('forceHeightFirst',$forceHeightFirst);
-			$marginWidth = $siteMap->getFieldValue('marginWidth');				
+			$marginWidth = $siteMap->getFieldValue('marginWidth');
 			if(!isset($marginWidth)) $marginWidth="11%";
 			$options->setValue('marginWidth',$marginWidth);
-			$logoTextColor = $siteMap->getFieldValue('logoTextColor');				
+			$logoTextColor = $siteMap->getFieldValue('logoTextColor');
 			if(!isset($logoTextColor)) $logoTextColor="666";
 			$options->setValue('logoTextColor',$logoTextColor);
-			$logoTextSize = $siteMap->getFieldValue('logoTextSize');				
+			$logoTextSize = $siteMap->getFieldValue('logoTextSize');
 			if(!isset($logoTextSize)) $logoTextSize="22px";
 			$options->setValue('logoTextSize',$logoTextSize);
-			$menuBgColor = $siteMap->getFieldValue('menuBgColor');				
+			$menuBgColor = $siteMap->getFieldValue('menuBgColor');
 			if(!isset($menuBgColor)) $menuBgColor="ccc";
 			$options->setValue('menuBgColor',$menuBgColor);
-			$menuTextColor = $siteMap->getFieldValue('menuTextColor');				
+			$menuTextColor = $siteMap->getFieldValue('menuTextColor');
 			if(!isset($menuTextColor)) $menuTextColor="fff";
 			$options->setValue('menuTextColor',$menuTextColor);
-			$titleTextColor = $siteMap->getFieldValue('titleTextColor');				
+			$titleTextColor = $siteMap->getFieldValue('titleTextColor');
 			if(!isset($titleTextColor)) $titleTextColor="696969";
 			$options->setValue('titleTextColor',$titleTextColor);
-			$menuTextHoverColor = $siteMap->getFieldValue('menuTextHoverColor');				
+			$menuTextHoverColor = $siteMap->getFieldValue('menuTextHoverColor');
 			if(!isset($menuTextHoverColor)) $menuTextHoverColor="5c523d";
 			$options->setValue('menuTextHoverColor',$menuTextHoverColor);
-			$titleTextSize = $siteMap->getFieldValue('titleTextSize');				
+			$titleTextSize = $siteMap->getFieldValue('titleTextSize');
 			if(!isset($titleTextSize)) $titleTextSize="24px";
 			$options->setValue('titleTextSize',$titleTextSize);
 			$publicCommentsBgColor = $siteMap->getFieldValue('publicCommentsBgColor');
@@ -569,32 +569,32 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$publicCommentsTextColor = $siteMap->getFieldValue('publicCommentsTextColor');
 			if(!isset($publicCommentsTextColor)) $publicCommentsTextColor="fff";
 			$options->setValue('publicCommentsTextColor',$publicCommentsTextColor);
-			$footerBgColor = $siteMap->getFieldValue('footerBgColor');				
+			$footerBgColor = $siteMap->getFieldValue('footerBgColor');
 			if(!isset($footerBgColor)) $footerBgColor="696969";
 			$options->setValue('footerBgColor',$footerBgColor);
-			$footerTextColor = $siteMap->getFieldValue('footerTextColor');				
+			$footerTextColor = $siteMap->getFieldValue('footerTextColor');
 			if(!isset($footerTextColor)) $footerTextColor="fff";
 			$options->setValue('footerTextColor',$footerTextColor);
-			$linkTextColor = $siteMap->getFieldValue('linkTextColor');				
+			$linkTextColor = $siteMap->getFieldValue('linkTextColor');
 			if(!isset($linkTextColor)) $linkTextColor="646eff";
 			$options->setValue('linkTextColor',$linkTextColor);
-			$evenArticleBgColor = $siteMap->getFieldValue('evenArticleBgColor');				
+			$evenArticleBgColor = $siteMap->getFieldValue('evenArticleBgColor');
 			if(!isset($evenArticleBgColor)) $evenArticleBgColor="fff";
 			$options->setValue('evenArticleBgColor',$evenArticleBgColor);
-			$oddArticleBgColor = $siteMap->getFieldValue('oddArticleBgColor');				
+			$oddArticleBgColor = $siteMap->getFieldValue('oddArticleBgColor');
 			if(!isset($oddArticleBgColor)) $oddArticleBgColor="ebecff";
 			$options->setValue('oddArticleBgColor',$oddArticleBgColor);
 			
 			// gets page Logo
 			$logo = $this->cms_getLogo($options);
-
+			
 			// gets page Menu
 			$menu = $this->cms_getMenu($options);
-
+			
 			// gets CSS definitions
 			$css = $this->cms_getCSS($options);
 			if(isset($css)) $options->setValue('css',$css);
-			// gets JS code			
+			// gets JS code
 			$js = $this->cms_getJSCode($options);
 			//gets page footer
 			$footer = $this->cms_getFooter($options);
@@ -605,40 +605,40 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			echo $this->cms_composeHeader($options,$logo,$menu,$introContent,$enablePublicComments,$introComments)."\n";
 			
 			// renders article content
-			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)), 
-				lf(
-					fsl(fs('contentTitle'),fs('contentHTML'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
-					lxAnd(lxEq(fs('contentType'),'content'),lxEq(fs('status'),'published')),
-					fskl(fsk('contentPosition'))
-				)),
-				dfasl(
-				dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('concat',
-					fx('htmlStartTag','div','class','wigii-cms','style',fx('oCall',$this,'cms_getArticleStyle',fs_e('this'))),"\n",
-						fx('htmlStartTag','div','class','wigii-cms title', 'id', fs_e('id')), 
-							fx('htmlStartTag','div', 'class', 'wigii-cms title-content'),
-								fx('first',fx('getAttr',fs('contentTitle'),$language),
-									fx('concat',fx('htmlStartTag', 'p'), $transS->t($principal,"cmsNoTitleAvailable",null,$language).$languages[$language],' ',
-										fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
-									fx('htmlEndTag', 'p'))
-								),
-							fx('htmlEndTag','div'),
-							fx('htmlStartTag','div','class', 'wigii-cms a-top'),$atopLink,fx('htmlEndTag','div'),
-						fx('htmlEndTag','div'),"\n",
-						fx('htmlStartTag','div','class','wigii-cms content'),fx('first',fx('getAttr',fs('contentHTML'),$language),
-							fx('concat',fx('htmlStartTag', 'p'),$transS->t($principal,"cmsNoContentAvailable",null,$language).$languages[$language],' ', 
-								fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
-							fx('htmlEndTag', 'p'))
-						),
-						//fx('htmlStartTag','p','style','text-align:center;'),$this->cms_getArticleSep($options),fx('htmlEndTag','p'),
-						fx('htmlEndTag','div'),"\n",
-					fx('htmlEndTag','div'),"\n")
-				),
-				dfas('StringSepDFA',
-				'setSeparator',
-				"\n"),
-				dfas('EchoDFA')
-				)
-			);
+			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
+					lf(
+							fsl(fs('contentTitle'),fs('contentHTML'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
+							lxAnd(lxEq(fs('contentType'),'content'),lxEq(fs('status'),'published')),
+							fskl(fsk('contentPosition'))
+							)),
+					dfasl(
+							dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('concat',
+									fx('htmlStartTag','div','class','wigii-cms','style',fx('oCall',$this,'cms_getArticleStyle',fs_e('this'))),"\n",
+									fx('htmlStartTag','div','class','wigii-cms title', 'id', fs_e('id')),
+									fx('htmlStartTag','div', 'class', 'wigii-cms title-content'),
+									fx('first',fx('getAttr',fs('contentTitle'),$language),
+											fx('concat',fx('htmlStartTag', 'p'), $transS->t($principal,"cmsNoTitleAvailable",null,$language).$languages[$language],' ',
+													fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
+													fx('htmlEndTag', 'p'))
+											),
+									fx('htmlEndTag','div'),
+									fx('htmlStartTag','div','class', 'wigii-cms a-top'),$atopLink,fx('htmlEndTag','div'),
+									fx('htmlEndTag','div'),"\n",
+									fx('htmlStartTag','div','class','wigii-cms content'),fx('first',fx('getAttr',fs('contentHTML'),$language),
+											fx('concat',fx('htmlStartTag', 'p'),$transS->t($principal,"cmsNoContentAvailable",null,$language).$languages[$language],' ',
+													fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
+													fx('htmlEndTag', 'p'))
+											),
+									//fx('htmlStartTag','p','style','text-align:center;'),$this->cms_getArticleSep($options),fx('htmlEndTag','p'),
+									fx('htmlEndTag','div'),"\n",
+									fx('htmlEndTag','div'),"\n")
+									),
+							dfas('StringSepDFA',
+									'setSeparator',
+									"\n"),
+							dfas('EchoDFA')
+							)
+					);
 			
 			// renders footer
 			echo "\n".$this->cms_composeFooter($options,$footer,$js);
@@ -708,11 +708,11 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				'<div id="top" ></div><div style="clear:both;"></div>'.
 				($enablePublicComments ?
 						'<div class="wigii-cms-public-comments"><div class="wigii-cms-public-comments-title">'.$transS->t($principal,"cmsPublicComments",null,$language).'</div><div class="wigii-cms-public-comments-hr"></div><div class="wigii-cms-add-public-comments">'.$transS->t($principal,"addJournalItem",null,$language).'</div><div id="wigii-cms-public-comments-content">'.$introComments.'</div></div>'
-				: '').
-				'<div class="wigii-cms" style="'.$style.'">'."\n".
-				'<div class="wigii-cms title"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
-				'<div class="wigii-cms content">'.(empty($intro)?' ':$intro).'</div>'."\n".
-				'</div>';
+						: '').
+						'<div class="wigii-cms" style="'.$style.'">'."\n".
+						'<div class="wigii-cms title"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
+						'<div class="wigii-cms content">'.(empty($intro)?' ':$intro).'</div>'."\n".
+						'</div>';
 	}
 	protected function cms_composeFooter($options,$footer,$js) {
 		return 	'<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>'.
@@ -747,7 +747,7 @@ $(document).ready(function(){
 		}
 		if (!fromClick || sameLocation) {
 			$("*").removeClass("over").find(".wigii-arrow").remove();
-			if(fromClick){ 
+			if(fromClick){
 				/* Prevent default anchor click behavior */
 				e.preventDefault();
 				hash = this.hash;
@@ -771,7 +771,7 @@ $(document).ready(function(){
 							scrollTop: scrollTo
 					}, 800, function(){
 						/* Add hash (#) to URL when done scrolling (default click behavior) */
-						if(fromClick){ 
+						if(fromClick){
 							window.location.hash = hash;
 						}
 						$(window).scrollTop(scrollTo);
@@ -825,12 +825,12 @@ $(document).ready(function(){
 });
 </script>
 '.
-				(empty($footer)?' ':'<div class="wigii-footer wigii-cms content">'.$footer.'</div>').
-				//'<div class="wigii-cms">'."\n".
-				//'<div class="wigii-cms title" id="bottom"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$atopLink.'</div></div>'."\n".
-				//'<div class="wigii-cms content">'.(empty($footer)?' ':$footer).'</div>'."\n".
-				//'</div>'."\n".
-				(!empty($js)?"<script>".$js."</script>\n":'')."</body>\n</html>";
+(empty($footer)?' ':'<div class="wigii-footer wigii-cms content">'.$footer.'</div>').
+//'<div class="wigii-cms">'."\n".
+		//'<div class="wigii-cms title" id="bottom"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$atopLink.'</div></div>'."\n".
+		//'<div class="wigii-cms content">'.(empty($footer)?' ':$footer).'</div>'."\n".
+		//'</div>'."\n".
+		(!empty($js)?"<script>".$js."</script>\n":'')."</body>\n</html>";
 	}
 	/**
 	 * Builds HTML Page intro string
@@ -840,16 +840,16 @@ $(document).ready(function(){
 	protected function cms_getIntro($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(fsl(fs('siteTitle'),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG','url')),
-				lxAnd(lxEq(fs('contentType'),'intro'),lxEq(fs('status'),'published')),
-				null,1,1)),
+						lxAnd(lxEq(fs('contentType'),'intro'),lxEq(fs('status'),'published')),
+						null,1,1)),
 				dfasl(dfas("NullDFA")));
 		if(isset($returnValue)) $returnValue = $returnValue->getDbEntity();
-		return $returnValue;	
+		return $returnValue;
 	}
 	/**
 	 * Builds HTML Page logo string
 	 * @param WigiiBPLParameter $options some rendering options
-	 * @return String 
+	 * @return String
 	 */
 	protected function cms_getLogo($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
@@ -857,17 +857,17 @@ $(document).ready(function(){
 						lxAnd(lxEq(fs('contentType'),'logo'),lxEq(fs('status'),'published')),
 						null,1,1)),
 				dfasl(
-					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentLogo')),
-					dfas('StringBufferDFA','setChunkSeparator',"\n")
-				)
-			);
+						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentLogo')),
+						dfas('StringBufferDFA','setChunkSeparator',"\n")
+						)
+				);
 		if(is_array($returnValue)) $returnValue = $returnValue[$options->getValue('language')];
 		return $returnValue;
 	}
 	/**
 	 * Builds HTML Page menu string
 	 * @param WigiiBPLParameter $options some rendering options
-	 * @return String 
+	 * @return String
 	 */
 	protected function cms_getMenu($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
@@ -875,17 +875,17 @@ $(document).ready(function(){
 						lxAnd(lxEq(fs('contentType'),'menu'),lxEq(fs('status'),'published')),
 						null,1,1)),
 				dfasl(
-					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentMenu')),
-					dfas('StringBufferDFA','setChunkSeparator',"\n")
-				)
-			);
+						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentMenu')),
+						dfas('StringBufferDFA','setChunkSeparator',"\n")
+						)
+				);
 		if(is_array($returnValue)) $returnValue = $returnValue[$options->getValue('language')];
 		return $returnValue;
 	}
 	/**
 	 * Builds HTML Page footer string
 	 * @param WigiiBPLParameter $options some rendering options
-	 * @return String 
+	 * @return String
 	 */
 	protected function cms_getFooter($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
@@ -893,10 +893,10 @@ $(document).ready(function(){
 						lxAnd(lxEq(fs('contentType'),'footer'),lxEq(fs('status'),'published')),
 						null,1,1)),
 				dfasl(
-					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentFooter')),
-					dfas('StringBufferDFA','setChunkSeparator',"\n")
-				)
-			);
+						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentFooter')),
+						dfas('StringBufferDFA','setChunkSeparator',"\n")
+						)
+				);
 		if(is_array($returnValue)) $returnValue = $returnValue[$options->getValue('language')];
 		return $returnValue;
 	}
@@ -908,15 +908,15 @@ $(document).ready(function(){
 	protected function cms_getCSS($options) {
 		return sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(
-					fsl(fs('contentCSS')),
-					lxAnd(lxEq(fs('contentType'),'css'),lxEq(fs('status'),'published'))
-				)),
+						fsl(fs('contentCSS')),
+						lxAnd(lxEq(fs('contentType'),'css'),lxEq(fs('status'),'published'))
+						)),
 				dfasl(
-					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentCSS')),
-					dfas('StringBufferDFA','setChunkSeparator',"\n")
-				)
-			);
-	}	
+						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentCSS')),
+						dfas('StringBufferDFA','setChunkSeparator',"\n")
+						)
+				);
+	}
 	/**
 	 * Builds JS code of page
 	 * @param WigiiBPLParameter $options some rendering options
@@ -925,14 +925,14 @@ $(document).ready(function(){
 	protected function cms_getJSCode($options) {
 		return sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(
-					fsl(fs('contentJS')),
-					lxAnd(lxEq(fs('contentType'),'js'),lxEq(fs('status'),'published'))
-				)),
+						fsl(fs('contentJS')),
+						lxAnd(lxEq(fs('contentType'),'js'),lxEq(fs('status'),'published'))
+						)),
 				dfasl(
-					dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentJS')),
-					dfas('StringBufferDFA','setChunkSeparator',"\n")
-				)
-			);
+						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentJS')),
+						dfas('StringBufferDFA','setChunkSeparator',"\n")
+						)
+				);
 	}
 	/**
 	 * Builds HTML header string
@@ -980,7 +980,7 @@ $(document).ready(function(){
 <html>
 <head>
 <base href="$url" />
-$title 
+$title
 $metaDescription $metaKeywords $metaAuthor
 <meta name="generator" content="Wigii-system   http://www.wigii-system.net" />
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
@@ -1034,22 +1034,23 @@ div.wigii-cms-public-comments-title	{ padding-top:10px; padding-bottom:5px; font
 div.wigii-cms-public-comments-hr	{ background-color:#$publicCommentsTextColor; height:2px; width:40px; display:block;margin:0 auto 5px; text-align:center;}
 div.wigii-cms-add-public-comments	{ cursor:pointer; text-align:center;margin-bottom:16px;}
 div.wigii-cms 					{ width:$articleWidth; box-sizing:border-box; }
+div.wigii-cms div.wigii-cms		{ width:100%; }
 div.wigii-cms.title-content 	{ float:left; width:80%; }
 div.wigii-cms.a-top 			{ float:right; width:20%; margin-top:24px; margin-bottom:24px; font-size:small; text-align:right; }
 div.wigii-cms.content 			{ clear:left; margin:0px; }
 div.wigii-cms.content p			{ margin-top:6px; margin-bottom:6px; }
-div.wigii-globalContainer>div.wigii-footer.wigii-cms.content 
+div.wigii-globalContainer>div.wigii-footer.wigii-cms.content
 								{ position:absolute; width:100%; font-size:small; padding-top:10px; padding-bottom:10px;border-bottom:none; }
 div.wigii-footer p 				{ margin:0px; padding:0px; }
 div.wigii-menu 					{ z-index:1;padding:10px 0px; position:fixed; width:100%; @media (max-height:600px) { padding-top:1px; padding-bottom:1px; } }
 div.wigii-menu #wigii-logo 		{ padding-left:-10px; margin-top:0px; float:left; }
 div.wigii-menu #wigii-logo p	{ margin:0px; }
 div.wigii-menu #wigii-logo span	{ font-size:22px; vertical-align:bottom; }
-div.wigii-menu #wigii-logo a:hover 
+div.wigii-menu #wigii-logo a:hover
 								{ text-decoration:none; }
 div.wigii-menu ul 				{ list-style-type:none; float:right; padding:0px; margin:0px; margin-top:17px; }
 div.wigii-menu ul li 			{ float:left; margin-left:22px; margin-bottom:10px; font-weight:bold; @media (max-height:600px) { margin-bottom:1px; } }
-div.wigii-menu a:hover, div.wigii-menu a.over 
+div.wigii-menu a:hover, div.wigii-menu a.over
 								{ text-decoration:none; }
 div#top 						{ float:left; }
 
@@ -1099,7 +1100,7 @@ HTMLCSS;
 	 */
 	protected function cms_getLanguageMenu($options) {
 		$languages = $options->getValue('languages');
-		if(!isset($languages)) $languages = ServiceProvider::getTranslationService()->getVisibleLanguage(); 
+		if(!isset($languages)) $languages = ServiceProvider::getTranslationService()->getVisibleLanguage();
 		$returnValue = '';
 		if(count($languages)>1) {
 			foreach($languages as $lan=>$language) {
@@ -1118,11 +1119,11 @@ HTMLCSS;
 	protected function cms_getSiteMap($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(fsl(fs('siteUrl'),fs('forceHeight'),fs('forceHeightFirst'),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('publicCommentsBgColor'),fs('publicCommentsTextColor'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs('supportedLanguage'),fs('defaultLanguage')),
-				lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')),
-				null,1,1)),
+						lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')),
+						null,1,1)),
 				dfasl(dfas("NullDFA")));
 		if(isset($returnValue)) $returnValue = $returnValue->getDbEntity();
-		return $returnValue;	
+		return $returnValue;
 	}
 	
 	/**
@@ -1143,7 +1144,7 @@ HTMLCSS;
 		try {
 			// extracts parameters
 			if($nArgs<1) throw new FuncExpEvalException('cms_getFile takes at least one argument which is the logical URL of the file to get', FuncExpEvalException::INVALID_ARGUMENT);
-			$url = $this->evaluateArg($args[0]);			
+			$url = $this->evaluateArg($args[0]);
 			if($nArgs>1) $options = $this->evaluateArg($args[1]);
 			else $options = null;
 			// extracts folderPath, fileName and fileExt
@@ -1196,10 +1197,10 @@ HTMLCSS;
 				//$fslForFetch->addFieldSelector($fieldName, "textContent");
 				
 				$element = sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
-					lf($fslForFetch,
-					lxAnd(lxEq(fs_e('id'),$fileName),lxEq(fs($fieldName,'type'),'.nohtml.txt'),lxEq(fs('status'),'published')),
-					null,1,1)),
-					dfasl(dfas("NullDFA")));			
+						lf($fslForFetch,
+								lxAnd(lxEq(fs_e('id'),$fileName),lxEq(fs($fieldName,'type'),'.nohtml.txt'),lxEq(fs('status'),'published')),
+								null,1,1)),
+						dfasl(dfas("NullDFA")));
 				
 				// dumps file content
 				if($element) {
@@ -1234,10 +1235,10 @@ HTMLCSS;
 				//$fslForFetch->addFieldSelector($fieldName, "textContent");
 				
 				$element = sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
-					lf($fslForFetch,
-					lxAnd(lxEq(fs($fieldName,'name'),$fileName),lxEq(fs($fieldName,'type'),$fileExt),lxEq(fs('status'),'published')),
-					null,1,1)),
-					dfasl(dfas("NullDFA")));			
+						lf($fslForFetch,
+								lxAnd(lxEq(fs($fieldName,'name'),$fileName),lxEq(fs($fieldName,'type'),$fileExt),lxEq(fs('status'),'published')),
+								null,1,1)),
+						dfasl(dfas("NullDFA")));
 				
 				// dumps file content
 				if($element) {
@@ -1252,7 +1253,7 @@ HTMLCSS;
 					else readfile($path);
 				}
 				else throw new FuncExpEvalException("No file found at $url", FuncExpEvalException::NOT_FOUND);
-			}			
+			}
 		}
 		catch(Exception $e) {
 			$this->executionSink()->publishEndOperationOnError("cms_getFile", $e, $principal);
@@ -1292,7 +1293,7 @@ HTMLCSS;
 			case "css": $returnValue = fsl(fs("contentCSS")); break;
 			case "js": $returnValue = fsl(fs("contentJS")); break;
 			case "forward": $returnValue = fsl(fs("fromUrl"),fs("toUrl")); break;
-		}		
+		}
 		return $returnValue;
 	}
 	/**
@@ -1308,9 +1309,9 @@ HTMLCSS;
 		$trashBinGroup = (string)ServiceProvider::getConfigService()->getParameter($principal,$cmsModule,'trashBinGroup');
 		
 		$returnValue = lxAnd(lxEq(fs('wigiiNamespace'),$currentWigiiNamespace->getWigiiNamespaceName()),
-			lxEq(fs('module'),$cmsModule->getModuleName()),
-			lxEq(fs('id_group_parent'),null)
-		); 
+				lxEq(fs('module'),$cmsModule->getModuleName()),
+				lxEq(fs('id_group_parent'),null)
+				);
 		if($trashBinGroup) $returnValue->addOperand(lxNotEq(fs('id'),$trashBinGroup));
 		return $returnValue;
 	}
