@@ -24,11 +24,12 @@
 /**
  * Wigii CMS module Element evaluator
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016
- * Updated by Wigii.org (Lionel Weber) on 05.10.2016
+ * Updated by Lionel Weber on 05.10.2016
  * Updated by Weber wwigii-system.net for Wigii.org on 15.11.2016
- * Updated by Wigii.org (Camille Weber) on 15.01.2017 to allow publication of html files through the link elementId.html
- * Updated by Wigii.org (Camille Weber) on 03.04.2017 to personalize site META information
- * Updated by Wigii.org (Camille Weber) on 15.06.2017 to manage internal url forwarding
+ * Updated by Camille Weber on 15.01.2017 to allow publication of html files through the link elementId.html
+ * Updated by Camille Weber on 03.04.2017 to personalize site META information
+ * Updated by Camille Weber on 15.06.2017 to manage internal url forwarding
+ * Updated by Lionel Weber on 09.09.2017 to add public comment management
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {		
@@ -523,8 +524,12 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				$options->setValue('introBgAlpha',$introBgAlpha);
 				$imgIntroBG = $intro->getFieldValue('imgIntroBG','url');
 				$options->setValue('imgIntroBG',$imgIntroBG);
-				$intro = $intro->getFieldValue('contentIntro');
-				if(is_array($intro)) $intro = $intro[$language];
+				$introContent = $intro->getFieldValue('contentIntro');
+				$enablePublicComments = $intro->getFieldValue('enablePublicComments');
+				$options->setValue('enablePublicComments',$enablePublicComments);
+				$introComments = $intro->getFieldValue('introComments');
+				$options->setValue('introElementId',$intro->getId());
+				if(is_array($introContent)) $introContent = $introContent[$language];
 			}
 			
 			// gets page options
@@ -558,6 +563,12 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$titleTextSize = $siteMap->getFieldValue('titleTextSize');				
 			if(!isset($titleTextSize)) $titleTextSize="24px";
 			$options->setValue('titleTextSize',$titleTextSize);
+			$publicCommentsBgColor = $siteMap->getFieldValue('publicCommentsBgColor');
+			if(!isset($publicCommentsBgColor)) $publicCommentsBgColor="ccc";
+			$options->setValue('publicCommentsBgColor',$publicCommentsBgColor);
+			$publicCommentsTextColor = $siteMap->getFieldValue('publicCommentsTextColor');
+			if(!isset($publicCommentsTextColor)) $publicCommentsTextColor="fff";
+			$options->setValue('publicCommentsTextColor',$publicCommentsTextColor);
 			$footerBgColor = $siteMap->getFieldValue('footerBgColor');				
 			if(!isset($footerBgColor)) $footerBgColor="696969";
 			$options->setValue('footerBgColor',$footerBgColor);
@@ -591,7 +602,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$atopLink = '<a href="./'.$language.'#top">▲ '.$transS->t($principal,"cmsAnchorTop",null,$language).'</a>';
 			
 			// renders header
-			echo $this->cms_composeHeader($options,$logo,$menu,$intro)."\n";
+			echo $this->cms_composeHeader($options,$logo,$menu,$introContent,$enablePublicComments,$introComments)."\n";
 			
 			// renders article content
 			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)), 
@@ -665,7 +676,11 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		}
 		return $returnValue;
 	}
-	protected function cms_composeHeader($options,$logo,$menu,$intro) {
+	protected function cms_composeHeader($options,$logo,$menu,$intro,$enablePublicComments,$introComments) {
+		$transS = ServiceProvider::getTranslationService();
+		$principal = $this->getPrincipal();
+		$language = $options->getValue('language');
+		
 		$style = '';
 		// background-color
 		$s = $options->getValue('introBgColor');
@@ -682,14 +697,18 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		// background-image
 		$s = $options->getValue('imgIntroBG');
 		if($s) $style .= "background:url('".$s."') no-repeat center center; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover; background-size: cover;";
-
-		return $this->cms_getHtmlHeader($options)."\n<body>".'<div class="wigii-globalContainer">'."\n".
+		
+		return $this->cms_getHtmlHeader($options)."\n<body>".
+				'<div class="wigii-globalContainer">'."\n".
 				(empty($logo)&&empty($menu)?' ':'<div class="wigii-menu">').
 				(empty($logo)?' ':'<div id="wigii-logo">'.$logo.'</div>').
 				(empty($menu)?' ':$menu).
 				(empty($logo)&&empty($menu)?' ':'</div>').
 				'<!-- top anchor -->'.
 				'<div id="top" ></div><div style="clear:both;"></div>'.
+				($enablePublicComments ?
+						'<div class="wigii-cms-public-comments"><div class="wigii-cms-public-comments-title">'.$transS->t($principal,"cmsPublicComments",null,$language).'</div><div class="wigii-cms-public-comments-hr"></div><div class="wigii-cms-add-public-comments">'.$transS->t($principal,"addJournalItem",null,$language).'</div><div id="wigii-cms-public-comments-content">'.$introComments.'</div></div>'
+				: '').
 				'<div class="wigii-cms" style="'.$style.'">'."\n".
 				'<div class="wigii-cms title"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
 				'<div class="wigii-cms content">'.(empty($intro)?' ':$intro).'</div>'."\n".
@@ -760,6 +779,44 @@ $(document).ready(function(){
 			}
 		}
 	}
+	'.($options->getValue("enablePublicComments") ? '
+		$("div.wigii-cms-add-public-comments").click(function(){
+			if(!$("button",this).length){
+				$(this).append("<br /><input type=\"text\" placeholder=\"'.ServiceProvider::getTranslationService()->t($this->getPrincipal(),"first_name", null, $options->getValue('language'))." ".ServiceProvider::getTranslationService()->t($this->getPrincipal(),"last_name", null, $options->getValue('language')).'\" style=\"box-sizing:border-box;width:100%;margin-top:5px;margin-bottom:2px;\"/><textarea style=\"box-sizing:border-box;width:100%;height:100px;margin-bottom:5px;\"></textarea><br /><button>Ok</button>");
+				$(":input:first",this).focus();
+				$("button", this).click(function(){
+					var name = $(this).prev().prev().prev().val();
+					var message = $(this).prev().prev().val();
+					if(!name){
+						$(this).prev().prev().prev().css("border-color","red");
+					} else {
+						$(this).prev().prev().prev().css("border-color","");
+					}
+					if(!message){
+						$(this).prev().prev().css("border-color","red");
+					} else {
+						$(this).prev().prev().css("border-color","");
+					}
+					if(name && message){
+						var myAjax = new jQuery.ajax({
+							type: "POST",
+							url: encodeURI("'.SITE_ROOT.'Update/wigii-cms-public-comments-content/'.$this->getPrincipal()->getWigiiNamespace()->getWigiiNamespaceUrl().'/CMS/element/addPublicComment/'.$options->getValue("introElementId").'"),
+							success : function(){ $("div.wigii-cms-add-public-comments :input, div.wigii-cms-add-public-comments br").remove(); alert("success!"); },
+							cache:false,
+							data: {
+								name: name,
+								addJournalItemMessage: message,
+								elementId: '.$options->getValue("introElementId").',
+								journalFieldName: "introComments",
+								toRefreshId: "wigii-cms-public-comments-content"
+							},
+							error: function(){ alert("error!"); }
+						});
+					}
+				});
+			}
+		});
+	' : '').'
 	resize();
 	scrollToHash();
 	$(window).resize(function(e){ resize(e); });
@@ -782,7 +839,7 @@ $(document).ready(function(){
 	 */
 	protected function cms_getIntro($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
-				lf(fsl(fs('siteTitle'),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG','url')),
+				lf(fsl(fs('siteTitle'),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG','url')),
 				lxAnd(lxEq(fs('contentType'),'intro'),lxEq(fs('status'),'published')),
 				null,1,1)),
 				dfasl(dfas("NullDFA")));
@@ -949,11 +1006,20 @@ HTMLHEAD;
 		$menuTextHoverColor = $options->getValue("menuTextHoverColor");
 		$titleTextColor = $options->getValue("titleTextColor");
 		$titleTextSize = $options->getValue("titleTextSize");
+		$publicCommentsBgColor = $options->getValue("publicCommentsBgColor");
+		$publicCommentsTextColor = $options->getValue("publicCommentsTextColor");
 		$footerBgColor = $options->getValue("footerBgColor");
 		$footerTextColor = $options->getValue("footerTextColor");
 		$linkTextColor = $options->getValue("linkTextColor");
 		$evenArticleBgColor = $options->getValue("evenArticleBgColor");
 		$oddArticleBgColor = $options->getValue("oddArticleBgColor");
+		$enablePublicComments = $options->getValue("enablePublicComments");
+		$publicCommentsBgColor = $options->getValue("publicCommentsBgColor");
+		$publicCommentsTextColor = $options->getValue("publicCommentsTextColor");
+		
+		$articleWidth = "100%";
+		if($enablePublicComments) $articleWidth = "80%";
+		$publicCommentsWidth = "20%";
 		
 		$returnValue = <<<HTMLCSS
 html, body 						{ height:100%; padding: 0px; margin:0px; font-family:arial; }
@@ -962,7 +1028,12 @@ a:hover 						{ text-decoration: underline; }
 div.wigii-globalContainer 		{ min-height:100%; }
 div.wigii-globalContainer>div.wigii-cms
 								{ padding-top:10px; padding-bottom:30px; border-bottom:2px solid #fff; }
-div.wigii-cms 					{ width:100%; box-sizing:border-box; }
+div.wigii-cms-public-comments	{ height:100%;width:$publicCommentsWidth; color:#$publicCommentsTextColor;background-color:#$publicCommentsBgColor;padding:0px 5px 0px 10px; box-sizing:border-box; position:fixed;right:0;border-left:2px solid #fff;}
+div.wigii-cms-public-comments p	{ margin:0px;}
+div.wigii-cms-public-comments-title	{ padding-top:10px; padding-bottom:5px; font-style:italic; text-align:center;}
+div.wigii-cms-public-comments-hr	{ background-color:#$publicCommentsTextColor; height:2px; width:40px; display:block;margin:0 auto 5px; text-align:center;}
+div.wigii-cms-add-public-comments	{ cursor:pointer; text-align:center;margin-bottom:16px;}
+div.wigii-cms 					{ width:$articleWidth; box-sizing:border-box; }
 div.wigii-cms.title-content 	{ float:left; width:80%; }
 div.wigii-cms.a-top 			{ float:right; width:20%; margin-top:24px; margin-bottom:24px; font-size:small; text-align:right; }
 div.wigii-cms.content 			{ clear:left; margin:0px; }
@@ -1046,7 +1117,7 @@ HTMLCSS;
 	 */
 	protected function cms_getSiteMap($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
-				lf(fsl(fs('siteUrl'),fs('forceHeight'),fs('forceHeightFirst'),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs('supportedLanguage'),fs('defaultLanguage')),
+				lf(fsl(fs('siteUrl'),fs('forceHeight'),fs('forceHeightFirst'),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('publicCommentsBgColor'),fs('publicCommentsTextColor'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs('supportedLanguage'),fs('defaultLanguage')),
 				lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')),
 				null,1,1)),
 				dfasl(dfas("NullDFA")));
@@ -1212,8 +1283,8 @@ HTMLCSS;
 		$returnValue = null;
 		switch($contentType) {
 			case "content": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentHTML"),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG'),fs('imgArticleBG','url')); break;
-			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("forceHeight"),fs("forceHeightFirst"),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
-			case "intro": $returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs("contentIntro"),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); break;
+			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("forceHeight"),fs("forceHeightFirst"),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('publicCommentsBgColor'),fs('publicCommentsTextColor'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
+			case "intro": $returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); break;
 			case "logo": $returnValue = fsl(fs("contentLogo")); break;
 			case "menu": $returnValue = fsl(fs("contentMenu")); break;
 			case "image": $returnValue = fsl(fs("contentImage")); break;
@@ -1242,5 +1313,20 @@ HTMLCSS;
 		); 
 		if($trashBinGroup) $returnValue->addOperand(lxNotEq(fs('id'),$trashBinGroup));
 		return $returnValue;
+	}
+	
+	/**
+	 * Returns a greater than character
+	 * @return string
+	 */
+	public function txtGt($args) {
+		return '>';
+	}
+	/**
+	 * Returns a lower than character
+	 * @return string
+	 */
+	public function txtLt($args) {
+		return '<';
 	}
 }

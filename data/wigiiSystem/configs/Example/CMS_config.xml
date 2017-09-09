@@ -50,8 +50,7 @@
 
 		reloadDetailAfterModify="0"
 		useGoogleServiceToPreviewOfficeDocuments="0"
-
-		trashBinGroup=""
+		
 		/>
 
 	<feedbackOnElement>
@@ -59,7 +58,7 @@
 		<fields>
 			<feedback_email type="Emails" require="1" ignoreNotification="1" />
 			<feedback_for type="Attributs" require="1" >
-				<attribute email="support@xxx.xx" checkd="1">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				<attribute email="admin@wigii.org" checkd="1">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
 			</feedback_for>
 			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
 			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
@@ -70,7 +69,7 @@
 		<fields>
 			<feedback_email type="Emails" require="1" ignoreNotification="1" />
 			<feedback_for type="Attributs" require="1" >
-				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				<attribute checked="1" email="admin@wigii.org">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
 			</feedback_for>
 			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
 			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
@@ -110,6 +109,8 @@
 				<menuTextHoverColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='5c523d'><label_l01>Active text color of menu</label_l01><label_l02>Couleur du texte du menu actif</label_l02></menuTextHoverColor>
 				<titleTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='696969'><label_l01>Text color of title</label_l01><label_l02>Couleur du texte des titres</label_l02></titleTextColor>
 				<titleTextSize labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='24px'><label_l01>Text size of title</label_l01><label_l02>Taille de texte des titres</label_l02></titleTextSize>
+				<publicCommentsBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='cccccc'><label_l01>Background color of public comments</label_l01><label_l02>Couleur des commentaires publiques</label_l02></publicCommentsBgColor>
+				<publicCommentsTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='ffffff'><label_l01>Text color of public comments</label_l01><label_l02>Couleur du texte des commentaires publiques</label_l02></publicCommentsTextColor>
 				<footerBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='696969'><label_l01>Background color of footer</label_l01><label_l02>Couleur du pied de page</label_l02></footerBgColor>
 				<footerTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='ffffff'><label_l01>Text color of footer</label_l01><label_l02>Couleur du texte du pied de page</label_l02></footerTextColor>
 				<linkTextColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"siteMap")' expand="1" isInLine="0" defaultExp='646EFF'><label_l01>Text color of links</label_l01><label_l02>Couleur du texte des liens</label_l02></linkTextColor>
@@ -135,6 +136,8 @@
 			<groupIntro groupStart="1"><label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></groupIntro>
 				<contentIntro enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Introduction content</label_l01><label_l02>Contenu de l'introduction</label_l02></contentIntro>
 				<siteTitle enableDynamicAttributes="1" excelExport="auto" type="Varchars" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1"><label_l01>Browser title</label_l01><label_l02>Titre du navigateur</label_l02></siteTitle>
+				<enablePublicComments excelExport="none" type="Booleans" ><label_l01>Enable public comments</label_l01><label_l02>Activer les commentaires publiques</label_l02></enablePublicComments>
+				<introComments excelExport="auto" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="1" clearOnCopy="1"><label_l01>Public comments content</label_l01><label_l02>Contenu des commentaires publiques</label_l02></introComments>
 				<metaDescription enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Description of the page for search engines</label_l01><label_l02>Description de la page pour les moteurs de recherche</label_l02></metaDescription>
 				<metaKeywords enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Keywords</label_l01><label_l02>Mots-clés</label_l02></metaKeywords>
 				<metaAuthor enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Author and copyright</label_l01><label_l02>Auteur et copyright</label_l02></metaAuthor>				
