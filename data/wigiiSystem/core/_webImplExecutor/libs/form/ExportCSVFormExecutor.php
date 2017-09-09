@@ -40,7 +40,7 @@ class ExportCSVFormExecutor extends ExportFormExecutor {
 
 	}
 
-	public function export($p, $exec, $state, $exportLC, $elementListLC, $tempExportLC){
+	public function export($p, $exec, $state, $exportLC, $elementListLC, $tempExportLC, $isIntegrated=false){
 		$elS = ServiceProvider::getElementService();
 		$groupAS = ServiceProvider::getGroupAdminService();
 		$configS = $this->getWigiiExecutor()->getConfigurationContext();
@@ -51,11 +51,11 @@ class ExportCSVFormExecutor extends ExportFormExecutor {
 		$recordWigiiBag->setFormFieldList($this->getRecord()->getFieldList());
 		$this->getRecord()->setWigiiBag($recordWigiiBag);
 
-		$contentType = 'application/vnd.ms-excel';
+		$contentType = 'text/csv';
 		$ext = "csv";
 		$fileName = ($exec->getCrtWigiiNamespace()->getWigiiNamespaceName() ? $exec->getCrtWigiiNamespace()->getWigiiNamespaceName()."_" : "").$transS->t($p, $exec->getCrtModule()->getModuleUrl())."_".date('Y.m.d').".".$ext;
 
-		$this->getHeader($contentType, $fileName);
+		$this->getHeader($contentType, $fileName, $isIntegrated);
 
 		$configGroupPList = $exportLC->getConfigGroupList();
 		if($elementListLC->getMultipleSelection()!=null){

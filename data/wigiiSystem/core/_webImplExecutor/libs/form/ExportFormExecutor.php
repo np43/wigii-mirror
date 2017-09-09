@@ -50,13 +50,18 @@ abstract class ExportFormExecutor extends FormExecutor {
 		$exec->addJsCode("actOnCloseDialog('".$exec->getIdAnswer()."'); download('".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/exportAndDownload/".$params."');");
 	}
 
-	protected function getHeader($contentType, $fileName){
+	protected function getHeader($contentType, $fileName, $isIntegrated=false){
 		header('Pragma: public');
 		header('Cache-Control: max-age=0');
 		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 		header("Last-Modified: " . gmdate( "D, d M Y H:i:s" ) . "GMT" );
-		header('Content-type: '.$contentType);
-		header('Content-Disposition: attachment; filename="'.$fileName.'"');
+		if(!$isIntegrated){
+			header('Content-type: '.$contentType);
+			header('Content-Disposition: attachment; filename="'.$fileName.'"');
+		} else {
+			header('Content-type: text');
+			//header('Content-Disposition: inline; filename="'.$fileName.'"');
+		}
 	}
 
 	protected function doRenderForm($p, $exec){

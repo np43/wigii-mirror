@@ -6219,8 +6219,13 @@ onUpdateErrorCounter = 0;
 					$elementId = $exec->getCrtParameters($i++);
 					$fieldName = $exec->getCrtParameters($i++);
 				} else if($isCSVBackup || $isCSVRaw || $isCSV){
-					$csvSeparator = $exec->getCrtParameters($i++);
+					$isIntegrated = false; //detect if next option is integrated
+					if($exec->getCrtParameters($i)=="integrated") { $isIntegrated = true; $i++; }
+					if($exec->getCrtParameters($i)=="tab") { $csvSeparator = "	"; $i++; }
+					else $csvSeparator = $exec->getCrtParameters($i++);
+					if($exec->getCrtParameters($i)=="integrated") { $isIntegrated = true; $i++; }
 					$csvEncoding = $exec->getCrtParameters($i++);
+					if($exec->getCrtParameters($i)=="integrated") { $isIntegrated = true; $i++; }
 				} else if($isICal){
 					$fromDate = $exec->getCrtParameters($i++);
 				}
@@ -6385,7 +6390,7 @@ onUpdateErrorCounter = 0;
 						$exportLC->setConfigGroupList($groupPList);
 						$tempExportLC->setConfigGroupList($groupPList);
 
-						$exportCSVFormExecutor->export($p, $exec, null, $exportLC, $elementListLC, $tempExportLC);
+						$exportCSVFormExecutor->export($p, $exec, null, $exportLC, $elementListLC, $tempExportLC, $isIntegrated);
 
 					} catch (Exception $e) {
 //						$this->displayNotFound();
