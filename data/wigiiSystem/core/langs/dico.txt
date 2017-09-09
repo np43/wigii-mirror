@@ -818,6 +818,7 @@ isUploaded:is already uploaded:est déjà importé:::::::::
 isUserCreator:User/Role manager:Gestionnaire d&apos;utilisateurs et de rôles:::::::::
 isUserCreator_help:Ability to create/edit/delete user/role.:Peut créer, modifier ou supprimer des utilisateurs et des rôles.:::::::::
 language:Language:Langue:::::::::
+first_name:First name:Prénom:::::::::
 last_name:Last name:Nom:::::::::
 logout:Logout:Déconnexion:::::::::
 login:Login:Se connecter:::::::::
@@ -1576,6 +1577,7 @@ pleaseSelectAtLeastOneGroup:Please select at least one #group#.:Veuillez sélect
 addJournalItem:<font style="font-size\:14px;font-weight\:bold;">+</font> <u>add...</u>:<font style="font-size\:14px;font-weight\:bold;">+</font> <u>ajouter...</u>::::::
 addJournalItemPostBackMessage:Bellow is your message, please copy it and try later:Ci-dessous est votre message. Veuillez le copier et essayer utlérieurement:
 externalAccessUsernameForJournal:external access:accès externe::::
+cmsPublicComments:Last comments:Derniers commentaires:::::::
 
 keepNotifiedButton:My notifications:Mes notifications:::::::
 keepNotifiedTitle:Keep notified:Restez notifié:::::::
