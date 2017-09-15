@@ -73,7 +73,7 @@
 		parent::event($eventName, $entityName, $module, $object);
 		if(isset($this->mail)) {
 			$this->executionSink()->publishStartOperation('event');
-			sel($this->getRootPrincipal(), newElement($this->getGroupId()), dfasl(
+			ServiceProvider::getDataFlowService()->processDataSource($this->getRootPrincipal(), newElement($this->getGroupId()), dfasl(
 				dfas('ElementSetterDFA',
 					'setCalculatedFieldSelectorMap', cfsMap(
 					cfs('date', date('Y-m-d H:i:s')),
@@ -83,7 +83,7 @@
 					cfs('content', $this->mail->getBodyHtmlForDb()))
 				),
 				dfas('ElementDFA', 'setMode', '1')	
-			));
+			), true, false); /* explicitely prevents events to popup to avoid loops */
 			$this->executionSink()->publishEndOperation('event');
 		}
 	}

@@ -194,7 +194,7 @@ class ElementPDataFlowConnector implements DataFlowDumpable
 		$eltS = $apiClient->getElementService();		
 		
 		// fetches the elementP
-		$element = $this->createElementInstance();
+		$element = $this->createElementInstance($dataFlowContext);
 		$element->setId($this->eltId);		
 		$element = $eltS->fillElement($principal, $element, $this->fieldSelectorList);
 		// extracts element info and stamps it
@@ -208,7 +208,20 @@ class ElementPDataFlowConnector implements DataFlowDumpable
 	
 	// Implementation
 	
-	protected function createElementInstance() {
-		return Element::createInstance(null, FieldListArrayImpl::createInstance(), WigiiBagBaseImpl::createInstance());
+	/**
+	 * Creates an Element 
+	 * @param DataFlowContext $dataFlowContext data flow context is given to be able to customize the creation of the element.
+	 * @return Element
+	 */
+	protected function createElementInstance($dataFlowContext) {
+		// if Wigii events are active, then creates a FormBag and a FormFieldList
+		if($dataFlowContext->areWigiiEventsEnabled()) {
+			$formBag = FormBag::createInstance();
+			$fieldList = FormFieldList::createInstance($formBag);
+			$formBag->setFormFieldList($fieldList);
+			return Element::createInstance(null, $fieldList, $formBag);
+		}
+		// else standard implementation.
+		else return Element::createInstance(null, FieldListArrayImpl::createInstance(), WigiiBagBaseImpl::createInstance());
 	}
 }

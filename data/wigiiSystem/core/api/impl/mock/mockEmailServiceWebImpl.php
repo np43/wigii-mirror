@@ -97,11 +97,11 @@ class mockEmailServiceWebImpl extends EmailServiceWebImpl {
 		$returnValue = 0;
 		try {
 			if(!empty($emails)) {
-				sel($this->getRootPrincipal(), array2df($emails), dfasl(
+				ServiceProvider::getDataFlowService()->processDataSource($this->getRootPrincipal(), array2df($emails), dfasl(
 					dfas('MapModel2ElementDFA', 'setGroupId', $this->getGroupId(),
 						'setModel2ElementMappingMethod', CallableObject::createInstance('mapWigiiEmail2Element', $this)),
 					dfas('ElementDFA', 'setMode', '1')
-				));
+				), true, false); /* explicitely prevents events to popup to avoid loops */
 			}
 		}
 		catch(Exception $e) {

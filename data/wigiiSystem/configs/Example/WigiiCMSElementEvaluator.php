@@ -29,7 +29,7 @@
  * Updated by Camille Weber on 15.01.2017 to allow publication of html files through the link elementId.html
  * Updated by Camille Weber on 03.04.2017 to personalize site META information
  * Updated by Camille Weber on 15.06.2017 to manage internal url forwarding
- * Updated by Lionel Weber on 09.09.2017 to add public comment management
+ * Updated by Lionel and Camille Weber on 09.09.2017 to add public comment management
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -298,41 +298,48 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			if($nArgs<1) throw new FuncExpEvalException('cms_processUrl takes at least one argument which is a WigiiBPLParameter object containing the parsedUrl array', FuncExpEvalException::INVALID_ARGUMENT);
 			$params = $this->evaluateArg($args[0]);
 			if(!($params instanceof WigiiBPLParameter)) throw new FuncExpEvalException('cms_processUrl takes at least one argument which is a WigiiBPLParameter object containing the parsedUrl array', FuncExpEvalException::INVALID_ARGUMENT);
-			// extracts parsedUrl
-			$parsedUrl = $params->getValue('parsedUrl');
 			
-			// extracts folder path and file name
-			if(is_array($parsedUrl)) {
-				$fileName = array_pop($parsedUrl);
-				$folderPath = implode('/', $parsedUrl);
-				if($folderPath) $folderPath = '/'.$folderPath.'/';
-				elseif($fileName) $folderPath = '/';
-			}
+			// 1. if POST verb, forwards request to appropriate method
+			if($_SERVER['REQUEST_METHOD']=='POST') $returnValue = $this->cms_processPost($params);
+			
+			// 2. else treats it a standard content rendering
 			else {
-				$folderPath = '/';
-				$fileName = $parsedUrl;
-			}
-			$ext = strrpos($fileName,'.');
-			// file identified
-			if($ext!==false) {
-				$fileExt = substr($fileName,$ext);
-				$fileName = substr($fileName,0,$ext);
-				$params->setValue('fileName',$fileName);
-				$params->setValue('fileExt',$fileExt);
-				$returnValue = $this->evaluateFuncExp(fx('cms_getFile',array($folderPath.$fileName.$fileExt,$params)),$this);
-			}
-			// else folder identified
-			else {
-				// extracts language
-				$languages = ServiceProvider::getTranslationService()->getVisibleLanguage();
-				// if last parameter is a valid language then extracts it
-				if($languages[$fileName]) {
-					$params->setValue('language', $fileName);
-				}
-				// else keeps complete folder path
-				else $folderPath .= $fileName.'/';
+				// extracts parsedUrl
+				$parsedUrl = $params->getValue('parsedUrl');
 				
-				$returnValue = $this->evaluateFuncExp(fx('cms_getContent',array($folderPath,$params)),$this);
+				// extracts folder path and file name
+				if(is_array($parsedUrl)) {
+					$fileName = array_pop($parsedUrl);
+					$folderPath = implode('/', $parsedUrl);
+					if($folderPath) $folderPath = '/'.$folderPath.'/';
+					elseif($fileName) $folderPath = '/';
+				}
+				else {
+					$folderPath = '/';
+					$fileName = $parsedUrl;
+				}
+				$ext = strrpos($fileName,'.');
+				// file identified
+				if($ext!==false) {
+					$fileExt = substr($fileName,$ext);
+					$fileName = substr($fileName,0,$ext);
+					$params->setValue('fileName',$fileName);
+					$params->setValue('fileExt',$fileExt);
+					$returnValue = $this->evaluateFuncExp(fx('cms_getFile',array($folderPath.$fileName.$fileExt,$params)),$this);
+				}
+				// else folder identified
+				else {
+					// extracts language
+					$languages = ServiceProvider::getTranslationService()->getVisibleLanguage();
+					// if last parameter is a valid language then extracts it
+					if($languages[$fileName]) {
+						$params->setValue('language', $fileName);
+					}
+					// else keeps complete folder path
+					else $folderPath .= $fileName.'/';
+					
+					$returnValue = $this->evaluateFuncExp(fx('cms_getContent',array($folderPath,$params)),$this);
+				}
 			}
 		}
 		catch(Exception $e) {
@@ -715,8 +722,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 						'</div>';
 	}
 	protected function cms_composeFooter($options,$footer,$js) {
-		return 	'<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>'.
-				'<script>
+		//return '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>'.
+		return '<script>
 var enableArticleResize = '.($options->getValue("forceHeight") ? 'true' : 'false').';
 var enableFirstArticleResize = '.($options->getValue("forceHeightFirst") ? 'true' : 'false').';
 $(document).ready(function(){
@@ -784,7 +791,7 @@ $(document).ready(function(){
 			if(!$("button",this).length){
 				$(this).append("<br /><input type=\"text\" placeholder=\"'.ServiceProvider::getTranslationService()->t($this->getPrincipal(),"first_name", null, $options->getValue('language'))." ".ServiceProvider::getTranslationService()->t($this->getPrincipal(),"last_name", null, $options->getValue('language')).'\" style=\"box-sizing:border-box;width:100%;margin-top:5px;margin-bottom:2px;\"/><textarea style=\"box-sizing:border-box;width:100%;height:100px;margin-bottom:5px;\"></textarea><br /><button>Ok</button>");
 				$(":input:first",this).focus();
-				$("button", this).click(function(){
+				$("button", this).click(function(e){
 					var name = $(this).prev().prev().prev().val();
 					var message = $(this).prev().prev().val();
 					if(!name){
@@ -800,9 +807,11 @@ $(document).ready(function(){
 					if(name && message){
 						var myAjax = new jQuery.ajax({
 							type: "POST",
-							url: encodeURI("'.SITE_ROOT.'Update/wigii-cms-public-comments-content/'.$this->getPrincipal()->getWigiiNamespace()->getWigiiNamespaceUrl().'/CMS/element/addPublicComment/'.$options->getValue("introElementId").'"),
-							success : function(){ $("div.wigii-cms-add-public-comments :input, div.wigii-cms-add-public-comments br").remove(); alert("success!"); },
+							url: encodeURI("'.SITE_ROOT.$this->getPrincipal()->getWigiiNamespace()->getWigiiNamespaceUrl().'/CMS/www/addPublicComment/'.$options->getValue("introElementId").'"),
+							success : function(data){ $("div.wigii-cms-add-public-comments :input,  div.wigii-cms-add-public-comments br").remove(); $("#wigii-cms-public-comments-content").html(data); },
 							cache:false,
+							crossDomain: true,
+							xhrFields: {withCredentials: true},							
 							data: {
 								name: name,
 								addJournalItemMessage: message,
@@ -810,7 +819,13 @@ $(document).ready(function(){
 								journalFieldName: "introComments",
 								toRefreshId: "wigii-cms-public-comments-content"
 							},
-							error: function(){ alert("error!"); }
+							error: function(data){
+								var fxError = data.responseXML;
+								wigii("HelpService").showFloatingHelp($("#wigii-cms-public-comments-content"),e, 
+									wigii().exception2html($(fxError).find("exception"),undefined),
+									{localContent:true,position:"NW",removeOnClose:true}
+								);
+							}
 						});
 					}
 				});
@@ -952,6 +967,9 @@ $(document).ready(function(){
 		if(isset($metaKeywords)) $metaKeywords = '<meta name="keywords" content="'.str_replace('"','',$metaKeywords).'"/>'."\n";
 		$metaAuthor = $options->getValue('metaAuthor');
 		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";
+		$wigiiJS = '<script type="text/javascript" src="'.SITE_ROOT_forFileUrl.'assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
+		//$wigiiCSS = '<link rel="stylesheet" href="'.SITE_ROOT_forFileUrl.'assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
+		$wigiiCSS = '';/* not compatible yet with CMS */
 		$returnValue = <<<HTMLHEAD
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
@@ -985,6 +1003,8 @@ $metaDescription $metaKeywords $metaAuthor
 <meta name="generator" content="Wigii-system   http://www.wigii-system.net" />
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+$wigiiJS
+$wigiiCSS
 <style>
 $css
 </style>
@@ -1260,6 +1280,97 @@ HTMLCSS;
 			throw $e;
 		}
 		$this->executionSink()->publishEndOperation("cms_getFile", $principal);
+		return $returnValue;
+	}
+	
+	
+	// POST processing
+	
+	/**
+	 * Entry point to process the incoming CMS POST request<br/>
+	 * FuncExp signature is: <code>cms_processPost(params)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) params: WigiiBPLParameter. A map of key values specifying the request and its environment
+	 *   parsedUrl: Array. The url parsed into arguments by the ExecutionService
+	 *   isIntegrated: Boolean. True if the answer is integrated into a Wigii protocol answer, false if http header should be sent.
+	 * @return mixed. Can echo directly the output or return an object which will be serialized by the WigiiWebCMSFormExecutor.
+	 */
+	public function cms_processPost($args) {		
+		$returnValue = null;
+		$principal = $this->getPrincipal();
+		$this->executionSink()->publishStartOperation("cms_processPost", $principal);
+		try {
+			// check we are in POST
+			if($_SERVER['REQUEST_METHOD']!='POST') throw new FuncExpEvalException('cms_processPost requires http verb is POST and not '.$_SERVER['REQUEST_METHOD'], FuncExpEvalException::INVALID_STATE);
+			// extracts parameters
+			if(is_array($args)) {
+				$nArgs = $this->getNumberOfArgs($args);
+				if($nArgs<1) throw new FuncExpEvalException('cms_processPost takes at least one argument which is a WigiiBPLParameter object containing the parsedUrl array', FuncExpEvalException::INVALID_ARGUMENT);
+				$params = $this->evaluateArg($args[0]);
+			}
+			else $params = $args;
+			if(!($params instanceof WigiiBPLParameter)) throw new FuncExpEvalException('cms_processPost takes at least one argument which is a WigiiBPLParameter object containing the parsedUrl array', FuncExpEvalException::INVALID_ARGUMENT);
+			// extracts parsedUrl
+			$parsedUrl = $params->getValue('parsedUrl');
+			if(empty($parsedUrl)) throw new FuncExpEvalException('Empty request', FuncExpEvalException::NOT_FOUND);
+			
+			// dispatches POST action
+			
+			// case /addComment/elementId
+			$elementId = ValueObject::createInstance();
+			if(arrayMatch($parsedUrl, 'addPublicComment',$elementId)) {
+				$params->setValue('elementId', $elementId->getValue());
+				$returnValue = $this->cms_addPublicComment($params);
+			}			
+			// default unknown request 
+			else throw new FuncExpEvalException('Unknown request '.implode('/',$parsedUrl), FuncExpEvalException::NOT_FOUND);			
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("cms_processPost", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("cms_processPost", $principal);
+		return $returnValue;
+	}
+	/**
+	 * Adds a public comment to an article
+	 * @param WigiiBPLParameter $options some posting options
+	 * @return String returns the updated comments content
+	 */
+	protected function cms_addPublicComment($options) {
+		$p = $this->getPrincipal();
+		$this->debugLogger()->logBeginOperation('cms_addPublicComment');		
+		// sanitizes posted form
+		$this->getFormExecutor()->preventInjectionForm($p, ServiceProvider::getExecutionService());
+		$html2text = new Html2text();
+		
+		$fieldName = $_POST["journalFieldName"];
+		
+		$message = $_POST["addJournalItemMessage"];
+		$html2text->setHtml($message);		
+		$message= $html2text->getText();
+		
+		$author = $_POST["name"];
+		$html2text->setHtml($author);
+		$author= $html2text->getText();
+		
+		// prepares comment
+		$header = date("d.m.Y H:i")." ".$author;
+		$returnValue = '<p style="color:#666;">&gt; ';
+		$returnValue.= $header;
+		$returnValue.= "</p>";
+		$returnValue.= '<p>'.$message.'</p>';
+		$returnValue.= "<p>&nbsp;</p>";
+		
+		// adds comment to article
+		$returnValue = ServiceProvider::getDataFlowService()->processDataSource($p, elementP($options->getValue('elementId')), dfasl(
+			dfas('ElementSetterDFA','setCalculatedFieldSelectorMap',cfsMap(
+				cfs($fieldName, fx('concat',$returnValue,fs($fieldName)))
+			)),
+			dfas('ElementDFA','setMode',1),
+			dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs($fieldName))
+		), true, TechnicalServiceProvider::getWigiiEventsDispatcher());
+		$this->debugLogger()->logEndOperation('cms_addPublicComment');
 		return $returnValue;
 	}
 	

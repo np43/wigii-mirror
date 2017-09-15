@@ -2546,16 +2546,39 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		};
 		/**
 		 * Converts an exception to HTML code that can be displayed
-		 * @param Object exception an exception object {name:string,code:int,message:string}
-		 * @param Object context if defined, then information about server context in the form 
+		 * @param Object|XML exception an exception object {name:string,code:int,message:string}
+		 * @param Object|XML context if defined, then information about server context in the form 
 		 * {request:string, wigiiNamespace:string, module:string, action:string, realUsername:string, username:string, principalNamespace:string, version:string}
 		 */
 		wigiiApi.exception2html = function(exception,context) {
-			htmlb = wigiiApi.getHtmlBuilder();
+			var htmlb = wigiiApi.getHtmlBuilder();
+			// if exception is not a plain object, then assumes its some xml
+			if(!$.isPlainObject(exception)) {
+				exception = $(exception);
+				exception = {
+					name: exception.find('name').text(),
+					code: exception.find('code').text(),
+					message: exception.find('message').text()
+				};
+			}
 			
 			htmlb.putStartTag('h2').put(exception.code).prepend(' ',wigiiApi.errorLabels[exception.code]).putEndTag('h2');
 			htmlb.putStartTag('p').implode(' : ',exception.name,exception.message).putEndTag('p');
 			if(context) {
+				// if context is not a plain object, then assumes its some xml
+				if(!$.isPlainObject(context)) {
+					context = $(context);
+					context = {
+						request: context.find('request').text(),
+						wigiiNamespace: context.find('wigiiNamespace').text(),
+						module: context.find('module').text(),
+						action: context.find('action').text(),
+						realUsername: context.find('realUsername').text(),
+						username: context.find('username').text(),
+						principalNamespace: context.find('principalNamespace').text()
+					}
+				}
+				
 				htmlb.putStartTag('div','class','elementHistoric')
 				.putStartTag('div', 'class', 'label SBB expanded','onclick',"$(this).toggleClass('expanded').toggleClass('collapsed');$(this).next().toggle();").put('Context').putEndTag('div')
 				.putStartTag('table','style','display:table;').putStartTag('tbody');
