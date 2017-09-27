@@ -365,6 +365,9 @@ class TemplateRecordManager extends Model {
 	 * output/return an html string which represent the value of the field
 	 */
 	public function displayValue($fieldName, $parentWidth = null, $visibleLanguage = null){
+		if(!is_array($visibleLanguage)) $visibleLanguage = $this->getTranslationService()->getVisibleLanguage();
+		else $visibleLanguage = array_intersect_key($this->getTranslationService()->getVisibleLanguage(), $visibleLanguage);
+		
 		$field = $this->getField($fieldName);
 		if($field->getDataType()!=null){
 			include DATATYPE_PATH.$field->getDataType()->getDataTypeName()."_displayValue.tpl.php";

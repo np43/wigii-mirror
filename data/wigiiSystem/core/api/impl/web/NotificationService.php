@@ -740,7 +740,7 @@ class NotificationService implements MultiplexedEvent {
 						} else if($field->getDataType()->getDataTypeName()=="Booleans"){
 							$displayInContent .= $trm->formatValueFromRecord($field->getFieldName(), "value", $rec, false);
 						} else {
-							$trm->displayValue($field->getFieldName());
+							$trm->displayValue($field->getFieldName(),null,$fsl->getSelectedLanguages());
 							$displayInContent .= "<b>".$trm->getHtmlAndClean()."</b>";
 						}
 						$displayInContent .= '</p>';
@@ -789,7 +789,7 @@ class NotificationService implements MultiplexedEvent {
 						} else if($field->getDataType() && $field->getDataType()->getDataTypeName()=="Booleans"){
 							$changeList .= $trm->formatValueFromRecord($field->getFieldName(), "value", $rec, false);
 						} else {
-							$trm->displayValue($field->getFieldName());
+							$trm->displayValue($field->getFieldName(),null,$fsl->getSelectedLanguages());
 							$changeList .= "<b>".$trm->getHtmlAndClean()."</b>";
 						}
 					}

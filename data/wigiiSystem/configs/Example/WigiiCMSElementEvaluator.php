@@ -29,7 +29,8 @@
  * Updated by Camille Weber on 15.01.2017 to allow publication of html files through the link elementId.html
  * Updated by Camille Weber on 03.04.2017 to personalize site META information
  * Updated by Camille Weber on 15.06.2017 to manage internal url forwarding
- * Updated by Lionel and Camille Weber on 09.09.2017 to add public comment management
+ * Updated by Lionel and Camille Weber on 27.09.2017 to add public comment management
+ * Revision: G97
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -55,6 +56,13 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$this->_executionSink = ExecutionSink::getInstance("WigiiCMSElementEvaluator");
 		}
 		return $this->_executionSink;
+	}
+	
+	protected function createTrmInstance($isOutputEnabled = true){
+		$formExecutor = $this->getFormExecutor();
+		$returnValue = $formExecutor->getWigiiExecutor()->createTRM(null, $formExecutor->isForNotification(), $formExecutor->isForPrint(), $formExecutor->isForExternalAccess(), false, false, $isOutputEnabled);
+		$returnValue->setFormExecutor($formExecutor);
+		return $returnValue;
 	}
 	
 	// Content authoring and publishing
@@ -734,6 +742,7 @@ $(document).ready(function(){
 		$("div.wigii-globalContainer>div.wigii-cms:not(.wigii-footer):last").css("min-height",$(window).height()-$("div.wigii-menu").outerHeight()-$("div.wigii-footer").outerHeight()-1);
 		$("div.wigii-cms div.middle").each(function(){ $(this).css("margin-top", Math.max(0,($(window).height()-$("div.wigii-menu").outerHeight()-$(this).parent().outerHeight())/2)); });
 		$("div.wigii-cms div.bottom").each(function(){ $(this).css("margin-top", Math.max(0,$(window).height()-$("div.wigii-menu").outerHeight()-$(this).parent().prev().outerHeight()-$(this).parent().outerHeight()-46)); });
+		$("div.wigii-cms-public-comments").height($(window).height()-$("div.wigii-menu").outerHeight());
 	}
 	function scrollToHash(e){
 		/* Make sure this.hash has a value before overriding default behavior */
@@ -789,8 +798,10 @@ $(document).ready(function(){
 	'.($options->getValue("enablePublicComments") ? '
 		$("div.wigii-cms-add-public-comments").click(function(){
 			if(!$("button",this).length){
-				$(this).append("<br /><input type=\"text\" placeholder=\"'.ServiceProvider::getTranslationService()->t($this->getPrincipal(),"first_name", null, $options->getValue('language'))." ".ServiceProvider::getTranslationService()->t($this->getPrincipal(),"last_name", null, $options->getValue('language')).'\" style=\"box-sizing:border-box;width:100%;margin-top:5px;margin-bottom:2px;\"/><textarea style=\"box-sizing:border-box;width:100%;height:100px;margin-bottom:5px;\"></textarea><br /><button>Ok</button>");
+				$(this).append("<br /><input type=\"text\" placeholder=\"'.ServiceProvider::getTranslationService()->t($this->getPrincipal(),"first_name", null, $options->getValue('language'))." ".ServiceProvider::getTranslationService()->t($this->getPrincipal(),"last_name", null, $options->getValue('language')).'\" style=\"box-sizing:border-box;width:100%;margin-top:5px;margin-bottom:2px;\"/><textarea style=\"box-sizing:border-box;width:100%;margin-bottom:5px;\"></textarea><br /><button>Ok</button>");
 				$(":input:first",this).focus();
+				autosize($("textarea",this).css("max-height",250).css("min-height",30));
+				$("textarea",this).wordlimit({ allowed: 77 });
 				$("button", this).click(function(e){
 					var name = $(this).prev().prev().prev().val();
 					var message = $(this).prev().prev().val();
@@ -967,7 +978,8 @@ $(document).ready(function(){
 		if(isset($metaKeywords)) $metaKeywords = '<meta name="keywords" content="'.str_replace('"','',$metaKeywords).'"/>'."\n";
 		$metaAuthor = $options->getValue('metaAuthor');
 		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";
-		$wigiiJS = '<script type="text/javascript" src="'.SITE_ROOT_forFileUrl.'assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
+		$wigiiJS = '<script type="text/javascript" src="https://relation.wigii.org/assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
+		//$wigiiJS = '<script type="text/javascript" src="'.SITE_ROOT_forFileUrl.'assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
 		//$wigiiCSS = '<link rel="stylesheet" href="'.SITE_ROOT_forFileUrl.'assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
 		$wigiiCSS = '';/* not compatible yet with CMS */
 		$returnValue = <<<HTMLHEAD
@@ -1048,15 +1060,16 @@ a:hover 						{ text-decoration: underline; }
 div.wigii-globalContainer 		{ min-height:100%; }
 div.wigii-globalContainer>div.wigii-cms
 								{ padding-top:10px; padding-bottom:30px; border-bottom:2px solid #fff; }
-div.wigii-cms-public-comments	{ height:100%;width:$publicCommentsWidth; color:#$publicCommentsTextColor;background-color:#$publicCommentsBgColor;padding:0px 5px 0px 10px; box-sizing:border-box; position:fixed;right:0;border-left:2px solid #fff;}
+div.wigii-cms-public-comments	{ width:$publicCommentsWidth; color:#$publicCommentsTextColor;background-color:#$publicCommentsBgColor;padding:0px 5px 0px 10px; box-sizing:border-box; position:fixed;right:0;border-left:2px solid #fff;}
+div.wigii-cms-public-comments:hover	{ overflow-y:auto;}
 div.wigii-cms-public-comments p	{ margin:0px;}
 div.wigii-cms-public-comments-title	{ padding-top:10px; padding-bottom:5px; font-style:italic; text-align:center;}
 div.wigii-cms-public-comments-hr	{ background-color:#$publicCommentsTextColor; height:2px; width:40px; display:block;margin:0 auto 5px; text-align:center;}
 div.wigii-cms-add-public-comments	{ cursor:pointer; text-align:center;margin-bottom:16px;}
 div.wigii-cms 					{ width:$articleWidth; box-sizing:border-box; }
 div.wigii-cms div.wigii-cms		{ width:100%; }
-div.wigii-cms.title-content 	{ float:left; width:80%; }
-div.wigii-cms.a-top 			{ float:right; width:20%; margin-top:24px; margin-bottom:24px; font-size:small; text-align:right; }
+div.wigii-cms  div.wigii-cms.title-content 	{ float:left; width:80%; }
+div.wigii-cms  div.wigii-cms.a-top { float:right; width:20%; margin-top:24px; margin-bottom:24px; font-size:small; text-align:right; }
 div.wigii-cms.content 			{ clear:left; margin:0px; }
 div.wigii-cms.content p			{ margin-top:6px; margin-bottom:6px; }
 div.wigii-globalContainer>div.wigii-footer.wigii-cms.content
@@ -1314,6 +1327,9 @@ HTMLCSS;
 			$parsedUrl = $params->getValue('parsedUrl');
 			if(empty($parsedUrl)) throw new FuncExpEvalException('Empty request', FuncExpEvalException::NOT_FOUND);
 			
+			// injects TRM
+			$this->getFormExecutor()->setTrm($this->createTrmInstance());/* by default output is enabled. */
+			
 			// dispatches POST action
 			
 			// case /addComment/elementId
@@ -1339,27 +1355,22 @@ HTMLCSS;
 	 */
 	protected function cms_addPublicComment($options) {
 		$p = $this->getPrincipal();
+		$rm = $this->getFormExecutor()->getTrm();
+		
 		$this->debugLogger()->logBeginOperation('cms_addPublicComment');		
 		// sanitizes posted form
 		$this->getFormExecutor()->preventInjectionForm($p, ServiceProvider::getExecutionService());
-		$html2text = new Html2text();
 		
 		$fieldName = $_POST["journalFieldName"];
-		
 		$message = $_POST["addJournalItemMessage"];
-		$html2text->setHtml($message);		
-		$message= $html2text->getText();
-		
 		$author = $_POST["name"];
-		$html2text->setHtml($author);
-		$author= $html2text->getText();
 		
 		// prepares comment
-		$header = date("d.m.Y H:i")." ".$author;
+		$header = date("d.m.Y H:i")." ".$rm->formatValueToPreventInjection($author);
 		$returnValue = '<p style="color:#666;">&gt; ';
 		$returnValue.= $header;
 		$returnValue.= "</p>";
-		$returnValue.= '<p>'.$message.'</p>';
+		$returnValue.= '<p>'.nl2br($rm->formatValueToPreventInjection($message)).'</p>';
 		$returnValue.= "<p>&nbsp;</p>";
 		
 		// adds comment to article

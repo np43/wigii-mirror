@@ -7,15 +7,15 @@
 		FeedbackOnElement_enable="1"
 
 		Notification_enable="1"
-		Notification_enableOnSharing="1"
+		Notification_enableOnSharing="0"
 		Notification_enableDynamicSubscription="1"
 		Notification_alwaysForceNotification="0"
 		Notification_enableMessage="0"
 		Notification_enableMessageOnDelete="0"
 		Notification_includeSenderInNotification="0"
 		Notification_includeOtherNamespaceInUpdateOrSetState="0"
-		Notification_hideElementView="0"
-		Notification_hideAccessButton="0"
+		Notification_hideElementView="1"
+		Notification_hideAccessButton="1"
 
 		ExcelExport_enableSysDate="0"
 		ExcelExport_enableCreationSysDate="0"
@@ -135,9 +135,9 @@
 			<groupMenu groupEnd="1" expand="1"/>
 			<groupIntro groupStart="1"><label_l01>Introduction</label_l01><label_l02>Introduction</label_l02></groupIntro>
 				<contentIntro enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Introduction content</label_l01><label_l02>Contenu de l'introduction</label_l02></contentIntro>
-				<siteTitle enableDynamicAttributes="1" excelExport="auto" type="Varchars" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1"><label_l01>Browser title</label_l01><label_l02>Titre du navigateur</label_l02></siteTitle>
+				<siteTitle enableDynamicAttributes="1" excelExport="auto" type="Varchars" require='eq(contentType,"intro")' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" displayContentInNotification="1"><label_l01>Browser title</label_l01><label_l02>Titre du navigateur</label_l02></siteTitle>
 				<enablePublicComments excelExport="none" type="Booleans" ><label_l01>Enable public comments</label_l01><label_l02>Activer les commentaires publiques</label_l02></enablePublicComments>
-				<introComments excelExport="auto" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="1" clearOnCopy="1" forceNotification="1"><label_l01>Public comments content</label_l01><label_l02>Contenu des commentaires publiques</label_l02></introComments>
+				<introComments excelExport="auto" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="1" clearOnCopy="1" forceNotification="1" displayContentInNotification="1"><label_l01>Public comments content</label_l01><label_l02>Contenu des commentaires publiques</label_l02></introComments>
 				<metaDescription enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Description of the page for search engines</label_l01><label_l02>Description de la page pour les moteurs de recherche</label_l02></metaDescription>
 				<metaKeywords enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Keywords</label_l01><label_l02>Mots-clés</label_l02></metaKeywords>
 				<metaAuthor enableDynamicAttributes="1"  excelExport="auto" type="Varchars" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="1" ><label_l01>Author and copyright</label_l01><label_l02>Auteur et copyright</label_l02></metaAuthor>				
@@ -197,12 +197,13 @@
 
 	<listView isDefaultView="1">
 		<fields>
-			<c1 field="contentType" width="120" isDefaultGroupByKey="1"/>			
-			<c2 field="contentSummary" width="null"/>
-			<c3 field="status" width="120"/>
+			<c1 field="contentType" width="120" isDefaultGroupByKey="1" ignoreNotification="1"/>			
+			<c2 field="contentSummary" width="null" ignoreNotification="1"/>
+			<c3 field="status" width="120" ignoreNotification="1"/>
 			<ch1 field="contentPosition" hidden="1" isDefaultSortByKey="1"/>
-			<e1 elementAttribut="sys_date" width="120" defaultSorted=" DESC " />
-			<e2 elementAttribut="sys_username" width="140"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
+			<ch2 field="siteTitle" hidden="1" notIgnoreNotification="1"/>
+			<e1 elementAttribut="sys_date" width="120" defaultSorted=" DESC " ignoreNotification="1"/>
+			<e2 elementAttribut="sys_username" width="140" ignoreNotification="1"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
 		</fields>
 	</listView>
 	
