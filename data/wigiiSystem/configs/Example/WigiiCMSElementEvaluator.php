@@ -978,9 +978,8 @@ $(document).ready(function(){
 		if(isset($metaKeywords)) $metaKeywords = '<meta name="keywords" content="'.str_replace('"','',$metaKeywords).'"/>'."\n";
 		$metaAuthor = $options->getValue('metaAuthor');
 		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";
-		$wigiiJS = '<script type="text/javascript" src="https://relation.wigii.org/assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
-		//$wigiiJS = '<script type="text/javascript" src="'.SITE_ROOT_forFileUrl.'assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
-		//$wigiiCSS = '<link rel="stylesheet" href="'.SITE_ROOT_forFileUrl.'assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
+		$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
+		//$wigiiCSS = '<link rel="stylesheet" href="https://resource.wigii.org/assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
 		$wigiiCSS = '';/* not compatible yet with CMS */
 		$returnValue = <<<HTMLHEAD
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
