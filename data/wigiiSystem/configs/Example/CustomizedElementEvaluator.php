@@ -20,11 +20,12 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-
+// version G99
 /**
  * My customized ElementEvaluator
  * Created by LWR on 28 may 10
  * Updated by CWE on 4 decembre 13
+ * Updated by LWR on 03.10.2017 (remove automatic translation for funcExp evaluation)
  */
 class CustomizedElementEvaluator extends ElementEvaluator
 {
@@ -40,13 +41,14 @@ class CustomizedElementEvaluator extends ElementEvaluator
 		return $this->myTrm;
 	}	
 	
-	/**
-	 * If you need to translate/format all Field Selector values customize the evaluateRecord function 
-	 * in the following way.
-	 * @see impl/RecordEvaluator::evaluateFuncExp()
-	 */
-	public function evaluateFuncExp($funcExp, $caller=null) {
-		$this->setTranslateAllValues(true);
-		return parent::evaluateFuncExp($funcExp, $caller);
-	}
+// 	/**
+// 	 * If you need to translate/format all Field Selector values customize the evaluateRecord function 
+// 	 * in the following way.
+// 	 * @see impl/RecordEvaluator::evaluateFuncExp()
+// 	 */
+// 	public function evaluateFuncExp($funcExp, $caller=null) {
+// 		$this->setTranslateAllValues(true);
+// 		return parent::evaluateFuncExp($funcExp, $caller);
+// 	}
+
 }

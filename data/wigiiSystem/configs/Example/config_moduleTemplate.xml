@@ -1,4 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
+<!-- Config version G99 -->
 <moduleName>
 	<parameters
 
@@ -49,8 +50,8 @@
 		/>
 		
 		<feedbackOnElement>
-		<template path="feedbackOnElement.php" inClientFolder="1" />
-		<fields>
+			<template path="feedbackOnElement.php" inClientFolder="1" />
+			<fields>
 				<feedback_email type="Emails" require="1" ignoreNotification="1" />
 				<feedback_for type="Attributs" require="1" >
 					<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>

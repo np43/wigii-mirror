@@ -1,4 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
+<!-- Config version G99 -->
 <filemanager >
 
 	<parameters
@@ -105,9 +106,9 @@
 		<groupright groupEnd="1" expand="1" noFieldset="1" />
 		
 		<!-- calculated fields -->
-		<calculatedField 		excelExport="auto" type="Strings" hidden="1" funcExp='implode(", ", implode("",integratedFile.name, integratedFile.type), first(implode("", file.name, file.type)))' ><label_l01>Document name</label_l01><label_l02>Nom du document</label_l02></calculatedField>
-		<calculatedType 		excelExport="auto" type="Strings" htmlArea="1" hidden="1" funcExp='first(integratedFile.mime,file.mime)' ><label> </label></calculatedType>
-		<calculatedDate 		excelExport="auto" type="Dates" hidden="1" includeTime="1" funcExp='first(max(integratedFile.date, file.date), __element.sys_date)' ><label_l01>Modified on</label_l01><label_l02>Modifié le</label_l02></calculatedDate>
+		<calculatedField excelExport="auto" type="Strings" htmlArea="1" hidden="1" funcExp='implode(", ", implode("",integratedFile.name, integratedFile.type), first(implode("", file.name, file.type)))' ><label_l01>Document name</label_l01><label_l02>Nom du document</label_l02></calculatedField>
+		<calculatedType excelExport="auto" type="Strings" htmlArea="1" hidden="1" funcExp='first(formatValueFromFS(integratedFile.mime),formatValueFromFS(file.mime))' ><label> </label></calculatedType>
+		<calculatedDate excelExport="auto" type="Dates" hidden="1" includeTime="1" funcExp='first(max(formatValueFromFS(integratedFile.date), formatValueFromFS(file.date)), formatValueFromFS(__element.sys_date))' ><label_l01>Modified on</label_l01><label_l02>Modifié le</label_l02></calculatedDate>
 		
 	</fields>
 

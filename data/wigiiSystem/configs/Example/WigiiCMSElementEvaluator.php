@@ -20,7 +20,7 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-
+// version G99
 /**
  * Wigii CMS module Element evaluator
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016

@@ -1,4 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
+<!-- Config version G99 -->
 <portal>
 
 	<parameters
@@ -83,7 +84,7 @@
 		
 		<!-- calculated fields -->
 		<calculatedField 	excelExport="auto" 	type="Strings" 	searchable="0" hidden="1" htmlArea="1" funcExp='first(weblink.name, weblink.url)' ><label_l01>Name</label_l01><label_l02>Nom</label_l02></calculatedField>
-		<calculatedDate 	excelExport="auto" 	type="Dates" 	searchable="0" hidden="1" includeTime="1" funcExp='first(__element.sys_date)' ><label_l01>Modified on</label_l01><label_l02>Modifié le</label_l02></calculatedDate>
+		<calculatedDate 	excelExport="auto" 	type="Dates" 	searchable="0" hidden="1" includeTime="1" funcExp='first(formatValueFromFS(__element.sys_date))' ><label_l01>Modified on</label_l01><label_l02>Modifié le</label_l02></calculatedDate>
 		
 	</fields>
 

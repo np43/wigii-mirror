@@ -1,4 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
+<!-- Config version G99 -->
 <events>
 
 	<parameters
@@ -114,9 +115,10 @@
 		<groupright groupEnd="1" expand="1" noFieldset="1" />
 
 		<!-- calculated fields -->
-		<calculatedStart excelExport="none" type="Dates" hidden="1" require="0" includeTime="1" funcExp='implode(" ", period.begDate, period.begTime)'><label_l01>Begining</label_l01><label_l02>Début</label_l02></calculatedStart>
-		<attachments excelExport="none" type="Strings" require="0" hidden="1" htmlArea="1" funcExp='implode(" ", integratedFile.mime,file.mime,file2.mime,file3.mime,file4.mime,file5.mime,flyer.mime)' />
-		<attachmentsForExport excelExport="auto" type="Strings" require="0" hidden="1" funcExp='doOnNotNull("(@)", first(integratedFile.date,file.date,file2.date,file3.date,file4.date,file5.date,flyer.date))' />
+		<calculatedStart excelExport="none" type="Dates" hidden="1" require="0" includeTime="1" funcExp='implode(" ", formatValueFromFS(period.begDate), formatValueFromFS(period.begTime))'><label_l01>Begining</label_l01><label_l02>Début</label_l02></calculatedStart>
+		<calculatedEnd excelExport="none" type="Dates" hidden="1" require="0" includeTime="1" funcExp='implode(" ", first(formatValueFromFS(period.endDate),formatValueFromFS(period.begDate)), formatValueFromFS(period.endTime))'><label_l01>End</label_l01><label_l02>Fin</label_l02></calculatedEnd>
+		<attachments excelExport="none" type="Strings" require="0" hidden="1" htmlArea="1" funcExp='implode(" ", formatValueFromFS(integratedFile.mime),formatValueFromFS(file.mime),formatValueFromFS(file2.mime),formatValueFromFS(file3.mime),formatValueFromFS(file4.mime),formatValueFromFS(file5.mime),formatValueFromFS(flyer.mime))' />
+		<attachmentsForExport excelExport="auto" type="Strings" require="0" hidden="1" funcExp='doOnNotNull("(@)", first(formatValueFromFS(integratedFile.date),formatValueFromFS(file.date),formatValueFromFS(file2.date),formatValueFromFS(file3.date),formatValueFromFS(file4.date),formatValueFromFS(file5.date),formatValueFromFS(flyer.date)))' />
 
 	</fields>
 
