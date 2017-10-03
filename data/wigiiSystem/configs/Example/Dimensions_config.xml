@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<!-- Config version G99 -->
+<!-- Config version G101 -->
 <dimensions>
 
 	<parameters
@@ -89,7 +89,8 @@
 			<idGroup excelExport="auto" type="Strings" require="0" expand="1" ><label_l01>Group ID(s)</label_l01><label_l02>ID(s) de groupe(s)</label_l02></idGroup>			
 			<checked excelExport="auto" type="Booleans" require="0" expand="1" ><label_l01>Checked by default</label_l01><label_l02>Sélectionné par défaut</label_l02></checked>
 			<freeText needTranslation="1" onlyInForm="1">Dimensions_email</freeText>
-			<email excelExport="auto" type="Emails" require="0" expand="1" isMultiple="1" noEmailContextualMenu="1"><label_l01>Email(s)</label_l01><label_l02>Email(s)</label_l02></email>			
+			<email excelExport="auto" type="Emails" require="0" expand="1" isMultiple="1" noEmailContextualMenu="1"><label_l01>Email(s)</label_l01><label_l02>Email(s)</label_l02></email>
+			<color excelExport="auto" type="Strings" colorPicker="1" require="0" expand="1"><label_l01>Color</label_l01><label_l02>Couleur</label_l02></color>
 		<moreOptions groupEnd="1"/>
 	</fields>
 

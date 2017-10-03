@@ -28,12 +28,18 @@
 
 $value = $this->formatValueFromRecord($fieldName, null, $this->getRecord());
 $xml = $field->getXml();
+$color = $xml->xpath('attribute[@color and (text()="'.$this->getRecord()->getFieldValue($fieldName).'")]');
+if($color){ $color = (string)$color[0]["color"]; }
 if($xml["displayAsTag"]=="1"){
 	if($value != null){
-		$this->put('<span class="tag ui-corner-all" style="padding:0px 10px 2px 10px;'.$xml["tagStyle"].'">'.$value.'</span>');
+		$this->put('<span class="tag ui-corner-all" style="padding:0px 10px 2px 10px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'">'.$value.'</span>');
 	}
 } else {
-	$this->put($value);
+	if($color){
+		$this->put('<span style="padding:2px 10px 2px 10px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$value.'</span>');
+	} else {
+		$this->put($value);
+	}
 }
 
 

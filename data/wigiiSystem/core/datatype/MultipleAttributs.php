@@ -77,10 +77,15 @@ class MultipleAttributs extends DataTypeInstance {
 			$isDisplayDbValueSet = ($fieldXml["displayDBValue"]=="1");
 			foreach($fieldXml->attribute as $attr){
 //				eput($attr);
+				$color = $attr["color"];
 				$sAttr = (string)$attr;
 				if(array_search($sAttr, $value) === false) continue; //$value[(string)$attr] == null) continue;
 				if(!$isDisplayDbValueSet) {
-					$translated[] = $transS->t($p, $sAttr, $attr);
+					if($color && !$returnArray){
+						$translated[] = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$transS->t($p, $sAttr, $attr).'</span>';
+					} else {
+						$translated[] = $transS->t($p, $sAttr, $attr);
+					}
 				} else {
 					$translated[] = $sAttr;
 				}

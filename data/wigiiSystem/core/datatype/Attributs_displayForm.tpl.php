@@ -84,7 +84,7 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 		$inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.str_replace(" ", "_", (string)$attribute).'_'.($inputType==null?$inputNode:$inputType);
 
 		$label = $this->getRecord()->getRedirectedFieldLabel($this->getP(), $fieldName, $attribute);
-
+		$labelDBValue = (string)$attribute;
 		$tempDisabled = $disabled;
 		if(!$label && $label!=="0"){
 			$label = $transS->t($p, (string)$attribute, $attribute);
@@ -106,7 +106,10 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 		//add the label
 		if($attribute["noLabel"]!="1"){
 			if($fieldXml["displayAsTag"]=="1"){
-				$label = $this->doFormatForTag($label, $fieldXml);
+				$label = $this->doFormatForTag($label, $fieldXml, $labelDBValue);
+			} else if ((string)$attribute["color"]){
+				$color = $attribute["color"];
+				$label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$label.'</span>';
 			}
 			if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
 			else $labelWidth = ($parentWidth-30);									

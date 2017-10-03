@@ -1279,7 +1279,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		}
 
 		// builds list filter
-		$fsl = fsl(fs('value', 'value'), fs('idGroup', 'value'), fs('email', 'value'), fs('checked', 'value'), fs('label', 'value'));
+		$fsl = fsl(fs('value', 'value'), fs('idGroup', 'value'), fs('color', 'value'), fs('email', 'value'), fs('checked', 'value'), fs('label', 'value'));
 		if(isset($attrLogExp) || isset($fskl)) $lf = lf($fsl, $attrLogExp, $fskl);
 		else $lf = lf($fsl);
 
@@ -1292,6 +1292,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 									fs('value'),
 									fx('newMap', 
 											'idGroup', fs('idGroup'), 
+											'color', fs('color'), 
 											'email', fs('email'), 
 											'checked', fx('ctlIf', fs('checked'), '1', '0'),
 											'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')
@@ -1420,7 +1421,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		}
 
 		// builds list filter
-		$fsl = fsl(fs('value', 'value'), fs('idGroup', 'value'), fs('email', 'value'), fs('checked', 'value'), fs('label', 'value'));
+		$fsl = fsl(fs('value', 'value'), fs('idGroup', 'value'), fs('color', 'value'), fs('email', 'value'), fs('checked', 'value'), fs('label', 'value'));
 		if(isset($attrLogExp) || isset($fskl)) $lf = lf($fsl, $attrLogExp, $fskl);
 		else $lf = lf($fsl);
 
@@ -1433,6 +1434,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 									fs('value'),
 									fx('newMap', 
 											'idGroup', fs('idGroup'), 
+											'color', fs('color'), 
 											'email', fs('email'), 
 											'checked', fx('ctlIf', fs('checked'), '1', '0'),
 											'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')

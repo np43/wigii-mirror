@@ -1468,16 +1468,25 @@ class TemplateRecordManager extends Model {
 		}
 		return $value;
 	}
-	public function doFormatForTag($value, $xml){
+	//$labelDBValue is to find the right color in case there is color attributes
+	public function doFormatForTag($value, $xml, $labelDBValue=null){
 		if($value==null) return;	
 		// Modified by AC on 07.19.2016 we remove the rule css "white-space: nowrap" to prevent the sector tag be too long
 		//$preFix = '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;white-space:nowrap;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].'" >';
-		$preFix = '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].'" >';
-		$postFix = '</span> ';
 		if(is_array($value)){
-			return $preFix.implode($postFix.$preFix, $value).$postFix;
+			//the labelDBValue contains the list of options in the same order but not translated. We need to do the correct matching after to take only the values to have numeric fields.
+			if($labelDBValue) $labelDBValue = array_values($labelDBValue);
+			$returnValue = "";
+			foreach($value as $key=>$val){
+				$color = $xml->xpath('attribute[@color and (text()="'.($labelDBValue ? $labelDBValue[$key] : $value[$key]).'")]');
+				if($color){ $color = (string)$color[0]["color"]; }
+				$returnValue .= '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'" >'.$value[$key].'</span> ';
+			}
+			return $returnValue;
 		} else {
-			return $preFix.$value.$postFix;
+			$color = $xml->xpath('attribute[@color and (text()="'.($labelDBValue ? $labelDBValue : $value).'")]');
+			if($color){ $color = (string)$color[0]["color"]; }
+			return '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'" >'.$value.'</span> ';
 		}
 	}
 
@@ -1891,8 +1900,9 @@ class TemplateRecordManager extends Model {
 // 					$xml = $this->getRecord()->getFieldList()->getField($fieldName)->getXml();
 // 				}
 				if($xml["displayAsTag"]=="1"){
+					$dbValue = $value;
 					$values = MultipleAttributs::formatDisplay($value, $field, true);
-					return $this->doFormatForTag($values, $xml);
+					return $this->doFormatForTag($values, $xml, $dbValue);
 				} else {
 					return MultipleAttributs::formatDisplay($value, $field);
 				}
