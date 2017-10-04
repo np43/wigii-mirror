@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<!-- Config version G101 -->
+<!-- Config version G102 -->
 <dimensions>
 
 	<parameters
@@ -98,10 +98,11 @@
 		<fields>
 			<c1 field="value" width="280" isDefaultSortingKey="1" />
 			<c2 field="label" width="null" />
-			<c3 elementAttribut="state_important1" width="16" />
-			<c4 elementAttribut="state_deprecated" width="16" />
-			<c5 elementAttribut="state_hidden" width="16" />
-			<c6 elementAttribut="sys_date" width="75" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></c6>
+			<c3 field="color" width="20" />
+			<c4 elementAttribut="state_important1" width="16" />
+			<e1 elementAttribut="state_deprecated" width="16" />
+			<e2 elementAttribut="state_hidden" width="16" />
+			<e3 elementAttribut="sys_date" width="75" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e3>
 		</fields>
 	</listView>
 
