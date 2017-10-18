@@ -23,22 +23,31 @@
 /**
  * Wigii NCD Fx Layer for ETPs : 
  * Expand, Translate, Program - Encode, Transmit, Power.
- * This language can be naturally used within the etp-vip-template.html for your own creations.
+ * This language can be naturally used within the etp-start.html for your own creations.
  * Created by Wigii.org (camille@wigii.org), 11.02.2017
+ * Updated version 2.0 by Camille Weber (camille@wigii.org), 17.10.2016
  */ 
 (function (window, $, wigiiNcd, wigiiNcdEtp){ 
+	// Configuration options
+	var wigiiNcdEtpOptions = wigiiNcdEtp.options;
+	/**
+	 * Marks a member as private. A private member is not published into the wncd symbol.
+	 *@param String memberName the name of the variable or function to be marked as private
+	 */
+	var ncdprivate = function(memberName) {
+		wigiiNcdEtpOptions.privateNcdEtpMembers[memberName] = true;
+	};
 
+
+	// Wigii NCD ETP FX 
+	
+	
 	// Execution environment
 
 	/**
 	 * Main HTML Emitter
 	 */
 	var html = wigiiNcdEtp.html;
-	
-	/**
-	 * List of available symbols in French and English
-	 */
-	var language = wigiiNcdEtp.language;
 	
 	/**
 	 * Main Program as a list of Func Exp to execute
@@ -900,112 +909,86 @@
 			}
 		}
 	};
-	programme.language = wigiiNcdEtp.createLanguageHolder();
-	programme.grille = html.grille; programme.language.grille = html.grille.language;
-	programme.tortue = html.tortue; programme.language.tortue = html.tortue.language;
-	programme.panier = wigiiNcdEtp.panier; programme.language.panier = wigiiNcdEtp.panier.language;
-	programme.formulaire = wigiiNcdEtp.formulaire; programme.language.formulaire = wigiiNcdEtp.formulaire.language;
-	programme.serveur = wigiiNcdEtp.serveur; programme.language.serveur = wigiiNcdEtp.serveur.language;
-	programme.div = function(id, cssClass) {return html.div(id,cssClass);}; programme.language.div = html.div.language;
-	programme.html = function(){ return html;}; programme.language.html = html.language;
-	programme.mainDiv = programme.html; programme.language.mainDiv = programme.language.html;
-	programme.currentDiv = function() {return programme.context.html();}; programme.language.currentDiv = programme.html.language;
-	programme.out = function(str,cssClass){programme.currentDiv().out(str,cssClass);return programme;}; programme.language.out = programme.language;
-	programme.h1 = function(str,cssClass){programme.currentDiv().h1(str,cssClass);return programme;}; programme.language.h1 = programme.language;
-	programme.p = function(cssClass) {programme.currentDiv().p(cssClass);return programme;}; programme.language.p = programme.language;
-	programme.$p = function() {programme.currentDiv().$p();return programme;}; programme.language.$p = programme.language;
-	programme.b = function(str){programme.currentDiv().b(str);return programme;}; programme.language.b = programme.language;
-	programme.i = function(str){programme.currentDiv().i(str);return programme;}; programme.language.i = programme.language;
-	programme.u = function(str){programme.currentDiv().u(str);return programme;}; programme.language.u = programme.language;
-	programme.a = function(url){programme.currentDiv().a(url);return programme;}; programme.language.a = programme.language;
-	programme.color = function(c,backgroundC,cssClass) {programme.currentDiv().color(c,backgroundC,cssClass);return programme;}; programme.language.color = programme.language;
-	programme.$color = function() {programme.currentDiv().$color();return programme;}; programme.language.$color = programme.language;
-	programme.bouton = function(label,onClick,cssClass) {programme.currentDiv().bouton(label,onClick,cssClass);return programme;}; programme.language.bouton = programme.language;
-	programme.codeSource = function() {return programme.context.codeSource;}; programme.language.codeSource = wigiiNcdEtp.createLanguageHolder();
-	programme.libSource = libSource; programme.language.libSource = wigiiNcdEtp.createLanguageHolder();
-	programme.libPublic = libPublic; programme.language.libPublic = wigiiNcdEtp.createLanguageHolder();
-	programme.txtDate = wigiiNcd().txtDate; programme.language.txtDate = wigiiNcdEtp.createLanguageHolder();
-	programme.txtFrenchDate = wigiiNcd().txtFrenchDate; programme.language.txtFrenchDate = wigiiNcdEtp.createLanguageHolder();
-	programme.createSelectionSense = wigiiNcd().createSelectionSense; programme.language.createSelectionSense = wigiiNcdEtp.createLanguageHolder();
-	programme.bindSelectionSense = wigiiNcd().bindSelectionSense; programme.language.bindSelectionSense = wigiiNcdEtp.createLanguageHolder();
-	programme.createCountingSense = wigiiNcd().createCountingSense; programme.language.createCountingSense = wigiiNcdEtp.createLanguageHolder();
-	programme.bindCountingSense = wigiiNcd().bindCountingSense; programme.language.bindCountingSense = wigiiNcdEtp.createLanguageHolder();
+	programme.grille = html.grille;
+	programme.tortue = html.tortue;
+	programme.panier = wigiiNcdEtp.panier; 
+	programme.formulaire = wigiiNcdEtp.formulaire; 
+	programme.serveur = wigiiNcdEtp.serveur; 
+	programme.div = function(id, cssClass) {return html.div(id,cssClass);}; 
+	programme.html = function(){ return html;};
+	programme.mainDiv = programme.html; 
+	programme.currentDiv = function() {return programme.context.html();}; 
+	programme.out = function(str,cssClass){programme.currentDiv().out(str,cssClass);return programme;}; 
+	programme.h1 = function(str,cssClass){programme.currentDiv().h1(str,cssClass);return programme;}; 
+	programme.p = function(cssClass) {programme.currentDiv().p(cssClass);return programme;};
+	programme.$p = function() {programme.currentDiv().$p();return programme;}; 
+	programme.b = function(str){programme.currentDiv().b(str);return programme;};
+	programme.i = function(str){programme.currentDiv().i(str);return programme;}; 
+	programme.u = function(str){programme.currentDiv().u(str);return programme;};
+	programme.a = function(url){programme.currentDiv().a(url);return programme;}; 
+	programme.color = function(c,backgroundC,cssClass) {programme.currentDiv().color(c,backgroundC,cssClass);return programme;};
+	programme.$color = function() {programme.currentDiv().$color();return programme;}; 
+	programme.bouton = function(label,onClick,cssClass) {programme.currentDiv().bouton(label,onClick,cssClass);return programme;};
+	programme.codeSource = function() {return programme.context.codeSource;}; 
+	programme.libSource = libSource; 
+	programme.libPublic = libPublic;
+	programme.txtDate = wigiiNcd().txtDate; 
+	programme.txtFrenchDate = wigiiNcd().txtFrenchDate; 
+	programme.createSelectionSense = wigiiNcd().createSelectionSense; 
+	programme.bindSelectionSense = wigiiNcd().bindSelectionSense; 
+	programme.createCountingSense = wigiiNcd().createCountingSense;
+	programme.bindCountingSense = wigiiNcd().bindCountingSense;
 	
 	
 	// Publish language
-	wigiiNcdEtp.programme = programme; language.programme = programme.language;
-	wigiiNcdEtp.sousProgramme = sousProgramme; language.sousProgramme = wigiiNcdEtp.createLanguageHolder();
+	wigiiNcdEtp.programme = programme;
+	wigiiNcdEtp.sousProgramme = sousProgramme; 
 	wigiiNcdEtp.fx = fx;
 	wigiiNcdEtp.fx_s = fx_s;
 	wigiiNcdEtp.ctlSeq = ctlSeq;
-	wigiiNcdEtp.sequence = ctlSeq; language.sequence = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.sequence.ajouter = wigiiNcdEtp.sequence.addFx; language.sequence.ajouter = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.sequence.fin = wigiiNcdEtp.sequence.toFx; language.sequence.fin = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.scripte = scripte; language.scripte = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.ctlGen = ctlGen; language.ctlGen = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.codePublic = codePublic; language.codePublic = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.codeSource = codeSource; language.codeSource = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.libPublic = libPublic; language.libPublic = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.libSource = libSource; language.libSource = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.menu = menu; language.menu = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.pause = pause; language.pause = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.boutonDePause = boutonDePause; language.boutonDePause = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.bouton = bouton; language.bouton = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.tortue = tortue; language.tortue = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.grille = grille; language.grille = wigiiNcdEtp.createLanguageHolder();
+	wigiiNcdEtp.sequence = ctlSeq; 
+	wigiiNcdEtp.sequence.ajouter = wigiiNcdEtp.sequence.addFx; 
+	wigiiNcdEtp.sequence.fin = wigiiNcdEtp.sequence.toFx; 
+	wigiiNcdEtp.scripte = scripte; 
+	wigiiNcdEtp.ctlGen = ctlGen; 
+	wigiiNcdEtp.codePublic = codePublic; 
+	wigiiNcdEtp.codeSource = codeSource;
+	wigiiNcdEtp.libPublic = libPublic;
+	wigiiNcdEtp.libSource = libSource; 
+	wigiiNcdEtp.menu = menu; 
+	wigiiNcdEtp.pause = pause; 
+	wigiiNcdEtp.boutonDePause = boutonDePause; 
+	wigiiNcdEtp.bouton = bouton;
+	wigiiNcdEtp.tortue = tortue; 
+	wigiiNcdEtp.grille = grille;
 	
 	// English translation
-	wigiiNcdEtp.program = wigiiNcdEtp.programme; language.program = language.programme;
-	wigiiNcdEtp.subProgram = wigiiNcdEtp.sousProgramme; language.subProgram = language.sousProgramme;
-	wigiiNcdEtp.sequence.add = wigiiNcdEtp.sequence.addFx; language.sequence.add = language.sequence.ajouter;
-	wigiiNcdEtp.sequence.end = wigiiNcdEtp.sequence.toFx; language.sequence.end = language.sequence.fin;
-	wigiiNcdEtp.script = wigiiNcdEtp.scripte; language.script = language.scripte;
-	wigiiNcdEtp.buttonPause = wigiiNcdEtp.boutonDePause; language.buttonPause = language.boutonDePause;
-	wigiiNcdEtp.button = wigiiNcdEtp.bouton; language.button = language.bouton;
-	wigiiNcdEtp.turtle = wigiiNcdEtp.tortue; language.turtle = language.tortue;
-	wigiiNcdEtp.grid = wigiiNcdEtp.grille; language.grid = language.grille;
-	/*
-	language.en.push('subProgram');
-	language.en.push('sequence');
-	language.en.push('sequence.add');
-	language.en.push('sequence.end');
-	language.en.push('script');
-	language.en.push('ctlGen');
-	language.en.push('codePublic');
-	language.en.push('codeSource');
-	language.en.push('menu');
-	language.en.push('pause');
-	language.en.push('buttonPause');
-	language.en.push('turtle');
-	*/
+	wigiiNcdEtp.program = wigiiNcdEtp.programme;
+	wigiiNcdEtp.subProgram = wigiiNcdEtp.sousProgramme; 
+	wigiiNcdEtp.sequence.add = wigiiNcdEtp.sequence.addFx;
+	wigiiNcdEtp.sequence.end = wigiiNcdEtp.sequence.toFx;
+	wigiiNcdEtp.script = wigiiNcdEtp.scripte;
+	wigiiNcdEtp.buttonPause = wigiiNcdEtp.boutonDePause;
+	wigiiNcdEtp.button = wigiiNcdEtp.bouton;
+	wigiiNcdEtp.turtle = wigiiNcdEtp.tortue;
+	wigiiNcdEtp.grid = wigiiNcdEtp.grille;	
 	
-	var parentDoPublishLanguage = wigiiNcdEtp.doPublishLanguage;
-	wigiiNcdEtp.doPublishLanguage = function(window) {
-		parentDoPublishLanguage(window);
-		if(wigiiNcdEtp.publishLanguage!==false) {
-			// French symbols
-			window.sousProgramme = wigiiNcdEtp.sousProgramme;
-			window.ctlSeq = wigiiNcdEtp.ctlSeq;
-			window.sequence = wigiiNcdEtp.sequence;
-			window.scripte = wigiiNcdEtp.scripte;
-			window.ctlGen = wigiiNcdEtp.ctlGen;
-			window.codePublic = wigiiNcdEtp.codePublic;
-			window.codeSource = wigiiNcdEtp.codeSource;
-			window.libPublic = wigiiNcdEtp.libPublic;
-			window.libSource = wigiiNcdEtp.libSource;
-			window.menu = wigiiNcdEtp.menu;
-			window.pause = wigiiNcdEtp.pause;
-			window.boutonDePause = wigiiNcdEtp.boutonDePause;
-			window.tortue = wigiiNcdEtp.tortue;			
-			// English symbols
-			window.subProgram = wigiiNcdEtp.subProgram;
-			window.script = wigiiNcdEtp.script;
-			window.buttonPause = wigiiNcdEtp.buttonPause;
-			window.turtle = wigiiNcdEtp.turtle;
-		}
+	// Exporting symbols
+	if(wigiiNcdEtpOptions.publishNcdEtpFxToWncd===undefined) wigiiNcdEtpOptions.publishNcdEtpFxToWncd = function(wigiiNcdEtp,wncd) {
+		// refreshes NCD ETP symbols			
+		if(wigiiNcdEtpOptions.publishNcdEtpToWncd) wigiiNcdEtpOptions.publishNcdEtpToWncd(wigiiNcdEtp,wncd);
+		// creates shortcuts
+		wncd.div = wigiiNcdEtp.program.div;
+		wncd.currentDiv = wigiiNcdEtp.program.currentDiv;
+	};
+	if(!window.wncd) window.wncd = {};
+	if(wigiiNcdEtpOptions.publishNcdEtpFxToWncd) wigiiNcdEtpOptions.publishNcdEtpFxToWncd(wigiiNcdEtp,window.wncd);
+	if(wigiiNcdEtpOptions.publishNcdEtpToWindow) wigiiNcdEtpOptions.publishNcdEtpToWindow(wigiiNcdEtp,window);
+	
+	// Ready callback
+	if(wigiiNcdEtpOptions.ncdEtpFxReady===undefined) wigiiNcdEtpOptions.ncdEtpFxReady = function(wigiiNcdEtp) {
+		var footer = $("#footer");
+		if(footer.length>0) footer.append('<span><i>&nbsp;(etp-fx v.'+wigiiNcdEtp.version()+' loaded)</i></span>');
 	}
-	
-	// Bootstrap
-	if(wigiiNcdEtp.publishLanguage!==false) wigiiNcdEtp.doPublishLanguage(window);	
-	$("#footer").append('<span><i>&nbsp;(etp-fx v.'+wigiiNcdEtp.version()+' loaded)</i></span>');
+	if(wigiiNcdEtpOptions.ncdEtpFxReady) wigiiNcdEtpOptions.ncdEtpFxReady(wigiiNcdEtp);
 })(window, jQuery, wigiiNcd, wigiiNcdEtp);

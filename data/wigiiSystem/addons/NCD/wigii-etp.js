@@ -23,37 +23,46 @@
 /**
  * Wigii NCD Language for ETPs : 
  * Expand, Translate, Program - Encode, Transmit, Power.
- * This language can be naturally used within the etp-vip-template.html for your own creations.
+ * This language can be naturally used within the etp-start.html for your own creations.
  * Created by Wigii.org (camille@wigii.org), 11.02.2017
  * Modified by Wigii.org (camille@wigii.org and lionel@wigii.org), 10.05.2017
+ * Updated version 2.0 by Camille Weber (camille@wigii.org), 17.10.2016
  */ 
 (function (window, $, wigiiNcd){ 
+	// Configuration options
+	var wigiiNcdEtpOptions = undefined;
+	if(window.wigiiNcdEtp && window.wigiiNcdEtp.options) wigiiNcdEtpOptions = window.wigiiNcdEtp.options;
+	if(!wigiiNcdEtpOptions) wigiiNcdEtpOptions = {};
+	// Private members management
+	if(!wigiiNcdEtpOptions.privateNcdEtpMembers) wigiiNcdEtpOptions.privateNcdEtpMembers = {};
+	/**
+	 * Marks a member as private. A private member is not published into the wncd symbol.
+	 *@param String memberName the name of the variable or function to be marked as private
+	 */
+	var ncdprivate = function(memberName) {
+		wigiiNcdEtpOptions.privateNcdEtpMembers[memberName] = true;
+	};
+
+
+	// Wigii NCD ETP
 
 	/**
 	 * Language holder
 	 */
-	var wigiiNcdEtp = {publishLanguage:true};
-	wigiiNcdEtp.instantiationTime = Date.now();
-	wigiiNcdEtp.ctxKey = 'WigiiNcdEtp_'+wigiiNcdEtp.instantiationTime;
-	wigiiNcdEtp.version = function() {return "1.1";};
+	var wigiiNcdEtp = {};
+	wigiiNcdEtp.instantiationTime = Date.now();ncdprivate('instantiationTime');
+	wigiiNcdEtp.ctxKey = 'WigiiNcdEtp_'+wigiiNcdEtp.instantiationTime;ncdprivate('ctxKey');
+	wigiiNcdEtp.version = function() {return "2.0";};
 	
 	// Execution environment
 
+	if(!wigiiNcdEtpOptions.programOutput) wigiiNcdEtpOptions.programOutput = "#programOutput";
+	
 	/**
 	 * Main HTML Emitter
 	 */
-	var html = wigiiNcd().getHtmlEmitter("#programOutput");
-	wigiiNcdEtp.html = html;
-	
-	/**
-	 * List of available symbols in French and English
-	 */
-	wigiiNcdEtp.createLanguageHolder = function() {
-		return {};
-	};
-	var language = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.language = language;
-	
+	var html = wigiiNcd().getHtmlEmitter(wigiiNcdEtpOptions.programOutput);
+	wigiiNcdEtp.html = html;ncdprivate('html');
 	
 	/**
 	 * Main Program
@@ -70,7 +79,7 @@
 	wigiiNcdEtp.debugger = {};
 	wigiiNcdEtp.debugger.initialize = function() {
 		if($("#programWatcherContainer").length==0) {
-			$("#programOutput").css('float','left').css('width','71%').after('<div id="programWatcherContainer"><div id="programWatcher"></div></div><div style="clear:both;"></div>');
+			html.$().css('float','left').css('width','71%').after('<div id="programWatcherContainer"><div id="programWatcher"></div></div><div style="clear:both;"></div>');
 		}
 		$("#programWatcherContainer").show();
 		return wigiiNcdEtp.debugger;
@@ -212,7 +221,7 @@
 		html.grille = html.impl.grille;		
 	});
 
-	
+
 	// Panier
 	var panier = {
 		impl:{ 
@@ -255,6 +264,20 @@
 					self.list.sort(fonctionTri);
 					return self;
 				};
+				
+				// English translation
+				self.read = self.lire;
+				self.readFirst = self.lirePremier;
+				self.readLast = self.lireDernier;
+				self.replace = self.remplacer;
+				self.add = self.ajouter;
+				self.removeLast = self.sortirDernier;
+				self.size = self.taille;
+				self.show = self.montrer;
+				self.export = self.exporter;
+				self.import = self.importer;
+				self.empty = self.vider;
+				self.sort = self.trier;
 			}
 		},
 		// Selecteur
@@ -482,7 +505,7 @@
 			return returnValue;
 		},
 		delete: function(index) {
-			var returnValue = formulaire.impl.collection['F_'+index];			
+			var returnValue = formulaire.impl.collection['F_'+index];
 			if(returnValue) {
 				// removes from collection
 				formulaire.impl.collection['F_'+index] = null;
@@ -511,165 +534,86 @@
 	};
 	
 	// Publish language
-	wigiiNcdEtp.programme = programme; language.programme = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.out = html.out; language.out = html.language;
-	wigiiNcdEtp.h1 = html.h1; language.h1 = html.language;
-	wigiiNcdEtp.p = html.p; language.p = html.language;
-	wigiiNcdEtp.$p = html.$p; language.$p = html.language;
-	wigiiNcdEtp.b = html.b; language.b = html.language;
-	wigiiNcdEtp.i = html.i; language.i = html.language;
-	wigiiNcdEtp.u = html.u; language.u = html.language;
-	wigiiNcdEtp.a = html.a; language.a = html.language;
-	wigiiNcdEtp.color = html.color; language.color = html.language;
-	wigiiNcdEtp.$color = html.$color; language.$color = html.language;
-	wigiiNcdEtp.bouton = html.bouton; language.bouton = html.language;
-	wigiiNcdEtp.input = html.input; language.input = wigiiNcdEtp.createLanguageHolder();
-	wigiiNcdEtp.display = html.display; language.display = wigiiNcdEtp.createLanguageHolder();
-	
-	wigiiNcdEtp.grille = html.grille; language.grille = wigiiNcdEtp.createLanguageHolder();
-	/*
-	language.fr.push('grille.texte');
-	language.fr.push('grille.onclick');
-	*/
-	
+	wigiiNcdEtp.programme = programme;
+	wigiiNcdEtp.out = html.out;
+	wigiiNcdEtp.h1 = html.h1;
+	wigiiNcdEtp.p = html.p;
+	wigiiNcdEtp.$p = html.$p;
+	wigiiNcdEtp.b = html.b;
+	wigiiNcdEtp.i = html.i;
+	wigiiNcdEtp.u = html.u;
+	wigiiNcdEtp.a = html.a;
+	wigiiNcdEtp.color = html.color; 
+	wigiiNcdEtp.$color = html.$color;
+	wigiiNcdEtp.bouton = html.bouton;
+	wigiiNcdEtp.input = html.input;
+	wigiiNcdEtp.display = html.display;
+	wigiiNcdEtp.grille = html.grille;
 	wigiiNcdEtp.panier = panier; 
-	/*
-	language.fr.push('panier.lire'); 
-	language.fr.push('panier.lirePremier');
-	language.fr.push('panier.lireDernier'); 
-	language.fr.push('panier.remplacer');
-	language.fr.push('panier.ajouter'); 
-	language.fr.push('panier.sortirDernier');
-	language.fr.push('panier.taille');
-	language.fr.push('panier.montrer'); 
-	language.fr.push('panier.exporter');
-	language.fr.push('panier.importer'); 
-	language.fr.push('panier.vider');
-	*/
 	wigiiNcdEtp.formulaire = formulaire;
-	/*
-	language.fr.push('formulaire.creerChamp'); 
-	language.fr.push('formulaire.champ');
-	language.fr.push('formulaire.champ.valeur');
-	language.fr.push('formulaire.champ.label');
-	language.fr.push('formulaire.champ.label.couleur');
-	language.fr.push('formulaire.champ.couleur');
-	language.fr.push('formulaire.champ.id');
-	language.fr.push('formulaire.champ.nom');
-	language.fr.push('formulaire.champ.$');
-	language.fr.push('formulaire.champ.input');
-	language.fr.push('formulaire.champ.vider');
-	language.fr.push('formulaire.champ.focus');
-	language.fr.push('formulaire.champCourant'); 
-	language.fr.push('formulaire.vider');
-	language.fr.push('formulaire.supprimer'); 
-	*/
 	wigiiNcdEtp.serveur = serveur; 
-	/*
-	language.fr.push('serveur.stockerDonnee'); language.fr.push('serveur.obtenirDonnee');
-	*/
-	
+
 	// English translation
 	wigiiNcdEtp.program = wigiiNcdEtp.programme; 
-	/*
-	language.en.push('program');
-	language.en.push('out');
-	language.en.push('h1');
-	language.en.push('p');
-	language.en.push('$p');
-	language.en.push('b');
-	language.en.push('i');
-	language.en.push('u');
-	language.en.push('a');
-	language.en.push('color');
-	language.en.push('$color');
-	*/
 	wigiiNcdEtp.button = wigiiNcdEtp.bouton; 
-	/*
-	language.en.push('button');
-	language.en.push('input');
-	language.en.push('display');
-	*/
 	wigiiNcdEtp.grid = wigiiNcdEtp.grille; 
-	/*
-	language.en.push('grid');
-	*/
-	/*
+
 	wigiiNcdEtp.basket = wigiiNcdEtp.panier;
-	wigiiNcdEtp.basket.read = wigiiNcdEtp.panier.lire; language.en.push('basket.read'); 
-	wigiiNcdEtp.basket.readFirst = wigiiNcdEtp.panier.lirePremier; language.en.push('basket.readFirst');
-	wigiiNcdEtp.basket.readLast =wigiiNcdEtp.panier.lireDernier; language.en.push('basket.readLast'); 
-	wigiiNcdEtp.basket.replace = wigiiNcdEtp.panier.remplacer; language.en.push('basket.replace');
-	wigiiNcdEtp.basket.add = wigiiNcdEtp.panier.ajouter; language.en.push('basket.add'); 
-	wigiiNcdEtp.basket.removeLast = wigiiNcdEtp.panier.sortirDernier; language.en.push('basket.removeLast');
-	wigiiNcdEtp.basket.size = wigiiNcdEtp.panier.taille; language.en.push('basket.size'); 
-	wigiiNcdEtp.basket.show = wigiiNcdEtp.panier.montrer; language.en.push('basket.show');
-	wigiiNcdEtp.basket.export = wigiiNcdEtp.panier.exporter; language.en.push('basket.export'); 
-	wigiiNcdEtp.basket.import = wigiiNcdEtp.panier.importer; language.en.push('basket.import');
-	wigiiNcdEtp.basket.empty = wigiiNcdEtp.panier.vider; language.en.push('basket.empty'); 	
+	wigiiNcdEtp.basket.read = wigiiNcdEtp.panier.lire;
+	wigiiNcdEtp.basket.readFirst = wigiiNcdEtp.panier.lirePremier;
+	wigiiNcdEtp.basket.readLast =wigiiNcdEtp.panier.lireDernier;
+	wigiiNcdEtp.basket.replace = wigiiNcdEtp.panier.remplacer;
+	wigiiNcdEtp.basket.add = wigiiNcdEtp.panier.ajouter; 
+	wigiiNcdEtp.basket.removeLast = wigiiNcdEtp.panier.sortirDernier;
+	wigiiNcdEtp.basket.size = wigiiNcdEtp.panier.taille;
+	wigiiNcdEtp.basket.show = wigiiNcdEtp.panier.montrer;
+	wigiiNcdEtp.basket.export = wigiiNcdEtp.panier.exporter;
+	wigiiNcdEtp.basket.import = wigiiNcdEtp.panier.importer;
+	wigiiNcdEtp.basket.empty = wigiiNcdEtp.panier.vider;
+	wigiiNcdEtp.basket.sort = wigiiNcdEtp.panier.trier;
 	
 	wigiiNcdEtp.form = wigiiNcdEtp.formulaire;
-	wigiiNcdEtp.form.createField = wigiiNcdEtp.formulaire.creerChamp; language.en.push('formulaire.creerChamp'); 
-	wigiiNcdEtp.form.field = wigiiNcdEtp.formulaire.champ; language.en.push('formulaire.champ');
-	language.en.push('form.field.value');
-	language.en.push('form.field.label');
-	language.en.push('form.field.label.color');
-	language.en.push('form.field.color');
-	language.en.push('form.field.id');
-	language.en.push('form.field.name');
-	language.en.push('form.field.$');
-	language.en.push('form.field.input');
-	language.en.push('form.field.empty');
-	language.en.push('form.field.focus');
-	wigiiNcdEtp.form.currentField = wigiiNcdEtp.formulaire.champCourant; language.en.push('formulaire.champCourant'); 
-	wigiiNcdEtp.form.empty = wigiiNcdEtp.formulaire.vider; language.en.push('formulaire.vider');
-	//wigiiNcdEtp.form.delete = wigiiNcdEtp.formulaire.supprimer; language.en.push('formulaire.supprimer'); 
+	wigiiNcdEtp.form.createField = wigiiNcdEtp.formulaire.creerChamp;
+	wigiiNcdEtp.form.field = wigiiNcdEtp.formulaire.champ;
+	wigiiNcdEtp.form.currentField = wigiiNcdEtp.formulaire.champCourant;
+	wigiiNcdEtp.form.empty = wigiiNcdEtp.formulaire.vider;
+	//delete is already defined. Do not translate again. wigiiNcdEtp.form.delete = wigiiNcdEtp.formulaire.supprimer;
 	
 	wigiiNcdEtp.server = wigiiNcdEtp.serveur;
-	wigiiNcdEtp.server.getData = wigiiNcdEtp.serveur.obtenirDonnee; language.en.push('server.getData');
-	wigiiNcdEtp.server.storeData = wigiiNcdEtp.serveur.stockerDonnee; language.en.push('server.storeData');
-	*/
+	wigiiNcdEtp.server.getData = wigiiNcdEtp.serveur.obtenirDonnee;
+	wigiiNcdEtp.server.storeData = wigiiNcdEtp.serveur.stockerDonnee;
 	
-	// Publish language to Window
-	wigiiNcdEtp.doPublishLanguage = function(window) {
-		if(wigiiNcdEtp.publishLanguage!==false) {
-			// French symbols
-			window.programme = wigiiNcdEtp.programme;
-			window.out = wigiiNcdEtp.out;	
-			window.h1 = wigiiNcdEtp.h1;
-			window.p = wigiiNcdEtp.p;
-			window.$p = wigiiNcdEtp.$p;
-			window.b = wigiiNcdEtp.b;
-			window.i = wigiiNcdEtp.i;
-			window.u = wigiiNcdEtp.u;
-			window.a = wigiiNcdEtp.a;
-			window.color = wigiiNcdEtp.color;
-			window.$color = wigiiNcdEtp.$color;
-			window.bouton = wigiiNcdEtp.bouton;
-			window.input = wigiiNcdEtp.input;
-			window.display = wigiiNcdEtp.display;
-			window.grille = wigiiNcdEtp.grille;
-			window.panier = wigiiNcdEtp.panier;
-			window.formulaire = wigiiNcdEtp.formulaire;
-			window.serveur = wigiiNcdEtp.serveur;
-			/* Deprecated symbols since 1.1 */
-			window.couleur = wigiiNcdEtp.grille.couleur;
-			window.texte = wigiiNcdEtp.grille.texte;
-			//window.onclick = wigiiNcdEtp.grille.onclick;
-			// English symbols
-			window.program = wigiiNcdEtp.program;
-			window.button = wigiiNcdEtp.button;
-			window.grid = wigiiNcdEtp.grid;
-			window.server = wigiiNcdEtp.server;
-		}
-	};
-	
-	// Bootstrap
+	// Starting up and exporting symbols
 	if(!window.wigiiNcdEtp || !window.wigiiNcdEtp.version || window.wigiiNcdEtp.version() < wigiiNcdEtp.version()) {
-		// Publish symbols to window if flag is not explicitely set to false
-		if(!window.wigiiNcdEtp || window.wigiiNcdEtp && window.wigiiNcdEtp.publishLanguage!==false) wigiiNcdEtp.doPublishLanguage(window);
-		else wigiiNcdEtp.publishLanguage = false;
 		window.wigiiNcdEtp = wigiiNcdEtp;
+		
+		// publish NCD ETP language symbols to wncd
+		if(wigiiNcdEtpOptions.publishNcdEtpToWncd===undefined) wigiiNcdEtpOptions.publishNcdEtpToWncd = function(wigiiNcdEtp,wncd) {
+			// publishes everything, except members considered as private			
+			for(var member in wigiiNcdEtp) {
+				if(!wigiiNcdEtpOptions.privateNcdEtpMembers[member]) wncd[member] = wigiiNcdEtp[member];
+			}
+			// creates shortcuts
+			wncd.html = wigiiNcdEtp.html.clone;
+		};
+		if(!window.wncd) window.wncd = {};
+		if(wigiiNcdEtpOptions.publishNcdEtpToWncd) wigiiNcdEtpOptions.publishNcdEtpToWncd(wigiiNcdEtp,window.wncd);
+		
+		// Publish symbols to window if flag is not explicitely set to false
+		if(wigiiNcdEtpOptions.publishNcdEtpToWindow===undefined) wigiiNcdEtpOptions.publishNcdEtpToWindow = function(wigiiNcdEtp,window) {
+			// publishes everything, except members considered as private			
+			for(var member in wigiiNcdEtp) {
+				if(!wigiiNcdEtpOptions.privateNcdEtpMembers[member]) window[member] = wigiiNcdEtp[member];
+			}
+		};
+		if(wigiiNcdEtpOptions.publishNcdEtpToWindow) wigiiNcdEtpOptions.publishNcdEtpToWindow(wigiiNcdEtp,window);		
 	}
-	$("#footer").append('<span><i>&nbsp;(etp v.'+wigiiNcdEtp.version()+' loaded)</i></span>');
+	// Ready callback
+	if(wigiiNcdEtpOptions.ncdEtpReady===undefined) wigiiNcdEtpOptions.ncdEtpReady = function(wigiiNcdEtp) {
+		var footer = $("#footer");
+		if(footer.length>0) footer.append('<span><i>&nbsp;(etp v.'+wigiiNcdEtp.version()+' loaded)</i></span>');
+	}
+	if(wigiiNcdEtpOptions.ncdEtpReady) wigiiNcdEtpOptions.ncdEtpReady(wigiiNcdEtp);
+	// keeps options for Fx layer loading 
+	wigiiNcdEtp.options = wigiiNcdEtpOptions;ncdprivate('options');
  })(window, jQuery, wigiiNcd);

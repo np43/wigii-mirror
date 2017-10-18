@@ -1,0 +1,313 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 
+ *  This file is part of Wigii. Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  Wigii is free software: you can redistribute it and/or modify it. See the license details at the end of this page. 
+-->
+<!-- <LIBRAIRIES WIGII.ORG NCD ETP> -->
+<script src="https://rise.wigii.org/assets/js/wigii-rise-core.js" type="text/javascript"></script>
+<link media="all" type="text/css" href="https://rise.wigii.org/assets/css/wigii-rise-core.css" rel="stylesheet">
+<link media="all" type="text/css" href="https://rise.wigii.org/assets/css/theme.css.php" rel="stylesheet">
+<script src="https://www.wigii.org/system/libs/wigii-rise-ncd.js"></script>
+<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-etp.css" rel="stylesheet"/>
+<!-- </LIBRAIRIES WIGII.ORG NCD ETP> -->
+
+
+<!-- (A) Les styles et le titre de la fenêtre-->
+<!-- Définis ici le titre affiché dans l'onglet de ton navigateur -->
+<title>NCD Reference</title>
+<!-- Définis ici les styles mettant en forme ta page en utilisant le langage CSS (https://www.w3schools.com/css/) -->
+<style>
+p#title {
+	display:inline;
+	padding-left:8px;
+}
+div#sink {
+	display:none;
+}
+div.method {
+	margin:10px 30px;
+}
+span.methodName {	
+}
+span.classKeyword {
+	padding-right: 8px;
+}
+span.functionKeyword {
+	padding-right: 8px;
+}
+span.keyword {
+	color:blue;
+}
+span.methodExpand {
+	cursor:pointer;
+	padding-right:8px;	
+}
+div.methodSrc, div.classSrc {
+	display:none;
+}
+div.methodSrc textarea, div.classSrc textarea {
+	white-space:pre;
+}
+span.methodSrcExpand, span.classSrcExpand {
+	cursor:pointer;
+	padding-left:8px;	
+}
+span.typeAssignement {
+	padding-left: 8px;
+	padding-right: 8px;
+}
+span.scalarValue {
+}
+</style>
+</head><body>
+
+
+<!-- (B) La Structure de la page -->
+<!-- Définis ici les balises structurant ta page en utilisant le langage HTML (https://www.w3schools.com/html/) -->
+<img src="https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif"/> <!-- Tu peux changer le logo ici https://rise.wigii.org/#NCD/CMS/folder/73 -->
+<p id="title">Wigii <span style="color:#3333ff;font-style:italic;">NCD</span> Documentation Reference</p>
+
+<div id="programOutput"><!-- La zone d'affichage de ton programme. (Balise obligatoire. Ne pas enlever!) --></div>
+<p id="footer">Wigii.org (CWE), 16.10.2017</p>
+
+
+<!-- (C) Ton programme -->
+
+<!-- <LIBRAIRIES WIGII.ORG NCD ETP> -->
+<script src="https://www.wigii.org/system/libs/wigii-ncd.js"></script>
+<script src="https://www.wigii.org/system/libs/wigii-etp.js" type="text/javascript"></script>
+<script src="https://www.wigii.org/system/libs/wigii-etp-fx.js" type="text/javascript"></script>
+<!-- </LIBRAIRIES WIGII.ORG NCD ETP> -->
+<script type="text/javascript">
+programme(
+	p(),out("The list of available functions and classes in the Wigii "),
+	color("#3333ff"),out("NCD"),$color(),
+	out(" language through the "),
+	color("#3333ff"),out("wncd"),$color(),
+	out(" symbol."),$p(),
+	scripte(function(){
+	/**
+	 * Renders the documentation of a given object into the given HtmlEmitter.
+	 *@param Any obj The object for which to emit the documentation
+	 *@param HtmlEmitter an open HtmlEmitter in which to emit the documentation
+	 *@param Object options an optional set of key/value pairs to parametrize the documentation emission
+	 *@return Object Returns a model of the object documentation of the form
+	 * ObjectDoc model
+	 * { 
+	 *	 type: String. One of 'lib'|'class'|'func'|'obj'|'var',
+	 *	 varType: String. Name of variable type (Array,String,Numeric,...)
+	 *	 name: String,
+	 *	 args: Array of Object {name: String, type: String. Name of argument type.}
+	 *	 return: String|Array. Name of return type (can be multiple),
+	 *	 throws: String|Array. Name of Exception type (can be multiple)
+	 *	 members: Map of ObjectDoc models
+	 * }
+	 */
+	wncd.ObjectDoc = function(obj,htmlEmitter,options) {
+		var self = this;
+		if(!obj) throw wncd.createServiceException('obj cannot be null', wncd.errorCodes.INVALID_ARGUMENT);
+		if(!htmlEmitter) throw wncd.createServiceException('htmlEmitter cannot be null', wncd.errorCodes.INVALID_ARGUMENT);
+		if(!options) options = {};
+		self.className = 'ObjectDoc';
+		self.ctxKey = wncd.ctxKey+'_'+self.className+Date.now();
+		self.context = {};
+		self.$ = function() {return htmlEmitter.$();};
+		
+		self.context.memberComments = {};
+		self.context.memberCount = 0;
+		if(options.expandLevel === undefined) options.expandLevel = 2;
+		if(!options.nullEmitter) options.nullEmitter = wncd.div("sink");
+		
+		if(!options.renderMemberSrc) options.renderMemberSrc = function(srcCode,comment) {
+			wncd.currentDiv().createTextArea().text((comment?comment+"\n":"")+srcCode).$().tabby();
+		}
+		
+		if(!options.renderClassSrc) options.renderClassSrc = function(srcCode,comment) {
+			wncd.currentDiv().createTextArea().text((comment?comment+"\n":"")+srcCode).$().tabby();
+		}
+		
+		if(!options.extractMemberComments) options.extractMemberComments = function(classSrcCode) {
+			var returnValue = {};
+			var commentsRegExp = /(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)\s*([\w]+)[.]([\w.]+)\s*=/g;
+			var matches = undefined;
+			while((matches = commentsRegExp.exec(classSrcCode))!==null){
+				//group 1 is comment, group 5 is class name or 'self', group 6 is method name
+				returnValue[matches[6]] = matches[1];
+				returnValue.className = matches[5];
+			}
+			return returnValue;
+		}
+		
+		if(!options.renderMemberDoc) options.renderMemberDoc = function(member,htmlEmitter,options,context,nestingLevel) {
+			var memberDiv = htmlEmitter.div("method_"+(context.memberCount++), "method");			
+			var expandable = false;
+			var args = undefined;
+			var isObjectConstructor = false;
+			var objectType = $.type(member.object);
+			// if a function displays parameters 
+			if($.isFunction(member.object)) {				
+				var srcCode = wigiiNcd().obj2FxString(member.object);
+				member.srcCode = srcCode;
+				args = srcCode.match(/^function\s*(\([^\(\)]*\))/);
+				if(args) args = args[1];				
+				
+				// checks if member is an object constructor 
+				// - is a Function 
+				// - has first line equal to var self = this;
+				isObjectConstructor = /^function\s*\([^\(\)]*\)\s*\{\s*var\s*self\s*=\s*this;/.test(srcCode);
+				// runs constructor (safely)
+				if(isObjectConstructor) {					
+					var newObj = {};
+					var constructorArgs = Array(member.object.length).fill(options.nullEmitter);
+					try {
+						member.object.apply(newObj, constructorArgs);
+						options.nullEmitter.reset();
+					}
+					catch(exc) {}					
+					if(!newObj.className) newObj.className = member.name;
+					member.object = newObj;
+				}
+				expandable = (Object.keys(member.object).length > 0);
+			}
+			else if(objectType === 'object' && member.object !== options.nullEmitter) {
+				expandable = (Object.keys(member.object).length > 0);
+			}
+			
+			// display expand button			
+			if(expandable) {
+				memberDiv.out("+","methodExpand");
+			}
+			// adds class keyword
+			if(isObjectConstructor) {
+				memberDiv.out("class","classKeyword keyword");
+			}
+			// adds function keyword
+			else if(args) {
+				memberDiv.out("function","functionKeyword keyword");
+			}
+			// displays member name
+			memberDiv.out(member.name,"methodName");
+			// follows with parameters	
+			if(args) {
+				memberDiv.out(" ").out(args);			
+				// if src code then display an expand src button
+				if(srcCode && !expandable) {
+					memberDiv.out("+","methodSrcExpand");
+					wncd.bindSelectionSense(memberDiv.$().find('span.methodSrcExpand'),function(selectionSense){
+						if(selectionSense.selected()) memberDiv.$().find('div.methodSrc').show();
+						else memberDiv.$().find('div.methodSrc').hide();
+					});	
+				}
+				// if class then display complete class src
+				else if(srcCode && isObjectConstructor) {
+					memberDiv.out("+","classSrcExpand");
+					wncd.bindSelectionSense(memberDiv.$().find('span.classSrcExpand'),function(selectionSense){
+						if(selectionSense.selected()) memberDiv.$().find('div.classSrc').show();
+						else memberDiv.$().find('div.classSrc').hide();
+					});	
+				}
+			}
+			// displays value type
+			else {
+				// if string or number and not empty and not ctxKey, instantiationTime or className, then displays value
+				if((objectType === 'number' || objectType === 'string') 
+					&& member.name != 'id'
+					&& member.name != 'ctxKey' 
+					&& member.name != 'className' 
+					&& member.name != 'instantiationTime' 
+					&& member.object) {
+					memberDiv.out(":","typeAssignement").out(member.object, "scalarValue");
+				}
+				else if(member.object === options.nullEmitter) memberDiv.out(":","typeAssignement").out('undefined', "keyword");
+				else memberDiv.out(":","typeAssignement").out($.type(member.object), "keyword");
+			}
+			memberDiv.out(" ","methodEnd");
+			
+			// displays class src code
+			if(srcCode && isObjectConstructor) {				
+				memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,srcCode).$tag("div").emit();				
+				// extracts member comments
+				context.memberComments[member.name] = options.extractMemberComments(srcCode);
+			}
+			// expands recursively until expandLevel, then only on click				
+			if(expandable) {				
+				var selectionSense = wncd.bindSelectionSense(memberDiv.$().find('span.methodExpand'),function(selectionSense){
+					if(selectionSense.selected()) options.renderObjDoc(member.object,memberDiv,options,context,nestingLevel+1);
+					else memberDiv.$().find('span.methodEnd').nextAll().remove();
+				});
+				// already expands
+				if(nestingLevel < options.expandLevel) {
+					selectionSense.selected(true);
+					options.renderObjDoc(member.object,memberDiv,options,context,nestingLevel+1);
+				}				
+			}			
+			// else displays member src code
+			else if(srcCode) {		
+				var memberComment = context.memberComments[member.className];
+				if(memberComment) memberComment = memberComment[member.name];
+				memberDiv.htmlBuilder().tag("div","class","methodSrc").insert(options.renderMemberSrc,srcCode,memberComment).$tag("div").emit();				
+			}
+		};
+		
+		if(!options.renderObjDoc) options.renderObjDoc = function(obj,htmlEmitter,options,context,nestingLevel) {
+			if(nestingLevel === undefined) nestingLevel = 1;
+			// fills an array with all members
+			var members = [];
+			for(var member in obj) {
+				members.push({
+					name: member,
+					object: obj[member],
+					className: obj.className
+				});
+			}
+			// sorts by name
+			if(!options.noSorting) {
+				members.sort(function(m1,m2){
+					if(m1.name < m2.name) return -1;
+					else if(m1.name > m2.name) return 1;
+					else return 0;
+				});
+			}
+			if(options.expandLevel > 0) {
+				for(var i=0;i<members.length;i++) {
+					var member = members[i];
+					options.renderMemberDoc(member,htmlEmitter,options,context,nestingLevel);			
+				}
+			}
+		};
+		
+		options.renderObjDoc(obj,htmlEmitter,options,self.context);
+	}
+	wncd.createObjectDoc = function(obj,htmlEmitter,options) { return new wncd.ObjectDoc(obj,htmlEmitter,options);}
+	wncd.html().addModeler(function(html){
+		html.createObjectDoc = function(obj,options) {return wncd.createObjectDoc(obj,html,options);};
+	});
+	
+	wncd.html().div("wncd", "method").color("#3333FF").out("wncd").$color();
+	wncd.div("wncd").createObjectDoc(wncd,{noSorting:true});
+}));
+// FIN du programme
+</script></body></html>
+<!-- 
+ **
+ *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016-2017  Wigii.org
+ *  @author     <http://www.wigii.org/system/libs>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>           <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>          GNU General Public License
+ *
+-->

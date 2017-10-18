@@ -1,0 +1,105 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 
+ *  This file is part of Wigii. Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  Wigii is free software: you can redistribute it and/or modify it. See the license details at the end of this page. 
+-->
+<!-- <LIBRAIRIES WIGII.ORG NCD ETP> -->
+<script src="https://rise.wigii.org/assets/js/wigii-rise-core.js" type="text/javascript"></script>
+<link media="all" type="text/css" href="https://rise.wigii.org/assets/css/wigii-rise-core.css" rel="stylesheet">
+<link media="all" type="text/css" href="https://rise.wigii.org/assets/css/theme.css.php" rel="stylesheet">
+<script src="https://www.wigii.org/system/libs/wigii-rise-ncd.js"></script>
+<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-etp.css" rel="stylesheet"/>
+<!-- </LIBRAIRIES WIGII.ORG NCD ETP> -->
+
+
+<!-- (A) Les styles et le titre de la fenêtre-->
+<!-- Définis ici le titre affiché dans l'onglet de ton navigateur -->
+<title>Titre de la fenêtre|Window title</title>
+<!-- Définis ici les styles mettant en forme ta page en utilisant le langage CSS (https://www.w3schools.com/css/) -->
+<style>
+p#title {
+	display:inline;
+}
+div#programOutput {	
+	padding:7px;
+}
+div#programOutput:hover {	
+	padding:5px;
+	border-style:solid;
+	border-width:2px;
+	border-color:indigo;
+	background-color:pink;
+}
+div#pretDepart p.ncd span {
+	color:indigo;
+	font-size:64px;
+	font-weight:300;
+}
+</style>
+</head><body>
+
+
+<!-- (B) La Structure de la page -->
+<!-- Définis ici les balises structurant ta page en utilisant le langage HTML (https://www.w3schools.com/html/) -->
+<img src="https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif"/> <!-- Tu peux changer le logo ici https://rise.wigii.org/#NCD/CMS/folder/73 -->
+<p id="title">Titre du programme|Program title</p>
+
+<div id="programOutput"><!-- La zone d'affichage de ton programme. (Balise obligatoire. Ne pas enlever!) --></div>
+<p id="footer">Wigii.org Natural Code Development (Nom du programmeur|Programmer's name), 18.10.2017</p>
+
+
+<!-- (C) Ton programme -->
+
+<!-- <LIBRAIRIES WIGII.ORG NCD ETP> -->
+<script src="https://www.wigii.org/system/libs/wigii-ncd.js"></script>
+<script src="https://www.wigii.org/system/libs/wigii-etp.js" type="text/javascript"></script>
+<script src="https://www.wigii.org/system/libs/wigii-etp-fx.js" type="text/javascript"></script>
+<!-- </LIBRAIRIES WIGII.ORG NCD ETP> -->
+<script type="text/javascript">
+// Fonction: Affiche un compte à rebours
+var pretDepart = function(label) {
+	// retourne une séquence
+	return ctlSeq(
+		/* qui fait une pause de 1s */
+		pause(1), 
+		/* puis crée un DIV 'pretDepart' et affiche le label */
+		scripte(function(){programme.div("pretDepart").reset().p().out(label).$p();})
+		// essaie d'enlever l'appel à la méthode reset() et observe le résultat.
+	);	
+};
+// Ecris ici ton programme en utilisant le langage Javascript Wigii NCD (https://www.naturalcodedevelopment.net/)
+programme (
+	pause(0.5),
+	pretDepart('3'),
+	pretDepart('2'),
+	pretDepart('1'),
+	pretDepart('Start!'),
+	pause(1.5),
+	p(),out("Ouvre le code source et écris ton programme"),$p(),
+	p(),out("Open the source code and write your program"),$p()
+);
+// FIN du programme
+</script></body></html>
+<!-- 
+ **
+ *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016-2017  Wigii.org
+ *  @author     <http://www.wigii.org/system/libs>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>           <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>          GNU General Public License
+ *
+-->

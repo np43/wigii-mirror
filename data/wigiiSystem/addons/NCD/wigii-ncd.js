@@ -23,19 +23,34 @@
  /**
   * Wigii Natural Code Development (NCD) core library
   * Created by Camille Weber (camille@wigii.org), 23.05.2016
+  * Updated version 2.0 by Camille Weber (camille@wigii.org), 17.10.2016
   * @param Window window current browser window
-  * @param JQuery $ depends on JQuery 1.8.x
+  * @param JQuery $ depends on JQuery
   */
  (function (window, $){
+	// Configuration options
+	var wigiiNcdOptions = undefined;
+	if(window.wigiiNcd && window.wigiiNcd.options) wigiiNcdOptions = window.wigiiNcd.options;
+	if(!wigiiNcdOptions) wigiiNcdOptions = {};
+	// Private members management
+	if(!wigiiNcdOptions.privateNcdMembers) wigiiNcdOptions.privateNcdMembers = {};
+	/**
+	 * Marks a member as private. A private member is not published into the wncd symbol.
+	 *@param String memberName the name of the variable or function to be marked as private
+	 */
+	var ncdprivate = function(memberName) {
+		wigiiNcdOptions.privateNcdMembers[memberName] = true;
+	};
+	
 	// Wigii NCD
 	var WigiiNcd = function() {
 		var wigiiNcd = this;
-		wigiiNcd.instantiationTime = Date.now();
-		wigiiNcd.ctxKey = 'WigiiNcd_'+wigiiNcd.instantiationTime;
+		wigiiNcd.instantiationTime = Date.now();ncdprivate('instantiationTime');
+		wigiiNcd.ctxKey = 'WigiiNcd_'+wigiiNcd.instantiationTime;ncdprivate('ctxKey');
 		/**
 		 * Object which holds inner private mutable state variables.
 		 */
-		wigiiNcd.context = {};		
+		wigiiNcd.context = {};ncdprivate('context');
 						
 		// Error codes
 		
@@ -128,7 +143,7 @@
 					wigiiNcd.errorLabels[wigiiNcd.errorCodes[errName]] = errName;
 				}
 			}			
-		};
+		};ncdprivate('initializeErrorLabels');
 		wigiiNcd.initializeErrorLabels();
 		
 		// NCD Exceptions
@@ -380,7 +395,7 @@
 				self.htmlTree.append(label);
 				var b = self.impl.putHtml(self.htmlTree.pop('</button>'), true);
 				if($.isFunction(onClick) && b) b.off().click(function(){
-					if(window.programme) programme.context.html(self);
+					if(window.wigiiNcdEtp && window.wigiiNcdEtp.program.context) window.wigiiNcdEtp.program.context.html(self);
 					try {onClick();}
 					catch(exc) {self.publishException(exc);}
 				});				
@@ -445,6 +460,22 @@
 					}
 					// stores child in children list
 					self.children[id] = returnValue;
+				}
+				return returnValue;
+			};
+			
+			/**
+			 * Creates a clone of this HtmlEmitter linked to an output element. The clone inherits from all modelers.
+			 *@param jQuery|DOM.Element output the new element in which to emit HTML code.
+			 */
+			self.clone = function(output) {
+				if(output===undefined) return self;
+				var returnValue = wigiiNcd.getHtmlEmitter(output);
+				// models child HTMLEmitter if some modelers exists
+				if(self.modelers) {
+					for(var i=0;i<self.modelers.length;i++) {
+						returnValue.addModeler(self.modelers[i]);
+					}
 				}
 				return returnValue;
 			};
@@ -604,7 +635,7 @@
 								var insertionTag = htmlEmitter.$().find('#'+insertionTags[i].id);
 								if(insertionTag) {
 									htmlEmitter.setCursor(insertionTag);
-									if(window.wigiiNcdEtp) wigiiNcdEtp.programme.context.html(htmlEmitter);
+									if(window.wigiiNcdEtp && window.wigiiNcdEtp.program.context) window.wigiiNcdEtp.program.context.html(htmlEmitter);
 									var r = insertionTags[i];
 									r = r.fx.apply(null, r.args);
 									if(r!==undefined) htmlEmitter.putHtml(r);
@@ -833,7 +864,7 @@
 			 * Inserts a piece of generated html. It can be a component or the result of a function.
 			 *@param Function f the function used to generate the HTML to be inserted. 
 			 * The function can be contextual and can take some parameters. In that case, pass the arguments to be injected following the function.
-			 *@example self.insert(function(article){ programme.formulaire.creerChamp("title", "Title").value(article.title);}, article)
+			 *@example self.insert(function(article){ program.form.createField("title", "Title").value(article.title);}, article)
 			 */
 			self.insert = function(f) {
 				if(f) {
@@ -1612,6 +1643,33 @@
 			};			
 		};
 		
+		/**
+		 * JQuery collection event handlers
+		 */
+		wigiiNcd.JQueryService = function() {
+			var self = this;
+			self.className = 'JQueryService';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className;	
+
+			/**
+			 * Returns an HtmlEmitter instance linked to the selected DOM element
+			 */
+			self.HtmlEmitter = function(selection,options) {
+				var returnValue=undefined;
+				// checks we have only one element
+				if(selection && selection.length==1) {
+					// gets a ready to use HtmlEmitter with all inherited modelers
+					returnValue = wncd.html(selection);
+				}
+				else if(selection && selection.length>1) throw wigiiNcd.createServiceException('Wigii NCD HtmlEmitter selector can only be activated on a JQuery collection containing one element and not '+selection.length, wigiiNcd.errorCodes.INVALID_ARGUMENT);
+				return (!returnValue?{$:selection}:returnValue);
+			};
+			/**
+			 * Returns an HtmlEmitter instance linked to the selected DOM element. Alias of HtmlEmitter handler.
+			 */
+			self.html = self.HtmlEmitter;
+		};
+		
 		// Service providing
 		
 		/**
@@ -1622,7 +1680,8 @@
 		};
 		
 		/**
-		 * Creates a new HtmlEmitter object
+		 * Creates a new HtmlEmitter object attached to the given DOM element.
+		 *@param jQuery|DOM.Element output the element in which to emit HTML code, defaults to body if not specified.
 		 */
 		wigiiNcd.getHtmlEmitter = function(output) {
 			return new wigiiNcd.HtmlEmitter(output);
@@ -1642,15 +1701,33 @@
 		wigiiNcd.createSelectionSense = function(onClick, options) {
 			return new wigiiNcd.SelectionSense(onClick, options);
 		};
+		/**
+		 * Creates and binds a Selection Sense to a given anchor
+		 */
 		wigiiNcd.bindSelectionSense = function(anchor, onClick, options) {
 			return wigiiNcd.createSelectionSense(onClick, options).bind(anchor);
 		};
-		
+		/**
+		 * Creates an unbound Counting Sense
+		 */
 		wigiiNcd.createCountingSense = function(onClick, options) {
 			return new wigiiNcd.CountingSense(onClick, options);
 		};
+		/**
+		 * Creates and binds a Counting Sense to a given anchor
+		 */
 		wigiiNcd.bindCountingSense = function(anchor, onClick, options) {
 			return wigiiNcd.createCountingSense(onClick, options).bind(anchor);
+		};
+		
+		/**
+		 * Returns a JQueryService instance
+		 */
+		wigiiNcd.getJQueryService = function() {
+			if(!wigiiNcd['jQueryServiceInstance']) {
+				wigiiNcd.jQueryServiceInstance = new wigiiNcd.JQueryService();ncdprivate('jQueryServiceInstance');
+			}
+			return wigiiNcd.jQueryServiceInstance;
 		};
 		
 		// Functions
@@ -1814,22 +1891,72 @@
 			
 			return returnValue;
 		};
+		
+		/**
+		 * Creates a new HtmlEmitter object attached to the given DOM element. Alias of getHtmlEmitter function.
+		 *@param jQuery|DOM.Element output the element in which to emit HTML code, defaults to body if not specified.
+		 */
+		wigiiNcd.html = function(output) {
+			return wigiiNcd.getHtmlEmitter(output);
+		};
+		
 		/**
 		 * @return String returns the Wigii NCD version number
 		 */
-		wigiiNcd.version = function() {return "1.1";};
-	},	
+		wigiiNcd.version = function() {return "2.0";};
+	};	
 	// Default WigiiNCD instance
-	wigiiNcdInstance = new WigiiNcd(),
+	var wigiiNcdInstance = new WigiiNcd();
 	// WigiiNCD Functional facade 
-	wigiiNcdFacade = function(selector,options) {
+	var wigiiNcdFacade = function(selector,options) {
 		var wigiiNcd = wigiiNcdInstance;
 		return wigiiNcd;
 	};
-	// Bootstrap
-	if(!window.wigiiNcd || window.wigiiNcd().version() < wigiiNcdFacade().version()) window.wigiiNcd = wigiiNcdFacade;
+	// Starting up and exporting symbols
+	if(!$.isFunction(window.wigiiNcd) || window.wigiiNcd().version() < wigiiNcdFacade().version()) {
+		window.wigiiNcd = wigiiNcdFacade;
+		
+		// publish NCD library members to wncd
+		if(wigiiNcdOptions.publishNcdToWncd===undefined) wigiiNcdOptions.publishNcdToWncd = function(wigiiNcd,wncd) {
+			// publishes everything, except members considered as private			
+			for(var member in wigiiNcd) {
+				if(!wigiiNcdOptions.privateNcdMembers[member]) wncd[member] = wigiiNcd[member];
+			}
+		};
+		window.wncd = {};
+		if(wigiiNcdOptions.publishNcdToWncd) wigiiNcdOptions.publishNcdToWncd(wigiiNcdInstance,window.wncd);
+	}
  })(window, jQuery);
  
+ /**
+ * Wigii NCD JQuery plugin
+ * Created by Camille Weber (camille@wigii.org), 18.10.2017
+ */
+(function($) {
+	/**
+	 * JQuery Wigii NCD plugin
+	 * @param String cmd selects a service or a command in the Wigii NCD library which accepts a jQuery collection
+	 * @param Object options a map of configuration options to be passed to the called service.
+	 * @return JQuery|Any returns the service or command result if defined, or the JQuery collection if no specific result.
+	 */
+	$.fn.wncd = function(cmd, options) {
+		var wncd = wigiiNcd();		
+		var returnValue = undefined;
+		try {
+			if(!cmd) throw wncd.createServiceException("cmd cannot be null",wncd.errorCodes.INVALID_ARGUMENT);			
+			var jQueryHandler = wncd.getJQueryService()[cmd];
+			if(!jQueryHandler || $.type(jQueryHandler) !== 'function') throw wncd.createServiceException("Wigii NCD JQueryService does not support the '"+cmd+"' command.",wncd.errorCodes.UNSUPPORTED_OPERATION);
+			returnValue = jQueryHandler(this,options);
+		}
+		catch(e) {
+			if(window.wigii) wigii().publishException(e);
+			else throw e;
+		}
+		if(returnValue) return returnValue;
+		else return this;		
+	};
+})(jQuery);
+
  /*
  *	Tabby jQuery plugin version 0.12
  *
