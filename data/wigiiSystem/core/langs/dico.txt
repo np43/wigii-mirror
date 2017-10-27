@@ -1401,6 +1401,7 @@ FUNC_SUM:sum:somme:::::::::
 indicator_field:Choose field:Choisissez un champ:::::::::
 indicator_function:Choose function:Choisissez une fonction:::::::::
 indicator_label:Define a label (optional):Définissez un nom (optionel):::::::::
+indicator_isRecursive:Do you want to include sub folders? (recursive):Voulez-vous inclure les sous-dossiers? (récursif):::::::::
 invalidFunctionForSelectedField:Invalid function for the choosed field.:Fonction non compatible avec le champ choisi.:::::::::
 elementField:#Element# field:Champ #ofElement#:::::::::
 elementFields:#Element# fields:Champs #ofElement#:::::::::

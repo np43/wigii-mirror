@@ -61,7 +61,7 @@ class AddIndicatorFormExecutor extends FormExecutor {
 		
 		$rec = $this->getRecord();
 		
-		$p->setValueInRoleContext("indicators_areShown", true);
+		$p->setValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl(), true);
 		
 		$indicatorList = $this->getWigiiExecutor()->getIndicatorList($p, $exec);
 		
@@ -76,6 +76,7 @@ class AddIndicatorFormExecutor extends FormExecutor {
 				$label = $transS->t($p, $fs->getSubFieldName());
 				$label .= " (";
 				$label .= $transS->t($p, $availableFunction[$rec->getFieldValue("indicator_function")]);
+				if($rec->getFieldValue("indicator_isRecursive")) $label .= " R";
 				$label .= ")";
 				$rec->setFieldValue($label, "indicator_label");
 			}
@@ -87,11 +88,12 @@ class AddIndicatorFormExecutor extends FormExecutor {
 				$label = $transS->t($p, $field->getFieldName(), $field->getXml());
 				$label .= " (";
 				$label .= $transS->t($p, $availableFunction[$rec->getFieldValue("indicator_function")]);
+				if($rec->getFieldValue("indicator_isRecursive")) $label .= " R";
 				$label .= ")";
 				$rec->setFieldValue($label, "indicator_label");
 			}
 		}
-		$indicatorList->addIndicator($fs, ($fs->isElementAttributeSelector() ? null : $field->getDataType()), $rec->getFieldValue("indicator_function"), $rec->getFieldValue("indicator_label"));
+		$indicatorList->addIndicator($fs, ($fs->isElementAttributeSelector() ? null : $field->getDataType()), $rec->getFieldValue("indicator_function"), $rec->getFieldValue("indicator_label"), null, $rec->getFieldValue("indicator_isRecursive"));
 		
 		$this->getWigiiExecutor()->serializeIndicatorsInContext($p, $exec, $indicatorList);
 		//persist context in DB;
@@ -111,13 +113,13 @@ class AddIndicatorFormExecutor extends FormExecutor {
 			$fs = explode("/", $rec->getFieldValue("indicator_field"));
 			$fs = FieldSelector::createInstance($fs[0], $fs[1]);
 			if($fs->isElementAttributeSelector()){
-				$ind = Indicator::createInstance($fs, null, $rec->getFieldValue("indicator_function"), $rec->getFieldValue("indicator_label"));
+				$ind = Indicator::createInstance($fs, null, $rec->getFieldValue("indicator_function"), $rec->getFieldValue("indicator_label"), null, $rec->getFieldValue("indicator_isRecursive"));
 			} else {
 				$configS = $this->getWigiiExecutor()->getConfigurationContext();
 				$fl = FieldListArrayImpl::createInstance(false, true);
 				$configS->getFields($p, $exec->getCrtModule(), null, $fl);
 				$field = $fl->getField($fs->getFieldName());
-				$ind = Indicator::createInstance($fs, $field->getDataType(), $rec->getFieldValue("indicator_function"), $rec->getFieldValue("indicator_label"));
+				$ind = Indicator::createInstance($fs, $field->getDataType(), $rec->getFieldValue("indicator_function"), $rec->getFieldValue("indicator_label"), null, $rec->getFieldValue("indicator_isRecursive"));
 			}
 		} catch (ServiceException $se){
 			if($se->getCode() == ServiceException::INVALID_ARGUMENT){

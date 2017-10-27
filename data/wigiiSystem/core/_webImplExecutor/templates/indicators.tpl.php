@@ -31,20 +31,24 @@ if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 if(!isset($configS)) $configS = $this->getConfigurationContext();
 
 
-$indicatorsAreShown= $p->getValueInRoleContext("indicators_areShown");
+$indicatorsAreShown= $p->getValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl());
 $indicatorList = $this->getIndicatorList($p, $exec); //$p->getValueInRoleContext("indicators_list");
 
 ?><div class="closeIndicators" style="display:<?=($indicatorList != null && !$indicatorList->isEmpty() && $indicatorsAreShown ? "inherit" : "none");?>;">( <font class="L H"><?=$transS->t($p, "closeIndicators");?></font> )</div><?
 ?><div class="showIndicators" style="display:<?=($indicatorList != null && !$indicatorList->isEmpty() && !$indicatorsAreShown ? "inherit" : "none");?>;">( <font class="L H"><?=$transS->t($p, "showIndicators");?> <?=$indicatorList->count();?></font>)</div><?
 
 if($indicatorsAreShown && $indicatorList!=null && !$indicatorList->isEmpty()){
+	$isOneSystemIndicator = false;
 	foreach($indicatorList->getListIterator() as $indicatorId=>$indicator){
+		if($indicator->isSystemIndicator()) $isOneSystemIndicator = true;
 		?><div id="<?=$indicatorId;?>" class="indicator <? echo ($indicator->isSystemIndicator()?"system" : "");?>"><?
 			echo $indicator->getLabel().": ";
 			echo '<span class="value">'.$indicator->getValue().'</span>';
 		?></div><?
 	}
 	$exec->addJsCode("update('JSCode/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/evaluateIndicators');");
+	//remove the close indicators if there is at least one system Indicator
+	if($isOneSystemIndicator) $exec->addJsCode("$('#moduleView div.closeIndicators').remove()");
 }
 
 $exec->addJsCode("setListenersToIndicator();");

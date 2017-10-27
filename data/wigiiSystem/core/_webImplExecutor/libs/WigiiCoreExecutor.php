@@ -2861,13 +2861,13 @@ invalidCompleteCache();
 				foreach ($indicatorList[$crtModule] as $indicatorId => $indicator) {
 					$fs = FieldSelector :: createInstance($indicator["fieldName"], $indicator["subFieldName"]);
 					if ($fs->isElementAttributeSelector()) {
-						$list->addIndicator($fs, null, $indicator["function"], $indicator["label"], $indicatorId);
+						$list->addIndicator($fs, null, $indicator["function"], $indicator["label"], $indicatorId, $indicator["isRecursive"]);
 					} else {
 						try {
 							$field = $fl->getField($indicator["fieldName"]);
 							if (!$field)
 								continue;
-							$list->addIndicator($fs, $field->getDataType(), $indicator["function"], $indicator["label"], $indicatorId);
+								$list->addIndicator($fs, $field->getDataType(), $indicator["function"], $indicator["label"], $indicatorId, $indicator["isRecursive"]);
 						} catch (Exception $e) {
 							continue;
 						}
@@ -2885,6 +2885,8 @@ invalidCompleteCache();
 				$systemIndicatorList = $this->evaluateFuncExp($p, $exec, str2fx($indicatorListExp));
 				if($systemIndicatorList){
 					$this->indicatorListPerModule[$crtModule]->mergeIndicatorList($systemIndicatorList);
+					//force the display of the indicators if defined in config
+					$p->setValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl(), true);
 				}
 			}
 		}
@@ -2905,7 +2907,7 @@ invalidCompleteCache();
 			//only persit if Indicator is not a systemIndicator
 			if(!$indicator->isSystemIndicator()){
 				$result[$indicatorId] = array (
-				"fieldName" => $indicator->getFieldSelector()->getFieldName(), "subFieldName" => $indicator->getFieldSelector()->getSubFieldName(), "function" => $indicator->getFunction(), "dataType" => ($indicator->getDataType() ? $indicator->getDataType()->getDataTypeName() : null), "label" => $indicator->getLabel(), "id" => $indicator->getId(), "timestamp" => $indicator->getTimestamp(), "value" => $indicator->getValue(),);
+				"fieldName" => $indicator->getFieldSelector()->getFieldName(), "subFieldName" => $indicator->getFieldSelector()->getSubFieldName(), "function" => $indicator->getFunction(), "dataType" => ($indicator->getDataType() ? $indicator->getDataType()->getDataTypeName() : null), "label" => $indicator->getLabel(), "id" => $indicator->getId(), "timestamp" => $indicator->getTimestamp(), "value" => $indicator->getValue(),"isRecursive" => $indicator->isRecursive());
 			}
 		}
 		$indicatorListPerModule[$exec->getCrtModule()->getModuleName()] = $result;
@@ -7051,7 +7053,7 @@ onUpdateErrorCounter = 0;
 			case "showIndicators" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
-				$p->setValueInRoleContext("indicators_areShown", true);
+					$p->setValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl(), true);
 				$exec->addRequests('indicators/' . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '/' . $exec->getCrtModule()->getModuleUrl() . '/display/indicators');
 				//persist context in DB;
 				$this->persistMainPrincipalSessionContext($p, $exec);
@@ -7060,7 +7062,7 @@ onUpdateErrorCounter = 0;
 			case "closeIndicators" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
-				$p->setValueInRoleContext("indicators_areShown", false);
+					$p->setValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl(), false);
 				$exec->addRequests('indicators/' . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '/' . $exec->getCrtModule()->getModuleUrl() . '/display/indicators');
 				//persist context in DB;
 				$this->persistMainPrincipalSessionContext($p, $exec);
@@ -7099,7 +7101,14 @@ onUpdateErrorCounter = 0;
 					$trm = $this->createTRM();
 					$fl = FieldListArrayImpl :: createInstance(false, true);
 					$configS->getFields($p, $exec->getCrtModule(), null, $fl);
+					$originalIncludeChildrenGroups = $lc->getGroupLogExp()->includeChildrenGroups();
 					foreach ($indicatorList->getListIterator() as $indicatorId => $indicator) {
+						//if indicator is recursive, force the evaluation with the subfolders
+						if($indicator->isRecursive()){
+							$lc->getGroupLogExp()->setIncludeChildrenGroups(true);
+						} else {
+							$lc->getGroupLogExp()->setIncludeChildrenGroups($originalIncludeChildrenGroups);
+						}
 						$val = $elS->evaluateIndicatorOnElementsInGroups($p, $indicator, $lc->getGroupLogExp(), $lc);
 						if ($indicator->getFieldSelector()->isElementAttributeSelector()) {
 							if ($indicator->getFunction() == Indicator :: FUNC_AVG || $indicator->getFunction() == Indicator :: FUNC_MAX || $indicator->getFunction() == Indicator :: FUNC_MIN || $indicator->getFunction() == Indicator :: FUNC_SUM) {

@@ -425,6 +425,7 @@
 			<freetext needTranslation="1" displayAsTitle="1">addIndicatorForElements</freetext>
 			<indicator_field type="Attributs"/>
 			<indicator_function type="Attributs"/>
+			<indicator_isRecursive type="Booleans"/>
 			<indicator_label type="Strings"/>
 			<!-- inTab will be completed by the module the principal can access -->
 			<!-- the inGroup field will be duplicated per module the principal can access. -->

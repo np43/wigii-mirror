@@ -23,7 +23,7 @@
 
 /**
  * IndicatorList array implementation
- * Updated by LWR on 18 July 2017
+ * Updated by LWR on 27 October 2017
  */
 class IndicatorListArrayImpl extends ObjectListArrayImpl implements IndicatorList
 {
@@ -41,9 +41,9 @@ class IndicatorListArrayImpl extends ObjectListArrayImpl implements IndicatorLis
 		return isset($this->objArray[$id]);
 	}
 	
-	public function addIndicator($fieldSelector, $dataType, $func, $label=null, $id=null)
+	public function addIndicator($fieldSelector, $dataType, $func, $label=null, $id=null, $isRecursive=false)
 	{
-		$ind = Indicator::createInstance($fieldSelector, $dataType, $func, $label, $id);
+		$ind = Indicator::createInstance($fieldSelector, $dataType, $func, $label, $id, $isRecursive);
 		$id = $ind->getId();
 		if(isset($this->objArray[$id]))
 		{

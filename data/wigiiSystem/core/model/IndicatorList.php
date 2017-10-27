@@ -24,7 +24,7 @@
 /**
  * A list of indicators
  * Created by LWR on 28 February 2011
- * Updated by LWR on 18 July 2017
+ * Updated by LWR on 27 October 2017
  */
 interface IndicatorList extends ObjectList
 {
@@ -32,7 +32,7 @@ interface IndicatorList extends ObjectList
 	 * Adds an indicator to the list
 	 * throws ListException::ALREADY_EXISTS if we try to put a second time the same field selector in the list
 	 */
-	public function addIndicator($fieldSelector, $dataType, $func, $id=null);
+	public function addIndicator($fieldSelector, $dataType, $func, $label=null, $id=null, $isRecursive=false);
 	public function addIndicatorInstance($indicator);
 
 	/**

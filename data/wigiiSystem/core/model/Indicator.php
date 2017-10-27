@@ -49,8 +49,9 @@ class Indicator extends Model
 	private $id = null;
 	private $label = null;
 	private $isSystemIndicator = null;
+	private $isRecursive = null; //if true the indicator include the children groups content (recursively)
 	
-	public static function createInstance($fieldSelector, $dataType, $func, $label=null, $id=null, $isSystemIndicator=false)
+	public static function createInstance($fieldSelector, $dataType, $func, $label=null, $id=null, $isRecursive=false, $isSystemIndicator=false)
 	{
 		$r = new self();
 		$r->setFieldSelector($fieldSelector);
@@ -59,14 +60,15 @@ class Indicator extends Model
 		}
 		$r->setFunction($func);
 		if($id!==null) $r->id = $id;
-		$r->reset($label, $isSystemIndicator);
+		$r->reset($label, $isRecursive, $isSystemIndicator);
 		return $r;
 	}
 	
-	public function reset($label=null, $isSystemIndicator=false){
+	public function reset($label=null, $isRecursive=false, $isSystemIndicator=false){
 		$this->value = null;
 		$this->timestamp = null;
 		$this->setSystemIndicator($isSystemIndicator);
+		$this->setRecursive($isRecursive);
 		$this->setLabel($label);
 		$this->getId();
 	}
@@ -90,13 +92,20 @@ class Indicator extends Model
 	public function setSystemIndicator($isSystemIndicator){
 		$this->isSystemIndicator = $isSystemIndicator;
 	}
+	//if the indicator is tagged as recursive, then the value include all the sub folders content
+	public function isRecursive(){
+		return $this->isRecursive;
+	}
+	public function setRecursive($isRecursive){
+		$this->isRecursive= $isRecursive;
+	}
 	public function getLabel(){
 		return $this->label;
 	}
 	public function setLabel($label){
 		if($label ==null){
 			$this->label = $this->getFieldSelector()->getFieldName();
-			$this->label .= "(".$this->getFunctionName().")";
+			$this->label .= "(".$this->getFunctionName().($this->isRecursive() ? " R" : "").")";
 		} else $this->label = $label;
 	}
 	
