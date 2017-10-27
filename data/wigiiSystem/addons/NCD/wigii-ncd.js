@@ -23,7 +23,7 @@
  /**
   * Wigii Natural Code Development (NCD) core library
   * Created by Camille Weber (camille@wigii.org), 23.05.2016
-  * Updated version 2.0 by Camille Weber (camille@wigii.org), 17.10.2016
+  * Updated version 2.0 by Camille Weber (camille@wigii.org), 27.10.2017
   * @param Window window current browser window
   * @param JQuery $ depends on JQuery
   */
@@ -46,7 +46,10 @@
 	var WigiiNcd = function() {
 		var wigiiNcd = this;
 		wigiiNcd.instantiationTime = Date.now();ncdprivate('instantiationTime');
-		wigiiNcd.ctxKey = 'WigiiNcd_'+wigiiNcd.instantiationTime;ncdprivate('ctxKey');
+		/**
+		 * Wigii NCD base key that can be used when generating unique context keys
+		 */
+		wigiiNcd.ctxKey = 'WigiiNcd_'+wigiiNcd.instantiationTime;
 		/**
 		 * Object which holds inner private mutable state variables.
 		 */
@@ -431,6 +434,17 @@
 			self.createCheckbox = function(cssClass) {
 				return new wigiiNcd.CheckBox(self, cssClass);
 			};
+			/**
+			 * Creates and emits a UnorderedList
+			 */
+			self.createUnorderedList = function(itemGenerator,itemRenderer,options){ 
+				return new wigiiNcd.UnorderedList(self,itemGenerator,itemRenderer,options);
+			};
+			/**
+			 * Creates and emits a UnorderedList. Alias of createUnorderedList method
+			 */
+			self.list = self.createUnorderedList;
+			
 			/**
 			 * Creates an HtmlBuilder which helps building HTML tags.
 			 * After building the HTML chain, call the emit function to push the HTML code to this HtmlEmitter.
@@ -1087,6 +1101,14 @@
 						}
 					}
 				}
+				return self;
+			};
+			/**
+			 * Binds an autocompletion sense on this txt input
+			 */
+			self.autocomplete = function(propositionGenerator,options) {
+				wigiiNcd.bindAutoCompletionSense(self,propositionGenerator,options);
+				return self; 
 			};
 		};			
 		
@@ -1150,6 +1172,14 @@
 						}
 					}
 				}
+				return self;
+			};
+			/**
+			 * Binds an autocompletion sense on this txt input
+			 */
+			self.autocomplete = function(propositionGenerator,options) {
+				wigiiNcd.bindAutoCompletionSense(self,propositionGenerator,options);
+				return self; 
 			};
 		};
 		
@@ -1213,6 +1243,14 @@
 						}
 					}
 				}
+				return self;
+			};
+			/**
+			 * Binds an autocompletion sense on this txt input
+			 */
+			self.autocomplete = function(propositionGenerator,options) {
+				wigiiNcd.bindAutoCompletionSense(self,propositionGenerator,options);
+				return self; 
 			};
 		};
 		
@@ -1267,11 +1305,128 @@
 						}
 					}
 				}
+				return self;
 			};
 			/**
 			 * Toggles the value of the checkbox
 			 */
 			self.toggle = function() {self.checked(!self.checked()); return self;}
+		};
+		
+		wigiiNcd.UnorderedList = function(htmlEmitter, itemGenerator, itemRenderer, options) {
+			var self = this;
+			self.className = 'UnorderedList';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+			self.options = options || {};
+			self.impl = {};
+			self.context = {
+				items:[],
+				selection:{},
+				selectedCount:0
+			};
+			
+			// Defines default options
+			if(self.options.selectedClass===undefined) self.options.selectedClass = 'selected';
+			
+			// Implementation
+			
+			self.$ = function(){return $('ul#'+self.ctxKey);}
+			self.size = function() {return self.context.items.length;}
+			self.items = function() {return self.context.items;}
+			self.selection = function() {
+				var returnValue = {};
+				for(var i in self.context.selection) {
+					if(self.context.selection[i]) returnValue[i] = self.context.items[i-1];
+				}			
+				return returnValue;
+			}
+			self.selected = function(i,bool) {
+				if(i===undefined && bool===undefined) return self.context.selectedCount;
+				if(i < 1 || self.size() < i) throw wncd.createServiceException("index "+i+" is out of list range.",wncd.errorCodes.OUT_OF_BOUND);
+				if(bool===undefined) return (self.context.selection[i]==true);
+				else {
+					// if maxSelection is > 1 and overpassed then ASSERTION_FAILED is thrown
+					if(bool && self.options.maxSelection > 1 && self.context.selectedCount >= self.options.maxSelection)  {
+						throw wncd.createServiceException("A maximum of "+self.options.maxSelection+" items can be selected.",wncd.errorCodes.ASSERTION_FAILED);
+					}
+					// else if maxSelection is 1, then first unselects automatically previous item.
+					else if(bool && self.options.maxSelection == 1 && self.context.selectedCount == 1) {
+						self.selected(Object.keys(self.selection())[0],false);
+					}
+					self.context.selection[i] = (bool==true);
+					var li = self.$().find("> li[data-listi='"+i+"']");
+					if(self.context.selection[i]) {
+						if(self.options.unselectedClass) li.removeClass(self.options.unselectedClass);
+						li.addClass(self.options.selectedClass);
+						self.context.selectedCount++;
+					}
+					else {
+						li.removeClass(self.options.selectedClass);
+						if(self.context.unselectedClass) li.addClass(self.options.unselectedClass);
+						self.context.selectedCount--;
+					}
+					return self;
+				}
+			};
+			self.toggle = function(i) {
+				self.selected(i,!self.selected(i)); 
+				return self;
+			};
+			self.onItemClick = function(onClick) {
+				// registers click handler on li
+				if($.isFunction(onClick)) self.options.onItemClick = onClick;
+				// simulates a click on the li
+				else self.impl.onItemClick(onClick);
+				return self;
+			};
+			
+			// Html emission
+			var htmlB = htmlEmitter.htmlBuilder();
+			htmlB.tag('ul','id',self.ctxKey,'class',htmlEmitter.emittedClass()+(options.cssClass?' '+options.cssClass:''));
+			var shouldContinue=true;
+			var n = 0;
+			while(shouldContinue) {
+				// generates item
+				var item = itemGenerator(n,self);
+				// if exists, then stores and renders it
+				if(item!==undefined) {
+					self.context.items.push(item);
+					n++;
+					var itemHtml = itemRenderer(n,item,self);
+					if(itemHtml) {
+						// if an object, then initializes li attributes with given values
+						if($.type(itemHtml)==='object') {
+							var tagArgs = ['li','data-listi',n,'class',htmlEmitter.emittedClass()+(itemHtml['class']?' '+itemHtml['class']:'')];
+							var plainHtml = '';
+							itemHtml['class'] = undefined;
+							for(var key in itemHtml) {
+								if(key=='html') plainHtml = itemHtml[key];
+								else if(itemHtml[key]) {
+									tagArgs.push(key);
+									tagArgs.push(itemHtml[key]);
+								}
+							}
+							htmlB.tag.apply(undefined,tagArgs).put(plainHtml).$tag('li');
+						}
+						// else if plain HTML string, then puts it out into li tag
+						else htmlB.tag('li','data-listi',n,'class',htmlEmitter.emittedClass()).put(itemHtml).$tag('li');
+					}
+				}
+				else shouldContinue = false;
+			}
+			htmlB.$tag('ul').emit();
+			// Registers click events
+			self.impl.onItemClick = function(i) {
+				self.toggle(i);
+				if($.isFunction(self.options.onItemClick)) self.options.onItemClick(i,self.context.items[i-1],self.selected(i),self); 
+			};
+			self.$().find('> li').click(function(){
+				try {self.impl.onItemClick($(this).attr('data-listi'));}
+				catch(e) {
+					// Ignores ASSERTION_FAILED if maxSelection is active
+					if(!(self.options.maxSelection > 1 && e.code == wncd.errorCodes.ASSERTION_FAILED)) htmlEmitter.publishException(e);
+				}
+			});
 		};
 		
 		/**
@@ -1486,6 +1641,470 @@
 			};
 		};
 		
+		/**
+		 * Object doc component. Builds the documentation model of a given object and optionally renders it into a given HtmlEmitter
+		 *@param Object obj a javascript object for which to introspect the documentation model
+		 *@param Object options a set of options to configure the behavior of the ObjectDoc component. It supports the following attributes :
+		 * - docOutput: HtmlEmitter|JQuery. A reference of where to output the documentation. Can be an open HtmlEmitter or a JQuery selector. 
+		 * - If not defined, outputs to current div. To prevent rendering HTML, set the noOutput option to true.
+		 * - noOutput: Boolean. If true, no HTML is rendered, only the internal documentation model is built.
+		 * - noSorting: Boolean. If true, the object members are not alphabetically sorted. Order is kept as in the source code.
+		 * - expandLevel: Integer. Max level of automatic expansion. For deeper members, expands only on demand, one level at a time. Default to 2 (lib->class->members)
+		 * - namespace: String. Optional library name which represents the object or to which the object belongs.
+		 * - className: String. Optional class name describing the object instance.
+		 * - nullEmitter: HtmlEmitter. An HtmlEmitter which is invisible and used to simulated object constructions. By default points to div with id 'nullEmitter'.
+		 * - privateValues: Map. A list of member names for which its value is considered as private and cannot be viewed or expanded. Only member name can be visualized.
+		 *
+		 * Type system language model :
+		 *
+		 * Variable = Name Type+
+		 * Function = Name Variable* Type+
+		 * Class = Name Variable* Function* Classes*
+		 * Type = [Namespace.]Name
+		 *
+		 * nb. Variables can have several types and function return type can be multiple.
+		 * Multiple type is represented in the source comments as a disjunction of types (using the vertical bar |).
+		 * 
+		 * Type system object model :
+		 *
+		 * Variable {
+		 *	 name: String. Variable name.
+		 *	 type: String|Map. Type qualified name or map of type names.
+		 *   value: Any. Value of the variable or constant.
+		 *	 attributes: Map. A map of attributes for chaining.
+		 *	 className: String. Optional class name to which this variable belongs.
+		 * 	 namespace: String. Optional library name to which this variable belongs.
+		 *	 qualifiedName = [namespace.][className.]name
+		 *   modelType = Variable
+		 * }
+		 *
+		 * Function {
+		 * 	 name: String. Function name.
+		 *	 args: Array. Array of variables.
+		 *	 returnType: String|Map. Return type qualified name or map of return types.
+		 *	 attributes: Map. A map of attributes for chaining.
+		 *	 className: String. Optional class name to which this function belongs.
+		 * 	 namespace: String. Optional library name to which this function belongs.
+		 *	 qualifiedName = [namespace.][className.]name
+		 * 	 modelType = Function
+		 * }
+		 *
+		 * Class {
+		 *	 name: String. The class name.
+		 *	 vars: Map. Map of instance variables.
+		 *	 methods: Map. Map of Functions representing instance methods.
+		 *	 innerClasses: Map. Map of inner classes.
+		 *	 namespace: String. Optional library name to which this class belongs.
+		 *   qualifiedName = [namespace.]name
+		 *	 modelType = Class
+		 * }
+		 *
+		 * Lib {
+		 * 	 namespace: String. The library name.
+		 *	 members: Map. Map of library members (classes, functions, variables)
+		 *	 modelType = Lib
+		 * }
+		 *
+		 * DocModel {
+		 * 	 libs: Map. Map of libraries
+		 * 	 members: Map. Map of qualified classes, functions and variables.
+		 * }
+		 */
+		wigiiNcd.ObjectDoc = function(obj,options) {
+			var self = this;
+			self.className = 'ObjectDoc';
+			self.instantiationTime = Date.now();
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+self.instantiationTime;
+			self.options = options || {};
+			self.context = {
+				stack:[],
+				docModel:{libs:{},members:{}}
+			};
+			self.impl = {};
+					
+			// Defines output options
+			if(!self.options.noOutput) {
+				if(!self.options.docOutput) self.options.docOutput = wncd.currentDiv();
+				else if($.type(self.options.docOutput)==='string' || self.options.docOutput.className != 'HtmlEmitter') {
+					self.options.docOutput = wncd.html(self.options.docOutput);
+				}
+				self.$ = function() {return self.options.docOutput.$();};
+			}
+			// Defines default options
+			if(self.options.expandLevel === undefined) self.options.expandLevel = 1;
+			if(!self.options.nullEmitter) self.options.nullEmitter = wncd.div("nullEmitter");
+			if(!self.options.privateValues) self.options.privateValues = {}
+			// Private values management
+			self.options.privateValues.id = true;
+			self.options.privateValues.ctxKey = true;
+			self.options.privateValues.instantiationTime = true;
+			self.options.privateValues.className = true;
+			self.options.privateValues.$ = true;
+			if(self.options.privateValues.context===undefined) self.options.privateValues.context = true;
+			if(self.options.privateValues.impl===undefined) self.options.privateValues.impl = true;
+			if(self.options.privateValues.options===undefined) self.options.privateValues.options = true;
+			
+			
+			if(!self.options.onMemberCreation) {
+				/**
+				 * Callback when a member documentation model is created
+				 *@param Object member member doc model. One of Class, Function, Variable.
+				 *@param Object objModel doc model of object containing the member. One of Lib or Class.
+				 *@param Object options map of options
+				 *@param Object context current runtime context
+				 *@param int nestingLevel current level of nesting. Start is 1.
+				 */
+				self.options.onMemberCreation = function(member,objModel,options,context,nestingLevel) {
+					if(!options.noOutput) options.renderMember(member,objModel,options,context,nestingLevel);
+				}
+			}
+			if(!self.options.renderMember) {
+				/**
+				 * Renders a member documentation model
+				 *@param Object member member doc model. One of Class, Function, Variable.
+				 *@param Object objModel doc model of object containing the member. One of Lib or Class.
+				 *@param Object options map of options
+				 *@param Object context current runtime context
+				 *@param int nestingLevel current level of nesting. Start is 1.
+				 */
+				self.options.renderMember = function(member,objModel,options,context,nestingLevel) {
+					var memberDiv = objModel.context.docOutput;
+					if(!memberDiv) memberDiv = options.docOutput;
+					memberDiv = memberDiv.div(member.uri, "method");						
+					
+					// display expand button			
+					if(member.context.expandable) {
+						memberDiv.out("+","methodExpand");
+					}
+					// adds class keyword
+					if(member.modelType === 'Class') {
+						memberDiv.out("class","classKeyword keyword");
+					}
+					// adds function keyword
+					else if(member.modelType === 'Function') {
+						memberDiv.out("function","functionKeyword keyword");
+					}
+					
+					// displays member name
+					memberDiv.out(member.name,"methodName");
+					
+					// follows with parameters	
+					if(member.context.args) {
+						memberDiv.out(" ").out(member.context.args);			
+						// if src code then display an expand src button
+						if(member.context.srcCode && !member.context.expandable) {
+							memberDiv.out("+","methodSrcExpand");
+							wncd.bindSelectionSense(memberDiv.$().find('span.methodSrcExpand'),function(selectionSense){
+								if(selectionSense.selected()) memberDiv.$().find('div.methodSrc').show();
+								else memberDiv.$().find('div.methodSrc').hide();
+							});	
+						}
+						// if class then display complete class src
+						else if(member.context.srcCode && member.modelType === 'Class') {
+							memberDiv.out("+","classSrcExpand");
+							wncd.bindSelectionSense(memberDiv.$().find('span.classSrcExpand'),function(selectionSense){
+								if(selectionSense.selected()) memberDiv.$().find('div.classSrc').show();
+								else memberDiv.$().find('div.classSrc').hide();
+							});	
+						}
+					}
+					// displays value type
+					else {
+						// if string or number and not empty and not private, then displays value
+						if((member.context.objectType === 'number' || member.context.objectType === 'string') 
+							&& !options.privateValues[member.name] 
+							&& member.context.object) {
+							memberDiv.out(":","typeAssignement").out(member.context.object, "scalarValue");
+						}
+						else if(member.context.object === options.nullEmitter) memberDiv.out(":","typeAssignement").out('undefined', "keyword");
+						else memberDiv.out(":","typeAssignement").out(member.context.objectType, "keyword");
+					}
+					memberDiv.out(" ","methodEnd");
+					
+					// displays class src code
+					if(member.context.srcCode && member.modelType === 'Class') {				
+						memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,member.context.srcCode).$tag("div").emit();				
+					}
+					
+					// expands recursively until expandLevel, then only on click				
+					if(member.context.expandable) {
+						var selectionSense = wncd.bindSelectionSense(memberDiv.$().find('span.methodExpand'),function(selectionSense){
+							if(selectionSense.selected()) {
+								// if expand token exists, then expands into method members container.
+								if(member.context.expand) member.context.expand();
+								// shows method members
+								memberDiv.$().find('div.methodMembers').show();
+							}
+							else memberDiv.$().find('div.methodMembers').hide();
+						});
+						// prepares method members container and prepares HtmlEmitter on it
+						memberDiv.htmlBuilder().tag("div","class","methodMembers").$tag("div").emit();
+						member.context.docOutput = memberDiv.clone(memberDiv.$().find('div.methodMembers'));
+						
+						// already marks as expanded
+						if(nestingLevel < options.expandLevel) selectionSense.selected(true);
+					}			
+					// else displays member src code
+					else if(member.context.srcCode) {		
+						memberDiv.htmlBuilder().tag("div","class","methodSrc").insert(options.renderMemberSrc,member.context.srcCode,member.context.comment).$tag("div").emit();				
+					}		
+				}
+			}
+			
+			if(!self.options.renderMemberSrc) self.options.renderMemberSrc = function(srcCode,comment) {
+				wncd.currentDiv().createTextArea().text((comment?comment+"\n":"")+srcCode).$().tabby();
+			}
+			
+			if(!self.options.renderClassSrc) self.options.renderClassSrc = function(srcCode,comment) {
+				wncd.currentDiv().createTextArea().text((comment?comment+"\n":"")+srcCode).$().tabby();
+			}
+			
+			// Implementation helpers
+			
+			self.impl.qualifier2uri = function(namespace,className,methodName) {
+				var returnValue = '';
+				if(namespace) returnValue += namespace.replace('.','__');
+				if(className) {
+					if(returnValue) returnValue += '__';
+					returnValue += className;
+				}
+				if(methodName) {
+					if(returnValue) returnValue += '__';
+					returnValue += methodName;
+				}
+				return returnValue.replace('$','S');
+			}
+			self.impl.buildQualifiedName = function(namespace,className,methodName) {
+				var returnValue = '';
+				if(namespace) returnValue += namespace;
+				if(className) {
+					if(returnValue) returnValue += '.';
+					returnValue += className;
+				}
+				if(methodName) {
+					if(returnValue) returnValue += '.';
+					returnValue += methodName;
+				}
+				return returnValue;
+			}
+			self.impl.extractClassMemberComments = function(classSrcCode) {
+				var returnValue = {};
+				var commentsRegExp = /(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)\s*([\w]+)[.]([\w.]+)\s*=/g;
+				var matches = undefined;
+				while((matches = commentsRegExp.exec(classSrcCode))!==null){
+					//group 1 is comment, group 5 is class name or 'self', group 6 is method name
+					returnValue[matches[6]] = matches[1];
+					returnValue.className = matches[5];
+				}
+				return returnValue;
+			};
+			self.impl.createObjModel = function(namespace,className,name) {
+				var returnValue = {};
+				if(namespace) returnValue.namespace = namespace;
+				if(className) returnValue.className = className;
+				if(name) returnValue.name = name;
+				returnValue.uri = self.impl.qualifier2uri(namespace,className,name);
+				returnValue.qualifiedName = self.impl.buildQualifiedName(namespace,className,name);
+				returnValue.context = {};
+				return returnValue;
+			};
+			self.impl.initClassModel = function(objModel) {
+				objModel.vars = {};
+				objModel.methods = {};
+				objModel.innerClasses = {};
+				objModel.modelType = 'Class';
+			};
+			self.impl.initFunctionModel = function(objModel) {
+				objModel.args = [];
+				objModel.returnType = undefined;
+				objModel.attributes = {};
+				objModel.modelType = 'Function';
+			};
+			self.impl.initVariableModel = function(objModel) {
+				objModel.type = undefined;
+				objModel.value = undefined;
+				objModel.attributes = {};
+				objModel.modelType = 'Variable';
+			};
+			self.impl.initLibModel = function(objModel) {
+				objModel.members = {};			
+				objModel.modelType = 'Lib';
+			};
+			
+			// Visitors
+			
+			self.impl.visitObj = function(obj,options,context,nestingLevel) {
+				var objModel = context.stack[nestingLevel-1];
+				
+				// fills an array with all members
+				var members = [];
+				for(var memberName in obj) {
+					var member = self.impl.createObjModel(objModel.namespace,(objModel.modelType === 'Class'?objModel.name:objModel.className),memberName);
+					member.context.object = obj[memberName];
+					members.push(member);
+				}
+				
+				// sorts by name
+				if(!options.noSorting) {
+					members.sort(function(m1,m2){
+						if(m1.name < m2.name) return -1;
+						else if(m1.name > m2.name) return 1;
+						else return 0;
+					});
+				}
+				
+				// visits members
+				if(options.expandLevel > 0) {
+					for(var i=0;i<members.length;i++) {
+						var member = members[i];					
+						self.impl.visitObjMember(member,options,context,nestingLevel);			
+					}
+				}					
+				
+				// removes model from stack
+				self.context.stack.pop();
+			};
+			self.impl.visitObjMember = function(member,options,context,nestingLevel) {
+				var objModel = context.stack[nestingLevel-1];
+				
+				// discovers member information and sets local variables
+				var objectType = $.type(member.context.object);	
+				var srcCode = undefined;
+				var args = undefined;
+				var expandable = false;
+				var isObjectConstructor = false;
+				var classMemberComments = undefined;
+				
+				if(objectType === 'function') {				
+					srcCode = wncd.obj2FxString(member.context.object);
+					args = srcCode.match(/^function\s*(\([^\(\)]*\))/);
+					if(args) args = args[1];				
+					
+					// checks if member is an object constructor 
+					// - is a Function 
+					// - has first line equal to var self = this;
+					isObjectConstructor = /^function\s*\([^\(\)]*\)\s*\{\s*var\s*self\s*=\s*this;/.test(srcCode);
+					// extracts members comments
+					classMemberComments = self.impl.extractClassMemberComments(srcCode);
+					// runs constructor (safely)
+					if(isObjectConstructor) {					
+						var newObj = {};
+						var constructorArgs = Array(member.context.object.length).fill(options.nullEmitter);
+						var currentDiv = wncd.currentDiv();
+						try {
+							wncd.program.context.html(options.nullEmitter);
+							member.context.object.apply(newObj, constructorArgs);
+							wncd.program.context.html(currentDiv);
+							options.nullEmitter.reset();
+						}
+						catch(exc) {wncd.program.context.html(currentDiv);}					
+						if(!newObj.className) newObj.className = member.name;
+						member.context.object = newObj;
+					}
+					expandable = (Object.keys(member.context.object).length > 0);				
+				}
+				else if(objectType === 'object' && member.context.object !== options.nullEmitter) {
+					expandable = (Object.keys(member.context.object).length > 0);
+				}
+				
+				// Is member a class
+				if(isObjectConstructor) {
+					self.impl.initClassModel(member);
+					member.context.srcCode = srcCode;
+					member.context.args = args;				
+					member.context.classMemberComments = classMemberComments;
+				}
+				// Is member a function
+				else if(objectType === 'function') {
+					self.impl.initFunctionModel(member);
+					member.context.srcCode = srcCode;
+					member.context.args = args;
+				}
+				// Is member a variable
+				else {
+					self.impl.initVariableModel(member);
+					member.context.objectType = objectType;
+				}
+				member.context.expandable = expandable;
+				// Links associated comment to member
+				if(objModel.context.classMemberComments) member.context.comment = objModel.context.classMemberComments[member.name];
+				
+				// blocks recursion for private values
+				if(options.privateValues[member.name]) member.context.expandable = false;
+				
+				// Registers member into objModel
+				if(objModel.modelType === 'Lib') objModel.members[member.name] = member;
+				else if(objModel.modelType === 'Class') {
+					if(member.modelType === 'Variable') objModel.vars[member.name] = member;
+					else if(member.modelType === 'Function') objModel.methods[member.name] = member;
+					else if(member.modelType === 'Class') {
+						// if an inner class, then updates namespace value with parent qualifier
+						member.namespace = objModel.qualifiedName;
+						member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+						member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+						objModel.innerClasses[member.name] = member;
+					}
+				}
+				else if(objModel.modelType === 'Function') {
+					// if chaining attribute, then updates namespace value with parent qualifier
+					member.namespace = objModel.qualifiedName;
+					member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+					member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+					objModel.attributes[member.name] = member;
+				}
+				else if(objModel.modelType === 'Variable') {
+					// if chaining attribute, then updates namespace value with parent qualifier
+					member.namespace = objModel.qualifiedName;
+					member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+					member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+					objModel.attributes[member.name] = member;
+				}
+				// indexes into docModel.members map
+				context.docModel.members[member.qualifiedName] = member;
+				
+				// creates a consumable 'expand' token which launches the recursion on demand				
+				if(member.context.expandable) {
+					member.context.expand = function() {
+						member.context.expand = undefined;
+						context.stack.push(member);
+						self.impl.visitObj(member.context.object,options,context,context.stack.length);
+					};				
+				}		
+			
+				// onMemberCreation callback
+				if(options.onMemberCreation) options.onMemberCreation(member,objModel,options,context,nestingLevel);
+				
+				// expands recursively until expandLevel
+				if(nestingLevel < options.expandLevel && member.context.expand) member.context.expand();
+			};
+			
+			/**
+			 * Builds the documentation model of the given object and adds it to the current model
+			 *@param Object obj the object for which to build the documentation model
+			 *@param String namespace optional library name which represents the object or to which the object belongs.
+			 *@param String className optional class name describing the object instance
+			 *@return Object returns the object documentation model
+			 */
+			self.buildDocModel = function(obj, namespace, className) {
+				if(obj) {
+					// creates objModel and initializes it as a Class or a Lib
+					var objModel = self.impl.createObjModel(namespace,undefined,className);
+					if(className) self.impl.initClassModel(objModel);
+					else self.impl.initLibModel(objModel);
+					// pushes objModel on stack and visits object.
+					self.context.stack.push(objModel);
+					self.impl.visitObj(obj,self.options,self.context,1);				
+					// updates docModel with built model	
+					if(objModel.modelType === 'Lib') self.context.docModel.libs[objModel.namespace] = objModel;
+					self.context.docModel.members[objModel.qualifiedName] = objModel;
+				}
+				return self.context.docModel;
+			};
+			
+			// Builds the object documentation model
+			self.buildDocModel(obj,self.options.namespace, self.options.className);
+		};		
+		
 		// Wigii Sense Services 
 		
 		/**
@@ -1644,6 +2263,121 @@
 		};
 		
 		/**
+		 * Wigii Autocompletion Sense
+		 * A stateful object which manages autocompletion of text.
+		 *@param Function|Array propositionGenerator a function which generates some propositions or an array of propositions.
+		 *@param Object options an optional map of options. It supports the following set of attributes :
+		 * - panel: HtmlEmitter|JQuery. The panel used by the AutocompletionSense to interact with the user
+		 * - cssClass: String. Optional CSS class associated to this AutocompletionSense panel
+		 * - actionOnChosenProposition: String. One of 'replace','append','prepend'. Defaults to 'replace'. 
+		 */
+		wigiiNcd.AutocompletionSense = function(propositionGenerator,options) {
+			var self = this;
+			self.className = 'AutocompletionSense';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+			self.options = options || {};
+			self.impl = {};
+			self.context = {interactivePanelReady:false};
+			
+			// Define default options
+			if($.isFunction(propositionGenerator)) self.impl.propositionGenerator = propositionGenerator;
+			else if($.isArray(propositionGenerator)) {
+				self.impl.propositionGenerator = function(n,txt,list) {
+					if(list.context.visited===undefined) list.context.visited=0;
+					// finds next matching in array
+					while(list.context.visited<propositionGenerator.length) {					
+						var returnValue = propositionGenerator[list.context.visited++];
+						if(returnValue.toLowerCase().indexOf(txt.toLowerCase())>=0) return returnValue;
+					}
+				}
+			}
+			if(!self.options.renderProposition) self.options.renderProposition = function(i,data,list) {
+				if(!list.context.txtLowerCase) {
+					list.context.txtLowerCase = list.context.txt.toLowerCase();
+					list.context.txtLength = list.context.txt.length;
+				}
+				// looks for txt pattern into data and highlights it
+				var txtPos = data.toLowerCase().indexOf(list.context.txtLowerCase);
+				var returnValue = data;
+				if(txtPos>=0) {
+					returnValue = wncd.getHtmlBuilder().out(data.substr(0,txtPos))
+					.tag("strong").out(data.substr(txtPos,list.context.txtLength)).$tag("strong")
+					.out(data.substr(txtPos+list.context.txtLength)).html();
+				}
+				return returnValue;
+			}
+			if(!self.options.actionOnChosenProposition) self.options.actionOnChosenProposition = 'replace';
+			if(!self.options.updateTextWithProposition) self.options.updateTextWithProposition = function(txt,proposition) {
+				if(self.options.actionOnChosenProposition == 'replace') return proposition;
+				else if(self.options.actionOnChosenProposition == 'append') return txt+proposition;
+				else if(self.options.actionOnChosenProposition == 'prepend') return proposition+txt;
+			}
+			
+			// Properties
+			
+			self.$ = function() {return $('#'+self.ctxKey);}
+			
+			// Methods
+							
+			/**
+			 * Given an input text, displays some propositions to user and callbacks with one choice.
+			 *@param String txt the text used as an input to propose some matching
+			 *@param Function choiceCallback function receiving the chosen text
+			 */
+			self.chooseOne = function(txt,choiceCallback) {
+				if(!self.context.interactivePanelReady) self.impl.initializeInteractivePanel();
+				/* resets panel */
+				self.options.panel.reset()
+				/* builds a list of propositions */
+				.list(
+					function(n,list){list.context.txt = txt; return self.impl.propositionGenerator(n,txt,list);}, 
+					self.options.renderProposition,
+					{
+						/* on selection of item, callbacks with updated text */
+						onItemClick: function(i,data,selected){
+							if(selected) {
+								choiceCallback(self.options.updateTextWithProposition(txt,data));
+								self.options.panel.reset();							
+							}
+						},
+						maxSelection:1
+					}
+				)
+				return self;
+			};		
+
+			/**
+			 * Binds the Autocompletion Sense to a specific TextArea or TextInput
+			 */
+			self.bind = function(txtInput) {
+				if(!self.context.interactivePanelReady) self.impl.initializeInteractivePanel(txtInput);
+				var txtInputSetText = function(txt){txtInput.text(txt);txtInput.$().focus();}
+				// on text input, executes a chooseOne process			
+				txtInput.onInput(function(txtInput,txt){
+					self.chooseOne(txt, txtInputSetText);				
+				});
+			};		
+
+			// Implementation
+			
+			/**
+			 * Initializes the interactive panel linked to this AutocompletionSense
+			 *@param TextInput|TextArea txtInput an optional TextInput or TextArea instance to which is bound this AutocompletionSense
+			 */ 
+			self.impl.initializeInteractivePanel = function(txtInput) {
+				// gets an HtmlEmitter out of the different options
+				if(!self.options.panel) self.options.panel = wncd.currentDiv();
+				else if($.type(self.options.panel)==='string' || self.options.panel.className != 'HtmlEmitter') {
+					self.options.panel = wncd.html(self.options.panel);
+				}
+				// creates a div
+				self.options.panel = self.options.panel.div(self.ctxKey,"autocompletionsense"+(self.options.cssClass?' '+self.options.cssClass:''));
+				self.options.panel.out("ready");
+				self.context.interactivePanelReady=true;
+			};		
+		};
+		
+		/**
 		 * JQuery collection event handlers
 		 */
 		wigiiNcd.JQueryService = function() {
@@ -1719,6 +2453,18 @@
 		wigiiNcd.bindCountingSense = function(anchor, onClick, options) {
 			return wigiiNcd.createCountingSense(onClick, options).bind(anchor);
 		};
+		/**
+		 * Creates an unbound Autocompletion Sense
+		 */
+		wigiiNcd.createAutoCompletionSense = function(propositionGenerator,options) {
+			return new wigiiNcd.AutocompletionSense(propositionGenerator,options);
+		};
+		/**
+		 * Creates and binds an Autocompletion Sense to a given TxtInput or TxtArea
+		 */
+		wigiiNcd.bindAutoCompletionSense = function(txtInput,propositionGenerator,options) {
+			return wigiiNcd.createAutoCompletionSense(propositionGenerator,options).bind(txtInput);
+		};
 		
 		/**
 		 * Returns a JQueryService instance
@@ -1729,6 +2475,13 @@
 			}
 			return wigiiNcd.jQueryServiceInstance;
 		};
+		
+		/**
+		 * Creates an object documentation model on the given object
+		 */
+		wigiiNcd.createObjectDoc = function(obj,options) { 
+			return new wigiiNcd.ObjectDoc(obj,options);
+		}		
 		
 		// Functions
 		

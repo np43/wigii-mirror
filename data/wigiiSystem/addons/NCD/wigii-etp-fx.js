@@ -25,7 +25,7 @@
  * Expand, Translate, Program - Encode, Transmit, Power.
  * This language can be naturally used within the etp-start.html for your own creations.
  * Created by Wigii.org (camille@wigii.org), 11.02.2017
- * Updated version 2.0 by Camille Weber (camille@wigii.org), 17.10.2016
+ * Updated version 2.0 by Camille Weber (camille@wigii.org), 27.10.2017
  */ 
 (function (window, $, wigiiNcd, wigiiNcdEtp){ 
 	// Configuration options
@@ -400,7 +400,6 @@
 		return returnValue;
 	};
 	
-	
 	// Source code and NCD components
 
 	/* 
@@ -625,6 +624,131 @@
 			code.program();
 		}
 		catch(exc) {programme.html().publishException(exc);}
+	};
+	
+	/**
+	 * Code source editor component. Allows to edit and test some source code given as a function.
+	 *@param Function f the source code to edit given as an anonymous function without any arguments.
+	 *@param Object options a set of options to configure the behavior of the Source Code Editor component. It supports the following attributes :
+	 * - programOutput: HtmlEmitter|JQuery. A reference of where to redirect the output when running code. Can be an open HtmlEmitter or a JQuery selector.
+	 * - runOnLoad: Boolean. If true, then given code is executed when loaded into the editor. False by default.
+	 * - resetOutput: Boolean. If true, then before the code is tested, the linked output is reset. 
+	 * By default, reset occurs only if output has been redirected to a specific location and not kept on current div.
+	 * - testBtnLabel: String. Label to put on the "Test" button. Defaults to "Test".
+	 * - testBtnClass: String. Optional CSS class to attach to the Test button.
+	 * - afterTest: Function. Callback each time the code has been tested. The callback receives the CodeSourceEditor instance.
+	 * - textAreaClass: String. Optional CSS class to attach to the source code text area.
+	 */
+	wigiiNcdEtp.CodeSourceEditor = function(f,options) {
+		var self = this;
+		self.className = 'CodeSourceEditor';
+		self.instantiationTime = Date.now();
+		self.ctxKey = wigiiNcdEtp.ctxKey+'_'+self.className+self.instantiationTime;
+		self.options = options || {};
+		self.context = {};
+		self.impl = {};
+		
+		// Defines default options
+		if(!self.options.testBtnLabel) self.options.testBtnLabel = 'Test';
+		if(!self.options.programOutput) {
+			self.options.programOutput = wncd.currentDiv();
+			if(self.options.resetOutput === undefined) self.options.resetOutput = false;
+		}
+		else if(self.options.programOutput === 'above' || 
+				self.options.programOutput === 'below' ||
+				self.options.programOutput === 'between') {
+			if(self.options.resetOutput === undefined) self.options.resetOutput = true;			
+		}
+		else if($.type(self.options.programOutput)==='string' || self.options.programOutput.className != 'HtmlEmitter') {
+			self.options.programOutput = wncd.html(self.options.programOutput);
+			if(self.options.resetOutput === undefined) self.options.resetOutput = true;
+		}
+		else if(self.options.resetOutput === undefined) self.options.resetOutput = true;
+		
+		/**
+		 * The source code wrapped as a scripte ready to be executed.
+		 */
+		self.context.codeScript = scripte(f);
+		/**
+		 * The source code as a valid string
+		 */
+		self.context.srcCode = wigiiNcd().obj2FxString(self.context.codeScript);
+		
+		/**
+		 * Runs the source code
+		 *@param FuncExp the source code wrapped as a script FuncExp. (cf. scripte function)
+		 */
+		self.impl.runCode = function(scripte) {
+			var currentDiv = programme.currentDiv();
+			programme.context.html(self.options.programOutput);
+			if(self.options.resetOutput) self.options.programOutput.reset();
+			scripte();
+			programme.context.html(currentDiv);
+		};
+		
+		if(self.options.programOutput === 'above') self.options.programOutput = programme.currentDiv().div(self.ctxKey+"_out");
+		
+		/**
+		 * The TextArea object to edit the source code
+		 */
+		self.context.textArea = programme.currentDiv().createTextArea(self.options.textAreaClass);
+		self.context.textArea.text(self.context.srcCode)
+		// Behavior: when typing, saves text 
+		.onInput(function(txtArea,txt){txtArea.text(txt);})
+		// Configures Jquery plugins
+		.$().tabby();
+		
+		if(self.options.programOutput === 'between') self.options.programOutput = programme.currentDiv().div(self.ctxKey+"_out");
+		
+		// Adds a button to test the code
+		programme.currentDiv().button(self.options.testBtnLabel,function(){
+			var srcCode = self.context.textArea.text();
+			// Creates back a script from the source code
+			var scripte = wigiiNcd().fxString2obj(srcCode);
+			// Runs the script
+			self.impl.runCode(scripte);
+			// Saves new scripte in context
+			self.context.codeScript = scripte;
+			if(self.options.afterTest) self.options.afterTest(self);
+		}, self.options.testBtnClass);
+		
+		if(self.options.programOutput === 'below') self.options.programOutput = programme.currentDiv().div(self.ctxKey+"_out");
+		
+		// Runs on load
+		if(self.options.runOnLoad) {
+			self.impl.runCode(self.context.codeScript);
+			if(self.options.afterTest) self.options.afterTest(self);
+		}
+	};
+	/**
+	 * Creates a CodeSourceEditor instance to edit and test the given function.
+	 *@param Function f some source code wrapped into an anonymous function without any parameters
+	 *@param Object options some options to configure the CodeSourceEditor.
+	 *@return wigiiNcdEtp.CodeSourceEditor 
+	 */
+	wigiiNcdEtp.createCodeSourceEditor = function(f,options) { return new wigiiNcdEtp.CodeSourceEditor(f,options);}
+	
+	/**
+	 * Opens a CodeSourceEditor to allow the user to see and test a given piece of code
+	 *@param Function f a scope holding some code to be tested by the user
+	 *@param Object options some options to configure the CodeSourceEditor. See CodeSourceEditor constructor for more details on available options.
+	 *@return Function a FuncExp ready to be invoked
+	 */
+	var exemple = function(f,options) { 
+		var returnValue = function(fxCtx){
+			return wigiiNcdEtp.createCodeSourceEditor(f,options);	
+		};
+		returnValue.toFxString = function() {
+			var fxs = 'exemple(';
+			fxs += wigiiNcd().obj2FxString(f);
+			if(options) {
+				fxs += ',';
+				fxs += wigiiNcd().obj2FxString(options);
+			}
+			fxs += ')';
+			return fxs;
+		};
+		return returnValue;
 	};
 	
 	// Interaction
@@ -894,6 +1018,280 @@
 	wigiiNcdEtp.color = function(c,backgroundC,cssClass) {return dynImpl_fx_s("color",function(fxCtx){return fxCtx.html().color;},c,backgroundC,cssClass);};
 	wigiiNcdEtp.$color = function() {return dynImpl_fx_s("$color",function(fxCtx){return fxCtx.html().$color;});};
 	
+	
+	// Layout system
+	html.addModeler(function(html){
+		/**
+		 * Emits an HTML layout based on composition of horizontal (h) and vertical (v) containers and proportional boxes (x1,...,x10).
+		 *@param Function layoutBuilder a function which composes a layout using the layout symbols. 
+		 * The functions signature has the form: layoutBuilder(h,v,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,args,...)
+		 */
+		html.layout = function(layoutBuilder) {
+			// extracts optional arguments
+			var optionalArgs;
+			if(arguments.length > 1) optionalArgs = Array.prototype.slice.call(arguments,1);
+			else optionalArgs = [];	
+			
+			// Layout object
+			var layout = {};
+			
+			// rendering functions
+			
+			/**
+			 * Renders a proportional box
+			 */
+			layout.x = function(fxCtx,args,options) {
+				// if options.h then renders an horizontal container
+				if(options.h && !args) layout.h(fxCtx,options.h,options);
+				// if options.v then renders a vertical container
+				else if(options.v && !args) layout.v(fxCtx,options.v,options);
+				// else renders a proportional box and fills it with content
+				else fxCtx.html().htmlBuilder().tag('div',
+						'id',options.id,
+						'class',options.name+(options.cssClass?' '+options.cssClass:''),
+						'style','float:left;width:'+options.width+'%;height:'+options.height+'%;'
+					)
+					.insert(args[0])
+					.$tag('div').emit();
+			}
+			layout.x1 = layout.x;
+			layout.x2 = layout.x;
+			layout.x3 = layout.x;
+			layout.x4 = layout.x;
+			layout.x5 = layout.x;
+			layout.x6 = layout.x;
+			layout.x7 = layout.x;
+			layout.x8 = layout.x;
+			layout.x9 = layout.x;
+			layout.x10 = layout.x;
+			/**
+			 * Returns the relative weight of a proportional box
+			 */
+			layout.weightOf = function(symbol) {
+				if(symbol && symbol.startsWith('x')) return Number(symbol.substr(1));
+				else return 0;
+			};
+			
+			/**
+			 * Renders an horizontal container
+			 */
+			layout.h = function(fxCtx,args,options) {			
+				var htmlb = fxCtx.html().htmlBuilder();
+				// extracts width and height
+				var width = options.width;
+				if(width) width = width+'%';
+				else width = options.cssWidth;
+				var height = options.height;
+				if(height) height = height+'%';
+				else height = options.cssHeight;
+				// computes total weight and extracts unit weight
+				var unitWeight = 0; var totalProportion = 0;
+				for(var i=0;i<args.length;i++) {
+					unitWeight += args[i].options.weight;
+				}
+				unitWeight = 100.0/unitWeight;
+				// renders container
+				htmlb.tag('div',
+					'id',options.id,
+					'class','h'+(options.cssClass?' '+options.cssClass:''),
+					'style','float:left;width:'+width+';height:'+height+';'
+				);
+				// renders all components with relative width
+				for(var i=0;i<args.length;i++) {
+					var componentFx = args[i];				
+					if(i<args.length-1) componentFx.options.width = Math.floor(componentFx.options.weight*unitWeight);
+					else componentFx.options.width = 100-totalProportion;
+					totalProportion += componentFx.options.width;
+					componentFx.options.height = 100;
+					htmlb.insert(function(componentFx){componentFx(wncd.createFxContext());},componentFx);
+				}
+				htmlb.$tag('div').emit();
+			};
+			/**
+			 * Renders a vertical container
+			 */
+			layout.v = function(fxCtx,args,options) {						
+				var htmlb = fxCtx.html().htmlBuilder();
+				// extracts width and height
+				var width = options.width;
+				if(width) width = width+'%';
+				else width = options.cssWidth;
+				var height = options.height;
+				if(height) height = height+'%';
+				else height = options.cssHeight;
+				// computes total weight and extracts unit weight
+				var unitWeight = 0; var totalProportion = 0;
+				for(var i=0;i<args.length;i++) {
+					unitWeight += args[i].options.weight;
+				}
+				unitWeight = 100.0/unitWeight;
+				// renders container
+				htmlb.tag('div',
+					'id',options.id,
+					'class','v'+(options.cssClass?' '+options.cssClass:''),
+					'style','float:left;width:'+width+';height:'+height+';'
+				);
+				// renders all components with relative height
+				for(var i=0;i<args.length;i++) {
+					var componentFx = args[i];
+					componentFx.options.width = 100;
+					if(i<args.length-1) componentFx.options.height = Math.floor(componentFx.options.weight*unitWeight);
+					else componentFx.options.height = 100-totalProportion;
+					totalProportion += componentFx.options.height;
+					htmlb.insert(function(componentFx){componentFx(wncd.createFxContext());},componentFx);
+				}
+				htmlb.$tag('div').emit();
+			}		
+			/**
+			 * Creates a FuncExp which wraps the underlying rendering function
+			 *@param String name the name of the underlying rendering function (one of h,v,x1,...,x10)
+			 *@param Array args the array of arguments passed to the FuncExp. These map to children nodes in the layout expression tree.
+			 *@param Object options some rendering options, like the id, cssClass, width or height.
+			 */
+			layout.fx = function(name,args,options) {
+				options = {name:name,id:'',cssClass:'',weight:layout.weightOf(name),h:(options?options.h:undefined),v:(options?options.v:undefined)};
+				
+				// Func Exp mapping a layout function
+				var returnValue = function(fxCtx) {return layout[name](fxCtx,args,options);};
+				returnValue.options = options;
+				
+				// Adds chaining capabilities to allow user to configure the boxes
+				/**
+				 * Sets an html id to the given box
+				 */
+				returnValue.id = function(id) {options.id = id;return returnValue;};
+				/**
+				 * Sets a CSS class to the given box
+				 */
+				returnValue.cssClass = function(cssClass) {options.cssClass = cssClass;return returnValue;};
+				
+				// For h and v container, allows the user to define initial height and weight
+				if(!layout.weightOf(name)) {
+					/**
+					 * Sets the height of the initial container
+					 *@param String cssHeight the height of the container in CSS syntax (200px or 50%, etc)
+					 */
+					returnValue.height = function(cssHeight) {options.cssHeight = cssHeight;return returnValue;}
+					/**
+					 * Sets the width of the initial container
+					 *@param String cssWidth the width of the container in CSS syntax (200px or 50%, etc)
+					 */
+					returnValue.width = function(cssWidth) {options.cssWidth = cssWidth;return returnValue;}
+				}
+				
+				/**
+				 * Fx serializer
+				 */
+				returnValue.toFxString = function() {
+					var fxs = name;
+					// Serializes arguments
+					var fxsArgs = args;
+					if(options.h) {
+						fxs += '.h';
+						fxsArgs = options.h;
+					}
+					else if(options.v) {
+						fxs += '.v';
+						fxsArgs = options.v;
+					}
+					fxs +='(';
+					for(var i=0;i<fxsArgs.length;i++) {
+						if(i>0) fxs += ',';
+						fxs += wncd.obj2FxString(fxsArgs[i]);			
+					}
+					fxs += ')';
+					if(options.id) fxs += '.id("'+options.id+'")';
+					if(options.cssClass) fxs += '.cssClass("'+options.cssClass+'")';
+					if(name == 'h' || name=='v') {
+						if(options.cssWidth) fxs += '.width("'+options.cssWidth+'")';
+						if(options.cssHeight) fxs += '.height("'+options.cssHeight+'")';
+					}
+					return fxs;
+				};			
+				return returnValue;
+			}
+			
+			// declares layout building language symbols
+			
+			/**
+			 * Fx constructor for the h container
+			 */
+			layout.hFx = function() {return layout.fx('h',Array.prototype.slice.call(arguments));}
+			/**
+			 * Fx constructor for the v container
+			 */
+			layout.vFx = function() {return layout.fx('v',Array.prototype.slice.call(arguments));}
+			
+			/**
+			 * Generates an Fx constructor for the given proportional box x1,...,x10
+			 *@return Function an Fx constructor
+			 */
+			layout.xFx = function(name) {
+				var returnValue = function() {return layout.fx(name,Array.prototype.slice.call(arguments));}
+				var options = {v:undefined,h:undefined};
+				/**
+				 * Injects a vertical container into the current proportional box.
+				 */
+				returnValue.v = function() {options.v = Array.prototype.slice.call(arguments);return layout.fx(name,undefined,options);};
+				/**
+				 * Injects an horizontal container into the current proportional box.
+				 */
+				returnValue.h = function() {options.h = Array.prototype.slice.call(arguments);return layout.fx(name,undefined,options);};
+				return returnValue;
+			}
+			/**
+			 * Fx constructor for the x1 proportional box
+			 */
+			layout.x1Fx = layout.xFx('x1');
+			/**
+			 * Fx constructor for the x2 proportional box
+			 */
+			layout.x2Fx = layout.xFx('x2');
+			/**
+			 * Fx constructor for the x3 proportional box
+			 */
+			layout.x3Fx = layout.xFx('x3');
+			/**
+			 * Fx constructor for the x4 proportional box
+			 */
+			layout.x4Fx = layout.xFx('x4');
+			/**
+			 * Fx constructor for the x5 proportional box
+			 */
+			layout.x5Fx = layout.xFx('x5');
+			/**
+			 * Fx constructor for the x6 proportional box
+			 */
+			layout.x6Fx = layout.xFx('x6');
+			/**
+			 * Fx constructor for the x7 proportional box
+			 */
+			layout.x7Fx = layout.xFx('x7');
+			/**
+			 * Fx constructor for the x8 proportional box
+			 */
+			layout.x8Fx = layout.xFx('x8');
+			/**
+			 * Fx constructor for the x9 proportional box
+			 */
+			layout.x9Fx = layout.xFx('x9');
+			/**
+			 * Fx constructor for the x10 proportional box
+			 */
+			layout.x10Fx = layout.xFx('x10');
+			
+			// fills language array
+			var layoutLanguage = [layout.hFx, layout.vFx, layout.x1Fx, layout.x2Fx, layout.x3Fx, layout.x4Fx, layout.x5Fx, layout.x6Fx, layout.x7Fx, layout.x8Fx, layout.x9Fx, layout.x10Fx];
+			Array.prototype.push.apply(layoutLanguage,optionalArgs);
+			// builds layout Fx using the layoutBuilder function provided by the user
+			var layoutFx = layoutBuilder.apply(null,layoutLanguage);
+			// executes layout Fx
+			if(layoutFx) wncd.program(layoutFx);
+			// returns HtmlEmitter for chaining
+			return html;
+		};
+	});
+	
 	// Scripting environment
 	programme.context = { impl:{},
 		html: function(html) {
@@ -945,11 +1343,13 @@
 	wigiiNcdEtp.sousProgramme = sousProgramme; 
 	wigiiNcdEtp.fx = fx;
 	wigiiNcdEtp.fx_s = fx_s;
+	wigiiNcdEtp.createFxContext = createFxContext;
 	wigiiNcdEtp.ctlSeq = ctlSeq;
 	wigiiNcdEtp.sequence = ctlSeq; 
 	wigiiNcdEtp.sequence.ajouter = wigiiNcdEtp.sequence.addFx; 
 	wigiiNcdEtp.sequence.fin = wigiiNcdEtp.sequence.toFx; 
 	wigiiNcdEtp.scripte = scripte; 
+	wigiiNcdEtp.exemple = exemple; 
 	wigiiNcdEtp.ctlGen = ctlGen; 
 	wigiiNcdEtp.codePublic = codePublic; 
 	wigiiNcdEtp.codeSource = codeSource;
@@ -968,6 +1368,7 @@
 	wigiiNcdEtp.sequence.add = wigiiNcdEtp.sequence.addFx;
 	wigiiNcdEtp.sequence.end = wigiiNcdEtp.sequence.toFx;
 	wigiiNcdEtp.script = wigiiNcdEtp.scripte;
+	wigiiNcdEtp.example = wigiiNcdEtp.exemple;
 	wigiiNcdEtp.buttonPause = wigiiNcdEtp.boutonDePause;
 	wigiiNcdEtp.button = wigiiNcdEtp.bouton;
 	wigiiNcdEtp.turtle = wigiiNcdEtp.tortue;
@@ -988,7 +1389,7 @@
 	// Ready callback
 	if(wigiiNcdEtpOptions.ncdEtpFxReady===undefined) wigiiNcdEtpOptions.ncdEtpFxReady = function(wigiiNcdEtp) {
 		var footer = $("#footer");
-		if(footer.length>0) footer.append('<span><i>&nbsp;(etp-fx v.'+wigiiNcdEtp.version()+' loaded)</i></span>');
+		if(footer.length>0) footer.append('<span><i>, Wigii NCD Fx loaded</i></span>');
 	}
 	if(wigiiNcdEtpOptions.ncdEtpFxReady) wigiiNcdEtpOptions.ncdEtpFxReady(wigiiNcdEtp);
 })(window, jQuery, wigiiNcd, wigiiNcdEtp);

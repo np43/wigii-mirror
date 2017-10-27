@@ -3,19 +3,22 @@
  *  This file is part of Wigii. Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  Wigii is free software: you can redistribute it and/or modify it. See the license details at the end of this page. 
 -->
-<!-- <LIBRAIRIES WIGII.ORG NCD ETP> -->
+<!-- <LIBRAIRIES WIGII.ORG NCD ETP LIBRARIES> -->
 <script src="https://rise.wigii.org/assets/js/wigii-rise-core.js" type="text/javascript"></script>
 <link media="all" type="text/css" href="https://rise.wigii.org/assets/css/wigii-rise-core.css" rel="stylesheet">
 <link media="all" type="text/css" href="https://rise.wigii.org/assets/css/theme.css.php" rel="stylesheet">
 <script src="https://www.wigii.org/system/libs/wigii-rise-ncd.js"></script>
-<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-etp.css" rel="stylesheet"/>
-<!-- </LIBRAIRIES WIGII.ORG NCD ETP> -->
+<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-core.min.css" rel="stylesheet"/>
+<!-- </LIBRAIRIES WIGII.ORG NCD ETP LIBRARIES> -->
 
 
-<!-- (A) Les styles et le titre de la fenêtre-->
+<!-- (A) Les styles et le titre de la fenêtre -->
+<!--     Styles and window title -->
 <!-- Définis ici le titre affiché dans l'onglet de ton navigateur -->
+<!-- Define here the title displayed in your browser tab -->
 <title>Titre de la fenêtre|Window title</title>
 <!-- Définis ici les styles mettant en forme ta page en utilisant le langage CSS (https://www.w3schools.com/css/) -->
+<!-- Define here the styles of your page by using the CSS language (https://www.w3schools.com/css/) -->
 <style>
 p#title {
 	display:inline;
@@ -40,34 +43,41 @@ div#pretDepart p.ncd span {
 
 
 <!-- (B) La Structure de la page -->
+<!--     Page structure -->
 <!-- Définis ici les balises structurant ta page en utilisant le langage HTML (https://www.w3schools.com/html/) -->
-<img src="https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif"/> <!-- Tu peux changer le logo ici https://rise.wigii.org/#NCD/CMS/folder/73 -->
-<p id="title">Titre du programme|Program title</p>
+<!-- Define here the tags structuring your page by using the HTML language (https://www.w3schools.com/html/) -->
+<img src="https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif"/> <!-- Tu peux changer le logo ici https://rise.wigii.org/#NCD/CMS/folder/73  to change the logo -->
+<p id="title">Titre du programme | Program title</p>
 
-<div id="programOutput"><!-- La zone d'affichage de ton programme. (Balise obligatoire. Ne pas enlever!) --></div>
-<p id="footer">Wigii.org Natural Code Development (Nom du programmeur|Programmer's name), 18.10.2017</p>
+<div id="programOutput"><!-- La zone d'affichage de ton programme. (Balise obligatoire. Ne pas enlever!) . The program output zone. Do not remove! --></div>
+<p id="footer">Wigii.org Natural Code Development (Author), 27.10.2017</p>
 
 
 <!-- (C) Ton programme -->
+<!--     Your program -->
 
-<!-- <LIBRAIRIES WIGII.ORG NCD ETP> -->
-<script src="https://www.wigii.org/system/libs/wigii-ncd.js"></script>
-<script src="https://www.wigii.org/system/libs/wigii-etp.js" type="text/javascript"></script>
-<script src="https://www.wigii.org/system/libs/wigii-etp-fx.js" type="text/javascript"></script>
-<!-- </LIBRAIRIES WIGII.ORG NCD ETP> -->
+<!-- <LIBRAIRIES WIGII.ORG NCD ETP LIBRARIES> -->
+<script src="https://www.wigii.org/system/libs/wigii-ncd-core.min.js"></script>
+<!-- </LIBRAIRIES WIGII.ORG NCD ETP LIBRARIES> -->
 <script type="text/javascript">
 // Fonction: Affiche un compte à rebours
+// Function: Displays a count down
 var pretDepart = function(label) {
 	// retourne une séquence
+	// returns a sequence
 	return ctlSeq(
 		/* qui fait une pause de 1s */
+		/* which pauses 1s */
 		pause(1), 
 		/* puis crée un DIV 'pretDepart' et affiche le label */
+		/* then creates a DIV 'pretDepart' and displays the label */
 		scripte(function(){programme.div("pretDepart").reset().p().out(label).$p();})
 		// essaie d'enlever l'appel à la méthode reset() et observe le résultat.
+		// try to remove the call to the reset() method and look at the result.
 	);	
 };
 // Ecris ici ton programme en utilisant le langage Javascript Wigii NCD (https://www.naturalcodedevelopment.net/)
+// Write your program here by using the Javascript Wigii NCD language (https://www.naturalcodedevelopment.net/)
 programme (
 	pause(0.5),
 	pretDepart('3'),
@@ -78,7 +88,7 @@ programme (
 	p(),out("Ouvre le code source et écris ton programme"),$p(),
 	p(),out("Open the source code and write your program"),$p()
 );
-// FIN du programme
+// FIN du programme . Program END
 </script></body></html>
 <!-- 
  **

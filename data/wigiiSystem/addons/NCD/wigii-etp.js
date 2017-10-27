@@ -26,7 +26,7 @@
  * This language can be naturally used within the etp-start.html for your own creations.
  * Created by Wigii.org (camille@wigii.org), 11.02.2017
  * Modified by Wigii.org (camille@wigii.org and lionel@wigii.org), 10.05.2017
- * Updated version 2.0 by Camille Weber (camille@wigii.org), 17.10.2016
+ * Updated version 2.0 by Camille Weber (camille@wigii.org), 27.10.2017
  */ 
 (function (window, $, wigiiNcd){ 
 	// Configuration options
@@ -76,15 +76,15 @@
 	/**
 	 * ETP Debugger
 	 */
-	wigiiNcdEtp.debugger = {};
-	wigiiNcdEtp.debugger.initialize = function() {
+	wigiiNcdEtp.debug = {};
+	wigiiNcdEtp.debug.initialize = function() {
 		if($("#programWatcherContainer").length==0) {
 			html.$().css('float','left').css('width','71%').after('<div id="programWatcherContainer"><div id="programWatcher"></div></div><div style="clear:both;"></div>');
 		}
 		$("#programWatcherContainer").show();
-		return wigiiNcdEtp.debugger;
+		return wigiiNcdEtp.debug;
 	};
-	wigiiNcdEtp.debugger.$ = function() {return $("#programWatcherContainer");};
+	wigiiNcdEtp.debug.$ = function() {return $("#programWatcherContainer");};
 	
 	/**
 	 * Server logical proxy
@@ -246,7 +246,7 @@
 				self.sortirDernier = function() { return self.list.pop(); };
 				self.taille = function() { return self.list.length; };
 				self.montrer = function() {
-					wigiiNcdEtp.debugger.initialize().$().find("#programWatcher").html("<u>"+self.index+"</u> "+"Taille: "+self.taille()+"<br/>"+JSON.stringify(self.list));
+					wigiiNcdEtp.debug.initialize().$().find("#programWatcher").html("<u>"+self.index+"</u> "+"Taille: "+self.taille()+"<br/>"+JSON.stringify(self.list));
 					//wigii().log("Panier: "+self.index+" Taille: "+self.taille()+"\n"+JSON.stringify(self.list));
 				};
 				self.exporter = function() { return self.list; };
@@ -274,8 +274,8 @@
 				self.removeLast = self.sortirDernier;
 				self.size = self.taille;
 				self.show = self.montrer;
-				self.export = self.exporter;
-				self.import = self.importer;
+				self.exportContent = self.exporter;
+				self.importContent = self.importer;
 				self.empty = self.vider;
 				self.sort = self.trier;
 			}
@@ -483,7 +483,7 @@
 					}
 					return self;
 				};
-				self.supprimer = function() {formulaire.delete(self.index);};
+				self.supprimer = function() {formulaire.remove(self.index);};
 
 				// English translation
 				self.createField = self.creerChamp;
@@ -491,7 +491,7 @@
 				self.fieldExist = self.champExiste;
 				self.currentField = self.champCourant;
 				self.empty = self.vider;
-				self.delete = self.supprimer;
+				self.remove = self.supprimer;
 				self.reset = function() {return formulaire.reset(self.index);};
 			}
 		},
@@ -504,7 +504,7 @@
 			}
 			return returnValue;
 		},
-		delete: function(index) {
+		remove: function(index) {
 			var returnValue = formulaire.impl.collection['F_'+index];
 			if(returnValue) {
 				// removes from collection
@@ -567,8 +567,8 @@
 	wigiiNcdEtp.basket.removeLast = wigiiNcdEtp.panier.sortirDernier;
 	wigiiNcdEtp.basket.size = wigiiNcdEtp.panier.taille;
 	wigiiNcdEtp.basket.show = wigiiNcdEtp.panier.montrer;
-	wigiiNcdEtp.basket.export = wigiiNcdEtp.panier.exporter;
-	wigiiNcdEtp.basket.import = wigiiNcdEtp.panier.importer;
+	wigiiNcdEtp.basket.exportContent = wigiiNcdEtp.panier.exporter;
+	wigiiNcdEtp.basket.importContent = wigiiNcdEtp.panier.importer;
 	wigiiNcdEtp.basket.empty = wigiiNcdEtp.panier.vider;
 	wigiiNcdEtp.basket.sort = wigiiNcdEtp.panier.trier;
 	
@@ -577,7 +577,7 @@
 	wigiiNcdEtp.form.field = wigiiNcdEtp.formulaire.champ;
 	wigiiNcdEtp.form.currentField = wigiiNcdEtp.formulaire.champCourant;
 	wigiiNcdEtp.form.empty = wigiiNcdEtp.formulaire.vider;
-	//delete is already defined. Do not translate again. wigiiNcdEtp.form.delete = wigiiNcdEtp.formulaire.supprimer;
+	//remove is already defined. Do not translate again. wigiiNcdEtp.form.remove = wigiiNcdEtp.formulaire.supprimer;
 	
 	wigiiNcdEtp.server = wigiiNcdEtp.serveur;
 	wigiiNcdEtp.server.getData = wigiiNcdEtp.serveur.obtenirDonnee;
@@ -611,7 +611,7 @@
 	// Ready callback
 	if(wigiiNcdEtpOptions.ncdEtpReady===undefined) wigiiNcdEtpOptions.ncdEtpReady = function(wigiiNcdEtp) {
 		var footer = $("#footer");
-		if(footer.length>0) footer.append('<span><i>&nbsp;(etp v.'+wigiiNcdEtp.version()+' loaded)</i></span>');
+		if(footer.length>0) footer.append('<span><i>&nbsp;Wigii NCD core v.'+wigiiNcdEtp.version()+' loaded</i></span>');
 	}
 	if(wigiiNcdEtpOptions.ncdEtpReady) wigiiNcdEtpOptions.ncdEtpReady(wigiiNcdEtp);
 	// keeps options for Fx layer loading 
