@@ -51,7 +51,12 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 		return 'xls';
 //		return 'xlsx';
 	}
-
+	
+	protected function preventFormulasInCellValue($valToInsert){
+		if($valToInsert && $valToInsert[0]=="=") $valToInsert = "'".$valToInsert;
+		return $valToInsert;
+	}
+	
 	private $groupPList;
 	public function setGroupPList($gl){ $this->groupPList = $gl; }
 	protected function getGroupPList(){
@@ -279,7 +284,7 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 								if($tempVal) $style->getAlignment()->setWrapText(true);
 								$l = $this->getCrtLineForPage($exl->getActiveSheetIndex());
 								$c = $this->incCrtColForPage($exl->getActiveSheetIndex());
-								$exl->getActiveSheet()->setCellValue(num2letter($c).$l, $tempVal);
+								$exl->getActiveSheet()->setCellValue(num2letter($c).$l, $this->preventFormulasInCellValue($tempVal));
 							} else {
 								$this->addCell($this->crtElement->getFieldValue($field->getFieldName(), $subFieldName), $this->firstCell);
 							}
@@ -602,7 +607,7 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 //			$exl->getActiveSheet()->setCellValue(num2letter($c).$l, trim(strtr($value, array_flip(get_html_translation_table(HTML_ENTITIES, ENT_QUOTES)))));
 			if(!isset($this->html2text)) $this->html2text = new Html2text();
 			$this->html2text->setHtml($value);
-			$exl->getActiveSheet()->setCellValue(num2letter($c).$l, trim(str_replace(array("	", "\n\n", " ", "   ", "  ", " \n"), array("", "\n", "", " ", " ", "\n"), htmlspecialchars_decode($this->html2text->get_text(), ENT_QUOTES))));
+			$exl->getActiveSheet()->setCellValue(num2letter($c).$l, $this->preventFormulasInCellValue(trim(str_replace(array("	", "\n\n", " ", "   ", "  ", " \n"), array("", "\n", "", " ", " ", "\n"), htmlspecialchars_decode($this->html2text->get_text(), ENT_QUOTES)))));
 // 			$this->html2text->clear();
 		}
 	}
@@ -901,21 +906,21 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 			$s->getRowDimension(1)->setRowHeight(40);
 //			fput("set title1 style on line 1 on sheet ".$exl->getActiveSheetIndex());
 			$s->getStyle('A1:D1')->applyFromArray($this->title1Style);
-			$s->setCellValue('A'.$this->incCrtLineForPage($exl->getActiveSheetIndex()), implode("/", $this->parentStackName));
+			$s->setCellValue('A'.$this->incCrtLineForPage($exl->getActiveSheetIndex()), $this->preventFormulasInCellValue(implode("/", $this->parentStackName)));
 			$this->addTitleForPage(1, 1, $exl->getActiveSheetIndex()); //to be able to set the style on the right nb of column when the first element is found
 		} else if($depth==1) {
 			//add a new line
 			$this->incCrtLineForPage($exl->getActiveSheetIndex());
 			$l = $this->incCrtLineForPage($exl->getActiveSheetIndex());
 //			fput("set title2 style on line ".$l." on sheet ".$exl->getActiveSheetIndex());
-			$s->setCellValue('A'.$l, $object->getDbEntity()->getGroupname());
+			$s->setCellValue('A'.$l, $this->preventFormulasInCellValue($object->getDbEntity()->getGroupname()));
 			$s->getStyle('A'.$l.':'.num2letter(max(4, (int)$this->getCrtWidthForPage($exl->getActiveSheetIndex()))).$l)->applyFromArray($this->title2Style);
 			$this->addTitleForPage(2, $l, $exl->getActiveSheetIndex()); //to be able to set the style on the right nb of column when the first element is found
 		} else {
 			$l = $this->incCrtLineForPage($exl->getActiveSheetIndex());
 //			fput("set title3 style on line ".$l." on sheet ".$exl->getActiveSheetIndex());
 			$s->getRowDimension($l)->setRowHeight(25);
-			$s->setCellValue('A'.$l, $object->getDbEntity()->getGroupname());
+			$s->setCellValue('A'.$l, $this->preventFormulasInCellValue($object->getDbEntity()->getGroupname()));
 			$s->getStyle('A'.$l.':'.num2letter(max(4, (int)$this->getCrtWidthForPage($exl->getActiveSheetIndex()))).$l)->applyFromArray($this->title3Style);
 			$s->getStyle('A'.$l)->getAlignment()->setIndent($depth-1);
 			$this->addTitleForPage(3, $l, $exl->getActiveSheetIndex()); //to be able to set the style on the right nb of column when the first element is found

@@ -38,7 +38,7 @@ class ElementPListExportExcelYearCalendar extends ElementPListExportExcel {
 		$elPl->setWigiiExecutor($wigiiExecutor);
 		return $elPl;
 	}
-
+	
 	private $year;
 	public function setYear($year, $fieldName, $isTimeRanges, $endDateFieldName=null){
 		$this->year = $year;
@@ -291,7 +291,7 @@ class ElementPListExportExcelYearCalendar extends ElementPListExportExcel {
 		}
 
 		//fill label on first cell
-		$s->setCellValue(num2letter($crtCol).($crtLine+1), $subject);
+		$s->setCellValue(num2letter($crtCol).($crtLine+1), $this->preventFormulasInCellValue($subject));
 
 		//colorize each dates
 //		unset($this->eventMarkStyle['borders']['right']);
@@ -628,7 +628,7 @@ class ElementPListExportExcelYearCalendar extends ElementPListExportExcel {
 			$s->getHeaderFooter()->setOddFooter('&L' . $exl->getProperties()->getTitle() . '&C &RPage &P / &N');
 			//add title on first line
 			$s->getStyle('A1')->applyFromArray($this->title1Style);
-			$s->setCellValue('A'.$this->incCrtLineForPage($exl->getActiveSheetIndex()), $this->getTitle());
+			$s->setCellValue('A'.$this->incCrtLineForPage($exl->getActiveSheetIndex()), $this->preventFormulasInCellValue($this->getTitle()));
 			$s->getRowDimension(1)->setRowHeight($this->titleHeight);
 
 			$s->getDefaultColumnDimension()->setWidth($this->dayWidth);
@@ -665,7 +665,7 @@ class ElementPListExportExcelYearCalendar extends ElementPListExportExcel {
 					} else {
 						$attribute = $xml->xpath('attribute[(text()="'.$label.'")]');
 					}
-					$s->setCellValue(num2Letter($crtCol+1).$crtLine, $transS->t($this->getP(), $label, ($attribute ? $attribute[0] : null)));
+					$s->setCellValue(num2Letter($crtCol+1).$crtLine, $this->preventFormulasInCellValue($transS->t($this->getP(), $label, ($attribute ? $attribute[0] : null))));
 					$s->getStyle(num2Letter($crtCol).$crtLine)->getFill()->applyFromArray(array("type"=>PHPExcel_Style_Fill::FILL_SOLID, "color"=>array("argb"=>"FF".$color)));
 					$crtLine++;
 				}
