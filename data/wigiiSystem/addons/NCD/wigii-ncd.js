@@ -819,7 +819,7 @@
 							i++;
 						}
 						else value = '';
-						self.buffer += ' '+key+'="'+value+'"';
+						if(value !== '' && value !== undefined) self.buffer += ' '+key+'="'+value+'"';
 					}
 				}
 				self.buffer += '>';
@@ -1420,12 +1420,13 @@
 				self.toggle(i);
 				if($.isFunction(self.options.onItemClick)) self.options.onItemClick(i,self.context.items[i-1],self.selected(i),self); 
 			};
-			self.$().find('> li').click(function(){
+			self.$().find('> li').click(function(e){
 				try {self.impl.onItemClick($(this).attr('data-listi'));}
-				catch(e) {
+				catch(exc) {
 					// Ignores ASSERTION_FAILED if maxSelection is active
-					if(!(self.options.maxSelection > 1 && e.code == wncd.errorCodes.ASSERTION_FAILED)) htmlEmitter.publishException(e);
+					if(!(self.options.maxSelection > 1 && exc.code == wncd.errorCodes.ASSERTION_FAILED)) htmlEmitter.publishException(exc);
 				}
+				e.stopPropagation();
 			});
 		};
 		

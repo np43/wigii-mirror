@@ -35,6 +35,8 @@ echo. >> ..\wigii-ncd-core.js
 type "..\wigii-etp.js" >> ..\wigii-ncd-core.js
 echo. >> ..\wigii-ncd-core.js
 type "..\wigii-etp-fx.js" >> ..\wigii-ncd-core.js
+echo. >> ..\wigii-ncd-core.js
+type "..\wigii-ncd-stdlib.js" >> ..\wigii-ncd-core.js
 
 java -jar yuicompressor-2.4.7.jar -o ..\wigii-ncd-core.min.js ..\wigii-ncd-core.js
 
