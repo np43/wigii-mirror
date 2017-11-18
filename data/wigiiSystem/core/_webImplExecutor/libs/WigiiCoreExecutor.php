@@ -2989,7 +2989,7 @@ invalidCompleteCache();
 				$count = $elementCounter->getTotal();
 				if ($max <= $count) {
 					$state = "closed";
-					$form->addAdditionalText($transS->t($p, "subscriptionMaxNbReached") . ": " . ($count));
+					$form->addAdditionalText($transS->t($p, "subscriptionMaxNbReached") . ": " . ($max)); //changed on the 17/11/2017 by LWR, it is not good to indicate to the public what is the real number of final subscribers, as mybe we are ok to add some manual entries and we don't want that the public sees it (taht for example allow overboocking)   
 				}
 			}
 //			echo $max."<br>";
@@ -7557,7 +7557,6 @@ onUpdateErrorCounter = 0;
 				if(!$labelWidth) $labelWidth = 200;
 
 				//Emailing is independant of the module
-
 				$EmailingRec = $this->createActivityRecordForForm($p, Activity :: createInstance("Emailing"), null);
 
 				//if parameters are setted, then set them to it:
@@ -7612,7 +7611,6 @@ onUpdateErrorCounter = 0;
 				if ($_POST["action"] != null)
 					$state = addslashes($_POST["action"]);
 				$form->ResolveForm($p, $exec, $state);
-
 				break;
 			case "ExportDownload" :
 			case "Downloading" :
