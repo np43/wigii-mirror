@@ -44,6 +44,7 @@ if($xmlFeed){
 					if($name && ((string)$file->type == ".html" || (string)$file->type == ".htm")){
 						if($file->textContent){
 							if(!$first) echo ",";
+							$i++;
 							?>
 {
 	title: '<?=str_replace("'", "\'", $name)?>',
@@ -59,7 +60,7 @@ if($xmlFeed){
 			}
 		}
 		//an empty template is needed to be added at the end as it appears having only one template generates an infinite loop in the JS when opening Emailing dialog
-		?>,{ title: '', description: '', html: '' }<?
+		if($i<2){ ?>,{ title: '', description: '', html: '' }<? }
 	}
 }
 
