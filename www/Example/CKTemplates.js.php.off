@@ -1,0 +1,71 @@
+﻿<?php 
+//use this file if you want to manage custom templates modifiable directly in your wigii instance.
+
+//parameters
+$namespaceName = "default";
+$xmlFeedPath = "https://example.mySite.org/Setup/Filemanager/getXmlFeed/11/abcdefghijklmnopqrstuvwxyz012345";
+
+//auto generation of the CKTemplate js file based on the content of xmlFeedPath
+//only take the content of html Files
+
+header("Content-type: application/javascript");
+
+?>CKEDITOR.addTemplates( '<?=$namespaceName;?>',
+{
+	// The name of sub folder which hold the shortcut preview images of the templates.
+	imagesPath : CKEDITOR.getUrl( CKEDITOR.plugins.getPath( 'templates' ) + 'templates/images/' ),
+
+	// The templates definitions.
+	templates :
+		[
+<?
+
+$xmlFeed = $xmlFeedPath;
+if($xmlFeed){
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $xmlFeed); 
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	$xmlFeed = curl_exec($ch);
+	if($xmlFeed){
+		$xmlFeed = @simplexml_load_string($xmlFeed);
+	}
+	curl_close($ch);
+	$i = 0;
+	if($xmlFeed){
+		//lookup for any item with a field  type Files with a none empty path
+		$tabs = array();
+		$first = true;
+		foreach($xmlFeed->item as $item){
+			$files = $item->xpath("fields/field[@type='Files']");
+			if($files){
+				foreach($files as $file){
+					$name = (string)$file->name;
+					if($name && ((string)$file->type == ".html" || (string)$file->type == ".htm")){
+						if($file->textContent){
+							if(!$first) echo ",";
+							?>
+{
+	title: '<?=str_replace("'", "\'", $name)?>',
+	description: '',
+	html: '<? echo str_replace(array("'", "<o:p>", "</o:p>", 'class="MsoNormal"', "\n", "\r"), array("\'", "", "", "", "", ""), $file->textContent); ?>'
+}
+							<?
+							$first = false;
+							continue 2;
+						}
+					}
+				}
+			}
+		}
+		//an empty template is needed to be added at the end as it appears having only one template generates an infinite loop in the JS when opening Emailing dialog
+		?>,{ title: '', description: '', html: '' }<?
+	}
+}
+
+?>
+
+		]
+});
+
+
