@@ -324,6 +324,7 @@
 			<groupHtmlContentPreview type="Blobs" height="100" htmlArea="1" isInLine="1" require="0" />
 			<groupXmlPublish type="Booleans" require="0" />
 			<groupXmlPublishPreview type="Urls" require="0" />
+			<groupCsvPublishParametersExplanation noLabel="1" type="Strings" onlyInDetail="1" />
 			<groupCsvPublishPreview type="Urls" require="0" />
 			<groupCsvRawPublishPreview type="Urls" require="0" />
 			<groupCsvBackupPublishPreview type="Urls" require="0" />

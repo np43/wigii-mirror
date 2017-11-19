@@ -117,6 +117,7 @@ class DetailGroupFormExecutor extends FormExecutor {
 				if($actRec4->getFieldValue("enableGroupXmlPublish")==true){
 					$record->setFieldValue("_blank", "groupXmlPublishPreview", "target");
 					$record->setFieldValue(SITE_ROOT.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/getXmlFeed/".$group->getId()."/".$actRec4->getFieldValue("xmlPublishCode"), "groupXmlPublishPreview", "url");
+					$record->setFieldValue($transS->t($p, "groupCsvPublishParametersExplanation"), "groupCsvPublishParametersExplanation");
 					$record->setFieldValue(SITE_ROOT.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/getXmlFeed/".$group->getId()."/".$actRec4->getFieldValue("xmlPublishCode")."/csv", "groupCsvPublishPreview", "url");
 					$record->setFieldValue(SITE_ROOT.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/getXmlFeed/".$group->getId()."/".$actRec4->getFieldValue("xmlPublishCode")."/csvraw", "groupCsvRawPublishPreview", "url");
 					$record->setFieldValue(SITE_ROOT.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/getXmlFeed/".$group->getId()."/".$actRec4->getFieldValue("xmlPublishCode")."/csvbackup", "groupCsvBackupPublishPreview", "url");

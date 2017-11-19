@@ -743,6 +743,7 @@ groupPortalPreview:External webpage:Page web externe:::::::::
 groupPortal_help:Display an external webpage:Afficher une page web externe:::::::
 groupXmlPublish:Publish #group#:Publier #group#:::::::::
 groupXmlPublishPreview:Publish XML:Publier en XML:::::::::
+groupCsvPublishParametersExplanation:Optional parameters can be added after\: the separator ";" or "," or "tab" | the encoding "UTF-8" or "ISO-8859-1" | if you don't want to receive as an attached file "integrated" . Each parameter must be separated by a "/":Des paramêtres optionnels peuvent être ajouté après\: le séparateur ";" ou "," ou "tab" | l'encodage des caractères "UTF-8" ou "ISO-8859-1" | si vous ne voulez pas recevoir en tant que fichier attaché "integrated" . Chaque paramêtre doit être séparé par un "/":::::::::
 groupCsvPublishPreview:Publish CSV:Publier en CSV:::::::::
 groupCsvRawPublishPreview:Publish CSV (RAW):Publier en CSV (RAW):::::::::
 groupCsvBackupPublishPreview:Publish in CSV for backup:Publier en CSV for backup:::::::::
