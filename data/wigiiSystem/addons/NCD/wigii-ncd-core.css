@@ -198,9 +198,29 @@ textarea.ncd:focus, input[type=text].ncd:focus, input[type=checkbox].ncd:focus {
 	border-color:blue;
 	outline:1px solid blue;
 }
+div.autocompletionsense {
+	overflow-y:auto;
+	background-color:white;
+	top:2px;
+	border: 1px solid #3333ff;
+	border-radius: 5px;
+	padding-bottom:3px;
+}
 div.autocompletionsense ul {
+	padding:0;
+	margin:0;
+	margin-top:5px;
+	margin-bottom:5px;
 	list-style: none;
-	cursor:pointer;
+	cursor:pointer;	
+}
+div.autocompletionsense ul li {
+	padding-left:5px;
+}
+div.autocompletionsense ul li.highlighted {
+	background-color: #3333ff;
+	border-radius: 2px;
+	padding-left:5px;
 }
 div.contextualMenu ul {
 	list-style: none;

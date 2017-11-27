@@ -1313,6 +1313,29 @@
 			self.toggle = function() {self.checked(!self.checked()); return self;}
 		};
 		
+		/**
+		 * A selectable, browseable, unordered list, implemented as a ul>li set.
+		 *@param wncd.HtmlEmitter htmlEmitter an open HtmlEmitter in which to render the unordered list.
+		 *@param Function itemGenerator a function which generates some items to add to the list. 
+		 * Function signature is : itemGenerator(n,list): Any; where
+		 * - n: Integer. The number of already generated items. First call is 0.
+		 * - list: wncd.UnorderedList. A reference to the current list for stateful operations.
+		 * returns any kind of object, which can then be rendered by the itemRendere function. 
+		 * This function is called as long as it returns something. To stop generating data, return nothing.
+		 *@param Function itemRenderer a function which generates some html code for the current list item.
+		 * Function signature is : itemRenderer(i,item,list): String|Object; where
+		 * - i: Integer. Current item index (1 to n).
+		 * - item: Any. Current item in the list as generated previously.
+		 * - list: wncd.UnorderedList. A reference to the current list for stateful operations.
+		 * returns some valid HTML string to be inserted into the ul>li tag,
+		 * or a map of key/values where key 'html' holds some HTML string to be inserted into the ul>li tag, 
+		 * and other keys defining some HTML attributes to be added to the ul>li node (for example class, style, etc).
+		 *@param Object options an optional bag of options to configure the UnorderedList. It supports the following set of attributes :
+		 * - selectedClass: String. Name of class added when an item is selected in the list. Defaults to 'selected'
+		 * - unselectedClass: String. Name of class added when an item is unselected. Defaults to no class.
+		 * - maxSelection: Integer. Maximum number of items that can be selected into the list. Defaults to no maximum.
+		 * - highlightedClass: String. Name of class added when an item is highlighted (using the iterator). Defaults to 'highlighted'
+		 */
 		wigiiNcd.UnorderedList = function(htmlEmitter, itemGenerator, itemRenderer, options) {
 			var self = this;
 			self.className = 'UnorderedList';
@@ -1322,17 +1345,28 @@
 			self.context = {
 				items:[],
 				selection:{},
-				selectedCount:0
+				selectedCount:0,
+				currentItem:undefined
 			};
 			
 			// Defines default options
 			if(self.options.selectedClass===undefined) self.options.selectedClass = 'selected';
+			if(self.options.highlightedClass===undefined) self.options.highlightedClass = 'highlighted';
 			
 			// Implementation
 			
 			self.$ = function(){return $('ul#'+self.ctxKey);}
+			/**
+			 *@return Integer returns the number of items in the list.
+			 */
 			self.size = function() {return self.context.items.length;}
+			/**
+			 *@return Array returns an array with all items in the list
+			 */
 			self.items = function() {return self.context.items;}
+			/**
+			 *@return Object returns a map with the currently selected items in the list. Key is item index (1 to size). Value is list item.
+			 */
 			self.selection = function() {
 				var returnValue = {};
 				for(var i in self.context.selection) {
@@ -1340,6 +1374,15 @@
 				}			
 				return returnValue;
 			}
+			/**
+			 * Tests if an item is selected into the list or selects it or unselects it.
+			 * If no parameters are given, then returns the number of selected items in the list.
+			 *@param Integer i the index of the item in the list (1 to size)
+			 *@param Boolean bool if true, then selects the item, if false then unselects the item, if undefined then returns selection state.
+			 *@throws wncd.ServiceException.OUT_OF_BOUND if index is not contained in the list.
+			 *@throws wncd.ServiceException.ASSERTION_FAILED if the maximum number of selected elements is overpassed. 
+			 * If maxSelection is one, then automatically unselects previous element.
+			 */
 			self.selected = function(i,bool) {
 				if(i===undefined && bool===undefined) return self.context.selectedCount;
 				if(i < 1 || self.size() < i) throw wncd.createServiceException("index "+i+" is out of list range.",wncd.errorCodes.OUT_OF_BOUND);
@@ -1354,7 +1397,7 @@
 						self.selected(Object.keys(self.selection())[0],false);
 					}
 					self.context.selection[i] = (bool==true);
-					var li = self.$().find("> li[data-listi='"+i+"']");
+					var li = self.$().find("> li:nth-child("+i+")");
 					if(self.context.selection[i]) {
 						if(self.options.unselectedClass) li.removeClass(self.options.unselectedClass);
 						li.addClass(self.options.selectedClass);
@@ -1368,16 +1411,165 @@
 					return self;
 				}
 			};
+			/**
+			 * Toggles the selection of the nth item in the list
+			 *@param Integer i the index of the item to toggle the selection in the list. (1 to size)
+			 *@return wncd.UnorderedList for chaining
+			 */
 			self.toggle = function(i) {
 				self.selected(i,!self.selected(i)); 
 				return self;
 			};
+			/**
+			 * Registers a click handler on an item in the list or simulates a click on an item.
+			 *@param Function onClick click handler of the form onClick(i,item,selected,list) where
+			 * - i: Integer. The index of the item in the list (1 to size)
+			 * - item: Any. The item object in the list as created by the itemGenerator function
+			 * - selected: Boolean. True if item is currently selected, else false.
+			 * - list: wncd.UnorderedList. A reference to the list of stateful operations.
+			 *@return wncd.UnorderedList for chaining
+			 */
 			self.onItemClick = function(onClick) {
 				// registers click handler on li
 				if($.isFunction(onClick)) self.options.onItemClick = onClick;
 				// simulates a click on the li
 				else self.impl.onItemClick(onClick);
 				return self;
+			};
+			
+			// Iteration
+			
+			/**
+			 * Highlights an item in the list given its index or returns the currently highlighted item.
+			 *@param Integer i the index of the item to highlight (1 to size)
+			 *@param String outputOption defines the output option. A string one of :
+			 * - 'index': returns the index of the highlighted item (1 to size)
+			 * - 'item': returns the list item 
+			 * - 'all': returns an object of the form 
+			 * {index: the index of the highlighted item (1 to size),
+			 *  item: the highlighted item,
+			 *	selected:Boolean indicating if the item is currently selected
+			 * }
+			 * Defaults to 'item'.
+			 *@return Any|Integer|Object the chosen output format according to the outputOption.
+			 *@throws wncd.ServiceException.OUT_OF_BOUND if index is not contained in the list.
+			 */
+			self.highLight = function(i, outputOption) {
+				// sets current item
+				if(i!==undefined) {
+					if(i < 1 || self.size() < i) throw wncd.createServiceException("index "+i+" is out of list range.",wncd.errorCodes.OUT_OF_BOUND);
+					if(self.context.currentItem) self.$().find("> li:nth-child("+self.context.currentItem+")").removeClass(self.options.highlightedClass);
+					self.context.currentItem = i;
+				}
+				if(self.context.currentItem) {
+					// add highlighted class
+					self.$().find("> li:nth-child("+self.context.currentItem+")").addClass(self.options.highlightedClass);
+					// returns output based on options
+					switch(outputOption) {
+						case 'index': return self.context.currentItem;
+						case 'all': return {
+							index:self.context.currentItem,
+							item:self.context.items[self.context.currentItem-1],
+							selected:self.selected(self.context.currentItem)
+						}
+						case 'item':
+						default: return self.context.items[self.context.currentItem-1]
+					}			
+				}
+			};
+			/**
+			 * Clears any highlighted item in the list
+			 *@return wncd.UnorderedList for chaining
+			 */
+			self.clearHighLight = function() {
+				if(self.context.currentItem) {
+					self.$().find("> li:nth-child("+self.context.currentItem+")").removeClass(self.options.highlightedClass);
+					self.context.currentItem = undefined;
+				}
+				return self;
+			};
+			/**
+			 * Highlights next item in the list and returns it
+			 *@param Boolean wrap if wrap then wraps again to first element when reaching the end.
+			 *@param String outputOption defines the output option. A string one of :
+			 * - 'index': returns the index of the highlighted item (1 to size)
+			 * - 'item': returns the list item 
+			 * - 'all': returns an object of the form 
+			 * {index: the index of the highlighted item (1 to size),
+			 *  item: the highlighted item,
+			 *	selected:Boolean indicating if the item is currently selected
+			 * }
+			 * Defaults to 'item'.
+			 *@return Any|Integer|Object the chosen output format according to the outputOption or undefined if the end of the list has been reached.
+			 */
+			self.next = function(wrap,outputOption) {
+				// removes previous highlight
+				if(self.context.currentItem) self.$().find("> li:nth-child("+self.context.currentItem+")").removeClass(self.options.highlightedClass);
+				// increments current item
+				if(self.context.currentItem === undefined) self.context.currentItem = 1;
+				else if(self.context.currentItem >= self.size()) {
+					if(wrap) self.context.currentItem = 1;
+					else self.context.currentItem = undefined;
+				}
+				else self.context.currentItem++;
+				
+				if(self.context.currentItem) {
+					// add highlighted class
+					self.$().find("> li:nth-child("+self.context.currentItem+")").addClass(self.options.highlightedClass);
+					// returns output based on options
+					switch(outputOption) {
+						case 'index': return self.context.currentItem;
+						case 'all': return {
+							index:self.context.currentItem,
+							item:self.context.items[self.context.currentItem-1],
+							selected:self.selected(self.context.currentItem)
+						}
+						case 'item':
+						default: return self.context.items[self.context.currentItem-1]
+					}	
+				}
+			};
+			/**
+			 * Highlights previous item in the list and returns it
+			 *@param Boolean wrap if wrap then wraps again to last element when reaching the beginning.
+			 *@param String outputOption defines the output option. A string one of :
+			 * - 'index': returns the index of the highlighted item (1 to size)
+			 * - 'item': returns the list item 
+			 * - 'all': returns an object of the form 
+			 * {index: the index of the highlighted item (1 to size),
+			 *  item: the highlighted item,
+			 *	selected:Boolean indicating if the item is currently selected
+			 * }
+			 * Defaults to 'item'.
+			 *@return Any|Integer|Object the chosen output format according to the outputOption or undefined if start of list has been reached.
+			 */
+			self.previous = function(wrap,outputOption) {
+				// removes previous highlight
+				if(self.context.currentItem) self.$().find("> li:nth-child("+self.context.currentItem+")").removeClass(self.options.highlightedClass);
+				
+				// decrements current item
+				if(self.context.currentItem === undefined) self.context.currentItem = self.size();
+				else if(self.context.currentItem <= 1) {
+					if(wrap) self.context.currentItem = self.size();
+					else self.context.currentItem = undefined;
+				}
+				else self.context.currentItem--;
+				
+				if(self.context.currentItem) {
+					// add highlighted class
+					self.$().find("> li:nth-child("+self.context.currentItem+")").addClass(self.options.highlightedClass);
+					// returns output based on options
+					switch(outputOption) {
+						case 'index': return self.context.currentItem;
+						case 'all': return {
+							index:self.context.currentItem,
+							item:self.context.items[self.context.currentItem-1],
+							selected:self.selected(self.context.currentItem)
+						}
+						case 'item':
+						default: return self.context.items[self.context.currentItem-1]
+					}	
+				}
 			};
 			
 			// Html emission
@@ -1396,7 +1588,7 @@
 					if(itemHtml) {
 						// if an object, then initializes li attributes with given values
 						if($.type(itemHtml)==='object') {
-							var tagArgs = ['li','data-listi',n,'class',htmlEmitter.emittedClass()+(itemHtml['class']?' '+itemHtml['class']:'')];
+							var tagArgs = ['li','class',htmlEmitter.emittedClass()+(self.context.unselectedClass?' '+self.context.unselectedClass:'')+(itemHtml['class']?' '+itemHtml['class']:'')];
 							var plainHtml = '';
 							itemHtml['class'] = undefined;
 							for(var key in itemHtml) {
@@ -1409,7 +1601,7 @@
 							htmlB.tag.apply(undefined,tagArgs).put(plainHtml).$tag('li');
 						}
 						// else if plain HTML string, then puts it out into li tag
-						else htmlB.tag('li','data-listi',n,'class',htmlEmitter.emittedClass()).put(itemHtml).$tag('li');
+						else htmlB.tag('li','class',htmlEmitter.emittedClass()+(self.context.unselectedClass?' '+self.context.unselectedClass:'')).put(itemHtml).$tag('li');
 					}
 				}
 				else shouldContinue = false;
@@ -1421,7 +1613,7 @@
 				if($.isFunction(self.options.onItemClick)) self.options.onItemClick(i,self.context.items[i-1],self.selected(i),self); 
 			};
 			self.$().find('> li').click(function(e){
-				try {self.impl.onItemClick($(this).attr('data-listi'));}
+				try {self.impl.onItemClick($(this).index()+1);}
 				catch(exc) {
 					// Ignores ASSERTION_FAILED if maxSelection is active
 					if(!(self.options.maxSelection > 1 && exc.code == wncd.errorCodes.ASSERTION_FAILED)) htmlEmitter.publishException(exc);
@@ -1836,7 +2028,9 @@
 								// shows method members
 								memberDiv.$().find('div.methodMembers').show();
 							}
-							else memberDiv.$().find('div.methodMembers').hide();
+							else {
+								memberDiv.$().find('div.methodMembers').hide();
+							}
 						});
 						// prepares method members container and prepares HtmlEmitter on it
 						memberDiv.htmlBuilder().tag("div","class","methodMembers").$tag("div").emit();
@@ -1844,6 +2038,8 @@
 						
 						// already marks as expanded
 						if(nestingLevel < options.expandLevel) selectionSense.selected(true);
+						// keeps selection sense into context to allow piloting the tree view
+						member.context.selectionSense = selectionSense;
 					}			
 					// else displays member src code
 					else if(member.context.srcCode) {		
@@ -1914,18 +2110,21 @@
 				objModel.methods = {};
 				objModel.innerClasses = {};
 				objModel.modelType = 'Class';
+				objModel.parent = undefined;
 			};
 			self.impl.initFunctionModel = function(objModel) {
 				objModel.args = [];
 				objModel.returnType = undefined;
 				objModel.attributes = {};
 				objModel.modelType = 'Function';
+				objModel.parent = undefined;
 			};
 			self.impl.initVariableModel = function(objModel) {
 				objModel.type = undefined;
 				objModel.value = undefined;
 				objModel.attributes = {};
 				objModel.modelType = 'Variable';
+				objModel.parent = undefined;
 			};
 			self.impl.initLibModel = function(objModel) {
 				objModel.members = {};			
@@ -2062,6 +2261,8 @@
 				}
 				// indexes into docModel.members map
 				context.docModel.members[member.qualifiedName] = member;
+				// links member back to its parent
+				member.parent = objModel;
 				
 				// creates a consumable 'expand' token which launches the recursion on demand				
 				if(member.context.expandable) {
@@ -2269,7 +2470,10 @@
 		 *@param Function|Array propositionGenerator a function which generates some propositions or an array of propositions.
 		 *@param Object options an optional map of options. It supports the following set of attributes :
 		 * - panel: HtmlEmitter|JQuery. The panel used by the AutocompletionSense to interact with the user
+		 * - hideOnSelection: Boolean. If true, then the panel is hidden once a proposition is selected.
 		 * - cssClass: String. Optional CSS class associated to this AutocompletionSense panel
+		 * - matchClass: String. CSS class associated to matching pattern in list items. Default to 'match'.
+		 * - matchTag: String. Default tag associated to matching pattern in list items. Default to 'strong'.
 		 * - actionOnChosenProposition: String. One of 'replace','append','prepend'. Defaults to 'replace'. 
 		 */
 		wigiiNcd.AutocompletionSense = function(propositionGenerator,options) {
@@ -2292,6 +2496,8 @@
 					}
 				}
 			}
+			if(!self.options.matchClass) self.options.matchClass = 'match';
+			if(!self.options.matchTag) self.options.matchTag = 'strong';
 			if(!self.options.renderProposition) self.options.renderProposition = function(i,data,list) {
 				if(!list.context.txtLowerCase) {
 					list.context.txtLowerCase = list.context.txt.toLowerCase();
@@ -2302,7 +2508,7 @@
 				var returnValue = data;
 				if(txtPos>=0) {
 					returnValue = wncd.getHtmlBuilder().out(data.substr(0,txtPos))
-					.tag("strong").out(data.substr(txtPos,list.context.txtLength)).$tag("strong")
+					.tag(self.options.matchTag,"class",self.options.matchClass).out(data.substr(txtPos,list.context.txtLength)).$tag(self.options.matchTag)
 					.out(data.substr(txtPos+list.context.txtLength)).html();
 				}
 				return returnValue;
@@ -2328,9 +2534,9 @@
 			self.chooseOne = function(txt,choiceCallback) {
 				if(!self.context.interactivePanelReady) self.impl.initializeInteractivePanel();
 				/* resets panel */
-				self.options.panel.reset()
+				self.options.panel.reset();
 				/* builds a list of propositions */
-				.list(
+				self.context.list = self.options.panel.list(
 					function(n,list){list.context.txt = txt; return self.impl.propositionGenerator(n,txt,list);}, 
 					self.options.renderProposition,
 					{
@@ -2338,12 +2544,20 @@
 						onItemClick: function(i,data,selected){
 							if(selected) {
 								choiceCallback(self.options.updateTextWithProposition(txt,data));
-								self.options.panel.reset();							
+								self.options.panel.reset();
+								self.context.list = undefined;
+								if(self.options.hideOnSelection) self.options.panel.$().hide();
 							}
 						},
 						maxSelection:1
 					}
-				)
+				);
+				// binds hover on list highLight
+				self.context.list.$().find('> li').on('hover',function(){
+					self.context.list.highLight($(this).index()+1);
+				});
+				if(self.options.hideOnSelection) self.options.panel.$().show();
+				self.options.panel.$().scrollTop(0);
 				return self;
 			};		
 
@@ -2352,7 +2566,7 @@
 			 */
 			self.bind = function(txtInput) {
 				if(!self.context.interactivePanelReady) self.impl.initializeInteractivePanel(txtInput);
-				var txtInputSetText = function(txt){txtInput.text(txt);txtInput.$().focus();}
+				var txtInputSetText = function(txt){txtInput.text(txt);txtInput.$().change().focus();}
 				// on text input, executes a chooseOne process			
 				txtInput.onInput(function(txtInput,txt){
 					self.chooseOne(txt, txtInputSetText);				
@@ -2366,13 +2580,63 @@
 			 *@param TextInput|TextArea txtInput an optional TextInput or TextArea instance to which is bound this AutocompletionSense
 			 */ 
 			self.impl.initializeInteractivePanel = function(txtInput) {
-				// gets an HtmlEmitter out of the different options
-				if(!self.options.panel) self.options.panel = wncd.currentDiv();
-				else if($.type(self.options.panel)==='string' || self.options.panel.className != 'HtmlEmitter') {
-					self.options.panel = wncd.html(self.options.panel);
+				// if no panel is defined, then creates a div below the txtInput
+				if(!self.options.panel) {
+					if(self.options.hideOnSelection===undefined) self.options.hideOnSelection=true;
+					var anchor = txtInput.$();
+					// ensures container displays panel				
+					anchor.parent().css('overflow','visible');					
+					// builds autcompletionsense container and inserts html code after the anchor
+					anchor.after(wigiiNcd.getHtmlBuilder().tag("div",
+						"id",self.ctxKey,
+						"class","autocompletionsense"+(self.options.cssClass?' '+self.options.cssClass:''),
+						"style","position:relative;"+(self.options.hideOnSelection?'display:none;':'')
+						).$tag("div").html()
+					);					
+					self.options.panel = wncd.html(self.$());
 				}
-				// creates a div
-				self.options.panel = self.options.panel.div(self.ctxKey,"autocompletionsense"+(self.options.cssClass?' '+self.options.cssClass:''));
+				else if($.type(self.options.panel)==='string' || self.options.panel.className != 'HtmlEmitter') {
+					self.options.panel = wncd.html(self.options.panel).div(self.ctxKey,"autocompletionsense"+(self.options.cssClass?' '+self.options.cssClass:''));
+				}				
+				/* Binds keyboard :
+				 * - to hide the panel: ESC or Backspace if empty.
+				 * - to select a value: Enter.
+				 * - to scroll up and down: Arrow up and down
+				 */
+				txtInput.$().on('keydown',function(e){					
+					if(e.key == 'Up' || e.key == 'ArrowUp') {
+						if(self.context.list) {
+							var i = self.context.list.previous(true,'index');							
+							var p = self.options.panel.$();
+							var li = self.context.list.$().find("> li:nth-child("+i+")");
+							if(i == self.context.list.size()) p.scrollTop(li.offset().top);
+							else if(li.offset().top < p.offset().top) p.scrollTop(Math.max(p.scrollTop() - li.height(),0));
+						}
+					}
+					else if(e.key == 'Down' || e.key == 'ArrowDown') {
+						if(self.context.list) {
+							var i = self.context.list.next(true,'index');							
+							var p = self.options.panel.$();
+							if(i == 1) p.scrollTop(0);
+							else {
+								var li = self.context.list.$().find("> li:nth-child("+i+")");
+								if(li.offset().top + li.height() > p.offset().top + p.height()) p.scrollTop(p.scrollTop() + li.height());
+							}
+						}
+					}
+				}).on('keypress',function(e){
+					if(self.options.hideOnSelection && 
+					(e.key == 'Esc' || e.key == 'Escape'
+					 || !$(this).val() && e.key == 'Backspace')) {
+						 self.options.panel.$().hide();
+						 if(self.context.list) self.context.list.clearHighLight();
+					 }
+					else if(e.key == 'Enter') {
+						var i = (self.context.list ? self.context.list.highLight(undefined,'index'):undefined);
+						if(i) self.context.list.onItemClick(i);
+						else if(self.options.hideOnSelection) self.options.panel.$().hide();
+					}
+				});				
 				self.options.panel.out("ready");
 				self.context.interactivePanelReady=true;
 			};		
