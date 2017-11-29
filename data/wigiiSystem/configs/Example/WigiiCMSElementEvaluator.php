@@ -20,7 +20,7 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-// version G99
+// version G114
 /**
  * Wigii CMS module Element evaluator
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016
@@ -30,7 +30,7 @@
  * Updated by Camille Weber on 03.04.2017 to personalize site META information
  * Updated by Camille Weber on 15.06.2017 to manage internal url forwarding
  * Updated by Lionel and Camille Weber on 27.09.2017 to add public comment management
- * Revision: G97
+ * Updated by Weber wwigii-system.net for Wigii.org on 29.11.2017 to enforce the support of javascript into the page rendering process.
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -38,6 +38,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 	private $_executionSink;
 	private $siteMap;
 	private $forwardMap;
+	private $jsCode;
 	
 	// Dependency injection
 	
@@ -64,7 +65,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$returnValue->setFormExecutor($formExecutor);
 		return $returnValue;
 	}
-	
+		
 	// Content authoring and publishing
 	
 	/**
@@ -201,17 +202,16 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$html2text = new Html2text();
 			if(is_array($txt)) {
 				foreach($txt as $t) {
-					$html2text->html2text($t);
-					$returnValue .= $html2text->get_text();
-					$html2text->clear();
+					$html2text->setHtml($t);
+					$returnValue .= $html2text->getText();
 					$returnValue .= ' ';
 				}
 			}
 			else {
-				$html2text->html2text($txt);
-				$returnValue = $html2text->get_text();
-				$html2text->clear();
+				$html2text->setHtml($txt);
+				$returnValue = $html2text->getText();
 			}
+			unset($html2text);
 			$returnValue = substr($returnValue,0,255);
 		}
 		return $returnValue;
@@ -520,85 +520,9 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			
 			// gets page title and intro
 			$intro = $this->cms_getIntro($options);
-			if(isset($intro)) {
-				$title = $intro->getFieldValue('siteTitle');
-				if(is_array($title)) $title = $title[$language];
-				$options->setValue('title',$title);
-				$metaDescription = $intro->getFieldValue('metaDescription');
-				if(is_array($metaDescription)) $metaDescription = $metaDescription[$language];
-				$options->setValue('metaDescription',$metaDescription);
-				$metaKeywords = $intro->getFieldValue('metaKeywords');
-				if(is_array($metaKeywords)) $metaKeywords = $metaKeywords[$language];
-				$options->setValue('metaKeywords',$metaKeywords);
-				$metaAuthor = $intro->getFieldValue('metaAuthor');
-				if(is_array($metaAuthor)) $metaAuthor = $metaAuthor[$language];
-				$options->setValue('metaAuthor',$metaAuthor);
-				$introBgColor = $intro->getFieldValue('introBgColor');
-				$options->setValue('introBgColor',$introBgColor);
-				$introBgAlpha = $intro->getFieldValue('introBgAlpha');
-				$options->setValue('introBgAlpha',$introBgAlpha);
-				$imgIntroBG = $intro->getFieldValue('imgIntroBG','url');
-				$options->setValue('imgIntroBG',$imgIntroBG);
-				$introContent = $intro->getFieldValue('contentIntro');
-				$enablePublicComments = $intro->getFieldValue('enablePublicComments');
-				$options->setValue('enablePublicComments',$enablePublicComments);
-				$introComments = $intro->getFieldValue('introComments');
-				$options->setValue('introElementId',$intro->getId());
-				if(is_array($introContent)) $introContent = $introContent[$language];
-			}
 			
-			// gets page options
-			$forceHeight = $siteMap->getFieldValue('forceHeight');
-			if(!isset($forceHeight)) $forceHeight=false;
-			$options->setValue('forceHeight',$forceHeight);
-			$forceHeightFirst = $siteMap->getFieldValue('forceHeightFirst');
-			if(!isset($forceHeightFirst)) $forceHeightFirst=true;
-			$options->setValue('forceHeightFirst',$forceHeightFirst);
-			$marginWidth = $siteMap->getFieldValue('marginWidth');
-			if(!isset($marginWidth)) $marginWidth="11%";
-			$options->setValue('marginWidth',$marginWidth);
-			$logoTextColor = $siteMap->getFieldValue('logoTextColor');
-			if(!isset($logoTextColor)) $logoTextColor="666";
-			$options->setValue('logoTextColor',$logoTextColor);
-			$logoTextSize = $siteMap->getFieldValue('logoTextSize');
-			if(!isset($logoTextSize)) $logoTextSize="22px";
-			$options->setValue('logoTextSize',$logoTextSize);
-			$menuBgColor = $siteMap->getFieldValue('menuBgColor');
-			if(!isset($menuBgColor)) $menuBgColor="ccc";
-			$options->setValue('menuBgColor',$menuBgColor);
-			$menuTextColor = $siteMap->getFieldValue('menuTextColor');
-			if(!isset($menuTextColor)) $menuTextColor="fff";
-			$options->setValue('menuTextColor',$menuTextColor);
-			$titleTextColor = $siteMap->getFieldValue('titleTextColor');
-			if(!isset($titleTextColor)) $titleTextColor="696969";
-			$options->setValue('titleTextColor',$titleTextColor);
-			$menuTextHoverColor = $siteMap->getFieldValue('menuTextHoverColor');
-			if(!isset($menuTextHoverColor)) $menuTextHoverColor="5c523d";
-			$options->setValue('menuTextHoverColor',$menuTextHoverColor);
-			$titleTextSize = $siteMap->getFieldValue('titleTextSize');
-			if(!isset($titleTextSize)) $titleTextSize="24px";
-			$options->setValue('titleTextSize',$titleTextSize);
-			$publicCommentsBgColor = $siteMap->getFieldValue('publicCommentsBgColor');
-			if(!isset($publicCommentsBgColor)) $publicCommentsBgColor="ccc";
-			$options->setValue('publicCommentsBgColor',$publicCommentsBgColor);
-			$publicCommentsTextColor = $siteMap->getFieldValue('publicCommentsTextColor');
-			if(!isset($publicCommentsTextColor)) $publicCommentsTextColor="fff";
-			$options->setValue('publicCommentsTextColor',$publicCommentsTextColor);
-			$footerBgColor = $siteMap->getFieldValue('footerBgColor');
-			if(!isset($footerBgColor)) $footerBgColor="696969";
-			$options->setValue('footerBgColor',$footerBgColor);
-			$footerTextColor = $siteMap->getFieldValue('footerTextColor');
-			if(!isset($footerTextColor)) $footerTextColor="fff";
-			$options->setValue('footerTextColor',$footerTextColor);
-			$linkTextColor = $siteMap->getFieldValue('linkTextColor');
-			if(!isset($linkTextColor)) $linkTextColor="646eff";
-			$options->setValue('linkTextColor',$linkTextColor);
-			$evenArticleBgColor = $siteMap->getFieldValue('evenArticleBgColor');
-			if(!isset($evenArticleBgColor)) $evenArticleBgColor="fff";
-			$options->setValue('evenArticleBgColor',$evenArticleBgColor);
-			$oddArticleBgColor = $siteMap->getFieldValue('oddArticleBgColor');
-			if(!isset($oddArticleBgColor)) $oddArticleBgColor="ebecff";
-			$options->setValue('oddArticleBgColor',$oddArticleBgColor);
+			// maps page options
+			$this->cms_initializePageOptions($options, $intro, $siteMap);
 			
 			// gets page Logo
 			$logo = $this->cms_getLogo($options);
@@ -608,52 +532,44 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			
 			// gets CSS definitions
 			$css = $this->cms_getCSS($options);
-			if(isset($css)) $options->setValue('css',$css);
+
 			// gets JS code
 			$js = $this->cms_getJSCode($options);
+			
 			//gets page footer
 			$footer = $this->cms_getFooter($options);
 			// top link
 			$atopLink = '<a href="./'.$language.'#top">▲ '.$transS->t($principal,"cmsAnchorTop",null,$language).'</a>';
+			$options->setValue('atopLink', $atopLink);
 			
 			// renders header
-			echo $this->cms_composeHeader($options,$logo,$menu,$introContent,$enablePublicComments,$introComments)."\n";
+			echo $this->cms_composeHeader($options,$css,$logo,$menu,$intro)."\n";
 			
 			// renders article content
 			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
-					lf(
-							fsl(fs('contentTitle'),fs('contentHTML'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
-							lxAnd(lxEq(fs('contentType'),'content'),lxEq(fs('status'),'published')),
-							fskl(fsk('contentPosition'))
-							)),
-					dfasl(
-							dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fx('concat',
-									fx('htmlStartTag','div','class','wigii-cms','style',fx('oCall',$this,'cms_getArticleStyle',fs_e('this'))),"\n",
-									fx('htmlStartTag','div','class','wigii-cms title', 'id', fs_e('id')),
-									fx('htmlStartTag','div', 'class', 'wigii-cms title-content'),
-									fx('first',fx('getAttr',fs('contentTitle'),$language),
-											fx('concat',fx('htmlStartTag', 'p'), $transS->t($principal,"cmsNoTitleAvailable",null,$language).$languages[$language],' ',
-													fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
-													fx('htmlEndTag', 'p'))
-											),
-									fx('htmlEndTag','div'),
-									fx('htmlStartTag','div','class', 'wigii-cms a-top'),$atopLink,fx('htmlEndTag','div'),
-									fx('htmlEndTag','div'),"\n",
-									fx('htmlStartTag','div','class','wigii-cms content'),fx('first',fx('getAttr',fs('contentHTML'),$language),
-											fx('concat',fx('htmlStartTag', 'p'),$transS->t($principal,"cmsNoContentAvailable",null,$language).$languages[$language],' ',
-													fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
-													fx('htmlEndTag', 'p'))
-											),
-									//fx('htmlStartTag','p','style','text-align:center;'),$this->cms_getArticleSep($options),fx('htmlEndTag','p'),
-									fx('htmlEndTag','div'),"\n",
-									fx('htmlEndTag','div'),"\n")
-									),
-							dfas('StringSepDFA',
-									'setSeparator',
-									"\n"),
-							dfas('EchoDFA')
-							)
-					);
+				lf(
+					fsl(fs('contentType'),fs('contentTitle'),fs('contentHTML'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
+					lxAnd(lxEq(fs('contentType'),'content'),lxEq(fs('status'),'published')),
+					fskl(fsk('contentPosition'))
+				)),
+				dfasl(
+					/* dispatches the composition of the article based on its contentType */
+					dfas('CallbackDFA','setProcessDataChunkCallback',function($article,$callbackDFA) use($options){
+						$article = $article->getDbEntity();
+						$articleType = $article->getFieldValue('contentType');
+						try {
+							switch($articleType) {
+								case 'content': $this->cms_composeContentArticle($article, $options, $callbackDFA); break;
+							}
+						}
+						catch(Exception $e) {
+							$this->publishException($e);
+						}
+					}),							
+					dfas('StringSepDFA', 'setSeparator',"\n"),
+					dfas('EchoDFA')
+				)
+			);
 			
 			// renders footer
 			echo "\n".$this->cms_composeFooter($options,$footer,$js);
@@ -664,6 +580,107 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		}
 		$this->executionSink()->publishEndOperation("cms_getContent", $principal);
 		return $returnValue;
+	}
+	/**
+	 * Pushes some JS code to the browser.
+	 * This method can be called from anywhere.
+	 * @param String $code some valid js code
+	 */
+	protected function addJsCode($code) {
+		if(!empty($code)) $this->jsCode .= $code.'; ';
+	}
+	/**
+	 * @return String returns the content of the JS queue
+	 */
+	protected function getJsCode() {
+		return $this->jsCode;
+	}
+	/**
+	 * Publishes an exception as HTML at the current position in the html stream
+	 * @param Exception $e
+	 */
+	protected function publishException($e) {
+		if($e instanceof ServiceException) $e = $e->getWigiiRootException();
+		if(isset($e)) {
+			echo '<p style="color:red;font-weight:bold;">'.$e->getCode().' '.$e->getMessage().'</p>';
+		}
+	}
+	/**
+	 * Renders an article of type content
+	 * @param Element $contentArticle article of type content
+	 * @param WigiiBPLParameter $options the current set of page options
+	 * @param CallbackDFA $callbackDFA current data flow activity and context
+	 */
+	public function cms_composeContentArticle($contentArticle,$options,$callbackDFA) {
+		$transS = ServiceProvider::getTranslationService();
+		$language = $options->getValue('language');
+		$languages = $options->getValue('languages');
+		$atopLink = $options->getValue('atopLink');
+		// uses an Fx to transform the article element to HTML, but could use another piece of code.
+		$returnValue = $this->evaluateFuncExp(fx('element2value',$contentArticle,
+			fx('concat',
+				fx('htmlStartTag','div','class','wigii-cms','style',fx('oCall',$this,'cms_getArticleStyle',fs_e('this'))),"\n",
+				fx('htmlStartTag','div','class','wigii-cms title', 'id', fs_e('id')),
+				fx('htmlStartTag','div', 'class', 'wigii-cms title-content'),
+				fx('first',fx('getAttr',fs('contentTitle'),$language),
+						fx('concat',fx('htmlStartTag', 'p'), $transS->t($principal,"cmsNoTitleAvailable",null,$language).$languages[$language],' ',
+								fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
+								fx('htmlEndTag', 'p'))
+						),
+				fx('htmlEndTag','div'),
+				fx('htmlStartTag','div','class', 'wigii-cms a-top'),$atopLink,fx('htmlEndTag','div'),
+				fx('htmlEndTag','div'),"\n",
+				fx('htmlStartTag','div','class','wigii-cms content'),fx('first',fx('getAttr',fs('contentHTML'),$language),
+						fx('concat',fx('htmlStartTag', 'p'),$transS->t($principal,"cmsNoContentAvailable",null,$language).$languages[$language],' ',
+								fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
+								fx('htmlEndTag', 'p'))
+						),
+				//fx('htmlStartTag','p','style','text-align:center;'),$this->cms_getArticleSep($options),fx('htmlEndTag','p'),
+				fx('htmlEndTag','div'),"\n",
+				fx('htmlEndTag','div'),"\n")
+			)
+		);
+		$callbackDFA->writeResultToOutput($returnValue);
+	}
+	/**
+	 * Initializes the bag of options with some key/value pairs found into the intro and site map elements
+	 * @param WigiiBPLParameter $options the bag of options for the current page
+	 * @param Element $intro the intro element
+	 * @param Element $siteMap the site map element
+	 * @return WigiiBPLParameter the updated bag of options
+	 */
+	protected function cms_initializePageOptions($options,$intro,$siteMap) {
+		if(!isset($options)) throw new FuncExpEvalException('options must be a non null instance of WigiiBPLParameter', FuncExpEvalException::INVALID_ARGUMENT);
+		// Extracts page options from introduction element
+		if(isset($intro)) {
+			$this->mapField2Option('siteTitle',$intro,$options,null,'title');
+			$this->mapField2Option('metaDescription',$intro,$options);
+			$this->mapField2Option('metaKeywords',$intro,$options);
+			$this->mapField2Option('metaAuthor',$intro,$options);
+			$this->mapField2Option('introBgColor',$intro,$options);
+			$this->mapField2Option('introBgAlpha',$intro,$options);
+			$this->mapField2Option(fs('imgIntroBG','url'),$intro,$options);			
+		}
+		// Extracts page options from site map element
+		if(isset($siteMap)) {
+			$this->mapField2Option('forceHeight',$siteMap,$options,false);
+			$this->mapField2Option('forceHeightFirst',$siteMap,$options,true);
+			$this->mapField2Option('marginWidth',$siteMap,$options,"11%");
+			$this->mapField2Option('logoTextColor',$siteMap,$options,"666");
+			$this->mapField2Option('logoTextSize',$siteMap,$options,"22px");
+			$this->mapField2Option('menuBgColor',$siteMap,$options,"ccc");
+			$this->mapField2Option('menuTextColor',$siteMap,$options,"fff");			
+			$this->mapField2Option('titleTextColor',$siteMap,$options,"696969");
+			$this->mapField2Option('menuTextHoverColor',$siteMap,$options,"5c523d");
+			$this->mapField2Option('titleTextSize',$siteMap,$options,"24px");
+			$this->mapField2Option('publicCommentsBgColor',$siteMap,$options,"ccc");
+			$this->mapField2Option('publicCommentsTextColor',$siteMap,$options,"fff");
+			$this->mapField2Option('footerBgColor',$siteMap,$options,"696969");
+			$this->mapField2Option('footerTextColor',$siteMap,$options,"fff");
+			$this->mapField2Option('linkTextColor',$siteMap,$options,"646eff");
+			$this->mapField2Option('evenArticleBgColor',$siteMap,$options,"fff");
+			$this->mapField2Option('oddArticleBgColor',$siteMap,$options,"ebecff");
+		}
 	}
 	/**
 	 * Generates a String used as an inline Style for the given article
@@ -691,7 +708,16 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		}
 		return $returnValue;
 	}
-	protected function cms_composeHeader($options,$logo,$menu,$intro,$enablePublicComments,$introComments) {
+	/**
+	 * Composes the page header
+	 * @param WigiiBPLParameter $options some rendering options
+	 * @param String $css a custom CSS section
+	 * @param String $logo the html to insert the logo
+	 * @param String $menu the html of the menu
+	 * @param Element $intro the introduction element
+	 * @return String the complete HTML string of the header of the page
+	 */
+	protected function cms_composeHeader($options,$css,$logo,$menu,$intro) {
 		$transS = ServiceProvider::getTranslationService();
 		$principal = $this->getPrincipal();
 		$language = $options->getValue('language');
@@ -713,6 +739,20 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$s = $options->getValue('imgIntroBG');
 		if($s) $style .= "background:url('".$s."') no-repeat center center; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover; background-size: cover;";
 		
+		// stores css string into options
+		if(!empty($css)) $options->setValue('css',$css);
+		
+		// Retrieves intro info
+		$introContent = $intro->getFieldValue('contentIntro');
+		if(is_array($introContent)) $introContent = $introContent[$language];
+		$enablePublicComments = $intro->getFieldValue('enablePublicComments');
+		$introComments = $intro->getFieldValue('introComments');
+		// saves some options used into the js part
+		if($enablePublicComments) {
+			$options->setValue('enablePublicComments',true);
+			$options->setValue('introElementId',$intro->getId());
+		}
+		
 		return $this->cms_getHtmlHeader($options)."\n<body>".
 				'<div class="wigii-globalContainer">'."\n".
 				(empty($logo)&&empty($menu)?' ':'<div class="wigii-menu">').
@@ -726,14 +766,34 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 						: '').
 						'<div class="wigii-cms" style="'.$style.'">'."\n".
 						'<div class="wigii-cms title"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$this->cms_getLanguageMenu($options).'</div></div>'."\n".
-						'<div class="wigii-cms content">'.(empty($intro)?' ':$intro).'</div>'."\n".
+						'<div class="wigii-cms content">'.(empty($introContent)?' ':$introContent).'</div>'."\n".
 						'</div>';
 	}
+	/**
+	 * Composes the page footer
+	 * @param WigiiBPLParameter $options some rendering options
+	 * @param String $footer the html of the footer
+	 * @param String $js some custom js to send to browser
+	 * @return String the html string of the page footer
+	 */
 	protected function cms_composeFooter($options,$footer,$js) {
-		//return '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>'.
-		return '<script>
-var enableArticleResize = '.($options->getValue("forceHeight") ? 'true' : 'false').';
-var enableFirstArticleResize = '.($options->getValue("forceHeightFirst") ? 'true' : 'false').';
+		$transS = ServiceProvider::getTranslationService();
+		$principal = $this->getPrincipal();
+		$language = $options->getValue('language');
+		
+		// Variables
+		$forceHeight = ($options->getValue("forceHeight") ? 'true' : 'false');
+		$forceHeightFirst = ($options->getValue("forceHeightFirst") ? 'true' : 'false');
+		$jsPublicComments = ($options->getValue("enablePublicComments")? $this->cms_getPublicCommentsJS($options):'');
+		$jsQueue = $this->getJsCode();
+		$footer = (!empty($footer)?'<div class="wigii-footer wigii-cms content">'.$footer.'</div>':'');
+		$js = (!empty($js)?"<script>".$js."</script>":'');
+		
+		// Creates footer
+		$returnValue = <<<PAGEFOOTER
+<script>
+var enableArticleResize = $forceHeight;
+var enableFirstArticleResize = $forceHeightFirst;
 $(document).ready(function(){
 	function resize(e){
 		$("div#top").height($("div.wigii-menu").outerHeight());
@@ -754,11 +814,6 @@ $(document).ready(function(){
 		if(this.hash !== ""){
 			/* check if link goes in a new location from the current location */
 			var href = $(this).attr("href")+"";
-			//alert(this.hash);
-			//alert(window.location);
-			//alert(href);
-			//alert(href.substr(0,1));
-			//alert(href.split("#")[0]);
 			sameLocation = href.substr(0,1)=="." || href.substr(0,1)=="#" || href.split("#")[0]==(window.location+("")).split("#")[0];
 		}
 		if (!fromClick || sameLocation) {
@@ -768,16 +823,16 @@ $(document).ready(function(){
 				e.preventDefault();
 				hash = this.hash;
 				if($(this).parents("#wigii-logo").length || $(this).parent().hasClass("a-top")){
-					/* do nothing $(this).addClass("over").append("<span class=\"wigii-arrow\"> ▲</span>"); */
+					/* do nothing $(this).addClass("over").append('<span class="wigii-arrow"> ▲</span>'); */
 				} else {
-					$(this).addClass("over").append("<span class=\"wigii-arrow\"> ▼</span>");
+					$(this).addClass("over").append('<span class="wigii-arrow"> ▼</span>');
 				}
 			} else {
 				hash = window.location.hash;
-				if($(\'div.wigii-menu a[href*="\'+hash+\'"]\').parents("#wigii-logo").length  || $(\'div.wigii-menu a[href*="\'+hash+\'"]\').parent().hasClass("a-top")){
+				if($('div.wigii-menu a[href*="'+hash+'"]').parents("#wigii-logo").length  || $('div.wigii-menu a[href*="'+hash+'"]').parent().hasClass("a-top")){
 					/* do nothing */
 				} else {
-					$(\'div.wigii-menu a[href*="\'+hash+\'"]\').addClass("over").append("<span class=\"wigii-arrow\"> ▼</span>");
+					$('div.wigii-menu a[href*="'+hash+'"]').addClass("over").append('<span class="wigii-arrow"> ▼</span>');
 				}
 			}
 			/* if hash tag exist in the page */
@@ -795,69 +850,84 @@ $(document).ready(function(){
 			}
 		}
 	}
-	'.($options->getValue("enablePublicComments") ? '
-		$("div.wigii-cms-add-public-comments").click(function(){
-			if(!$("button",this).length){
-				$(this).append("<br /><input type=\"text\" placeholder=\"'.ServiceProvider::getTranslationService()->t($this->getPrincipal(),"first_name", null, $options->getValue('language'))." ".ServiceProvider::getTranslationService()->t($this->getPrincipal(),"last_name", null, $options->getValue('language')).'\" style=\"box-sizing:border-box;width:100%;margin-top:5px;margin-bottom:2px;\"/><textarea style=\"box-sizing:border-box;width:100%;margin-bottom:5px;\"></textarea><br /><button>Ok</button>");
-				$(":input:first",this).focus();
-				autosize($("textarea",this).css("max-height",250).css("min-height",30));
-				$("textarea",this).wordlimit({ allowed: 77 });
-				$("button", this).click(function(e){
-					var name = $(this).prev().prev().prev().val();
-					var message = $(this).prev().prev().val();
-					if(!name){
-						$(this).prev().prev().prev().css("border-color","red");
-					} else {
-						$(this).prev().prev().prev().css("border-color","");
-					}
-					if(!message){
-						$(this).prev().prev().css("border-color","red");
-					} else {
-						$(this).prev().prev().css("border-color","");
-					}
-					if(name && message){
-						var myAjax = new jQuery.ajax({
-							type: "POST",
-							url: encodeURI("'.SITE_ROOT.$this->getPrincipal()->getWigiiNamespace()->getWigiiNamespaceUrl().'/CMS/www/addPublicComment/'.$options->getValue("introElementId").'"),
-							success : function(data){ $("div.wigii-cms-add-public-comments :input,  div.wigii-cms-add-public-comments br").remove(); $("#wigii-cms-public-comments-content").html(data); },
-							cache:false,
-							crossDomain: true,
-							xhrFields: {withCredentials: true},							
-							data: {
-								name: name,
-								addJournalItemMessage: message,
-								elementId: '.$options->getValue("introElementId").',
-								journalFieldName: "introComments",
-								toRefreshId: "wigii-cms-public-comments-content"
-							},
-							error: function(data){
-								var fxError = data.responseXML;
-								wigii("HelpService").showFloatingHelp($("#wigii-cms-public-comments-content"),e, 
-									wigii().exception2html($(fxError).find("exception"),undefined),
-									{localContent:true,position:"NW",removeOnClose:true}
-								);
-							}
-						});
-					}
-				});
-			}
-		});
-	' : '').'
+	$jsPublicComments
 	resize();
 	scrollToHash();
 	$(window).resize(function(e){ resize(e); });
 	$("a").click(scrollToHash);
-	window.onhashchange = function() { scrollToHash(); }
+	window.onhashchange = function() { scrollToHash(); };
+	$jsQueue
 });
 </script>
-'.
-(empty($footer)?' ':'<div class="wigii-footer wigii-cms content">'.$footer.'</div>').
-//'<div class="wigii-cms">'."\n".
-		//'<div class="wigii-cms title" id="bottom"><div class="wigii-cms title-content"> </div><div class="wigii-cms a-top">'.$atopLink.'</div></div>'."\n".
-		//'<div class="wigii-cms content">'.(empty($footer)?' ':$footer).'</div>'."\n".
-		//'</div>'."\n".
-		(!empty($js)?"<script>".$js."</script>\n":'')."</body>\n</html>";
+$footer
+$js
+</body>
+</html>
+PAGEFOOTER;
+
+		return $returnValue;
 	}
+	
+	
+	protected function cms_getPublicCommentsJS($options) {
+		$transS = ServiceProvider::getTranslationService();
+		$principal = $this->getPrincipal();
+		$language = $options->getValue('language');
+		
+		$introElementId = $options->getValue("introElementId");
+		$publicCommentsNamePlaceHolder = $transS->t($principal,"first_name", null, $language)." ".$transS->t($principal,"last_name", null, $language);
+		$publicCommentsPostUrl = SITE_ROOT.$principal->getWigiiNamespace()->getWigiiNamespaceUrl().'/CMS/www/addPublicComment/'.$introElementId;
+		$returnValue = <<<JSPUBLICCOMMENTS
+$("div.wigii-cms-add-public-comments").click(function(){
+	if(!$("button",this).length){
+		$(this).append('<br /><input type="text" placeholder="$publicCommentsNamePlaceHolder" style="box-sizing:border-box;width:100%;margin-top:5px;margin-bottom:2px;"/><textarea style="box-sizing:border-box;width:100%;margin-bottom:5px;"></textarea><br /><button>Ok</button>');
+		$(":input:first",this).focus();
+		autosize($("textarea",this).css("max-height",250).css("min-height",30));
+		$("textarea",this).wordlimit({ allowed: 77 });
+		$("button", this).click(function(e){
+			var name = $(this).prev().prev().prev().val();
+			var message = $(this).prev().prev().val();
+			if(!name){
+				$(this).prev().prev().prev().css("border-color","red");
+			} else {
+				$(this).prev().prev().prev().css("border-color","");
+			}
+			if(!message){
+				$(this).prev().prev().css("border-color","red");
+			} else {
+				$(this).prev().prev().css("border-color","");
+			}
+			if(name && message){
+				var myAjax = new jQuery.ajax({
+					type: "POST",
+					url: encodeURI("$publicCommentsPostUrl"),
+					success : function(data){ $("div.wigii-cms-add-public-comments :input,  div.wigii-cms-add-public-comments br").remove(); $("#wigii-cms-public-comments-content").html(data); },
+					cache:false,
+					crossDomain: true,
+					xhrFields: {withCredentials: true},
+					data: {
+						name: name,
+						addJournalItemMessage: message,
+						elementId: $introElementId,
+						journalFieldName: "introComments",
+						toRefreshId: "wigii-cms-public-comments-content"
+					},
+					error: function(data){
+						var fxError = data.responseXML;
+						wigii("HelpService").showFloatingHelp($("#wigii-cms-public-comments-content"),e,
+							wigii().exception2html($(fxError).find("exception"),undefined),
+							{localContent:true,position:"NW",removeOnClose:true}
+						);
+					}
+				});
+			}
+		});
+	}
+});
+JSPUBLICCOMMENTS;
+		return $returnValue;
+	}
+	
 	/**
 	 * Builds HTML Page intro string
 	 * @param WigiiBPLParameter $options some rendering options
@@ -1159,6 +1229,32 @@ HTMLCSS;
 	}
 	
 	/**
+	 * Gets all the accessible URLs managed by this CMS instance<br/>
+	 * FuncExp signature is: <code>cms_getAllUrls()</code><br/>
+	 * @return Array An array of accessible URLs relative to root.
+	 */
+	public function cms_getAllUrls($args=null) {
+		$principal = $this->getPrincipal();
+		// gets published site maps
+		$returnValue = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)),
+			lf(fsl(fs('siteUrl'),fs('folderId')), lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')))),
+			dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','siteUrl','setValueField','folderId'))
+		);
+		if(!isset($returnValue)) $returnValue = array();
+		// gets all published forward urls
+		$forwardUrls = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)),
+			lf(fsl(fs('fromUrl'),fs('toUrl')), lxAnd(lxEq(fs('contentType'),'forward'),lxEq(fs('status'),'published')))),
+			dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','fromUrl','setValueField','toUrl'))
+		);
+		if(!isset($forwardUrls)) $forwardUrls = array();
+		// merges the two arrays and sorts.
+		$returnValue = array_merge($returnValue,$forwardUrls);
+		$returnValue = array_keys($returnValue);
+		sort($returnValue);
+		return $returnValue;
+	}
+	
+	/**
 	 * Gets the file associated to the given URL<br/>
 	 * FuncExp signature is: <code>cms_getFile(url,options)</code><br/>
 	 * Where arguments are :
@@ -1247,6 +1343,10 @@ HTMLCSS;
 					else readfile($path);
 				}
 				else throw new FuncExpEvalException("No file found at $url", FuncExpEvalException::NOT_FOUND);
+			}
+			// if sitemap.fx then returns the list of accessible URLs
+			elseif($fileName == 'sitemap' && $fileExt == '.fx') {
+				return json_encode($this->cms_getAllUrls(),JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 			}
 			// Else fetches standard File according to mime
 			else {
@@ -1370,7 +1470,7 @@ HTMLCSS;
 		$returnValue.= $header;
 		$returnValue.= "</p>";
 		$returnValue.= '<p>'.nl2br($rm->formatValueToPreventInjection($message)).'</p>';
-		$returnValue.= "<p>&nbsp;</p>";
+		$returnValue.= "<p> </p>";
 		
 		// adds comment to article
 		$returnValue = ServiceProvider::getDataFlowService()->processDataSource($p, elementP($options->getValue('elementId')), dfasl(
@@ -1438,17 +1538,98 @@ HTMLCSS;
 	}
 	
 	/**
-	 * Returns a greater than character
-	 * @return string
+	 * Copies the value of a given field from an element to a bag of options.
+	 * If the value is multilanguage, then uses the language defined in the options to get the right value,
+	 * If the value is null, then can be optionally initialized with a given default value.
+	 * @param String|FieldSelector $fieldName the field name in the element from which to fetch the value, 
+	 * and option name under which the value is stored, except if optionName is defined.
+	 * @param Element $element the element from which to fetch values
+	 * @param WigiiBPLParameter $options the bag of options to be filled
+	 * @param Any $defaultValue a default value if retrieved value is null
+	 * @param String $optionName option name under which to store the option value. If not set, uses the fieldName.
+	 * @return WigiiBPLParameter the updated set of options
 	 */
-	public function txtGt($args) {
-		return '>';
+	private function mapField2Option($fieldName,$element,$options,$defaultValue=null,$optionName=null) {
+		if(!isset($element)) throw new FuncExpEvalException('element cannot be null', FuncExpEvalException::INVALID_ARGUMENT);
+		if(!isset($options)) throw new FuncExpEvalException('options cannot be null', FuncExpEvalException::INVALID_ARGUMENT);		
+		if($fieldName instanceof FieldSelector) {
+			$subFieldName = $fieldName->getSubFieldName();
+			$fieldName = $fieldName->getFieldName();
+		}
+		else $subFieldName = null;
+		
+		if(!isset($optionName)) $optionName = $fieldName;
+		$value = $element->getFieldValue($fieldName,$subFieldName);
+		// if value is null, then puts default value
+		if(!isset($value)) $options->setValue($optionName, $defaultValue);
+		// if value is array and field type is Varchars or Texts then gets the right language
+		elseif(is_array($value)) {
+			$dataType= $element->getFieldList()->getField($fieldName)->getDataType();
+			if($dataType instanceof Varchars || $dataType instanceof Texts) $options->setValue($optionName, $value[$options->getValue('language')]);
+			else $options->setValue($optionName,$value);
+		}
+		// else copies value as-is
+		else $options->setValue($optionName,$value);
+		return $options;
 	}
+	
+	
+	// Func Exp standard candidates
+	
 	/**
-	 * Returns a lower than character
-	 * @return string
+	 * Transforms a given element to a value using a transformation FuncExp<br/>
+	 * FuncExp signature : <code>element2value(element,fx)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) element: Element|Record. An element or a record to be transformed into a value.
+	 * - Arg(1) fx: FuncExp|FieldSelector. A transformation FuncExp which returns a value based on the element. Or a FieldSelector returning a value of the element.
+	 * @return Any the result of the FuncExp
 	 */
-	public function txtLt($args) {
-		return '<';
+	public function element2value($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$p = $this->getPrincipal();
+		if($nArgs < 2) throw new FuncExpEvalException('element2value takes two arguments, the element to transform and a transformation FuncExp or FieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
+		$element = $this->evaluateArg($args[0]);
+		if(!isset($element)) throw new FuncExpEvalException('element cannot be null', FuncExpEvalException::INVALID_ARGUMENT);
+		$fx = $args[1];
+		if(($fx instanceof FuncExp) && $this->isFxOriginPublic()) $fx->setOriginIsPublic();
+		
+		// gets RecordEvaluator
+		if($element instanceof Element) $evaluatorClassName = (string)ServiceProvider::getConfigService()->getParameter($p, $element->getModule(), "Element_evaluator");
+		else $evaluatorClassName = null;
+		if(empty($evaluatorClassName)) $evaluatorClassName = (string)ServiceProvider::getConfigService()->getParameter($p, ServiceProvider::getExecutionService()->getCrtModule(), "Element_evaluator");
+		$fxEval= ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
+		// injects the context
+		$fxEval->setContext($p, $element);
+		// gets vm
+		$fxEval= ServiceProvider::getFuncExpVM($p, $fxEval);
+		$fxEval->setFreeParentEvaluatorOnFreeMemory(true);
+
+		// evaluates the expression
+		$returnValue = null;
+		try {
+			$returnValue = $fxEval->evaluateFuncExp($fx, $this);
+			$fxEval->freeMemory();
+		}
+		catch(Exception $e) {
+			$fxEval->freeMemory();
+			throw $e;
+		}
+		return $returnValue;
+	}
+	
+	/**
+	 * json_encode. See http://www.php.net/json_encode
+	 */
+	public function json_encode($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException("json_encode function takes at least one parameter the value to encode", FuncExpEvalException::INVALID_ARGUMENT);
+		$value = $this->evaluateArg($args[0]);
+		if($nArgs>1) $options = $this->evaluateArg($args[1]);
+		else $options=0;
+		if($nArgs>2) $depth = $this->evaluateArg($args[2]);
+		else $depth=512;
+		$returnValue = json_encode($value,$options,$depth);
+		if($returnValue === false) throw new FuncExpEvalException('JSON encode error '.json_last_error().' '.json_last_error_msg(), FuncExpEvalException::INVALID_ARGUMENT);
+		return $returnValue;
 	}
 }

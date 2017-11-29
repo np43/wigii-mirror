@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<!-- Config version G99 -->
+<!-- Config version G114 -->
 <CMS>
 
 	<parameters
@@ -198,13 +198,13 @@
 
 	<listView isDefaultView="1">
 		<fields>
-			<c1 field="contentType" width="120" isDefaultGroupByKey="1" ignoreNotification="1"/>			
-			<c2 field="contentSummary" width="null" ignoreNotification="1"/>
-			<c3 field="status" width="120" ignoreNotification="1"/>
+			<c1 field="contentType" width="120" isDefaultGroupByKey="1" />			
+			<c2 field="contentSummary" width="null" />
+			<c3 field="status" width="120" />
 			<ch1 field="contentPosition" hidden="1" isDefaultSortByKey="1"/>
 			<ch2 field="siteTitle" hidden="1" notIgnoreNotification="1"/>
-			<e1 elementAttribut="sys_date" width="120" defaultSorted=" DESC " ignoreNotification="1"/>
-			<e2 elementAttribut="sys_username" width="140" ignoreNotification="1"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
+			<e1 elementAttribut="sys_date" width="120" defaultSorted=" DESC " />
+			<e2 elementAttribut="sys_username" width="140"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
 		</fields>
 	</listView>
 	
