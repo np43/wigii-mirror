@@ -74,100 +74,9 @@ class DetailElementFormExecutor extends FormExecutor {
 			if(!isset($parentFieldXml)) throw new ConfigServiceException("Could not retrieve XML configuration of parent field '".$config->getCurrentFieldName()."' in module ".$config->getCurrentModule()->getModuleName(), ConfigServiceException::CONFIGURATION_ERROR);
 			$parentReadonly = $parentFieldXml['readonly']=='1' || $parentFieldXml['disabled']=='1';
 		}
+
+		include(TEMPLATE_PATH . "detailElementToolsBar.php");        
 		
-		//display the toolbar only when editable, the feedback and the link is integrated in the bottom of the element:
-		$crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
-		$crtModule = $exec->getCrtModule()->getModuleUrl();
-		if($elementP->getRights()->canWriteElement() || $element->isSubElement()){
-			?><div class="T" href="#<?=$element->getId();?>" style="width: 100%; max-width:100%;"><?
-			if($elementP->getRights()->canWriteElement()){
-				$enableElementState = $this->computeEnableElementState($p, $exec, $elementP);
-				//edit
-				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked() || $parentReadonly)) {
-					?><div class="H el_edit"><?=$transS->t($p, "edit");?></div><?
-				}
-				//copy
-				if(!$elementP->isParentElementState_blocked() && !$parentReadonly) {
-					?><div class="H el_copy"><?=$transS->t($p, "copy");?></div><?
-				}
-				//element status
-				if($enableElementState > 0 && !$parentReadonly){
-					?><div class="H el_status"><?=$transS->t($p, "changeElementStates");?><?
-						?><div class="cm SBB elementStatusMenu" style="display:none;" ><?
-							?><div class="exit SBB">x</div><?
-							if($elementP->isEnabledElementState_locked()){
-								?><div class="H fB <?=($element->isState_locked() ? 'checked' : '');?>" href="#locked"><?
-									echo $transS->t($p, "state_locked");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_blocked()){
-								?><div class="H fB <?=($element->isState_blocked() ? 'checked' : '');?>" href="#blocked"><?
-									echo $transS->t($p, "state_blocked");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_important1()){
-								?><div class="H fB <?=($element->isState_important1() ? 'checked' : '');?>" href="#important1"><?
-									echo $transS->t($p, "state_important1");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_important2()){
-								?><div class="H fB <?=($element->isState_important2() ? 'checked' : '');?>" href="#important2"><?
-									echo $transS->t($p, "state_important2");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_finalized()){
-								?><div class="H fB <?=($element->isState_finalized() ? 'checked' : '');?>" href="#finalized"><?
-									echo $transS->t($p, "state_finalized");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_approved()){
-								?><div class="H fB <?=($element->isState_approved() ? 'checked' : '');?>" href="#approved"><?
-									echo $transS->t($p, "state_approved");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_dismissed()){
-								?><div class="H fB <?=($element->isState_dismissed() ? 'checked' : '');?>" href="#dismissed"><?
-									echo $transS->t($p, "state_dismissed");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_archived()){
-								?><div class="H fB <?=($element->isState_archived() ? 'checked' : '');?>" href="#archived"><?
-									echo $transS->t($p, "state_archived");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_deprecated()){
-								?><div class="H fB <?=($element->isState_deprecated() ? 'checked' : '');?>" href="#deprecated"><?
-									echo $transS->t($p, "state_deprecated");
-								?></div><?
-							}
-							if($elementP->isEnabledElementState_hidden()){
-								?><div class="H fB <?=($element->isState_hidden() ? 'checked' : '');?>" href="#hidden"><?
-									echo $transS->t($p, "state_hidden");
-								?></div><?
-							}
-						?></div><?
-					?></div><?
-				}
-				//modify groups sharing
-				if(!$element->isSubElement() && !$element->isState_blocked() && !$parentReadonly){
-					?><div class="H el_organize"><?=$transS->t($p, "organize");?></div><?
-				}
-
-				//delete
-				if(!($element->isState_blocked() || $elementP->isParentElementState_blocked() || $parentReadonly) &&
-					($config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && $elementP->getRights()->canModify() ||
-					 $config->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')!="1") &&
-					 ((string)$config->getParameter($p, $exec->getCrtModule(),'Element_beforeDeleteExp')!=="0")) {
-					?><div class="H el_delete"><?=$transS->t($p, "delete");?></div><?
-				}
-			}
-
-			// sub element back button
-			if($element->isSubElement()) {
-				?><div class="H el_back"><?=$transS->t($p, "backToParent");?></div><?
-			}
-			?></div><div class="clear"></div><?
-		}
 		//add a div here for can scroll all content except the menu above
 		?><div id="scrollElement" style="<?=(!$this->isWorkzoneViewDocked())? 'overflow:auto;':''?> "><?
 		?><div id="<?=$this->getFormId(); ?>" class="elementDetail" style="width: 100%;"><?
@@ -410,17 +319,21 @@ class DetailElementFormExecutor extends FormExecutor {
 			$findSelector = ".find('.T div:last').after";
 		}
 
+        if($this->isWorkzoneViewDocked()) {
+            $exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_closeDetails\"><span class=\"glyphicon glyphicon-remove\" aria-hidden=\"true\"></span>".$transS->t($p, "close")."</a>');");
+        }
+
 		// feedback
 		if($config->getParameter($p, $exec->getCrtModule(), "FeedbackOnElement_enable")=="1"){
-			$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_feedback\" href=\"#".$element->getId()."\">".$transS->t($p, "feedback")."</a>');");
+			$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_feedback\" href=\"#".$element->getId()."\"><span class=\"glyphicon glyphicon-envelope\" aria-hidden=\"true\"></span> ".$transS->t($p, "feedback")."</a>');");
 		}
 		//link
 		//if(!$element->isSubElement())
-		$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_sendLink\" href=\"javascript:mailToFromLink(\\'".$idAnswer."\\', \\'".str_replace("//", '\/\/', $elS->getUrlForElement($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $element))."\\');\">".$transS->t($p, "sendLink")."</a>');");
+		$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_sendLink\" href=\"javascript:mailToFromLink(\\'".$idAnswer."\\', \\'".str_replace("//", '\/\/', $elS->getUrlForElement($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $element))."\\');\"><span class=\"glyphicon glyphicon-link\" aria-hidden=\"true\"></span> ".$transS->t($p, "sendLink")."</a>');");
 
 		//print
 		//use the same context for print, to use the same configuration
-		$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_printDetails\" href=\"".str_replace("//", '\/\/', SITE_ROOT."usecontext/".$exec->getCrtContext()."/__/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/print/".$element->getId())."\" target=\"_blank\" >".$transS->t($p, "printDetails")."</a>');");
+		$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_printDetails\" href=\"".str_replace("//", '\/\/', SITE_ROOT."usecontext/".$exec->getCrtContext()."/__/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/print/".$element->getId())."\" target=\"_blank\" ><span class=\"glyphicon glyphicon-print\" aria-hidden=\"true\"></span> ".$transS->t($p, "printDetails")."</a>');");
 
 		//$exec->addJsCode("$('#elementDialogContent .tags').corner();");
 		//if(!$element->isSubElement()) $exec->addJsCode("$('#".$idAnswer."').parent().css('overflow','visible');");
@@ -428,10 +341,6 @@ class DetailElementFormExecutor extends FormExecutor {
 		//back to parent on close sub item
 		if($element->isSubElement()) {
 			$exec->addJsCode("$('#".$idAnswer."').parents('.ui-dialog').find('.ui-dialog-titlebar-close').unbind('click').click(function(e){ $(this).parents('.ui-dialog').find('.T .el_back').click(); return false; });");
-		}
-		
-		if($this->isWorkzoneViewDocked()) {
-			$exec->addJsCode("$('#".$idAnswer."')$findSelector('<div class=\"H el_closeDetails\">".$transS->t($p, "close")."</div>');");
 		}
 
 		//since 08.01.2013 all those informations are unified in displayElementAdditionalInformation

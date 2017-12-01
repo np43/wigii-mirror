@@ -16,7 +16,7 @@
 		Notification_includeSenderInNotification="0"
 		Notification_includeOtherNamespaceInUpdateOrSetState="0"
 		Notification_hideElementView="0"
-		Notificatin_hideAccessButton="0"
+		Notification_hideAccessButton="0"
 
 		ExcelExport_enableSysDate="0"
 		ExcelExport_enableCreationSysDate="0"
@@ -136,11 +136,11 @@
 			<integratedFile excelExport="none" type="Files" require="0" keepHistory="8" htmlArea="1" ><label_l01>Write some instructions</label_l01><label_l02>Ecrire des instructions</label_l02></integratedFile>
 			<file excelExport="none" type="Files" require="0" keepHistory="8" ><label_l01>or upload a documentation file</label_l01><label_l02>ou ajouter un fichier de documentation</label_l02></file>
 			<groupInputFiles groupStart="1" noFieldset="1" ><label_l01>Input files</label_l01><label_l02>Fichiers d'entrée</label_l02></groupInputFiles>
-				<file1 excelExport="none" type="Files" require="0" enableForDownloading="0" keepHistory="0"><label_l01>File 1</label_l01><label_l02>Fichier 1</label_l02></file1>
-				<file2 excelExport="none" type="Files" require="0" enableForDownloading="0" keepHistory="0"><label_l01>File 2</label_l01><label_l02>Fichier 2</label_l02></file2>
-				<file3 excelExport="none" type="Files" require="0" enableForDownloading="0" keepHistory="0"><label_l01>File 3</label_l01><label_l02>Fichier 3</label_l02></file3>
-				<file4 excelExport="none" type="Files" require="0" enableForDownloading="0" keepHistory="0"><label_l01>File 4</label_l01><label_l02>Fichier 4</label_l02></file4>
-				<file5 excelExport="none" type="Files" require="0" enableForDownloading="0" keepHistory="0"><label_l01>File 5</label_l01><label_l02>Fichier 5</label_l02></file5>
+				<file1 excelExport="none" type="Files" require="0" enableForDownloading="1" keepHistory="0"><label_l01>File 1</label_l01><label_l02>Fichier 1</label_l02></file1>
+				<file2 excelExport="none" type="Files" require="0" enableForDownloading="1" keepHistory="0"><label_l01>File 2</label_l01><label_l02>Fichier 2</label_l02></file2>
+				<file3 excelExport="none" type="Files" require="0" enableForDownloading="1" keepHistory="0"><label_l01>File 3</label_l01><label_l02>Fichier 3</label_l02></file3>
+				<file4 excelExport="none" type="Files" require="0" enableForDownloading="1" keepHistory="0"><label_l01>File 4</label_l01><label_l02>Fichier 4</label_l02></file4>
+				<file5 excelExport="none" type="Files" require="0" enableForDownloading="1" keepHistory="0"><label_l01>File 5</label_l01><label_l02>Fichier 5</label_l02></file5>
 			<groupInputFiles groupEnd="1" noFieldset="1" />		
 		<groupRight groupEnd="1" expand="1" noFieldset="1" />		
 		<onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='ctlIgnoreReturnValue(setVal(scriptStatus,NULL))'/>

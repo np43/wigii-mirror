@@ -1,0 +1,126 @@
+<?xml version='1.0' standalone='yes'?>
+<filemanager >
+
+	<parameters
+	
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+
+		Notification_enable="1"
+		Notification_enableOnSharing="1"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="1"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="0"
+		Notification_includeSenderInNotification="0"
+		Notification_includeOtherNamespaceInUpdateOrSetState="0"
+		Notification_hideElementView="0"
+		Notification_hideAccessButton="0"
+
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableCreationSysDate="0"
+		ExcelExport_enableId="0"
+
+		Element_enableLockedStatus="0"
+		Element_enableImportant1Status="1"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="0"
+		Element_enableDeprecatedStatus="1"
+		Element_enableHiddenStatus="0"		
+		Element_evaluator="CustomizedElementEvaluator"
+
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_selectAllGroupsOnSearch="1"
+		Group_enableDynamicConfig="1"
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		nbOfLevelToExpandOnInit="0"
+
+		elementTotalWidth="860"
+		elementLabelWidth="380"
+
+		WigiiHelp_onAdd='wigiiHelpOnAdd("0")'
+		WigiiHelp_onModule='wigiiHelpOnModule("0")'
+		WigiiHelp_onEdit='wigiiHelpOnEdit("0")'
+		
+		reloadDetailAfterModify="0"
+		useGoogleServiceToPreviewOfficeDocuments="1"
+
+		trashBinGroup=""
+		/>
+
+	<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				<attribute checked="1" redirect="author" >onElement<label_l01>Owner</label_l01><label_l02>Référant</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+
+	<Notification>
+		<template path="Notification.php" inClientFolder="1" />
+	</Notification>
+
+	<fields >
+		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="500"  />
+			<groupFile groupStart="1" groupHasAtLeastFilled="1" noFieldset="1" noLabel="1" onlyInForm="1" expand="1" />
+				<file 				excelExport="none" type="Files" require="0" enableForDownloading="1" keepHistory="8" ><label_l01>Upload a document</label_l01><label_l02>Ajouter un document</label_l02></file>
+				<integratedFile		excelExport="none" type="Files" require="0" enableForDownloading="1" keepHistory="8" displayContentInDetail="0" htmlArea="1" displayContentInNotification="1" deactivateHTMLPurifier="1"><label_l01>Or write an on-line document <a class="wigiiHelp" href="0" data-wigiihelp="medium"> </a></label_l01><label_l02>Ou écrire un document en ligne</label_l02></integratedFile>
+			<groupFile groupEnd="1" onlyInForm="1" expand="1" noFieldset="1" />
+			<enable type="Booleans" expand="1"><label>Enable publication</label></enable>
+			<publishIn type="Blobs" expand="1"><label>Show in</label></publishIn>
+			<publishTarget type="Attributs" expand="1" divInFormExp='wigiiHelp("0","medium")'><label>Publish through</label>
+				<attribute>none</attribute>
+				<attribute>link<label>link</label></attribute>
+				<attribute>top<label>dialog top</label></attribute>
+				<attribute>left<label>dialog left</label></attribute>
+				<attribute>right<label>dialog right</label></attribute>
+				<attribute>bottom<label>dialog bottom</label></attribute>
+			</publishTarget>
+		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
+		
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="300" class="fieldGroupRight" />
+			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="1"><label_l01>Comments</label_l01><label_l02>Commentaires</label_l02></comments>
+		<groupright groupEnd="1" expand="1" noFieldset="1" />
+		
+		<!-- calculated fields -->
+		<calculatedField 		excelExport="auto" type="Strings" hidden="1" funcExp='implode(", ", implode("",integratedFile.name, integratedFile.type), first(implode("", file.name, file.type)))' ><label_l01>Document name</label_l01><label_l02>Nom du document</label_l02></calculatedField>
+		<calculatedType 		excelExport="auto" type="Strings" htmlArea="1" hidden="1" funcExp='first(formatValueFromFS(integratedFile.mime),formatValueFromFS(file.mime))' ><label> </label></calculatedType>
+		<calculatedDate 		excelExport="auto" type="Dates" hidden="1" includeTime="1" funcExp='first(max(integratedFile.date, file.date), __element.sys_date)' ><label_l01>Modified on</label_l01><label_l02>Modifié le</label_l02></calculatedDate>
+		
+	</fields>
+
+	<selectSearchBar>
+		<fields>
+			<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
+			<e2 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e2>
+		</fields>
+	</selectSearchBar>
+
+	<listView>
+		<fields>
+			<c1 field="calculatedType" width="12" />
+			<c2 isDefaultSortingKey="1" field="calculatedField" width="null"><label_l01>Document name <a class="wigiiHelp" href="0"> </a></label_l01><label_l02>Nom du document</label_l02></c2>
+			<c3 elementAttribut="state_locked" width="12" />
+			<c5 field="calculatedDate" width="106" defaultSorted=" DESC " />
+		</fields>
+	</listView>
+
+</filemanager>

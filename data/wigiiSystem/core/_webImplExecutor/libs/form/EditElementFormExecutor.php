@@ -305,7 +305,7 @@ class EditElementFormExecutor extends FormExecutor {
 				$findSelector = ".find('.T div:last').after";
 			}
 			$exec->addJsCode("
-				$('#".$idAnswer."')$findSelector('<a class=\"H el_deleteDraft\" href=\"javascript:update(\\'confirmationDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/delete/".$this->getRecord()->getId()."/$idAnswer\\', false, {action:\\'persistAndSkipNotify\\'});"."\">".$transS->t($p, "deleteDraft")."</a>');
+				$('#".$idAnswer."')$findSelector('<a class=\"H el_deleteDraft\" href=\"javascript:update(\\'confirmationDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/delete/".$this->getRecord()->getId()."/$idAnswer\\', false, {action:\\'persistAndSkipNotify\\'});"."\"><span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span> ".$transS->t($p, "deleteDraft")."</a>');
 				resize_groupPanel();
 				resize_elementList();
 			");

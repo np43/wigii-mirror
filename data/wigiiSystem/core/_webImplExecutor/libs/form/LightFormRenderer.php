@@ -162,7 +162,7 @@ class LightFormRenderer extends FormRenderer {
 
 		// FIELD INFO PART
 		if($dataType!=null){
-			$additionalInformations = $rm->getAdditionalinInformation($fieldName);
+			$additionalInformations = $rm->getAdditionalInformation($fieldName);
 			if($additionalInformations) $rm->put('<div class="addinfo">'.$additionalInformations.'</div>');
 		}
 		

@@ -40,7 +40,8 @@
 			jsCodeExp,
 			jsCodeInDetailExp,
 			jsCodeInFormExp,			
-			prefixFilter"
+			prefixFilter,
+			class"
 		Field_enableDynamicAttributes="1"
 	/>
 	
@@ -137,7 +138,7 @@
 			<inGroupId type="Attributs" require="1" />
 			<csvSeparator type="Strings" require="1" persistCookie="1" />
 			<csvFile type="Files" />
-			<importInRawData type="Blobs" noWrap="1" height="400" isInLine="1" />
+			<importInRawData type="Blobs" noWrap="1" height="400" isInLine="1" doNotPersist="1"/>
 		</fields>
 	</importElementIn>
 
@@ -147,7 +148,7 @@
 			<fieldKey type="Attributs" require="1" />
 			<csvSeparator type="Strings" require="1" persistCookie="1" />
 			<csvFile type="Files" />
-			<updateInRawData type="Blobs" noWrap="1" height="400" isInLine="1" />
+			<updateInRawData type="Blobs" noWrap="1" height="400" isInLine="1" doNotPersist="1"/>
 		</fields>
 	</updateElementIn>
 
@@ -417,7 +418,7 @@
 	<moduleConfigEdit>
 		<fields>
 			<moduleEditorFilenameField type="Strings" require="1" />
-			<moduleEditorConfigField type="Blobs" require="0" isInLine="1" noWrap="1" height="400" />
+			<moduleEditorConfigField type="Blobs" require="0" isInLine="1" noWrap="1" height="400" doNotPersist="1"/>
 		</fields>
 	</moduleConfigEdit>
 

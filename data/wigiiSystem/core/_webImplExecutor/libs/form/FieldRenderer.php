@@ -99,6 +99,8 @@ class FieldRenderer extends Model {
 			$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage());
 			if($fieldXml["displayAsTitle"]=="1") $rm->put('</h4>');
 			$rm->put('</div>');
+
+            if($fieldXml["displayAsTag"]=="1") $rm->put('<div class="displayAsTag"></div>');
 		}
 
 		//create the group container, 10 is group padding
@@ -121,6 +123,13 @@ class FieldRenderer extends Model {
 
 	protected function leaveCrtFieldGroup($rm, $fieldXml){
 		$this->updateWidthOnLeaveField($fieldXml);
+
+        if($fieldXml["displayAsTag"]=="1"){
+            $rm->put('<div style="clear: both;"></div>');
+            $rm->put('<div class="lessBsp"><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span> Less</div>');
+            $rm->put('<div  class="displayAsTag"></div>');
+        }
+
 		$rm->put('</div></div>'); //close div.value, div.field
 	}
 
@@ -181,7 +190,8 @@ class FieldRenderer extends Model {
 		if(($fieldGroupXml["groupStart"]=="1" || $fieldGroupXml["groupEnd"]=="1") && $useMultipleColumn){
 			//take in consideration the margin-right of 10 for each column except the last one
 			//$totalWidth = floor(($totalWidth-(($useMultipleColumn-1)*10)) / $useMultipleColumn);
-            $totalWidth = floor(($totalWidth-(($useMultipleColumn)*10)) / $useMultipleColumn);
+            $totalWidth = floor(($totalWidth-(($useMultipleColumn)*10)) / $useMultipleColumn) - 10;
+            //$totalWidth = (($totalWidth-5)/$useMultipleColumn);
 		}
 
 		if($labelWidth == null) $labelWidth = floor($totalWidth * ($parentLabelWidth / $parentTotalWidth));

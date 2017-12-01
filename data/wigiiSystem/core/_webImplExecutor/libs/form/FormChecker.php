@@ -429,7 +429,7 @@ class FormChecker implements FieldListVisitor {
 				}
 			}
 		}
-		
+
 		// Box file upload in box folder if the path is not like "box://..."	
 		if ($dataTypeName=="Files" && $fieldHasContent && (!strstr($ff->getRecord()->getFieldValue($fieldName, "path"), "box://")) &&
 			(((string)$fieldParams['boxFolderId']) || $fieldParams['boxAllowUpdate']=='1') && $this->getBoxServiceFormExecutor()->isBoxEnabled()){			
@@ -495,7 +495,7 @@ class FormChecker implements FieldListVisitor {
 			}
 		}
 
-		//if autoSave change fields is posted, update the fieldIsChanged accordingly
+        //if autoSave change fields is posted, update the fieldIsChanged accordingly
 		if($this->isFieldChangedWithAutoSave($fieldName)){
 			$recBag->setChanged($fieldName);
 		}
@@ -512,6 +512,48 @@ class FormChecker implements FieldListVisitor {
 		} catch (Exception $e){
 			$ff->addErrorToField($transS->h($p, $e->getMessage()), $fieldName);
 		}
+
+        //Check if the minDate or maxDate is respected in the field date
+        if($dataTypeName=="Dates" && ($fieldParams['minDate'] || $fieldParams['maxDate'])){
+            $value = $recBag->getValue($ff->getRecord()->getId(), $dataTypeName, $fieldName, "value");
+            $minDate = $fieldParams['minDate'];
+            $maxDate = $fieldParams['maxDate'];
+
+            if(!empty($minDate)){
+                $minDateEval = $ff->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $minDate);
+                if(preg_match('^[0-9]{1,2}\.[0-12]{2}\.\d{4}^', $minDateEval)){
+                    $date = explode('.', $minDateEval);
+                    Dates::fromString($date, $d, $m, $y);
+
+                    $minDate = $d . '.' . $m . '.' . $y;
+                } else{
+                    $minDate = $ff->getRecord()->getFieldValue($minDateEval);
+                }
+            }
+            if(!empty($maxDate)){
+                $maxDateEval = $ff->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $maxDate);
+                if(preg_match('^[0-9]{1,2}\.[0-12]{2}\.\d{4}^', $maxDateEval)){
+                    $date = explode('.', $maxDateEval);
+                    Dates::fromString($maxDateEval, $d, $m, $y);
+
+                    $maxDate = $d . '.' . $m . '.' . $y;
+                } else{
+                    $maxDate = $ff->getRecord()->getFieldValue($maxDateEval);
+                }
+            }
+                if(($minDate) && ($value < $minDate)){
+                    if($value) {
+                        $errorText = $transS->h($p, "endDate_error", $subFieldParams);
+                        $ff->addErrorToField($errorText, $fieldName);
+                    }
+                }
+                if(($maxDate) && ($value > $maxDate)){
+                    if($value){
+                        $errorText = $transS->h($p, "startDate_error", $subFieldParams);
+                        $ff->addErrorToField($errorText, $fieldName);
+                    }
+                }
+        }
 	}
 	
 	/**

@@ -253,7 +253,7 @@ div#editGroupParentMenu li.root{
 	padding:0px;
 }
 #groupAdminForMatrix_treeview li div.divAsSpan, #groupAdminForMatrix_treeview li div.divFolder {
-	background-image:url('../../images/gui/iconsimplefolder.png');
+	background-image:url('../../images/gui/iconsimplefolder2.png');
 	background-repeat:no-repeat;
 	background-position:-8px -1px;
 	padding-left:20px;

@@ -25,6 +25,7 @@
  * GroupP - UserP matrix (Group rights per User and Roles)
  * Created on 20 janv. 10 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair(CWE) on 25.09.2017 to show all users if principal is super admin and not only users in principal's namespace.
  */
 class MatrixGroupPListUserPListRenderer extends MatrixRenderer implements GroupPList, UserPList, UserRPList {
 
@@ -372,9 +373,9 @@ $('#".$this->getId()." .MatrixColHeaders div.noRights').each(function(){
 		if($groupP->getRights() == null) return;
 		$this->crtGroupPForAddUserRP = $groupP;
 		$lf = $this->getAdminContext()->getUserListFilter();
-		//if the folder is in another namespace than the Principal then don't find the roles outside of current namespace
+		//if the folder is in another namespace than the Principal then don't find the roles outside of current namespace, except if super admin		
 		$origLE = $lf->getFieldSelectorLogExp();
-		if($groupP->getGroup()->getWigiiNamespace()->getWigiiNamespaceName()!= $this->getP()->getWigiiNamespace()->getWigiiNamespaceName()){
+		if(!$this->getP()->isWigiiNamespaceCreator() && $groupP->getGroup()->getWigiiNamespace()->getWigiiNamespaceName()!= $this->getP()->getWigiiNamespace()->getWigiiNamespaceName()){
 			$fsle = LogExp::createAndExp();
 			$fsle->addOperand(LogExp::createEqualExp(FieldSelector::createInstance("wigiiNamespace"), $this->getP()->getWigiiNamespace()->getWigiiNamespaceName()));
 			if($origLE){

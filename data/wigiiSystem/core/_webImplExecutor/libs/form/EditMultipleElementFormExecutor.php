@@ -435,18 +435,13 @@ class EditMultipleElementFormExecutor extends EditElementFormExecutor implements
 			if($isKey && $field->getFieldName() == $isKey->getName()){
 				$element->getWigiiBag()->setHidden(true, $field->getFieldName());
 			}
-			$fieldXml = $field->getXml();
-			// hides fields which have no label as the multiple edit doesn't allow to modify them.
-			if($fieldXml["noLabel"] == "1") {
-				$element->getWigiiBag()->setHidden(true, $field->getFieldName());
-			}
 		}
 
 		$this->getTrm()->displayRemainingForms();
 
 		$this->getTrm()->getCaptchaHTML($this);
 
-		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), ($this->isWorkzoneViewDocked())?false:$this->isDialog());
+		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), ($this->isWorkzoneViewDocked())?false:$this->isDialog(), ($this->isWorkzoneViewDocked())?'Cancel':null);
 
 		$this->openDialog($p, $exec, $state);
 

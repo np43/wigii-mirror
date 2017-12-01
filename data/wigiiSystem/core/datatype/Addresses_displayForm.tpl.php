@@ -31,8 +31,8 @@ $dtXml = $field->getDataType()->getXml();
 
 //defining width if existant
 if($parentWidth != null && $labelWidth != null){
-	$valueWidth = " width:".($parentWidth-$labelWidth-5)."px; ";
-	$labelWidth = " width:".($labelWidth)."px; ";
+	$valueWidth = " width:100%; max-width:".($parentWidth-$labelWidth)."px; ";
+	$labelWidth = " width:100%; max-width:".($labelWidth-20)."px; ";
 }
 
 //defining readOnly or disabled

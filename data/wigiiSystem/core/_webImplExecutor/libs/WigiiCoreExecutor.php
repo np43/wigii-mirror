@@ -253,9 +253,6 @@ class WigiiCoreExecutor {
 			$evaluator = ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
 			// injects the context
 			$evaluator->setContext($p, $rec);
-			// gets vm
-			$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
-			$returnValue->setFreeParentEvaluatorOnFreeMemory(true);
 		}
 		// else gets an ElementEvaluator based on current module
 		else {
@@ -264,10 +261,11 @@ class WigiiCoreExecutor {
 			$evaluator = ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
 			// injects the context
 			$evaluator->setContext($p, null);
-			// gets vm
-			$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
-			$returnValue->setFreeParentEvaluatorOnFreeMemory(true);
 		}
+		// gets vm
+		$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
+		$returnValue->setFreeParentEvaluatorOnFreeMemory(true);
+		$returnValue->setWigiiExecutor($this);
 		//$this->debugLogger()->write("instanciated FuncExpEvaluator of class ".get_class($returnValue));
 		return $returnValue;
 	}
@@ -1026,6 +1024,11 @@ class WigiiCoreExecutor {
 		$activity = Activity :: createInstance("exportMenu");
 		$act = $configS->mf($p, $exec->getCrtModule(), $activity);
 
+        if(!isset($configS)) $configS= $this->getConfigurationContext();
+
+        $companyColor = $configS->getParameter($p, null, "companyColor");
+        $rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
+
 		if (!empty ($act)) {
 			$options = $optionHelp = null;
 			foreach ($act->export->attribute as $export) {
@@ -1034,9 +1037,10 @@ class WigiiCoreExecutor {
 				$options .= "</div>";
 			}
 			$JsCode = "" .
-					"if($('#searchBar .toolbarBox .exportMenuButton').length==0){ " .
-						"$('#searchBar .toolbarBox').append('<div id=\"exportMenuButton\" class=\"exportMenuButton L H \">".$transS->h($p, "exportElementButton")."</div>');" .
-						"$('#searchBar .toolbarBox .exportMenuButton').append('" .
+					"$(document).ready(function(){
+					if($('#searchBar .toolbarBox .exportMenuButton').length==0){ " .
+						"$('#searchBar .toolbarBox').append('<div id=\"exportMenuButton\" class=\"exportMenuButton L H \" style=\"color:". $rCompanyColor. "\">".$transS->h($p, "exportElementButton")."</div>');" .
+                "$('#searchBar .toolbarBox .exportMenuButton').append('" .
 							"<div class=\"cm SBB\" id=\"exportMenu\" style=\"display:none;\" >" .
 							"<div class=\"exit SBB\">x</div>" .
 							"$options" .
@@ -1047,7 +1051,8 @@ class WigiiCoreExecutor {
 			} else {
 				$JsCode.= "setListenersToMenu('exportMenuButton', 'exportMenu', 'elementDialog', 'export');";
 			}
-			$JsCode.= " } ";
+			$JsCode.= " }
+			 });";
 			$exec->addJsCode($JsCode);
 		}
 
@@ -1081,6 +1086,346 @@ class WigiiCoreExecutor {
 		}
 
 		$this->executionSink()->publishEndOperation("includeRunMenu", $p);
+	}
+	protected function includeCoverPage($crtGroupP, $p, $exec, $transS, $configS) {
+	    //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start cover page"] = microtime(true);
+	    $this->debugLogger()->logBeginOperation("cover page");
+        $htmlContent=null;
+        $groupPortalAction = $configS->getParameter($p, $exec->getCrtModule(), "Group_portalAction");
+        // redirects to portal action
+        if(!empty($groupPortalAction)) {
+            // evaluates any FuncExp given as a groupPortalAction
+            $groupPortalAction = $this->evaluateConfigParameter($p,$exec,$groupPortalAction);
+            ?><div id="groupPortalAction" class="portal" style="overflow:hidden; display:none; padding-left:10px; padding-right:10px;"><?
+			if($configS->getParameter($p, $exec->getCrtModule(), "Group_portalActionRefreshOnMultipleChange") != "1"){					
+				$groupPortalAction =  'groupPortalAction/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/".$groupPortalAction."/".$crtGroupP->getId();
+				$exec->addJsCode("update('".$groupPortalAction."');");					
+			}
+			?></div><?    		
+		} 
+		// renders group cover page
+		else if($crtGroupP->getGroup()->getDetail()!=null){
+
+			$htmlContentRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupHtmlContent"), $exec->getCrtModule());
+			$htmlContentRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getGroup()->getDetail()->getHtmlContent(), $htmlContentRec->getActivity());
+			$trmHtmlContent = $this->createTRM($htmlContentRec);
+			$htmlContent = $trmHtmlContent->doFormatForHtmlText($htmlContentRec->getFieldValue("text"));
+
+			if($htmlContent != null){
+				?><div class="portal" style="overflow:hidden; display:none; padding-left:10px; padding-right:10px;"><?
+					echo $htmlContent;
+				?></div><?
+			}
+		}
+		// shows toggle view button
+		if($htmlContent != null || !empty($groupPortalAction)){
+			$exec->addJsCode("" .
+				"coverPage_toggleList_titleList = '".$transS->h($p, "viewElementsInPortal")."';" .
+				"coverPage_toggleList_titleWebsite = '".$transS->h($p, "viewPortalContent")."';" .
+				"coverPage_toggleList();" .
+				"if($('#searchBar .firstBox #removeFiltersButton.R').length==1) coverPage_toggleList();" .
+				"hrefWithSiteroot2js('moduleView>div.portal', 'elementDialog');" .
+				"");
+		} 
+		//remove and hide any previous cover page settings
+		else {
+			$exec->addJsCode("removeCoverPageItems();");
+		}
+    	$this->debugLogger()->logEndOperation("cover page");
+	}	
+	protected function includeGroupPortal($crtGroupP, $p, $exec, $transS, $configS) {
+	    $this->debugLogger()->logBeginOperation("group portal");
+	    $url = null;
+	    //we the group details	    
+	    //if detail = null, then do nothing
+	    if($crtGroupP->getGroup()->getDetail()!=null){ 	        
+	        $portalRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupPortal"), $exec->getCrtModule());
+	        $portalRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getGroup()->getDetail()->getPortal(), $portalRec->getActivity());
+	        $url = $portalRec->getFieldValue("url", "url");
+	        // evaluates any given FuncExp
+	        $url = $this->evaluateConfigParameter($p,$exec,$url);
+	        if(!empty($url)){
+	            $cooKieName = $portalRec->getFieldValue("groupPortalCookieName");
+	            if($portalRec->getFieldValue("groupPortalCookieIncludeRoles")){
+	                $roleList = $p->getRoleListener()->getRolesPerWigiiNamespaceModule($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl(), $exec->getCrtModule()->getModuleUrl());
+	                if($roleList) $roleList = implode(";", $roleList);
+	            } else $roleList = null;
+	            if($cooKieName){
+	                $result = getExternalCookieConnectionValue($portalRec->getFieldValue("groupPortalCookieSeparator"), $p->getRealUsername(), $portalRec->getFieldValue("groupPortalCookieCustomParameter"), $portalRec->getFieldValue("groupPortalCookieExpiration"), $roleList, $portalRec->getFieldValue("groupPortalCookieEncrypt"), $portalRec->getFieldValue("groupPortalCookieRotationKey"));
+	                $exec->addJsCode("$.cookie('".$cooKieName."', '".$result."', { path: '/', domain: '".$portalRec->getFieldValue("groupPortalCookieDomain")."', secure: ".strtolower(put(HTTPS_ON))." }); ");
+	            }
+	            ?><div class="portal" style="overflow:hidden; "><?
+					if(!preg_match('#^(((ht|f)tp(s?))\://)#i', $url)) $url = "http://".$url;
+					?><a class="media {type:'html'}" href="<?=$url;?>" ></a><?
+				?></div><?
+				$exec->addJsCode("$('#moduleView .portal a.media').media();");
+			}
+		}
+		$this->debugLogger()->logEndOperation("group portal");
+		return $url;
+	}
+	protected function prepareSortByOptions($lc, $currentConfigKey, $p, $exec, $transS, $configS, $sessAS) {
+	    $fieldSelectorList = $sessAS->getData($this, $currentConfigKey."_sortByFieldselectorList");
+	    $sortByOptions = $sessAS->getData($this, $currentConfigKey."_sortByOptions");
+	    if($fieldSelectorList==null){
+	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start sortBy"] = microtime(true);
+	        $this->debugLogger()->write("start sortBy");
+	        //sortBy
+	        //look if a groupBy activity is defined. Otherwise just list all available fields
+	        $sortByActivity = Activity :: createInstance("sortBy");
+	        $sortByOptions = array();
+	        if($configS->ma($p, $exec->getCrtModule(), $sortByActivity)){
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather activity config"] = microtime(true);
+	            $this->debugLogger()->write("gather activity config");
+	            $fieldSelectorList = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
+	            $fieldSelectorList->setSelectedLanguages(array ($transS->getLanguage() => $transS->getLanguage()));
+	            $configS->getFields($p, $exec->getCrtModule(), $sortByActivity, $fieldSelectorList);
+	            $fieldList = FormFieldList :: createInstance(null);
+	            $configS->getFields($p, $exec->getCrtModule(), null, $fieldList);
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
+	            $this->debugLogger()->write("config gathered");
+	            $trmTemp = $this->createTRM(null, false, false, false, true, false, false); //we want to be able to buffer the result
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
+	            $this->debugLogger()->write("build sortByOptionArray for activity");
+	            foreach($fieldSelectorList->getListIterator() as $key=>$fieldSelector){
+	                if($fieldSelector->isElementAttributeSelector()) $fieldXml = null;
+	                else $fieldXml = $fieldList->getField($fieldSelector->getFieldName())->getXml();
+	                $xmlHeader = $fieldSelectorList->getXml($key);
+	                $trmTemp->displayHeaderLabel($fieldSelector, $fieldXml, $xmlHeader, true);
+	                $label = $trmTemp->getHtmlAndClean();
+	                $sortByOptions[$key] = $label;
+	            }
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
+	            $this->debugLogger()->write("build sortByOptionArray for activity");
+	        } else {
+	            //create the fieldSelectorList for all fields and for element info
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather all config"] = microtime(true);
+	            $this->debugLogger()->write("gather all config");
+	            $elementFieldsXml = $configS->mf($p, $exec->getCrtModule());
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
+	            $fieldSelectorList = FieldSelectorListArrayWebImpl::createInstance(false, false);
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for fields"] = microtime(true);
+	            foreach($elementFieldsXml->children() as $elementFieldXml){
+	                if($lc->byPassDataTypeForSortByFilter($elementFieldXml["type"])) continue;
+	                $subFieldNames = $lc->defineDataTypeSubFieldForSortByFilter($elementFieldXml["type"]);
+	                foreach($subFieldNames as $subFieldName){
+	                    $key = $fieldSelectorList->addFieldSelector($elementFieldXml->getName(), $subFieldName);
+	                    $label = $transS->t($p, $elementFieldXml->getName(), $elementFieldXml);
+	                    if($subFieldName != "" && $subFieldName != "value") $label .= " ".$transS->t($p, $elementFieldXml["type"]."_".$subFieldName);
+	                    $sortByOptions[$key] = $label;
+	                }
+	            }
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for subFields"] = microtime(true);
+	            //add the element infos
+	            $subFieldNames = $lc->defineElementSubFieldForSortByFilter();
+	            foreach($subFieldNames as $subFieldName){
+	                $fieldSelector = FieldSelector::createElementAttributeSelector($subFieldName);
+	                $key = $fieldSelectorList->addFieldSelectorInstance($fieldSelector);
+	                $label = $transS->t($p, $subFieldName);
+	                $sortByOptions[$key] = $label;
+	            }
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."sortByOptionArray built"] = microtime(true);
+	        }
+	        $sessAS->storeData($this, $currentConfigKey."_sortByFieldselectorList", $fieldSelectorList);
+	        $sessAS->storeData($this, $currentConfigKey."_sortByOptions", $sortByOptions);
+	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."sortBy stored in session"] = microtime(true);
+	        $this->debugLogger()->write("sortBy stored in session");
+	    } 
+	    $lc->setSortByFieldSelectorList($fieldSelectorList);
+	    return $sortByOptions;
+	}
+	protected function includeSortByMenu($lc, $sortByOptions, $p, $exec, $transS, $configS) {
+	    $exec->addJsCode("" .
+	        "$('#searchBar .toolbarBox .sortBy').removeClass('disabledR');" .
+	        "$('#searchBar .toolbarBox .sortBy .SBB').removeClass('SBB').addClass('SBIB');" .
+	        "$('#searchBar .toolbarBox .sortBy div.disabledBg').removeClass('disabledBg');");
+	    if($sortByOptions[$lc->getSortedBy()]){
+	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start define sortBy value"] = microtime(true);
+	        $this->debugLogger()->write("define sortByValue");
+	        $exec->addJsCode("" .
+	            "$('#searchBar .toolbarBox .sortBy .direction').removeClass('".($lc->isAscending() ? "DESC" : "ASC")."').addClass('".($lc->isAscending() ? "ASC" : "DESC")."');" .
+	            "$('#searchBar .toolbarBox .sortBy .value').html('<a href=\"#".$lc->getSortedBy()."\">".str_replace("'", "\\'", $sortByOptions[$lc->getSortedBy()])."</a>');");
+	    }
+	    if($sortByOptions){
+	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start loading sortBy menu"] = microtime(true);
+	        $this->debugLogger()->write("loading sortBy menu");
+	        $options = "";
+	        if($lc->isAscending()){
+	            $glyphicon = "glyphicon-triangle-top";
+	            $order = "ASC";
+	        } else{
+	            $glyphicon = "glyphicon-triangle-bottom";
+	            $order = "DESC";
+	        }
+	        $selected = $sortByOptions[$lc->getSortedBy()];
+            $options .= '<li style="color:red;"><a href="#'.$lc->getSortedBy().'" class="changeOrder '. $order .'" style="margin-left:-17px; color: red; clear:none;" title="'.str_replace("'", "\\'", strip_tags($selected)).'"><span class="glyphicon '. $glyphicon. '" aria-hidden="true"></span>'.str_replace("'", "\\'", strip_tags($selected)).'</a></li>';
+	        foreach($sortByOptions as $key=>$label){
+                if($label != $selected) $options .= '<li><a href="#'.$key.'" title="'.str_replace("'", "\\'", strip_tags($label)).'">'.str_replace("'", "\\'", strip_tags($label)).'</a></li>';
+	        }
+	        $exec->addJsCode(
+	            "$('#searchBar .toolbarBox .sortBy .value').html('
+                ". $options. "'
+                );".
+	            "setListenersToMenuBsp('searchBar .toolbarBox .sortBy .value', 'sortByMenu', 'moduleView', 'changeSortByKey', null, true);".
+	            //add listener to direction
+	            "$('#searchBar .toolbarBox .sortBy .direction').click(function(){ " .
+	            "update('moduleView/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/changeSortByKey/'+$('a:first', $(this).next()).attr('href').replace('#', '')+'/'+$(this).hasClass('DESC'));" .
+	            " });");
+	    }
+	}
+	protected function prepareGroupyByOptions($lc, $currentConfigKey, $p, $exec, $transS, $configS, $sessAS) {
+	    $fieldSelectorList = $sessAS->getData($this, $currentConfigKey."_groupByfieldselectorList");
+	    $groupByOptions = $sessAS->getData($this, $currentConfigKey."_groupByOptions");
+	    if($fieldSelectorList==null){
+	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start groupBy"] = microtime(true);
+	        //look if a groupBy activity is defined. Otherwise just list all available fields
+	        $groupByActivity = Activity :: createInstance("groupBy");
+	        $groupByOptions = array();
+	        if($configS->ma($p, $exec->getCrtModule(), $groupByActivity)){
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather activity config"] = microtime(true);
+	            $fieldSelectorList = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
+	            $fieldSelectorList->setSelectedLanguages(array ($transS->getLanguage() => $transS->getLanguage()));
+	            $configS->getFields($p, $exec->getCrtModule(), $groupByActivity, $fieldSelectorList);
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
+	            $fieldList = FormFieldList :: createInstance(null);
+	            $configS->getFields($p, $exec->getCrtModule(), null, $fieldList);
+	            $trmTemp = $this->createTRM(null, false, false, false, true, false, false); //we want to be able to buffer the result
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for fields"] = microtime(true);
+	            foreach($fieldSelectorList->getListIterator() as $key=>$fieldSelector){
+	                if($fieldSelector->isElementAttributeSelector()) $fieldXml = null;
+	                else $fieldXml = $fieldList->getField($fieldSelector->getFieldName())->getXml();
+	                $xmlHeader = $fieldSelectorList->getXml($key);
+	                $trmTemp->displayHeaderLabel($fieldSelector, $fieldXml, $xmlHeader, true);
+	                $label = $trmTemp->getHtmlAndClean();
+	                $groupByOptions[$key] = $label;
+	            }
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
+	        } else {
+	            //create the fieldSelectorList for all fields and for element info
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather all config"] = microtime(true);
+	            $elementFieldsXml = $configS->mf($p, $exec->getCrtModule());
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
+	            $fieldSelectorList = FieldSelectorListArrayWebImpl::createInstance(false, false);
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for fields"] = microtime(true);
+	            foreach($elementFieldsXml->children() as $elementFieldXml){
+	                if($lc->byPassDataTypeForGroupByFilter($elementFieldXml["type"])) continue;
+	                if($elementFieldXml["groupable"]=="0") continue;
+	                $subFieldNames = $lc->defineDataTypeSubFieldForGroupByFilter($elementFieldXml["type"]);
+	                foreach($subFieldNames as $subFieldName){
+	                    $key = $fieldSelectorList->addFieldSelector($elementFieldXml->getName(), $subFieldName);
+	                    $label = $transS->t($p, $elementFieldXml->getName(), $elementFieldXml);
+	                    if($subFieldName != "" && $subFieldName != "value") $label .= " ".$transS->t($p, $elementFieldXml["type"]."_".$subFieldName);
+	                    $groupByOptions[$key] = $label;
+	                }
+	            }
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for subFields"] = microtime(true);
+	            //add the element infos
+	            $subFieldNames = $lc->defineElementSubFieldForGroupByFilter();
+	            foreach($subFieldNames as $subFieldName){
+	                $fieldSelector = FieldSelector::createElementAttributeSelector($subFieldName);
+	                $key = $fieldSelectorList->addFieldSelectorInstance($fieldSelector);
+	                $label = $transS->t($p, $subFieldName);
+	                $groupByOptions[$key] = $label;
+	            }
+	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."groupByOptionArray built"] = microtime(true);
+	        }
+	        $sessAS->storeData($this, $currentConfigKey."_groupByfieldselectorList", $fieldSelectorList);
+	        $sessAS->storeData($this, $currentConfigKey."_groupByOptions", $groupByOptions);
+	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."groupBy stored in session"] = microtime(true);
+	        $this->debugLogger()->write("groupBy stored in session");
+	    } else {
+	        //		fput("found ".$currentConfigKey."_groupBy"." in session!");
+	    }
+	    $lc->setGroupByFieldSelectorList($fieldSelectorList);
+	    return $groupByOptions;
+	}
+	protected function includeGroupByMenu($lc, $groupByOptions, $p, $exec, $transS, $configS) {
+	    //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start define groupBy value"] = microtime(true);
+	    $exec->addJsCode("" .
+	   	    "$('#searchBar .toolbarBox .groupBy').removeClass('disabledR');" .
+	   	    "$('#searchBar .toolbarBox .groupBy .SBB').removeClass('SBB').addClass('SBIB');" .
+	   	    "$('#searchBar .toolbarBox .groupBy div.disabledBg').removeClass('disabledBg');");
+	    $this->debugLogger()->write("start define groupBy value");
+	    if($lc->getGroupBy()==null){
+	        $exec->addJsCode("$('#searchBar .toolbarBox .groupBy .value').html('<a href=\"#null\">".str_replace("'", "\\'", $transS->t($p, "selectInList"))."</a>');");
+	    } else if($groupByOptions[$lc->getGroupBy()]){
+	        $exec->addJsCode("$('#searchBar .toolbarBox .groupBy .value').html('<a href=\"#".$lc->getGroupBy()."\">".str_replace("'", "\\'", $groupByOptions[$lc->getGroupBy()])."</a>');");
+	    }
+	    if($groupByOptions){
+	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start loading groupBy menu"] = microtime(true);
+	        $this->debugLogger()->write("loading groupBy menu");
+	        $options = "";
+	        $selected = $groupByOptions[$lc->getGroupBy()];
+	        //add option to reset the groupBy to nothing
+            if($selected) $options .= '<li style="color:red;"><a href="#null" style="margin-left:-20px; color: red; clear:none;" title="'.str_replace("'", "\\'", strip_tags($selected)).'"><span style="margin-right: 3px; margin-top: 3px;" class="glyphicon glyphicon-remove" aria-hidden="true"></span>'.str_replace("'", "\\'", strip_tags($selected)).'</a></li>';
+	            
+	            foreach($groupByOptions as $key=>$label){
+	                if($label != $selected) $options .= '<li><a href="#'.$key.'" title="'.str_replace("'", "\\'", strip_tags($label)).'">'.str_replace("'", "\\'", strip_tags($label)).'</a></li>';
+	            }
+	            $exec->addJsCode(
+	                "$('#searchBar .toolbarBox .groupBy .value').html('
+                ". $options. "'
+                );".
+                "setListenersToMenuBsp('searchBar .toolbarBox .groupBy .value', 'groupByMenu', 'moduleView', 'changeGroupByKey', null, true);");
+	    }
+	}
+	protected function includeAddElementButton($crtGroupP, $p, $exec, $transS, $configS) {
+	    if($crtGroupP != null && $crtGroupP->getRights()!=null && $crtGroupP->getRights()->canShareElement()){
+	        $crtGroupIsWritable = true;
+	    }
+	    else {
+	        $crtGroupIsWritable = false;
+	    }
+	    //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar addElement"] = microtime(true);
+	    $this->debugLogger()->write("start searchBar toolbar addElement");
+	    if($crtGroupIsWritable){
+	        $exec->addJsCode("" .
+	            "$('#searchBar .toolbarBox .addNewElement')" .
+	            ".addClass('Green')" .
+	            ".removeClass('disabledBg')" .
+	            ".unbind('click').click(function(){ ".$exec->getUpdateJsCode($p->getRealUserId(), "'+crtRoleId+'", "'+crtWigiiNamespaceUrl+'", "'+crtModuleName+'", 'elementDialog', 'addElement', "element/add/".$crtGroupP->getId())." })" .
+	            ".find('font').addClass('H');");
+	    } else {
+	        $exec->addJsCode("" .
+	            "$('#searchBar .toolbarBox .addNewElement')" .
+	            ".removeClass('Green')" .
+	            ".addClass('disabledBg')" .
+	            ".unbind('click')" .
+	            ".find('font').removeClass('H');");
+	    }
+	}
+	protected function includeSwitchViewButton($lc, $p, $exec, $transS, $configS) {
+	    $crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
+	    $crtModule = $exec->getCrtModule()->getModuleUrl();
+	    //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar switchView"] = microtime(true);
+	    $moduleTemplates = $lc->getAvailableTemplates($p, $exec->getCrtModule(), $configS);
+	    if(count($moduleTemplates)>1){
+	        $first = true;
+	        foreach($lc->getAvailableTemplates($p, $exec->getCrtModule(), $configS) as $moduleView=>$moduleTemplate){
+	            if($lc->getCrtView() == $moduleView) continue;
+	            if($first){
+	                $exec->addJsCode("" .
+	                    "$('#searchBar .toolbarBox .switchView')" .
+	                    ".removeClass('disabledR')" .
+	                    ".html('".$transS->h($p, $moduleView."View")."')" .
+	                    ".unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); })" .
+	                    ".show();");
+	                $first = false;
+	            } else {
+	                $exec->addJsCode("" .
+	                    "$('#searchBar .toolbarBox .switchView:first')" .
+	                    ".clone().html('".$transS->h($p, $moduleView."View")."')" .
+	                    ".unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); })" .
+	                    ".insertAfter($('#searchBar .toolbarBox .switchView:first'));");
+	            }
+	        }
+	    } else {
+	        $exec->addJsCode("" .
+	            "$('#searchBar .toolbarBox .switchView')" .
+	            ".addClass('disabledR')" .
+	            ".unbind('click')" .
+	            ".hide();");
+	    }
 	}
 	/**
 	 * Includes Module Help anchor in ListView if configuration parameter WigiiHelp_module is defined
@@ -1233,7 +1578,7 @@ class WigiiCoreExecutor {
 				'$("#' . $domId . '").css("min-height", "0").prev().css("display","none");' .
 				'if(checkOpenItemTemp_url==null) {setTimeout(function(){ $("#' . $domId . '").dialog("destroy"); }, 1000); }' .
 				'else {$("#' . $domId . '").html($("#' . $domId . '").html()+"<br />'.$transS->t($p, "operationDoneWaitNextAction").'");}; ';
-		$jsCode .= 'if(isWorkzoneViewMode() && $(".elementDialog.docked").children().length==0){manageWorkzoneViewDocked(\'hide\')};';		
+		$jsCode .= 'if(isWorkzoneViewDocked() && $(".elementDialog.docked").children().length==0){manageWorkzoneViewDocked(\'hide\')};';		
 		$exec->addJsCode($jsCode);
 	}
 	public function openAsMessage($domId, $width, $messageTitle, $messageText, $okJsCode = null, $okLabel = "Ok", $forceQuitJsCode = null, $forceQuitLabel = null, $iconType = "info") {
@@ -1356,7 +1701,7 @@ class WigiiCoreExecutor {
                 '$("#scrollElement").css("max-width", "'. ($width + 17). 'px");
                 $("#scrollElement").css("width", "100%");
                 margin = (($(window).width()-'. ($width + 17). ')/2);
-                 $(".ui-dialog").css("left", margin+"px");
+                $(".ui-dialog").css("left", margin+"px");
                 $(window).resize(function(){
                     if($(window).width() < ' . ($width + 17) . '){
                         $(".ui-dialog").css("left", "0px");
@@ -1522,13 +1867,8 @@ class WigiiCoreExecutor {
 				'}).dialog("moveToTop");' .
 				' $(".elementDialog").css("float","none"); ' .
 				''.
-        'margin = (($(window).width()-'. ($width + 17). ')/2);
+        ' margin = (($(window).width()-'. ($width + 17). ')/2);
         ariaForm3B = "[aria-describedBy=\"' . $domId . '\"]";
-        $(ariaForm3B).css("left", margin+"px");
-        $(ariaForm3B).css("width", "100%");
-        $(ariaForm3B).css("max-width", '. ($width + 17). ');
-
-
         if($(window).width() < ' . ($width + 17) . '){
             $(ariaForm3B).css("left", "0px");
             $(ariaForm3B).css("width", "100%");
@@ -1536,6 +1876,7 @@ class WigiiCoreExecutor {
         }else{
             margin = (($(window).width()-'. ($width + 17). ')/2);
             $(ariaForm3B).css("left", margin+"px");
+            /* $(ariaForm3B).css("height", $(window).height()); */
         }
 
         $(window).resize(function(){
@@ -1549,6 +1890,7 @@ class WigiiCoreExecutor {
                 $(ariaForm3B).css("width", '. ($width + 17). ');
             }
         });
+
         ');
 		if ($dialogTitle == null) {
 			$exec->addJsCode(' $("#' . $domId . '").prev().css("display","none"); ');
@@ -1606,7 +1948,7 @@ class WigiiCoreExecutor {
                     }else{
                         margin = (($(window).width()-'. ($width + 17). ')/2);
                         $(aria).css("left", margin+"px");
-                        $(".ui-dialog").css("width", '. ($width + 17). ');
+                        $(aria).css("width", '. ($width + 17). ');
                     }
                  });');
 		$exec->addJsCode('addScrollWithShadow("elementDialog");
@@ -1751,12 +2093,6 @@ class WigiiCoreExecutor {
 	
 		//creating the list
 		$elementPList = ElementPListRowsForElementListImpl :: createInstance($this, $listContext);
-		/*
-		$pageSize = (int)$configS->getParameter($p, $exec->getCrtModule(), "listPageSize");
-		if($pageSize == null) $pageSize = 250; //default value
-		$elementPList->setPageSize($pageSize);
-		$elementPList->setDesiredPage($desiredPage);
-		*/
 		
 		$elementPList->setFieldList($fieldList);
 		$elementPList->setP($p);
@@ -1771,11 +2107,7 @@ class WigiiCoreExecutor {
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start getSelectedElementsInGroups"] = microtime(true);
 		$this->executionSink()->log("start getSelectedElementsInGroups");
 		if ($listContext->doesGroupListIncludeChildren() || $listContext->getGroupPList()->count() == 1) {
-			//if looking for duplicates then remove manual paging. Only duplicates will be displayed, that means
-			//a display paged will be more than a db page
 			if($listContext->isGroupByOnlyDuplicates()){
-				//$desiredPage = null;
-				//$pageSize = null;
 				$groupLogExp = $listContext->getGroupLogExp();
 				// remove trashbin if exists
 				$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
@@ -1818,26 +2150,17 @@ class WigiiCoreExecutor {
 			else {
 				$groupLogExp = $listContext->getGroupLogExp();
 			}
-			$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp, //getGroupList(), $
+			
+			$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp,
 					$elementPList,
 					$listContext
-					/*,$desiredPage,$pageSize*/
 			);
+			
 		} else {
 			$nbRow = 0;
 		}
 
-		//$nbRow = $elementPList->getTotalNumberOfElements();
 		$total = $listContext->getTotalNumberOfObjects();
-		//manual paging since V4
-		/*
-		$total = $nbRow;
-		if(($pageSize*$desiredPage-$nbRow) > 0){
-			$nbRow = $pageSize-($pageSize*$desiredPage-$nbRow);
-		} else {
-			$nbRow = $pageSize;
-		}
-		*/
 		$elementPList->actOnFinishAddElementP($total);
 	
 		$this->setTempTotalElementsIdsForListView($elementPList->getTotalElementsIds());
@@ -1922,12 +2245,6 @@ class WigiiCoreExecutor {
 	
 		//creating the list
 		$elementPList = ElementPListRowsForElementBlogImpl :: createInstance($this, $listContext);
-		/*
-		$pageSize = (int)$configS->getParameter($p, $exec->getCrtModule(), "blogPageSize");
-		if($pageSize == null) $pageSize = 250; //default value
-		$elementPList->setPageSize($pageSize);
-		$elementPList->setDesiredPage($desiredPage);
-		*/
 		$elementPList->setFieldList($fieldList);
 		$elementPList->setP($p);
 		$elementPList->setExec($exec);
@@ -1941,11 +2258,7 @@ class WigiiCoreExecutor {
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start getSelectedElementsInGroups"] = microtime(true);
 		$this->executionSink()->log("start getSelectedElementsInGroups");
 		if ($listContext->doesGroupListIncludeChildren() || $listContext->getGroupPList()->count() == 1) {
-			//if looking for duplicates then remove manual paging. Only duplicates will be displayed, that means
-			//a display paged will be more than a db page
 			if($listContext->isGroupByOnlyDuplicates()){
-				//$desiredPage = null;
-				//$pageSize = null;
 				$groupLogExp = $listContext->getGroupLogExp();
 				// remove trashbin if exists
 				$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
@@ -1986,26 +2299,17 @@ class WigiiCoreExecutor {
 			else {
 				$groupLogExp = $listContext->getGroupLogExp();
 			}
-			$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp, //getGroupList(), $
+			
+			$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp,
 					$elementPList,
 					$listContext
-					/*,$desiredPage,$pageSize*/
 			);
+			
 		} else {
 			$nbRow = 0;
 		}
 	
-		//$nbRow = $elementPList->getTotalNumberOfElements();
 		$total = $listContext->getTotalNumberOfObjects();
-		//manual paging since V4
-		/*
-		 $total = $nbRow;
-		 if(($pageSize*$desiredPage-$nbRow) > 0){
-		 $nbRow = $pageSize-($pageSize*$desiredPage-$nbRow);
-		 } else {
-		 $nbRow = $pageSize;
-		 }
-		 */
 		$elementPList->actOnFinishAddElementP($total);
 	
 		$this->setTempTotalElementsIdsForListView($elementPList->getTotalElementsIds());
@@ -2319,8 +2623,7 @@ class WigiiCoreExecutor {
 	}
 	//COMMON Templates
 	protected function includeTemplateAll($p, $exec){
-	    if(defined(WEB2_IMPL)) include(TEMPLATE_PATH . "baseGrid.tpl.php");
-        else include(TEMPLATE_PATH . "all.tpl.php");
+        include(TEMPLATE_PATH . "all.tpl.php");
 	}
 	protected function includeTemplateFooterBar($p, $exec){
 		include(TEMPLATE_PATH . "footerBar.tpl.php");
@@ -2332,10 +2635,11 @@ class WigiiCoreExecutor {
 		include(TEMPLATE_PATH . "moduleView.tpl.php");
 	}
 	protected function includeTemplateNavigation($p, $exec){
-		include(TEMPLATE_PATH . "navigationBar.tpl.php");
+	    include(TEMPLATE_PATH . "navigationBar.bsp.php");		
 	}
 	protected function includeTemplateSearchBar($p, $exec){
-		include(TEMPLATE_PATH . "searchBar.tpl.php");
+	    // 28.11.2017: search bar is included directly into navigation bar.
+	    //include(TEMPLATE_PATH . "searchBar.tpl.php");
 	}
 	protected function includeTemplateWorkZone($p, $exec){
 		include(TEMPLATE_PATH . "workZone.tpl.php");
@@ -2848,9 +3152,9 @@ invalidCompleteCache();
 			$this->indicatorListPerModule = array ();
 		if (!isset ($this->indicatorListPerModule[$crtModule])) {
 			$configS = $this->getConfigurationContext();
-// 			//uncomment the two following lines to reset the indicators of a user
-// 						$p->setValueInRoleContext("indicators_list", null);
-// 						$this->persistMainPrincipalSessionContext($p, $exec);
+			//uncomment the two following lines to reset the indicators of a user
+			//			$p->setValueInRoleContext("indicators_list", null);
+			//			$this->persistMainPrincipalSessionContext($p, $exec);
 			$indicatorList = $p->getValueInRoleContext("indicators_list");
 			if ($indicatorList == null || $indicatorList[$crtModule] == null) {
 				$this->indicatorListPerModule[$crtModule] = IndicatorListArrayImpl :: createInstance();
@@ -2875,7 +3179,7 @@ invalidCompleteCache();
 				}
 				$this->indicatorListPerModule[$crtModule] = $list;
 			} else {
-				$e = new ServcieException("invalid indicatorList from P context", ServiceException :: INVALID_ARGUMENT);
+				$e = new ServiceException("invalid indicatorList from P context", ServiceException :: INVALID_ARGUMENT);
 				$this->executionSink()->publishEndOperationOnError("getIndicatorList", $e, $p);
 				throw $e;
 			}
@@ -3853,8 +4157,9 @@ invalidCompleteCache();
 						}
 						if ($exec->getCrtAction() == "display" && $exec->getCrtParameters(0) == "detachModule")
 							$SITE_TITLE = ServiceProvider :: getTranslationService()->t($p, $exec->getCrtModule()->getModuleName()) . " : " . $SITE_TITLE;
-						if ($exec->getIdAnswer()=="newDialog" || !$exec->getIsUpdating())
-							include_once (IMPL_PATH . "templates/header.php");
+						if ($exec->getIdAnswer()=="newDialog" || !$exec->getIsUpdating()){
+                            include_once (IMPL_PATH . "templates/header.php");
+                        }
 					}
 					else $byPassedHeader=true;
 					$started = true;
@@ -4028,7 +4333,7 @@ invalidCompleteCache();
 			case "getNextElementInList" :
 			case "getNextElementInBlog" :
 			case "getNextElementInPreviewList" :
-			case "getCalendarEvents" :
+            case "getCalendarEvents" :
 				//			case "JSON":
 				//			case "PDF":
 				//			case "Excel"
@@ -6884,7 +7189,18 @@ onUpdateErrorCounter = 0;
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 
 				//define the sorting by
-				$lc->setSortedBy($exec->getCrtParameters(0), ($exec->getCrtParameters(1)=="true" ? true : ($exec->getCrtParameters(1)=="false" ? false : null)));
+                $key = $exec->getCrtParameters(0);
+                $ascending = ($exec->getCrtParameters(1) == "true" ? true : ($exec->getCrtParameters(1) == "false" ? false : null));
+                if($ascending === null){
+                    switch ($key){
+                        case "(__element(sys_date))":
+                        case "(__element(sys_creationDate))":
+                            $ascending = false;
+                            break;
+                    }
+                }
+
+				$lc->setSortedBy($key, $ascending);
 				$exec->addJsCode("invalidCache('moduleView');");
 				$exec->addRequests('moduleView/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView");
 
@@ -7083,21 +7399,7 @@ onUpdateErrorCounter = 0;
 					$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "EvaluateIndicators");
 					//take the elementListContext
 					$elementListContext = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
-					//fput($elementListContext->getGroupPList());
-					//since 4 May 2011, there is no sense to limit the indicators evaluation to multiple selection
-					//				if($elementListContext->getMultipleSelection()!=null){
-					//					$lc->resetFetchCriteria($p, $this);
-					//					//add groupList on all
-					//					$groupList = GroupListAdvancedImpl::createInstance(false);
-					//					$lf = ListFilter::createInstance();
-					//					$lf->setFieldSelectorList(ServiceProvider::getGroupAdminService()->getFieldSelectorListForGroupWithoutDetail());
-					//					$groupAS->getAllGroups($p, $exec->getCrtModule(), $groupList, $lf);
-					//					$lc->setGroupPList($groupList->getRootGroups(), true);
-					//					//add the multipleSelection criterias in the LogExp
-					//					$lc->addLogExpOnMultipleSelection($elementListContext->getMultipleSelection());
-					//				} else {
 					$lc->matchFetchCriteria($elementListContext);
-					//				}
 					$trm = $this->createTRM();
 					$fl = FieldListArrayImpl :: createInstance(false, true);
 					$configS->getFields($p, $exec->getCrtModule(), null, $fl);
@@ -7557,6 +7859,7 @@ onUpdateErrorCounter = 0;
 				if(!$labelWidth) $labelWidth = 200;
 
 				//Emailing is independant of the module
+
 				$EmailingRec = $this->createActivityRecordForForm($p, Activity :: createInstance("Emailing"), null);
 
 				//if parameters are setted, then set them to it:
@@ -7611,6 +7914,7 @@ onUpdateErrorCounter = 0;
 				if ($_POST["action"] != null)
 					$state = addslashes($_POST["action"]);
 				$form->ResolveForm($p, $exec, $state);
+
 				break;
 			case "ExportDownload" :
 			case "Downloading" :
@@ -9022,7 +9326,7 @@ onUpdateErrorCounter = 0;
 					$lc->setGroupPList($configS->getRootGroupsInModule($p, $exec->getCrtModule()), true);
 					$configS->setGroupPList($p, $exec->getCrtModule(), $configS->getRootGroupsInModule($p, $exec->getCrtModule()), true);
 					$exec->addJsCode("invalidCache('moduleView'); setFiltersButton(true);");
-					$exec->addJsCode("$('#workZone #searchBar input:first').val('".addSlashes($lc->getTextSearch())."');");
+					$exec->addJsCode("$('nav #searchField input:first').val('".addSlashes($lc->getTextSearch())."');");
 					$exec->addRequests("moduleView/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/moduleView/");
 					$exec->addRequests("groupPanel/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/groupPanel/count");
 				}
@@ -9148,7 +9452,7 @@ onUpdateErrorCounter = 0;
 						$inGroupModuleXml = '<excludeGroups type="MultipleAttributs" chosen="1" expand="1">';
 						$inGroupModuleXml .= $selectOptionGroupTree->getResult();										
 						$inGroupModuleXml .= '</excludeGroups>';							
-						$field->setXml(simplexml_load_string($inGroupModuleXml));						
+						$field->setXml(simplexml_load_string($inGroupModuleXml));
 					} else {
 						$filtersRec->getWigiiBag()->setHidden(true, "groupFilterInGroup");
 						$filtersRec->getWigiiBag()->setHidden(true, "limitFilterInGroup");
@@ -9242,12 +9546,11 @@ onUpdateErrorCounter = 0;
 					$filtersRec->setFieldValue($excludeGroupsInSearch, ListContext::ExcludeGroupsSearchField);					
 				}
 				$form->ResolveForm($p, $exec, $state);
-
 				break;
 			case "countElementsInGroupPanel":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
-
+				if (!isset ($configS)) $configS = $this->getConfigurationContext();
 				if($this->getTempTotalElementsIdsForListView()){
 					$elS = ServiceProvider::getElementService();
 					$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
@@ -9259,18 +9562,27 @@ onUpdateErrorCounter = 0;
 					else {
 						$groupLogExp = $lc->getGroupLogExp()->reduceNegation(true);
 						$countData = $elS->countSelectedElementsDistributionInGroups($p, $groupLogExp, $lc);
-					}					
+					}	
+					// Medair (CWE) 19.09.2017: if Group_selectAllGroupsOnSearch = 0 and only one group selected, then hides found groups which are not children from current group.
+					if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") == "0" && $lc->getGroupPList()->count()==1) {
+					    $currentGroupId = reset($lc->getGroupPList()->getListIterator())->getId();
+					    $currentGroupSelector = '#group_'.$currentGroupId.' ';
+					}
+					else $currentGroupId = null;
 					$exec->addJsCode("" .
 						"$('#groupPanel .found, #groupPanel .hidden, #groupPanel .empty').removeClass('found').removeClass('hidden').removeClass('empty');" .
 						"$('#groupPanel .nb').remove();" .
 						"$('#groupPanel li').show();" .
 						"");
 					foreach($countData as $groupId=>$nb){
+					    // Medair (CWE) 19.09.2017: if Group_selectAllGroupsOnSearch = 0, only keeps sub-groups of current group
+					    if($groupId == $currentGroupId || $currentGroupId==null) $cgs = '';
+					    else $cgs = $currentGroupSelector;
+					    
 						if($nb == null){
-							//normally this never happens because countData contains only data
-							$exec->addJsCode("$('#group_$groupId>div span.description').before('<span class=\"R nb empty\"></span>');");
+						    $exec->addJsCode("$('$cgs#group_$groupId>div span.description').before('<span class=\"R nb empty\"></span>');");
 						} else {
-							$exec->addJsCode("$('#group_$groupId>div span.description').before('<span class=\"R nb\">&nbsp;($nb)</span>');");
+						    $exec->addJsCode("$('$cgs#group_$groupId>div span.description').before('<span class=\"R nb\">&nbsp;($nb)</span>');");
 						}
 					}
 
@@ -11022,7 +11334,7 @@ onUpdateErrorCounter = 0;
 				} else {
 					$exec->addRequests(($exec->getIsUpdating() ? "workZone/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/workZone");
 				}
-				$exec->addJsCode("crtModuleName = '" . $mAS->getHomeModule($p)->getModuleUrl() . "'; refreshNavigateMenu();setNavigationBarInHomeState(".$configS->getParameter($p, $mAS->getHomeModule($p), "FeedbackOnSystem_enable").");");
+				$exec->addJsCode("crtModuleName = '" . $mAS->getHomeModule($p)->getModuleUrl() . "'; setNavigationBarInHomeStateBsp(".$configS->getParameter($p, $mAS->getHomeModule($p), "FeedbackOnSystem_enable").");");
 				break;
 			case "navigate" :
 				$authS = ServiceProvider :: getAuthenticationService();
@@ -11165,60 +11477,74 @@ onUpdateErrorCounter = 0;
 					}
 				}
 
-				// Checks module access	and calculates module to which navigate and workingModule in case of Admin										
-				$lastModule = $exec->getCrtModule()->getModuleName();
-				$workingModule = null;
-				// if lastModule is not null and p has no access to module then error
-				if($lastModule && $lastModule != Module::HOME_MODULE && !$p->getModuleAccess($lastModule)) {
-					if($p->isRealUserPublic()) {
-						throw new AuthenticationServiceException('public access forbidden', AuthenticationServiceException::FORBIDDEN_PUBLIC_USER);
-					} else {
-						$exec->addJsCode("alert('".$transS->h($p, "noModuleAccessFoundForRole").": ".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."->".$transS->t($p, $exec->getCrtModule()->getModuleName()).". ".$transS->h($p, "noModuleAccessFoundForRoleExplanation")."');");
-						$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/":'').WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
-					}
-					break;
-				}	
-				// if lastModule is null then gives first accessible module or Home if only Admin rights.
-				if(!$lastModule) {
-					if($p->getWigiiNamespace()->getWigiiNamespaceName()!=WigiiNamespace::EMPTY_NAMESPACE_NAME) $lastModule=$p->getFirstNoneAdminAccessibleModule();
-					if(!$lastModule) $lastModule=Module::HOME_MODULE;					
-				}							
-				// if lastModule is not null and p has access to module 
-				if($lastModule != Module::HOME_MODULE) {
-					// gets Module object
-					$lastModule = $p->getModuleAccess($lastModule);					
-					
-					// if navigating in or to Admin: calculates workingModule
-					if ($lastModule->isAdminModule()) {
-						
-						// if going to admin in same namespace, keeps current module
-						if ($fromWigiiNamespace == $p->getWigiiNamespace()->getWigiiNamespaceUrl() && $toWorkingModule == null) $toWorkingModule = $fromModule;
-						// if going to admin in other namespace retrieves last working module
-						else if ($toWorkingModule == null) $toWorkingModule = $p->getValueInRoleContext("lastWorkingModule");
+                //if getting out from Admin, then force going to Home module
+                if ($fromModule == Module :: ADMIN_MODULE && !$exec->getCrtModule()->isAdminModule()){
+                    $lastModule=$mAS->getHomeModule($p);
+                } else {
 
-						// checks admin working module access
-						if ($toWorkingModule) {
-							$workingModule = $p->getModuleAccess($toWorkingModule);
-						}
-						if (!$workingModule || $workingModule->isAdminModule()) {
-							$workingModule = $p->getFirstNoneAdminAccessibleModule();
-						}
-						
-						// Persists admin working module in context
-						$this->getAdminContext($p)->setWorkingModule($workingModule);
-						$p->setValueInRoleContext("lastWorkingModule", $workingModule->getModuleName());
-					} 
-					// if p is bound to a namespace, then forces a non Admin module
-					else if ($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole() && $lastModule->isAdminModule()) {
-						$lastModule = $p->getFirstNoneAdminAccessibleModule();
-					}
-					// Persists lastModule in context
-					$p->setValueInRoleContext("lastModule", $lastModule->getModuleName());
-					// Persists principal context in DB
-					$this->persistMainPrincipalSessionContext($p, $exec);
-				}
-				else $lastModule=$mAS->getHomeModule($p);
-							
+
+                    // Checks module access	and calculates module to which navigate and workingModule in case of Admin
+                    $lastModule = $exec->getCrtModule()->getModuleName();
+                    $workingModule = null;
+                    // if lastModule is not null and p has no access to module then error
+                    if ($lastModule && $lastModule != Module::HOME_MODULE && !$p->getModuleAccess($lastModule)) {
+                        if ($p->isRealUserPublic()) {
+                            throw new AuthenticationServiceException('public access forbidden', AuthenticationServiceException::FORBIDDEN_PUBLIC_USER);
+                        } else {
+                            $exec->addJsCode("alert('" . $transS->h($p, "noModuleAccessFoundForRole") . ": " . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "->" . $transS->t($p, $exec->getCrtModule()->getModuleName()) . ". " . $transS->h($p, "noModuleAccessFoundForRoleExplanation") . "');");
+                            $exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : '') . WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
+                        }
+                        break;
+                    }
+                    // if lastModule is null then gives first accessible module or Home if only Admin rights.
+                    if (!$lastModule) {
+                        if ($p->getWigiiNamespace()->getWigiiNamespaceName() != WigiiNamespace::EMPTY_NAMESPACE_NAME) $lastModule = $p->getFirstNoneAdminAccessibleModule();
+                        if (!$lastModule) $lastModule = Module::HOME_MODULE;
+                    }
+                    // if lastModule is not null and p has access to module
+                    if ($lastModule != Module::HOME_MODULE) {
+                        // gets Module object
+                        $lastModule = $p->getModuleAccess($lastModule);
+
+                        //When we navigate, the search field should be filled with the last text enter.
+                        if (!isset($lc)) $lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+                        $exec->addJsCode("$('nav .firstBox input:first').val('" . $lc->getTextSearch() . "')");
+                        if ($lc->getSearchBar()) {
+                            $exec->addJsCode("$('#searchField input, #filtersButton, #removeFiltersButton').addClass('R')");
+                        } else {
+                            $exec->addJsCode("$('#searField input, #filtersButton, #removeFiltersButton').removeClass('R');" .
+                                "$('#searchField input').attr('placeholder', '" . $transS->t($p,"defineFilters") . $transS->t($p, $exec->getCrtModule()->getModuleName())."...');");
+                        }
+
+                        // if navigating in or to Admin: calculates workingModule
+                        if ($lastModule->isAdminModule()) {
+
+                            // if going to admin in same namespace, keeps current module
+                            if ($fromWigiiNamespace == $p->getWigiiNamespace()->getWigiiNamespaceUrl() && $toWorkingModule == null) $toWorkingModule = $fromModule;
+                            // if going to admin in other namespace retrieves last working module
+                            else if ($toWorkingModule == null) $toWorkingModule = $p->getValueInRoleContext("lastWorkingModule");
+
+                            // checks admin working module access
+                            if ($toWorkingModule) {
+                                $workingModule = $p->getModuleAccess($toWorkingModule);
+                            }
+                            if (!$workingModule || $workingModule->isAdminModule()) {
+                                $workingModule = $p->getFirstNoneAdminAccessibleModule();
+                            }
+
+                            // Persists admin working module in context
+                            $this->getAdminContext($p)->setWorkingModule($workingModule);
+                            $p->setValueInRoleContext("lastWorkingModule", $workingModule->getModuleName());
+                        } // if p is bound to a namespace, then forces a non Admin module
+                        else if ($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole() && $lastModule->isAdminModule()) {
+                            $lastModule = $p->getFirstNoneAdminAccessibleModule();
+                        }
+                        // Persists lastModule in context
+                        $p->setValueInRoleContext("lastModule", $lastModule->getModuleName());
+                        // Persists principal context in DB
+                        $this->persistMainPrincipalSessionContext($p, $exec);
+                    } else $lastModule = $mAS->getHomeModule($p);
+                }
 				// Breaks html generation if found in cache
 				if($type == "user" && $exec->wasFoundInJSCache()) {
 					break;
@@ -11244,41 +11570,42 @@ onUpdateErrorCounter = 0;
 				else {
 					// Enters Admin console
 					if ($lastModule->isAdminModule()) {
-						//load the navigation bar
-						$exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
-						$exec->addRequests(($exec->getIsUpdating() ? "workZone/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/adminWorkZone/");
+						// since 4.603 28.11.2017 the navigation bar doesn't need to be refreshed. it is loaded once at the beginning.
+						// $exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
+						
+						// loads admin console
+					    $exec->addRequests(($exec->getIsUpdating() ? "workZone/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/adminWorkZone/");
 					} 
 					// Navigates through User modules and namespaces or goes out of Admin 
 					else {
+					    // since 4.603 28.11.2017 the navigation bar doesn't need to be refreshed. it is loaded once at the beginning.
+					    // if($fromModule == null || $fromModule == Module :: ADMIN_MODULE) $exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
+						
 						//load the workZone. This include:
-						// 	- the search bar
 						//	- the group selector pannel
-						//	- the moduleView
-						if($fromModule == null || $fromModule == Module :: ADMIN_MODULE) $exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
+						//	- the moduleView						
 						$exec->addRequests(($exec->getIsUpdating() ? "workZone/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/workZone/");
 					}
 				}
 
 				// JS to adjust GUI on client side
-				$exec->addJsCode("
+                $currentModuleLabel = $transS->t($p, "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl());
+                if($currentModuleLabel == "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl()) $currentModuleLabel = $transS->t($p, $lastModule->getModuleUrl());
+
+				$defaultWigiiNamespaceUrl = (string) $configS->getParameter($p, null, "defaultWigiiNamespace");
+                $exec->addJsCode("
 closeStandardsDialogs();
+crtModuleLabel = '" . $currentModuleLabel . "';
+defaultWigiiNamespaceUrl = '" . $defaultWigiiNamespaceUrl . "';
 crtRoleId = '" . $roleId . "';
 crtWigiiNamespaceUrl = '" . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "';
 crtModuleName = '" . $lastModule->getModuleUrl() . "';
 crtWorkingModuleName = '" . ($workingModule ? $workingModule->getModuleUrl() : '') . "';
 $additionalJsCode
-refreshNavigateMenu();
-".($lastModule->isAdminModule() ? "
-setNavigationBarInAdminState();
-timeToScrollBack();
-" : ($lastModule->isHomeModule() ? "
-setNavigationBarInHomeState(".$configS->getParameter($p, $lastModule, "FeedbackOnSystem_enable").");
-" : "
-setNavigationBarNotInHomeState(".$configS->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");
-timeToScrollBack();
-" ))."
-document.title='".$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()."/".$transS->h($p, $exec->getCrtModule()->getModuleName())." - ".$configS->getParameter($p, null, "siteTitle")."';
-");
+".($lastModule->isAdminModule() ? "setNavigationBarInAdminStateBsp();"
+: ($lastModule->isHomeModule() ? "setNavigationBarInHomeStateBsp(".$configS->getParameter($p, $lastModule, "FeedbackOnSystem_enable").");" 
+: "setNavigationBarNotInHomeStateBsp(".$configS->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");"))
+."document.title='".$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()."/".$transS->h($p, $exec->getCrtModule()->getModuleName())." - ".$configS->getParameter($p, null, "siteTitle")."';");
 				break;
 			case "switchView" :
 				$authS = ServiceProvider :: getAuthenticationService();
@@ -11359,7 +11686,8 @@ document.title='".$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()."/".$tr
 						$this->includeTemplateIndicators($p, $exec);
 						break;
 					case "navigationBar" :
-						$this->includeTemplateNavigation($p, $exec);
+					    // since 4.603 28.11.2017 the navigation bar doesn't need to be repainted. It is constructed once at the beginning.
+						//$this->includeTemplateNavigation($p, $exec);
 						break;
 					case "adminNavigationBar" :
 						$this->includeTemplateAdminNavigation($p, $exec);
@@ -11598,6 +11926,7 @@ document.title='".$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()."/".$tr
 	 * @param ExecutionService $exec current request
 	 */
 	public function bindJsServicesOnModuleView($p,$exec) {
+	    $this->debugLogger()->logBeginOperation('bindJsServicesOnModuleView');
 		// binds standard Wigii JS services
 		$config = $this->getConfigurationContext();
 		$module = $exec->getCrtModule();
@@ -11644,5 +11973,6 @@ document.title='".$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()."/".$tr
 	
 		// HelpService on Fields (not in print, not in external access, not in notification)
 		$exec->addJsCode("$('#moduleView .wigiiHelp').wigii('bindHelpService');");
+		$this->debugLogger()->logEndOperation('bindJsServicesOnModuleView');
 	}
 }

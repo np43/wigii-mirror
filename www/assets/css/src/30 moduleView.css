@@ -48,7 +48,7 @@
 	padding:3px 6px;
 	margin-left:22px;
 	font-weight:bold;
-	background:no-repeat url('../../images/icones/tango/22x22/actions/up.png') 20px 0px;
+	background:no-repeat url('../../images/gui/folder-structure-arrow-up.png') 25px 5px;
 	padding-left:45px;
 }
 #moduleView div.calendar span.folderUp {
@@ -236,14 +236,14 @@
 	padding-right:7px;
 	float:left;
 	cursor:pointer;
-	background:no-repeat url('../../images/icones/22x22/iconfolder22x22.png') 5px 2px;
+	background:no-repeat url('../../images/gui/folder-structure-arrow-right.png') 4px 5px;
 	margin-left:15px;
 }
 #moduleView .list div.dataList table tr td div.disabled {
 	cursor:default;
 }
 #moduleView .list div.dataList table tr td div.folderUp {
-	background:no-repeat url('../../images/icones/tango/22x22/actions/up.png') 5px 5px;
+	background:no-repeat url('../../images/gui/folder-structure-arrow-up.png') 5px 5px;
 	padding-left:32px;
 	padding-right:10px;
 }
@@ -326,7 +326,7 @@
 	border:3px solid #fff;
 	border-left:none;
 	border-bottom:none;
-	background-color:#f6f6f6;
+	/* background-color:#f6f6f6; */
 }
 
 #moduleView .blog div.dataBlog div.groupList{
@@ -350,7 +350,7 @@
 	cursor:default;
 }
 #moduleView .blog div.dataBlog div.groupList div.folderUp {
-	background:no-repeat url('../../images/icones/tango/22x22/actions/up.png') 5px 5px;
+	background:no-repeat url('../../images/gui/folder-structure-arrow-up.png') 5px 5px;
 	padding-left:32px;
 	padding-right:10px;
 }

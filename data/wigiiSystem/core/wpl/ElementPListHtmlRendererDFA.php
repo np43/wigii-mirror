@@ -214,7 +214,8 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 				$module = $this->lastElement->getModule();
 				//$exec->addRequests("workZone/" . $this->wigiiNamespace->getWigiiNamespaceUrl() . "/" . $module->getModuleUrl() . "/display/workZoneStructure/");
 				$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "").$this->wigiiNamespace->getWigiiNamespaceUrl() . "/" . $module->getModuleUrl() . "/navigate");
-				$exec->addJsCode("$('#workZone #searchBar input:first').val('#".implode(" #", $this->elementIds)."');");
+	            $s = "$('nav #searchField input:first').val('#".implode(" #", $this->elementIds)."');";
+			    $exec->addJsCode('setTimeout(function(){'.$s.'},10);');		            
 				$exec->addJsCode('setTimeout(function(){$("#goForSearch").click();}, 500);');				
 			}
 			// no elements found -> redirects to Namespace/Module of search space

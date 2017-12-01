@@ -19,9 +19,9 @@
 
 #groupPanel>div.collapse, #dockingContainer>div.collapse {
 	float:right;
-	width:10px;
+	width:20px;
 	height:10px; /* updated by JS*/
-	font-size:large;
+	font-size:19px;
 	font-weight:bold;
 	text-align:center;
 	cursor:pointer;
@@ -82,13 +82,13 @@
 	background:no-repeat url('../../images/gui/iconcheckbox_checked.png') 0 -2px;
 }
 .groupPanel span.without-ul {
-	background:no-repeat url('../../images/gui/iconsimplefolder.png') 0 3px;
+	background:no-repeat url('../../images/gui/folder-structure-item.png') 0 5px;
 }
 .groupPanel span.with-ul-hidden {
-	background:no-repeat url('../../images/gui/iconfolderexpand.png') 0 3px;
+	background:no-repeat url('../../images/gui/folder-structure-arrow-right.png') 4px 5px;
 }
 .groupPanel span.with-ul-displayed {
-	background:no-repeat url('../../images/gui/iconfolderreduce.png') 0 3px;
+	background:no-repeat url('../../images/gui/folder-structure-arrow-down.png') 4px 5px;
 }
 .groupPanel ul {
 	padding:0px;

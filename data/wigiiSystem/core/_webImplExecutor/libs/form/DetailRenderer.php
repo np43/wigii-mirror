@@ -149,9 +149,9 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		//do an exception for Blobs with isJournal to make the +add button available
 		} else if($dataTypeName=="Blobs" && $fieldXml["isJournal"]=="1"){
 			//display the label
-		//always display Links if record is writable
-		} else if($dataTypeName=="Links"){
-			//display the label
+		// hides Links if external access and empty
+		} else if($dataTypeName=="Links"){		    
+		    if($rm->isForExternalAccess() && $rm->getRecord()->getFieldValue($fieldName) == 0 && $fieldXml['displayEvenIfEmpty']!='1') return;
 		//always display field if displayEvenIfEmpty
 		} else if($fieldXml["displayEvenIfEmpty"]=="1"){
 			//display the label
@@ -196,6 +196,20 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 							"resize_scrollArea(true);".
 						"}" .
 					"});");
+
+                    if($fieldXml["displayAsTag"]=="1"){
+                        $rm->addJsCode("" .
+                            "$('#".$crtFieldGroupId." .lessBsp').css('cursor','pointer').click(function(){" .
+                            "if($('#".$crtFieldGroupId."_group:visible').length){" .
+                                "$('#".$crtFieldGroupId."_group').hide();" .
+                                "$('#".$crtFieldGroupId.">.label').append('<span class=\"expand\"> &nbsp; ".$rm->h("cickToShowGroupContent")."</span>');" .
+                            "} else {" .
+                                "$('#".$crtFieldGroupId."_group').show();" .
+                                "resize_scrollArea(true);".
+                            "}" .
+                            "});");
+                    }
+
 				if($fieldXml["expand"]=="0" || $fieldXml["forceCollapse"]=="1"){
 					$rm->addJsCode("" .
 						"$('#".$crtFieldGroupId."_group').hide();" .
@@ -234,7 +248,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		}
 		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.($dataType!=null?'data-wigii-datatype="'.$dataTypeName.'"':'').' >');
 		if($dataType!=null){
-			$additionalInformations = $rm->getAdditionalinInformation($fieldName);
+			$additionalInformations = $rm->getAdditionalInformation($fieldName);
 			if($additionalInformations) $rm->put('<div class="addinfo ui-corner-all SBIB">'.$additionalInformations.'</div>');
 		}
 
@@ -244,17 +258,17 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			$noPadding = "";
 			if($dataTypeName=="Files"){
 				if($fieldXml["displayPreviewOnly"]=="1"){
-					$labelWidth = $this->getIsInLineWidth()-20;
+					$labelWidth = $this->getIsInLineWidth();
 				} else {
-					$labelWidth = min($this->getLabelWidth()-20, 100-20);
+					$labelWidth = min($this->getLabelWidth(), 100);
 				}
 			} else if($dataTypeName=="Urls" && $fieldXml["bigLabel"]=="1"){
-				$labelWidth = min($this->getLabelWidth()-20, 100-20);
+				$labelWidth = min($this->getLabelWidth(), 100);
 			} else if(($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1"){
 				$labelWidth = $this->getIsInLineWidth();
 				$noPadding = "padding-right:0px;"; //don't need the right padding if is inline
 			} else {
-				$labelWidth = $this->getLabelWidth()-20;
+				$labelWidth = $this->getLabelWidth();
 			}
 			$style = "width: 100%; max-width:".$labelWidth."px;$noPadding";
 			if($dataTypeName=="Files"){
@@ -279,7 +293,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		} else {
 			$valueWidth = $this->getValueWidth()-20; //remove 20px to prevent the return to line
 		}
-		$style = "width: 100%; max-width:".$valueWidth."px;";
+		$style = "width: 100%; max-width:".$valueWidth."px;overflow:hidden;";
 		$class = "";
 		if($dataType!=null){
 			if($dataTypeName == "Blobs" ||

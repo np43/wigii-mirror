@@ -16,7 +16,7 @@
 		Notification_includeSenderInNotification="0"
 		Notification_includeOtherNamespaceInUpdateOrSetState="0"
 		Notification_hideElementView="0"
-		Notificatin_hideAccessButton="0"
+		Notification_hideAccessButton="0"
 
 		ExcelExport_enableSysDate="0"
 		ExcelExport_enableCreationSysDate="0"

@@ -2,10 +2,11 @@
 * searchBar
 **************************************/
 #searchBar {
-	padding-top:10px;
-	padding-bottom:10px;
+	padding-top:2px;
+	padding-bottom:2px;
 	padding-left:10px;
 	padding-right:2px;
+	float: right;
 }
 
 #searchBar div.firstBox{
@@ -46,10 +47,6 @@
 }
 
 /* toolBar box */
-#searchBar div.toolbarBox{
-	float:right;
-	padding-top:2px;
-}
 #searchBar div.toolbarBox div{
 	float:right;
 }
@@ -147,4 +144,92 @@
 	margin-left: 4px;
 	margin-right: 4px;
 	cursor: pointer;
+}
+
+/*
+ * Adaptation to include the searchBar in the navigation bar
+ */
+
+nav div.firstBox{
+	float:left;
+	margin-top: 2px;
+}
+
+nav input{
+	font-size:16px;
+	height:23px;
+	padding:2px;
+	padding-right:0px;
+	border-right-width:0px;
+	width: 100%;
+	max-width:303px;
+	margin:0px;
+	float:left;
+}
+nav #goForSearch {
+	height:23px;
+	float:left;
+	padding:2px 15px;
+	font-size:18px;
+	font-weight:bold;
+}
+nav .searchButtons {
+	float:left;
+	background-color:#fff;
+	border-left-width:0px;
+	border-right-width:0px;
+	font-size:16px;
+	font-weight:normal;
+	height:23px;
+	padding:4px 5px 0px 0px;
+	line-height: 12px;
+}
+nav .searchButtons span {
+	padding-right:5px;
+	padding-left:5px;
+}
+
+nav .glyphicon-search {
+	font-size: 10pt;
+}
+
+nav .G {
+	background-color: #D8D8D8;
+}
+
+/* ToolBarBox */
+
+#searchBar .toolbarBox .groupBy, #searchBar .toolbarBox .sortBy{
+	margin-top: -5px;
+}
+
+#searchBar .toolbarBox .groupBy button, #searchBar .toolbarBox .sortBy button{
+	height: 13px;
+	line-height: 13px;
+	border: none;
+}
+
+nav #searchBar .toolbarBox .groupBy button, nav #searchBar .toolbarBox .sortBy button{
+	height: 24px;
+	line-height: 13px;
+	border: none;
+}
+
+#searchBar .toolbarBox .scrollable-menu {
+	height: auto;
+	max-height: 300px;
+	overflow-x: hidden;
+	max-width:200px;
+}
+
+#searchBar .toolbarBox .sortBy .glyphicon, #searchBar .toolbarBox .groupBy .glyphicon{
+	float: left;
+	margin-top: 3px;
+	margin-left: 1px;
+	font-size: 12px;
+	padding-right: 3px;
+}
+
+#elementDialog .docked {
+	margin-top: -50px !important;
 }

@@ -21,9 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 3 déc. 09
- * by LWR
+/**
+ * Created by LWR on 3 déc. 09
+ * Modified by CWE on 11.03.2016 to limit Blobs size to prevent loss of data and keep CKEditor running
+ * Modified by Medair(CWE) on 22.09.2017 to limit Blobs size to 512Ko if htmlArea=1, to 8Mo if persisted in DB, and no limit if not persisted.
  */
 class Blobs extends DataTypeInstance {
 	
@@ -33,10 +34,14 @@ class Blobs extends DataTypeInstance {
 	* automatiquement, si le type de donnée évolue, il faut aussi modifier cette méthode
 	*/
 	public function checkValues($p, $elementId, $wigiiBag, $field){
-		$val=$wigiiBag->getValue($elementId, 'Blobs', $field->getFieldName());		
-		if($val) {
-			$size = strlen($val);			
-			$allowed = 512*1024; /* CWE 11.03.2016: limits the Blobs size to 512Ko to keep CKEditor running smoothly. Blobs SQL limit is MediumText: 16Mo.*/
+		$val=$wigiiBag->getValue($elementId, 'Blobs', $field->getFieldName());
+		$fieldXml = $field->getXml();
+		if($val && $fieldXml['doNotPersist'] !='1') {		    
+			$size = strlen($val);
+			/* CWE 11.03.2016: limits the Blobs size to 512Ko to keep CKEditor running smoothly. Blobs SQL limit is MediumText: 16Mo.*/
+			if($fieldXml['htmlArea']=='1') $allowed = 512*1024;
+			/* CWE 22.09.2017: else allows 8Mo */
+			else $allowed = 8*1024*1024;
 			if($size>$allowed) {
 				throw new RecordException(str_replace(array('$$chars$$', '$$size$$','$$allowed$$'), array($size-$allowed, $size,$allowed), ServiceProvider::getTranslationService()->t($p,'exceedBlobsLimit')), RecordException::INVALID_ARGUMENT);
 			}

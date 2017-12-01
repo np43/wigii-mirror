@@ -161,6 +161,21 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $this->authS;
 	}
 	
+	private $authoS;
+	public function setAuthorizationService($authorizationService)
+	{
+	    $this->authoS = $authorizationService;
+	}
+	protected function getAuthorizationService()
+	{
+	    // autowired
+	    if(!isset($this->authoS))
+	    {
+	        $this->authoS = ServiceProvider::getAuthorizationService();
+	    }
+	    return $this->authoS;
+	}
+	
 	private $gAS;
 	public function setGroupAdminService($groupAdminService)
 	{
@@ -1120,6 +1135,49 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    return TechnicalServiceProvider::getFuncExpBuilder()->elementFile2df($element, $fieldName, $chunkSize);
 	}
 	
+	// Transformations
+	
+	/**
+	 * Transforms a given element to a value using a transformation FuncExp<br/>
+	 * FuncExp signature : <code>element2value(element,fx)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) element: Element|Record. An element or a record to be transformed into a value.
+	 * - Arg(1) fx: FuncExp|FieldSelector. A transformation FuncExp which returns a value based on the element. Or a FieldSelector returning a value of the element.
+	 * @return Any the result of the FuncExp
+	 */
+	public function element2value($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    $p = $this->getPrincipal();
+	    if($nArgs < 2) throw new FuncExpEvalException('element2value takes two arguments, the element to transform and a transformation FuncExp or FieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
+	    $element = $this->evaluateArg($args[0]);
+	    if(!isset($element)) throw new FuncExpEvalException('element cannot be null', FuncExpEvalException::INVALID_ARGUMENT);
+	    $fx = $args[1];
+	    if(($fx instanceof FuncExp) && $this->isFxOriginPublic()) $fx->setOriginIsPublic();
+	    
+	    // gets RecordEvaluator
+	    if($element instanceof Element) $evaluatorClassName = (string)ServiceProvider::getConfigService()->getParameter($p, $element->getModule(), "Element_evaluator");
+	    else $evaluatorClassName = null;
+	    if(empty($evaluatorClassName)) $evaluatorClassName = (string)ServiceProvider::getConfigService()->getParameter($p, ServiceProvider::getExecutionService()->getCrtModule(), "Element_evaluator");
+	    $fxEval= ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
+	    // injects the context
+	    $fxEval->setContext($p, $element);
+	    // gets vm
+	    $fxEval= ServiceProvider::getFuncExpVM($p, $fxEval);
+	    $fxEval->setFreeParentEvaluatorOnFreeMemory(true);
+	    
+	    // evaluates the expression
+	    $returnValue = null;
+	    try {
+	        $returnValue = $fxEval->evaluateFuncExp($fx, $this);
+	        $fxEval->freeMemory();
+	    }
+	    catch(Exception $e) {
+	        $fxEval->freeMemory();
+	        throw $e;
+	    }
+	    return $returnValue;
+	}
+	
 	// Configuration builder
 
 	/**
@@ -1567,6 +1625,77 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $returnValue;
 	}	
 
+	/**
+	 * Creates an IndicatorList object to be used in indicatorListExp parameter in config
+	 * FuncExp signature : <code>cfgIndicatorList(indicator1:Indicator, ...)</code><br/>
+	 * @return IndicatorList
+	 */
+	public function cfgIndicatorList($args) {
+	    $returnValue = IndicatorListArrayImpl::createInstance ();
+	    $nArgs = $this->getNumberOfArgs ( $args );
+	    if($nArgs>0) {
+    	    foreach ( $args as $arg ) {
+    	        $arg = $this->evaluateArg ( $arg );
+    	        if ($arg) {
+    	            $returnValue->addIndicatorInstance ( $arg );
+    	        }
+    	    }
+	    }
+	    return $returnValue;
+	}
+	/**
+	 * Creates an Indicator object to be used in indicatorListExp parameter in config
+	 * FuncExp signature : <code>cfgIndicator(function:Integer, fs:FieldSelector, label:String = null, isRecursive:Boolean = false)</code><br/>
+	 * function: AVG = 1, COUNT = 3, COUNT_DISTINCT = 4, MAX = 7, MIN = 8, SUM = 9
+	 * @return Indicator
+	 */
+	public function cfgIndicator($args) {
+	    $nArgs = $this->getNumberOfArgs ( $args );
+	    if ($nArgs < 2) {
+	        throw new FuncExpEvalException ( "cfgIndicator takes at least 2 arguments the function and the field selector", FuncExpEvalException::INVALID_ARGUMENT );
+	    }
+	    
+	    $configS = $this->getConfigService();
+	    $transS = ServiceProvider::getTranslationService();
+	    $exec = ServiceProvider::getExecutionService ();
+	    
+	    $function = ( int ) $this->evaluateArg ( $args [0] );
+	    if ($args [1] instanceof FieldSelector) {
+	        $fs = $args [1];
+	    } else {
+	        $fs = $this->evaluateArg ( $args [1] );
+	    }
+	    $label = null;
+	    if ($nArgs > 2) {
+	        $label = $this->evaluateArg ( $args [2] );
+	    }
+	    //find the field in config
+	    $fl = FieldListArrayImpl::createInstance ( false, true );
+	    $configS->getFields ( $this->getPrincipal (), $exec->getCrtModule (), null, $fl );
+	    $field = $fl->getField ( $fs->getFieldName () );
+	    //define a nice label if not defined
+	    if($label == null){
+	        $availableFunction = Indicator::getAvailableFunctions();
+	        if($fs->isElementAttributeSelector()){
+	            $label = $transS->t($p, $fs->getSubFieldName());
+	            $label .= " (";
+	            $label .= $transS->t($p, $availableFunction[$function]);
+	            $label .= ")";
+	        } else {
+	            $label = $transS->t($p, $field->getFieldName(), $field->getXml());
+	            $label .= " (";
+	            $label .= $transS->t($p, $availableFunction[$function]);
+	            $label .= ")";
+	        }
+	    }
+	    $isRecursive = false;
+	    if ($nArgs > 3) {
+	        $isRecursive= $this->evaluateArg ( $args [3] );
+	    }
+	    $returnValue = Indicator::createInstance ( $fs, $field->getDataType (), $function, $label, null, $isRecursive, true);
+	    return $returnValue;
+	}
+	
 	// WigiiBPLParameter builder
 	
 	/**
@@ -1887,6 +2016,15 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		}
 	}
 	
+	/**
+	 * Returns true if current principal is a Public principal used in the scope of subscriptions or external access
+	 * FuncExp signature : <code>ctlIsInPublic()</code><br/>
+	 * @return Boolean true if current principal is a public principal else false.
+	 */
+	public function ctlIsInPublic($args) {
+	    return $this->getAuthorizationService()->isPublicPrincipal($this->getPrincipal());
+	}
+	
 	// System functions
 	
 	/**
@@ -2108,7 +2246,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(1) password: String. The user password to check against for authentication (full password).
 	 * Postcondition: if login is successful then FuncExpVM principal is changed.
 	 * @return boolean true if user has successfully logged in, false if user was already logged in and no change, exception if login is not successful.
-	 * @throws AuthenticationException in case of login error.
+	 * @throws AuthenticationServiceException in case of login error.
 	 */
 	public function sysLogin($args) {
 		$nArgs = $this->getNumberOfArgs($args);

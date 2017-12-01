@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 16 april 2010
- * by LWR
+/**
+ * Created by LWR on 16 april 2010 
+ * Modified by Medair (LMA,CWE) in 2017 for maintenance purpose. See SVN log for details.
  */
 class ModuleConfigEditFormExecutor extends FormExecutor {
 
@@ -173,9 +173,11 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 			throw new ServiceException('adding new config files need to be wigiiNamespace creator', ServiceException::FORBIDDEN);
 		}
 
-		if($rec->getFieldValue("moduleEditorConfigField") != null){
+		if($rec->getFieldValue("moduleEditorConfigField") != null){            
 			// CWE 17.05.2016: keeps raw backslashes in file
 			file_put_contents($this->getFilename(), str_replace('&#92;','\\',stripslashes($rec->getFieldValue("moduleEditorConfigField"))));
+			// Change permission to 666 by Medair (LMA) 28.08.2017
+			@chmod($this->getFilename(), 0666);
 		} else {
 			@unlink($this->getFilename());
 		}

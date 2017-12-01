@@ -1391,6 +1391,11 @@ class ElementServiceImpl implements ElementService
 		{
 			if(isset($elementPMapper)) $elementPMapper->freeMemory();
 			if(isset($eltQP)) $eltQP->freeMemory();
+			// Medair(CWE) 11.09.2017: if SQL Error 1116 too many tables, then raises a Configuration Error because where clause is too big
+			$rootE = $ese->getWigiiRootException();
+			if(($rootE instanceof MySqlFacadeException) && $rootE->getMySqlErrorNo() == 1116) {
+			    $ese = new ElementServiceException("Too many fields in where clause. Please reduce the number of searchable fields in configuration or build searchable summaries.", ElementServiceException::CONFIGURATION_ERROR);
+			}
 			$this->executionSink()->publishEndOperationOnError("getSelectedElementsInGroups", $ese, $principal);
 			throw $ese;
 		}
@@ -1404,8 +1409,17 @@ class ElementServiceImpl implements ElementService
 		{
 			if(isset($elementPMapper)) $elementPMapper->freeMemory();
 			if(isset($eltQP)) $eltQP->freeMemory();
-			$this->executionSink()->publishEndOperationOnError("getSelectedElementsInGroups", $e, $principal);
-			throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+			// Medair(CWE) 11.09.2017: if SQL Error 1116 too many tables, then raises a Configuration Error because where clause is too big
+			if($e instanceof ServiceException) {
+    			$rootE = $e->getWigiiRootException();
+    			if(($rootE instanceof MySqlFacadeException) && $rootE->getMySqlErrorNo() == 1116) {
+    			    throw new ElementServiceException("Too many fields in where clause. Please reduce the number of searchable fields in configuration or build searchable summaries.", ElementServiceException::CONFIGURATION_ERROR);
+    			}
+			}
+			else {
+			     $this->executionSink()->publishEndOperationOnError("getSelectedElementsInGroups", $e, $principal);
+			     throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+			}
 		}
 		$this->executionSink()->publishEndOperation("getSelectedElementsInGroups", $principal);
 		return $returnValue;

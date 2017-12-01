@@ -40,7 +40,7 @@ class Test_BasicStringTokenizer extends WigiiApiTest
 		$matches = array();
 
 		$symbols_pattern = '[\\Q°§+"*%&\/()=?`@#|´~\'^!${}[]-.:,;<>\\\\E]';
-		$accentChars_pattern = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿ';
+		$accentChars_pattern = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýýþÿ';
 		$wordChars_pattern = "[\\w$accentChars_pattern]";
 		$word_pattern = "(?:$wordChars_pattern+)(?=\\s|$symbols_pattern|".'$)';
 		if(preg_match_all("/$word_pattern|$symbols_pattern/s", $s, $matches, PREG_SET_ORDER) > 0)

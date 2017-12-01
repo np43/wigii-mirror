@@ -30,7 +30,7 @@ $fieldXml = $field->getXml();
 
 //defining width if existant
 if($parentWidth != null){
-	$valueWidth = " width: 100%; max-width:".($parentWidth-5)."px; ";
+	$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";
 }
 //
 //$subFieldName = "value";

@@ -698,7 +698,13 @@ getRootGroupCreator_help:Can create root #group# (with no parent).:Peut créer d
 giveGeneralFeedback:Send us your feedback:Envoyer nous votre Feedback:::::::::
 giveFeedback:Send feedback:Donner un feedback:::::::::
 
+time_complete:Time complete#:Temps complété:::::::
+not_started_yet:Not started yet:Pas démarré:::::::
+open_ended:Open ended:Sans fin:::::::
+p_of_time:% of time: % accompli:::::::
 
+endDate_error:The end date must be after the start date:La date de fin doit être après la date de début:::::::
+startDate_error:The start date must be before the end date:La date de début doit être avant la date de fin:::::::
 
 moduleView:Views:Affichages::::::::
 navigationStyle:Navigation:Navigation::::::::
@@ -1589,7 +1595,7 @@ changeKeepNotifiedEmailLabel:change email address:changer l'adresse email::::::
 noEmailIsSettedSuccessfully:No email address is defined.:Aucune adresse email est définie.:
 
 
-defineFilters:Define filters...:Définir un filtre...::::::::
+defineFilters:Filter in :Filtrer dans ::::::::
 defineFiltersForElementsTitle:Filter #elements# with:Filtrer #elements# avec::::::::
 removeFilters:Remove filters:Supprimer les filtres::::::::
 resetFilters:Reset:Reset::::::::

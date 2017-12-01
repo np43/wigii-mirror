@@ -461,14 +461,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					$(self.popupElt).show();
 					if(!self.isVisible) {
 						self.isVisible = true;
-						// if the popup is relative to anchor we add overflow for fix a display bug
+						// if the popup is relative to anchor we add overflow to  ensure popup is displayed
 						if(self.isRelativeToAnchor) anchor.parent().css('overflow','visible');
 						// reset default position and dimension if resetOnShow
 						if(self.resetOnShow && self.defaultOptions) {
 							var w = self.window();
 							w.css('top',self.defaultOptions.top).css('left',self.defaultOptions.left);
 							if(self.defaultOptions.width && self.defaultOptions.height) {
-								w.css('height',self.defaultOptions.height+10).css('width',self.defaultOptions.width).resize();
+								w.css('height',self.defaultOptions.height+20).css('width',self.defaultOptions.width).resize();
 							}; 
 							self.body().scrollTop(0).scrollLeft(0);
 						}
@@ -548,13 +548,22 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Sets the html of the popup body.
-			 * @param String htmlString the html string to use as html content for this popup 
+			 * @param String|Function htmlString the html string to use as html content for this popup 
 			 */
 			self.html = function(htmlString) {
 				var b = self.body();
-				if(b) b.html(htmlString);
+				if(b) {
+					// if we have an html emitting function, call it on the popup body.
+					if($.isFunction(htmlString)) htmlString(b,self)
+					// else we already have a built in html string
+					else b.html(htmlString);
+					// fixes body height					
+					if(b.children().size()>0) {
+						b.css('height',b.height()+1);						
+					}
+				}
 				// records default width and height if not yet calculated
-				if(self.defaultOptions && !self.defaultOptions.width && !self.defaultOptions.height) {
+				if(b.children().size()>0 && self.defaultOptions && !self.defaultOptions.width && !self.defaultOptions.height) {					
 					var w = self.window();
 					self.defaultOptions.width = w.width();
 					self.defaultOptions.height = w.height();
@@ -599,7 +608,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				top = top+(anchorOffset.top-parentOffset.top);
 				left = left+(anchorOffset.left-parentOffset.left);
 				// fixes anchor parent position
-				anchor.parent().css('position','relative').css('overflow','visible'); //.removeAttr('overflow');
+				anchor.parent().css('position','relative').css('overflow','visible');
 				popupPosition='absolute';
 				if(!self.isRelativeToAnchor) self.isRelativeToAnchor = true;
 			}
@@ -607,17 +616,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			var popupHtml = '<div';
 			if(options['id']) popupHtml+=' id="'+options['id']+'"';
 			popupHtml += ' class="'+(options['classId']&&!options['id']?options['classId']:'')+' ui-corner-all ui-widget ui-dialog SBIB"';
-			popupHtml += ' style="cursor:default;z-index:998;position:'+popupPosition+';background-color:#fff;border-style:solid;border-width:1px;top:'+top+'px;left:'+left+'px;padding:5px;width:'+width+'px;max-height:'+height+'px;display:none;float:none;border-color:black;"';
+			popupHtml += ' style="cursor:default;z-index:998;position:'+popupPosition+';background-color:#fff;border-style:solid;border-width:1px;top:'+top+'px;left:'+left+'px;padding:5px;width:'+width+'px;height:auto;max-height:'+height+'px;display:none;float:none;border-color:black;"';
 			popupHtml +='>';
-			if(title) popupHtml +='<div class="popupTitle ui-corner-all ui-widget-header" style="'+(options['resizable']?'cursor:move;':'')+'float:left;font-style:normal;font-weight:bold;font-size:small;text-align:left;padding-left:13px;padding-right:0;padding-top:5px;padding-bottom:5px;margin:0;color:black;height:14px;width:'+(width-15)+'px" >'+title+'</div>';
+			if(title) popupHtml +='<div class="popupTitle ui-corner-all ui-widget-header" style="'+(options['resizable']?'cursor:move;':'')+'float:left;font-style:normal;font-weight:bold;font-size:small;text-align:left;padding-left:13px;padding-right:0;padding-top:5px;padding-bottom:5px;margin:0;color:black;min-height:14px;width:'+(width-13)+'px" >'+title+'</div>';
 			else popupHtml +='<div class="popupTitle emptyTitle ui-corner-all" style="'+(options['resizable']?'cursor:move;':'')+'float:left;z-index:999;position:absolute;right:4px;top:-10px;font-style:normal;font-weight:bold;font-size:small;text-align:left;padding-left:13px;padding-right:0;padding-top:5px;padding-bottom:5px;margin:0;color:black;height:14px;width:'+(width-10)+'px" >&nbsp;</div>';
-			//if(options['closeable']) popupHtml += '<div class="exit ui-corner-all SBIB" style="z-index:999;position:absolute;right:-8px;top:-8px;cursor:pointer;width:15px;height:17px;float:right;background-color:#fff;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>';			
 			if(options['closeable']) {
-				if(title) popupHtml += '<div class="exit ui-corner-all" style="z-index:999;position:absolute;right:10px;top:7px;cursor:pointer;width:15px;height:17px;float:right;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>'; 
+				if(title) popupHtml += '<div class="exit ui-corner-all" style="z-index:999;position:absolute;right:6px;top:8px;cursor:pointer;width:15px;height:17px;float:right;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0">x</div>'; 
 				else popupHtml += '<div class="exit ui-corner-all SBIB" style="z-index:999;position:absolute;right:-2px;top:-3px;cursor:pointer;width:15px;height:17px;float:right;background-color:#fff;border-style:solid;border-width:1px;text-align:center;vertical-align:middle;color:black;font-weight:bold;font-style:normal;font-size:small;padding:0;margin:0;border-color:black">x</div>';
 			}
 			popupHtml +='<div class="clear"></div>';
-			popupHtml +='<div class="popupBody" style="z-index:998;cursor:normal;float:left;font-weight:normal;font-style:normal;font-size:small;text-align:left;padding:0;margin:0;margin-top:1px;color:black;overflow-y:auto;height:auto;max-height:'+(height-28)+'px;width:'+(width-5)+'px;"><br/></div></div>';
+			popupHtml +='<div class="popupBody" style="z-index:998;cursor:default;float:left;font-weight:normal;font-style:normal;font-size:small;text-align:left;padding:0;margin:0;margin-top:1px;color:black;overflow-y:auto;height:auto;max-height:'+(title?height-40:height-8)+'px;width:'+(width-9)+'px;"><br/></div></div>';
 						
 			// if insert into anchor
 			if(insertIntoAnchor) {
@@ -644,7 +652,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			}
 			// resizable and draggable
 			if(options['resizable']) {
-				self.popupElt.draggable({handle:'.popupTitle'}).resizable().resize(function(){
+				self.popupElt.draggable({handle:'.popupTitle'}).resizable().resize(function(event){
+					event.stopPropagation();
 					$(this).css('min-width','0').css('min-height','0').css('max-width','none').css('max-height','none');
 					var body = $(this).find('div.popupBody');
 					body.css('min-width','0').css('min-height','0').css('max-width','none').css('max-height','none').width($(this).width()-5);
@@ -654,7 +663,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						body.height($(this).height()-8);
 					}
 					else {
-						title.width($(this).width()-15);
+						title.width($(this).width()-13);
 						body.height($(this).height()-28);
 					}
 				});				
@@ -716,18 +725,23 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 */
 			self.showHelp = function(content,anchor,options) {
 				//We go back to the tree node 'scrollElement' if not found we are in html node
-				options.referenceWindow =  anchor.parentsUntil('#scrollElement').last().parent();
+				options.referenceWindow = anchor.parentsUntil('#scrollElement').last().parent();
 				//If we didn't find node 'scrollElement' we try to find 'elementDialog'
-				if(options.referenceWindow.attr('id')!='scrollElement' || isWorkzoneViewMode()) options.referenceWindow =  anchor.parentsUntil('#elementDialog').last().parent(); //addElement_form
+				if(options.referenceWindow.attr('id')!='scrollElement' || isWorkzoneViewDocked()) options.referenceWindow =  anchor.parentsUntil('#elementDialog').last().parent();
 				var context = anchor.data(self.ctxKey);
 				if(!context) {
 					context = {};
 					// popup positioning
-					if(!options.top && !options.left) {
-						//if option.referenceWindow first child has 'html' it was the window object and use offset else use position
-						var anchorOffset = (options.referenceWindow.children().first().is('html')) ? anchor.offset() : anchor.position();
-						var scrollLeft = options.referenceWindow.scrollLeft(); //changer cette valeur si on est dans une fenêtre
+					if(!options.top && !options.left) {						
+						var anchorOffset = anchor.offset();
+						var scrollLeft = options.referenceWindow.scrollLeft();
 						var scrollTop = options.referenceWindow.scrollTop();
+						// if reference window is a dialog, then the scroll is in fact the dialog position in the page
+						var refWindowOffset = options.referenceWindow.offset();						
+						if(refWindowOffset && (refWindowOffset.top > 0 || refWindowOffset.left > 0)) {
+							scrollLeft = refWindowOffset.left;
+							scrollTop = refWindowOffset.top;
+						}						
 						// takes max available window height if position is S,SE or SW, 1/3 window height if position is center.
 						switch(options.position) {
 						case 'SE':
@@ -736,23 +750,36 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							options.height = Math.max(options.height, options.referenceWindow.height()-(anchorOffset.top-scrollTop)-options.offset-15);
 							break;
 						case 'center':
-							options.height = Math.max(options.height,Math.floor(options.referenceWindow.height()/2));	
+							options.height = Math.max(options.height,Math.floor(options.referenceWindow.height()/2));
 							break;
 						}
 						wigiiApi.positionBox({pageX:anchorOffset.left,pageY:anchorOffset.top}, options, options);
 						// make position relative to anchor
-						options.top = options.top+scrollTop-anchorOffset.top;				
-						options.left = options.left+scrollLeft-anchorOffset.left;
-						options.relativeToAnchor=true;
-						
-						//We must add 20px to the left in case where you have a scroolbar
-						options.left = options.left-20;
+						options.top = options.top-(anchorOffset.top-scrollTop);				
+						options.left = options.left-(anchorOffset.left-scrollLeft);
+						options.relativeToAnchor=true;						
 					}
 					else {
 						options.relativeToAnchor=false;
 					};
 					// popup creation					
 					context.popup = wigiiApi.createPopUpInstance(anchor,options);
+					
+					// if type == 'help' we would have only one popup  
+					// (this initialization on show/hide events should be done before first call of show)
+					if (options.type == 'help') {
+						fh = anchor.parents('div.field').first().wigii('FieldHelper');
+						if(fh.ctxKey) {
+							fh = fh.formHelper();
+							context.popup.show(fh.onHelpPopupShow);
+							context.popup.hide(fh.onHelpPopupHide);
+						}						
+					};
+					
+					
+					// shows popup first
+					context.popup.show();
+					// fills content after to resize height correctly based on content
 					if(options.localContent) {
 						context.popup.html(content);
 					}
@@ -762,20 +789,22 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							success:wigiiApi.buildUpdateCallback(context)
 						});
 					}
+					// reposition the window now we know its size.
+					if(options.relativeToAnchor) {
+						var w = context.popup.window();
+						options.height = w.height();
+						options.width = w.width();
+						wigiiApi.positionBox({pageX:anchorOffset.left,pageY:anchorOffset.top}, options, options);
+						options.top = options.top-(anchorOffset.top-scrollTop);								
+						if(context.popup.defaultOptions) context.popup.defaultOptions.top = options.top;
+						w.css('top',Math.ceil(options.top));
+					}
 					anchor.data(self.ctxKey,context);
 					// removes anchor on close if needed
 					if(options['removeOnClose']) context.popup.remove(function(){anchor.remove();});
-					// if type == 'help' we would have only one popup
-					if (options.type == 'help') {
-						fh = anchor.parents('div.field').first().wigii('FieldHelper');
-						if(fh.ctxKey) {
-							fh = fh.formHelper();
-							context.popup.show(fh.onHelpPopupShow);
-							context.popup.hide(fh.onHelpPopupHide);
-						}						
-					};
-				}
-				context.popup.show();
+					
+				}	
+				else context.popup.show();
 			};
 			
 			/**
@@ -788,7 +817,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			self.toggleHelp = function(content,anchor,options) {
 				var context = anchor.data(self.ctxKey);
 				if(context) context.popup.toggle();
-				else self.showHelp(content,anchor,options);
+                else self.showHelp(content,anchor,options);
 			};
 			
 			/**
@@ -825,9 +854,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					wigiiApi.positionBox(mouseEvent,options,options);
 				}
 				// popup creation
-				context = {};
+				var context = {};
 				context.popup = wigiiApi.createPopUpInstance(container,options);
-				if(options.localContent) {
+				// shows popup first
+				context.popup.show();
+				// fills content after to resize height correctly based on content
+				if(options.localContent) {					
 					context.popup.html(content);
 				}
 				else {
@@ -836,8 +868,6 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						success:wigiiApi.buildUpdateCallback(context)
 					});
 				}
-				// shows popup
-				context.popup.show();
 			};
 			
 			/**
@@ -879,7 +909,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				default:
 					helpAnchor = 'infoAnchor';
 				}
-				// creates helpSpan and inserts it into the DOM 
+				// creates helpSpan and inserts it into the DOM
 				var helpSpan = '<a class="'+ctxKey+' HelpService '+helpAnchor+'"></a>';
 				var neighbor = undefined;
 				switch(options.domInsertionMode) {
@@ -972,9 +1002,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					wigiiNotif = $('#elementDialog').parent().find('.wigiiNotif');
 					// creates div if does not exist
 					if(wigiiNotif.length == 0) {
-						if(isWorkzoneViewMode()) {
-							$('#searchBar .middleBox div.T').children().last().after('<div class="wigiiNotif" style=""/>');
-							wigiiNotif = $('#searchBar .middleBox div.T').find('.wigiiNotif');
+						if(isWorkzoneViewDocked()) {
+							$('#validTop').children().last().after('<div class="wigiiNotif" style=""/>');
+							wigiiNotif = $('#validTop').find('.wigiiNotif');
 						} else {
 							$('#elementDialog').parent().find('.ui-dialog-titlebar-close').before('<div class="wigiiNotif" style="float:right;padding-right:3px;padding-left:3px;padding-top:3px;padding-bottom:3px;margin-right:10px;max-width:100%;overflow:hidden;"/>');
 							wigiiNotif = $('#elementDialog').parent().find('.wigiiNotif');
@@ -986,8 +1016,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						var wigiiHelp = wigiiNotif.prev('.elementHelp'); 
 						if(wigiiHelp.length == 0) {
 							wigiiNotif.before('<div class="elementHelp" style="float:right;padding-right:3px;padding-left:0px;padding-top:3px;padding-bottom:3px;margin-right:10px;max-width:100%;overflow:hidden;"/>');
-							if(isWorkzoneViewMode()) {
-								wigiiNotif = $('#searchBar').find('.elementHelp');
+							if(isWorkzoneViewDocked()) {
+								wigiiNotif = $('#validTop .elementHelp');
+								wigiiNotif.css('margin-top', '25px');
 							} else {
 								wigiiNotif = $('#elementDialog').parent().find('.elementHelp');
 							}
@@ -1765,7 +1796,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				//self.debugLogger.logBeginOperation('bindHelpService');				
 				var helpService = wigiiApi.getHelpService();
 				var optionsFx = ($.type(options) === 'function');
-				
+				// finds closes div.value and ensures overflow is visible
+				var visibleOverflowOnEnclosingValueDiv = function(startElt) {
+					var valueDiv = startElt.closest('div.value, div.field');
+					if(valueDiv.length > 0 && valueDiv.hasClass('value')) valueDiv.css('overflow','visible');
+				}
 				if(options && (options.content || optionsFx)) {			
 					var contentFx = !optionsFx && ($.type(options.content) === 'function');
 					selection.each(function(i){
@@ -1796,12 +1831,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							height:(e.attr("data-popup-height")?e.attr("data-popup-height"):400),
 							type:(e.attr("data-popup-type")?e.attr("data-popup-type"):'help'),
 							position:(e.attr("data-popup-position")?e.attr("data-popup-position"):'SE')
-						};	
+						};						
 						// case: div with localContent
 						if(e.is("div.localContent")) {
 							content = e.html();							
 							opts.localContent = true;							
-							e = e.parent().find("div.value");
+							e = e.parent().find("div.value");							
 							if(content) {
 								helpService.renderHelpAnchor(e, content, opts);							
 							}							
@@ -1810,7 +1845,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						else if(e.is("div.remoteContent")) {
 							content = e.text();/* remote content is an url, so retrieves it as text to avoid double coding of amperstands */							
 							opts.localContent = false;							
-							e = e.parent().find("div.value");
+							e = e.parent().find("div.value");							
 							if(content) {
 								helpService.renderHelpAnchor(e, content, opts);							
 							}							
@@ -1824,7 +1859,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 								if(!content['height']) content.height=opts.height;
 								if(!content['type']) content.type=opts.type;
 								opts=content;
-								e = e.parent().find("div.value");
+								e = e.parent().find("div.value");								
 								if(opts.content) {
 									helpService.renderHelpAnchor(e, opts.content, opts);							
 								}	
@@ -1835,7 +1870,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							content = e.attr('href');
 							opts.localContent = false;
 							opts.domInsertionMode = 'after';
-							e.hide();							
+							e.hide();
+							// if e is into a div.value, ensures overflow is visible
+							visibleOverflowOnEnclosingValueDiv(e);
 							if(content) {
 								helpService.renderHelpAnchor(e, content, opts);							
 							}
@@ -1845,7 +1882,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							content = e.html();
 							opts.localContent = true;
 							opts.domInsertionMode = 'after';
-							e.hide();							
+							e.hide();
+							// if e is into a div.value, ensures overflow is visible
+							visibleOverflowOnEnclosingValueDiv(e);
 							if(content) {
 								helpService.renderHelpAnchor(e, content, opts);							
 							}
@@ -2612,7 +2651,10 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			if(!boxOptions) boxOptions = {};
 			var screenTop=undefined,screenLeft=undefined,boxTop=undefined,boxLeft=undefined;			
 			if(!positionOptions) positionOptions = {};
-			if(!positionOptions.referenceWindow) positionOptions.referenceWindow = $(window);		
+			if(!positionOptions.referenceWindow) positionOptions.referenceWindow = $(window);
+			var refWindowTop = 0, refWindowLeft = 0, refWindowOffset = positionOptions.referenceWindow.offset();
+			if(refWindowOffset) {refWindowTop = refWindowOffset.top; refWindowLeft = refWindowOffset.left;}
+			
 			// if no mouseEvent then takes window center
 			if(!mouseEvent) {			
 				screenTop = Math.floor(positionOptions.referenceWindow.height()/2);
@@ -2621,16 +2663,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			}
 			// else takes mouse position
 			else {
-				screenTop = mouseEvent.pageY-positionOptions.referenceWindow.scrollTop();
-				screenLeft = mouseEvent.pageX-positionOptions.referenceWindow.scrollLeft();
+				screenTop = mouseEvent.pageY-(refWindowTop > 0 ? refWindowTop:positionOptions.referenceWindow.scrollTop());
+				screenLeft = mouseEvent.pageX-(refWindowLeft > 0 ? refWindowLeft:positionOptions.referenceWindow.scrollLeft());
 				if(!positionOptions.position) positionOptions.position = 'SE';
 				if(!positionOptions.position=='center' && !positionOptions.offset && positionOptions.offset!==0) positionOptions.offset=15;
 			}
 			// calculates boxTop and boxLeft
 			switch(positionOptions.position) {
 			case 'center': 
-				boxTop = screenTop-boxOptions.height/2;
-				boxLeft = screenLeft-boxOptions.width/2;
+				boxTop = boxOptions.height/2;
+				boxLeft = boxOptions.width/2;
 				break;
 			case 'N':
 				boxTop = screenTop-positionOptions.offset-boxOptions.height;
@@ -2666,11 +2708,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				break;
 			}
 			// keeps box fully visible except if preventCovering		
-			if(!positionOptions.preventCovering) {
+			if(!positionOptions.preventCovering) {				
 				if(boxTop<0) boxTop = 0;
 				if(boxLeft<0) boxLeft = 0;
-				boxTop = Math.min(boxTop,positionOptions.referenceWindow.height()-boxOptions.height-15);
-				boxLeft = Math.min(boxLeft,positionOptions.referenceWindow.width()-boxOptions.width-15);
+				boxTop = Math.max(Math.min(boxTop,positionOptions.referenceWindow.height()-boxOptions.height-20),10);
+				boxLeft = Math.max(Math.min(boxLeft,positionOptions.referenceWindow.width()-boxOptions.width-30),10);
 			}
 			boxOptions.left = Math.ceil(boxLeft);
 			boxOptions.top = Math.ceil(boxTop);

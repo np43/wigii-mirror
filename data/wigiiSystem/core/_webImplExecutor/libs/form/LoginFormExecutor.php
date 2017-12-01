@@ -189,6 +189,10 @@ class LoginFormExecutor extends FormExecutor {
 				$exec->getIdAnswer(), $this->getTotalWidth()+$this->getCorrectionWidth(),
 				'$("form", this).submit();', $transS->t($p, "login"),
 				$transS->t($p, "ok"), $transS->t($p, "cancel"));
+
+			    //To prevent the background color
+                $exec->addJsCode("$('#elementDialog').css('background-color', 'white');");
+
 		} else {
 			//format login form to fit login speciality
 
@@ -209,7 +213,7 @@ class LoginFormExecutor extends FormExecutor {
 			if($_POST["action"]==null && !$authS->isPublicAccessEnabledForClient($p->getWigiiNamespace()->getClient()->getClientName())){ //don't rearrange on error
 				$exec->addJsCode("" .
 					"$('#loginForm #login_form__username').after($('#loginForm #login_form__stayConnected'));" .
-					"$('#login_form__stayConnected .value').width(30).after($('#login_form__stayConnected .label'));" .
+					"$('#login_form__stayConnected .value').width(15).after($('#login_form__stayConnected .label'));" .
 					"$('#loginForm #login_form__password').css('clear','left').after($('#loginForm button'));" .
 					"$('#loginForm button').css('float','left');" .
 					"$('#loginForm div.publicFormBorder').remove();" .
@@ -217,7 +221,7 @@ class LoginFormExecutor extends FormExecutor {
                     "$('#login_form__username').css('max-width', '');".
                     "$('#login_form__password').css('width', '". $this->getTotalWidth(). "');".
                     "$('#login_form__password').css('max-width', '');".
-                    "$('#login_form__stayConnected').css('width', '". ($this->getTotalWidth()-300). "');".
+                    "$('#login_form__stayConnected').css('width', '". ($this->getTotalWidth()-290). "');".
                     "$('#login_form__stayConnected').css('max-width', '');".
 					"");
 			} else {

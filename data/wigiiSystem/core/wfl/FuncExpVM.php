@@ -55,7 +55,8 @@ class FuncExpVM implements FuncExpEvaluator {
 		unset($this->parentFuncExpEvaluator);
 		$this->freeParentEvaluatorOnFreeMemory = false;
 		unset($this->principal);			
-		unset($this->stack);				
+		unset($this->stack);
+		unset($this->wigiiExecutor);
 		$this->stackPointer = 0;
 		$this->lockedForUse = false;
 	}
@@ -198,6 +199,22 @@ class FuncExpVM implements FuncExpEvaluator {
 		else $this->bootstrapModules = $classNames; 
 	}
 	
+	private $wigiiExecutor;
+	/**
+	 * Injects the WigiiExecutor if known and valid in the context of use
+	 * @param WigiiExecutor $wigiiExecutor
+	 */
+	public function setWigiiExecutor($wigiiExecutor) {
+	    $this->wigiiExecutor = $wigiiExecutor;
+	}
+	
+	/**
+	 *@return ConfigService Returns a contexutal ConfigService instance ready to be used to query the configuration
+	 */
+	public function getConfigService() {
+	    if(isset($this->wigiiExecutor)) return $this->wigiiExecutor->getConfigurationContext();
+	    else return ServiceProvider::getConfigService();
+	}
 	
 	// FuncExp Evaluator implementation
 	

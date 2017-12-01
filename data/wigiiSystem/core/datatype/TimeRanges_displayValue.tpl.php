@@ -70,7 +70,7 @@ if(!empty($endDate) && $begDate != $endDate){
 	$this->put(' <img src="'.SITE_ROOT_forFileUrl.'images/gui/arrow-right-0.png" alt=">" /> ');
 
 	if(!$isAllDay && !empty($endDate) && $begDate != $endDate){
-		$this->put("<br>");
+		//$this->put("<br>");
 	}
 
 	if ($begDate != $endDate)

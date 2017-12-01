@@ -101,7 +101,8 @@ class DeleteElementFormExecutor extends EditElementFormExecutor {
 	        // checks if a deletion is conditioned by an Element_beforeDeleteExp
 	        $this->beforeDeleteExpResult = null;
 	        $configS = $this->getWigiiExecutor()->getConfigurationContext();
-	        $beforeDeleteExp = (string)$configS->getParameter($p, $exec->getCrtModule(), "Element_beforeDeleteExp");
+	        $module = ($this->getElementPToDelete()? $this->getElementPToDelete()->getElement()->getModule():$exec->getCrtModule());
+	        $beforeDeleteExp = (string)$configS->getParameter($p, $module, "Element_beforeDeleteExp");
 	        $beforeDeleteExp = $this->evaluateBeforeDeleteExp($p, $exec, $beforeDeleteExp);
 	        if(!$beforeDeleteExp->okToDelete) {
 	            $this->beforeDeleteExpResult = $beforeDeleteExp;
@@ -134,10 +135,10 @@ class DeleteElementFormExecutor extends EditElementFormExecutor {
 	    else {
 	        // if the FuncExp has a syntax error or fails to execute, then deletion is blocked and exception message is added to standard message.
 	        try {
-	            $beforeDeleteExp = str2fx($beforeDeleteExp);          
-	            $returnValue = $this->getWigiiExecutor()->evaluateFuncExp($p, $exec, $beforeDeleteExp, $this->getElementPToDelete()->getDbEntity());
+	            $beforeDeleteExp = str2fx($beforeDeleteExp);
+	            $returnValue = $this->evaluateFuncExp($p, $exec, $beforeDeleteExp, $this->getElementPToDelete()->getDbEntity());
 	        }
-	        catch(Exception $e) {	            
+	        catch(Exception $e) {
 	            if($e instanceof ServiceException) $e = $e->getWigiiRootException();
 	            $returnValue = (object)array('okToDelete'=>false,'message'=>$e->getMessage().$transS->t($p, "elementCannotBeDeletedEvaluationError"));
 	        }
@@ -358,7 +359,7 @@ class DeleteElementFormExecutor extends EditElementFormExecutor {
 			if(!$element->isSubElement()) {
 				//remove from list
 				$exec->addJsCode("removeElementInList('" . $elementId . "');");
-				$exec->addJsCode("if(isWorkzoneViewMode()) manageWorkzoneViewDocked('clear');");
+				$exec->addJsCode("if(isWorkzoneViewDocked()) manageWorkzoneViewDocked('clear');");
 				//refetch events if calendar view:
 				$exec->addJsCode("if($('#moduleView .calendar').length){ $('#moduleView .calendar').fullCalendar('refetchEvents');}");
 

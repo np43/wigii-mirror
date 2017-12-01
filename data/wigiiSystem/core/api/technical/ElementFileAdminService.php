@@ -23,9 +23,9 @@
 
 /**
  * Class ElementFileAdminService
- * Created by DJC 26.06.2016
- *
  * Service of helper functions to handle Files related to Files field types in an Element
+ * Created by Medair(DJC) on 26.06.2016
+ * Modified by Medair(CWE) on 22.09.2017 to prevent uploading unwanted scripts to server
  */
 class ElementFileAdminService {
 
@@ -73,14 +73,18 @@ class ElementFileAdminService {
 
 		$fileNameInfo = pathinfo($file['name']);
 
+		//prevent script extensions
+		$type = $fileNameInfo['extension'];
+		if(!empty($type)) {
+		    if(preg_match(Files::Script_Extensions, $type)) $type = ".no".$type.".txt";
+		    else $type = '.'.$type;
+		}
+		
 		//create temporary file in the element
-		$newName = $this->createFileName($principal, $fieldName, $fileNameInfo['filename'], $fileNameInfo['extension']);
+		$newName = $this->createFileName($principal, $fieldName, $fileNameInfo['filename'], $type);
 		if (empty($newName)) throw new ElementFileAdminServiceException(
 			'Unknown error generating the file name to store on disk',
 			ElementFileAdminServiceException::UNKNOWN_ERROR);
-
-		//check if we version the file
-		
 
 		$tempFileLocation = TEMPORARYUPLOADEDFILE_path . $newName;
 
@@ -88,7 +92,7 @@ class ElementFileAdminService {
 			throw new ElementFileAdminServiceException('Could not move the uploaded file.'. print_r($_FILES, true),
 				                                        ElementFileAdminServiceException::UNKNOWN_ERROR);
 		$this->make_file_safe($tempFileLocation);
-		$this->setFileData($principal, $element, $fieldName, $fileNameInfo['filename'], $newName, true);
+		$this->setFileData($principal, $element, $fieldName, $fileNameInfo['filename'], $newName, true, $type);
 
 		return true;
 	}
@@ -101,21 +105,26 @@ class ElementFileAdminService {
 	 * @param string $originalName Original File name for display etc
 	 * @param string $filePath The location path for the new file
 	 * @param boolean $staging weather of not the file is in the staging area so we can find it
+	 * @param string $type Optional file type with dot. If not given, guesses file type from file path extension.
 	 * @throws ElementFileAdminServiceException
 	 * @throws RecordException
 	 */
 	public function setFileData(Principal $principal, Element $element, $fieldName, $originalName,
-									   $filePath, $staging = false) {
+									   $filePath, $staging = false, $type=null) {
 
 		$fullPath = ($staging) ? TEMPORARYUPLOADEDFILE_path . $filePath : FILES_PATH . $filePath;
 		if (!file_exists($fullPath)) throw new ElementFileAdminServiceException('No file found at ' . $fullPath,
 			ElementFileAdminServiceException::FILE_NOT_FOUND);
 		$size = filesize($fullPath);
-		$pathParts = pathinfo($filePath);
-		$type = $pathParts['extension'];
-		if (empty($type)) throw new ElementFileAdminServiceException('Cannot guess the file type',
-			ElementFileAdminServiceException::UNKNOWN_FILE_TYPE);
-		$mime = typeMime('.' . $type);
+		// if type is not given, guesses it from extension
+		if(empty($type)) {
+		  $pathParts = pathinfo($filePath);
+		  $type = $pathParts['extension'];
+		  if (empty($type)) throw new ElementFileAdminServiceException('Cannot guess the file type',
+			 ElementFileAdminServiceException::UNKNOWN_FILE_TYPE);
+		  $type = '.'.$type;
+		}
+		$mime = typeMime($type);
 
 		$originalName = pathinfo($originalName);
 		$originalName = $originalName['filename'];
@@ -123,7 +132,7 @@ class ElementFileAdminService {
 		$element->setFieldValue($filePath, $fieldName, 'path');
 		$element->setFieldValue($originalName, $fieldName, 'name');
 		$element->setFieldValue($size, $fieldName, 'size');
-		$element->setFieldValue('.' . $type, $fieldName, 'type');
+		$element->setFieldValue($type, $fieldName, 'type');
 		$element->setFieldValue($mime, $fieldName, 'mime');
 		$element->setFieldValue(date("Y-m-d H:i:s"), $fieldName, 'date');
 		$element->setFieldValue($principal->getRealUserId(), $fieldName, 'user');
@@ -163,7 +172,7 @@ class ElementFileAdminService {
 		if (!file_exists($filename)) throw new ElementFileAdminServiceException(
 			'Cannot change permissions on a non existent file: ' . $filename,
 			ElementFileAdminServiceException::FILE_NOT_FOUND);
-		if (!chmod($filename, 0664)) {
+		if (!chmod($filename, 0666)) {
 			unlink($filename); // We don't want the file if we get to this point as it is dangerous
 			throw new ElementFileAdminServiceException (
 				'Unable to change file permissions on ' . $filename,

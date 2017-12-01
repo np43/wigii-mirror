@@ -235,4 +235,19 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		return number_format($number,$decimals,$dec_point,$thousands_sep);
 	}
 	
+	/**
+	 * json_encode. See http://www.php.net/json_encode
+	 */
+	public function json_encode($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException("json_encode function takes at least one parameter the value to encode", FuncExpEvalException::INVALID_ARGUMENT);
+	    $value = $this->evaluateArg($args[0]);
+	    if($nArgs>1) $options = $this->evaluateArg($args[1]);
+	    else $options=0;
+	    if($nArgs>2) $depth = $this->evaluateArg($args[2]);
+	    else $depth=512;
+	    $returnValue = json_encode($value,$options,$depth);
+	    if($returnValue === false) throw new FuncExpEvalException('JSON encode error '.json_last_error().' '.json_last_error_msg(), FuncExpEvalException::INVALID_ARGUMENT);
+	    return $returnValue;
+	}
 }

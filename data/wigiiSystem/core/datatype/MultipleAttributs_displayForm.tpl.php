@@ -32,7 +32,7 @@ $fieldXml = $field->getXml();
 
 //defining width if existant
 if($parentWidth != null){
-	$valueWidth = " width: 100%; max-width:".($parentWidth-1)."px; "; //select we don't need to make it smaller
+	$valueWidth = " width: 100%; max-width:".($parentWidth)."px; "; //select we don't need to make it smaller
 }
 
 //defining readOnly or disabled
@@ -56,6 +56,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 	$inputName = $fieldName.'_'.$subFieldName.'[]';
 	$val = $this->getRecord()->getFieldValue($fieldName, $subFieldName);
 //	eput($val);
+	$firstLoop = true;
 	foreach($fieldXml->attribute as $attribute_key => $attribute){
 
 		// filters dropdown using prefix filter
@@ -64,11 +65,15 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 		// CWE 09.02.2016: in public: filters disabled options
 		if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
 		
+		if(!$firstLoop && !$useMultipleColumn) {
+		    $this->put('<br>'); //next line for the next label and checkbox
+		}
+		
 		//the checkbox is before the text of the option
 		//the width of the checkbox is valueWidth / useMultipleColumn if defined / maxSelection if defined
 
 		if($useMultipleColumn>0){
-			$this->put('<div style="float:left; width: 100%; max-width:'.(($parentWidth-5)/$useMultipleColumn).'px;" >');
+			$this->put('<div style="float:left; width: 100%; max-width:'.((($parentWidth)/$useMultipleColumn)-5).'px;" >');
 		}
 		$inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.str_replace(" ", "_", (string)$attribute).'_'.($inputType==null?$inputNode:$inputType);
 
@@ -96,17 +101,19 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 			if($fieldXml["displayAsTag"]=="1"){
 				$label = $this->doFormatForTag($label, $fieldXml, $labelDBValue);
 			} else if ((string)$attribute["color"]){
-				$color = $attribute["color"];
+				$color = (string)$attribute["color"];
 				$label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$label.'</span>';
 			}
-			if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
+			if($useMultipleColumn>0) $labelWidth = (($parentWidth)/$useMultipleColumn)-50;
 			else $labelWidth = ($parentWidth-30);
-			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;width: 100%; max-width:'.$labelWidth.'px;">'.$label.'</div></label>');
+			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;max-width:'.$labelWidth.'px;">'.$label.'</div></label>');
 		}
 		if($useMultipleColumn>0){
 			$this->put('</div>');
-		} else {
-			$this->put('<br>'); //next line for the next label and checkbox
+		}
+		
+		if($firstLoop){
+		    $firstLoop = false;
 		}
 	}
 

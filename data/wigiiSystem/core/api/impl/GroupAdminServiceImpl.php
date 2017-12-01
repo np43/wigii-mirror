@@ -25,6 +25,7 @@
  * Wigii GroupAdminService implementation
  * Created by CWE on 2 juin 09
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) on 01.09.2017 to enable root principal and public principal to create sub groups.
  */
 class GroupAdminServiceImpl implements GroupAdminService
 {
@@ -473,6 +474,7 @@ class GroupAdminServiceImpl implements GroupAdminService
 			$dbAS = $this->getDbAdminService();
 			$dbCS = $dbAS->getDbConnectionSettings($principal);
 			$mySqlF = $this->getMySqlFacade();
+			$autoS = $this->getAuthorizationService();
 			// if isNew then insert
 			$returnValue = 0;
 			if($isNew)
@@ -483,11 +485,6 @@ class GroupAdminServiceImpl implements GroupAdminService
 						$mySqlF->insertOne($principal,
 							$this->getSqlForInsertGroup($principal, $group, true),
 							$dbCS)
-						//changed the 4 October 2011, the groupname is no more unique per wigiiNamespace
-//						$mySqlF->insertIfUnique($principal,
-//							$this->getSqlForInsertGroup($principal, $group, true),
-//							$this->getSqlForCheckGroupUnique($group),
-//							$dbCS)
 					);
 				} catch(MySqlFacadeException $e) {
 					if($e->getCode() == MySqlFacadeException::MYSQL_NOTUNIQUE){
@@ -505,10 +502,14 @@ class GroupAdminServiceImpl implements GroupAdminService
 							$dbCS);
 					}
 
-					// inserts principal right
-					$mySqlF->insertOne($principal,
-						$this->getSqlForInsertUserGroupRight($this->getUGROnGroupCreation($principal, $group)),
-						$dbCS);
+					// 01.09.2017 Medair(CWE) inserts principal right only if principal is a user and not root or public
+					if(!$autoS->isRootPrincipal($principal) && !$autoS->isPublicPrincipal($principal)) {
+    					$mySqlF->insertOne($principal,
+    						$this->getSqlForInsertUserGroupRight($this->getUGROnGroupCreation($principal, $group)),
+    						$dbCS);
+					}
+					// 01.09.2017 Medair(CWE) root or public principal cannot insert root groups
+					elseif($group->getGroupParentId() == null) $autoS->fail($principal, 'is not authorized to insert new root group');
 				}
 				// if insertion error, then deletes first created group and throws exception
 				catch(Exception $e)
@@ -551,12 +552,6 @@ class GroupAdminServiceImpl implements GroupAdminService
 							$this->getSqlForUpdateGroupIgnoreParent($principal, $group, $origGroup, $fieldSelectorList),
 							$dbCS
 						);
-						//changed the 4 October 2011, the groupname is no more unique per wigiiNamespace
-//						$returnValue = $mySqlF->updateIfUnique($principal,
-//							$this->getSqlForUpdateGroupIgnoreParent($principal, $group, $origGroup, $fieldSelectorList),
-//							$this->getSqlForCheckGroupUnique($group),
-//							$dbCS
-//						);
 					} catch(MySqlFacadeException $e) {
 						if($e->getCode() == MySqlFacadeException::MYSQL_NOTUNIQUE){
 							throw new GroupAdminServiceException("groupname already used in wigiiNamespace ".$group->getWigiiNamespace()->getWigiiNamespaceName(), GroupAdminServiceException::GROUPNAME_ALREADY_USED_IN_NAMESPACE);
@@ -656,18 +651,21 @@ class GroupAdminServiceImpl implements GroupAdminService
 		// checks general authorization
 		$autoS->assertPrincipalAuthorized($principal, "GroupAdminService", "persistGroup");
 		// check specific rights
-		// new user/role -> admin creator or user creator
+		// new group -> group creator or root group creator
 		if($origGroupP==null)
 		{
-			if($principal->getGroupCreator($module)==null)
+		    // 01.09.2017 Medair(CWE) public or root principal can create sub-groups
+		    if(!$autoS->isRootPrincipal($principal) && !$autoS->isPublicPrincipal($principal) && $principal->getGroupCreator($module)==null)
 			{
 				$autoS->fail($principal, 'is not group creator, therefore can not insert new group');
-			}
-			if($parentGroupP == null && $principal->getRootGroupCreator($module)==null){
-				$autoS->fail($principal, 'is not root group creator, therefore can not insert new root group');
+			}			
+			if($parentGroupP == null){
+			    // 01.09.2017 Medair(CWE) public or root principal cannot create root groups
+			    if($autoS->isRootPrincipal($principal) || $autoS->isPublicPrincipal($principal)) $autoS->fail($principal, 'is not authorized to insert new root group');
+			    elseif($principal->getRootGroupCreator($module)==null) $autoS->fail($principal, 'is not root group creator, therefore can not insert new root group');
 			}
 		}
-		// existing user/role -> (admin creator or user creator or user manager in wigiiNamespace) and principal owns user
+		// existing group -> group creator and principal has admin rights on group
 		else
 		{
 			$origPRights = $origGroupP->getRights();
@@ -691,12 +689,6 @@ class GroupAdminServiceImpl implements GroupAdminService
 		if($parentGroupChanged && $origParentGroupP!=null && ($origParentGroupP->getRights()==null || !$origParentGroupP->getRights()->canModify())){
 			$autoS->fail($principal, "has no X right on orig parent group ".$origParentGroupP->getGroup()->getGroupName());
 		} 
-		//this test is no more useful because of the one above. This test is usefull if we want to let
-		//any X group being modified even if no rights on parent, but still want to check that if the parent is changed
-		//that it is possible (need x right on parent then)
-//		if($parentGroupP!=null && $parentGroupChanged && ($parentGroupP->getRights()==null || !$parentGroupP->getRights()->canModify())){
-//			$autoS->fail($principal, "has no X right on parent group ".$parentGroupP->getGroup()->getGroupName());
-//		}
 	}
 	protected function validateGroup($principal, $group, $origGroupP, $parentGroupP, $parentGroupChanged, $origParentGroupP, $fieldSelectorList=null)
 	{
@@ -705,8 +697,6 @@ class GroupAdminServiceImpl implements GroupAdminService
 		if($fieldSelectorList == null || $fieldSelectorList->containsFieldSelector("wigiiNamespace")){
 			$val->assert($principal->getWigiiNamespace()->getClient() == $group->getWigiiNamespace()->getClient(), 'cannot create a group for an other client: '.$group->getWigiiNamespace()->getClient()->getClientName().' than Principal client '.$principal->getWigiiNamespace()->getClient()->getClientName().'.');
 			if(!$principal->isWigiiNamespaceCreator()){
-//				eput($user->getWigiiNamespace()->displayDebug());
-//				eput($principal->getWigiiNamespace()->displayDebug());
 				if($origGroupP != null){
 					if($parentGroupP!=null){
 						$val->assert($parentGroupP->getGroup()->getWigiiNamespace() == $group->getWigiiNamespace(), 'Principal cannot create a group in an other wigiiNamespace : '.$group->getWigiiNamespace()->getWigiiNamespaceName(). ' than parent group.');

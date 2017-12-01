@@ -31,10 +31,10 @@ $dtXml = $field->getDataType()->getXml();
 
 //defining width if existant
 if($parentWidth != null && $labelWidth != null){
-	$inputWithDatePickerWidth = $parentWidth-$labelWidth-5-40;
-	$halfInputWidth = ((($parentWidth)/2)-5)-30;
-	$valueWidth = " width: 100%; max-width:".($parentWidth-$labelWidth-5)."px; ";
-	$labelWidth = " width: 100%; max-width:".($labelWidth)."px; ";
+	$inputWithDatePickerWidth = $parentWidth-$labelWidth-5-25;
+	$halfInputWidth = ((($parentWidth)/2)-5);
+	$valueWidth = " width: 100%; max-width:".($parentWidth-$labelWidth)."px; text-align: left;";
+	$labelWidth = " width: 100%; max-width:".($labelWidth-20)."px; ";
 }
 
 //defining readOnly or disabled
@@ -58,7 +58,7 @@ if($fieldXml["onlyDate"]!="1"){
 	$inputName = $fieldName.'_'.$subFieldName;
 	$isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, 'max-width: 14px;', $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
 	$val = $this->getRecord()->getFieldValue($fieldName, $subFieldName);
 	//if($fieldXml["onlyDate"]=="1"){
 	//	//si l'on veut le onlyDate, on modifie le onClick en l'obligeant d'être toujours valide..
@@ -125,7 +125,7 @@ if($fieldXml["onlyDate"]!="1"){
 	$inputName = $fieldName.'_'.$subFieldName;
 	$isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, ($valueWidth-4), $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
 	$this->displayForm_1_TillClassDefinition();
 	$this->displayForm_2_TillStyleDefinition($labelWidth, $valueWidth, $subFieldName, $readonly, $disabled);
 	$this->displayForm_3a_CloseStyleBeginValueAsAttribute();
@@ -141,7 +141,7 @@ if($fieldXml["onlyDate"]!="1"){
 	$inputName = $fieldName.'_'.$subFieldName;
 	$isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, ($valueWidth-4), $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
 	$this->displayForm_1_TillClassDefinition();
 	$this->displayForm_2_TillStyleDefinition($labelWidth, $valueWidth, $subFieldName, $readonly, $disabled);
 	$this->displayForm_3a_CloseStyleBeginValueAsAttribute();
@@ -207,7 +207,7 @@ $('#".$begDateInputId.", #".$endDateInputId."')
 		$(this).datepicker('hide');
 	})
 	.width(".$inputWithDatePickerWidth.")
-	.next().css('margin',0).width(34)
+	.next().css('margin',0).width(34);
 ;");
 	} else {
 		$this->getExecutionService()->addJsCode("
@@ -219,9 +219,8 @@ $('#".$begDateInputId.", #".$endDateInputId."')
 		constrainInput:false,
 		showOn:'focus'
 	})
-	.width(".$halfInputWidth.")
-;
-");
+	.width(".($halfInputWidth-27).");
+	");
 	}
 	//if begDate is more than end date, then clear endate
 	$this->getExecutionService()->addJsCode("

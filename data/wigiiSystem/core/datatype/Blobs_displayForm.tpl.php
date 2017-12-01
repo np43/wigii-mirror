@@ -31,7 +31,7 @@ $fieldXml = $field->getXml();
 
 //defining width if existant
 if($parentWidth != null){
-	$valueWidth = " width: 100%; max-width:".($parentWidth-5)."px; ";
+	$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";
 }
 
 //defining readOnly or disabled
@@ -74,7 +74,7 @@ $this->put('" ');
 if($disabled) $this->put(' disabled="disabled" ');
 if($readonly) $this->put(' disabled="disabled" ');
 if($fieldXml["noWrap"]=="1") $this->put(' wrap="off" ');
-$this->put(' style="'.$valueWidth. 'box-sizing: border-box;');
+$this->put(' style="'.$valueWidth. '');
 if((string)$fieldXml["height"]!=null && (string)$fieldXml["height"] != "0") $this->put(' height:'.$fieldXml["height"].'px; ');
 if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
 $this->put('" >');

@@ -30,7 +30,7 @@ $fieldXml = $field->getXml();
 
 //defining width if existant
 if($parentWidth != null){
-	$valueWidth = " width: 100%; max-width:".($parentWidth-5)."px; ";
+	$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";
 }
 
 //defining readOnly or disabled
@@ -60,7 +60,7 @@ if($disabled) $this->put(' disabled ');
 if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
 if($isNoAutofill) $this->put('autocomplete="off"');
 $this->put(' style="'.$valueWidth);
-if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
+if($readonly) $this->put('background-color:#E3E3E3;color:#666'); //disabled make color as white in Google Chrome
 $this->put('" value="');
 //$this->put($this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, $subFieldName))); //$this->formatValueFromRecord($fieldName, $subFieldName, $this->getRecord()));
 if($fieldXml["isProgressBar"]=="1"){

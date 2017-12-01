@@ -75,7 +75,7 @@ class GroupAdminServiceWebImpl extends GroupAdminServiceImpl
 	
 	public function getHtmlToDisplayGroupAsFolder($p, $exec, $group){
 		$result = "";
-		$result .= '<img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/iconfolder22x22.png" align="absmiddle"/>';
+		$result .= '<img src="'.SITE_ROOT_forFileUrl.'images/gui/folder-structure-arrow-right.png" align="absmiddle"/>';
 		$result .= '&nbsp;&nbsp;<font style="font-size:normal;">'.$group->getGroupName().'</font>';
 		return $result;
 	}

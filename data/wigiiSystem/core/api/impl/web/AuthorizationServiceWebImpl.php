@@ -21,11 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 21 april 10
- * by LWR
+/**
+ * Created by LWR on 21 april 2010
+ * Modified by Medair(CWE) on 01.09.2017 to authorize public principal to be groupCreator
  */
-
 class AuthorizationServiceWebImpl extends AuthorizationServiceImpl {
 
 	private $_debugLogger;
@@ -77,7 +76,8 @@ class AuthorizationServiceWebImpl extends AuthorizationServiceImpl {
 		$publicPrincipal = Principal::createInstanceFromArray(array(
 			"username"=>'AUTZSIPP_webImpl',
 			"wigiiNamespace"=>$wigiiNamespace,
-			"moduleAccess"=>$moduleAccess
+			"moduleAccess"=>$moduleAccess,
+		    "groupCreator"=>$moduleAccess
 		));
 		return $publicPrincipal;
 	}

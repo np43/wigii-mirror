@@ -21,10 +21,11 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* A wigii Indicator
+/**
+ * A wigii Indicator
  * An indicator is a myslq function applied to a specific field in a selection of elements in groups 
  * Created by LWR on 23 February 2011
- * Updated by LWR on 18 July 2017
+ * Updated by Wigii.org(Lionel Weber) on October 2017 to support system indicators and recursive indicators
  */
 class Indicator extends Model
 {

@@ -32,8 +32,8 @@ if(!defined("DATATYPE_PATH")) define("DATATYPE_PATH", CORE_PATH . "datatype/");
 if(!defined("LANG_FOLDER")) define("LANG_FOLDER", CORE_PATH . "langs/");
 if(!defined("CLIENT_CONFIG_PATH")) define("CLIENT_CONFIG_PATH", wigiiSystem_PATH . "configs/" . CLIENT_NAME . "/");
 
-define("ACCENT_list", "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿ");
-define("Replace_ACCENT_list", "AAAAAAACEEEEIIIIDNOOOOOOUUUUYPBaaaaaaaceeeeiiiionoooooouuuyypy");
+define("ACCENT_list", "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýýþÿ");
+define("Replace_ACCENT_list", "AAAAAAACEEEEIIIIDNOOOOOOUUUUYPBaaaaaaaceeeeiiiionoooooouuuuyypy");
 
 //first include each functions libs
 include(CORE_PATH."api/libs/functions.php");

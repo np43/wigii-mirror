@@ -1197,20 +1197,43 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 			}
 		}
 		
-		// HelpService on Fields (not in print, not in external access, not in notification)
+		// HelpService on Fields (not in print, not in notification)
+		// In externalAccess, allows only local content
 		if(!$this->isForPrint() && !$this->isForExternalAccess() && !$this->isForNotification()) $exec->addJsCode("$('#$formId .wigiiHelp').wigii('bindHelpService');");
+		else if($this->isForExternalAccess()) $exec->addJsCode("$('#$formId span.wigiiHelp, #$formId div.wigiiHelp.localContent').wigii('bindHelpService');");
 	}
 	
 	/**
 	 * @return FuncExpEvaluator returns a configured FuncExpEvaluator ready to be used to executes func exp
 	 */
-	public function getFuncExpEval($p, $exec) {
-		$returnValue = $this->getWigiiExecutor()->getFuncExpEvaluator($p, $exec, $this->getRecord());
+	public function getFuncExpEval($p, $exec,$rec=null) {
+		$returnValue = $this->getWigiiExecutor()->getFuncExpEvaluator($p, $exec, (isset($rec)?$rec:$this->getRecord()));
 		// injects a reference to the current FormExecutor
 		$returnValue->getParentFuncExpEvaluator()->setFormExecutor($this);
 		return $returnValue;
 	}
 
+	/**
+	 * Evaluates a FuncExp in the context of the given Record.
+	 * @param Principal $p principal executing the request
+	 * @param ExecutionService $exec current ExecutionService instance
+	 * @param FuncExp $fx the FuncExp instance to evaluate
+	 * @return Any FuncExp result
+	 */
+	public function evaluateFuncExp($p,$exec,$fx,$rec=null) {
+	    $fxEval = $this->getFuncExpEval($p, $exec, $rec);
+	    $returnValue = null;
+	    try {
+	        $returnValue = $fxEval->evaluateFuncExp($fx, $this);
+	        $fxEval->freeMemory();
+	    }
+	    catch(Exception $e) {
+	        $fxEval->freeMemory();
+	        throw $e;
+	    }
+	    return $returnValue;
+	}
+	
 	/**
 	 * Template Renderer implementation
 	 */

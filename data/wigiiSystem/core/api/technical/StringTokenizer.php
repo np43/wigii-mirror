@@ -113,7 +113,7 @@ class StringTokenizer
 	{
 		$this->symbols_pattern = '[\\Q°§+"*%&\/()=?`@#|´~\'^!${}[]-.:,;<>\\\\E]';
 		$symbols_pattern = $this->symbols_pattern;
-		$accentChars_pattern = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿ';
+		$accentChars_pattern = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýýþÿ';
 
 		if(isset($this->word_extra_symbols))
 		{

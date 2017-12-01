@@ -25,7 +25,6 @@
  * Created on 12 October 2011 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
-
 class FiltersSelectSearchBarFieldList implements FieldList {
 
 	private $wigiiNamespace;
@@ -142,7 +141,7 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 			if($elField["type"]=="Attributs" || $elField["type"]=="MultipleAttributs"){
 				$attribute = '';
 				//add the element fields
-				$html2text = new Html2text();
+				//$html2text = new Html2text();
 				foreach($elField->attribute as $option){
 					if((string)$option == "none") continue;
 					$attrNb++;
@@ -151,12 +150,14 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 					}else{
 						$attrLabel = $option;
 					}
+					/* Medair (CWE) 13.11.2017, keep HTML in labels, but disables help icons js code 
 					$html2text->setHtml($attrLabel);
-					$attrLabel = $html2text->getText();
-// 					$html2text->clear();
-					$attribute .= '<attribute>'.(string)$option.'<label>'.str_replace(array("&", "<", ">"), array("&amp;", "&lt;", "&gt;"), $attrLabel).'</label></attribute>';
+					$attrLabel = $html2text->getText();					
+					$attribute .= '<attribute>'.(string)$option.'<label>'.str_replace(array("&", "<", ">"), array("&amp;", "&lt;", "&gt;"), $attrLabel).'</label></attribute>';					 
+					*/
+					$attribute .= '<attribute>'.(string)$option.'<label>'.$attrLabel.'</label></attribute>';
 				}
-				unset($html2text);
+				//unset($html2text);
 				$this->reverseFields[$fieldName] = $label;
 				$this->getListContext()->addSelectSearchField($fieldName, $elFieldName);
 			} else if($elField["type"]=="Booleans"){
@@ -170,15 +171,7 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 		$filtersRec->getFieldList()->renameField($filterAttrI->getFieldName(), $fieldName);
 
 		if($fieldXml["type"] == "groupFilter" || $elField["type"]=="Attributs" || $elField["type"]=="MultipleAttributs"){
-			/*
-			if(false && $attrNb < 10){ //don't mix checkboxes and multiple list, it makes unclear
-				$size = 'useCheckboxes="1" useMultipleColumn="2" isInLine="1"';
-			} else {
-				$size = 'size="'.min(min(max(4, $attrNb/3), 8), $attrNb).'"'; //min 4, between 4-8 is nb/3 or 4, more is 8
-			}
-			*/
 			// activate chosen drop downs in advanced search
-			
 			if((string)$elField["useCheckboxes"]=="1" || (string)$elField["useRadioButtons"]=="1"){
 				// handle checkboxes as is 
 				$size = ($elField["useMultipleColumn"] < 3 ? $elField["useMultipleColumn"] : '3');

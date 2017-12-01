@@ -73,7 +73,7 @@ class UserRoleAllocationRenderer implements UserList, UserPList {
 		$this->nb = 0;
 		$transS = ServiceProvider::getTranslationService();
 		//add a filter input:
-		?><input id="UserRoleAllocationFilterInput" class="SBIB" style="padding:2px;float:left;border-right:none;" type="text" name="UserRoleAllocationFilter" /><div style="float:left;font-size:small;font-weight:bold;height:17px;padding:2px 15px;" class="H G SBIB"><?=$transS->t($p, "userRoleAllocationFilterText");?></div><div class="clear"></div><?
+		?><input id="UserRoleAllocationFilterInput" class="SBIB" style="padding:2px;float:left;border-right:none;" type="text" name="UserRoleAllocationFilter" /><div style="float:left;font-size:small;font-weight:bold;padding:2px 15px;" class="H G SBIB"><?=$transS->t($p, "userRoleAllocationFilterText");?></div><div class="clear"></div><?
 
 		$exec->addJsCode("setListenerToUserRoleAllocationFilter();");
 		//add a first empty div to make the scrolling effect

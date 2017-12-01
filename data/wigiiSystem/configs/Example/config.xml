@@ -19,10 +19,11 @@
 		listPageSize="200"
 		defaultWigiiNamespace=""
 		prioritizeWigiiNamespaceInHomePage=""
-		prioritizeModuleInHomePage=""
-		
+		prioritizeModuleInHomePage=""		
 		totalMaxAttachementFilesize="8388608"
-		preventFolderContentCaching="1"
+		preventFolderContentCaching="0"
+		jsCodeAfterShowExp='concat(wigiiHelpBinder())'
+		jsCodeForListExp='concat(wigiiHelpBinder("moduleView"))'
 		>
 		<!-- default propagation is 1 if not defined, 0, 1 or 2 can be defined -->
 		<MODULE_defaultPropagation>

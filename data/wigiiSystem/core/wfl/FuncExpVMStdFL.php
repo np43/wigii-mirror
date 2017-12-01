@@ -1641,6 +1641,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 		return $returnValue;
 	}
+		
 	/**
 	 * Evaluates a sequence of actions only if a condition is true.
 	 * This func exp is a synonym to the<code>ctlCondSeq</code> function.
@@ -1652,6 +1653,23 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 */
 	public function ctlSeqIf($args) {
 		return $this->ctlCondSeq($args);
+	}
+	
+	/**
+	 * Ignore if error occurs in expression
+	 * FuncExp signature : <code>ctlIgnoreError(exp:FuncExp, valueOnError=null)</code><br/>
+	 * @return Any value of exp if no error else valueOnError
+	 */
+	public function ctlIgnoreError($args){
+	    $nArgs = $this->getNumberOfArgs ( $args );
+	    if ($nArgs < 1) {
+	        throw new FuncExpEvalException ( "ctlIgnoreError takes at least 1 argument", FuncExpEvalException::INVALID_ARGUMENT );
+	    }
+	    try{
+	        return $this->evaluateArg ( $args[0] );
+	    } catch(Exception $e){
+	        return $this->evaluateArg ( $args[1] );
+	    }
 	}
 	
 	/**
@@ -1958,6 +1976,50 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
+	 * Returns the min date of a series of dates
+	 * FuncExp signature : <code>ctlMinDate(date1, date2, ...)</code><br/>
+	 * Where arguments are :
+	 * - date1: string : a date string in wigii format (yyyy-mm-dd hh:mm:ss)
+	 * - date2: string : a date string in wigii format (yyyy-mm-dd hh:mm:ss)
+	 * - ...  : idem than above
+	 * @return string the minimum date (yyyy-mm-dd hh:mm:ss)
+	 */
+	public function ctlMinDate($args){
+	    $nArgs = $this->getNumberOfArgs($args);	    
+	    $result = array();
+	    foreach($args as $arg){
+	        $arg= $this->evaluateArg($arg);
+	        if($arg){
+	            $result[] = strtotime($arg);
+	        }
+	    }
+	    return date("Y-m-d H:i:s",min($result));
+	}
+	
+	/**
+	 * Returns the max date of a series of dates
+	 * FuncExp signature : <code>ctlMaxDate(date1, date2, ...)</code><br/>
+	 * Where arguments are :
+	 * - date1: string : a date string in wigii format (yyyy-mm-dd hh:mm:ss)
+	 * - date2: string : a date string in wigii format (yyyy-mm-dd hh:mm:ss)
+	 * - ...  : idem than above
+	 * @return string the max date (yyyy-mm-dd hh:mm:ss)
+	 */
+	public function ctlMaxDate($args){
+	    $nArgs = $this->getNumberOfArgs($args);
+	    $result = array();
+	    foreach($args as $arg){
+	        $arg= $this->evaluateArg($arg);
+	        if($arg){
+	            $result[] = strtotime($arg);
+	        }
+	    }
+	    return date("Y-m-d H:i:s",max($result));
+	}
+	
+	
+	
+	/**
 	 * Evaluates first argument, if true, then evaluates all next arguments in sequence,
 	 * and this as long as first argument evaluates to true
 	 * @return value of last evaluated arg
@@ -2056,6 +2118,202 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    $nArgs = $this->getNumberOfArgs($args);
 	    if($nArgs<1) throw new FuncExpEvalException('txtDico takes one argument which is the key to lookup into the dictionary', FuncExpEvalException::INVALID_ARGUMENT);
 	    return $this->getTranslationService()->t($this->getPrincipal(), $this->evaluateArg($args[0]));
+	}
+	
+	/**
+	 * Checks a given string to be a valid email and formats it. 
+	 * Returns null if not a valid email address.
+	 * FuncExp signature : <code>txtFormatEmail(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string representing an email address to be checked and formatted.
+	 * @return String the email checked and well formatted, or false if not a valid email.
+	 */
+	public function txtFormatEmail($args) {
+	    if(is_array($args)) {
+	       $nArgs = $this->getNumberOfArgs($args);
+	       if($nArgs<1) throw new FuncExpEvalException('txtFormatEmail takes one argument which is the email string value to be checked and formatted', FuncExpEvalException::INVALID_ARGUMENT);
+	       $str = $this->evaluateArg($args[0]);
+	    }
+	    else $str = $args;
+	    $returnValue = null;
+	    if($str != null) $str = trim($str);
+	    if(!empty($str)) {
+	        if(validateEmail($str)) $returnValue = $str;
+	        else $returnValue = null;
+	    }
+	    return $returnValue;
+	}
+	/**
+	 * Checks a given string to be a valid email and formats it. 
+	 * If not, throws an exception. Use txtFormatEmail to have a silent version.
+	 * FuncExp signature : <code>txtAcceptEmail(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string representing an email address to be checked and formatted.
+	 * @return String the email checked and well formatted.
+	 * @throws FuncExpEvalException::ASSERTION_FAILED if given string cannot be parsed as a valid email address.
+	 */
+	public function txtAcceptEmail($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtAcceptEmail takes one argument which is the email string value to be checked and formatted', FuncExpEvalException::INVALID_ARGUMENT);
+	    $str = trim($this->evaluateArg($args[0]));
+	    $returnValue = $this->txtFormatEmail($str);
+	    if($str != '' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid email address.");
+	    return $returnValue;
+	}
+	
+	/**
+	 * Checks a given string to be a valid phone number and formats it.
+	 * Returns null if not a valid phone number.
+	 * FuncExp signature : <code>txtFormatPhone(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string representing a phone number to be checked and formatted.
+	 * - Arg(1) defaultCountryPrefix : String. Optional string used as a default country prefix if given phone number doesn't have a country code. By default, no country code is added. 
+	 * @return String the phone number checked and well formatted, or false if not a valid phone number.
+	 */
+	public function txtFormatPhone($args) {
+	    $defaultCountryPrefix = null;
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs<1) throw new FuncExpEvalException('txtFormatPhone takes one argument which is the phone number string value to be checked and formatted', FuncExpEvalException::INVALID_ARGUMENT);
+	        $str = $this->evaluateArg($args[0]);
+	        if($nArgs>1) $defaultCountryPrefix = $this->evaluateArg($args[1]);
+	    }
+	    else $str = $args;
+	    $returnValue = null;
+	    if($str != null) $str = trim($str);
+	    if(!empty($str)) {
+	        // removes any space after + sign	       
+	        // replaces "standard" phone numbers separators by spaces
+	        $tokens = str_replace(array('(0)','(',')','/','.','-'),' ',$str);
+	        $tokens = str_replace('+ ','+',$tokens);	        
+	        $tokens = trim($tokens);
+	        $tokens = str_replace(' 00','00',$tokens);
+	        $tokens = preg_split('/\s+/', $tokens);
+	        $n = 1;
+	        foreach($tokens as $t) {
+	            $parts = array();
+	            // separates 0 or + prefix from rest of number
+	            if(preg_match('/([+0]+)?([1-9][0-9]*)/',$t,$parts)!==1) {
+	                $returnValue = null;
+	                break;
+	            }
+	            // checks that phone number hasn't any trailing comment or text
+	            if($parts[0] != $t) {
+	                $returnValue = null;
+	                break;
+	            }
+	            // if first token, then checks if international or national prefix
+	            if($n==1) {
+	                // if only one zero, assumes its national
+	                if($parts[1] === '0') {
+	                    // adds default country prefix if defined
+	                    if(isset($defaultCountryPrefix)) $prefix = $defaultCountryPrefix;
+	                    // else keeps national number
+	                    else $prefix = '0';
+	                }
+	                // else adds the international + prefix
+	                elseif($parts[1]) $prefix = '+';
+	                // else no prefix given, then its a national number.
+	                else {
+	                    // adds default country prefix if defined
+	                    if(isset($defaultCountryPrefix)) $prefix = $defaultCountryPrefix;
+	                    // else creates national number
+	                    else $prefix = '0';
+	                }
+	                // adds number part (without any leading 0)
+	                if($parts[2]) $returnValue .= $prefix.$parts[2];
+	            }
+	            // if second token, then removes any leading 0
+	            elseif($n==2) {
+	                // adds number part (without any leading 0)
+	                if($parts[2]) $returnValue .= $parts[2];
+	            }
+	            // else appends leading 0 with number part.
+	            else {
+	                // if only one zero, assumes its part of the number
+	                if($parts[1] === '0') $prefix = '0';
+	                // else no prefix given.
+	                else $prefix = '';
+	                // adds number part (without any leading 0)
+	                if($parts[2]) $returnValue .= $prefix.$parts[2];
+	            }
+	            $n++;
+	        }
+	        
+	        // final formatting
+	        if($returnValue) {
+	            // joins number in one
+	            $tokens = $returnValue; $n = strlen($tokens);
+	            // splits in tokens starting from the end.
+	            // last 2 digits
+	            $i=$n-2;
+	            if($i>=0) $returnValue = substr($tokens,$i,2);
+	            // last 2 digits
+	            $i -= 2;
+	            if($i>=0) $returnValue = substr($tokens,$i,2).' '.$returnValue;
+	            // if France, then splits into groups of 2 digits
+	            if(substr($tokens,0,3) == '+33') {
+	                $countryCode = '+33';
+	                if($i>=5) $countryCode .= ' '.substr($tokens, 3,2);
+	                if($i>=7) $countryCode .= ' '.substr($tokens, 5,2);
+	                if($i>=9) $countryCode .= ' '.substr($tokens, 7,2);
+	                if($i>=11) $countryCode .= ' '.substr($tokens, 9,2);
+	                $returnValue = $countryCode.' '.$returnValue;
+	            }
+	            // else
+	            else {
+	                // last 3 digits
+	                $i -= 3;
+	                if($i>=0) $returnValue = substr($tokens,$i,3).' '.$returnValue;
+	                // if international prefix then splits between international and national
+	                if(substr($tokens,0,1) == '+') {
+	                    $countryCode = substr($tokens,1,2);
+	                    // if Europe (+3? or +4?) then splits between international and national
+	                    if(is_numeric($countryCode) && 30 < (int)$countryCode && (int)$countryCode < 50) {
+	                        $returnValue = '+'.$countryCode.($i > 3? ' '.substr($tokens, 3, $i-3):'').' '.$returnValue;
+	                    }
+	                    // if US, the keeps +1 and separates by group of 3
+	                    elseif(substr($tokens, 0, 2) == '+1') {
+	                        $countryCode = '+1';
+	                        if($i>=5) $countryCode .= ' '.substr($tokens, 2,3);
+	                        if($i>=8) $countryCode .= ' '.substr($tokens, 5,3);
+	                        if($i>=11) $countryCode .= ' '.substr($tokens, 8,3);
+	                        $returnValue = $countryCode.' '.$returnValue;
+	                    }
+	                    // rest of world
+	                    else {
+	                        // last 2 digits
+	                        $i -= 2;
+	                        if($i>=0) $returnValue = substr($tokens,$i,2).' '.$returnValue;
+	                        // rest of string
+	                        if($i>0) $returnValue = substr($tokens,0,$i).' '.$returnValue;
+	                    }
+	                }
+	                // else keeps national prefix as one.
+	                elseif($i>0) $returnValue = substr($tokens,0,$i).' '.$returnValue;
+	            }
+	        }
+	    }
+	    return $returnValue;	    	  
+	}
+	/**
+	 * Checks a given string to be a valid phone number and formats it.
+	 * If not, throws an exception. Use txtFormatPhone to have a silent version.
+	 * FuncExp signature : <code>txtFormatPhone(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string representing a phone number to be checked and formatted.
+ 	 * - Arg(1) defaultCountryPrefix : String. Optional string used as a default country prefix if given phone number doesn't have a country code. By default, no country code is added.
+	 * @return String the phone number checked and well formatted.
+	 * @throws FuncExpEvalException::ASSERTION_FAILED if given string cannot be parsed as a valid phone number.
+	 */
+	public function txtAcceptPhone($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatPhone takes one argument which is the phone number string value to be checked and formatted', FuncExpEvalException::INVALID_ARGUMENT);
+	    $str = trim($this->evaluateArg($args[0]));
+	    if($nArgs>1) $returnValue = $this->evaluateFuncExp(fx('txtFormatPhone'),$str,$this->evaluateArg($args[1]));
+	    else $returnValue = $this->txtFormatPhone($str);
+	    if($str!='' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid phone number.");
+	    return $returnValue;
 	}
 	
 	/**
@@ -2167,6 +2425,13 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		return '&amp;';
 	}
 	/**
+	 * Returns an html br tag
+	 * @return string
+	 */
+	public function htmlBr($args) {
+	    return '<br/>';
+	}
+	/**
 	 * Builds a URL Query based given the hierarchical part and the query arguments 
 	 * FuncExp signature : <code>htmlUrlQuery(baseUrl,key1,value1,key2,value2,...)</code><br/>
 	 * Where arguments are :
@@ -2215,6 +2480,26 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		return '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
 	} 
 		
+	/**
+	 * Convert html to text
+	 * FuncExp signature : <code>html2text(html)</code><br/>
+	 * Where arguments are :
+	 * - html : String
+	 * return String : in text format
+	 */
+	public function html2text($args){
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('html2text takes at least 1 argument: html text string', FuncExpEvalException::INVALID_ARGUMENT);
+	    
+	    $returnValue = $this->evaluateArg($args[0]);
+	    if(!empty($returnValue)) {
+	        $html2text = new Html2text();
+	        $html2text->setHtml($returnValue);
+	        $returnValue = $html2text->getText();
+	    }
+	    return $returnValue;
+	}
+	
 	/**
 	 * Returns a string representing a date in a Wigii compatible format (Y-m-d H:i:s).
 	 * For general formatting use the func exp date (defined in PhpStdFL).

@@ -514,12 +514,12 @@ class ImportElementInFormExecutor extends FormExecutor implements ElementDataTyp
 		$this->getTrm()->displayRemainingForms("importInRawData");
 
 		if($this->getState() != "start"){
-			echo '<br /><font style="font-style:italic;" >';
+			echo '<div class="field"><font style="font-style:italic;" >';
 			if($this->languageInstalled != null) echo $transS->t($p, "importInMultilanguageExplanation")." : ".implode(", ", $transS->getVisibleLanguage())."<br /><br />";
 			echo $transS->t($p, "importInFilesExplanation")."<br /><br />";
 			echo $transS->t($p, "importInDataValidationExplanation")."<br /><br />";
 			echo $transS->t($p, "importAvailableHeaders").':<br /><textarea class="noElastic" readonly="readonly" style="height:50px;width: 100%; max-width:'.$this->getTotalWidth().'px;overflow-y:scroll;overflow-x:hidden;">'.implode($defaultSeparator." ", $this->keptHeaders)."</textarea>";
-			echo '</font>';
+			echo '</font></div>';
 		}
 
 		$this->getTrm()->displayRemainingForms();

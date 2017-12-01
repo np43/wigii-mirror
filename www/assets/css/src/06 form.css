@@ -1,7 +1,3 @@
-public form * {
-	box-sizing: border-box;
-}
-
 form div.field div.label {
 	padding-top:7px;
 }

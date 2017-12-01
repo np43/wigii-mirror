@@ -16,7 +16,7 @@
 		Notification_includeSenderInNotification="0"
 		Notification_includeOtherNamespaceInUpdateOrSetState="0"
 		Notification_hideElementView="0"
-		Notificatin_hideAccessButton="0"
+		Notification_hideAccessButton="0"
 
 		ExcelExport_enableSysDate="0"
 		ExcelExport_enableCreationSysDate="0"
@@ -27,10 +27,7 @@
 		Element_enableImportant2Status="0"
 		Element_enableArchivedStatus="0"
 		Element_enableDeprecatedStatus="1"
-		Element_enableHiddenStatus="0"
-		Element_viewVersion="0"
-		Element_viewInfo="1"
-		Element_viewId="0"
+		Element_enableHiddenStatus="0"		
 		Element_evaluator="CustomizedElementEvaluator"
 
 		Group_selectAllGroupsOnFirstLoad="0"

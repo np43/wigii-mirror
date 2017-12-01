@@ -34,7 +34,7 @@ $fieldXml = $field->getXml();
 
 //defining width if existant
 if($parentWidth != null){
-	$valueWidth = " width: 100%; max-width:".($parentWidth-5)."px; ";
+	$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";
 }
 
 //always activate jsCode
@@ -64,7 +64,7 @@ $inputBoxFileId =  $formId.'_'.$fieldName.'_box_hidden';
 $boxFolderIdTag = (string)$fieldXml["boxFolderId"];
 
 //display the type preview
-$this->put('<div class="filePreview" style="'.(!($path || $textContent)? "display:none;" : "").'float:left; background:url(\''.SITE_ROOT_forFileUrl.'images/preview/prev.26'.$type.'.png\') no-repeat 0px -1px; margin-right:4px;width: 100%; max-width:width:26px;height:26px;"></div>');
+$this->put('<div class="filePreview" style="'.(!($path || $textContent)? "display:none;" : "").'float:left; background:url(\''.SITE_ROOT_forFileUrl.'images/preview/prev.26'.$type.'.png\') no-repeat 0px -1px; margin-right:4px;width:26px;height:26px;"></div>');
 
 //the name field
 $subFieldName = "name";
@@ -112,7 +112,7 @@ if($fieldXml["htmlArea"]=="1"){
 	$this->put('<textarea id="'.$textContentId.'" name="'.$fieldName.'_'.$subFieldName.'" ');
 	if($disabled) $this->put(' disabled ');
 	if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
-	$this->put(' style="float:left;display:none;width: 100%; max-width:'.($parentWidth-5).'px;">');
+	$this->put(' style="float:left;display:none;width: 100%; max-width:'.($parentWidth).'px;">');
 	$this->put($textContent);
 	$this->put('</textarea>');
 } else {
@@ -121,7 +121,7 @@ if($fieldXml["htmlArea"]=="1"){
 	$this->put(' type="file" ');
 	if($disabled) $this->put(' disabled ');
 	if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
-	$this->put(' style="float:left;'.($path && $activeJS ? "display:none;" : "").'width: 100%; max-width:'.($parentWidth-5).'px;" value="" />');
+	$this->put(' style="float:left;'.($path && $activeJS ? "display:none;" : "").'width: 100%; max-width:'.($parentWidth).'px;" value="" />');
 }
 
 	// Box File picker integration (disabled on Activities, disabled if attachContentInNotification=1, disabled if isForExternalAccess)
@@ -140,7 +140,7 @@ if($fieldXml["htmlArea"]=="1"){
 		if($disabled) $this->put(' disabled ');
 		if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
 		
-		$this->put('style="'.($path && $activeJS ? "display:none;" : "").'width: 100%; max-width:'.($parentWidth-5).'px;font-size:0.9em;" value="'.$transS->h($p, "boxChooseFile").'"/>');
+		$this->put('style="'.($path && $activeJS ? "display:none;" : "").'width: 100%; max-width:130px;font-size:0.9em;" value="'.$transS->h($p, "boxChooseFile").'"/>');
 		$elem = $xml->clientId;
 	
 		//initializes the Box file picker

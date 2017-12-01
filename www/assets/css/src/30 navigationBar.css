@@ -431,3 +431,43 @@ adds for making work the navBar
 	overflow:hidden;
 }
 
+#NMContainerBsp input {
+	font-size: 10pt;
+	border-right: none;
+	max-width: 200px;
+}
+
+#NMContainerBsp #removeFiltersButton {
+	vertical-align: text-bottom;
+}
+
+#dropdown-title > span  {
+	font-size: 14pt;
+}
+
+#navigationBarBsp{
+	margin-bottom: 0;
+}
+
+#navigateMenuBsp {
+	margin-right: 20px;
+}
+
+.nav > li > a {
+	padding-right: 5px !important;
+	padding-left: 10px !important;
+}
+
+#navigationBarBspMobile li.dropdown{
+	float: left;
+	margin-left:20px;
+}
+
+#navigationBarBspMobile li#base-dropdown {
+	float: right;
+	margin-right:20px;
+}
+
+nav a.username:hover, nav a.username:focus {
+	background-color: #fff !important;
+}

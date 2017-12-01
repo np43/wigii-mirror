@@ -25,24 +25,13 @@
  * Created 25 July 2011 by LWR
  * Changed by Medair (LMA) on 28.03.2017: Improved findOnlyDuplicate to compute groupBy in DB instead of php
  * Modified by Medair (ACA, CWE) on 16.05.2017 to hide delete button in contextual menu if enableDeleteOnlyForAdmin and not admin or if Element_beforeDeleteExp=0
+ * Refactored by Medair (CWE) on 29.09.2017 to extend from ElementPGroupableSelectablePagedListImpl
  */
-
-class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExecutor {
-
-	private $isGroupedBy;
-	private $crtGroupByValue;
-	private $trm_;
-	protected function getTRM(){
-		if(!isset($this->trm_)){
-			$this->trm_ = $this->createTRMInstance();
-		}
-		return $this->trm_;
-	}
-	protected function createTRMInstance(){
-		return $this->getWigiiExecutor()->createTRM(null, false, false, false, true, false, true);
-	}
-	public function setTRM($var){ $this->trm_ = $var; }
-
+class ElementPListRowsForElementBlogImpl extends ElementPGroupableSelectablePagedListImpl {
+    protected function getMenuWidth(){ return 0; }
+    protected function getMultipleWidth(){ return 5; }
+    
+    private $detailRenderer;
 	public function getDetailRenderer($rowId){
 		if(!isset($this->setDetailRenderer)){
 			$this->detailRenderer = DetailRenderer::createInstance($rowId, $this->getTRM());
@@ -54,127 +43,22 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 	}
 	public function setDetailRenderer($detailRenderer){ $this->detailRenderer = $detailRenderer; }
 
-
-	private $fieldList;
-	public function setFieldList($fieldList){$this->fieldList = $fieldList;}
-	protected function getFieldList(){ return $this->fieldList; }
-	private $p;
-	public function setP($p){$this->p = $p;}
-	protected function getP(){ return $this->p; }
-	private $exec;
-	public function setExec($exec){$this->exec = $exec;}
-	protected function getExec(){ return $this->exec; }
-
-	protected function getMenuWidth(){ return 0; }
-	protected function getMultipleWidth(){ return 5; }
-
-	private $pageSize;
-	public function setPageSize($size){ $this->pageSize = $size; }
-	protected function getPageSize(){ return $this->pageSize; }
-	private $desiredPage;
-	public function setDesiredPage($page){ $this->desiredPage = $page; }
-	protected function getDesiredPage(){ return $this->desiredPage; }
-
+	
 	public static function createInstance($wigiiExecutor, $listContext){
 		$elPl = new self();
-		$elPl->setWigiiExecutor($wigiiExecutor);
-		$elPl->setListContext($listContext);
-		$elPl->isGroupedBy = $listContext->getGroupBy();
-		$elPl->crtGroupByValue = $listContext->getGroupByItemCurrentValue();
-        if($elPl->getListContext()->isGroupByOnlyDuplicates())trim(strtoupper($elPl->crtGroupByValue));
+		$elPl->reset($wigiiExecutor,$listContext);
 		return $elPl;
 	}
 
 	/**
-	 * Adds an element to the list
-	 * throws ListException::ALREADY_EXISTS if we try to put a second time the same element in the list
+	 * Does the real work of displaying an element in the list
 	 */
-	private $elementIds; //array which stores the elements ids already added
-	private $nb;
-	private $globalNb; //numbering for manual paging
-	private $headersMade = false;
-	private $tableBegan = false;
-	private $doOnlyRows = false;
-	private $doOnlyRowsContent = false;
-	public function doOnlyRows($doOnlyRowsContent = false){
-		$this->doOnlyRows = true;
-		$this->doOnlyRowsContent = $doOnlyRowsContent;
-	}
-	public function getOnlyRows(){
-		return $this->doOnlyRows;
-	}
-	public function getTotalElementsIds(){
-		return $this->elementIds;
-	}
-
-	public function getTotalNumberOfElements(){
-		return $this->globalNb;
-	}
-	public function getNumberOfElementsProcessed(){
-		return $this->nb;
-	}
-
-	//show only duplicates management
-	private $previousElement = null;
-	private $previousGroupByValue = null;
-	private $groupByFS = null;
-	private $shouldRecalculateMultipleElementState = false;
-	public function addElementP($elementP){
+	protected function doAddElementP($elementP){
 		$rm = $this->getTRM();
 		$p = $this->getP();
-
-		/*
-		 * Changed by Medair (LMA) on 28.03.2017: Improved findOnlyDuplicate to compute groupBy in DB instead of php
-		 */
-		//DEPRECATED if only duplicates then keep in memory the last one and display only if groupBy value is the same...
-		//WARNING, ensure that manual paging has not been activated in getSelectedElementsInGroups to
-		//prevent error when displaying the results. As duplicates should not return too much of result not having paging issues
-		//should not make any problem
-        /*
-		if($this->getListContext()->isGroupByOnlyDuplicates() && $this->previousElement !== $elementP){
-			if(!isset($this->groupByFS)) $this->groupByFS = $this->getListContext()->getGroupByItemFieldSelector();
-//			fput($this->groupByFS);
-//			fput($elementP->getElement()->getFieldList());
-			$crtGroupByValue = $elementP->getElement()->getFieldValue($this->groupByFS->getFieldName(), $this->groupByFS->getSubFieldName());
-			$this->previousGroupByValue = $crtGroupByValue;
-
-			if($crtGroupByValue == null) return;
-
-			if($this->previousGroupByValue == $crtGroupByValue && $this->previousElement){
-				$this->addElementP($this->previousElement);
-				$this->previousElement = null;
-			}
-			if($this->previousGroupByValue != $crtGroupByValue){
-				$this->previousGroupByValue = $crtGroupByValue;
-				$this->previousElement = $elementP;
-				return;
-			}
-		}
-        //*/
-
-		$this->globalNb++;
-
 		$element = $elementP->getElement();
-		$elId = $element->getId();
-
-		if($this->elementIds[$elId]!=null) throw new ListException("Id: $elId already exist in the ElementListFrame", ListException::ALREADY_EXIST);
-		$this->elementIds[$elId] = $elId;
-
-		//manual paging:
-		if($this->getPageSize()!= 0 && $this->getDesiredPage()!=0){
-			if(	($this->globalNb <= (($this->getDesiredPage()-1)*$this->getPageSize())) ||
-				($this->globalNb > ($this->getDesiredPage()*$this->getPageSize()))
-				){
-				//do nothing
-				return;
-			}
-		}
-
-		$this->nb++;
-
 		$rowId = "row_".$element->getId();
 
-		$rm->reset($element);
 		$this->getDetailRenderer($rowId);
 
 		$elementFieldSelectorList = $this->getListContext()->getFieldSelectorList();
@@ -183,26 +67,11 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 			throw new ServiceException("A FieldSelectorList is needed", ServiceException::INVALID_ARGUMENT);
 		}
 
-		if($this->doOnlyRows){
-			if(!is_array($this->doOnlyRows)) $this->doOnlyRows = array();
-			$this->doOnlyRows[] = $elementP->getId();
-		}
-		if(!$this->doOnlyRowsContent){
+		if(!$this->getDoOnlyRowsContent()){
 			echo "\n";
-			if($this->isGroupedBy !=null && $this->isGroupedBy !== "null"){
-				$fieldSelector = $this->getListContext()->getGroupByItemFieldSelector();
-				$crtGroupByValue = null;
-				if($fieldSelector){
-					$crtGroupByValue = $rm->formatValueFromFS($fieldSelector, $element, true);
-				}
-
-				if($this->getListContext()->isGroupByOnlyDuplicates()) $crtGroupByValue = trim(strtoupper($crtGroupByValue));
-				if($this->crtGroupByValue != $crtGroupByValue){
-					$this->crtGroupByValue = $crtGroupByValue;
-					$this->getListContext()->setGroupByItemCurrentValue($crtGroupByValue);
-					?><div class="groupByTitle grayFont"><?=$crtGroupByValue;?></div><?
-					echo "\n";
-				}
+			if($this->isGroupedBy() && $this->hasGroupByValueChanged()){
+				?><div class="groupByTitle grayFont"><?=$this->getCrtGroupByValue();?></div><?
+				echo "\n";
 			}
 
 			//add the current selected item
@@ -214,7 +83,7 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 			if(!$elementP->getRights()->canWriteElement() || $element->isState_blocked() || $elementP->isParentElementState_blocked()) $class .= " readOnly ";
 			if($this->getListContext()->getCrtSelectedItem()==$element->getId()) $class .= " S ";
 			if($this->getListContext()->isInMultipleSelection($element->getId())) $class .= " M ";
-			if($this->doOnlyRows) $class .= "new "; //to prevent resetting all rows events in JS: setListenersToRows
+			if($this->isDoOnlyRows()) $class .= "new "; //to prevent resetting all rows events in JS: setListenersToRows
 
 			?><div href="#<?=$cacheLookup;?>" <?=($class ? 'class="'.$class.'" ' : '');?> <?=($element->isState_dismissed() ? 'style="text-decoration:line-through" ' : '');?> id="<?=$rowId;?>"><?
 		} else {
@@ -230,18 +99,6 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		echo '<div class="max"></div>';
 		echo '<div class="mul"></div>';
 		echo '<div class="menu"><span class="elEnableState" style="display:none;">'.$elementEnableState.'</span><span class="elState" style="display:none">'.$elementState.'</span></div>';
-		// updates list context multiple selection with element state
-		if($this->getListContext()->isInMultipleSelection($element->getId())) {
-			$this->getListContext()->updateElementStateInMultipleSelection($element->getId(), $elementEnableState, $elementState, false);
-			$this->shouldRecalculateMultipleElementState = true;
-		}
-
-		//store in the context each duplicates ids to be able to click on the select all checkbox
-		if($this->getListContext()->isGroupByOnlyDuplicates()){
-			$isWritable = false;
-			if($elementP->getRights() && $elementP->getRights()->canWriteElement()) $isWritable = true;
-			$this->getListContext()->addDuplicatesId($elementP->getId(), $isWritable, $elementEnableState, $elementState);
-		}
 
 		if($element->isState_locked()){
 			echo '<fieldset class="isPlayingRole ui-corner-all" style="border-color:#CC4B4B;" ><legend class="ui-corner-all" style="background-color:#CC4B4B;" >';
@@ -471,7 +328,11 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 			$class .= " ".(string)$fieldXml["class"]." ";
 			$class .= " ".(string)$xmlHeader["class"]." ";
 			$idField = $rowId."__".$fieldName;
-			$rm->put('<div id="'.$idField.'" class="field '.$class.'" style="width:100%; '.$style.'" >');
+            //Define the width
+            $totalWidth = ($xmlHeader["totalWidth"]?(string)$xmlHeader["totalWidth"].'px':'100%');
+			$style = "width: $totalWidth;";
+
+			$rm->put('<div id="'.$idField.'" class="field '.$class.'" style="'.$style.'" >');
 
 			//display label
 			if((($xmlHeader != null && count($xmlHeader->children()) > 0) ||
@@ -509,6 +370,7 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 					$class = "value";
 				}
 			}
+			$style = "";
 			//for print we don't limit the width to prevent hidding some information
 			$rm->put('<div class="'.$class.'" style="'.$style.'" >');
 			if($dataType!= null && $dataType->getDataTypeName()!="Links" &&
@@ -522,27 +384,6 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 			$rm->put('</div>');
 
 			$rm->put('</div>');
-
-//			// for Links datatype: if element is not writable, then hides the 'Add' button
-//			if($dataType && $dataType->getDataTypeName()=="Links") {
-//				if(!$this->getRecordIsWritable()){
-//					//$this->addJsCodeAfterShow("$('#".$this->getDetailId()." .addNewSubElement').removeClass('Green').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
-//					$this->addJsCodeAfterShow("$('#".$this->getDetailId()."').find('.addNewSubElement, td.edit, td.delete, td.restore').removeClass('Green edit delete restore').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
-//				}
-//			}
-//
-//			//add any JsCode if defined:
-//			if((string)$fieldXml["jsCode"]!=null){
-//				$this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCode"]));
-//			}
-//			if((string)$fieldXml["jsCodeInDetail"]!=null){
-//				$jsCode = str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCodeInDetail"]);
-//				if($dataType && ($dataType->getDataTypeName()=="Attributs")) {
-//					$jsCode = str_replace('$$attrValue$$', $rm->getRecord()->getFieldValue($field->getFieldName()), $jsCode);
-//				}
-//				$this->addJsCodeAfterShow($jsCode);
-//			}
-
 		}
 
 		if($element->isState_locked()){
@@ -564,12 +405,13 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 			$rm->put('</fieldset> ');
 		}
 
-		if(!$this->doOnlyRowsContent){
+		if(!$this->getDoOnlyRowsContent()){
 			$blogViewXml = $this->getWigiiExecutor()->getConfigurationContext()->ma($p, $this->getExec()->getCrtModule(), Activity::createInstance("blogView"));
 			$nbOfColumns = ($blogViewXml["nbOfColumns"]<>"" ? $blogViewXml["nbOfColumns"] : 2);
+            $blogItemWidth = ($blogViewXml["blogItemWidth"]<>"" ? $blogViewXml["blogItemWidth"] : false);
 			
 			?></div><?
-			if($this->nb%$nbOfColumns==0){
+			if($this->getNumberOfElementsProcessed()%$nbOfColumns==0 && !$blogItemWidth){
 				?><div class="clear"></div><?
 			}
 		}
@@ -577,61 +419,11 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		flush();
 	}
 
-
-	/**
-	 * Returns an integer encoding the "enableElementState" menu
-	 */
-	private $enableElementStateConfigCache = null;
-	protected function computeEnableElementState($elementP) {
-		$p = $this->getP();
-		$configS = $this->getWigiiExecutor()->getConfigurationContext();
-		// creates config cache if not already done
-		if(!isset($this->enableElementStateConfigCache)) {
-			$m =  $this->getExec()->getCrtModule();			
-			$this->enableElementStateConfigCache = array(
-				'Element_enableLockedStatus' => $configS->getParameter($p, $m, 'Element_enableLockedStatus')=="1",
-				'Element_enableBlockedStatus' => $configS->getParameter($p, $m, 'Element_enableBlockedStatus')=="1",
-				'Element_enableImportant1Status' => $configS->getParameter($p, $m, 'Element_enableImportant1Status')=="1",
-				'Element_enableImportant2Status' => $configS->getParameter($p, $m, 'Element_enableImportant2Status')=="1",
-				'Element_enableFinalizedStatus' => $configS->getParameter($p, $m, 'Element_enableFinalizedStatus')=="1",
-				'Element_enableApprovedStatus' => $configS->getParameter($p, $m, 'Element_enableApprovedStatus')=="1",
-				'Element_enableDismissedStatus' => $configS->getParameter($p, $m, 'Element_enableDismissedStatus')=="1",
-				'Element_enableArchivedStatus' => $configS->getParameter($p, $m, 'Element_enableArchivedStatus')=="1",
-				'Element_enableDeprecatedStatus' => $configS->getParameter($p, $m, 'Element_enableDeprecatedStatus')=="1",
-				'Element_enableHiddenStatus' => $configS->getParameter($p, $m, 'Element_enableHiddenStatus')=="1",
-			    'Element_enableHiddenDelete' => $configS->getParameter($p, $m, 'enableDeleteOnlyForAdmin')=="1" || ((string)$configS->getParameter($p, $m, 'Element_beforeDeleteExp')==="0")
-			);
-		}
-
-		// initializes elementP with default policy
-		$elementP->enableElementState_locked($this->enableElementStateConfigCache['Element_enableLockedStatus']);
-		$elementP->enableElementState_blocked($this->enableElementStateConfigCache['Element_enableBlockedStatus']);
-		$elementP->enableElementState_important1($this->enableElementStateConfigCache['Element_enableImportant1Status']);
-		$elementP->enableElementState_important2($this->enableElementStateConfigCache['Element_enableImportant2Status']);
-		$elementP->enableElementState_finalized($this->enableElementStateConfigCache['Element_enableFinalizedStatus']);
-		$elementP->enableElementState_approved($this->enableElementStateConfigCache['Element_enableApprovedStatus']);
-		$elementP->enableElementState_dismissed($this->enableElementStateConfigCache['Element_enableDismissedStatus']);
-		$elementP->enableElementState_archived($this->enableElementStateConfigCache['Element_enableArchivedStatus']);
-		$elementP->enableElementState_deprecated($this->enableElementStateConfigCache['Element_enableDeprecatedStatus']);
-		$elementP->enableElementState_hidden($this->enableElementStateConfigCache['Element_enableHiddenStatus']);
-		$elementP->enableElementState_delete($this->enableElementStateConfigCache['Element_enableHiddenDelete'] && (!$elementP->getRights()->canModify() || ((string)$configS->getParameter($p, $elementP->getElement()->getModule(), 'Element_beforeDeleteExp')==="0")));
-
-		// updates policy using the ElementPolicyEvaluator
-		$policyEval = $this->getElementPolicyEvaluator();
-		if(isset($policyEval)) $policyEval->computeEnableElementState($p, $elementP);
-
-		// converts the policy to a binary representation
-		return $elementP->getEnableElementStateAsInt();
-	}
-
-
 	public function actOnBeforeAddElementP(){
-		$this->globalNb = 0;
-		$this->shouldRecalculateMultipleElementState = false;
+	    parent::actOnBeforeAddElementP();
 		//in case of only doing the rows, then no headers needed
-		if($this->doOnlyRows) return;
+		if($this->isDoOnlyRows()) return;
 
-		$this->nb = 0;
 		$this->nbGroup = 0;
 
 		$p = $this->getP();
@@ -648,27 +440,26 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		$groupS = ServiceProvider::getGroupAdminService();
 		$cgl = $this->getListContext()->getGroupPList();
 		if($cgl->count()>1){
-			//$lf = $groupS->getListFilterForGroupsInElementList($this->getExec()->getCrtModule(), $cgl->getIds());
-			//we need to select all groups and filter on groupId to make the propagation working correctly. Otherwise we will miss some parent groups
 			$lf = $groupS->getListFilterForSelectGroupWithoutDetail();
 		} else {
 			$gP = reset($cgl->getListIterator());
 			$g = $gP->getDbEntity();
-			//$lf = $groupS->getListFilterForSubGroupsInElementList($this->getExec()->getCrtModule(), $g->getId());
 			$lf = $groupS->getListFilterForSelectGroupWithoutDetail();
 		}
 
 		if($cgl->count()==1){
 			?><div id="groupList_<?=($g->getGroupParentId() ? $g->getGroupParentId() : '0');?>" class="folder folderUp L H"><?
 				?><?=$this->getTRM()->h("groupUp");?><?
-			?></div><?
+			?></div><div class="clear"></div><?
 		}
 
 		if(!$this->getListContext()->doesGroupListIncludeChildren()){
-			//$groupS->getAllGroups($p, $this->getExec()->getCrtModule(), $this, $lf);
 			$groupS->getAllGroups($p, $this->getExec()->getCrtModule(), $this, $lf);
 		}
 
+		?>
+        <div class="clear"></div>
+        <?php
 
 		if($cgl->count()>1){
 			//add list elements
@@ -715,11 +506,13 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 	}
 
 	public function actOnFinishAddElementP($numberOfObjects){
-		$p = $this->getP();
+	    parent::actOnFinishAddElementP($numberOfObjects);
+	    $p = $this->getP();
 		$blogViewXml = $this->getWigiiExecutor()->getConfigurationContext()->ma($p, $this->getExec()->getCrtModule(), Activity::createInstance("blogView"));
 		$nbOfColumns = ($blogViewXml["nbOfColumns"]<>"" ? $blogViewXml["nbOfColumns"] : 2);
+        $blogItemWidth = ($blogViewXml["blogItemWidth"]<>"" ? $blogViewXml["blogItemWidth"] : false);
 
-		if($this->nb == 0 && $this->nbGroup==0){
+        if($this->getNumberOfElementsProcessed() == 0 && $this->nbGroup==0){
 			if($this->getListContext()->getFieldSelectorLogExp()!=null){
 				$t = $this->getTRM()->t("noElementMatchSearchCriteria");
 			} else {
@@ -729,8 +522,10 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		}
 
 		$this->getExec()->addJsCode("crtBlogViewNbOfColumns = $nbOfColumns;");
-
-		if(!$this->doOnlyRows){
+		if($blogItemWidth){
+            $this->getExec()->addJsCode("blogItemWidth = $blogItemWidth");
+        }
+		if(!$this->isDoOnlyRows()){
 			$this->getExec()->addJsCode("crtElementId = '".$this->getListContext()->getCrtSelectedItem()."';");
 			$this->getExec()->addJsCode("setListenersToElementBlog();");
 			if($this->getListContext()->getSearchBar()){
@@ -740,21 +535,10 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 		} else {
 			$this->getExec()->addJsCode("setListenersToRows('#moduleView .blog', '#moduleView .dataBlog div.el', '#moduleView .dataBlog div.folder', '#moduleView .blog>.cm');resize_blog();");
 		}
-		if($this->getListContext()->isMultipleSelection()){
-			if($this->shouldRecalculateMultipleElementState) $this->getListContext()->computeMultipleElementStateInt();
-			if(!$this->doOnlyRows){
-				$this->getExec()->addRequests("multipleDialog/".$this->getExec()->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$this->getExec()->getCrtModule()->getModuleName()."/element/displayMultipleDialog");
-			}
-		}
-		if(!$this->doOnlyRows){
+		if(!$this->isDoOnlyRows()){
 			?></div><?
-			//addJsCode to match the column width on headers
-			//this is done in the element_resize js function
-
 			$this->displayNbItems($numberOfObjects);
-
 		}
-
 	}
 
 	protected function displayNbItems($numberOfObjects){
@@ -762,16 +546,15 @@ class ElementPListRowsForElementBlogImpl extends ElementPListWebImplWithWigiiExe
 			if($this->nbGroup){
 				echo $this->nbGroup;
 				echo " ".$this->getTRM()->t("#-groups#");
-				if($this->nb) echo "&nbsp;&nbsp;&nbsp;";
+				if($this->getNumberOfElementsProcessed()) echo "&nbsp;&nbsp;&nbsp;";
 			}
-			if($this->nb){
-				echo '<span class="nb">'.$this->nb.'</span>';
-				if($this->nb != $numberOfObjects) echo ' / <span class="total">'.$numberOfObjects.'</span>';
-				if($this->nb != $numberOfObjects) echo ' (<span class="page">'.($this->getDesiredPage() ? $this->getDesiredPage() : $this->getListContext()->getDesiredPageNumber()).'</span><span class="H L loadMoreLines">'.$this->getTRM()->t("scrollToLoadNextElements").'</span>)';
+			if($this->getNumberOfElementsProcessed()){
+				echo '<span class="nb">'.$this->getNumberOfElementsProcessed().'</span>';
+				if($this->getNumberOfElementsProcessed() != $numberOfObjects) echo ' / <span class="total">'.$numberOfObjects.'</span>';
+				if($this->getNumberOfElementsProcessed() != $numberOfObjects) echo ' (<span class="page">'.($this->getDesiredPage() ? $this->getDesiredPage() : $this->getListContext()->getDesiredPageNumber()).'</span><span class="H L loadMoreLines">'.$this->getTRM()->t("scrollToLoadNextElements").'</span>)';
 				echo '<span class="type"> '.$this->getTRM()->t("#-elements#").'</span>';
 			}
 		?></div><?
 	}
-
 }
 

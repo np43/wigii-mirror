@@ -324,9 +324,9 @@ class ElementSetterDFA extends ElementDFAWithFuncExpVM
 			foreach($this->cfsMap->getListIterator() as $cfs) {
 				$fs = $cfs->getFieldSelector();
 				$fx = $cfs->getFuncExp();
-				if(isset($fs) && isset($fx)) {
+				if(isset($fs)) {
 					if($fs->isElementAttributeSelector()) {
-						$element->setAttribute($this->evaluateFuncExp($fx), $fs);
+					    $element->setAttribute((isset($fx)?$this->evaluateFuncExp($fx):null), $fs);
 						
 						// sets FieldSelector in FieldSelectorList
 						if($this->firstElementInFlow && !$fieldSelectorList->containsFieldSelector($fs->getFieldName(), $fs->getSubFieldName())) {
@@ -349,7 +349,7 @@ class ElementSetterDFA extends ElementDFAWithFuncExpVM
 						}
 						else {
 							// evaluates func exp
-							$val = $this->evaluateFuncExp($fx);
+						    $val = (isset($fx)?$this->evaluateFuncExp($fx):null);
 							// sets value in element					
 							if(is_array($val) && is_null($subFieldName)) {
 								// if array, then checks for the presence of subfields

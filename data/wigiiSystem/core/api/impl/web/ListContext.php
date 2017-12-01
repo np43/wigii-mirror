@@ -571,7 +571,7 @@ class ListContext extends ListFilter {
 		if($ascending !== null){
 			$this->ascendingSort = $ascending;
 		} else {
-			$ascending = $this->ascendingSort;
+		    $ascending = $this->ascendingSort;
 		}
 
 		if(($key == null || $key ==="reset") && method_exists($this->getFieldSelectorList(), "getDefaultSortingKey")){

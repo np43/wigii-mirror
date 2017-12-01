@@ -187,7 +187,7 @@ class DeleteMultipleElementFormExecutor extends DeleteElementFormExecutor {
 	            // evaluates beforeDeleteExp against each selected elements
 	            $returnValue = (object)array('okToDelete'=>true,'message'=>null);
 	            foreach($this->getElementPAList()->getListIterator() as $elementP) {
-	                $singleResult = $this->getWigiiExecutor()->evaluateFuncExp($p, $exec, $beforeDeleteExp, $elementP->getDbEntity());
+	                $singleResult = $this->evaluateFuncExp($p, $exec, $beforeDeleteExp, $elementP->getDbEntity());
 	                $okToDelete = false;
 	                if($singleResult instanceof stdClass) {
 	                    $returnValue->okToDelete = $returnValue->okToDelete && $singleResult->okToDelete;

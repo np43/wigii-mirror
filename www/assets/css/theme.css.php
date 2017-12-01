@@ -42,7 +42,7 @@ $searchBarR = $black;
 $searchBarBorder = "E0E2E5"; //"d0d2da";
 $searchBarInputBorder = "93a4c1"; //"d0d2da";
 $toolBar = "f1f3f7"; //"ecf3fe";
-$toolBarR = $black;
+$toolBarR = "555";
 $odd = "f1f3f7";
 $link = "0050e8";
 $red = "fe0000";
@@ -164,6 +164,10 @@ button.publicFormBorder:hover {
   background-color:#<?=$toolBar;?>;
   color:#<?=$toolBarR;?>;
 }
+.T a{
+    background-color:#<?=$toolBar;?>;
+    color:#<?=$toolBarR;?>;
+}
 .Tcolor {
   background-color:#<?=$toolBar;?>;
   color:#<?=$toolBarR;?>;
@@ -219,7 +223,7 @@ div.fieldGroupRight{
 div.fieldGroupRight div.SBIB {
 	background-color:#<?=$toolBar;?>;
 	border:none;
-	padding:4px 6px 4px 12px;
+	padding:4px 0px 4px 10px;
 }
 div.fieldGroupRight>div.SBIB>div.field{
 	border-bottom:5px solid #fff;
@@ -231,7 +235,6 @@ div.fieldGroupRight>div.SBIB>div.field{
 div.fieldGroupRight>div.SBIB>div.field:last-child{
 	border-bottom:none;
 }
-
 
 .O {
   background-color:#<?=$odd;?>;
@@ -442,7 +445,7 @@ a.H {
 .disabled,
 input:disabled, textarea:disabled, option:disabled, optgroup:disabled, select:disabled:disabled
 {
-  color:#666; /* $disabled; */
+  color:#000; /* $disabled; */
   background-color:#<?=$disabled;?>; /* $disabled; */
   cursor:default;
 }
@@ -599,6 +602,15 @@ input:disabled, textarea:disabled, option:disabled, optgroup:disabled, select:di
   color:#<?=$calendarEventR;?>;
 }
 
+/* show the group with displayAsTag */
+#elementDialog .displayAsTag {
+    width: 100%;
+    height: 2px;
+    background-color: #f9ebb2;
+    margin-top: -17px;
+    margin-bottom: 15px;
+}
+
 /******************************
 * JQUERY-UI
 ******************************/
@@ -618,4 +630,3 @@ input:disabled, textarea:disabled, option:disabled, optgroup:disabled, select:di
 .cke_inner .cke_toolbox_collapser.cke_toolbox_collapser_min { margin: 0px 2px; }
 .cke_inner .cke_bottom { position:static; }
 .cke_inner .cke_editable ol { font-family: Arial; font-size: 13px; }
-

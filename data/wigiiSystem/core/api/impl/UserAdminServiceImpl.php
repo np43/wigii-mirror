@@ -1469,7 +1469,7 @@ WHERE (
 		} else $orderByClause='';
 		
 		$sql = "SELECT ".$this->getSqlColumnsForUser('U').", 1 as isOwner from Users as U ";
-		// if not wigiiNamespaceCreator then sees only users owned by the principal or all all from users from namespace
+		// if not wigiiNamespaceCreator then sees only users owned by the principal or all from namespace
 		if(!$principal->isWigiiNamespaceCreator()) {
 			$sql .= " inner join (";
 			// users owned by principal

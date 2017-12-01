@@ -148,7 +148,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		$rm = $this->getTemplateRecordManager();
 
 		//if field is hidden, or onlyInDetail, or not in Public and principal is public -> skip it
-		if(($isPublicPrincipal && $fieldXml["notInPublic"]=="1")) return;
+        if(($isPublicPrincipal && $fieldXml["notInPublic"]=="1")) return;
 		if((!$isPublicPrincipal && $fieldXml["onlyInPublic"]=="1")) return;
 		if($rm->getRecord()->getWigiiBag()->isHidden($fieldName) || $fieldXml["onlyInDetail"]=="1") return;
 
@@ -173,7 +173,10 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		}
 
 		// skips links attributes when external access or multiple.
-		if($dataType instanceof Links && ($rm->isForExternalAccess() || $this->isMultiple())) return;
+		if($dataType instanceof Links) {
+		    if($this->isMultiple()) return;
+		    elseif($rm->isForExternalAccess() && $rm->getRecord()->getFieldValue($fieldName) == 0 && $fieldXml['displayEvenIfEmpty']!='1') return;
+		}
 
 		//define base attributes of field such:
 		//	- $idField
@@ -245,9 +248,24 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 					"} else {" .
 						"$('#".$crtFieldGroupId.">.label>span.expand').remove();" .
 						"$('#".$crtFieldGroupId."_group').show();" .
+                        "autosize.update($('#".$crtFieldGroupId."'+' textarea:not(.noWrap):not(.noElastic)').css('max-height',450).css('min-height',30));" . //Update the autosize for textarea when we click on expand
 						"resize_scrollArea(true);".
 					"}" .
 				"});");
+
+
+			if($fieldXml["displayAsTag"]=="1"){
+                $rm->addJsCode("" .
+                    "$('#".$crtFieldGroupId." .lessBsp').css('cursor','pointer').click(function(){" .
+                    "if($('#".$crtFieldGroupId."_group:visible').length){" .
+                        "$('#".$crtFieldGroupId."_group').hide();" .
+                        "$('#".$crtFieldGroupId.">.label').append('<span class=\"expand\"> &nbsp; ".$rm->h("cickToShowGroupContent")."</span>');" .
+                    "} else {" .
+                        "$('#".$crtFieldGroupId."_group').show();" .
+                        "resize_scrollArea(true);".
+                    "}" .
+                    "});");
+            }
 			//collapse a fieldGroup only if there is no data and nothing is required
 			if(((!$this->isCrtFieldGroupFilled() && $fieldXml["expand"]!="1") || $fieldXml["forceCollapse"]=="1")
 			   && !$this->isCrtFieldGroupHasError()){
@@ -264,7 +282,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			$this->updateWidthOnEnterField($fieldName, $fieldXml);
 		}
 
-		//field management
+        //field management
 
 		//a group is filled if there is error inside or if there is mandatory fields
 		if(	($dataType && $dataTypeName!="Booleans" && $isFilled) ||
@@ -295,7 +313,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		}
 		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.$help.($dataType!=null?' data-wigii-datatype="'.$dataTypeName.'"':'').' >');
 		if($dataType!=null){
-			$additionalInformations = $rm->getAdditionalinInformation($fieldName);
+			$additionalInformations = $rm->getAdditionalInformation($fieldName);
 			if($additionalInformations) $rm->put('<div class="addinfo ui-corner-all SBIB">'.$additionalInformations.'</div>');
 		}
 		if(!empty($error)){
@@ -304,7 +322,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 
 		//display label
 		$countSubFields = 0;
-		if($dataType!=null && $fieldXml["noLabel"]!="1"){
+		if(($dataType!=null && $fieldXml["noLabel"]!="1")){
 			//display label on full width if field dispay more than one subfield
 			$countSubFields = count($dataType->getXml()->xpath("*[@type!='hidden']")); //count only none hidden sub fields
 			if(	($dataTypeName=="Urls" && $fieldXml["onlyUrl"] =="1") ||
@@ -316,7 +334,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			//20 is the label padding
 			$noPadding = "";
 			if(!$isCollapse && ($countSubFields > 1 || $fieldXml["isInLine"] =="1")){
-				$labelWidth = $this->getIsInLineWidth();
+				$labelWidth = $this->getIsInLineWidth()-20;
 				$noPadding = "padding-right:0px;"; //don't need the right padding if is inline
 			} else {
 				$labelWidth = $this->getLabelWidth()-20;
@@ -398,11 +416,46 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			}
 		}
 
+		//Display label div in case of MultipleEdit and noLabel=1
+        if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){
+            $rm->put('<div class="label" style="width:0px;" >'); //Padding is 20px
+            $tempClass = "checkField";
+            if($rm->getRecord()->getWigiiBag()->isDisabled($fieldName)){
+                $tempClass .= " disabled ";
+                $disabled = ' disabled="on" ';
+            } else $disabled = null;
+            $checked = $rm->getRecord()->getWigiiBag()->isMultipleChecked($fieldName);
+            if($checked) $checked = ' checked="on" ';
+            else $checked = null;
+            $multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheck").'\');" onmouseout="hideHelp();" ';
+            $rm->put('<span class="checkField M" style="padding:5px 0px 1px 0px;"><input id="'.$this->getFormId().'_'.$fieldName.'_check" style="margin-top:1px" type="checkbox" name="'.$fieldName.'_check" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /></span> ');
+            if(	($dataTypeName == "Emails" && $fieldXml["isMultiple"]=="1") ||
+                ($dataTypeName == "Addresses") ||
+                ($dataTypeName == "Blobs") ||
+                ($dataTypeName == "Floats") ||
+                ($dataTypeName == "Links") ||
+                ($dataTypeName == "Numerics") ||
+                ($dataTypeName == "Texts") ||
+                $dataTypeName == "MultipleAttributs"){
+                $checked = $rm->getRecord()->getWigiiBag()->isMultipleAddOnlyChecked($fieldName);
+                //by default check this checkbox
+                if($_POST["action"]==null) $checked = true;
+                if($checked) $checked = ' checked="on" ';
+                else $checked = null;
+                $multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheckAddOnly").'\');" onmouseout="hideHelp();" ';
+                $rm->put('<input id="'.$this->getFormId().'_'.$fieldName.'_checkAddOnly" style="margin-top:1px" type="checkbox" name="'.$fieldName.'_checkAddOnly" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /> ');
+            }
+            $rm->put('</div>');
+        }
+
 		//display value
 		if($dataType==null || ($countSubFields > 1 || $fieldXml["isInLine"] =="1" || $fieldXml["noLabel"] =="1")){
 			$valueWidth = $this->getIsInLineWidth();
 		} else {
             $valueWidth = $this->getValueWidth();
+        }
+        if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){
+            $valueWidth -= 20;
         }
         $useMultipleColumn = (int)(string)$fieldXml["useMultipleColumn"];
 		if($useMultipleColumn>0){
@@ -421,7 +474,11 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			}
 		}
 		$rm->put('<div class="'.$class.'" style="'.$style.'" >');
-		$rm->displayForm($this->getFormId(), $fieldName, $valueWidth, $this->getLabelWidth(), $this->getVisibleLanguage());
+		if((int)(string)$fieldXml["displayViewOnly"] == 1){
+            $rm->displayValue($fieldName, $valueWidth, $this->getVisibleLanguage());
+        } else{
+            $rm->displayForm($this->getFormId(), $fieldName, $valueWidth, $this->getLabelWidth(), $this->getVisibleLanguage());
+        }
 		$rm->put('</div>');
 
 		// adds any dynamically generated hidden divs

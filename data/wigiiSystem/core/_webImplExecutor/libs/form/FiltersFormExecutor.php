@@ -100,8 +100,8 @@ class FiltersFormExecutor extends FormExecutor {
 		//invalid moduleView cache to let each click on the filtering result displaying the correct content
 		$exec->addJsCode("invalidCache('moduleView'); setFiltersButton(".($this->getListContext()->getSearchBar() ? 'true' : 'false').");");
 
-		//update the __textSearch with the defined value:
-		$exec->addJsCode("$('#workZone #searchBar input:first').val('".addSlashes($this->getListContext()->getTextSearch())."');");
+		//update the __textSearch with the defined value:		
+		$exec->addJsCode("$('nav #searchField input:first').val('".addSlashes($this->getListContext()->getTextSearch())."');");
 
 		if ($this->getListContext()->isCrtViewCalendar()) {
 			$this->getListContext()->setCrtViewParams(true, "redefineSearchCriterias");
@@ -145,20 +145,16 @@ class FiltersFormExecutor extends FormExecutor {
 
 		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog());
 
-//		$this->getWigiiExecutor()->openAsDialogForm(
-//			$exec->getIdAnswer(), $this->getTotalWidth()+$this->getCorrectionWidth(),
-//			'convertTimestamps($("#filters_form___textAdvancedSearch_value_textarea")); $("form", this).submit();', $transS->t($p, "defineFiltersForElementsTitle"),
-//			$transS->t($p, "ok"), $transS->t($p, "cancel"));
 		$this->getWigiiExecutor()->openAsDialogForm3B(
 			$exec->getIdAnswer(), $this->getTotalWidth()+$this->getCorrectionWidth(),
 			'convertTimestamps($("#filters_form___textAdvancedSearch_value_textarea")); $("form", this).submit();', $transS->t($p, "defineFiltersForElementsTitle"),
-			$transS->t($p, "ok"), $transS->t($p, "resetFilters"), $transS->t($p, "cancel"), null, "actOnCancelDialog('".$exec->getIdAnswer()."'); $('#workZone #searchBar #removeFiltersButton').click();");
+			$transS->t($p, "ok"), $transS->t($p, "resetFilters"), $transS->t($p, "cancel"), null, "actOnCancelDialog('".$exec->getIdAnswer()."'); $('#removeFiltersButton').click();");
 
 		//add the advanced and group search wizard
 		$configS = $this->getWigiiExecutor()->getConfigurationContext();
 		$elS = ServiceProvider::getElementService();
 		$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
-		$html2text = new Html2text();
+		//$html2text = new Html2text();
 	    ?><div class="cm SBB" id="addFieldMenu" ><?
 	    	?><div class="exit SBB">x</div><?
 	    	?><div class="grayFont"><?=$transS->t($p, "as_af_dataFields");?></div><?
@@ -169,9 +165,11 @@ class FiltersFormExecutor extends FormExecutor {
 				$dxml = $field->getDataType()->getXml();
 				?><div class="searchField"><?
 				//display field name		
+				/* Medair (CWE) 13.11.2017, keep HTML in labels, but disables help icons js code 
 				$html2text->setHtml($transS->t($p, $field->getFieldName(), $field->getXml()));
 				$translatedFieldName = $html2text->getText();
-// 				$html2text->clear();
+				*/
+				$translatedFieldName = $transS->t($p, $field->getFieldName(), $field->getXml());
 				?><div class="H fB handler" ><?
 	    			echo $translatedFieldName;
 	    		?></div><?
@@ -413,6 +411,9 @@ $('#filtersDialog').parent().append($('#addFieldMenu')).append($('#addGroupOpera
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
 	}
+	
+	
+	public function bindJsServices($p,$exec) {/* disables online help js service and any custom js service */}
 }
 
 

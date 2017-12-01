@@ -1192,7 +1192,7 @@ class NotificationService implements MultiplexedEvent {
 					$recipients = null;
 				}
 			}
-			?><textarea class="difH noElastic" id="id<?=$this->getNotificationToInputName();?>" name="<?=$this->getNotificationToInputName();?>" style="width: 100%; max-width:<?=$valueWidth-5;?>px;height:50px;box-sizing: border-box;" ><?=$recipients;?></textarea><?
+			?><textarea class="difH noElastic" id="id<?=$this->getNotificationToInputName();?>" name="<?=$this->getNotificationToInputName();?>" style="width: 100%; max-width:<?=$valueWidth-5;?>px;height:50px;" ><?=$recipients;?></textarea><?
 		?></div><?
 		//20 is about label padding
 		?><div class="label" style="width: 100%; max-width:<?=$labelWidth-20?>px; clear:left; " ><?
@@ -1222,7 +1222,7 @@ class NotificationService implements MultiplexedEvent {
 		}
 		?><div class="clear"></div><?
 		?><div class="value" style="width: 100%; max-width:<?=$totalWidth;?>px; clear:left; " ><?
-			?><textarea id="id<?=$this->getNotificationMessageInputName();?>" name="<?=$this->getNotificationMessageInputName();?>" class="htmlArea" style="width: 100%; max-width:<?=$totalWidth-5;?>px;box-sizing: border-box;" ><?=($this->getNotificationMessageInputValue() ? $this->getNotificationMessageInputValue() : $this->getInitialMessageContent($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList));?></textarea><?
+			?><textarea id="id<?=$this->getNotificationMessageInputName();?>" name="<?=$this->getNotificationMessageInputName();?>" class="htmlArea" style="width: 100%; max-width:<?=$totalWidth;?>px;" ><?=($this->getNotificationMessageInputValue() ? $this->getNotificationMessageInputValue() : $this->getInitialMessageContent($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList));?></textarea><?
 		?></div><?
 	}
 	protected function displayNotificationMessage($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList=null){

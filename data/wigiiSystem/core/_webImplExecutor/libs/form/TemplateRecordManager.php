@@ -256,6 +256,14 @@ class TemplateRecordManager extends Model {
 		}
 		return $returnValue;
 	}
+    /**
+     * Evaluates a Configuration Parameter which can be either a constant or a FuncExp.
+     * @param String $parameter the configuration parameter to evaluate
+     * @return Any FuncExp result
+     */
+    public function evaluateConfigParameter($parameter) {
+        return $this->getFormExecutor()->getWigiiExecutor()->evaluateConfigParameter($this->getP(),$this->getExecutionService(),$parameter,$this->getRecord());
+    }
 	public static function createInstance($isForNotification = false, $isForPrint=false, $isForExternalAccess=false, $isForListView=false, $isForPreviewList=false, $isOutputEnabled = true){
 		$r = new TemplateRecordManager();
 		$r->reset(null, $isForNotification, $isForPrint, $isForExternalAccess, $isForListView, $isForPreviewList, $isOutputEnabled);
@@ -565,6 +573,163 @@ class TemplateRecordManager extends Model {
 		$this->setRecord($trmRecord);
 	}
 
+    /**
+     * displays a blog view with the related items
+     * @param Principal $p
+     * @param int $width
+     * @param Element $element
+     * @param String $linkName
+     * @param FieldSelectorList $fsl
+     * @param FieldSortingKeyList $fskl
+     * @param int $limit
+     */
+    public function displayElementPListBlogPreview($p, $width, $element, $linkName, $fsl, $fskl, $limit) {
+        //if element is not yet an element, no links are defined
+        if(!$element || !$element->getId()) return;
+
+        // gets link type
+        $fieldXml = $element->getFieldList()->getField($linkName)->getXml();
+        $query = null;
+        $linkType = Links::linkTypeFromString((string)$fieldXml['linkType']);
+        switch($linkType) {
+            case Links::LINKS_TYPE_SUBITEM:
+                break;
+            case Links::LINKS_TYPE_LINK:
+                break;
+            case Links::LINKS_TYPE_QUERY:
+                $query = (string)$fieldXml['source'];
+                break;
+            default: /*no preview supported*/ return;
+        }
+
+        $trmIsForPreviewList = $this->isForPreviewList();
+        $trmRecord = $this->getRecord();
+        $this->setForPreviewList(true);
+
+        $previewListId = 'previewList_'.$element->getId()."_".$linkName;
+        $this->put('<div class="SBIB ui-corner-all preview" id="'.$previewListId.'" style="overflow-x:auto;width: 100%; max-width:'.$width.'px;'.($fieldXml['expand']=="0" ? 'display:none;' : '').'">');
+
+        $elementIsBlocked = $element->isState_blocked();
+        // checks if parent is blocked
+        if(!$elementIsBlocked && $element->isSubElement()) {
+            foreach($this->getConfigService()->getCurrentSubElementPathFromRoot()->getListIterator() as $ls) {
+                if($ls->isOwnerElementBlocked()) {
+                    $elementIsBlocked = true;
+                    break;
+                }
+            }
+        }
+        $elementIsReadonly = $fieldXml['readonly']=='1' || $fieldXml['disabled']=='1';
+
+        $listFilter = ListFilter::createInstance();
+        $listFilter->setFieldSelectorList($fsl);
+        $listFilter->setFieldSortingKeyList($fskl);
+        if($limit){
+            $listFilter->setPageSize($limit);
+            $listFilter->setDesiredPageNumber(1);
+        }
+
+        $elS = ServiceProvider::getElementService();
+
+        // links of type query
+        if($linkType == Links::LINKS_TYPE_QUERY && !empty($query)) {
+            // parses query and creates func exp
+            $queryFx = str2fx($query);
+            // gets func exp evaluator
+            $evalFx = $this->getFuncExpEvaluator($p, $element);
+            $querySource = null;
+            try {
+                // evaluates query and builds data source object
+                $querySource = $evalFx->evaluateFuncExp($queryFx, $this);
+                // frees evaluator
+                $evalFx->freeMemory();
+            }
+            catch(Exception $e) {
+                $evalFx->freeMemory();
+                throw $e;
+            }
+            // updates list filter if set
+            if($querySource instanceof ElementPListDataFlowConnector) {
+                $querySourceLf = $querySource->getListFilter();
+                if(isset($querySourceLf)) {
+                    if(isset($fsl)) $querySourceLf->setFieldSelectorList($fsl);
+                    if(isset($fskl)) $querySourceLf->setFieldSortingKeyList($fskl);
+                    if($limit) {
+                        $querySourceLf->setPageSize($limit);
+                        $querySourceLf->setDesiredPageNumber(1);
+                    }
+                }
+                else $querySource->setListFilter($listFilter);
+            }
+            // executes data flow and builds html
+            if(isset($querySource)) {
+                $currentNamespace = $p->getWigiiNamespace();
+                $adaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
+                $p->setAdaptiveWigiiNamespace(true);
+                try {
+                    $nb = $this->getDataFlowService()->processDataSource($p, $querySource, dfasl(
+                        dfas('ElementPListRowsForBlogPreview',
+                            'setTrm', $this,
+                            'setP', $p,
+                            'setExec', $this->getExecutionService(),
+                            'setConfigService', $this->getConfigService(),
+                            'setFsl', $fsl,
+                            'setElementId', $element->getId(),
+                            'setLinkName', $linkName,
+                            'setLinkType', $linkType,
+                            'setElementIsBlocked', $elementIsBlocked,
+                            'setElementIsReadonly', $elementIsReadonly,
+                            'setPreviewListId', $previewListId,
+                            'setWidth', $width)
+                    ), false);
+                }
+                catch(ServiceException $se) {
+                    // if AuthorizationServiceException::FORBIDDEN then displays an empty table
+                    if($se->getWigiiRootException()->getCode() == AuthorizationServiceException::FORBIDDEN) {
+                        $nb = 0;
+                    }
+                    // else propagates exception
+                    else throw $se;
+                }
+                if(!$nb) {
+                    // if no rows, then displays an empty table
+                    $elementPList = ElementPListRowsForBlogPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+                    $elementPList->setElementIsReadonly($elementIsReadonly);
+                    if($querySource instanceof ElementPListDataFlowConnector) {
+                        $groupList = $querySource->getCalculatedGroupList();
+                        if(isset($groupList) && !$groupList->isEmpty()) {
+                            $g = reset($querySource->getCalculatedGroupList()->getListIterator());
+                            $elementPList->setModule($g->getModule());
+                        }
+                    }
+                    $elementPList->actOnBeforeAddElementP($p);
+                    $elementPList->actOnFinishAddElementP($p, ($listFilter->isPaged() ? ($listFilter->getTotalNumberOfObjects() > 0 ? $listFilter->getTotalNumberOfObjects():0) : ($nb > 0? $nb:0)), ($nb > 0? $nb:0), $listFilter->getPageSize(), $width);
+                }
+                if(method_exists($querySource, 'freeMemory')) $querySource->freeMemory();
+                if($adaptiveWigiiNamespace) $p->setAdaptiveWigiiNamespace(false);
+                $p->bindToWigiiNamespace($currentNamespace);
+            }
+        }
+        // else subitem or link
+        else {
+            $elementPList = ElementPListRowsForBlogPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+            $elementPList->setElementIsReadonly($elementIsReadonly);
+            $elementPList->actOnBeforeAddElementP($p);
+            if($linkType == Links::LINKS_TYPE_SUBITEM) {
+                $nb = $elS->getSubElementsForField($p, $element->getId(), $linkName, $elementPList, $listFilter);
+            }
+            //else : not implemented.
+
+            $elementPList->actOnFinishAddElementP($p, ($listFilter->isPaged() ? $listFilter->getTotalNumberOfObjects() : $nb), $nb, $listFilter->getPageSize(), $width);
+        }
+        $this->getSessionAdminService()->storeData($elS, $previewListId."_".$this->getExecutionService()->getCrtContext(), array($element->getId(), $linkName, (string)$fieldXml['linkType'], $listFilter, $elementIsBlocked, $query, $elementIsReadonly));
+
+        $this->put('</div>');
+
+        $this->setForPreviewList($trmIsForPreviewList);
+        $this->setRecord($trmRecord);
+    }
+
 	/**
 	 * output/return an html string which represent the label of the field
 	 * @param $allowSpecialLabel : bool = true, if true the label will be construct with the datatype_displayLabel.tpl.php if existing
@@ -650,7 +815,7 @@ class TemplateRecordManager extends Model {
 	 * 	- Created on: sys_creationDate
 	 * @param $sysInformationObject must implement interface SysInformation
 	 */
-	public function getAdditionalinInformation($fieldName){
+	public function getAdditionalInformation($fieldName){
 		$returnValue = "";
 		if($this->getRecord()->getFieldValue($fieldName, "sys_username")) $returnValue .= $this->h("sys_username").": ".$this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "sys_username"))."<br />";
 		if($this->getRecord()->getFieldValue($fieldName, "sys_date")) $returnValue .= $this->h("sys_date").": ".date("d.m.Y H:i:s", $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "sys_date")))."<br />";
@@ -658,20 +823,6 @@ class TemplateRecordManager extends Model {
 		if($this->getRecord()->getFieldValue($fieldName, "sys_creationDate")) $returnValue .= $this->h("sys_creationDate").": ".date("d.m.Y H:i:s", $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "sys_creationDate")))."<br />";
 		return $returnValue;
 	}
-	//this was used in old way of managing notification templates
-//	public function displayAdditionalRec($rec, $detailRenderer){
-//		foreach($rec->getFieldList()->getListIterator() as $field){
-//			$rec->getWigiiBag()->setHidden($field->getDataType() == null, $field->getFieldName());
-//			//this method does no more work with false
-//			$rec->getWigiiBag()->setChanged(false, $field->getFieldName());
-//		}
-//		$this->reset($rec);
-//		$this->setDetailRenderer($detailRenderer);
-//		$this->displayRemainingDetails();
-//		foreach($rec->getFieldList()->getListIterator() as $field){
-//			$rec->getWigiiBag()->setHidden(true, $field->getFieldName());
-//		}
-//	}
 	/**
 	 * @param additionalRowInfo, is information added in a column per elements (i.e. used to say those element remains elsewhere)
 	 */
@@ -867,7 +1018,7 @@ class TemplateRecordManager extends Model {
 		}
 		if(!$isDialog){
 
-			$this->put('<div style="border-width:2px 0px 0px 0px;background-color:transparent;padding-top:10px;margin-bottom:30px;" class="publicFormBorder">');
+			$this->put('<div id="validateButton" style="border-width:2px 0px 0px 0px;background-color:transparent;padding-top:10px;margin-bottom:30px;" class="publicFormBorder">');
 			if($cancelName != null){
 				$this->put('<button style="margin-left:10px;float:right;" type="button" class="H cancel ui-button publicFormBorder ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false"><span class="ui-button-text">'.$this->t($cancelName).'</span></button>');
 			}
@@ -987,13 +1138,13 @@ class TemplateRecordManager extends Model {
 
 	protected function displayForm_0_TillPossibleAdditionalAttribute($labelWidth, $valueWidth, $subFieldName, $dataTypeName, $inputNode, $inputType, $inputId, $inputName, $isRequire, $noLabel = false, $isNoAutofill = false){
 		if(!$noLabel){
-			$this->put('<div class="subLabel" style="'.$labelWidth.'" ><label for="'.$inputId.'" >');
+			$this->put('<div class="subLabel" style="'.trim($labelWidth).'" ><label for="'.$inputId.'" >');
 			if($isRequire) $this->put("* ");
 			$this->put($this->t($dataTypeName."_".$subFieldName));
 			$this->put('</label></div>');
 		}
-		$this->put('<div class="subInput" style="'.$valueWidth.'" >');
-		$this->put('<'.$inputNode.' id="'.$inputId.'" name="'.$inputName.'" ');
+		$this->put('<div class="subInput" style="'.trim($valueWidth).'" >');
+		$this->put('<'.$inputNode.' id="'.$inputId.'" name="'.$inputName.'" style="'.trim($valueWidth).'" ');
 		if($inputType != null) $this->put(' type="'.$inputType.'" ');
 		if($isNoAutofill) $this->put('autocomplete="off"');
 	}
@@ -1496,7 +1647,7 @@ class TemplateRecordManager extends Model {
 	 * int colorCode: 3 = Orange
 	 * int colorCode: 4 = Red
 	 */
-	public function doFormatForProgressBar($value, $colorCode, $doRegroupSimilarValue = false){
+	public function doFormatForProgressBar($value, $colorCode, $doRegroupSimilarValue = false, $isFlatProgressBar = false, $width=200, $height=4){
 		if($value===null) return "";
 		if($value == null) $value = 0;
 		//$value = "<script>display ('element1',$value,$colorCode);</script>";
@@ -1517,8 +1668,27 @@ class TemplateRecordManager extends Model {
     			$colorCode = 1;
     		}
     	}
-		$value = '<img src="'.SITE_ROOT_forFileUrl.'/assets/css/images_progressBar/percentImage.png" alt="'.$value.'%" class="percentImage'.$colorCode.'" style="background-position: '.$actualWidth.'px 0pt;"/> <span>'.$value.'%</span>';
-		return $value;
+    	if($isFlatProgressBar){
+    	    $percentageWidth = ($value / 100)*$width;
+    	    $status = $value. $this->t('p_of_time');
+    	    if($value>=100)
+    	        $status=$this->t('time_complete');
+    	    if($value < 0){
+                $status=$this->t('not_started_yet');
+                $percentageWidth = 0;
+            }
+            if($value == -1){
+    	        $status = $this->t('open_ended');
+                $value = '<p>'. $status. '</p>';
+                $value .= '<div style="width: '.$width.'px; margin: 0; height: '.$height.'px; background: lightgrey; padding: 0;"></div>';
+            }else{
+                $value = '<p>'. $status. '</p>';
+                $value .= '<div style="width: '.$width.'px; margin: 0; height: '.$height.'px; background: #FCDF80; padding: 0;"><div style="background: #C3AC5F; margin: 0; padding: 0; height: '.$height.'px; width: '. $percentageWidth. 'px;">&nbsp;</div></div>';
+            }
+        } else{
+            $value = '<img src="'.SITE_ROOT_forFileUrl.'/assets/css/images_progressBar/percentImage.png" alt="'.$value.'%" class="percentImage'.$colorCode.'" style="background-position: '.$actualWidth.'px 0pt;"/> <span>'.$value.'%</span>';
+        }
+        return $value;
 	}
 	public function formatValueFromFS($fieldSelector, $record, $doRegroupSimilarValue = false, $idsAreNew=false){
 //		if(!$fieldSelector) return;
@@ -1635,7 +1805,7 @@ class TemplateRecordManager extends Model {
 				break;
 			case "Numerics":
 				if($xml["isProgressBar"]=="1" && !$this->isForNotification()){
-					return $this->doFormatForProgressBar($value, $xml["progressBarColor"], $doRegroupSimilarValue);
+					return $this->doFormatForProgressBar($value, $xml["progressBarColor"], $doRegroupSimilarValue, $xml["isFlatProgressBar"], 250, 4);
 				} else {
 					return $this->doFormatForNumeric($value, $xml, $doRegroupSimilarValue);
 				}

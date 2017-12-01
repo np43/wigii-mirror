@@ -56,15 +56,19 @@ abstract class FuncExpVMAbstractFL
 	}
 		
 	/**
-	 * Returns the FuncExpVMServiceProvider to use
+	 *@return FuncExpVMServiceProvider Returns the FuncExpVMServiceProvider to use
 	 */
 	protected function getFuncExpVMServiceProvider() {return $this->getFuncExpVM()->getFuncExpVMServiceProvider();}
 		
 	/**
-	 * Returns the Principal to use
+	 *@return Principal Returns the Principal to use
 	 */
 	protected function getPrincipal() {return $this->getFuncExpVM()->getPrincipal();}
 	
+	/**
+	 *@return ConfigService Returns a contexutal ConfigService instance ready to be used to query the configuration 
+	 */
+	protected function getConfigService() {return $this->getFuncExpVM()->getConfigService();}
 	
 	// Evaluation
 	

@@ -24,13 +24,15 @@
 /*
  * Created on 4 déc. 09
  * by LWR
+ *
+ * Changed on 2.10.2017 by Medair (LMA) - Add min date and max date attribute
  */
 
 $fieldXml = $field->getXml();
 
 //defining width if existant
 if($parentWidth != null){
-	$valueWidth = " width: 100%; max-width:".($parentWidth-35)."px; ";
+	$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";
 }
 
 //defining readOnly or disabled
@@ -44,6 +46,11 @@ $isRequire = 	$fieldXml["require"]=="1" && !$isPublicPrincipal ||
 $isNotExpanded = !$isFilled && $fieldXml["expand"]!="1" && (!$isRequire || $fieldXml["expand"]=="0");
 $inputId = $formId.'_'.$fieldName;
 
+//Define max and min date
+$minDate = (string)$fieldXml["minDate"];
+if(!empty($minDate)) $minDate = $this->evaluateConfigParameter($minDate);
+$maxDate = (string)$fieldXml["maxDate"];
+if(!empty($maxDate)) $maxDate = $this->evaluateConfigParameter($maxDate);
 
 //value
 $subFieldName = "value";
@@ -51,6 +58,9 @@ $inputNode = "input";
 $inputType = "text";
 $inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
 $inputName = $fieldName.'_'.$subFieldName;
+
+$minDateId = $formId.'_'.$minDate.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
+$maxDateId = $formId.'_'.$maxDate.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
 
 $this->put('<'.$inputNode.' id="'.$inputId.'" name="'.$inputName.'" ');
 if($inputType != null) $this->put(' type="'.$inputType.'" ');
@@ -72,10 +82,68 @@ if(!($readonly || $disabled) && $fieldXml["isBirthDate"]!="1") {
 	$this->getExecutionService()->addJsCode("
 $('#".$inputId."')
 .datepicker({ dateFormat: 'dd.mm.yy', changeYear: true, firstDay:1,	constrainInput:false, showOn:'button' })
-.click(function(){ $(this).datepicker('hide'); }).width(".($parentWidth-5-40).").next().css('margin',0).width(34)
+.click(function(){ $(this).datepicker('hide'); }).width(".($parentWidth-50).").next().css('margin',0).width(10)
 ".($isNotExpanded ? ".hide()" : "").";");
 }
+if($minDate) {
+    if (preg_match('^[0-9]{1,2}\.[0-12]{2}\.\d{4}^', $minDate)) {
+        $date = explode('.', $minDate);
+        Dates::fromString($minDate, $d, $m, $y);
 
+        $minDate = $d . '.' . $m . '.' . $y;
+
+        $this->getExecutionService()->addJsCode("
+        var dateFormat = 'd.m.yy';
+        date = $.datepicker.parseDate( dateFormat, '" . $minDate . "' );
+        $('#" . $inputId . "').datepicker('option', 'minDate', date);
+    ");
+
+    } else {
+            $this->getExecutionService()->addJsCode("
+        $('#" . $minDateId . "').on('change', function(){
+            $('#" . $inputId . "').datepicker('option', 'minDate', getDate(this));
+        });
+    ");
+    }
+
+}
+if($maxDate) {
+    if (preg_match('^[0-9]{1,2}\.[0-12]{2}\.\d{4}^', $maxDate)) {
+        $date = explode('.', $maxDate);
+        Dates::fromString($maxDate, $d, $m, $y);
+
+        $maxDate = $d . '.' . $m . '.' . $y;
+
+        $this->getExecutionService()->addJsCode("
+        var dateFormat = 'd.m.yy';
+        date = $.datepicker.parseDate( dateFormat, '" . $maxDate . "' );
+        $('#" . $inputId . "').datepicker('option', 'maxDate', date);
+    ");
+    } else {
+            $this->getExecutionService()->addJsCode("
+    $('#" . $maxDateId . "').on('change', function(){
+        $('#" . $inputId . "').datepicker('option', 'maxDate', getDate(this));
+    });
+    ");
+    }
+}
+
+
+if($minDate || $maxDate){
+    $this->getExecutionService()->addJsCode("
+        var dateFormat = 'dd.mm.yy';
+        function getDate( element ) {
+          var date;
+          try {
+            date = $.datepicker.parseDate( dateFormat, element.value );
+          } catch( error ) {
+            date = null;
+          }
+ 
+          return date;
+        }
+    ");
+}
 
 
 

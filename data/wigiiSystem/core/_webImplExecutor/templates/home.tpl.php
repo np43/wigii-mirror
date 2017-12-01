@@ -229,7 +229,7 @@ if($exec->getIdAnswer()!="workZone"){
 
 	?></div><?
 
-	$exec->addJsCode("resize_homePage(); setListenerToHomePage(); setNavigationBarInHomeState(".$config->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");");
+    $exec->addJsCode("resize_homePage(); setListenerToHomePage('top'); setNavigationBarInHomeStateBsp(".$config->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable")."); ");
 }
 
 

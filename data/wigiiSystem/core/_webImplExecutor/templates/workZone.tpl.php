@@ -39,9 +39,7 @@ switch($exec->getCrtModule()->getModuleName()){
 		break;
 	default:
 		$displayOnlyStructure = ($exec->getCrtAction() == 'display') && ($exec->getCrtParameters(0) == 'workZoneStructure');
-		?><div id="searchBar" class="SB"><?
-			if($exec->getIsUpdating()) $this->includeTemplateSearchBar($p, $exec);
-		?></div><?
+		if($exec->getIsUpdating()) $this->includeTemplateSearchBar($p, $exec);
 
 		?><div id="groupPanel" class="groupPanel BSB"><?
 			if($exec->getIsUpdating() && !$displayOnlyStructure) $this->includeTemplateGroupPanel($p, $exec);

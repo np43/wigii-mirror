@@ -32,7 +32,7 @@ $linkType = Links::linkTypeFromString((string)$fieldXml['linkType']);
 
 //defining width if existant
 if($parentWidth != null){
-	$valueWidth = " width: 100%; max-width:".($parentWidth-5)."px; ";
+	$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";
 }
 
 //defining readOnly or disabled
@@ -71,7 +71,7 @@ $this->put($strValue);
 $subEltModule = ServiceProvider::getModuleAdminService()->getModule($this->getP(), (string)$fieldXml['module'])->getModuleUrl();
 $trashBinPrefix = (string)$this->getConfigService()->getParameter($this->getP(), null, "deletedSubElementsLinkNamePrefix");
 if(!empty($trashBinPrefix) && strpos($field->getFieldName(), $trashBinPrefix)!==0 && $linkType == Links::LINKS_TYPE_SUBITEM &&
-	!$readonly && !$disabled){
+    !$this->isForExternalAccess() && !$readonly && !$disabled){
 	if($this->getRecord()->isNew()){
 		$this->put('<div class="grayFont" style="float: right; margin: 0 4px; padding: 2px 4px">'.$this->t("finishElementBeforeAddingSubItems_prefix").$this->t("#elements".$subEltModule."#").'.</div>');
 	} else {		
@@ -89,7 +89,11 @@ if($fieldXml["fsl"]!=""){
 	$fsl = str2fsl((string)$fieldXml["fsl"]);
 
 	$this->put('</div>'); //close current value div and open a new div full width for preview
-	$this->displayElementPListPreview($this->getP(), $this->getFormRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, (string)$fieldXml["limit"]);
+    if($fieldXml["isBlogView"]=="1") {
+        $this->displayElementPListBlogPreview($this->getP(), $this->getFormRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, (string)$fieldXml["limit"]);
+    } else{
+        $this->displayElementPListPreview($this->getP(), $this->getFormRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, (string)$fieldXml["limit"]);
+    }
 	$this->put('<div>'); //open new div to prevent div open close missmatch
 }
 

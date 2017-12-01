@@ -35,9 +35,9 @@ $fieldXml = $field->getXml();
 //defining width if existant
 if($parentWidth != null){
 	if($fieldXml["flex"]=="1"){
-		$valueWidth = " width: 100%; max-width:".($parentWidth-6)."px; ";  //select we don't need to make it smaller
+		$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";  //select we don't need to make it smaller
 	} else {
-		$valueWidth = " width: 100%; max-width:".($parentWidth-1)."px; ";  //select we don't need to make it smaller
+		$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";  //select we don't need to make it smaller
 	}
 }
 
@@ -68,18 +68,24 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 	if($fieldXml->xpath("attribute[text()='none']")){
 		$allowUnchek = true;
 	}
+    $firstLoop = true;
 	foreach($fieldXml->attribute as $attribute_key => $attribute){
+
 		if($attribute == "none") continue;
 
 		// filters dropdown using prefix filter
 		if($filterDropDown && strpos((string)$attribute, $prefixFilter)!==0) continue;
 		// CWE 09.02.2016: in public: filters disabled options
 		if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
+
+        if(!$firstLoop && !$useMultipleColumn) {
+            $this->put('<br>'); //next line for the next label and radiobutton
+        }
 		
 		//the radioButton is before the text of the option
 		//the width of the checkbox is valueWidth / useMultipleColumn if defined
 		if($useMultipleColumn>0){
-			$this->put('<div style="float:left; width: 100%; max-width:'.(($parentWidth-5)/$useMultipleColumn).'px;" >');
+			$this->put('<div style="float:left; width: 100%; max-width:'.(($parentWidth)/$useMultipleColumn).'px;" >');
 		}
 		$inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.str_replace(" ", "_", (string)$attribute).'_'.($inputType==null?$inputNode:$inputType);
 
@@ -108,18 +114,20 @@ if((string)$fieldXml["useRadioButtons"]=="1" || (string)$fieldXml["useCheckboxes
 			if($fieldXml["displayAsTag"]=="1"){
 				$label = $this->doFormatForTag($label, $fieldXml, $labelDBValue);
 			} else if ((string)$attribute["color"]){
-				$color = $attribute["color"];
+				$color = (string)$attribute["color"];
 				$label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$label.'</span>';
 			}
 			if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
-			else $labelWidth = ($parentWidth-30);									
+			else $labelWidth = ($parentWidth-30);
 			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;width: 100%; max-width:'.$labelWidth.'px;">'.$label.'</div></label>');
 		}
 		if($useMultipleColumn>0){
 			$this->put('</div>');
-		} else {
-			$this->put('<br>'); //next line for the next label and radiobutton
 		}
+
+        if($firstLoop){
+            $firstLoop = false;
+        }
 	}
 
 	if((string)$fieldXml["useCheckboxes"]=="1"){

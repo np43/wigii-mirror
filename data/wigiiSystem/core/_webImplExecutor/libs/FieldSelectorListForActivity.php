@@ -72,6 +72,7 @@ class FieldSelectorListForActivity extends FieldSelectorListArrayWebImpl impleme
 			else if($this->forceValueSubfieldIfnotdefined || $xml["isDefaultGroupByKey"]=="1" || $xml["isDefaultSortingKey"]=="1") $subFieldName = "value";
 			if($subFieldName) $addFieldSelectorSysInfoSubFieldsXml = true;
 			$key = $this->addFieldSelector($f, $subFieldName);
+			$key2 = $this->getFieldSelectorKey($f, null);
 		} else {
 			if($subFieldName) $addFieldSelectorSysInfoSubFieldsXml = true;
 			$key = $this->addFieldSelector($field->getFieldName(), $subFieldName);
@@ -79,10 +80,14 @@ class FieldSelectorListForActivity extends FieldSelectorListArrayWebImpl impleme
 		if($xml["isDefaultSortingKey"]=="1"){
 			$this->setDefaultSortingKey($key);
 			$this->setDefaultSortingAscending(!stripos($xml["defaultSorted"], "desc")!==false);
+			// Medair (CWE) 19.05.2017: also indexes xml without subField value
+			if($subFieldName=='value' && $key2) $this->fieldsXml[$key2] = $xml;
 		}
 		if($xml["isDefaultGroupByKey"]=="1"){
 			$this->setDefaultGroupByKey($key);
 			$this->setDefaultGroupByAscending(!stripos($xml["defaultSorted"], "desc")!==false);
+			// Medair (CWE) 19.05.2017: also indexes xml without subField value
+			if($subFieldName=='value' && $key2) $this->fieldsXml[$key2] = $xml;
 		}
 		if($addFieldSelectorSysInfoSubFieldsXml && $this->addSysInfoFields){
 			$this->addFieldSelectorSysInfoSubFieldsXml($field->getFieldName(), $xml);

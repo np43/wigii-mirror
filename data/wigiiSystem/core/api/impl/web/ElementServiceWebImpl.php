@@ -251,9 +251,9 @@ class ElementServiceWebImpl extends ElementServiceImpl
 				?><div class="value" style="padding-left:0px;clear:both;<?=($totalWidth ? 'width: 100%; max-width:'.$totalWidth.'px;' : '');?>" ><?
 					foreach($paths as $groupId=>$path){
 						if($isNotification){
-							?><div><img src="<?=SITE_ROOT_forFileUrl;?>images/icones/22x22/iconfolder22x22.png" style="vertical-align:middle;margin-right:5px;margin-bottom:5px;" /><a class="H" style="font-weight:normal;" href="<?=$this->getGroupAdminServiceImpl()->getUrlForGroup($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $groupId);?>"><?=implode(" / ", $path);?> /</a></div><?
+							?><div><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/folder-structure-arrow-right.png" style="vertical-align:middle;margin-right:0px;margin-bottom:0px;" /><a class="H" style="font-weight:normal;" href="<?=$this->getGroupAdminServiceImpl()->getUrlForGroup($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $groupId);?>"><?=implode(" / ", $path);?> /</a></div><?
 						} else {
-							?><div><img src="<?=SITE_ROOT_forFileUrl;?>images/icones/22x22/iconfolder22x22.png" style="vertical-align:middle;margin-right:5px;margin-bottom:5px;" /><a class="H" style="font-weight:normal;" href="javascript:clickOnGroupInGroupPanel(<?=$groupId;?>);"><?=implode(" / ", $path);?> /</a></div><?
+							?><div><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/folder-structure-arrow-right.png" style="vertical-align:middle;margin-right:0px;margin-bottom:0px;" /><a class="H" style="font-weight:normal;" href="javascript:clickOnGroupInGroupPanel(<?=$groupId;?>);"><?=implode(" / ", $path);?> /</a></div><?
 						}
 					}
 				?></div><?
@@ -276,7 +276,7 @@ class ElementServiceWebImpl extends ElementServiceImpl
 				?><div class="value" style="padding-left:0px;clear:both;width: 100%; max-width:<?=$totalWidth;?>px;" ><?
 					foreach($paths as $groupId=>$path){
 						if($isNotification){
-							?><div><img src="<?=SITE_ROOT_forFileUrl;?>images/icones/22x22/iconfolder22x22.png" style="vertical-align:middle;margin-right:5px;margin-bottom:5px;" /><a class="H" style="font-weight:normal;" href="<?=$this->getGroupAdminServiceImpl()->getUrlForGroup($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $groupId)?>"><?=implode(" / ", $path);?> /</a></div><?
+							?><div><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/folder-structure-arrow-right.png" style="vertical-align:middle;margin-right:0px;margin-bottom:0px;" /><a class="H" style="font-weight:normal;" href="<?=$this->getGroupAdminServiceImpl()->getUrlForGroup($exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $groupId)?>"><?=implode(" / ", $path);?> /</a></div><?
 						} else {
 							?><div><a class="H" style="font-weight:normal;" href="javascript:clickOnGroupInGroupPanel(<?=$groupId;?>);"><?=implode(" / ", $path);?> /</a></div><?
 						}
@@ -361,7 +361,7 @@ class ElementServiceWebImpl extends ElementServiceImpl
 						$count = 0;
 						foreach($paths as $groupId=>$path){
 							if($count!=0){ ?><tr><td width="<?=$labelWidth;?>"></td><?; }
-							?><td class="group"><img src="<?=SITE_ROOT_forFileUrl;?>images/icones/22x22/iconfolder22x22.png" style="vertical-align:middle;margin-right:5px;margin-bottom:5px;" /><a class="H" style="font-weight:normal;" href="javascript:clickOnGroupInGroupPanel(<?=$groupId;?>);"><?=implode(" / ", $path);?> /</a></td><?
+							?><td class="group"><img src="<?=SITE_ROOT_forFileUrl;?>images/gui/folder-structure-arrow-right.png" style="vertical-align:middle;margin-right:0px;margin-bottom:0px;" /><a class="H" style="font-weight:normal;" href="javascript:clickOnGroupInGroupPanel(<?=$groupId;?>);"><?=implode(" / ", $path);?> /</a></td><?
 							?></tr><?;
 							$count ++;
 						}

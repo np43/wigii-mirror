@@ -49,9 +49,10 @@ if(!$authS->isMainPrincipalMinimal()){
 	$rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
 	if(!$companyColor) $companyColor = "#3E4552";
 	if(!$rCompanyColor) $rCompanyColor = "#fff";
-	?><div id="navigationBar" style="background-color:<?=$companyColor;?>;color:<?=$rCompanyColor;?>;float:left; width:100%;" ><?
-		$this->includeTemplateNavigation($p, $exec);
-	?></div><?
+    ?><?php
+        $this->includeTemplateNavigation($p, $exec);
+    ?><?php
+
 
 	/**
 	 * WorkZone
@@ -79,5 +80,3 @@ $this->includeTemplateFooterBar($p, $exec);
 
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end all.tpl.php"] = microtime(true);
 $this->executionSink()->publishEndOperation("TEMPLATE all.tpl.php");
-
-

@@ -26,6 +26,7 @@
  * Created on 23 juil. 09 by LWR
  * Modified by CWE on November 23rd 2015: added initialization of Wigii JS client and support of Wigii Light Client.
  * Modified by Medair on 22.07.2016 to enable Box integration
+ * Modified by Medair on 14.11.2017 to include Bootstrap components and allow js and CSS custom files in client configuration folder.
  */
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start header.php"] = microtime(true);
 $this->executionSink()->publishStartOperation("TEMPLATE header.php");
@@ -138,15 +139,27 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 if(TechnicalServiceProvider::getBoxServiceFormExecutor()->isBoxEnabled()) {
 ?>
 <script type="text/javascript" src ="https://app.box.com/js/static/select.js"></script>
-<?}?>
+<?}
+?>
+<link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/bootstrap/bootstrap.min.css" type="text/css" media="all" />
+<link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/bootstrap/bootstrap-submenu.min.css" type="text/css" media="all" />
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii_<?=ASSET_REVISION_NUMBER;?>.css" type="text/css" media="all" />
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/theme.css.php" type="text/css" media="all" />
 <?
 if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".css")){
 ?>
-<link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.css" type="text/css" media="all" />
+<link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.css?v=<?=ASSET_REVISION_NUMBER;?>" type="text/css" media="all" />
 <?
 }
+if(file_exists(CLIENT_CONFIG_PATH.CLIENT_NAME.".css")){
+?>
+<style>
+<?php include CLIENT_CONFIG_PATH.CLIENT_NAME.".css";?>
+</style>
+<?
+}// Bootstrap components loader ?>
+<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/js/bootstrap/bootstrap-submenu.min.js"></script>
+<?
 //***
 // IE 7 and less fixes
 //***
@@ -168,6 +181,7 @@ if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".css")){
 <![endif]-->
 </head>
 <body>
+
 <script type="text/javascript" ><?
 //Definition of JS constante
 ?>
@@ -199,13 +213,6 @@ wigii().context.isWorkzoneViewDocked = <?= ($this->isWorkzoneViewDocked()?'true'
 <?
 //Browser detection, at each refresh, the browser and window height is refreshed
 ?>
-/*
-version = parseFloat(jQuery.browser.version.split(".").slice(0,2).join("."));
-if(jQuery.browser.msie) browserName = "msie";
-else if(jQuery.browser.mozilla) browserName = "mozilla";
-else if(jQuery.browser.safari) browserName = "safari";
-else browserName = "other";
-*/
 if (navigator.userAgent.search("MSIE") >= 0) {
 	browserName = "msie";
 	version = parseFloat(navigator.appVersion.split(".").slice(0,2).join("."));
@@ -234,12 +241,17 @@ if($exec->getCrtAction()=="c") {
 </script>
 <?
 if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".js")){
-?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js" ></script><?
+?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script><?
 }
 if(file_exists(CLIENT_WEB_PATH."CKTemplates.js.php")){
 ?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js.php" ></script><?
 } else if(file_exists(CLIENT_WEB_PATH."CKTemplates.js")){
 ?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js" ></script><?
+}
+if(file_exists(CLIENT_CONFIG_PATH.CLIENT_NAME.".js")){
+?><script type="text/javascript">
+<?php include CLIENT_CONFIG_PATH.CLIENT_NAME.".js"; ?>
+</script><?
 }
 flush();
 $companyColor = $configS->getParameter($p, null, "companyColor");
@@ -387,12 +399,17 @@ DIALOG_doYouWantToSave_changePasswordDialog = '<?=$transS->h($p, "doYouWantToSav
 </script>
 <?
 if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".js")){
-?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js" ></script><?
+?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script><?
 }
 if(file_exists(CLIENT_WEB_PATH."CKTemplates.js.php")){
 ?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js.php" ></script><?
 } else if(file_exists(CLIENT_WEB_PATH."CKTemplates.js")){
 ?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js" ></script><?
+}
+if(file_exists(CLIENT_CONFIG_PATH.CLIENT_NAME.".js")){
+?><script type="text/javascript">
+<?php include CLIENT_CONFIG_PATH.CLIENT_NAME.".js"; ?>
+</script><?
 }
 flush();
 $companyColor = $configS->getParameter($p, null, "companyColor");
@@ -403,7 +420,7 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 <div id="busyDiv" class="ui-corner-all" style="background-color:<?=$companyColor;?>;color:<?=$rCompanyColor;?>;border:2px solid <?=$rCompanyColor;?>;font-size:small;padding:2px 13px;position:absolute; top:32px; left:48%; display:none; z-index:999999;"><?=$transS->t($p, "wigiiBusyLoading");?></div>
 <div id="loadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiBusyLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="filteringBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiFilteringLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
-<div id="fileDownloadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "fileDownloading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
+<div id="fileDownloadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:30%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "fileDownloading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="formProgressBar" style="background-color:#fff;position:absolute; top:40%; left:40%; width:20%; display:none; z-index:999999;padding:10px;"></div>
 <div id="savingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiBusySaving");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="help" style="display:none;"></div>

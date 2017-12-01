@@ -578,7 +578,7 @@ function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, tem
 	$(formId+' div.field').mouseleave(function(e){
 		$(this).find(".addinfo").hide();
 	});
-	if(isWorkzoneViewMode()) addScrollWithShadow($(formId).parent().prop("id"));	
+	if(isWorkzoneViewDocked()) addScrollWithShadow($(formId).parent().prop("id"));	
 }
 
 function convertTimestamps(obj){
@@ -1001,7 +1001,7 @@ function setListenerToEmailExternalCode(
 	$(emb).parent().find('input.subject').width(395-$(emb).parent().find('span.subject').width());
 
 	//hide externalaccess view and edit if element is readOnly	
-	if((!isWorkzoneViewMode() && $('#'+elementDialogId+' div.T div.el_edit').length==0) || (isWorkzoneViewMode() && $('#searchBar .middleBox div.T div.el_edit').length==0)){
+	if((!isWorkzoneViewDocked() && $('#'+elementDialogId+' div.T div.el_edit').length==0) || (isWorkzoneViewDocked() && $('#searchBar .middleBox div.T div.el_edit').length==0)){
 		$('.externalAccessMenu input[value="externalAccessMenuViewLink"]').hide().next().hide().next().hide();
 		$('.externalAccessMenu input[value="externalAccessMenuEditLink"]').hide().next().hide().next().hide();
 		$('.externalAccessMenu input[value="externalAccessMenuStop"]').hide().next().hide().next().hide();
@@ -1325,7 +1325,7 @@ function setListenerForAutoSave(formId, submitUrlForAutoSave, labelAutoSaveTrigg
 		$('#'+formId).parents('.ui-dialog').find('button.cancel').hide();
 	}
 	// Re-initializes middle box with toolbar from dialog box.
-	if(isWorkzoneViewMode()){
+	if(isWorkzoneViewDocked()){
 		var middleBox = initMiddleBox();
 		middleBox.append($('#elementDialog .T').addClass('docked').css({'width':''}));
 		$('#searchBar .toolbarBox').hide();

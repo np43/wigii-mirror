@@ -21,11 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 29 June 2011
- * by LWR
+/**
+ * Created on 29 June 2011 by LWR
+ * @deprecated since 4.603 28.11.2017, replaced by navigationBar.bsp
  */
-
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 if(!isset($authS)) $authS = ServiceProvider::getAuthenticationService();
 if(!isset($p)) $p = $authS->getMainPrincipal();
@@ -61,9 +60,18 @@ if($exec->getCrtModule()->isAdminModule()){
 	if($backUserId==null){
 		$backUserId = reset($roleList->getCalculatedRoleIds());
 	}
-	$backUser = $roleList->getUser($backUserId);
+    $backUser = $roleList->getUser($backUserId);
 }
 
+if(!isset($configS)) $configS = $this->getConfigurationContext();
+$companyColor = $configS->getParameter($p, null, "companyColor");
+$rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
+if(!$companyColor) $companyColor = "#3E4552";
+if(!$rCompanyColor) $rCompanyColor = "#fff";
+
+?>
+<div id="navigationBar" style="background-color:<?=$companyColor;?>;color:<?=$rCompanyColor;?>;float:left; width:100%;" >
+<?php
 include(TEMPLATE_PATH . "navigationUserMenu.tpl.php");
 
 //add navigation in different roles
@@ -94,7 +102,7 @@ include(TEMPLATE_PATH . "navigationUserMenu.tpl.php");
 				else echo $customLabel." (".$transS->t($p, $moduleName).")";
 				?></a><?
 			?></li><?
-		}*/
+		}//*/
 		?>
 		<li class="selected"></li>
 		<?
@@ -167,11 +175,5 @@ if($exec->getCrtModule()->isAdminModule()){
 	$exec->addJsCode("setNavigationBarNotInHomeState(".$config->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");");
 }
 $exec->addJsCode("resize_navigateMenu();");
-
-
-
-
-
-
-
-
+?>
+</div>

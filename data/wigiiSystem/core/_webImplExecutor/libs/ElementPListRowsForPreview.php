@@ -185,7 +185,8 @@ class ElementPListRowsForPreview implements ElementPList, DataFlowActivity {
 			$cacheLookup = $this->getExec()->getCurrentCacheLookup($this->getP(), "selectElementDetail", "element/detail/".$elementP->getId());
 			$linkId = 'prev$$'.$this->getElementId()."$$".$this->getLinkName()."$$".$elementP->getId();
 		}
-		$trm->put('<tr href="#'.$cacheLookup.'" class="H" '.($element->isState_dismissed() ? 'style="text-decoration:line-through" ' : '').'id="'.$linkId.'">');
+		$class = ($trm->isForExternalAccess()?'':'class="H"');
+		$trm->put('<tr href="#'.$cacheLookup.'" '.$class.' '.($element->isState_dismissed() ? 'style="text-decoration:line-through" ' : '').'id="'.$linkId.'">');
 		if($this->isDeletedSubElement()){
 			if($element->isState_blocked() || $this->isElementBlocked()) {
 				$trm->put('<td class="disabledBg"><div>'.$trm->doFormatForState('blocked', true).'</div></td>'); //no restore
@@ -195,7 +196,10 @@ class ElementPListRowsForPreview implements ElementPList, DataFlowActivity {
 			}
 			else $trm->put('<td class="restore"><div></div></td>'); //restore
 		} else {						
-			if(!$elementP->getRights()->canWriteElement() || $this->isElementReadonly() || $element->isState_blocked() || $this->isElementBlocked() || $this->getLinkType() == Links::LINKS_TYPE_QUERY) {
+			if(!$elementP->getRights()->canWriteElement() || $this->isElementReadonly() 
+			    || $element->isState_blocked() || $this->isElementBlocked()
+			    || $trm->isForExternalAccess()
+			    || $this->getLinkType() == Links::LINKS_TYPE_QUERY) {
 				$s = '';
 				$s .= $trm->doFormatForState('approved', $element->isState_approved(), false, true);
 				$s .= $trm->doFormatForState('finalized', $element->isState_finalized(), false, true);
@@ -277,18 +281,23 @@ class ElementPListRowsForPreview implements ElementPList, DataFlowActivity {
 
 	public function actOnFinishAddElementP($principal, $total, $number, $pageSize, $width){
 		$trm = $this->getTRM();
-		if(!$trm->isForPrint()) {
+		if(!$trm->isForPrint() && !$trm->isForExternalAccess()) {
 			$refresh = '<img class="H refresh" align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/view-refresh.png"';
 			$refresh .= ' onmouseover="showHelp(this, \''.$trm->h("refresh").'\');" ';
 			$refresh .= ' onmouseout="hideHelp();" ';
 			$refresh .= '/>';
 		}
 		else $refresh = '';
-		//add refresh button and see more if necessary
-		$trm->put('<tr class="loadNextLines"><td colspan="'.(count($this->getFsl()->getListIterator())+($this->isDeletedSubElement() ? 1 : 2)).'">'.(($total>$number) ? '<font class="H grayFont">'.$trm->t("seeMore").'</font>' : '').'<span class="totalItems">'.$total.'</span><span class="pageSize">'.$pageSize.'</span><span class="nbItem">'.$number.'</span>'.$refresh.'</td></tr>');
+		//add refresh button and see more if necessary, hide if external access
+		if($trm->isForExternalAccess()) {
+		    $trm->put('<tr ><td colspan="'.(count($this->getFsl()->getListIterator())+($this->isDeletedSubElement() ? 1 : 2)).'">'.(($total>$number) ? '<font class="grayFont">&nbsp;...</font>' : '').'</td></tr>');
+		}
+		else {
+		    $trm->put('<tr class="loadNextLines"><td colspan="'.(count($this->getFsl()->getListIterator())+($this->isDeletedSubElement() ? 1 : 2)).'">'.(($total>$number) ? '<font class="H grayFont">'.$trm->t("seeMore").'</font>' : '').'<span class="totalItems">'.$total.'</span><span class="pageSize">'.$pageSize.'</span><span class="nbItem">'.$number.'</span>'.$refresh.'</td></tr>');
+		}
 		$trm->put('</table>');
 		
-		$trm->addJsCode("setListenerToPreviewList('".$this->getElementId()."', '".$this->getLinkName()."', '".$this->getPreviewListId()."', '".(isset($this->module) ? $this->module->getModuleUrl(): Module::EMPTY_MODULE_URL)."', $width".", '".Links::linkTypeToString($this->getLinkType())."');");
+		if(!$trm->isForExternalAccess()) $trm->addJsCode("setListenerToPreviewList('".$this->getElementId()."', '".$this->getLinkName()."', '".$this->getPreviewListId()."', '".(isset($this->module) ? $this->module->getModuleUrl(): Module::EMPTY_MODULE_URL)."', $width".", '".Links::linkTypeToString($this->getLinkType())."');");
 	}
 
 	/**

@@ -51,7 +51,10 @@
 
 		reloadDetailAfterModify="0"
 		useGoogleServiceToPreviewOfficeDocuments="0"
-		
+
+		trashBinGroup=""
+		jsCodeAfterShowExp=''
+		jsCodeForListExp=''
 		/>
 
 	<feedbackOnElement>
@@ -59,7 +62,7 @@
 		<fields>
 			<feedback_email type="Emails" require="1" ignoreNotification="1" />
 			<feedback_for type="Attributs" require="1" >
-				<attribute email="admin@wigii.org" checkd="1">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				<attribute email="support@xxx.xx" checkd="1">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
 			</feedback_for>
 			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
 			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
@@ -70,7 +73,7 @@
 		<fields>
 			<feedback_email type="Emails" require="1" ignoreNotification="1" />
 			<feedback_for type="Attributs" require="1" >
-				<attribute checked="1" email="admin@wigii.org">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
 			</feedback_for>
 			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
 			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />

@@ -1,0 +1,192 @@
+/*!
+ *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @author     <http://www.wigii.org/system>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
+ *
+ * 29.05.2017 - Created by Medair (LMA)
+ */
+
+/*
+ * Prevent the scafolding.less from bootstrap
+ */
+body {
+	line-height: normal;
+}
+
+/*
+ * Prevent the box sizing of Bootstrap for the workzone
+ */
+#workZone *{
+	box-sizing: content-box;
+	-webkit-box-sizing: content-box;
+	-moz-box-sizing: content-box;
+}
+
+/*
+ * Display the label with the wigii style instead of the bootstrap style
+ */
+#workZone .label, .ui-dialog .label, #detailElement_form .label, .public .label, #editElement_form .label {
+	display: block;
+	padding-right: 20px;
+	padding-top: 8px;
+	padding-left: 0px;
+	font-size: 13px;
+	font-weight: normal;
+	color: rgb(51, 51, 51);
+	text-align: left;
+	white-space: normal;
+	border: none;
+}
+
+#loginForm .label {
+	display: block;
+	padding-right: 20px;
+	padding-top: 7px;
+	font-size: 13px;
+	font-weight: normal;
+	text-align: left;
+	white-space: normal;
+	color:inherit;
+}
+
+#cronJobs .label {
+	color: #93a4c1;
+	font-weight: normal;
+}
+
+#scrollElement > div.elementHistoric > table{
+	/*max-width: 500px !important;*/
+}
+
+.groupPanel .checkbox {
+	display: inline;
+}
+
+/*
+ * Display of the legend in admin
+ */
+#workZone legend, .ui-dialog legend{
+	display: inline;
+	width: auto;
+	padding: 2px 5px 2px 5px;
+	margin-bottom: auto;
+	font-size: inherit;
+	line-height: inherit;
+	color: #333;
+	border: none;
+	border-bottom: inherit;
+}
+
+#login_form__stayConnected > div.label {
+	margin-left: inherit;
+}
+
+#workZone {
+}
+
+/*
+ * Prevent font-size of title
+ */
+
+.h3, h3 {
+	font-size: 14px;
+	font-weight: bold;
+}
+
+a.username {
+	background-color: #fff;
+	border-radius: 10px;
+	line-height: 10px !important;
+	margin-top: 3px;
+	padding: 6px !important;
+}
+
+a.username:hover {
+	background-color: rgb(119, 119, 119); !important;
+	color: #fff;
+}
+
+nav#navBarBsp {
+	margin-bottom: 0;
+	height: 30px;
+}
+
+div#NMContainerBsp {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+#footerBar {
+	height:18px;
+	box-sizing: content-box;
+}
+
+.collapse {
+	display: block;
+}
+
+.media {
+	overflow: visible;
+}
+
+
+body > div.ui-dialog.ui-corner-all.ui-widget.ui-widget-content.ui-front.ui-draggable > div.sendLinkInput.ui-corner-all.SBB {
+	width: 430px !important;
+}
+
+#moduleView {
+	border-left:none;
+}
+
+span.select2-dropdown {
+	z-index: 9999999;
+}
+
+#validTop > button {
+	margin-top: 20px;
+}
+
+div.blockMsg {
+	z-index: 9999999 !important;
+}
+
+#scrollElement a {
+	text-decoration: underline;
+}
+
+#multipleDialog .SBIB {
+	box-sizing: content-box;
+}
+
+#loginPage input {
+	color: black;
+}
+
+.label #cronJobsStart {
+	font-size: 10pt;
+	display: inline;
+}
+
+label {
+	display: inline;
+}
+
+.navbar-default .navbar-nav>.open>a, .navbar-default .navbar-nav>.open>a:hover, .navbar-default .navbar-nav>.open>a:focus {
+	background-color: unset;
+}

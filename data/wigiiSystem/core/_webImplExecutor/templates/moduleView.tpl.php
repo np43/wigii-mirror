@@ -74,6 +74,17 @@ if($exec->getIdAnswer()!='moduleView' && $exec->getIsUpdating()){ //!$exec->getI
 	if($selectedGroupIds && count($selectedGroupIds)==1) $exec->addJsCode("selectGroupInGroupPanel(".implode(", ", $selectedGroupIds).");");
 	else $exec->addJsCode("unselectGroups('#groupPanel'); resize_elementList();");
 }
+//Move the searchBar in the navigation bar
+$exec->addJsCode(
+	'if($(".toolBar #searchBar").length){
+         var toolBar = null;
+         $("#navToolBar #searchBar").remove();
+        toolBar = $(".toolBar #searchBar").clone(true,true);
+        toolBar.appendTo("#navToolBar");
+        $(".toolBar #searchBar").remove();
+        $("#searchBar").show();
+        $("#navToolBar .toolbarBox").css(\'width\',\'\');
+    }');
 
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end moduleView.tpl.php"] = microtime(true);
 $this->executionSink()->publishEndOperation("TEMPLATE moduleView.tpl.php");

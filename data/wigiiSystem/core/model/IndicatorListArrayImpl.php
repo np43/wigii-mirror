@@ -23,7 +23,7 @@
 
 /**
  * IndicatorList array implementation
- * Updated by LWR on 27 October 2017
+ * Updated by Wigii.org(Lionel Weber) on October 2017 to support system indicators and recursive indicators
  */
 class IndicatorListArrayImpl extends ObjectListArrayImpl implements IndicatorList
 {

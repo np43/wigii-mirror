@@ -19,7 +19,7 @@ div.popupTitle div {
 	color:black;
 }
 div.popupBody div {
-	cursor:normal;
+	cursor:default;
 	float:left;
 	font-weight:normal;
 	font-style:normal;
@@ -32,19 +32,42 @@ div.field div.file div.ui-resizable-handle {
 	padding:0;
 	margin:0;
 }
+#moduleView .list div.headerList div div {
+	cursor:default;
+	float:left;
+	font-weight:normal;
+	font-style:normal;
+	font-size:normal;
+	padding:0;
+	margin:0;
+	color:black;
+	overflow:visible;
+	white-space:normal;
+	border:initial;
+}
+#moduleView .list div.headerList div div.ui-resizable-s {
+    cursor: s-resize;
+    bottom: 0;
+    left: 0;
+}
+#moduleView .list div.headerList div div.ui-resizable-e {
+    cursor: e-resize;
+    right: 0;
+    top: 0;
+}
+#moduleView .list div.headerList div div.ui-resizable-se {
+    cursor: se-resize;
+    bottom: 0;
+}
+#moduleView .list div.headerList div div.ui-resizable-handle {
+    position: absolute;
+    font-size: .1px;
+    display: block;
+}
+
 /**************************************
 * HelpService
 **************************************/
-/*
-div.moduleHelp a.HelpService.helpAnchor {
-	background:url('../../images/icones/22x22/iconhelp22x22.png') no-repeat;
-	margin-left:3px;
-	padding-left:1px;
-	padding-right:1px;
-	padding-bottom:1px;
-	cursor:pointer;
-}
-*/
 a.HelpService.helpAnchor {
 	background:url('../../images/gui/iconhelp16x16.png') no-repeat;
 	margin-left:3px;

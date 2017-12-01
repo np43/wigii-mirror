@@ -67,7 +67,11 @@ if(!$this->isForNotification() && $fieldXml["fsl"]!=""){
 	$fsl = str2fsl((string)$fieldXml["fsl"]);
 
 	$this->put('</div>'); //close current value div and open a new div full width for preview
-	$this->displayElementPListPreview($this->getP(), $this->getDetailRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, (string)$fieldXml["limit"]);
+    if($fieldXml["isBlogView"]=="1"){
+        $this->displayElementPListBlogPreview($this->getP(), $this->getDetailRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, (string)$fieldXml["limit"]);
+    }else {
+        $this->displayElementPListPreview($this->getP(), $this->getDetailRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, (string)$fieldXml["limit"]);
+    }
 	$this->put('<div>'); //open new div to prevent div open close missmatch
 }
 

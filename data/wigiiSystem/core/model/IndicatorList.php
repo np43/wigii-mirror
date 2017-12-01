@@ -24,7 +24,7 @@
 /**
  * A list of indicators
  * Created by LWR on 28 February 2011
- * Updated by LWR on 27 October 2017
+ * Updated by Wigii.org(Lionel Weber) on October 2017 to support system indicators and recursive indicators
  */
 interface IndicatorList extends ObjectList
 {

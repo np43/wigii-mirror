@@ -24,12 +24,12 @@
 /**
  * Wigii CMS module Element evaluator
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016
- * Updated by Lionel Weber on 05.10.2016
+ * Updated by Wigii.org (Lionel Weber) on 05.10.2016
  * Updated by Weber wwigii-system.net for Wigii.org on 15.11.2016
- * Updated by Camille Weber on 15.01.2017 to allow publication of html files through the link elementId.html
- * Updated by Camille Weber on 03.04.2017 to personalize site META information
- * Updated by Camille Weber on 15.06.2017 to manage internal url forwarding
- * Updated by Lionel and Camille Weber on 27.09.2017 to add public comment management
+ * Updated by Wigii.org (Camille Weber) on 15.01.2017 to allow publication of html files through the link elementId.html
+ * Updated by Wigii.org (Camille Weber) on 03.04.2017 to personalize site META information
+ * Updated by Wigii.org (Camille Weber) on 15.06.2017 to manage internal url forwarding
+ * Updated by Wigii.org (Lionel and Camille Weber) on 27.09.2017 to add public comment management
  * Updated by Weber wwigii-system.net for Wigii.org on 29.11.2017 to enforce the support of javascript into the page rendering process.
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
@@ -1571,65 +1571,5 @@ HTMLCSS;
 		// else copies value as-is
 		else $options->setValue($optionName,$value);
 		return $options;
-	}
-	
-	
-	// Func Exp standard candidates
-	
-	/**
-	 * Transforms a given element to a value using a transformation FuncExp<br/>
-	 * FuncExp signature : <code>element2value(element,fx)</code><br/>
-	 * Where arguments are :
-	 * - Arg(0) element: Element|Record. An element or a record to be transformed into a value.
-	 * - Arg(1) fx: FuncExp|FieldSelector. A transformation FuncExp which returns a value based on the element. Or a FieldSelector returning a value of the element.
-	 * @return Any the result of the FuncExp
-	 */
-	public function element2value($args) {
-		$nArgs = $this->getNumberOfArgs($args);
-		$p = $this->getPrincipal();
-		if($nArgs < 2) throw new FuncExpEvalException('element2value takes two arguments, the element to transform and a transformation FuncExp or FieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
-		$element = $this->evaluateArg($args[0]);
-		if(!isset($element)) throw new FuncExpEvalException('element cannot be null', FuncExpEvalException::INVALID_ARGUMENT);
-		$fx = $args[1];
-		if(($fx instanceof FuncExp) && $this->isFxOriginPublic()) $fx->setOriginIsPublic();
-		
-		// gets RecordEvaluator
-		if($element instanceof Element) $evaluatorClassName = (string)ServiceProvider::getConfigService()->getParameter($p, $element->getModule(), "Element_evaluator");
-		else $evaluatorClassName = null;
-		if(empty($evaluatorClassName)) $evaluatorClassName = (string)ServiceProvider::getConfigService()->getParameter($p, ServiceProvider::getExecutionService()->getCrtModule(), "Element_evaluator");
-		$fxEval= ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
-		// injects the context
-		$fxEval->setContext($p, $element);
-		// gets vm
-		$fxEval= ServiceProvider::getFuncExpVM($p, $fxEval);
-		$fxEval->setFreeParentEvaluatorOnFreeMemory(true);
-
-		// evaluates the expression
-		$returnValue = null;
-		try {
-			$returnValue = $fxEval->evaluateFuncExp($fx, $this);
-			$fxEval->freeMemory();
-		}
-		catch(Exception $e) {
-			$fxEval->freeMemory();
-			throw $e;
-		}
-		return $returnValue;
-	}
-	
-	/**
-	 * json_encode. See http://www.php.net/json_encode
-	 */
-	public function json_encode($args) {
-		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs < 1) throw new FuncExpEvalException("json_encode function takes at least one parameter the value to encode", FuncExpEvalException::INVALID_ARGUMENT);
-		$value = $this->evaluateArg($args[0]);
-		if($nArgs>1) $options = $this->evaluateArg($args[1]);
-		else $options=0;
-		if($nArgs>2) $depth = $this->evaluateArg($args[2]);
-		else $depth=512;
-		$returnValue = json_encode($value,$options,$depth);
-		if($returnValue === false) throw new FuncExpEvalException('JSON encode error '.json_last_error().' '.json_last_error_msg(), FuncExpEvalException::INVALID_ARGUMENT);
-		return $returnValue;
-	}
+	}	
 }

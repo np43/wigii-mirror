@@ -305,8 +305,8 @@ function updateThroughCache(id, lookupPath, url, checkAnyOpenItem, informIfFound
 	if (arguments.length<5) informIfFoundInCache = false;
 	if (arguments.length<6) noOpenItemCheck = false;
  
-	if(!isWorkzoneViewMode()){
-		if(!noOpenItemCheck && checkOpenItem(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCache)){	
+	if(!isWorkzoneViewDocked()){
+		if(!noOpenItemCheck && checkOpenItem(id, lookupPath, url, checkAnyOpenItem, informIfFoundInCache)){
 			return;
 		}
 	} else {
@@ -507,7 +507,7 @@ function update(url, noOpenItemCheck, postdata, successCallback){
 	idAnswer = url.split("/")[0];
 
 	if(!noOpenItemCheck){
-		if(isWorkzoneViewMode()){
+		if(isWorkzoneViewDocked()){
 			if(checkOpenWorkzoneViewMode(idAnswer, null, url)){
 				return;
 			}

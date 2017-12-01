@@ -21,11 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 3 déc. 09
- * by LWR
+/**
+ * Created on 3 déc. 09 by LWR
+ * Updated by Wigii.org (Lionel Weber) on 30.11.2017 to manage colors
  */
-
 $value = $this->formatValueFromRecord($fieldName, null, $this->getRecord());
 $xml = $field->getXml();
 $color = $xml->xpath('attribute[@color and (text()="'.$this->getRecord()->getFieldValue($fieldName).'")]');

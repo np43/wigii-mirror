@@ -38,7 +38,7 @@ class ElementPListExportExcelYearCalendar extends ElementPListExportExcel {
 		$elPl->setWigiiExecutor($wigiiExecutor);
 		return $elPl;
 	}
-	
+
 	private $year;
 	public function setYear($year, $fieldName, $isTimeRanges, $endDateFieldName=null){
 		$this->year = $year;

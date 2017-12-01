@@ -47,7 +47,7 @@ $height = 150;
 $this->put('<div id="'.$id.'_tabs" class="multilanguage" style="');
 
 if($parentWidth != null){
-	$this->put(' width: 100%; max-width:'.($parentWidth-5).'px; float:left; ');
+	$this->put(' width: 100%; max-width:'.($parentWidth).'px; float:left; ');
 	if($fieldXml["isInLine"]=="1") $this->put(' clear:left; ');
 
 }
@@ -64,7 +64,7 @@ foreach ($visibleLanguage as $idLang=>$languageLabel){
 	$tab .= "<div class='value' style='width:100%;'><input type='text' id='".$id."_value_".$idLang."_text' name='".$fieldName."_value[".$idLang."]' ";
 	if($disabled) $tab .=' disabled ';
 	if($readonly) $tab .= ' disabled class="removeDisableOnSubmit" ';
-	$tab .=' style="width: 100%; max-width:'.($parentWidth-17).'px; ';
+	$tab .=' style="width: 100%; max-width:'.($parentWidth).'px; ';
 	if($readonly || $disabled) $tab .='color:#a9a9a9; background-color:#E3E3E3;';
 	$tab .='" value="';
 	$tab .= $val[$idLang];

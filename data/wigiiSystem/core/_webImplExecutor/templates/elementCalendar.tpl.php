@@ -21,8 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/***
+/**
+ * Module view template displaying elements in a calendar
  * Created by LWR, on 7 October 2011
+ * Refactored by Medair (CWE) on 28.09.2017 to componentize sort by and group by menus management.
  */
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start elementCalendar.tpl.php"] = microtime(true);
 $this->executionSink()->publishStartOperation("TEMPLATE elementCalendar.tpl.php");
@@ -33,6 +35,9 @@ if(!isset($elS)) $elS = ServiceProvider::getElementService();
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 if(!isset($configS)) $configS= $this->getConfigurationContext();
+
+$companyColor = $configS->getParameter($p, null, "companyColor");
+$rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
 
 $lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 //hide the importElement and addNewELement icon if the group is not writable:
@@ -49,15 +54,14 @@ $exec->addJsCode("calendarIsEditable = ".strtolower(put($crtGroupIsWritable)).";
 $crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 $crtModule = $exec->getCrtModule()->getModuleUrl();
 
-//Hide searchbox when parameters is equal to
+//Hide searchbox when parameters is equal to 1
 if($configS->getParameter($p, $exec->getCrtModule(), "hide_searchBar") == "1"){
 	$exec->addJsCode("$('#searchBar > .firstBox, #searchBar > .toolbarBox').hide();");
+    $exec->addJsCode("$('nav #searchField').hide();");
 } else {
 	$exec->addJsCode("$('#searchBar > .firstBox, #searchBar > .toolbarBox').show();");
+    $exec->addJsCode("$('nav #searchField').show();");
 }
-
-//add toolbar
-
 
 //we need to fetch the group details
 if($crtGroupP) $crtGroupP = $groupAS->getGroup($p, $crtGroupP->getId());
@@ -67,70 +71,49 @@ if($crtGroupP) $crtGroupP = $groupAS->getGroup($p, $crtGroupP->getId());
  * if a portal is set on the group, then display the content of the website
  */
 $url = null;
-if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1"){
-	if($crtGroupP){
-		if($crtGroupP->getDbEntity()->getDetail()!=null){ //if detail = null, then do nothing
-
-			$portalRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupPortal"), $exec->getCrtModule());
-			$portalRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getDbEntity()->getDetail()->getPortal(), $portalRec->getActivity());
-			$url = $portalRec->getFieldValue("url", "url");
-			// evaluates any given FuncExp 
-			$url = $this->evaluateConfigParameter($p,$exec,$url);
-			if(!empty($url)){
-				$cooKieName = $portalRec->getFieldValue("groupPortalCookieName");
-				if($portalRec->getFieldValue("groupPortalCookieIncludeRoles")){
-					$roleList = $p->getRoleListener()->getRolesPerWigiiNamespaceModule($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl(), $exec->getCrtModule()->getModuleUrl());
-					if($roleList) $roleList = implode(";", $roleList);
-				} else $roleList = null;
-				if($cooKieName){
-					$result = getExternalCookieConnectionValue($portalRec->getFieldValue("groupPortalCookieSeparator"), $p->getRealUsername(), $portalRec->getFieldValue("groupPortalCookieCustomParameter"), $portalRec->getFieldValue("groupPortalCookieExpiration"), $roleList, $portalRec->getFieldValue("groupPortalCookieEncrypt"), $portalRec->getFieldValue("groupPortalCookieRotationKey"));
-					$exec->addJsCode("$.cookie('".$cooKieName."', '".$result."', { path: '/', domain: '".$portalRec->getFieldValue("groupPortalCookieDomain")."', secure: ".strtolower(put(HTTPS_ON))." }); ");
-				}
-				?><div class="portal" style="overflow:hidden; "><?
-					if(!preg_match('#^(((ht|f)tp(s?))\://)#i', $url)) $url = "http://".$url;
-					?><a class="media {type:'html'}" href="<?=$url;?>" ></a><?
-				?></div><?
-				$exec->addJsCode("$('#moduleView .portal a.media').media();");
-			}
-		} //end if detail != null
-	}
+if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1" && $crtGroupP){    
+    $url = $this->includeGroupPortal($crtGroupP, $p, $exec, $transS, $configS);
 }
 
-if(!$url){ //display list only if no url
+/**
+ * Calendar View zone
+ */
+if(!$url){ //displays list only if no url
 
-?><div class="toolBar"><?
-
-	//reload if search bar is reloaded
-	$lastConfigKey = $sessAS->getData($this, "elementListLastConfigKey");
-	$currentConfigKey = $this->getCurrentConfigContextKey($p, $exec);
-	$sessAS->storeData($this, "elementListLastConfigKey", $currentConfigKey);
+    $lastConfigKey = $sessAS->getData($this, "elementListLastConfigKey");
+    $currentConfigKey = $this->getCurrentConfigContextKey($p, $exec);
+    $sessAS->storeData($this, "elementListLastConfigKey", $currentConfigKey);
+    $configChanged = ($lastConfigKey!=$currentConfigKey);
+    
+?><div class="toolBar SB">
+    <div id="indicators" style="float: left;"><?
+        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start indicator"] = microtime(true);
+        $this->debugLogger()->write("start indicator");
+        $this->includeTemplateIndicators($p, $exec);
+        ?></div>
+    <div id="searchBar" style="display:none"><?
+    include("moduleToolsBar.bsp.php");?>
+	</div><?
+	//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar"] = microtime(true);
+	$this->executionSink()->log("start searchBar toolbar");
 
 	//no sortBy or groupBy for this view
-	$exec->addJsCode("$('#searchBar .toolbarBox .sortBy, #searchBar .toolbarBox .groupBy').hide();");
+	$exec->addJsCode("$('#searchBar .toolbarBox .sortBy, #searchBar .toolbarBox .groupBy').remove();");
 
 	//switchView
-	$moduleTemplates = $lc->getAvailableTemplates($p, $exec->getCrtModule(), $configS);
-    if(count($moduleTemplates)>1){
-    	$first = true;
-    	foreach($lc->getAvailableTemplates($p, $exec->getCrtModule(), $configS) as $moduleView=>$moduleTemplate){
-			if($lc->getCrtView() == $moduleView) continue;
-			if($first){
-				$exec->addJsCode("$('#searchBar .toolbarBox .switchView').removeClass('disabledR').html('".$transS->h($p, $moduleView."View")."').unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); }).show();");
-				$first = false;
-			} else {
-				$exec->addJsCode("$('#searchBar .toolbarBox .switchView:first').clone().html('".$transS->h($p, $moduleView."View")."').unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); }).insertAfter($('#searchBar .toolbarBox .switchView:first'));");
-			}
-	    }
-    } else {
-		$exec->addJsCode("$('#searchBar .toolbarBox .switchView').addClass('disabledR').unbind('click').hide();");
-    }
+	$this->includeSwitchViewButton($lc, $p, $exec, $transS, $configS);
 
 	//Export menu, does this view include export activities?
 	$this->includeExportMenu($p, $exec, $transS, $configS);
 
 	//Emailing
 	if($this->canCrtModuleEmailing($exec->getCrtModule())){
-		$exec->addJsCode("if($('#searchBar .toolbarBox .emailing').length==0){ $('#searchBar .toolbarBox').append('<div class=\"emailing L H\">".$transS->h($p, "emailingButton")."</div>').find('.emailing').click(function(){ update('emailingDialog/$crtWigiiNamespace/$crtModule/Emailing'); }); }");
+		$exec->addJsCode("$(document).ready(function(){
+                            if($('#searchBar .toolbarBox .emailing').length==0){ 
+                                $('#searchBar .toolbarBox').append('<div class=\"emailing L H\" style=\"color:$rCompanyColor \">".$transS->h($p, "emailingButton")."</div>').find('.emailing').click(function(){ update('emailingDialog/$crtWigiiNamespace/$crtModule/Emailing'); });
+                            }
+                        });
+                        ");
 	}
 
 	//Show in Outlook
@@ -186,22 +169,14 @@ if(!$url){ //display list only if no url
 	}
 
 	//add element
-	if($crtGroupIsWritable){
-		$exec->addJsCode("$('#searchBar .toolbarBox .addNewElement').addClass('Green').removeClass('disabledBg').unbind('click').click(function(){ ".$exec->getUpdateJsCode($p->getRealUserId(), "'+crtRoleId+'", "'+crtWigiiNamespaceUrl+'", "'+crtModuleName+'", 'elementDialog', 'addElement', "element/add/".$crtGroupP->getId())." }).find('font').addClass('H');");
-	} else {
-		$exec->addJsCode("$('#searchBar .toolbarBox .addNewElement').removeClass('Green').addClass('disabledBg').unbind('click').find('font').removeClass('H');");
-	}
+	$this->includeAddElementButton($crtGroupP, $p, $exec, $transS, $configS);
 	
 	//refreshes module help icon if config changed
-	if($lastConfigKey!=$currentConfigKey) $this->refreshModuleHelpAnchor($p,$exec);
-	$this->bindJsServicesOnModuleView($p,$exec);
+	$this->refreshModuleHelpAnchor($p,$exec);
 
 ?></div></div><?
 ?><div class="clear"></div><?
 /** INDICATORS */
-?><div id="indicators"><?
-	$this->includeTemplateIndicators($p, $exec);
-?></div><?
 ?><div class="clear"></div><?
 
 
@@ -230,54 +205,13 @@ $exec->addJsCode("$crtDate setListenersToCalendar('".($crtGroupP ? ($crtGroupP->
 	//echo $table;
 ?></div><?
 
-//height is done in resize_elementList()
-
-//no preview or context menu for calendar view
+$this->bindJsServicesOnModuleView($p,$exec);
 
 /**
  * Cover page zone
  */
-if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1"){
-	if($crtGroupP){
-		//we need to fetch the group details
-		//already done in the portal part
-		$groupPortalAction = $configS->getParameter($p, $exec->getCrtModule(), "Group_portalAction");
-		if(!empty($groupPortalAction)) {
-			// evaluates any FuncExp given as a groupPortalAction
-			$groupPortalAction = $this->evaluateConfigParameter($p,$exec,$groupPortalAction);
-			?><div id="groupPortalAction" class="portal" style="overflow:hidden; display:none; padding-left:10px; padding-right:10px;"><?
-				if($configS->getParameter($p, $exec->getCrtModule(), "Group_portalActionRefreshOnMultipleChange") != "1"){					
-					$groupPortalAction =  'groupPortalAction/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/".$groupPortalAction."/".$crtGroupP->getId();
-					$exec->addJsCode("update('".$groupPortalAction."');");					
-				}
-			//calcul de la hauteur plus redimensionnement
-			?></div><?
-		} else if($crtGroupP->getDbEntity()->getDetail()!=null){ //if detail = null, then do nothing
-			$htmlContentRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupHtmlContent"), $exec->getCrtModule());
-			$htmlContentRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getDbEntity()->getDetail()->getHtmlContent(), $htmlContentRec->getActivity());
-			$trmHtmlContent = $this->createTRM($htmlContentRec);
-			$htmlContent = $trmHtmlContent->doFormatForHtmlText($htmlContentRec->getFieldValue("text"));
-
-			if($htmlContent != null){
-				?><div class="portal" style="overflow:hidden; display:none; padding-left:10px; padding-right:10px;"><?
-					echo $htmlContent;
-				//calcul de la hauteur plus redimensionnement
-				?></div><?
-			}
-		}
-		if($htmlContent != null || !empty($groupPortalAction)){
-			$exec->addJsCode("" .
-					"coverPage_toggleList_titleList = '".$transS->h($p, "viewElementsInPortal")."';" .
-					"coverPage_toggleList_titleWebsite = '".$transS->h($p, "viewPortalContent")."';" .
-					"coverPage_toggleList();" .
-					"if($('#searchBar .firstBox #removeFiltersButton.R').length==1) coverPage_toggleList();" .
-					"hrefWithSiteroot2js('moduleView>div.portal', 'elmentDialog');" .
-					"");
-		} else {
-			//remove and hide any previous cover page settings
-			$exec->addJsCode("removeCoverPageItems();");
-		} //end if detail != null
-	}
+if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1" && $crtGroupP){
+    $this->includeCoverPage($crtGroupP, $p, $exec, $transS, $configS);
 }
 
 } //display list only if no url

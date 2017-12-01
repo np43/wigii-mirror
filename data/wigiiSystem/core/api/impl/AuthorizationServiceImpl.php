@@ -26,6 +26,7 @@
  * Created by CWE on 9 août 09
  * Modified by CWE on 23.09.2014 to add stamping support.
  * Modified by Medair (CWE) on 28.04.2017 to activate stamping on standard DataFlow sources
+ * Modified by Medair (CWE) on 01.09.2017 to enable root principal and public principal to persist sub groups.
  */
 class AuthorizationServiceImpl implements AuthorizationService
 {
@@ -129,7 +130,8 @@ class AuthorizationServiceImpl implements AuthorizationService
 		$rootPrincipal = Principal::createInstanceFromArray(array(
 			"username"=>'AUTZSIRP',
 			"wigiiNamespace"=>$wigiiNamespace,
-			"moduleAccess"=>$moduleAccess
+		    "moduleAccess"=>$moduleAccess,
+		    "groupCreator"=>$moduleAccess
 		));
 		return $rootPrincipal;
 	}
@@ -163,7 +165,8 @@ class AuthorizationServiceImpl implements AuthorizationService
 		$publicPrincipal = Principal::createInstanceFromArray(array(
 			"username"=>'AUTZSIPP',
 			"wigiiNamespace"=>$wigiiNamespace,
-			"moduleAccess"=>$moduleAccess
+		    "moduleAccess"=>$moduleAccess,
+		    "groupCreator"=>$moduleAccess
 		));
 		return $publicPrincipal;
 	}
@@ -266,9 +269,11 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "getAllGroups":
 					case "getSelectedGroups":
 						if($this->isPublicPrincipal($principal)){
-							return PrincipalRights::createInstance(array("canWriteElement"=>true, "canShareElement"=>true));
+						    // 01.09.2017 Medair(CWE) : public principal gains admin rights on group
+							return PrincipalRights::createInstance(array("canWriteElement"=>true, "canShareElement"=>true, "canModify"=>true));
 						} else if($this->isRootPrincipal($principal)){
-							return PrincipalRights::createInstance(array("canWriteElement"=>true, "canShareElement"=>true));
+						    // 01.09.2017 Medair(CWE) : root principal gains admin rights on group
+						    return PrincipalRights::createInstance(array("canWriteElement"=>true, "canShareElement"=>true, "canModify"=>true));
 						} else {
 							$this->assertPrincipalHasAttachedUser($principal);
 						}
@@ -299,6 +304,12 @@ class AuthorizationServiceImpl implements AuthorizationService
 							return null; /* principal gets no special rights */
 						}
 					case "persistGroup":
+					    // 01.09.2017 Medair(CWE) public principal and root principal are authorized to persist groups
+					    if(!$this->isPublicPrincipal($principal) && !$this->isRootPrincipal($principal)) {
+					        $this->assertPrincipalHasAttachedUser($principal);
+					        $this->assertPrincipalHasAdminAccess($principal);					        
+					    }
+					    return null; /* principal gets no special rights */
 					case "deleteGroup":
 					case "setUserRight":
 					case "removeUser":
@@ -386,7 +397,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "getModuleFromSelectedElements":
 					case "getModuleFromSelectedGroups":
 					case "getModulesFromSelectedGroups":
-						$this->assertPrincipalIsRootOrHasAttachedUser($principal);
+					    $this->assertPrincipalIsRootOrIsPublicOrHasAttachedUser($principal);
 						return null; /* principal gets no special rights */
 				}
 				break;
