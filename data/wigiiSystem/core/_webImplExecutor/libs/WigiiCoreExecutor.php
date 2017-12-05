@@ -11426,6 +11426,8 @@ onUpdateErrorCounter = 0;
 					$this->clearDico();
 					$userAS->calculateAllMergedRoles($p);
 					$this->storeAdminAndCalculatedRoleIdsInSession($p);
+					// CWE 05.12.2017: once out of Admin, clears lastModule to not clear again everything next time.
+					$p->cleanKeysInRoleContext('lastModule');
 				}
 				
 				// Notifies the navigate event.
@@ -11593,6 +11595,9 @@ onUpdateErrorCounter = 0;
                 if($currentModuleLabel == "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl()) $currentModuleLabel = $transS->t($p, $lastModule->getModuleUrl());
 
 				$defaultWigiiNamespaceUrl = (string) $configS->getParameter($p, null, "defaultWigiiNamespace");
+				if(!$defaultWigiiNamespaceUrl){
+					$defaultWigiiNamespaceUrl = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+				}
                 $exec->addJsCode("
 closeStandardsDialogs();
 crtModuleLabel = '" . $currentModuleLabel . "';

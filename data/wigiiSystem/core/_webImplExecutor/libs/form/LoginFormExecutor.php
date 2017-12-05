@@ -209,8 +209,8 @@ class LoginFormExecutor extends FormExecutor {
 				"$('#login_form_username_value_text').keydown(function(e){ if (e.keyCode == '9') { $('#login_form_password_value_password').focus().select(); e.preventDefault(); }});" .
 				"$('#login_form_password_value_password').keydown(function(e){ if (e.keyCode == '9' && e.shiftKey) { $('#login_form_username_value_text').focus().select(); e.preventDefault(); }});" .
 				"");
-			//rearrange
-			if($_POST["action"]==null && !$authS->isPublicAccessEnabledForClient($p->getWigiiNamespace()->getClient()->getClientName())){ //don't rearrange on error
+			//rearrange			
+			if(!$authS->isPublicAccessEnabledForClient($p->getWigiiNamespace()->getClient()->getClientName())){
 				$exec->addJsCode("" .
 					"$('#loginForm #login_form__username').after($('#loginForm #login_form__stayConnected'));" .
 					"$('#login_form__stayConnected .value').width(15).after($('#login_form__stayConnected .label'));" .
@@ -222,16 +222,15 @@ class LoginFormExecutor extends FormExecutor {
                     "$('#login_form__password').css('width', '". $this->getTotalWidth(). "');".
                     "$('#login_form__password').css('max-width', '');".
                     "$('#login_form__stayConnected').css('width', '". ($this->getTotalWidth()-290). "');".
-                    "$('#login_form__stayConnected').css('max-width', '');".
-					"");
-			} else {
+                    "$('#login_form__stayConnected').css('max-width', '');".					
+					"");				
+			}			
+			if($_POST["action"]!=null) {
 				$exec->addJsCode("" .
-					"$('#loginForm').width('100%');" .
-					"$('#login_form').css('max-width', '".$this->getTotalWidth()."');" .
-					//CWE 03.02.2016: keep errors in red instead of rCompanyColor "$('#loginForm .label, #loginForm a, #loginForm .fieldError').css('color', '$rCompanyColor');" .
-					"$('#loginForm .label, #loginForm a').css('color', '$rCompanyColor');" .
-					"$('#loginForm .fieldError').css('font-weight','bold').css('color','$rCompanyColor').css('border-width','2px').css('border-bottom-style','solid').css('border-color', 'red');" .
-					"");
+				//CWE 03.02.2016: keep errors in red instead of rCompanyColor "$('#loginForm .label, #loginForm a, #loginForm .fieldError').css('color', '$rCompanyColor');" .
+				"$('#loginForm .label, #loginForm a').css('color', '$rCompanyColor');" .
+				"$('#loginForm .fieldError').css('font-weight','bold').css('color','$rCompanyColor').css('border-width','2px').css('border-bottom-style','solid').css('border-color', 'red');" .
+				"");
 			}
 
 			//allow both way to write hideIntroductionTextAndGlobalEmailonLoginPage and hideIntroductionTextAndGlobalEmailOnLoginPage
