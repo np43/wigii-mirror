@@ -23,7 +23,7 @@
 
 /**
  * Created on 29 June 2011 by LWR
- * @deprecated since 4.603 28.11.2017, replaced by navigationBar.bsp
+ * @deprecated since 4.602 28.11.2017, replaced by navigationBar.bsp
  */
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 if(!isset($authS)) $authS = ServiceProvider::getAuthenticationService();

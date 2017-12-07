@@ -23,7 +23,7 @@
 
 /**
  * Created on 21 July 2011 by LWR
- * @deprecated since 4.603 28.11.2017, merged into navigationBar.bsp
+ * @deprecated since 4.602 28.11.2017, merged into navigationBar.bsp
  */
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 if(!isset($sessAS)) $sessAS = ServiceProvider::getSessionAdminService();

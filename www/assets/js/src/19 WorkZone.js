@@ -2401,7 +2401,7 @@ function setListenerToNavigateMenu(){
 			}, 400);
 		}
 	});
-	/* deprecated since 4.603 28.11.2017
+	/* deprecated since 4.602 28.11.2017
 	$('#navigationBar .navL').click(function(e){
 		if($(this).hasClass('D')) return;
 		$('#navigateMenu').stop(true, true).animate({ marginLeft: "+=200" }, 200, enableDisableNavScroll);
@@ -2557,7 +2557,7 @@ function timeToScrollBack(){
 	}
 }
 /**
- * @deprecated since v.4.603 28.11.2017, replaced by setNavigationBarInHomeStateBsp
+ * @deprecated since v.4.602 28.11.2017, replaced by setNavigationBarInHomeStateBsp
  */
 function setNavigationBarInHomeState(displayFeedbackOnSystem){
 	if(arguments.length==0){ displayFeedbackOnSystem = false; }
@@ -2607,7 +2607,7 @@ function setNavigationBarInHomeStateBsp(displayFeedbackOnSystem){
     resize_navigateMenu();
 }
 /**
- * @deprecated since v.4.603 28.11.2017, replaced by setNavigationBarNotInHomeStateBsp
+ * @deprecated since v.4.602 28.11.2017, replaced by setNavigationBarNotInHomeStateBsp
  */
 function setNavigationBarNotInHomeState(displayFeedbackOnSystem){
 	$('#navigationBar .admin').hide();
@@ -2678,7 +2678,7 @@ function setNavigationBarNotInHomeStateBsp(displayFeedbackOnSystem){
 	resize_navigateMenu();
 }
 /**
- * @deprecated since v.4.603 28.11.2017, replaced by setNavigationBarInAdminState
+ * @deprecated since v.4.602 28.11.2017, replaced by setNavigationBarInAdminState
  */
 function setNavigationBarInAdminState(){
 	$('#navigationBar .homeOnly').hide();
@@ -2714,7 +2714,7 @@ function setNavigationBarInAdminStateBsp(){
 	}
 }
 /**
- * @deprecated since v.4.603 28.11.2017
+ * @deprecated since v.4.602 28.11.2017
  */
 function refreshNavigateMenu(){
 	$('#navigateMenu .selected')
@@ -3113,7 +3113,7 @@ function setListenersToFiltersBsp(){
     });
 }
 /**
- * @deprecated since v.4.603 28.11.2017
+ * @deprecated since v.4.602 28.11.2017
  */
 function setListenersToFilters(){
 	$('#workZone #searchBar input:first').change(function(){

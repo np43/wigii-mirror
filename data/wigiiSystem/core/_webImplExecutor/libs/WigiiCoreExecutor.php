@@ -8084,9 +8084,15 @@ onUpdateErrorCounter = 0;
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($groupAS)) $groupAS = ServiceProvider :: getGroupAdminService();
+				if (!isset ($configS)) $configS = $this->getConfigurationContext();
+
+				// Medair (CWE) 05.12.2017 rejects CSV import if CSVImport_enableExp = 0
+				if($this->evaluateConfigParameter($p,$exec,(string)$configS->getParameter($p, $exec->getCrtModule(), 'CSVImport_enableExp')) === '0')
+				    throw new AuthorizationServiceException("CSV Import is not allowed", AuthorizationServiceException::UNAUTHORIZED);
+				    
 				$totalWidth = 450;
 				$labelWidth = 200;
-
+				    
 				//the dialog box parameters is independant of the module
 				$importToRec = $this->createActivityRecordForForm($p, Activity :: createInstance("importElementIn"), null);
 
@@ -8126,6 +8132,11 @@ onUpdateErrorCounter = 0;
 				if (!isset ($groupAS)) $groupAS = ServiceProvider :: getGroupAdminService();
 				if (!isset ($configS)) $configS = $this->getConfigurationContext();
 				if (!isset ($transS)) $transS = ServiceProvider :: getTranslationService();
+
+				// Medair (CWE) 05.12.2017 rejects CSV update if CSVUpdate_enableExp = 0
+				if($this->evaluateConfigParameter($p,$exec,(string)$configS->getParameter($p, $exec->getCrtModule(), 'CSVUpdate_enableExp')) === '0')
+				    throw new AuthorizationServiceException("CSV Update is not allowed", AuthorizationServiceException::UNAUTHORIZED);
+				    
 				$totalWidth = 450;
 				$labelWidth = 200;
 
@@ -11572,7 +11583,7 @@ onUpdateErrorCounter = 0;
 				else {
 					// Enters Admin console
 					if ($lastModule->isAdminModule()) {
-						// since 4.603 28.11.2017 the navigation bar doesn't need to be refreshed. it is loaded once at the beginning.
+						// since 4.602 28.11.2017 the navigation bar doesn't need to be refreshed. it is loaded once at the beginning.
 						// $exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
 						
 						// loads admin console
@@ -11580,7 +11591,7 @@ onUpdateErrorCounter = 0;
 					} 
 					// Navigates through User modules and namespaces or goes out of Admin 
 					else {
-					    // since 4.603 28.11.2017 the navigation bar doesn't need to be refreshed. it is loaded once at the beginning.
+					    // since 4.602 28.11.2017 the navigation bar doesn't need to be refreshed. it is loaded once at the beginning.
 					    // if($fromModule == null || $fromModule == Module :: ADMIN_MODULE) $exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
 						
 						//load the workZone. This include:
@@ -11594,9 +11605,9 @@ onUpdateErrorCounter = 0;
                 $currentModuleLabel = $transS->t($p, "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl());
                 if($currentModuleLabel == "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl()) $currentModuleLabel = $transS->t($p, $lastModule->getModuleUrl());
 
-				$defaultWigiiNamespaceUrl = (string) $configS->getParameter($p, null, "defaultWigiiNamespace");
+				$defaultWigiiNamespaceUrl = (string) $configS->getParameter($p, null, "defaultWigiiNamespace");				
 				if(!$defaultWigiiNamespaceUrl){
-					$defaultWigiiNamespaceUrl = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+				    $defaultWigiiNamespaceUrl = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
 				}
                 $exec->addJsCode("
 closeStandardsDialogs();
@@ -11691,7 +11702,7 @@ $additionalJsCode
 						$this->includeTemplateIndicators($p, $exec);
 						break;
 					case "navigationBar" :
-					    // since 4.603 28.11.2017 the navigation bar doesn't need to be repainted. It is constructed once at the beginning.
+					    // since 4.602 28.11.2017 the navigation bar doesn't need to be repainted. It is constructed once at the beginning.
 						//$this->includeTemplateNavigation($p, $exec);
 						break;
 					case "adminNavigationBar" :

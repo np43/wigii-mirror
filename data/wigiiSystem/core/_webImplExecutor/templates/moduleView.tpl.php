@@ -73,6 +73,24 @@ if($exec->getIdAnswer()!='moduleView' && $exec->getIsUpdating()){ //!$exec->getI
 	//if more than one, then we don't select groups, because we are not diplaying the content
 	if($selectedGroupIds && count($selectedGroupIds)==1) $exec->addJsCode("selectGroupInGroupPanel(".implode(", ", $selectedGroupIds).");");
 	else $exec->addJsCode("unselectGroups('#groupPanel'); resize_elementList();");
+	
+	// Medair (CWE) 05.12.2017 manage config parameters CSVImport_enableExp or CSVUpdate_enableExp to enable or disable CSV import or update menus
+	$enableCSVMenu = (string)$configS->getParameter($p, $exec->getCrtModule(), 'CSVImport_enableExp');
+	$enableCSVMenu = $this->evaluateConfigParameter($p,$exec,$enableCSVMenu);
+	if($enableCSVMenu !== '0') {
+	    $exec->addJsCode('$("#userMenuImport").removeClass("disabled").find("> a").css("pointer-events","")');
+	}
+	else {
+	    $exec->addJsCode('$("#userMenuImport").addClass("disabled").find("> a").css("pointer-events","none")');
+	}
+	$enableCSVMenu = (string)$configS->getParameter($p, $exec->getCrtModule(), 'CSVUpdate_enableExp');
+	$enableCSVMenu = $this->evaluateConfigParameter($p,$exec,$enableCSVMenu);
+	if($enableCSVMenu !== '0') {
+	    $exec->addJsCode('$("#userMenuUpdate").removeClass("disabled").find("> a").css("pointer-events","")');
+	}
+	else {	    
+	    $exec->addJsCode('$("#userMenuUpdate").addClass("disabled").find("> a").css("pointer-events","none")');
+	}
 }
 //Move the searchBar in the navigation bar
 $exec->addJsCode(

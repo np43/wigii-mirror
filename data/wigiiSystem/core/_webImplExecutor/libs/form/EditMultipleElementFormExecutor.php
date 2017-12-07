@@ -435,6 +435,11 @@ class EditMultipleElementFormExecutor extends EditElementFormExecutor implements
 			if($isKey && $field->getFieldName() == $isKey->getName()){
 				$element->getWigiiBag()->setHidden(true, $field->getFieldName());
 			}
+			// Medair (CWE) 04.12.2017: disables multiple edition of fields having notInMultipleEdit=1
+			$fieldXml = $field->getXml();
+			if($fieldXml['notInMultipleEdit'] == '1') {
+			    $element->getWigiiBag()->setHidden(true, $field->getFieldName());
+			}
 		}
 
 		$this->getTrm()->displayRemainingForms();

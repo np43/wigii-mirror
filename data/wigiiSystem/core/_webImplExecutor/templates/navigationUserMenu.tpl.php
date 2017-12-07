@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 8 July 2011
- * by LWR
+/**
+ * Created on 8 July 2011 by LWR
+ * @deprecated since 4.602 28.11.2017, replaced by navigationBar.bsp
  */
 
 //DEPENDENCIES
