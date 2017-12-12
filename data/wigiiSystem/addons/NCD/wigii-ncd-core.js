@@ -1,4 +1,4 @@
-/**
+/*!
  *  This file is part of Wigii.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  
@@ -1437,6 +1437,28 @@
 				return self;
 			};
 			
+			// Mutation
+			
+			/**
+			 * Adds an item at the end of the list
+			 *@param Any item a piece of data of same nature as the other ones in the list and that can be rendered using the itemRenderer function
+			 *@return wncd.UnorderedList for chaining
+			 */
+			self.add = function(item) {
+				var n = self.size();
+				// if exists, then stores and renders it
+				if(item!==undefined) {
+					var htmlB = self.$().wncd('html').htmlBuilder();
+					self.context.items.push(item);
+					n++;
+					self.impl.buildLi(n,item,htmlB);
+					htmlB.emit();
+					// binds click event
+					self.$().find('> li:nth-child('+n+')').click(self.impl.onLiClick);
+				}
+				return self;
+			};
+			
 			// Iteration
 			
 			/**
@@ -1572,11 +1594,33 @@
 				}
 			};
 			
+			// Html emission helper
+			self.impl.buildLi = function(n,item,htmlB) {
+				var itemHtml = itemRenderer(n,item,self);
+				if(itemHtml) {
+					// if an object, then initializes li attributes with given values
+					if($.type(itemHtml)==='object') {
+						var tagArgs = ['li','class',htmlEmitter.emittedClass()+(self.context.unselectedClass?' '+self.context.unselectedClass:'')+(itemHtml['class']?' '+itemHtml['class']:'')];
+						var plainHtml = '';
+						itemHtml['class'] = undefined;
+						for(var key in itemHtml) {
+							if(key=='html') plainHtml = itemHtml[key];
+							else if(itemHtml[key]) {
+								tagArgs.push(key);
+								tagArgs.push(itemHtml[key]);
+							}
+						}
+						htmlB.tag.apply(undefined,tagArgs).put(plainHtml).$tag('li');
+					}
+					// else if plain HTML string, then puts it out into li tag
+					else htmlB.tag('li','class',htmlEmitter.emittedClass()+(self.context.unselectedClass?' '+self.context.unselectedClass:'')).put(itemHtml).$tag('li');
+				}
+			}	
 			// Html emission
 			var htmlB = htmlEmitter.htmlBuilder();
 			htmlB.tag('ul','id',self.ctxKey,'class',htmlEmitter.emittedClass()+(options.cssClass?' '+options.cssClass:''));
 			var shouldContinue=true;
-			var n = 0;
+			var n = 0;			
 			while(shouldContinue) {
 				// generates item
 				var item = itemGenerator(n,self);
@@ -1584,42 +1628,26 @@
 				if(item!==undefined) {
 					self.context.items.push(item);
 					n++;
-					var itemHtml = itemRenderer(n,item,self);
-					if(itemHtml) {
-						// if an object, then initializes li attributes with given values
-						if($.type(itemHtml)==='object') {
-							var tagArgs = ['li','class',htmlEmitter.emittedClass()+(self.context.unselectedClass?' '+self.context.unselectedClass:'')+(itemHtml['class']?' '+itemHtml['class']:'')];
-							var plainHtml = '';
-							itemHtml['class'] = undefined;
-							for(var key in itemHtml) {
-								if(key=='html') plainHtml = itemHtml[key];
-								else if(itemHtml[key]) {
-									tagArgs.push(key);
-									tagArgs.push(itemHtml[key]);
-								}
-							}
-							htmlB.tag.apply(undefined,tagArgs).put(plainHtml).$tag('li');
-						}
-						// else if plain HTML string, then puts it out into li tag
-						else htmlB.tag('li','class',htmlEmitter.emittedClass()+(self.context.unselectedClass?' '+self.context.unselectedClass:'')).put(itemHtml).$tag('li');
-					}
+					self.impl.buildLi(n,item,htmlB);
 				}
 				else shouldContinue = false;
 			}
-			htmlB.$tag('ul').emit();
+			htmlB.$tag('ul').emit();			
+			
 			// Registers click events
 			self.impl.onItemClick = function(i) {
 				self.toggle(i);
 				if($.isFunction(self.options.onItemClick)) self.options.onItemClick(i,self.context.items[i-1],self.selected(i),self); 
 			};
-			self.$().find('> li').click(function(e){
+			self.impl.onLiClick = function(e){
 				try {self.impl.onItemClick($(this).index()+1);}
 				catch(exc) {
 					// Ignores ASSERTION_FAILED if maxSelection is active
 					if(!(self.options.maxSelection > 1 && exc.code == wncd.errorCodes.ASSERTION_FAILED)) htmlEmitter.publishException(exc);
 				}
 				e.stopPropagation();
-			});
+			};
+			self.$().find('> li').click(self.impl.onLiClick);
 		};
 		
 		/**
@@ -1832,480 +1860,7 @@
 				if(ry < 0) ry = grid.nCols()+ry;
 				return grid.cell(rx, ry);
 			};
-		};
-		
-		/**
-		 * Object doc component. Builds the documentation model of a given object and optionally renders it into a given HtmlEmitter
-		 *@param Object obj a javascript object for which to introspect the documentation model
-		 *@param Object options a set of options to configure the behavior of the ObjectDoc component. It supports the following attributes :
-		 * - docOutput: HtmlEmitter|JQuery. A reference of where to output the documentation. Can be an open HtmlEmitter or a JQuery selector. 
-		 * - If not defined, outputs to current div. To prevent rendering HTML, set the noOutput option to true.
-		 * - noOutput: Boolean. If true, no HTML is rendered, only the internal documentation model is built.
-		 * - noSorting: Boolean. If true, the object members are not alphabetically sorted. Order is kept as in the source code.
-		 * - expandLevel: Integer. Max level of automatic expansion. For deeper members, expands only on demand, one level at a time. Default to 2 (lib->class->members)
-		 * - namespace: String. Optional library name which represents the object or to which the object belongs.
-		 * - className: String. Optional class name describing the object instance.
-		 * - nullEmitter: HtmlEmitter. An HtmlEmitter which is invisible and used to simulated object constructions. By default points to div with id 'nullEmitter'.
-		 * - privateValues: Map. A list of member names for which its value is considered as private and cannot be viewed or expanded. Only member name can be visualized.
-		 *
-		 * Type system language model :
-		 *
-		 * Variable = Name Type+
-		 * Function = Name Variable* Type+
-		 * Class = Name Variable* Function* Classes*
-		 * Type = [Namespace.]Name
-		 *
-		 * nb. Variables can have several types and function return type can be multiple.
-		 * Multiple type is represented in the source comments as a disjunction of types (using the vertical bar |).
-		 * 
-		 * Type system object model :
-		 *
-		 * Variable {
-		 *	 name: String. Variable name.
-		 *	 type: String|Map. Type qualified name or map of type names.
-		 *   value: Any. Value of the variable or constant.
-		 *	 attributes: Map. A map of attributes for chaining.
-		 *	 className: String. Optional class name to which this variable belongs.
-		 * 	 namespace: String. Optional library name to which this variable belongs.
-		 *	 qualifiedName = [namespace.][className.]name
-		 *   modelType = Variable
-		 * }
-		 *
-		 * Function {
-		 * 	 name: String. Function name.
-		 *	 args: Array. Array of variables.
-		 *	 returnType: String|Map. Return type qualified name or map of return types.
-		 *	 attributes: Map. A map of attributes for chaining.
-		 *	 className: String. Optional class name to which this function belongs.
-		 * 	 namespace: String. Optional library name to which this function belongs.
-		 *	 qualifiedName = [namespace.][className.]name
-		 * 	 modelType = Function
-		 * }
-		 *
-		 * Class {
-		 *	 name: String. The class name.
-		 *	 vars: Map. Map of instance variables.
-		 *	 methods: Map. Map of Functions representing instance methods.
-		 *	 innerClasses: Map. Map of inner classes.
-		 *	 namespace: String. Optional library name to which this class belongs.
-		 *   qualifiedName = [namespace.]name
-		 *	 modelType = Class
-		 * }
-		 *
-		 * Lib {
-		 * 	 namespace: String. The library name.
-		 *	 members: Map. Map of library members (classes, functions, variables)
-		 *	 modelType = Lib
-		 * }
-		 *
-		 * DocModel {
-		 * 	 libs: Map. Map of libraries
-		 * 	 members: Map. Map of qualified classes, functions and variables.
-		 * }
-		 */
-		wigiiNcd.ObjectDoc = function(obj,options) {
-			var self = this;
-			self.className = 'ObjectDoc';
-			self.instantiationTime = Date.now();
-			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+self.instantiationTime;
-			self.options = options || {};
-			self.context = {
-				stack:[],
-				docModel:{libs:{},members:{}}
-			};
-			self.impl = {};
-					
-			// Defines output options
-			if(!self.options.noOutput) {
-				if(!self.options.docOutput) self.options.docOutput = wncd.currentDiv();
-				else if($.type(self.options.docOutput)==='string' || self.options.docOutput.className != 'HtmlEmitter') {
-					self.options.docOutput = wncd.html(self.options.docOutput);
-				}
-				self.$ = function() {return self.options.docOutput.$();};
-			}
-			// Defines default options
-			if(self.options.expandLevel === undefined) self.options.expandLevel = 1;
-			if(!self.options.nullEmitter) self.options.nullEmitter = wncd.div("nullEmitter");
-			if(!self.options.privateValues) self.options.privateValues = {}
-			// Private values management
-			self.options.privateValues.id = true;
-			self.options.privateValues.ctxKey = true;
-			self.options.privateValues.instantiationTime = true;
-			self.options.privateValues.className = true;
-			self.options.privateValues.$ = true;
-			if(self.options.privateValues.context===undefined) self.options.privateValues.context = true;
-			if(self.options.privateValues.impl===undefined) self.options.privateValues.impl = true;
-			if(self.options.privateValues.options===undefined) self.options.privateValues.options = true;
-			
-			
-			if(!self.options.onMemberCreation) {
-				/**
-				 * Callback when a member documentation model is created
-				 *@param Object member member doc model. One of Class, Function, Variable.
-				 *@param Object objModel doc model of object containing the member. One of Lib or Class.
-				 *@param Object options map of options
-				 *@param Object context current runtime context
-				 *@param int nestingLevel current level of nesting. Start is 1.
-				 */
-				self.options.onMemberCreation = function(member,objModel,options,context,nestingLevel) {
-					if(!options.noOutput) options.renderMember(member,objModel,options,context,nestingLevel);
-				}
-			}
-			if(!self.options.renderMember) {
-				/**
-				 * Renders a member documentation model
-				 *@param Object member member doc model. One of Class, Function, Variable.
-				 *@param Object objModel doc model of object containing the member. One of Lib or Class.
-				 *@param Object options map of options
-				 *@param Object context current runtime context
-				 *@param int nestingLevel current level of nesting. Start is 1.
-				 */
-				self.options.renderMember = function(member,objModel,options,context,nestingLevel) {
-					var memberDiv = objModel.context.docOutput;
-					if(!memberDiv) memberDiv = options.docOutput;
-					memberDiv = memberDiv.div(member.uri, "method");						
-					
-					// display expand button			
-					if(member.context.expandable) {
-						memberDiv.out("+","methodExpand");
-					}
-					// adds class keyword
-					if(member.modelType === 'Class') {
-						memberDiv.out("class","classKeyword keyword");
-					}
-					// adds function keyword
-					else if(member.modelType === 'Function') {
-						memberDiv.out("function","functionKeyword keyword");
-					}
-					
-					// displays member name
-					memberDiv.out(member.name,"methodName");
-					
-					// follows with parameters	
-					if(member.context.args) {
-						memberDiv.out(" ").out(member.context.args);			
-						// if src code then display an expand src button
-						if(member.context.srcCode && !member.context.expandable) {
-							memberDiv.out("+","methodSrcExpand");
-							wncd.bindSelectionSense(memberDiv.$().find('span.methodSrcExpand'),function(selectionSense){
-								if(selectionSense.selected()) memberDiv.$().find('div.methodSrc').show();
-								else memberDiv.$().find('div.methodSrc').hide();
-							});	
-						}
-						// if class then display complete class src
-						else if(member.context.srcCode && member.modelType === 'Class') {
-							memberDiv.out("+","classSrcExpand");
-							wncd.bindSelectionSense(memberDiv.$().find('span.classSrcExpand'),function(selectionSense){
-								if(selectionSense.selected()) memberDiv.$().find('div.classSrc').show();
-								else memberDiv.$().find('div.classSrc').hide();
-							});	
-						}
-					}
-					// displays value type
-					else {
-						// if string or number and not empty and not private, then displays value
-						if((member.context.objectType === 'number' || member.context.objectType === 'string') 
-							&& !options.privateValues[member.name] 
-							&& member.context.object) {
-							memberDiv.out(":","typeAssignement").out(member.context.object, "scalarValue");
-						}
-						else if(member.context.object === options.nullEmitter) memberDiv.out(":","typeAssignement").out('undefined', "keyword");
-						else memberDiv.out(":","typeAssignement").out(member.context.objectType, "keyword");
-					}
-					memberDiv.out(" ","methodEnd");
-					
-					// displays class src code
-					if(member.context.srcCode && member.modelType === 'Class') {				
-						memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,member.context.srcCode).$tag("div").emit();				
-					}
-					
-					// expands recursively until expandLevel, then only on click				
-					if(member.context.expandable) {
-						var selectionSense = wncd.bindSelectionSense(memberDiv.$().find('span.methodExpand'),function(selectionSense){
-							if(selectionSense.selected()) {
-								// if expand token exists, then expands into method members container.
-								if(member.context.expand) member.context.expand();
-								// shows method members
-								memberDiv.$().find('div.methodMembers').show();
-							}
-							else {
-								memberDiv.$().find('div.methodMembers').hide();
-							}
-						});
-						// prepares method members container and prepares HtmlEmitter on it
-						memberDiv.htmlBuilder().tag("div","class","methodMembers").$tag("div").emit();
-						member.context.docOutput = memberDiv.clone(memberDiv.$().find('div.methodMembers'));
-						
-						// already marks as expanded
-						if(nestingLevel < options.expandLevel) selectionSense.selected(true);
-						// keeps selection sense into context to allow piloting the tree view
-						member.context.selectionSense = selectionSense;
-					}			
-					// else displays member src code
-					else if(member.context.srcCode) {		
-						memberDiv.htmlBuilder().tag("div","class","methodSrc").insert(options.renderMemberSrc,member.context.srcCode,member.context.comment).$tag("div").emit();				
-					}		
-				}
-			}
-			
-			if(!self.options.renderMemberSrc) self.options.renderMemberSrc = function(srcCode,comment) {
-				wncd.currentDiv().createTextArea().text((comment?comment+"\n":"")+srcCode).$().tabby();
-			}
-			
-			if(!self.options.renderClassSrc) self.options.renderClassSrc = function(srcCode,comment) {
-				wncd.currentDiv().createTextArea().text((comment?comment+"\n":"")+srcCode).$().tabby();
-			}
-			
-			// Implementation helpers
-			
-			self.impl.qualifier2uri = function(namespace,className,methodName) {
-				var returnValue = '';
-				if(namespace) returnValue += namespace.replace('.','__');
-				if(className) {
-					if(returnValue) returnValue += '__';
-					returnValue += className;
-				}
-				if(methodName) {
-					if(returnValue) returnValue += '__';
-					returnValue += methodName;
-				}
-				return returnValue.replace('$','S');
-			}
-			self.impl.buildQualifiedName = function(namespace,className,methodName) {
-				var returnValue = '';
-				if(namespace) returnValue += namespace;
-				if(className) {
-					if(returnValue) returnValue += '.';
-					returnValue += className;
-				}
-				if(methodName) {
-					if(returnValue) returnValue += '.';
-					returnValue += methodName;
-				}
-				return returnValue;
-			}
-			self.impl.extractClassMemberComments = function(classSrcCode) {
-				var returnValue = {};
-				var commentsRegExp = /(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)\s*([\w]+)[.]([\w.]+)\s*=/g;
-				var matches = undefined;
-				while((matches = commentsRegExp.exec(classSrcCode))!==null){
-					//group 1 is comment, group 5 is class name or 'self', group 6 is method name
-					returnValue[matches[6]] = matches[1];
-					returnValue.className = matches[5];
-				}
-				return returnValue;
-			};
-			self.impl.createObjModel = function(namespace,className,name) {
-				var returnValue = {};
-				if(namespace) returnValue.namespace = namespace;
-				if(className) returnValue.className = className;
-				if(name) returnValue.name = name;
-				returnValue.uri = self.impl.qualifier2uri(namespace,className,name);
-				returnValue.qualifiedName = self.impl.buildQualifiedName(namespace,className,name);
-				returnValue.context = {};
-				return returnValue;
-			};
-			self.impl.initClassModel = function(objModel) {
-				objModel.vars = {};
-				objModel.methods = {};
-				objModel.innerClasses = {};
-				objModel.modelType = 'Class';
-				objModel.parent = undefined;
-			};
-			self.impl.initFunctionModel = function(objModel) {
-				objModel.args = [];
-				objModel.returnType = undefined;
-				objModel.attributes = {};
-				objModel.modelType = 'Function';
-				objModel.parent = undefined;
-			};
-			self.impl.initVariableModel = function(objModel) {
-				objModel.type = undefined;
-				objModel.value = undefined;
-				objModel.attributes = {};
-				objModel.modelType = 'Variable';
-				objModel.parent = undefined;
-			};
-			self.impl.initLibModel = function(objModel) {
-				objModel.members = {};			
-				objModel.modelType = 'Lib';
-			};
-			
-			// Visitors
-			
-			self.impl.visitObj = function(obj,options,context,nestingLevel) {
-				var objModel = context.stack[nestingLevel-1];
-				
-				// fills an array with all members
-				var members = [];
-				for(var memberName in obj) {
-					var member = self.impl.createObjModel(objModel.namespace,(objModel.modelType === 'Class'?objModel.name:objModel.className),memberName);
-					member.context.object = obj[memberName];
-					members.push(member);
-				}
-				
-				// sorts by name
-				if(!options.noSorting) {
-					members.sort(function(m1,m2){
-						if(m1.name < m2.name) return -1;
-						else if(m1.name > m2.name) return 1;
-						else return 0;
-					});
-				}
-				
-				// visits members
-				if(options.expandLevel > 0) {
-					for(var i=0;i<members.length;i++) {
-						var member = members[i];					
-						self.impl.visitObjMember(member,options,context,nestingLevel);			
-					}
-				}					
-				
-				// removes model from stack
-				self.context.stack.pop();
-			};
-			self.impl.visitObjMember = function(member,options,context,nestingLevel) {
-				var objModel = context.stack[nestingLevel-1];
-				
-				// discovers member information and sets local variables
-				var objectType = $.type(member.context.object);	
-				var srcCode = undefined;
-				var args = undefined;
-				var expandable = false;
-				var isObjectConstructor = false;
-				var classMemberComments = undefined;
-				
-				if(objectType === 'function') {				
-					srcCode = wncd.obj2FxString(member.context.object);
-					args = srcCode.match(/^function\s*(\([^\(\)]*\))/);
-					if(args) args = args[1];				
-					
-					// checks if member is an object constructor 
-					// - is a Function 
-					// - has first line equal to var self = this;
-					isObjectConstructor = /^function\s*\([^\(\)]*\)\s*\{\s*var\s*self\s*=\s*this;/.test(srcCode);
-					// extracts members comments
-					classMemberComments = self.impl.extractClassMemberComments(srcCode);
-					// runs constructor (safely)
-					if(isObjectConstructor) {					
-						var newObj = {};
-						var constructorArgs = Array(member.context.object.length).fill(options.nullEmitter);
-						var currentDiv = wncd.currentDiv();
-						try {
-							wncd.program.context.html(options.nullEmitter);
-							member.context.object.apply(newObj, constructorArgs);
-							wncd.program.context.html(currentDiv);
-							options.nullEmitter.reset();
-						}
-						catch(exc) {wncd.program.context.html(currentDiv);}					
-						if(!newObj.className) newObj.className = member.name;
-						member.context.object = newObj;
-					}
-					expandable = (Object.keys(member.context.object).length > 0);				
-				}
-				else if(objectType === 'object' && member.context.object !== options.nullEmitter) {
-					expandable = (Object.keys(member.context.object).length > 0);
-				}
-				
-				// Is member a class
-				if(isObjectConstructor) {
-					self.impl.initClassModel(member);
-					member.context.srcCode = srcCode;
-					member.context.args = args;				
-					member.context.classMemberComments = classMemberComments;
-				}
-				// Is member a function
-				else if(objectType === 'function') {
-					self.impl.initFunctionModel(member);
-					member.context.srcCode = srcCode;
-					member.context.args = args;
-				}
-				// Is member a variable
-				else {
-					self.impl.initVariableModel(member);
-					member.context.objectType = objectType;
-				}
-				member.context.expandable = expandable;
-				// Links associated comment to member
-				if(objModel.context.classMemberComments) member.context.comment = objModel.context.classMemberComments[member.name];
-				
-				// blocks recursion for private values
-				if(options.privateValues[member.name]) member.context.expandable = false;
-				
-				// Registers member into objModel
-				if(objModel.modelType === 'Lib') objModel.members[member.name] = member;
-				else if(objModel.modelType === 'Class') {
-					if(member.modelType === 'Variable') objModel.vars[member.name] = member;
-					else if(member.modelType === 'Function') objModel.methods[member.name] = member;
-					else if(member.modelType === 'Class') {
-						// if an inner class, then updates namespace value with parent qualifier
-						member.namespace = objModel.qualifiedName;
-						member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
-						member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
-						objModel.innerClasses[member.name] = member;
-					}
-				}
-				else if(objModel.modelType === 'Function') {
-					// if chaining attribute, then updates namespace value with parent qualifier
-					member.namespace = objModel.qualifiedName;
-					member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
-					member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
-					objModel.attributes[member.name] = member;
-				}
-				else if(objModel.modelType === 'Variable') {
-					// if chaining attribute, then updates namespace value with parent qualifier
-					member.namespace = objModel.qualifiedName;
-					member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
-					member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
-					objModel.attributes[member.name] = member;
-				}
-				// indexes into docModel.members map
-				context.docModel.members[member.qualifiedName] = member;
-				// links member back to its parent
-				member.parent = objModel;
-				
-				// creates a consumable 'expand' token which launches the recursion on demand				
-				if(member.context.expandable) {
-					member.context.expand = function() {
-						member.context.expand = undefined;
-						context.stack.push(member);
-						self.impl.visitObj(member.context.object,options,context,context.stack.length);
-					};				
-				}		
-			
-				// onMemberCreation callback
-				if(options.onMemberCreation) options.onMemberCreation(member,objModel,options,context,nestingLevel);
-				
-				// expands recursively until expandLevel
-				if(nestingLevel < options.expandLevel && member.context.expand) member.context.expand();
-			};
-			
-			/**
-			 * Builds the documentation model of the given object and adds it to the current model
-			 *@param Object obj the object for which to build the documentation model
-			 *@param String namespace optional library name which represents the object or to which the object belongs.
-			 *@param String className optional class name describing the object instance
-			 *@return Object returns the object documentation model
-			 */
-			self.buildDocModel = function(obj, namespace, className) {
-				if(obj) {
-					// creates objModel and initializes it as a Class or a Lib
-					var objModel = self.impl.createObjModel(namespace,undefined,className);
-					if(className) self.impl.initClassModel(objModel);
-					else self.impl.initLibModel(objModel);
-					// pushes objModel on stack and visits object.
-					self.context.stack.push(objModel);
-					self.impl.visitObj(obj,self.options,self.context,1);				
-					// updates docModel with built model	
-					if(objModel.modelType === 'Lib') self.context.docModel.libs[objModel.namespace] = objModel;
-					self.context.docModel.members[objModel.qualifiedName] = objModel;
-				}
-				return self.context.docModel;
-			};
-			
-			// Builds the object documentation model
-			self.buildDocModel(obj,self.options.namespace, self.options.className);
-		};		
+		};				
 		
 		// Wigii Sense Services 
 		
@@ -2739,14 +2294,7 @@
 				wigiiNcd.jQueryServiceInstance = new wigiiNcd.JQueryService();ncdprivate('jQueryServiceInstance');
 			}
 			return wigiiNcd.jQueryServiceInstance;
-		};
-		
-		/**
-		 * Creates an object documentation model on the given object
-		 */
-		wigiiNcd.createObjectDoc = function(obj,options) { 
-			return new wigiiNcd.ObjectDoc(obj,options);
-		}		
+		};			
 		
 		// Functions
 		
@@ -5487,6 +5035,910 @@
 	if(wigiiNcdEtpOptions.ncdEtpFxReady) wigiiNcdEtpOptions.ncdEtpFxReady(wigiiNcdEtp);
 })(window, jQuery, wigiiNcd, wigiiNcdEtp); 
 /**
+ * Wigii Natural Code Development (NCD) external libraries package
+ * Packaged by Camille Weber (camille@wigii.org), 12.12.2017
+ */
+if(!wncd.externals) wncd.externals = {};
+
+/*!
+ * Prism 1.9.0: Lightweight, robust, elegant syntax highlighting (http://prismjs.com)
+ * @author Lea Verou http://lea.verou.me
+ * @license MIT license http://www.opensource.org/licenses/mit-license.php/
+ * Packaged Prism library as a wncd external library by camille@wigii.org on 12.12.2017
+ */
+wncd.externals.Prism = (function(_self){
+
+// Private helper vars
+var lang = /\blang(?:uage)?-(\w+)\b/i;
+var uniqueId = 0;
+
+var _ = _self.Prism = {
+	manual: true /* camille@wigii.org: sets mode to be always manual.*/ /*_self.Prism && _self.Prism.manual*/,
+	disableWorkerMessageHandler: _self.Prism && _self.Prism.disableWorkerMessageHandler,
+	util: {
+		encode: function (tokens) {
+			if (tokens instanceof Token) {
+				return new Token(tokens.type, _.util.encode(tokens.content), tokens.alias);
+			} else if (_.util.type(tokens) === 'Array') {
+				return tokens.map(_.util.encode);
+			} else {
+				return tokens.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\u00a0/g, ' ');
+			}
+		},
+
+		type: function (o) {
+			return Object.prototype.toString.call(o).match(/\[object (\w+)\]/)[1];
+		},
+
+		objId: function (obj) {
+			if (!obj['__id']) {
+				Object.defineProperty(obj, '__id', { value: ++uniqueId });
+			}
+			return obj['__id'];
+		},
+
+		// Deep clone a language definition (e.g. to extend it)
+		clone: function (o) {
+			var type = _.util.type(o);
+
+			switch (type) {
+				case 'Object':
+					var clone = {};
+
+					for (var key in o) {
+						if (o.hasOwnProperty(key)) {
+							clone[key] = _.util.clone(o[key]);
+						}
+					}
+
+					return clone;
+
+				case 'Array':
+					return o.map(function(v) { return _.util.clone(v); });
+			}
+
+			return o;
+		}
+	},
+
+	languages: {
+		extend: function (id, redef) {
+			var lang = _.util.clone(_.languages[id]);
+
+			for (var key in redef) {
+				lang[key] = redef[key];
+			}
+
+			return lang;
+		},
+
+		/**
+		 * Insert a token before another token in a language literal
+		 * As this needs to recreate the object (we cannot actually insert before keys in object literals),
+		 * we cannot just provide an object, we need anobject and a key.
+		 * @param inside The key (or language id) of the parent
+		 * @param before The key to insert before. If not provided, the function appends instead.
+		 * @param insert Object with the key/value pairs to insert
+		 * @param root The object that contains `inside`. If equal to Prism.languages, it can be omitted.
+		 */
+		insertBefore: function (inside, before, insert, root) {
+			root = root || _.languages;
+			var grammar = root[inside];
+
+			if (arguments.length == 2) {
+				insert = arguments[1];
+
+				for (var newToken in insert) {
+					if (insert.hasOwnProperty(newToken)) {
+						grammar[newToken] = insert[newToken];
+					}
+				}
+
+				return grammar;
+			}
+
+			var ret = {};
+
+			for (var token in grammar) {
+
+				if (grammar.hasOwnProperty(token)) {
+
+					if (token == before) {
+
+						for (var newToken in insert) {
+
+							if (insert.hasOwnProperty(newToken)) {
+								ret[newToken] = insert[newToken];
+							}
+						}
+					}
+
+					ret[token] = grammar[token];
+				}
+			}
+
+			// Update references in other language definitions
+			_.languages.DFS(_.languages, function(key, value) {
+				if (value === root[inside] && key != inside) {
+					this[key] = ret;
+				}
+			});
+
+			return root[inside] = ret;
+		},
+
+		// Traverse a language definition with Depth First Search
+		DFS: function(o, callback, type, visited) {
+			visited = visited || {};
+			for (var i in o) {
+				if (o.hasOwnProperty(i)) {
+					callback.call(o, i, o[i], type || i);
+
+					if (_.util.type(o[i]) === 'Object' && !visited[_.util.objId(o[i])]) {
+						visited[_.util.objId(o[i])] = true;
+						_.languages.DFS(o[i], callback, null, visited);
+					}
+					else if (_.util.type(o[i]) === 'Array' && !visited[_.util.objId(o[i])]) {
+						visited[_.util.objId(o[i])] = true;
+						_.languages.DFS(o[i], callback, i, visited);
+					}
+				}
+			}
+		}
+	},
+	plugins: {},
+
+	highlightAll: function(async, callback) {
+		_.highlightAllUnder(document, async, callback);
+	},
+
+	highlightAllUnder: function(container, async, callback) {
+		var env = {
+			callback: callback,
+			selector: 'code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code'
+		};
+
+		_.hooks.run("before-highlightall", env);
+
+		var elements = env.elements || container.querySelectorAll(env.selector);
+
+		for (var i=0, element; element = elements[i++];) {
+			_.highlightElement(element, async === true, env.callback);
+		}
+	},
+
+	highlightElement: function(element, async, callback) {
+		// Find language
+		var language, grammar, parent = element;
+
+		while (parent && !lang.test(parent.className)) {
+			parent = parent.parentNode;
+		}
+
+		if (parent) {
+			language = (parent.className.match(lang) || [,''])[1].toLowerCase();
+			grammar = _.languages[language];
+		}
+
+		// Set language on the element, if not present
+		element.className = element.className.replace(lang, '').replace(/\s+/g, ' ') + ' language-' + language;
+
+		if (element.parentNode) {
+			// Set language on the parent, for styling
+			parent = element.parentNode;
+
+			if (/pre/i.test(parent.nodeName)) {
+				parent.className = parent.className.replace(lang, '').replace(/\s+/g, ' ') + ' language-' + language;
+			}
+		}
+
+		var code = element.textContent;
+
+		var env = {
+			element: element,
+			language: language,
+			grammar: grammar,
+			code: code
+		};
+
+		_.hooks.run('before-sanity-check', env);
+
+		if (!env.code || !env.grammar) {
+			if (env.code) {
+				_.hooks.run('before-highlight', env);
+				env.element.textContent = env.code;
+				_.hooks.run('after-highlight', env);
+			}
+			_.hooks.run('complete', env);
+			return;
+		}
+
+		_.hooks.run('before-highlight', env);
+
+		if (async && _self.Worker) {
+			var worker = new Worker(_.filename);
+
+			worker.onmessage = function(evt) {
+				env.highlightedCode = evt.data;
+
+				_.hooks.run('before-insert', env);
+
+				env.element.innerHTML = env.highlightedCode;
+
+				callback && callback.call(env.element);
+				_.hooks.run('after-highlight', env);
+				_.hooks.run('complete', env);
+			};
+
+			worker.postMessage(JSON.stringify({
+				language: env.language,
+				code: env.code,
+				immediateClose: true
+			}));
+		}
+		else {
+			env.highlightedCode = _.highlight(env.code, env.grammar, env.language);
+
+			_.hooks.run('before-insert', env);
+
+			env.element.innerHTML = env.highlightedCode;
+
+			callback && callback.call(element);
+
+			_.hooks.run('after-highlight', env);
+			_.hooks.run('complete', env);
+		}
+	},
+
+	highlight: function (text, grammar, language) {
+		var tokens = _.tokenize(text, grammar);
+		return Token.stringify(_.util.encode(tokens), language);
+	},
+
+	matchGrammar: function (text, strarr, grammar, index, startPos, oneshot, target) {
+		var Token = _.Token;
+
+		for (var token in grammar) {
+			if(!grammar.hasOwnProperty(token) || !grammar[token]) {
+				continue;
+			}
+
+			if (token == target) {
+				return;
+			}
+
+			var patterns = grammar[token];
+			patterns = (_.util.type(patterns) === "Array") ? patterns : [patterns];
+
+			for (var j = 0; j < patterns.length; ++j) {
+				var pattern = patterns[j],
+					inside = pattern.inside,
+					lookbehind = !!pattern.lookbehind,
+					greedy = !!pattern.greedy,
+					lookbehindLength = 0,
+					alias = pattern.alias;
+
+				if (greedy && !pattern.pattern.global) {
+					// Without the global flag, lastIndex won't work
+					var flags = pattern.pattern.toString().match(/[imuy]*$/)[0];
+					pattern.pattern = RegExp(pattern.pattern.source, flags + "g");
+				}
+
+				pattern = pattern.pattern || pattern;
+
+				// Don’t cache length as it changes during the loop
+				for (var i = index, pos = startPos; i < strarr.length; pos += strarr[i].length, ++i) {
+
+					var str = strarr[i];
+
+					if (strarr.length > text.length) {
+						// Something went terribly wrong, ABORT, ABORT!
+						return;
+					}
+
+					if (str instanceof Token) {
+						continue;
+					}
+
+					pattern.lastIndex = 0;
+
+					var match = pattern.exec(str),
+					    delNum = 1;
+
+					// Greedy patterns can override/remove up to two previously matched tokens
+					if (!match && greedy && i != strarr.length - 1) {
+						pattern.lastIndex = pos;
+						match = pattern.exec(text);
+						if (!match) {
+							break;
+						}
+
+						var from = match.index + (lookbehind ? match[1].length : 0),
+						    to = match.index + match[0].length,
+						    k = i,
+						    p = pos;
+
+						for (var len = strarr.length; k < len && (p < to || (!strarr[k].type && !strarr[k - 1].greedy)); ++k) {
+							p += strarr[k].length;
+							// Move the index i to the element in strarr that is closest to from
+							if (from >= p) {
+								++i;
+								pos = p;
+							}
+						}
+
+						/*
+						 * If strarr[i] is a Token, then the match starts inside another Token, which is invalid
+						 * If strarr[k - 1] is greedy we are in conflict with another greedy pattern
+						 */
+						if (strarr[i] instanceof Token || strarr[k - 1].greedy) {
+							continue;
+						}
+
+						// Number of tokens to delete and replace with the new match
+						delNum = k - i;
+						str = text.slice(pos, p);
+						match.index -= pos;
+					}
+
+					if (!match) {
+						if (oneshot) {
+							break;
+						}
+
+						continue;
+					}
+
+					if(lookbehind) {
+						lookbehindLength = match[1].length;
+					}
+
+					var from = match.index + lookbehindLength,
+					    match = match[0].slice(lookbehindLength),
+					    to = from + match.length,
+					    before = str.slice(0, from),
+					    after = str.slice(to);
+
+					var args = [i, delNum];
+
+					if (before) {
+						++i;
+						pos += before.length;
+						args.push(before);
+					}
+
+					var wrapped = new Token(token, inside? _.tokenize(match, inside) : match, alias, match, greedy);
+
+					args.push(wrapped);
+
+					if (after) {
+						args.push(after);
+					}
+
+					Array.prototype.splice.apply(strarr, args);
+
+					if (delNum != 1)
+						_.matchGrammar(text, strarr, grammar, i, pos, true, token);
+
+					if (oneshot)
+						break;
+				}
+			}
+		}
+	},
+
+	tokenize: function(text, grammar, language) {
+		var strarr = [text];
+
+		var rest = grammar.rest;
+
+		if (rest) {
+			for (var token in rest) {
+				grammar[token] = rest[token];
+			}
+
+			delete grammar.rest;
+		}
+
+		_.matchGrammar(text, strarr, grammar, 0, 0, false);
+
+		return strarr;
+	},
+
+	hooks: {
+		all: {},
+
+		add: function (name, callback) {
+			var hooks = _.hooks.all;
+
+			hooks[name] = hooks[name] || [];
+
+			hooks[name].push(callback);
+		},
+
+		run: function (name, env) {
+			var callbacks = _.hooks.all[name];
+
+			if (!callbacks || !callbacks.length) {
+				return;
+			}
+
+			for (var i=0, callback; callback = callbacks[i++];) {
+				callback(env);
+			}
+		}
+	}
+};
+
+var Token = _.Token = function(type, content, alias, matchedStr, greedy) {
+	this.type = type;
+	this.content = content;
+	this.alias = alias;
+	// Copy of the full string this token was created from
+	this.length = (matchedStr || "").length|0;
+	this.greedy = !!greedy;
+};
+
+Token.stringify = function(o, language, parent) {
+	if (typeof o == 'string') {
+		return o;
+	}
+
+	if (_.util.type(o) === 'Array') {
+		return o.map(function(element) {
+			return Token.stringify(element, language, o);
+		}).join('');
+	}
+
+	var env = {
+		type: o.type,
+		content: Token.stringify(o.content, language, parent),
+		tag: 'span',
+		classes: ['token', o.type],
+		attributes: {},
+		language: language,
+		parent: parent
+	};
+
+	if (o.alias) {
+		var aliases = _.util.type(o.alias) === 'Array' ? o.alias : [o.alias];
+		Array.prototype.push.apply(env.classes, aliases);
+	}
+
+	_.hooks.run('wrap', env);
+
+	var attributes = Object.keys(env.attributes).map(function(name) {
+		return name + '="' + (env.attributes[name] || '').replace(/"/g, '&quot;') + '"';
+	}).join(' ');
+
+	return '<' + env.tag + ' class="' + env.classes.join(' ') + '"' + (attributes ? ' ' + attributes : '') + '>' + env.content + '</' + env.tag + '>';
+
+};
+
+if (!_self.document) {
+	if (!_self.addEventListener) {
+		// in Node.js
+		return _self.Prism;
+	}
+
+	if (!_.disableWorkerMessageHandler) {
+		// In worker
+		_self.addEventListener('message', function (evt) {
+			var message = JSON.parse(evt.data),
+				lang = message.language,
+				code = message.code,
+				immediateClose = message.immediateClose;
+
+			_self.postMessage(_.highlight(code, _.languages[lang], lang));
+			if (immediateClose) {
+				_self.close();
+			}
+		}, false);
+	}
+
+	return _self.Prism;
+}
+
+//Get current script and highlight
+var script = document.currentScript || [].slice.call(document.getElementsByTagName("script")).pop();
+
+if (script) {
+	_.filename = script.src;
+
+	if (!_.manual && !script.hasAttribute('data-manual')) {
+		if(document.readyState !== "loading") {
+			if (window.requestAnimationFrame) {
+				window.requestAnimationFrame(_.highlightAll);
+			} else {
+				window.setTimeout(_.highlightAll, 16);
+			}
+		}
+		else {
+			document.addEventListener('DOMContentLoaded', _.highlightAll);
+		}
+	}
+}
+
+return _self.Prism;
+
+})(wncd.externals);
+
+wncd.externals.Prism.languages.markup = {
+	'comment': /<!--[\s\S]*?-->/,
+	'prolog': /<\?[\s\S]+?\?>/,
+	'doctype': /<!DOCTYPE[\s\S]+?>/i,
+	'cdata': /<!\[CDATA\[[\s\S]*?]]>/i,
+	'tag': {
+		pattern: /<\/?(?!\d)[^\s>\/=$<]+(?:\s+[^\s>\/=]+(?:=(?:("|')(?:\\[\s\S]|(?!\1)[^\\])*\1|[^\s'">=]+))?)*\s*\/?>/i,
+		inside: {
+			'tag': {
+				pattern: /^<\/?[^\s>\/]+/i,
+				inside: {
+					'punctuation': /^<\/?/,
+					'namespace': /^[^\s>\/:]+:/
+				}
+			},
+			'attr-value': {
+				pattern: /=(?:("|')(?:\\[\s\S]|(?!\1)[^\\])*\1|[^\s'">=]+)/i,
+				inside: {
+					'punctuation': [
+						/^=/,
+						{
+							pattern: /(^|[^\\])["']/,
+							lookbehind: true
+						}
+					]
+				}
+			},
+			'punctuation': /\/?>/,
+			'attr-name': {
+				pattern: /[^\s>\/]+/,
+				inside: {
+					'namespace': /^[^\s>\/:]+:/
+				}
+			}
+
+		}
+	},
+	'entity': /&#?[\da-z]{1,8};/i
+};
+
+wncd.externals.Prism.languages.markup['tag'].inside['attr-value'].inside['entity'] =
+	wncd.externals.Prism.languages.markup['entity'];
+
+// Plugin to make entity title show the real entity, idea by Roman Komarov
+wncd.externals.Prism.hooks.add('wrap', function(env) {
+
+	if (env.type === 'entity') {
+		env.attributes['title'] = env.content.replace(/&amp;/, '&');
+	}
+});
+
+wncd.externals.Prism.languages.xml = wncd.externals.Prism.languages.markup;
+wncd.externals.Prism.languages.html = wncd.externals.Prism.languages.markup;
+wncd.externals.Prism.languages.mathml = wncd.externals.Prism.languages.markup;
+wncd.externals.Prism.languages.svg = wncd.externals.Prism.languages.markup;
+
+wncd.externals.Prism.languages.css = {
+	'comment': /\/\*[\s\S]*?\*\//,
+	'atrule': {
+		pattern: /@[\w-]+?.*?(?:;|(?=\s*\{))/i,
+		inside: {
+			'rule': /@[\w-]+/
+			// See rest below
+		}
+	},
+	'url': /url\((?:(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1|.*?)\)/i,
+	'selector': /[^{}\s][^{};]*?(?=\s*\{)/,
+	'string': {
+		pattern: /("|')(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,
+		greedy: true
+	},
+	'property': /[-_a-z\xA0-\uFFFF][-\w\xA0-\uFFFF]*(?=\s*:)/i,
+	'important': /\B!important\b/i,
+	'function': /[-a-z0-9]+(?=\()/i,
+	'punctuation': /[(){};:]/
+};
+
+wncd.externals.Prism.languages.css['atrule'].inside.rest = wncd.externals.Prism.util.clone(wncd.externals.Prism.languages.css);
+
+if (wncd.externals.Prism.languages.markup) {
+	wncd.externals.Prism.languages.insertBefore('markup', 'tag', {
+		'style': {
+			pattern: /(<style[\s\S]*?>)[\s\S]*?(?=<\/style>)/i,
+			lookbehind: true,
+			inside: wncd.externals.Prism.languages.css,
+			alias: 'language-css',
+			greedy: true
+		}
+	});
+
+	wncd.externals.Prism.languages.insertBefore('inside', 'attr-value', {
+		'style-attr': {
+			pattern: /\s*style=("|')(?:\\[\s\S]|(?!\1)[^\\])*\1/i,
+			inside: {
+				'attr-name': {
+					pattern: /^\s*style/i,
+					inside: wncd.externals.Prism.languages.markup.tag.inside
+				},
+				'punctuation': /^\s*=\s*['"]|['"]\s*$/,
+				'attr-value': {
+					pattern: /.+/i,
+					inside: wncd.externals.Prism.languages.css
+				}
+			},
+			alias: 'language-css'
+		}
+	}, wncd.externals.Prism.languages.markup.tag);
+};
+wncd.externals.Prism.languages.clike = {
+	'comment': [
+		{
+			pattern: /(^|[^\\])\/\*[\s\S]*?(?:\*\/|$)/,
+			lookbehind: true
+		},
+		{
+			pattern: /(^|[^\\:])\/\/.*/,
+			lookbehind: true
+		}
+	],
+	'string': {
+		pattern: /(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,
+		greedy: true
+	},
+	'class-name': {
+		pattern: /((?:\b(?:class|interface|extends|implements|trait|instanceof|new)\s+)|(?:catch\s+\())[\w.\\]+/i,
+		lookbehind: true,
+		inside: {
+			punctuation: /[.\\]/
+		}
+	},
+	'keyword': /\b(?:if|else|while|do|for|return|in|instanceof|function|new|try|throw|catch|finally|null|break|continue)\b/,
+	'boolean': /\b(?:true|false)\b/,
+	'function': /[a-z0-9_]+(?=\()/i,
+	'number': /\b-?(?:0x[\da-f]+|\d*\.?\d+(?:e[+-]?\d+)?)\b/i,
+	'operator': /--?|\+\+?|!=?=?|<=?|>=?|==?=?|&&?|\|\|?|\?|\*|\/|~|\^|%/,
+	'punctuation': /[{}[\];(),.:]/
+};
+
+wncd.externals.Prism.languages.javascript = wncd.externals.Prism.languages.extend('clike', {
+	'keyword': /\b(?:as|async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|enum|export|extends|finally|for|from|function|get|if|implements|import|in|instanceof|interface|let|new|null|of|package|private|protected|public|return|set|static|super|switch|this|throw|try|typeof|var|void|while|with|yield)\b/,
+	'number': /\b-?(?:0[xX][\dA-Fa-f]+|0[bB][01]+|0[oO][0-7]+|\d*\.?\d+(?:[Ee][+-]?\d+)?|NaN|Infinity)\b/,
+	// Allow for all non-ASCII characters (See http://stackoverflow.com/a/2008444)
+	'function': /[_$a-z\xA0-\uFFFF][$\w\xA0-\uFFFF]*(?=\s*\()/i,
+	'operator': /-[-=]?|\+[+=]?|!=?=?|<<?=?|>>?>?=?|=(?:==?|>)?|&[&=]?|\|[|=]?|\*\*?=?|\/=?|~|\^=?|%=?|\?|\.{3}/
+});
+
+wncd.externals.Prism.languages.insertBefore('javascript', 'keyword', {
+	'regex': {
+		pattern: /(^|[^/])\/(?!\/)(\[[^\]\r\n]+]|\\.|[^/\\\[\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/,
+		lookbehind: true,
+		greedy: true
+	},
+	// This must be declared before keyword because we use "function" inside the look-forward
+	'function-variable': {
+		pattern: /[_$a-z\xA0-\uFFFF][$\w\xA0-\uFFFF]*(?=\s*=\s*(?:function\b|(?:\([^()]*\)|[_$a-z\xA0-\uFFFF][$\w\xA0-\uFFFF]*)\s*=>))/i,
+		alias: 'function'
+	}
+});
+
+wncd.externals.Prism.languages.insertBefore('javascript', 'string', {
+	'template-string': {
+		pattern: /`(?:\\[\s\S]|[^\\`])*`/,
+		greedy: true,
+		inside: {
+			'interpolation': {
+				pattern: /\$\{[^}]+\}/,
+				inside: {
+					'interpolation-punctuation': {
+						pattern: /^\$\{|\}$/,
+						alias: 'punctuation'
+					},
+					rest: wncd.externals.Prism.languages.javascript
+				}
+			},
+			'string': /[\s\S]+/
+		}
+	}
+});
+
+if (wncd.externals.Prism.languages.markup) {
+	wncd.externals.Prism.languages.insertBefore('markup', 'tag', {
+		'script': {
+			pattern: /(<script[\s\S]*?>)[\s\S]*?(?=<\/script>)/i,
+			lookbehind: true,
+			inside: wncd.externals.Prism.languages.javascript,
+			alias: 'language-javascript',
+			greedy: true
+		}
+	});
+}
+
+wncd.externals.Prism.languages.js = wncd.externals.Prism.languages.javascript;
+
+/**
+ * Prism NormalizeWhitespace plugin
+ */
+(function() {
+
+var assign = Object.assign || function (obj1, obj2) {
+	for (var name in obj2) {
+		if (obj2.hasOwnProperty(name))
+			obj1[name] = obj2[name];
+	}
+	return obj1;
+}
+
+function NormalizeWhitespace(defaults) {
+	this.defaults = assign({}, defaults);
+}
+
+function toCamelCase(value) {
+	return value.replace(/-(\w)/g, function(match, firstChar) {
+		return firstChar.toUpperCase();
+	});
+}
+
+function tabLen(str) {
+	var res = 0;
+	for (var i = 0; i < str.length; ++i) {
+		if (str.charCodeAt(i) == '\t'.charCodeAt(0))
+			res += 3;
+	}
+	return str.length + res;
+}
+
+NormalizeWhitespace.prototype = {
+	setDefaults: function (defaults) {
+		this.defaults = assign(this.defaults, defaults);
+	},
+	normalize: function (input, settings) {
+		settings = assign(this.defaults, settings);
+
+		for (var name in settings) {
+			var methodName = toCamelCase(name);
+			if (name !== "normalize" && methodName !== 'setDefaults' &&
+					settings[name] && this[methodName]) {
+				input = this[methodName].call(this, input, settings[name]);
+			}
+		}
+		return input;
+	},
+
+	/*
+	 * Normalization methods
+	 */
+	leftTrim: function (input) {
+		return input.replace(/^\s+/, '');
+	},
+	rightTrim: function (input) {
+		return input.replace(/\s+$/, '');
+	},
+	tabsToSpaces: function (input, spaces) {
+		spaces = spaces|0 || 4;
+		return input.replace(/\t/g, new Array(++spaces).join(' '));
+	},
+	spacesToTabs: function (input, spaces) {
+		spaces = spaces|0 || 4;
+		return input.replace(new RegExp(' {' + spaces + '}', 'g'), '\t');
+	},
+	removeTrailing: function (input) {
+		return input.replace(/\s*?$/gm, '');
+	},
+	// Support for deprecated plugin remove-initial-line-feed
+	removeInitialLineFeed: function (input) {
+		return input.replace(/^(?:\r?\n|\r)/, '');
+	},
+	removeIndent: function (input) {
+		var indents = input.match(/^[^\S\n\r]*(?=\S)/gm);
+
+		if (!indents || !indents[0].length)
+			return input;
+
+		indents.sort(function(a, b){return a.length - b.length; });
+
+		if (!indents[0].length)
+			return input;
+
+		return input.replace(new RegExp('^' + indents[0], 'gm'), '');
+	},
+	indent: function (input, tabs) {
+		return input.replace(/^[^\S\n\r]*(?=\S)/gm, new Array(++tabs).join('\t') + '$&');
+	},
+	breakLines: function (input, characters) {
+		characters = (characters === true) ? 80 : characters|0 || 80;
+
+		var lines = input.split('\n');
+		for (var i = 0; i < lines.length; ++i) {
+			if (tabLen(lines[i]) <= characters)
+				continue;
+
+			var line = lines[i].split(/(\s+)/g),
+			    len = 0;
+
+			for (var j = 0; j < line.length; ++j) {
+				var tl = tabLen(line[j]);
+				len += tl;
+				if (len > characters) {
+					line[j] = '\n' + line[j];
+					len = tl;
+				}
+			}
+			lines[i] = line.join('');
+		}
+		return lines.join('\n');
+	}
+};
+wncd.externals.Prism.plugins.NormalizeWhitespace = new NormalizeWhitespace({
+	'remove-trailing': true,
+	'remove-indent': true,
+	'left-trim': true,
+	'right-trim': true
+	/*'break-lines': 80,
+	'indent': 2,
+	'remove-initial-line-feed': false,
+	'tabs-to-spaces': 4,
+	'spaces-to-tabs': 4*/
+});
+
+wncd.externals.Prism.hooks.add('before-sanity-check', function (env) {
+	var Normalizer = wncd.externals.Prism.plugins.NormalizeWhitespace;
+
+	// Check settings
+	if (env.settings && env.settings['whitespace-normalization'] === false) {
+		return;
+	}	
+
+	// Simple mode if there is no env.element
+	if ((!env.element || !env.element.parentNode) && env.code) {
+		env.code = Normalizer.normalize(env.code, env.settings);
+		return;
+	}
+
+	// Normal mode
+	var pre = env.element.parentNode;
+	var clsReg = /\bno-whitespace-normalization\b/;
+	if (!env.code || !pre || pre.nodeName.toLowerCase() !== 'pre' ||
+			clsReg.test(pre.className) || clsReg.test(env.element.className))
+		return;
+
+	var children = pre.childNodes,
+	    before = '',
+	    after = '',
+	    codeFound = false;
+
+	// Move surrounding whitespace from the <pre> tag into the <code> tag
+	for (var i = 0; i < children.length; ++i) {
+		var node = children[i];
+
+		if (node == env.element) {
+			codeFound = true;
+		} else if (node.nodeName === "#text") {
+			if (codeFound) {
+				after += node.nodeValue;
+			} else {
+				before += node.nodeValue;
+			}
+
+			pre.removeChild(node);
+			--i;
+		}
+	}
+
+	if (!env.element.children.length || !wncd.externals.Prism.plugins.KeepMarkup) {
+		env.code = before + env.code + after;
+		env.code = Normalizer.normalize(env.code, env.settings);
+	} else {
+		// Preserve markup for keep-markup plugin
+		var html = before + env.element.innerHTML + after;
+		env.element.innerHTML = Normalizer.normalize(html, env.settings);
+		env.code = env.element.textContent;
+	}
+});
+
+}());
+/*! END OF PRISM http://prismjs.com */ 
+/**
  *  This file is part of Wigii.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  
@@ -5508,11 +5960,510 @@
  *  @license    <http://www.gnu.org/licenses/>     		GNU General Public License
  */
  
- /**
+ /*!
   * Wigii Natural Code Development (NCD) standard library
   * Created by Camille Weber (camille@wigii.org), 15.11.2017
   */
-
+ 
+/**
+ * Object doc component. Builds the documentation model of a given object and optionally renders it into a given HtmlEmitter
+ *@param Object obj a javascript object for which to introspect the documentation model
+ *@param Object options a set of options to configure the behavior of the ObjectDoc component. It supports the following attributes :
+ * - docOutput: HtmlEmitter|JQuery. A reference of where to output the documentation. Can be an open HtmlEmitter or a JQuery selector. 
+ * - If not defined, outputs to current div. To prevent rendering HTML, set the noOutput option to true.
+ * - noOutput: Boolean. If true, no HTML is rendered, only the internal documentation model is built.
+ * - noSorting: Boolean. If true, the object members are not alphabetically sorted. Order is kept as in the source code.
+ * - expandLevel: Integer. Max level of automatic expansion. For deeper members, expands only on demand, one level at a time. Default to 2 (lib->class->members)
+ * - namespace: String. Optional library name which represents the object or to which the object belongs.
+ * - className: String. Optional class name describing the object instance.
+ * - nullEmitter: HtmlEmitter. An HtmlEmitter which is invisible and used to simulated object constructions. By default points to div with id 'nullEmitter'.
+ * - privateValues: Map. A list of member names for which its value is considered as private and cannot be viewed or expanded. Only member name can be visualized.
+ *
+ * Type system language model :
+ *
+ * Variable = Name Type+
+ * Function = Name Variable* Type+
+ * Class = Name Variable* Function* Classes*
+ * Type = [Namespace.]Name
+ *
+ * nb. Variables can have several types and function return type can be multiple.
+ * Multiple type is represented in the source comments as a disjunction of types (using the vertical bar |).
+ * 
+ * Type system object model :
+ *
+ * Variable {
+ *	 name: String. Variable name.
+ *	 type: String|Map. Type qualified name or map of type names.
+ *   value: Any. Value of the variable or constant.
+ *	 attributes: Map. A map of attributes for chaining.
+ *	 className: String. Optional class name to which this variable belongs.
+ * 	 namespace: String. Optional library name to which this variable belongs.
+ *	 qualifiedName = [namespace.][className.]name
+ *   modelType = Variable
+ * }
+ *
+ * Function {
+ * 	 name: String. Function name.
+ *	 args: Array. Array of variables.
+ *	 returnType: String|Map. Return type qualified name or map of return types.
+ *	 attributes: Map. A map of attributes for chaining.
+ *	 className: String. Optional class name to which this function belongs.
+ * 	 namespace: String. Optional library name to which this function belongs.
+ *	 qualifiedName = [namespace.][className.]name
+ * 	 modelType = Function
+ * }
+ *
+ * Class {
+ *	 name: String. The class name.
+ *	 vars: Map. Map of instance variables.
+ *	 methods: Map. Map of Functions representing instance methods.
+ *	 innerClasses: Map. Map of inner classes.
+ *	 namespace: String. Optional library name to which this class belongs.
+ *   qualifiedName = [namespace.]name
+ *	 modelType = Class
+ * }
+ *
+ * Lib {
+ * 	 namespace: String. The library name.
+ *	 members: Map. Map of library members (classes, functions, variables)
+ *	 modelType = Lib
+ * }
+ *
+ * DocModel {
+ * 	 libs: Map. Map of libraries
+ * 	 members: Map. Map of qualified classes, functions and variables.
+ * }
+ */
+wncd.ObjectDoc = function(obj,options) {
+	var self = this;
+	self.className = 'ObjectDoc';
+	self.instantiationTime = Date.now();
+	self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
+	self.options = options || {};
+	self.context = {
+		stack:[],
+		docModel:{libs:{},members:{}}
+	};
+	self.impl = {};
+			
+	// Defines output options
+	if(!self.options.noOutput) {
+		if(!self.options.docOutput) self.options.docOutput = wncd.currentDiv();
+		else if($.type(self.options.docOutput)==='string' || self.options.docOutput.className != 'HtmlEmitter') {
+			self.options.docOutput = wncd.html(self.options.docOutput);
+		}
+		self.$ = function() {return self.options.docOutput.$();};
+	}
+	// Defines default options
+	if(self.options.expandLevel === undefined) self.options.expandLevel = 1;
+	if(!self.options.nullEmitter) self.options.nullEmitter = wncd.div("nullEmitter");
+	if(!self.options.privateValues) self.options.privateValues = {}
+	// Private values management
+	self.options.privateValues.id = true;
+	self.options.privateValues.ctxKey = true;
+	self.options.privateValues.instantiationTime = true;
+	self.options.privateValues.className = true;
+	self.options.privateValues.$ = true;
+	if(self.options.privateValues.context===undefined) self.options.privateValues.context = true;
+	if(self.options.privateValues.impl===undefined) self.options.privateValues.impl = true;
+	if(self.options.privateValues.options===undefined) self.options.privateValues.options = true;
+	
+	
+	if(!self.options.onMemberCreation) {
+		/**
+		 * Callback when a member documentation model is created
+		 *@param Object member member doc model. One of Class, Function, Variable.
+		 *@param Object objModel doc model of object containing the member. One of Lib or Class.
+		 *@param Object options map of options
+		 *@param Object context current runtime context
+		 *@param int nestingLevel current level of nesting. Start is 1.
+		 */
+		self.options.onMemberCreation = function(member,objModel,options,context,nestingLevel) {
+			if(!options.noOutput) options.renderMember(member,objModel,options,context,nestingLevel);
+		}
+	}
+	if(!self.options.renderMember) {
+		/**
+		 * Renders a member documentation model
+		 *@param Object member member doc model. One of Class, Function, Variable.
+		 *@param Object objModel doc model of object containing the member. One of Lib or Class.
+		 *@param Object options map of options
+		 *@param Object context current runtime context
+		 *@param int nestingLevel current level of nesting. Start is 1.
+		 */
+		self.options.renderMember = function(member,objModel,options,context,nestingLevel) {
+			var memberDiv = objModel.context.docOutput;
+			if(!memberDiv) memberDiv = options.docOutput;
+			memberDiv = memberDiv.div(member.uri, "method");						
+			
+			// display expand button			
+			if(member.context.expandable) {
+				memberDiv.out("+","methodExpand");
+			}
+			// adds class keyword
+			if(member.modelType === 'Class') {
+				memberDiv.out("class","classKeyword keyword");
+			}
+			// adds function keyword
+			else if(member.modelType === 'Function') {
+				memberDiv.out("function","functionKeyword keyword");
+			}
+			
+			// displays member name
+			memberDiv.out(member.name,"methodName");
+			
+			// follows with parameters	
+			if(member.context.args) {
+				memberDiv.out(" ").out(member.context.args);			
+				// if src code then display an expand src button
+				if(member.context.srcCode && !member.context.expandable) {
+					memberDiv.out("+","methodSrcExpand");
+					wncd.bindSelectionSense(memberDiv.$().find('span.methodSrcExpand'),function(selectionSense){
+						if(selectionSense.selected()) memberDiv.$().find('div.methodSrc').show();
+						else memberDiv.$().find('div.methodSrc').hide();
+					});	
+				}
+				// if class then display complete class src
+				else if(member.context.srcCode && member.modelType === 'Class') {
+					memberDiv.out("+","classSrcExpand");
+					wncd.bindSelectionSense(memberDiv.$().find('span.classSrcExpand'),function(selectionSense){
+						if(selectionSense.selected()) memberDiv.$().find('div.classSrc').show();
+						else memberDiv.$().find('div.classSrc').hide();
+					});	
+				}
+			}
+			// displays value type
+			else {
+				// if string or number and not empty and not private, then displays value
+				if((member.context.objectType === 'number' || member.context.objectType === 'string') 
+					&& !options.privateValues[member.name] 
+					&& member.context.object) {
+					memberDiv.out(":","typeAssignement").out(member.context.object, "scalarValue");
+				}
+				else if(member.context.object === options.nullEmitter) memberDiv.out(":","typeAssignement").out('undefined', "keyword");
+				else memberDiv.out(":","typeAssignement").out(member.context.objectType, "keyword");
+			}
+			memberDiv.out(" ","methodEnd");
+			
+			// displays class src code
+			if(member.context.srcCode && member.modelType === 'Class') {				
+				memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,member.context.srcCode).$tag("div").emit();				
+			}
+			
+			// expands recursively until expandLevel, then only on click				
+			if(member.context.expandable) {
+				var selectionSense = wncd.bindSelectionSense(memberDiv.$().find('span.methodExpand'),function(selectionSense){
+					if(selectionSense.selected()) {
+						// if expand token exists, then expands into method members container.
+						if(member.context.expand) member.context.expand();
+						// shows method members
+						memberDiv.$().find('div.methodMembers').show();
+					}
+					else {
+						memberDiv.$().find('div.methodMembers').hide();
+					}
+				});
+				// prepares method members container and prepares HtmlEmitter on it
+				memberDiv.htmlBuilder().tag("div","class","methodMembers").$tag("div").emit();
+				member.context.docOutput = memberDiv.clone(memberDiv.$().find('div.methodMembers'));
+				
+				// already marks as expanded
+				if(nestingLevel < options.expandLevel) selectionSense.selected(true);
+				// keeps selection sense into context to allow piloting the tree view
+				member.context.selectionSense = selectionSense;
+			}			
+			// else displays member src code
+			else if(member.context.srcCode) {		
+				memberDiv.htmlBuilder().tag("div","class","methodSrc").insert(options.renderMemberSrc,member.context.srcCode,member.context.comment).$tag("div").emit();				
+			}		
+		}
+	}
+	
+	if(!self.options.renderMemberSrc) self.options.renderMemberSrc = function(srcCode,comment) {
+		var Prism = wncd.externals.Prism;
+		// Appends comments
+		srcCode = (comment?"\t\t"+comment+"\n":"")+"\t\t"+srcCode;
+		// Normalize indentation
+		srcCode = Prism.plugins.NormalizeWhitespace.normalize(srcCode);
+		// Highlight syntax
+		wncd.currentDiv().htmlBuilder()
+			.tag('pre').tag('code','class','language-js')
+				.put(Prism.highlight(srcCode,Prism.languages.js))
+			.$tag('code').$tag('pre')
+		.emit();
+	}
+	
+	if(!self.options.renderClassSrc) self.options.renderClassSrc = function(srcCode,comment) {
+		var Prism = wncd.externals.Prism;
+		// Appends comments
+		srcCode = (comment?"\t\t"+comment+"\n":"")+"\t\t"+srcCode;
+		// Normalize indentation
+		srcCode = Prism.plugins.NormalizeWhitespace.normalize(srcCode);
+		// Highlight syntax
+		wncd.currentDiv().htmlBuilder()
+			.tag('pre').tag('code','class','language-js')
+				.put(Prism.highlight(srcCode,Prism.languages.js))
+			.$tag('code').$tag('pre')
+		.emit();
+	}
+	
+	// Implementation helpers
+	
+	self.impl.qualifier2uri = function(namespace,className,methodName) {
+		var returnValue = '';
+		if(namespace) returnValue += namespace.replace('.','__');
+		if(className) {
+			if(returnValue) returnValue += '__';
+			returnValue += className;
+		}
+		if(methodName) {
+			if(returnValue) returnValue += '__';
+			returnValue += methodName;
+		}
+		return returnValue.replace('$','S');
+	}
+	self.impl.buildQualifiedName = function(namespace,className,methodName) {
+		var returnValue = '';
+		if(namespace) returnValue += namespace;
+		if(className) {
+			if(returnValue) returnValue += '.';
+			returnValue += className;
+		}
+		if(methodName) {
+			if(returnValue) returnValue += '.';
+			returnValue += methodName;
+		}
+		return returnValue;
+	}
+	self.impl.extractClassMemberComments = function(classSrcCode) {
+		var returnValue = {};
+		var commentsRegExp = /(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)\s*([\w]+)[.]([\w.]+)\s*=/g;
+		var matches = undefined;
+		while((matches = commentsRegExp.exec(classSrcCode))!==null){
+			//group 1 is comment, group 5 is class name or 'self', group 6 is method name
+			returnValue[matches[6]] = matches[1];
+			returnValue.className = matches[5];
+		}
+		return returnValue;
+	};
+	self.impl.createObjModel = function(namespace,className,name) {
+		var returnValue = {};
+		if(namespace) returnValue.namespace = namespace;
+		if(className) returnValue.className = className;
+		if(name) returnValue.name = name;
+		returnValue.uri = self.impl.qualifier2uri(namespace,className,name);
+		returnValue.qualifiedName = self.impl.buildQualifiedName(namespace,className,name);
+		returnValue.context = {};
+		return returnValue;
+	};
+	self.impl.initClassModel = function(objModel) {
+		objModel.vars = {};
+		objModel.methods = {};
+		objModel.innerClasses = {};
+		objModel.modelType = 'Class';
+		objModel.parent = undefined;
+	};
+	self.impl.initFunctionModel = function(objModel) {
+		objModel.args = [];
+		objModel.returnType = undefined;
+		objModel.attributes = {};
+		objModel.modelType = 'Function';
+		objModel.parent = undefined;
+	};
+	self.impl.initVariableModel = function(objModel) {
+		objModel.type = undefined;
+		objModel.value = undefined;
+		objModel.attributes = {};
+		objModel.modelType = 'Variable';
+		objModel.parent = undefined;
+	};
+	self.impl.initLibModel = function(objModel) {
+		objModel.members = {};			
+		objModel.modelType = 'Lib';
+	};
+	
+	// Visitors
+	
+	self.impl.visitObj = function(obj,options,context,nestingLevel) {
+		var objModel = context.stack[nestingLevel-1];
+		
+		// fills an array with all members
+		var members = [];
+		for(var memberName in obj) {
+			var member = self.impl.createObjModel(objModel.namespace,(objModel.modelType === 'Class'?objModel.name:objModel.className),memberName);
+			member.context.object = obj[memberName];
+			members.push(member);
+		}
+		
+		// sorts by name
+		if(!options.noSorting) {
+			members.sort(function(m1,m2){
+				if(m1.name < m2.name) return -1;
+				else if(m1.name > m2.name) return 1;
+				else return 0;
+			});
+		}
+		
+		// visits members
+		if(options.expandLevel > 0) {
+			for(var i=0;i<members.length;i++) {
+				var member = members[i];					
+				self.impl.visitObjMember(member,options,context,nestingLevel);			
+			}
+		}					
+		
+		// removes model from stack
+		self.context.stack.pop();
+	};
+	self.impl.visitObjMember = function(member,options,context,nestingLevel) {
+		var objModel = context.stack[nestingLevel-1];
+		
+		// discovers member information and sets local variables
+		var objectType = $.type(member.context.object);	
+		var srcCode = undefined;
+		var args = undefined;
+		var expandable = false;
+		var isObjectConstructor = false;
+		var classMemberComments = undefined;
+		
+		if(objectType === 'function') {				
+			srcCode = wncd.obj2FxString(member.context.object);
+			args = srcCode.match(/^function\s*(\([^\(\)]*\))/);
+			if(args) args = args[1];				
+			
+			// checks if member is an object constructor 
+			// - is a Function 
+			// - has first line equal to var self = this;
+			isObjectConstructor = /^function\s*\([^\(\)]*\)\s*\{\s*var\s*self\s*=\s*this;/.test(srcCode);
+			// extracts members comments
+			classMemberComments = self.impl.extractClassMemberComments(srcCode);
+			// runs constructor (safely)
+			if(isObjectConstructor) {					
+				var newObj = {};
+				var constructorArgs = Array(member.context.object.length).fill(options.nullEmitter);
+				var currentDiv = wncd.currentDiv();
+				try {
+					wncd.program.context.html(options.nullEmitter);
+					member.context.object.apply(newObj, constructorArgs);
+					wncd.program.context.html(currentDiv);
+					options.nullEmitter.reset();
+				}
+				catch(exc) {wncd.program.context.html(currentDiv);}					
+				if(!newObj.className) newObj.className = member.name;
+				member.context.object = newObj;
+			}
+			expandable = (Object.keys(member.context.object).length > 0);				
+		}
+		else if(objectType === 'object' && member.context.object !== options.nullEmitter) {
+			expandable = (Object.keys(member.context.object).length > 0);
+		}
+		
+		// Is member a class
+		if(isObjectConstructor) {
+			self.impl.initClassModel(member);
+			member.context.srcCode = srcCode;
+			member.context.args = args;				
+			member.context.classMemberComments = classMemberComments;
+		}
+		// Is member a function
+		else if(objectType === 'function') {
+			self.impl.initFunctionModel(member);
+			member.context.srcCode = srcCode;
+			member.context.args = args;
+		}
+		// Is member a variable
+		else {
+			self.impl.initVariableModel(member);
+			member.context.objectType = objectType;
+		}
+		member.context.expandable = expandable;
+		// Links associated comment to member
+		if(objModel.context.classMemberComments) member.context.comment = objModel.context.classMemberComments[member.name];
+		
+		// blocks recursion for private values
+		if(options.privateValues[member.name]) member.context.expandable = false;
+		
+		// Registers member into objModel
+		if(objModel.modelType === 'Lib') objModel.members[member.name] = member;
+		else if(objModel.modelType === 'Class') {
+			if(member.modelType === 'Variable') objModel.vars[member.name] = member;
+			else if(member.modelType === 'Function') objModel.methods[member.name] = member;
+			else if(member.modelType === 'Class') {
+				// if an inner class, then updates namespace value with parent qualifier
+				member.namespace = objModel.qualifiedName;
+				member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+				member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+				objModel.innerClasses[member.name] = member;
+			}
+		}
+		else if(objModel.modelType === 'Function') {
+			// if chaining attribute, then updates namespace value with parent qualifier
+			member.namespace = objModel.qualifiedName;
+			member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+			member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+			objModel.attributes[member.name] = member;
+		}
+		else if(objModel.modelType === 'Variable') {
+			// if chaining attribute, then updates namespace value with parent qualifier
+			member.namespace = objModel.qualifiedName;
+			member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+			member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+			objModel.attributes[member.name] = member;
+		}
+		// indexes into docModel.members map
+		context.docModel.members[member.qualifiedName] = member;
+		// links member back to its parent
+		member.parent = objModel;
+		
+		// creates a consumable 'expand' token which launches the recursion on demand				
+		if(member.context.expandable) {
+			member.context.expand = function() {
+				member.context.expand = undefined;
+				context.stack.push(member);
+				self.impl.visitObj(member.context.object,options,context,context.stack.length);
+			};				
+		}		
+	
+		// onMemberCreation callback
+		if(options.onMemberCreation) options.onMemberCreation(member,objModel,options,context,nestingLevel);
+		
+		// expands recursively until expandLevel
+		if(nestingLevel < options.expandLevel && member.context.expand) member.context.expand();
+	};
+	
+	/**
+	 * Builds the documentation model of the given object and adds it to the current model
+	 *@param Object obj the object for which to build the documentation model
+	 *@param String namespace optional library name which represents the object or to which the object belongs.
+	 *@param String className optional class name describing the object instance
+	 *@return Object returns the object documentation model
+	 */
+	self.buildDocModel = function(obj, namespace, className) {
+		if(obj) {
+			// creates objModel and initializes it as a Class or a Lib
+			var objModel = self.impl.createObjModel(namespace,undefined,className);
+			if(className) self.impl.initClassModel(objModel);
+			else self.impl.initLibModel(objModel);
+			// pushes objModel on stack and visits object.
+			self.context.stack.push(objModel);
+			self.impl.visitObj(obj,self.options,self.context,1);				
+			// updates docModel with built model	
+			if(objModel.modelType === 'Lib') self.context.docModel.libs[objModel.namespace] = objModel;
+			self.context.docModel.members[objModel.qualifiedName] = objModel;
+		}
+		return self.context.docModel;
+	};
+	
+	// Builds the object documentation model
+	self.buildDocModel(obj,self.options.namespace, self.options.className);
+};	
+/**
+ * Creates an object documentation model on the given object
+ */
+wncd.createObjectDoc = function(obj,options) { 
+	return new wncd.ObjectDoc(obj,options);
+};	
+ 
 /**
  * Builds a contextual menu and attaches it to a given anchor
  *@param jQuery|DOM.Element anchor the element to which attach the contextual menu
@@ -5853,6 +6804,276 @@ wncd.getJQueryService().menu = function(selection,options) {
 		// creates a ContextualMenu
 		returnValue = new wncd.ContextualMenu(selection,compose,options);
 	}
-	else if(selection && selection.length>1) throw wigiiNcd.createServiceException('Wigii NCD menu selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
+	else if(selection && selection.length>1) throw wncd.createServiceException('Wigii NCD menu selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
 	return (!returnValue?{$:selection}:returnValue);
 };
+
+/**
+ * A desktop user interface which displays a user menu, a header bar, a workzone and a footer bar.
+ * It accepts  to display desktop components which should display a header bar, a workzone and a footer bar.
+ * It supports an activate component event and a close event. The activate event is fired when a component is brought to the screen,
+ * the close event is fired when a component is brought off the screen.
+ *@param Object options a set of options to configure the desktop component. It supports the following attributes :
+ * - htmlEmitter: HtmlEmitter|JQuery. A reference of where to render the desktop user interface. Can be an open HtmlEmitter or a JQuery selector.
+ * - label: Label used to display the desktop
+ * - title: Title displayed in the title bar
+ * - logo: HTML img to display a logo
+ * - height: height of the desktop in his container. Defaults to 100%
+ * - width: width of the desktop in his container. Defaults to 100%
+ */
+wncd.Desktop = function(options) {
+	var self = this;
+	self.className = 'Desktop';
+	self.instantiationTime = Date.now();
+	self.ctxKey = wncd.ctxKey+'_'+self.className;
+	self.options = options || {};
+	self.context = {
+		components: {},
+		currentComponent: undefined
+	};
+	self.impl = {
+		onCloseSubscribers:[],
+		onActivateSubscribers:[]
+	};
+	
+	// Define default options
+	if(!self.options.userMenuLabel) self.options.userMenuLabel = "&#9776;"; //trigram of heaven
+	if(!self.options.label) self.options.label = "&#127968;"; //house building
+	if(!self.options.title) self.options.title = "&nbsp;";
+	self.options.obj = self;
+	if(!self.options.height) self.options.height = "100%";
+	if(!self.options.width) self.options.width = "100%";
+	if(!self.options.logo) self.options.logo = wncd.getHtmlBuilder()
+		.tag('img','class','logo','src','https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif').$tag('img')
+		.html();
+
+	/**
+	 *Defines default HtmlEmitter
+	 */
+	if(!self.options.htmlEmitter) self.options.htmlEmitter = wncd.currentDiv();
+	else if($.type(self.options.htmlEmitter)==='string' || self.options.htmlEmitter.className != 'HtmlEmitter') {
+		self.options.htmlEmitter = wncd.html(self.options.htmlEmitter);
+	}
+	
+	/**
+	 * Defines desktop displayHeaderBar function
+	 */
+	if(!self.options.displayHeaderBar) self.options.displayHeaderBar = function(desktop) {
+		wncd.currentDiv().reset();
+	};
+	/**
+	 * Defines desktop displayWorkzone function
+	 */
+	if(!self.options.displayWorkzone) self.options.displayWorkzone = function(desktop) {
+		wncd.currentDiv().reset();
+	};
+	/**
+	 * Defines desktop displayFooterBar function
+	 */
+	if(!self.options.displayFooterBar) self.options.displayFooterBar = function(desktop) {			
+		var startupLog = '';
+		if(program.context.startupLog) {
+			if(program.context.startupLog.ncdEtpReady) startupLog += "Wigii NCD core v."+program.context.startupLog.version;
+			if(program.context.startupLog.ncdEtpFxReady) startupLog += (startupLog?", ":"")+"Fx layer ready "+wncd.txtDate(new Date());				
+		}
+		self.context.startupLog = startupLog;
+		wncd.currentDiv().reset().out(self.context.startupLog);
+	};
+	/**
+	 * Defines desktop displayUserMenu function
+	 */
+	if(!self.options.displayUserMenu) self.options.displayUserMenu = function(desktop) {
+		// creates the list of available components in a displayable order
+		self.context.userMenu = [];
+		for(var key in self.context.components) {
+			self.context.userMenu.push(key);
+		}
+		wncd.currentDiv().reset().out(self.options.userMenuLabel,'userMenuButton')
+		.$().find('span.userMenuButton').wncd('menu',{
+			compose:function(n,subMenu,list) {
+				// returns each component in the user menu
+				if(n<self.context.userMenu.length) {
+					var component = self.context.components[self.context.userMenu[n]];
+					// sets the label
+					if(component.options && component.options.label) component.label = component.options.label;
+					else component.label = component.key;
+					return component;
+				}
+			},
+			onItemClick: function(i,component) {self.activate(component.key);},
+			top:5,left:20,
+			cssClass:'userMenu'
+		});			
+	};
+	/**
+	 * Defines desktop layout function
+	 */
+	if(!self.options.layoutDesktop) self.options.layoutDesktop = function(h,v,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,desktop) {
+		return v(
+			x3.h(
+				/* user menu */
+				x1.h(
+					x1(self.options.logo||"&nbsp;"),
+					x1().id(desktop.ctxKey+"_userMenu").cssClass("userMenuContainer")
+				),
+				/* header bar */
+				x10.v(
+					x1().id(desktop.ctxKey+"_titleBar").cssClass("titleBar"),
+					x3().id(desktop.ctxKey+"_headerBar").cssClass("headerBar")
+				)
+			),
+			/* workzone */
+			x10().id(desktop.ctxKey+"_workzone").cssClass("workzone"),
+			/* footer bar */
+			x1().id(desktop.ctxKey+"_footerBar").cssClass("footerBar")
+		).cssClass("desktop").width(desktop.options.width).height(desktop.options.height);
+	};
+	
+	/**
+	 * Registers a new component that can be displayed on the desktop
+	 *@param String key the key under which the component is registered
+	 *@param Function displayHeaderBar a function which display the component header bar using wncd.currentDiv() context. It receives the desktop as parameter.
+	 *@param Function displayWorkzone a function which display the component workzone using wncd.currentDiv() context. It receives the desktop as parameter.
+	 *@param Function displayFooterBar a function which display the component footer bar using wncd.currentDiv() context. It receives the desktop as parameter.
+	 *@param Object options some options to configure the component registration. It supports the following attributes :
+	 * - label: A label to put into a menu or button to activate the component
+	 * - obj: An underlying object instance representing the component itself.
+	 * - title: An optional title to display on the top of the desktop
+	 *@return wncd.Desktop for chaining
+	 */
+	self.registerComponent = function(key,
+		displayHeaderBar,
+		displayWorkzone,
+		displayFooterBar, 
+		options) {
+		
+		self.context.components[key] = {
+			key: key,
+			displayHeaderBar: displayHeaderBar,
+			displayWorkzone: displayWorkzone,
+			displayFooterBar: displayFooterBar,
+			options: options
+		};
+		
+		// displays user menu
+		wncd.program.context.html(self.options.userMenuEmitter);
+		self.options.displayUserMenu(self);
+		
+		return self;
+	};
+	/**
+	 * Creates an instance of a desktop component given its class name and registers it into the desktop
+	 *@param String className a wncd class which can be registred as a desktop component
+	 *@param Objects options an optional map of options to be passed to the component constructor
+	 *@return wncd.Desktop for chaining
+	 */
+	self.add = function(className,options) {
+		var componentConstructor = wncd[className];
+		if(!$.isFunction(componentConstructor)) throw wncd.createServiceException("Unsupported class "+className,wncd.errorCodes.UNSUPPORTED_OPERATION);
+		new componentConstructor(self,options);
+		return self;
+	};
+	
+	/**
+	 * Activates and brings to the screen a registered component given its key
+	 *@return Object returns underlying component object if defined
+	 */ 
+	self.activate = function(key) {
+		if(!key) throw wncd.createServiceException("key cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+		var component = self.context.components[key];
+		if(!component) throw wncd.createServiceException("no component registered under key "+key,wncd.errorCodes.INVALID_ARGUMENT);
+		// closes previous component
+		if(self.context.currentComponent) self.onClose();
+		// changes current component key
+		self.context.currentComponent = key;
+		// activates the component			
+		self.onActivate();			
+		// Renders component header bar
+		self.options.titleBarEmitter.reset().out(component.options.title||'&nbsp;');
+		if($.isFunction(component.displayHeaderBar)) {
+			wncd.program.context.html(self.options.headerBarEmitter);
+			component.displayHeaderBar(self);
+		}
+		// Renders component workzone			
+		if($.isFunction(component.displayWorkzone)) {
+			wncd.program.context.html(self.options.workzoneEmitter);
+			component.displayWorkzone(self);
+		}
+		// Renders component footer bar			
+		if($.isFunction(component.displayFooterBar)) {
+			wncd.program.context.html(self.options.footerBarEmitter);
+			component.displayFooterBar(self);			
+		}
+		// keeps current div on workzone.
+		wncd.program.context.html(self.options.workzoneEmitter);
+		
+		return self.getComponentObject(key);
+	};
+	/**
+	 * If the component has an underlying object, then returns it
+	 */
+	self.getComponentObject = function(key) {
+		if(!key) throw wncd.createServiceException("key cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+		var component = self.context.components[key];
+		if(!component) throw wncd.createServiceException("no component registered under key "+key,wncd.errorCodes.INVALID_ARGUMENT);
+		if(component.options) return component.options.obj;
+	};
+	/**
+	 * Removes the current component off the screen and displays again the desktop
+	 */
+	self.closeCurrentComponent = function() {
+		self.activate(self.ctxKey);
+	};
+	/**
+	 * Registers an eventHandler which is called when a component is closed and took off the screen.
+	 *@param Function closeEventHandler a function which receives the component key which is closed and the desktop
+	 */
+	self.onClose = function(closeEventHandler) {
+		if($.isFunction(closeEventHandler)) {
+			self.impl.onCloseSubscribers.push(closeEventHandler);
+		}
+		else if(closeEventHandler===undefined) {
+			for(var i=0;i<self.impl.onCloseSubscribers.length;i++) {
+				var eh = self.impl.onCloseSubscribers[i];
+				if($.isFunction(eh)) eh(self.context.currentComponent, self);
+			}
+		}
+		return self;
+	};
+	/**
+	 * Registers an eventHandler which is called when a component is activated and took on the screen.
+	 * This event is called before the component is asked to be rendered so that it can optionally prepare itself.
+	 *@param Function activateEventHandler a function which receives the component key which is activated and the desktop
+	 */
+	self.onActivate = function(activateEventHandler) {
+		if($.isFunction(activateEventHandler)) {
+			self.impl.onActivateSubscribers.push(activateEventHandler);
+		}
+		else if(activateEventHandler===undefined) {
+			for(var i=0;i<self.impl.onActivateSubscribers.length;i++) {
+				var eh = self.impl.onActivateSubscribers[i];
+				if($.isFunction(eh)) eh(self.context.currentComponent, self);
+			}
+		}
+		return self;
+	};
+	
+	// Lays out the desktop		
+	self.options.htmlEmitter.layout(self.options.layoutDesktop,self);
+	// Keeps the open emitters into memory
+	self.options.userMenuEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_userMenu"));
+	self.options.titleBarEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_titleBar"));
+	self.options.headerBarEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_headerBar"));
+	self.options.workzoneEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_workzone"));
+	self.options.footerBarEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_footerBar"));
+	
+	// Registers the default desktop component 
+	self.registerComponent(self.ctxKey,
+		self.options.displayHeaderBar,
+		self.options.displayWorkzone,
+		self.options.displayFooterBar,
+		self.options);			
+	// Activates the desktop
+	self.activate(self.ctxKey);
+};
+wncd.createDesktop = function(options) {return new wncd.Desktop(options);}

@@ -36,9 +36,20 @@ type "..\wigii-etp.js" >> ..\wigii-ncd-core.js
 echo. >> ..\wigii-ncd-core.js
 type "..\wigii-etp-fx.js" >> ..\wigii-ncd-core.js
 echo. >> ..\wigii-ncd-core.js
+type "..\wigii-ncd-externals.js" >> ..\wigii-ncd-core.js
+echo. >> ..\wigii-ncd-core.js
 type "..\wigii-ncd-stdlib.js" >> ..\wigii-ncd-core.js
 
 java -jar yuicompressor-2.4.7.jar -o ..\wigii-ncd-core.min.js ..\wigii-ncd-core.js
+
+del ..\wigii-ncd-core.css
+copy NUL ..\wigii-ncd-core.css
+
+type "..\wigii-ncd.css" >> ..\wigii-ncd-core.css
+echo. >> ..\wigii-ncd-core.css
+type "..\wigii-ncd-externals.css" >> ..\wigii-ncd-core.css
+echo. >> ..\wigii-ncd-core.css
+type "..\wigii-ncd-stdlib.css" >> ..\wigii-ncd-core.css
 
 java -jar yuicompressor-2.4.7.jar -o ..\wigii-ncd-core.min.css ..\wigii-ncd-core.css
 

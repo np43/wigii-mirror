@@ -1,4 +1,4 @@
-/**
+/*!
  *  This file is part of Wigii.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  
@@ -198,6 +198,176 @@ textarea.ncd:focus, input[type=text].ncd:focus, input[type=checkbox].ncd:focus {
 	border-color:blue;
 	outline:1px solid blue;
 }
+ 
+/**
+ * Wigii Natural Code Development (NCD) external css packaged to work with wigii-ncd-externals.js
+ * Packaged by Camille Weber (camille@wigii.org), 12.12.2017
+ */
+
+/*!
+ * prism.js 1.9.0 default theme for JavaScript, CSS and HTML
+ * Based on dabblet (http://dabblet.com)
+ * @author Lea Verou
+ * @license Non-Profit Open Software License version 3.0 http://www.opensource.org/licenses/NPOSL-3.0
+ */
+code[class*="language-"],
+pre[class*="language-"] {
+	color: black;
+	background: none;
+	text-shadow: 0 1px white;
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+pre[class*="language-"]::-moz-selection, pre[class*="language-"] ::-moz-selection,
+code[class*="language-"]::-moz-selection, code[class*="language-"] ::-moz-selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+pre[class*="language-"]::selection, pre[class*="language-"] ::selection,
+code[class*="language-"]::selection, code[class*="language-"] ::selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+@media print {
+	code[class*="language-"],
+	pre[class*="language-"] {
+		text-shadow: none;
+	}
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+	background: #f5f2f0;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: slategray;
+}
+
+.token.punctuation {
+	color: #999;
+}
+
+.namespace {
+	opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #905;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: #690;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+	color: #a67f59;
+	background: hsla(0, 0%, 100%, .5);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+	color: #07a;
+}
+
+.token.function {
+	color: #DD4A68;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+	color: #e90;
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+/*! END OF PRISM http://prismjs.com */ 
+/**
+ *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016-2017  Wigii.org
+ *  @author     <http://www.wigii.org/system/libs>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>           <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>          GNU General Public License
+ */
+ 
+ /*!
+  * Wigii Natural Code Development (NCD) standard library CSS
+  * Created by Camille Weber (camille@wigii.org), 15.11.2017
+  */
 div.autocompletionsense {
 	overflow-y:auto;
 	background-color:white;
@@ -252,4 +422,28 @@ div.contextualMenu span.rightMenu, div.contextualMenu span.noMenu {
 	padding-right:2px;
 	color:#000099;
 	display:table-cell;
+}
+
+div.desktop img.logo {
+	margin:15px;
+}
+div.desktop div.userMenuContainer {
+	padding:8px;
+	padding-top:15px;	
+}
+div.desktop div.userMenuContainer > span.userMenuButton {
+	cursor:pointer;
+	font-size:30px;	
+}
+div.desktop div.headerBar {
+	padding-top: 25px;
+}
+div.desktop div.footerBar {
+	padding-top:12px;
+	padding-left:5px;
+	border-top: solid black 1px;
+	color:#3333ff;
+}
+div.desktop div.footerBar span.ncd {
+	font-size:15px;
 }

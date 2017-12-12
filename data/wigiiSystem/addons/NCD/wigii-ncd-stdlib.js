@@ -20,11 +20,510 @@
  *  @license    <http://www.gnu.org/licenses/>     		GNU General Public License
  */
  
- /**
+ /*!
   * Wigii Natural Code Development (NCD) standard library
   * Created by Camille Weber (camille@wigii.org), 15.11.2017
   */
-
+ 
+/**
+ * Object doc component. Builds the documentation model of a given object and optionally renders it into a given HtmlEmitter
+ *@param Object obj a javascript object for which to introspect the documentation model
+ *@param Object options a set of options to configure the behavior of the ObjectDoc component. It supports the following attributes :
+ * - docOutput: HtmlEmitter|JQuery. A reference of where to output the documentation. Can be an open HtmlEmitter or a JQuery selector. 
+ * - If not defined, outputs to current div. To prevent rendering HTML, set the noOutput option to true.
+ * - noOutput: Boolean. If true, no HTML is rendered, only the internal documentation model is built.
+ * - noSorting: Boolean. If true, the object members are not alphabetically sorted. Order is kept as in the source code.
+ * - expandLevel: Integer. Max level of automatic expansion. For deeper members, expands only on demand, one level at a time. Default to 2 (lib->class->members)
+ * - namespace: String. Optional library name which represents the object or to which the object belongs.
+ * - className: String. Optional class name describing the object instance.
+ * - nullEmitter: HtmlEmitter. An HtmlEmitter which is invisible and used to simulated object constructions. By default points to div with id 'nullEmitter'.
+ * - privateValues: Map. A list of member names for which its value is considered as private and cannot be viewed or expanded. Only member name can be visualized.
+ *
+ * Type system language model :
+ *
+ * Variable = Name Type+
+ * Function = Name Variable* Type+
+ * Class = Name Variable* Function* Classes*
+ * Type = [Namespace.]Name
+ *
+ * nb. Variables can have several types and function return type can be multiple.
+ * Multiple type is represented in the source comments as a disjunction of types (using the vertical bar |).
+ * 
+ * Type system object model :
+ *
+ * Variable {
+ *	 name: String. Variable name.
+ *	 type: String|Map. Type qualified name or map of type names.
+ *   value: Any. Value of the variable or constant.
+ *	 attributes: Map. A map of attributes for chaining.
+ *	 className: String. Optional class name to which this variable belongs.
+ * 	 namespace: String. Optional library name to which this variable belongs.
+ *	 qualifiedName = [namespace.][className.]name
+ *   modelType = Variable
+ * }
+ *
+ * Function {
+ * 	 name: String. Function name.
+ *	 args: Array. Array of variables.
+ *	 returnType: String|Map. Return type qualified name or map of return types.
+ *	 attributes: Map. A map of attributes for chaining.
+ *	 className: String. Optional class name to which this function belongs.
+ * 	 namespace: String. Optional library name to which this function belongs.
+ *	 qualifiedName = [namespace.][className.]name
+ * 	 modelType = Function
+ * }
+ *
+ * Class {
+ *	 name: String. The class name.
+ *	 vars: Map. Map of instance variables.
+ *	 methods: Map. Map of Functions representing instance methods.
+ *	 innerClasses: Map. Map of inner classes.
+ *	 namespace: String. Optional library name to which this class belongs.
+ *   qualifiedName = [namespace.]name
+ *	 modelType = Class
+ * }
+ *
+ * Lib {
+ * 	 namespace: String. The library name.
+ *	 members: Map. Map of library members (classes, functions, variables)
+ *	 modelType = Lib
+ * }
+ *
+ * DocModel {
+ * 	 libs: Map. Map of libraries
+ * 	 members: Map. Map of qualified classes, functions and variables.
+ * }
+ */
+wncd.ObjectDoc = function(obj,options) {
+	var self = this;
+	self.className = 'ObjectDoc';
+	self.instantiationTime = Date.now();
+	self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
+	self.options = options || {};
+	self.context = {
+		stack:[],
+		docModel:{libs:{},members:{}}
+	};
+	self.impl = {};
+			
+	// Defines output options
+	if(!self.options.noOutput) {
+		if(!self.options.docOutput) self.options.docOutput = wncd.currentDiv();
+		else if($.type(self.options.docOutput)==='string' || self.options.docOutput.className != 'HtmlEmitter') {
+			self.options.docOutput = wncd.html(self.options.docOutput);
+		}
+		self.$ = function() {return self.options.docOutput.$();};
+	}
+	// Defines default options
+	if(self.options.expandLevel === undefined) self.options.expandLevel = 1;
+	if(!self.options.nullEmitter) self.options.nullEmitter = wncd.div("nullEmitter");
+	if(!self.options.privateValues) self.options.privateValues = {}
+	// Private values management
+	self.options.privateValues.id = true;
+	self.options.privateValues.ctxKey = true;
+	self.options.privateValues.instantiationTime = true;
+	self.options.privateValues.className = true;
+	self.options.privateValues.$ = true;
+	if(self.options.privateValues.context===undefined) self.options.privateValues.context = true;
+	if(self.options.privateValues.impl===undefined) self.options.privateValues.impl = true;
+	if(self.options.privateValues.options===undefined) self.options.privateValues.options = true;
+	
+	
+	if(!self.options.onMemberCreation) {
+		/**
+		 * Callback when a member documentation model is created
+		 *@param Object member member doc model. One of Class, Function, Variable.
+		 *@param Object objModel doc model of object containing the member. One of Lib or Class.
+		 *@param Object options map of options
+		 *@param Object context current runtime context
+		 *@param int nestingLevel current level of nesting. Start is 1.
+		 */
+		self.options.onMemberCreation = function(member,objModel,options,context,nestingLevel) {
+			if(!options.noOutput) options.renderMember(member,objModel,options,context,nestingLevel);
+		}
+	}
+	if(!self.options.renderMember) {
+		/**
+		 * Renders a member documentation model
+		 *@param Object member member doc model. One of Class, Function, Variable.
+		 *@param Object objModel doc model of object containing the member. One of Lib or Class.
+		 *@param Object options map of options
+		 *@param Object context current runtime context
+		 *@param int nestingLevel current level of nesting. Start is 1.
+		 */
+		self.options.renderMember = function(member,objModel,options,context,nestingLevel) {
+			var memberDiv = objModel.context.docOutput;
+			if(!memberDiv) memberDiv = options.docOutput;
+			memberDiv = memberDiv.div(member.uri, "method");						
+			
+			// display expand button			
+			if(member.context.expandable) {
+				memberDiv.out("+","methodExpand");
+			}
+			// adds class keyword
+			if(member.modelType === 'Class') {
+				memberDiv.out("class","classKeyword keyword");
+			}
+			// adds function keyword
+			else if(member.modelType === 'Function') {
+				memberDiv.out("function","functionKeyword keyword");
+			}
+			
+			// displays member name
+			memberDiv.out(member.name,"methodName");
+			
+			// follows with parameters	
+			if(member.context.args) {
+				memberDiv.out(" ").out(member.context.args);			
+				// if src code then display an expand src button
+				if(member.context.srcCode && !member.context.expandable) {
+					memberDiv.out("+","methodSrcExpand");
+					wncd.bindSelectionSense(memberDiv.$().find('span.methodSrcExpand'),function(selectionSense){
+						if(selectionSense.selected()) memberDiv.$().find('div.methodSrc').show();
+						else memberDiv.$().find('div.methodSrc').hide();
+					});	
+				}
+				// if class then display complete class src
+				else if(member.context.srcCode && member.modelType === 'Class') {
+					memberDiv.out("+","classSrcExpand");
+					wncd.bindSelectionSense(memberDiv.$().find('span.classSrcExpand'),function(selectionSense){
+						if(selectionSense.selected()) memberDiv.$().find('div.classSrc').show();
+						else memberDiv.$().find('div.classSrc').hide();
+					});	
+				}
+			}
+			// displays value type
+			else {
+				// if string or number and not empty and not private, then displays value
+				if((member.context.objectType === 'number' || member.context.objectType === 'string') 
+					&& !options.privateValues[member.name] 
+					&& member.context.object) {
+					memberDiv.out(":","typeAssignement").out(member.context.object, "scalarValue");
+				}
+				else if(member.context.object === options.nullEmitter) memberDiv.out(":","typeAssignement").out('undefined', "keyword");
+				else memberDiv.out(":","typeAssignement").out(member.context.objectType, "keyword");
+			}
+			memberDiv.out(" ","methodEnd");
+			
+			// displays class src code
+			if(member.context.srcCode && member.modelType === 'Class') {				
+				memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,member.context.srcCode).$tag("div").emit();				
+			}
+			
+			// expands recursively until expandLevel, then only on click				
+			if(member.context.expandable) {
+				var selectionSense = wncd.bindSelectionSense(memberDiv.$().find('span.methodExpand'),function(selectionSense){
+					if(selectionSense.selected()) {
+						// if expand token exists, then expands into method members container.
+						if(member.context.expand) member.context.expand();
+						// shows method members
+						memberDiv.$().find('div.methodMembers').show();
+					}
+					else {
+						memberDiv.$().find('div.methodMembers').hide();
+					}
+				});
+				// prepares method members container and prepares HtmlEmitter on it
+				memberDiv.htmlBuilder().tag("div","class","methodMembers").$tag("div").emit();
+				member.context.docOutput = memberDiv.clone(memberDiv.$().find('div.methodMembers'));
+				
+				// already marks as expanded
+				if(nestingLevel < options.expandLevel) selectionSense.selected(true);
+				// keeps selection sense into context to allow piloting the tree view
+				member.context.selectionSense = selectionSense;
+			}			
+			// else displays member src code
+			else if(member.context.srcCode) {		
+				memberDiv.htmlBuilder().tag("div","class","methodSrc").insert(options.renderMemberSrc,member.context.srcCode,member.context.comment).$tag("div").emit();				
+			}		
+		}
+	}
+	
+	if(!self.options.renderMemberSrc) self.options.renderMemberSrc = function(srcCode,comment) {
+		var Prism = wncd.externals.Prism;
+		// Appends comments
+		srcCode = (comment?"\t\t"+comment+"\n":"")+"\t\t"+srcCode;
+		// Normalize indentation
+		srcCode = Prism.plugins.NormalizeWhitespace.normalize(srcCode);
+		// Highlight syntax
+		wncd.currentDiv().htmlBuilder()
+			.tag('pre').tag('code','class','language-js')
+				.put(Prism.highlight(srcCode,Prism.languages.js))
+			.$tag('code').$tag('pre')
+		.emit();
+	}
+	
+	if(!self.options.renderClassSrc) self.options.renderClassSrc = function(srcCode,comment) {
+		var Prism = wncd.externals.Prism;
+		// Appends comments
+		srcCode = (comment?"\t\t"+comment+"\n":"")+"\t\t"+srcCode;
+		// Normalize indentation
+		srcCode = Prism.plugins.NormalizeWhitespace.normalize(srcCode);
+		// Highlight syntax
+		wncd.currentDiv().htmlBuilder()
+			.tag('pre').tag('code','class','language-js')
+				.put(Prism.highlight(srcCode,Prism.languages.js))
+			.$tag('code').$tag('pre')
+		.emit();
+	}
+	
+	// Implementation helpers
+	
+	self.impl.qualifier2uri = function(namespace,className,methodName) {
+		var returnValue = '';
+		if(namespace) returnValue += namespace.replace('.','__');
+		if(className) {
+			if(returnValue) returnValue += '__';
+			returnValue += className;
+		}
+		if(methodName) {
+			if(returnValue) returnValue += '__';
+			returnValue += methodName;
+		}
+		return returnValue.replace('$','S');
+	}
+	self.impl.buildQualifiedName = function(namespace,className,methodName) {
+		var returnValue = '';
+		if(namespace) returnValue += namespace;
+		if(className) {
+			if(returnValue) returnValue += '.';
+			returnValue += className;
+		}
+		if(methodName) {
+			if(returnValue) returnValue += '.';
+			returnValue += methodName;
+		}
+		return returnValue;
+	}
+	self.impl.extractClassMemberComments = function(classSrcCode) {
+		var returnValue = {};
+		var commentsRegExp = /(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)\s*([\w]+)[.]([\w.]+)\s*=/g;
+		var matches = undefined;
+		while((matches = commentsRegExp.exec(classSrcCode))!==null){
+			//group 1 is comment, group 5 is class name or 'self', group 6 is method name
+			returnValue[matches[6]] = matches[1];
+			returnValue.className = matches[5];
+		}
+		return returnValue;
+	};
+	self.impl.createObjModel = function(namespace,className,name) {
+		var returnValue = {};
+		if(namespace) returnValue.namespace = namespace;
+		if(className) returnValue.className = className;
+		if(name) returnValue.name = name;
+		returnValue.uri = self.impl.qualifier2uri(namespace,className,name);
+		returnValue.qualifiedName = self.impl.buildQualifiedName(namespace,className,name);
+		returnValue.context = {};
+		return returnValue;
+	};
+	self.impl.initClassModel = function(objModel) {
+		objModel.vars = {};
+		objModel.methods = {};
+		objModel.innerClasses = {};
+		objModel.modelType = 'Class';
+		objModel.parent = undefined;
+	};
+	self.impl.initFunctionModel = function(objModel) {
+		objModel.args = [];
+		objModel.returnType = undefined;
+		objModel.attributes = {};
+		objModel.modelType = 'Function';
+		objModel.parent = undefined;
+	};
+	self.impl.initVariableModel = function(objModel) {
+		objModel.type = undefined;
+		objModel.value = undefined;
+		objModel.attributes = {};
+		objModel.modelType = 'Variable';
+		objModel.parent = undefined;
+	};
+	self.impl.initLibModel = function(objModel) {
+		objModel.members = {};			
+		objModel.modelType = 'Lib';
+	};
+	
+	// Visitors
+	
+	self.impl.visitObj = function(obj,options,context,nestingLevel) {
+		var objModel = context.stack[nestingLevel-1];
+		
+		// fills an array with all members
+		var members = [];
+		for(var memberName in obj) {
+			var member = self.impl.createObjModel(objModel.namespace,(objModel.modelType === 'Class'?objModel.name:objModel.className),memberName);
+			member.context.object = obj[memberName];
+			members.push(member);
+		}
+		
+		// sorts by name
+		if(!options.noSorting) {
+			members.sort(function(m1,m2){
+				if(m1.name < m2.name) return -1;
+				else if(m1.name > m2.name) return 1;
+				else return 0;
+			});
+		}
+		
+		// visits members
+		if(options.expandLevel > 0) {
+			for(var i=0;i<members.length;i++) {
+				var member = members[i];					
+				self.impl.visitObjMember(member,options,context,nestingLevel);			
+			}
+		}					
+		
+		// removes model from stack
+		self.context.stack.pop();
+	};
+	self.impl.visitObjMember = function(member,options,context,nestingLevel) {
+		var objModel = context.stack[nestingLevel-1];
+		
+		// discovers member information and sets local variables
+		var objectType = $.type(member.context.object);	
+		var srcCode = undefined;
+		var args = undefined;
+		var expandable = false;
+		var isObjectConstructor = false;
+		var classMemberComments = undefined;
+		
+		if(objectType === 'function') {				
+			srcCode = wncd.obj2FxString(member.context.object);
+			args = srcCode.match(/^function\s*(\([^\(\)]*\))/);
+			if(args) args = args[1];				
+			
+			// checks if member is an object constructor 
+			// - is a Function 
+			// - has first line equal to var self = this;
+			isObjectConstructor = /^function\s*\([^\(\)]*\)\s*\{\s*var\s*self\s*=\s*this;/.test(srcCode);
+			// extracts members comments
+			classMemberComments = self.impl.extractClassMemberComments(srcCode);
+			// runs constructor (safely)
+			if(isObjectConstructor) {					
+				var newObj = {};
+				var constructorArgs = Array(member.context.object.length).fill(options.nullEmitter);
+				var currentDiv = wncd.currentDiv();
+				try {
+					wncd.program.context.html(options.nullEmitter);
+					member.context.object.apply(newObj, constructorArgs);
+					wncd.program.context.html(currentDiv);
+					options.nullEmitter.reset();
+				}
+				catch(exc) {wncd.program.context.html(currentDiv);}					
+				if(!newObj.className) newObj.className = member.name;
+				member.context.object = newObj;
+			}
+			expandable = (Object.keys(member.context.object).length > 0);				
+		}
+		else if(objectType === 'object' && member.context.object !== options.nullEmitter) {
+			expandable = (Object.keys(member.context.object).length > 0);
+		}
+		
+		// Is member a class
+		if(isObjectConstructor) {
+			self.impl.initClassModel(member);
+			member.context.srcCode = srcCode;
+			member.context.args = args;				
+			member.context.classMemberComments = classMemberComments;
+		}
+		// Is member a function
+		else if(objectType === 'function') {
+			self.impl.initFunctionModel(member);
+			member.context.srcCode = srcCode;
+			member.context.args = args;
+		}
+		// Is member a variable
+		else {
+			self.impl.initVariableModel(member);
+			member.context.objectType = objectType;
+		}
+		member.context.expandable = expandable;
+		// Links associated comment to member
+		if(objModel.context.classMemberComments) member.context.comment = objModel.context.classMemberComments[member.name];
+		
+		// blocks recursion for private values
+		if(options.privateValues[member.name]) member.context.expandable = false;
+		
+		// Registers member into objModel
+		if(objModel.modelType === 'Lib') objModel.members[member.name] = member;
+		else if(objModel.modelType === 'Class') {
+			if(member.modelType === 'Variable') objModel.vars[member.name] = member;
+			else if(member.modelType === 'Function') objModel.methods[member.name] = member;
+			else if(member.modelType === 'Class') {
+				// if an inner class, then updates namespace value with parent qualifier
+				member.namespace = objModel.qualifiedName;
+				member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+				member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+				objModel.innerClasses[member.name] = member;
+			}
+		}
+		else if(objModel.modelType === 'Function') {
+			// if chaining attribute, then updates namespace value with parent qualifier
+			member.namespace = objModel.qualifiedName;
+			member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+			member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+			objModel.attributes[member.name] = member;
+		}
+		else if(objModel.modelType === 'Variable') {
+			// if chaining attribute, then updates namespace value with parent qualifier
+			member.namespace = objModel.qualifiedName;
+			member.qualifiedName = self.impl.buildQualifiedName(member.namespace,member.name);
+			member.uri = self.impl.qualifier2uri(objModel.uri,member.name);
+			objModel.attributes[member.name] = member;
+		}
+		// indexes into docModel.members map
+		context.docModel.members[member.qualifiedName] = member;
+		// links member back to its parent
+		member.parent = objModel;
+		
+		// creates a consumable 'expand' token which launches the recursion on demand				
+		if(member.context.expandable) {
+			member.context.expand = function() {
+				member.context.expand = undefined;
+				context.stack.push(member);
+				self.impl.visitObj(member.context.object,options,context,context.stack.length);
+			};				
+		}		
+	
+		// onMemberCreation callback
+		if(options.onMemberCreation) options.onMemberCreation(member,objModel,options,context,nestingLevel);
+		
+		// expands recursively until expandLevel
+		if(nestingLevel < options.expandLevel && member.context.expand) member.context.expand();
+	};
+	
+	/**
+	 * Builds the documentation model of the given object and adds it to the current model
+	 *@param Object obj the object for which to build the documentation model
+	 *@param String namespace optional library name which represents the object or to which the object belongs.
+	 *@param String className optional class name describing the object instance
+	 *@return Object returns the object documentation model
+	 */
+	self.buildDocModel = function(obj, namespace, className) {
+		if(obj) {
+			// creates objModel and initializes it as a Class or a Lib
+			var objModel = self.impl.createObjModel(namespace,undefined,className);
+			if(className) self.impl.initClassModel(objModel);
+			else self.impl.initLibModel(objModel);
+			// pushes objModel on stack and visits object.
+			self.context.stack.push(objModel);
+			self.impl.visitObj(obj,self.options,self.context,1);				
+			// updates docModel with built model	
+			if(objModel.modelType === 'Lib') self.context.docModel.libs[objModel.namespace] = objModel;
+			self.context.docModel.members[objModel.qualifiedName] = objModel;
+		}
+		return self.context.docModel;
+	};
+	
+	// Builds the object documentation model
+	self.buildDocModel(obj,self.options.namespace, self.options.className);
+};	
+/**
+ * Creates an object documentation model on the given object
+ */
+wncd.createObjectDoc = function(obj,options) { 
+	return new wncd.ObjectDoc(obj,options);
+};	
+ 
 /**
  * Builds a contextual menu and attaches it to a given anchor
  *@param jQuery|DOM.Element anchor the element to which attach the contextual menu
@@ -365,6 +864,276 @@ wncd.getJQueryService().menu = function(selection,options) {
 		// creates a ContextualMenu
 		returnValue = new wncd.ContextualMenu(selection,compose,options);
 	}
-	else if(selection && selection.length>1) throw wigiiNcd.createServiceException('Wigii NCD menu selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
+	else if(selection && selection.length>1) throw wncd.createServiceException('Wigii NCD menu selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
 	return (!returnValue?{$:selection}:returnValue);
 };
+
+/**
+ * A desktop user interface which displays a user menu, a header bar, a workzone and a footer bar.
+ * It accepts  to display desktop components which should display a header bar, a workzone and a footer bar.
+ * It supports an activate component event and a close event. The activate event is fired when a component is brought to the screen,
+ * the close event is fired when a component is brought off the screen.
+ *@param Object options a set of options to configure the desktop component. It supports the following attributes :
+ * - htmlEmitter: HtmlEmitter|JQuery. A reference of where to render the desktop user interface. Can be an open HtmlEmitter or a JQuery selector.
+ * - label: Label used to display the desktop
+ * - title: Title displayed in the title bar
+ * - logo: HTML img to display a logo
+ * - height: height of the desktop in his container. Defaults to 100%
+ * - width: width of the desktop in his container. Defaults to 100%
+ */
+wncd.Desktop = function(options) {
+	var self = this;
+	self.className = 'Desktop';
+	self.instantiationTime = Date.now();
+	self.ctxKey = wncd.ctxKey+'_'+self.className;
+	self.options = options || {};
+	self.context = {
+		components: {},
+		currentComponent: undefined
+	};
+	self.impl = {
+		onCloseSubscribers:[],
+		onActivateSubscribers:[]
+	};
+	
+	// Define default options
+	if(!self.options.userMenuLabel) self.options.userMenuLabel = "&#9776;"; //trigram of heaven
+	if(!self.options.label) self.options.label = "&#127968;"; //house building
+	if(!self.options.title) self.options.title = "&nbsp;";
+	self.options.obj = self;
+	if(!self.options.height) self.options.height = "100%";
+	if(!self.options.width) self.options.width = "100%";
+	if(!self.options.logo) self.options.logo = wncd.getHtmlBuilder()
+		.tag('img','class','logo','src','https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif').$tag('img')
+		.html();
+
+	/**
+	 *Defines default HtmlEmitter
+	 */
+	if(!self.options.htmlEmitter) self.options.htmlEmitter = wncd.currentDiv();
+	else if($.type(self.options.htmlEmitter)==='string' || self.options.htmlEmitter.className != 'HtmlEmitter') {
+		self.options.htmlEmitter = wncd.html(self.options.htmlEmitter);
+	}
+	
+	/**
+	 * Defines desktop displayHeaderBar function
+	 */
+	if(!self.options.displayHeaderBar) self.options.displayHeaderBar = function(desktop) {
+		wncd.currentDiv().reset();
+	};
+	/**
+	 * Defines desktop displayWorkzone function
+	 */
+	if(!self.options.displayWorkzone) self.options.displayWorkzone = function(desktop) {
+		wncd.currentDiv().reset();
+	};
+	/**
+	 * Defines desktop displayFooterBar function
+	 */
+	if(!self.options.displayFooterBar) self.options.displayFooterBar = function(desktop) {			
+		var startupLog = '';
+		if(program.context.startupLog) {
+			if(program.context.startupLog.ncdEtpReady) startupLog += "Wigii NCD core v."+program.context.startupLog.version;
+			if(program.context.startupLog.ncdEtpFxReady) startupLog += (startupLog?", ":"")+"Fx layer ready "+wncd.txtDate(new Date());				
+		}
+		self.context.startupLog = startupLog;
+		wncd.currentDiv().reset().out(self.context.startupLog);
+	};
+	/**
+	 * Defines desktop displayUserMenu function
+	 */
+	if(!self.options.displayUserMenu) self.options.displayUserMenu = function(desktop) {
+		// creates the list of available components in a displayable order
+		self.context.userMenu = [];
+		for(var key in self.context.components) {
+			self.context.userMenu.push(key);
+		}
+		wncd.currentDiv().reset().out(self.options.userMenuLabel,'userMenuButton')
+		.$().find('span.userMenuButton').wncd('menu',{
+			compose:function(n,subMenu,list) {
+				// returns each component in the user menu
+				if(n<self.context.userMenu.length) {
+					var component = self.context.components[self.context.userMenu[n]];
+					// sets the label
+					if(component.options && component.options.label) component.label = component.options.label;
+					else component.label = component.key;
+					return component;
+				}
+			},
+			onItemClick: function(i,component) {self.activate(component.key);},
+			top:5,left:20,
+			cssClass:'userMenu'
+		});			
+	};
+	/**
+	 * Defines desktop layout function
+	 */
+	if(!self.options.layoutDesktop) self.options.layoutDesktop = function(h,v,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,desktop) {
+		return v(
+			x3.h(
+				/* user menu */
+				x1.h(
+					x1(self.options.logo||"&nbsp;"),
+					x1().id(desktop.ctxKey+"_userMenu").cssClass("userMenuContainer")
+				),
+				/* header bar */
+				x10.v(
+					x1().id(desktop.ctxKey+"_titleBar").cssClass("titleBar"),
+					x3().id(desktop.ctxKey+"_headerBar").cssClass("headerBar")
+				)
+			),
+			/* workzone */
+			x10().id(desktop.ctxKey+"_workzone").cssClass("workzone"),
+			/* footer bar */
+			x1().id(desktop.ctxKey+"_footerBar").cssClass("footerBar")
+		).cssClass("desktop").width(desktop.options.width).height(desktop.options.height);
+	};
+	
+	/**
+	 * Registers a new component that can be displayed on the desktop
+	 *@param String key the key under which the component is registered
+	 *@param Function displayHeaderBar a function which display the component header bar using wncd.currentDiv() context. It receives the desktop as parameter.
+	 *@param Function displayWorkzone a function which display the component workzone using wncd.currentDiv() context. It receives the desktop as parameter.
+	 *@param Function displayFooterBar a function which display the component footer bar using wncd.currentDiv() context. It receives the desktop as parameter.
+	 *@param Object options some options to configure the component registration. It supports the following attributes :
+	 * - label: A label to put into a menu or button to activate the component
+	 * - obj: An underlying object instance representing the component itself.
+	 * - title: An optional title to display on the top of the desktop
+	 *@return wncd.Desktop for chaining
+	 */
+	self.registerComponent = function(key,
+		displayHeaderBar,
+		displayWorkzone,
+		displayFooterBar, 
+		options) {
+		
+		self.context.components[key] = {
+			key: key,
+			displayHeaderBar: displayHeaderBar,
+			displayWorkzone: displayWorkzone,
+			displayFooterBar: displayFooterBar,
+			options: options
+		};
+		
+		// displays user menu
+		wncd.program.context.html(self.options.userMenuEmitter);
+		self.options.displayUserMenu(self);
+		
+		return self;
+	};
+	/**
+	 * Creates an instance of a desktop component given its class name and registers it into the desktop
+	 *@param String className a wncd class which can be registred as a desktop component
+	 *@param Objects options an optional map of options to be passed to the component constructor
+	 *@return wncd.Desktop for chaining
+	 */
+	self.add = function(className,options) {
+		var componentConstructor = wncd[className];
+		if(!$.isFunction(componentConstructor)) throw wncd.createServiceException("Unsupported class "+className,wncd.errorCodes.UNSUPPORTED_OPERATION);
+		new componentConstructor(self,options);
+		return self;
+	};
+	
+	/**
+	 * Activates and brings to the screen a registered component given its key
+	 *@return Object returns underlying component object if defined
+	 */ 
+	self.activate = function(key) {
+		if(!key) throw wncd.createServiceException("key cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+		var component = self.context.components[key];
+		if(!component) throw wncd.createServiceException("no component registered under key "+key,wncd.errorCodes.INVALID_ARGUMENT);
+		// closes previous component
+		if(self.context.currentComponent) self.onClose();
+		// changes current component key
+		self.context.currentComponent = key;
+		// activates the component			
+		self.onActivate();			
+		// Renders component header bar
+		self.options.titleBarEmitter.reset().out(component.options.title||'&nbsp;');
+		if($.isFunction(component.displayHeaderBar)) {
+			wncd.program.context.html(self.options.headerBarEmitter);
+			component.displayHeaderBar(self);
+		}
+		// Renders component workzone			
+		if($.isFunction(component.displayWorkzone)) {
+			wncd.program.context.html(self.options.workzoneEmitter);
+			component.displayWorkzone(self);
+		}
+		// Renders component footer bar			
+		if($.isFunction(component.displayFooterBar)) {
+			wncd.program.context.html(self.options.footerBarEmitter);
+			component.displayFooterBar(self);			
+		}
+		// keeps current div on workzone.
+		wncd.program.context.html(self.options.workzoneEmitter);
+		
+		return self.getComponentObject(key);
+	};
+	/**
+	 * If the component has an underlying object, then returns it
+	 */
+	self.getComponentObject = function(key) {
+		if(!key) throw wncd.createServiceException("key cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+		var component = self.context.components[key];
+		if(!component) throw wncd.createServiceException("no component registered under key "+key,wncd.errorCodes.INVALID_ARGUMENT);
+		if(component.options) return component.options.obj;
+	};
+	/**
+	 * Removes the current component off the screen and displays again the desktop
+	 */
+	self.closeCurrentComponent = function() {
+		self.activate(self.ctxKey);
+	};
+	/**
+	 * Registers an eventHandler which is called when a component is closed and took off the screen.
+	 *@param Function closeEventHandler a function which receives the component key which is closed and the desktop
+	 */
+	self.onClose = function(closeEventHandler) {
+		if($.isFunction(closeEventHandler)) {
+			self.impl.onCloseSubscribers.push(closeEventHandler);
+		}
+		else if(closeEventHandler===undefined) {
+			for(var i=0;i<self.impl.onCloseSubscribers.length;i++) {
+				var eh = self.impl.onCloseSubscribers[i];
+				if($.isFunction(eh)) eh(self.context.currentComponent, self);
+			}
+		}
+		return self;
+	};
+	/**
+	 * Registers an eventHandler which is called when a component is activated and took on the screen.
+	 * This event is called before the component is asked to be rendered so that it can optionally prepare itself.
+	 *@param Function activateEventHandler a function which receives the component key which is activated and the desktop
+	 */
+	self.onActivate = function(activateEventHandler) {
+		if($.isFunction(activateEventHandler)) {
+			self.impl.onActivateSubscribers.push(activateEventHandler);
+		}
+		else if(activateEventHandler===undefined) {
+			for(var i=0;i<self.impl.onActivateSubscribers.length;i++) {
+				var eh = self.impl.onActivateSubscribers[i];
+				if($.isFunction(eh)) eh(self.context.currentComponent, self);
+			}
+		}
+		return self;
+	};
+	
+	// Lays out the desktop		
+	self.options.htmlEmitter.layout(self.options.layoutDesktop,self);
+	// Keeps the open emitters into memory
+	self.options.userMenuEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_userMenu"));
+	self.options.titleBarEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_titleBar"));
+	self.options.headerBarEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_headerBar"));
+	self.options.workzoneEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_workzone"));
+	self.options.footerBarEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_footerBar"));
+	
+	// Registers the default desktop component 
+	self.registerComponent(self.ctxKey,
+		self.options.displayHeaderBar,
+		self.options.displayWorkzone,
+		self.options.displayFooterBar,
+		self.options);			
+	// Activates the desktop
+	self.activate(self.ctxKey);
+};
+wncd.createDesktop = function(options) {return new wncd.Desktop(options);}
