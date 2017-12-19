@@ -152,7 +152,7 @@ class AddSubElementFormExecutor extends AddElementFormExecutor {
 		return $cancelJsCode;
 	}
 
-	protected function realoadAfterCheckedRecord($p, $exec){
+	protected function reloadAfterCheckedRecord($p, $exec){
 		$rootElementId = $this->getWigiiExecutor()->getConfigurationContext()->getCurrentSubElementPathFromRoot()->getFirstLinkSelector()->getOwnerElementId();
 		$exec->addJsCode("updateElementInList('" . $rootElementId . "');");
 	}

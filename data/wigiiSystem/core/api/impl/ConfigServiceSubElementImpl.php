@@ -24,6 +24,7 @@
 /**
  * Sub Elements Config Service
  * Created by CWE on February 4th 2014
+ * Updated by Medair (CWE) on 17.12.2017 to propagate freeMemory to linked ConfigServices
  */
 class ConfigServiceSubElementImpl implements ConfigService
 {	
@@ -64,6 +65,8 @@ class ConfigServiceSubElementImpl implements ConfigService
 		unset($this->currentConfigUrl);
 		unset($this->currentLinkSelector);
 		unset($this->currentLinkSelectorList);
+		if(isset($this->configS) && method_exists($this->configS, 'freeMemory')) $this->configS->freeMemory();
+		if(isset($this->configServiceImpl) && method_exists($this->configServiceImpl, 'freeMemory')) $this->configServiceImpl->freeMemory();
 		$this->lockedForUse = false;		
 	}
 	

@@ -114,14 +114,14 @@ class ExternalAccessDeleteFormExecutor extends EditElementFormExecutor {
 				//'', $transS->t($p, "ok"), null, null, "done");
 				'window.close()', $transS->t($p, "ok"), null, null, "done");
 			
-		$this->realoadAfterCheckedRecord($p, $exec);
+		$this->reloadAfterCheckedRecord($p, $exec);
 	}
 	
 	protected function getExternalAccessCode($p, $exec){
 		return $exec->getCrtParameters(0);
 		
 	}
-	protected function realoadAfterCheckedRecord($p, $exec){ 
+	protected function reloadAfterCheckedRecord($p, $exec){ 
 		//no reload. The operation done is not disaparing automaticaly, and on the click there is the link to view the new details.
 	}
 	

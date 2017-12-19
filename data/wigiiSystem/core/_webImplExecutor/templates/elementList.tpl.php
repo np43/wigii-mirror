@@ -48,12 +48,10 @@ $pageSize = (int)$configS->getParameter($p, $exec->getCrtModule(), "listPageSize
 if($pageSize == null) $pageSize = 250; //default value
 $lc->setPageSize($pageSize);
 
-// Hide searchbox when parameters is equal to 1 
+// Hide searchbox when parameters is equal to 1
 if($configS->getParameter($p, $exec->getCrtModule(), "hide_searchBar") == "1"){
-	$exec->addJsCode("$('#searchBar > .firstBox, #searchBar > .toolbarBox').hide();");
     $exec->addJsCode("$('nav #searchField').hide();");
 } else {
-	$exec->addJsCode("$('#searchBar > .firstBox, #searchBar > .toolbarBox').show();");
     $exec->addJsCode("$('nav #searchField').show();");
 }
 
@@ -65,6 +63,12 @@ $url = null;
 if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1" && $crtGroupP){
     $crtGroupP = $groupAS->getGroup($p, $crtGroupP->getId());
     $url = $this->includeGroupPortal($crtGroupP, $p, $exec, $transS, $configS);
+}
+
+
+if($url){
+    $exec->addJsCode("$('nav #searchField').hide();");
+    $exec->addJsCode("$('nav #searchBar').hide();");
 }
 
 /**

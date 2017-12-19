@@ -31,9 +31,9 @@ $dtXml = $field->getDataType()->getXml();
 
 //defining width if existant
 if($parentWidth != null && $labelWidth != null){
-	$inputWithDatePickerWidth = $parentWidth-$labelWidth-5-25;
+	$inputWithDatePickerWidth = $parentWidth-$labelWidth-5-35;
 	$halfInputWidth = ((($parentWidth)/2)-5);
-	$valueWidth = " width: 100%; max-width:".($parentWidth-$labelWidth)."px; text-align: left;";
+	$valueWidth = " width: 100%; max-width:".($parentWidth-$labelWidth-6)."px; text-align: left;";
 	$labelWidth = " width: 100%; max-width:".($labelWidth-20)."px; ";
 }
 
@@ -125,7 +125,7 @@ if($fieldXml["onlyDate"]!="1"){
 	$inputName = $fieldName.'_'.$subFieldName;
 	$isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, ($valueWidth-4), $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, ($valueWidth), $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
 	$this->displayForm_1_TillClassDefinition();
 	$this->displayForm_2_TillStyleDefinition($labelWidth, $valueWidth, $subFieldName, $readonly, $disabled);
 	$this->displayForm_3a_CloseStyleBeginValueAsAttribute();
@@ -141,7 +141,7 @@ if($fieldXml["onlyDate"]!="1"){
 	$inputName = $fieldName.'_'.$subFieldName;
 	$isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, ($valueWidth-4), $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, ($valueWidth), $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
 	$this->displayForm_1_TillClassDefinition();
 	$this->displayForm_2_TillStyleDefinition($labelWidth, $valueWidth, $subFieldName, $readonly, $disabled);
 	$this->displayForm_3a_CloseStyleBeginValueAsAttribute();

@@ -24,6 +24,7 @@
 /**
  * The data flow service implementation
  * Created by CWE on 28 mai 2013
+ * Modified by Medair (CWE) 15.12.2017 to add public method clearDataSourceCache
  */
 class DataFlowServiceImpl implements DataFlowService
 {
@@ -945,6 +946,15 @@ class DataFlowServiceImpl implements DataFlowService
 	// data flow source caching
 	
 	private $dataSourceCache = array();
+	
+	/**
+	 * Resets the internal data source cache
+	 */
+	public function clearDataSourceCache() {
+	    $this->executionSink()->publishStartOperation('clearDataSourceCache', $principal);
+	    $this->dataSourceCache = array();
+	    $this->executionSink()->publishEndOperation('clearDataSourceCache', $principal);
+	}
 	
 	protected function cacheDataSource($principal, $cacheKey, $source, $freeMemoryOfSource=true, $wigiiEventsSubscriber=null) {
 		$this->executionSink()->publishStartOperation('cacheDataSource', $principal);

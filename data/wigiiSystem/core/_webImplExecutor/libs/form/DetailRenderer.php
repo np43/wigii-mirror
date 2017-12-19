@@ -246,6 +246,9 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		if($fieldXml["noMargin"]=="1"){
 			$style .= "margin-right:0px;";
 		}
+        if($fieldXml["displayHidden"]=="1"){
+            $style .= "display:none;";
+        }
 		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.($dataType!=null?'data-wigii-datatype="'.$dataTypeName.'"':'').' >');
 		if($dataType!=null){
 			$additionalInformations = $rm->getAdditionalInformation($fieldName);

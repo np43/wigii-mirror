@@ -2016,6 +2016,33 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    }
 	    return date("Y-m-d H:i:s",max($result));
 	}
+
+    /**
+     * Give the percentage of already elapsed time between startDate and endDate (Based on now)
+     * FuncExp signature : <code>ctlTimeProgression(startDate:Dates, endDates:Dates)</code><br/>
+     * @return Number Percentage of already elapsed time between startDate and endDate (Based on now)
+     */
+    public function ctlTimeProgression($args){
+        $nArgs = $this->getNumberOfArgs($args);
+        if($nArgs < 2){
+            throw new FuncExpEvalException ( "ctlTimeProgression takes at least 2 arguments", FuncExpEvalException::INVALID_ARGUMENT );
+        }
+
+        $start = $this->evaluateArg ($args[0]);
+        $end = $this->evaluateArg ($args[1]);
+
+        $returnValue = 0;
+        $start = strtotime($start);
+        $end = strtotime($end);
+        $diff = $end - $start;
+        $actual = time() - $start;
+
+        if($actual >= $diff) $actual = $diff;
+
+        if($diff>0) $returnValue = ($actual/$diff)*100;
+
+        return $returnValue;
+    }
 	
 	
 	

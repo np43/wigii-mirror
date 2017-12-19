@@ -178,6 +178,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		    elseif($rm->isForExternalAccess() && $rm->getRecord()->getFieldValue($fieldName) == 0 && $fieldXml['displayEvenIfEmpty']!='1') return;
 		}
 
+		if(($dataType instanceof Texts || $dataType instanceof Varchars) && $rm->isForExternalAccess())throw new ServiceException('Varchars and Texts are not supported in public',ServiceException::UNSUPPORTED_OPERATION);
+
 		//define base attributes of field such:
 		//	- $idField
 		//	- $error
@@ -311,6 +313,9 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if($fieldXml["noMargin"]=="1"){
 			$style .= "margin-right:0px;";
 		}
+		if($fieldXml["displayHidden"]=="1"){
+		    $style .= "display:none;";
+        }
 		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.$help.($dataType!=null?' data-wigii-datatype="'.$dataTypeName.'"':'').' >');
 		if($dataType!=null){
 			$additionalInformations = $rm->getAdditionalInformation($fieldName);
@@ -455,7 +460,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
             $valueWidth = $this->getValueWidth();
         }
         if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){
-            $valueWidth -= 20;
+            $valueWidth -= 25;
         }
         $useMultipleColumn = (int)(string)$fieldXml["useMultipleColumn"];
 		if($useMultipleColumn>0){
@@ -538,6 +543,15 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		}
 		//$this->debugLogger()->logEndOperation('resolveDivExp');
 	}
+
+    /**
+     * Overrides parent method to retrieve 5 pixel in public form and if no group due to box-sizing = border-box
+     */
+    public function getValueWidth(){
+        $returnValue = parent::getValueWidth();
+        if($this->getFormExecutor()->isForExternalAccess() && $this->getCrtFieldGroup() == 'root') $returnValue -= 5;
+        return $returnValue;
+    }
 }
 
 

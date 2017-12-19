@@ -206,7 +206,7 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 		$exec->addJsCode("if(checkOpenItemTemp_url!=null){update(checkOpenItemTemp_url, true); checkOpenItemTemp_url=null;}");
 	}
 
-	protected function realoadAfterCheckedRecord($p, $exec){
+	protected function reloadAfterCheckedRecord($p, $exec){
 		$exec->addJsCode("addElementInList('" . $this->getRecord()->getId() . "');");
 		//invalid the cache of the list
 		$ids = $this->getCurrentSelectedGroup($p,$exec);
@@ -227,7 +227,7 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 				$this->insertElementOnAutosave($p, $exec, $this->getRecord());
 				$exec->addRequests($exec->getIdAnswer()."/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/edit/".$this->getRecord()->getId()."/autoadd");
 				$this->addAutoSaveJSCode($p, $exec);
-				$this->realoadAfterCheckedRecord($p, $exec);
+				$this->reloadAfterCheckedRecord($p, $exec);
 				return;
 			}
 		}

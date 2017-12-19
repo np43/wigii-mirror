@@ -24,6 +24,7 @@
 /**
  * Created on 15 sept. 09 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) on 15.12.2017 to support keepModifyingExp config parameter
  */
 class EditElementFormExecutor extends FormExecutor {
 
@@ -213,35 +214,48 @@ class EditElementFormExecutor extends FormExecutor {
 
 		$exec->addJsCode("actOnCloseDialog('".$exec->getIdAnswer()."');");
 
-		// if subelement then reloads parent
-		if($this->getRecord()->isSubElement()) {
-			$exec->addRequests($exec->getIdAnswer()."/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/detail/".$this->getRecord()->getElementParentId());
+		// Medair (CWE) if keepModifyingExp evaluates to 1 then reloads edit form
+		$keepModifyingExp = $this->getWigiiExecutor()->getConfigurationContext()->getParameter($p, $this->getRecord()->getModule(), "keepModifyingExp");
+		if($keepModifyingExp && $this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $keepModifyingExp, $this->getRecord()) == '1') {
+		    $exec->addRequests($exec->getIdAnswer()."/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/edit/".$this->getRecord()->getId());
+		    // Clears action from POST to force start state.
+		    if($_POST["action"] != null) unset($_POST["action"]); 
+		    // Resets DataFlowService, AttributeExpConfigController and ConfigService in memory cache to recalculate correctly the dynamic attributes.
+		    ServiceProvider::getExclusiveAccessObject('AttributeExpConfigController')->clearCache()->freeMemory();
+		    $dfS = ServiceProvider::getDataFlowService(); if(method_exists($dfS, 'clearDataSourceCache')) $dfS->clearDataSourceCache();
+		    ServiceProvider::getConfigService()->freeMemory();
 		}
-		// else
 		else {
-			if($exec->getIdAnswer()=="mainDiv" || $this->getWigiiExecutor()->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "reloadDetailAfterModify")=="1"){
-				//reload detail
-				$exec->addRequests($exec->getIdAnswer()."/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/detail/".$this->getRecord()->getId());
-				// Resets ConfigService in memory cache to recalculate correctly the dynamic attributes.
-				ServiceProvider::getConfigService()->freeMemory();
-			} else {
-				$exec->addJsCode("$('#groupPanel li>div.highlight').removeClass('highlight');");
-				$this->getWigiiExecutor()->operationSuccessfullMessage($exec->getIdAnswer(), 350, $transS->t($p, "operationDoneSuccessfully"), "", "done");
-			}
+    		// if subelement then reloads parent
+    		if($this->getRecord()->isSubElement()) {
+    			$exec->addRequests($exec->getIdAnswer()."/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/detail/".$this->getRecord()->getElementParentId());
+    		}
+    		// else
+    		else {
+    			if($exec->getIdAnswer()=="mainDiv" || $this->getWigiiExecutor()->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "reloadDetailAfterModify")=="1"){
+    				//reload detail
+    				$exec->addRequests($exec->getIdAnswer()."/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/detail/".$this->getRecord()->getId());
+    				// Resets DataFlowService, AttributeExpConfigController and ConfigService in memory cache to recalculate correctly the dynamic attributes.
+    				ServiceProvider::getExclusiveAccessObject('AttributeExpConfigController')->clearCache()->freeMemory();
+    				$dfS = ServiceProvider::getDataFlowService(); if(method_exists($dfS, 'clearDataSourceCache')) $dfS->clearDataSourceCache();
+    				ServiceProvider::getConfigService()->freeMemory();
+    			} else {
+    				$exec->addJsCode("$('#groupPanel li>div.highlight').removeClass('highlight');");
+    				$this->getWigiiExecutor()->operationSuccessfullMessage($exec->getIdAnswer(), 350, $transS->t($p, "operationDoneSuccessfully"), "", "done");
+    			}
+    		}
 		}
-
-		//disable the cache of the element --> to realod change on next request
+		//disable the cache of the element --> to reload change on next request
 		$exec->invalidCache($p, 'elementDialog', "selectElementDetail",  "element/detail/".$this->getRecord()->getId());
 		if(!$this->getRecord()->isSubElement()){
 		    $this->getListContext()->setCrtSelectedItem($this->getRecord()->getId());
 		}
-		//No more reorder after change, this is peinful for the user! $this->getListContext()->setSortedBy("sys_date", false);
 
-		$this->realoadAfterCheckedRecord($p, $exec);
+		$this->reloadAfterCheckedRecord($p, $exec);
 		// continues interrupted navigation if any.
 		$exec->addJsCode("if(checkOpenItemTemp_url!=null){update(checkOpenItemTemp_url, true); checkOpenItemTemp_url=null;}");
 	}
-	protected function realoadAfterCheckedRecord($p, $exec){
+	protected function reloadAfterCheckedRecord($p, $exec){
 		if($exec->getIdAnswer()!="mainDiv"){
 			if($this->getRecord()->isSubElement()){
 				$rootElementId = $this->getWigiiExecutor()->getConfigurationContext()->getCurrentSubElementPathFromRoot()->getFirstLinkSelector()->getOwnerElementId();

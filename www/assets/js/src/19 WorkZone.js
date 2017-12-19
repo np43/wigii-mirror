@@ -3977,6 +3977,8 @@ function manageWorkzoneViewDocked(action, cardSize){
 			$('#moduleView').css({'float':'none'});
 			$('.firstBox, .toolbarBox','#searchBar').css('display','block');
 			$('#searchBar .middleBox').css('display','none');
+			// CWE 14.12.2017 unhighlights folders containing element in the group panel
+			if($('#groupPanel').length){ $('#groupPanel li>div.highlight').removeClass('highlight'); }
 			break;
 	};
 	

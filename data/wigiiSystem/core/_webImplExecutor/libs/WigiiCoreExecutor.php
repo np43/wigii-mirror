@@ -1899,7 +1899,7 @@ class WigiiCoreExecutor {
 	public function openAsDialog($domId, $width, $dialogTitle = null, $closeJsCode = null) {
 		$exec = ServiceProvider :: getExecutionService();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
-		
+
 		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
 			$exec->addJsCode("
 				if($('#elementDialog').is(':ui-dialog')) {
@@ -6491,7 +6491,7 @@ onUpdateErrorCounter = 0;
 				$form->getTrm()->setP($p);
 				$form->setIsForExternalAccess(true);
 				$form->setIsDialog(false);
-				$form->setCorrectionWidth(19);
+				//$form->setCorrectionWidth(19);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				if($groupSubscriptionRecord && $groupSubscriptionRecord->getFieldValue("subscriptionEnableCaptcha")){
@@ -6782,9 +6782,9 @@ onUpdateErrorCounter = 0;
 				}
 				//eput($record);
                 if($configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic")){
-                    $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic");
+                    $totalWidth = $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic");
                 }else{
-                    $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
+                    $totalWidth = $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
                 }
                 if($labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic")){
                     $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic");
@@ -6801,7 +6801,7 @@ onUpdateErrorCounter = 0;
 				$form->getTrm()->setP($p);
 				$form->setIsForExternalAccess(true);
 				$form->setIsDialog(false);
-				$form->setCorrectionWidth(19);
+				//$form->setCorrectionWidth(19);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				if($record->getFieldValue("subscriptionEnableCaptcha")){
@@ -10008,7 +10008,7 @@ onUpdateErrorCounter = 0;
 						//invalidate the cache of the element detail
 						$exec->invalidCache($p, 'elementDialog', "selectElementDetail", "element/detail/" . $elementId);
 						if($element && $element->isSubElement()){
-							//disable the cache of the element parent --> to realod change on next request
+							//disable the cache of the element parent --> to reload change on next request
 							$exec->invalidCache($p, 'elementDialog', "selectElementDetail",  "element/detail/".$element->getElementParentId());
 						}
 						//update the element in the list
@@ -10026,7 +10026,7 @@ onUpdateErrorCounter = 0;
 						//$exec->addRequests($exec->getIdAnswer()."/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $element->getModule()->getModuleUrl() . "/element/detail/".$elementId);
 						$exec->addRequests($exec->getIdAnswer()."/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/element/detail/".$elementId);
 						if($element && $element->isSubElement()){
-							//disable the cache of the element parent --> to realod change on next request
+							//disable the cache of the element parent --> to reload change on next request
 							$exec->invalidCache($p, 'elementDialog', "selectElementDetail",  "element/detail/".$element->getElementParentId());
 							$rootElementId = $configS->getCurrentSubElementPathFromRoot()->getFirstLinkSelector()->getOwnerElementId();
 							$exec->addJsCode("updateElementInList('" . $rootElementId . "');");

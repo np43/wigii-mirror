@@ -31,7 +31,7 @@ $dtXml = $field->getDataType()->getXml();
 
 //defining width if existant
 if($parentWidth != null && $labelWidth != null){
-	$valueWidth = " width:100%; max-width:".($parentWidth-$labelWidth)."px; ";
+	$valueWidth = " width:100%; max-width:".($parentWidth-$labelWidth-5)."px; ";
 	$labelWidth = " width:100%; max-width:".($labelWidth-20)."px; ";
 }
 

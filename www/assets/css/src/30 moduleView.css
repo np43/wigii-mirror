@@ -302,7 +302,7 @@
 *********************************/
 #moduleView .calendar{
 	overflow-x:auto;
-	overflow-y:scroll;
+	overflow-y:auto;
 }
 #moduleView .calendar div.fc-content{
 	overflow-x:hidden;

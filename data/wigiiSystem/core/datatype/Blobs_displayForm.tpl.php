@@ -102,6 +102,6 @@ if($fieldXml["template"]!=null && $_POST["action"]==null && ($this->getRecord()-
  ******************/
 if($fieldXml["displayOnRightSide"]=="1" && !$this->isForNotification() && $this->getState()!="addMessageToNotification"){
 	$fieldId = $this->getFormRenderer()->getFormId()."__".$fieldName;
-	$this->getFormRenderer()->addJsCodeAfterShow("actOnDisplayOnRightSide('".$exec->getIdAnswer()."', '$fieldId', ".max(($fieldXml["htmlArea"]=="1" ? 300 : 200), min(400, $this->getFormRenderer()->getValueWidth())).", ".($this->getFormRenderer()->getValueWidth()+$this->getFormRenderer()->getLabelWidth()+50).");");
+	$this->getFormRenderer()->addJsCodeAfterShow("actOnDisplayOnRightSide('".$exec->getIdAnswer()."', '$fieldId', ".max(($fieldXml["htmlArea"]=="1" ? 300 : 200), min(400, $this->getFormRenderer()->getValueWidth()))."+10, ".($this->getFormRenderer()->getValueWidth()+$this->getFormRenderer()->getLabelWidth()+50).");");
 }
 

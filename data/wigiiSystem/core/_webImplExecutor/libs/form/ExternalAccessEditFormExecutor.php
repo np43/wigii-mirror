@@ -143,7 +143,7 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 		//other wise we take the code in paramater
 
 	}
-	protected function realoadAfterCheckedRecord($p, $exec){
+	protected function reloadAfterCheckedRecord($p, $exec){
 		//no reload. The operation done is not disaparing automaticaly, and on the click there is the link to view the new details.
 	}
 
@@ -308,7 +308,7 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 				//'', $transS->t($p, "ok"), null, null, "done");
 				'window.close()', $transS->t($p, "ok"), null, null, "done");
 
-			$this->realoadAfterCheckedRecord($p, $exec);
+			$this->reloadAfterCheckedRecord($p, $exec);
 		}
 	}
 
@@ -412,7 +412,7 @@ class ExternalAccessEditFormExecutor extends EditElementFormExecutor {
 		$this->getFormRenderer()->resetJsCodeAfterShow();
 
 		echo '<div class="public public'.str_replace(" ", "_", $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()).'" style="';
-		if($this->getTotalWidth()) echo ' width: 100%; max-width:'.$this->getTotalWidth().'px; ';
+		if($this->getTotalWidth()) echo ' width: 100%; max-width:'.($this->getTotalWidth()+40).'px; ';
 		if($this->isDialog()) echo ' float:left; ';
 		echo ' margin-right:auto; margin-left:auto; padding:20px; background-color:#fff; ';
 		echo ' " >';

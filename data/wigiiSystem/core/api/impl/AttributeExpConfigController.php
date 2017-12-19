@@ -24,6 +24,7 @@
 /**
  * A configuration controller which replaces 'attributeExp' nodes with their expanded form.
  * Created by CWE on 03 March 2014
+ * Updated by Medair (CWE) on 15.12.2017 to add a public clearCache method
  */
 class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 {
@@ -47,6 +48,13 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 		parent::freeMemory();
 	}
 
+	public function clearCache() {
+	    $this->debugLogger()->logBeginOperation('clearCache');
+	    $this->configCache = array();
+	    $this->debugLogger()->logEndOperation('clearCache');
+	    return $this;
+	}
+	
 	// Dependency injection
 
 	private function debugLogger()

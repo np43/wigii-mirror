@@ -723,6 +723,10 @@ function actOnDisplayOnRightSide(elementDialogId, fieldId, journalItemWidth, tot
 			if($('#'+elementDialogId+'').closest('.ui-dialog').position()) $('#'+elementDialogId+'').closest('.ui-dialog').css('left', Math.min($('#'+elementDialogId+'').closest('.ui-dialog').position().left, $(window).width()-$('#'+elementDialogId+'').closest('.ui-dialog').outerWidth()-5));
 //			$('#'+elementDialogId+' form').wrapInner('<div class="center" />');
 //			$('#'+elementDialogId+' form>.center').before('<div style="position:fixed;margin-left:'+(totalWidth+12)+'px;border-width:2px;padding:5px;width:'+(journalItemWidth+20)+'px;background-color:#fff;" id="elementRightSide" class="SBIB ui-corner-all"></div>');
+            $('#'+elementDialogId).ready(function(){
+                var width = $('.ui-dialog').width()+20;
+                $('.ui-dialog').css('width', width);
+            });
 		} else {
 			return;
 		}
@@ -1332,6 +1336,62 @@ function setListenerForAutoSave(formId, submitUrlForAutoSave, labelAutoSaveTrigg
 	}
 	
 }
+
+//
+function setListenerForTimeline(formId, fieldId, nbColumn, options){
+    var historyFields = options.historyFields;
+    historyFields = $.parseJSON(historyFields);
+    var d = new Date();
+    var date = d.getDate() + '.' + (d.getMonth()+1) + '.' + d.getFullYear();
+
+    $("#"+fieldId+' input').click(function(){
+    	if($(this).attr('class') == 'inTimeline'){
+            if($(this).prop('checked') == false){
+                $(this).prop('checked', false);
+            }else{
+                $(this).prop('checked', true);
+            }
+
+            var index = $(this).parent().index()-1;
+            var revIndex = nbColumn - index;
+            $(this).parent().parent().children('div .child:lt('+index+')').each(function(){
+                var fieldName = $(this).children('input').attr('value');
+                var fieldId = formId+'_'+historyFields[fieldName]+'_value_text';
+
+                console.log(historyFields[fieldName]);
+
+                $(this).children('input').prop('checked', true);
+
+                if(!$('#'+fieldId).attr('value')){
+                    $('#'+fieldId).attr('value', date);
+                }
+            });
+            $(this).parent().parent().children('div .child:gt(-'+revIndex+')').each(function(){
+                $(this).children('input').prop('checked', false);
+            });
+            $("#"+formId+' .value').children('input').each(function(){
+                $(this).prop('checked', false);
+            });
+
+            if($(this).prop('checked') == true){
+                $(this).prop('checked', true);
+
+                var fieldName = $(this).attr('value');
+                var field = formId+'_'+historyFields[fieldName]+'_value_text';
+
+                $(this).attr('id');
+
+                if(!$('#'+field).attr('value')){
+                    $('#'+field).attr('value', date);
+                }
+
+            }else{
+                $("#"+fieldId).prop('checked', false);
+            }
+		}
+    });
+}
+
 // called each time the server historizes an online html file.
 function actOnHistorizedHtmlFile(fieldName) {
 	// blocks further history if CKEditor is still open on the same file during autosave flow

@@ -265,7 +265,7 @@ class FieldRenderer extends Model {
 	protected function setFieldWidth($fieldGroupName, $totalWidth, $labelWidth){
 		$this->fieldTotalWidth[$fieldGroupName] = $totalWidth;
 		$this->fieldLabelWidth[$fieldGroupName] = $labelWidth;
-		$this->fieldValueWidth[$fieldGroupName] = $totalWidth-$labelWidth-$this->getFieldOffset();
+		$this->fieldValueWidth[$fieldGroupName] = $totalWidth-$labelWidth-$this->getFieldOffset()-5;
 		$this->fieldIsInLineWidth[$fieldGroupName] = $totalWidth-$this->getFieldOffset();
 	}
 }

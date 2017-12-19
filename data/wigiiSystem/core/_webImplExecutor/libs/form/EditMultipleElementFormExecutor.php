@@ -148,7 +148,7 @@ class EditMultipleElementFormExecutor extends EditElementFormExecutor implements
 		$this->getElementPAListWigiiBag()->applyOperator($op, $value, $dataType->getDataTypeName(), $fieldName, $subFieldName, $lang, $field);
 	}
 
-	protected function realoadAfterCheckedRecord($p, $exec){
+	protected function reloadAfterCheckedRecord($p, $exec){
 		$transS = ServiceProvider::getTranslationService();
 		$configS = $this->getWigiiExecutor()->getConfigurationContext();
 		//invalid the cache of each element
@@ -185,7 +185,7 @@ class EditMultipleElementFormExecutor extends EditElementFormExecutor implements
 
 		$exec->addJsCode("actOnCloseDialog('".$exec->getIdAnswer()."');");
 
-		$this->realoadAfterCheckedRecord($p, $exec);
+		$this->reloadAfterCheckedRecord($p, $exec);
 	}
 
 	protected function actOnCheckedRecord($p, $exec) {

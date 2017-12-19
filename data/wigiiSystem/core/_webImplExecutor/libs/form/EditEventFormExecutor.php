@@ -36,7 +36,7 @@ class EditEventFormExecutor extends EditElementFormExecutor {
 		return $fe;
 	}
 
-	protected function realoadAfterCheckedRecord($p, $exec){
+	protected function reloadAfterCheckedRecord($p, $exec){
 		$exec->addJsCode("$('#moduleView .calendar').fullCalendar('refetchEvents');");
 	}
 

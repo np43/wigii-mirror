@@ -56,10 +56,8 @@ $crtModule = $exec->getCrtModule()->getModuleUrl();
 
 //Hide searchbox when parameters is equal to 1
 if($configS->getParameter($p, $exec->getCrtModule(), "hide_searchBar") == "1"){
-	$exec->addJsCode("$('#searchBar > .firstBox, #searchBar > .toolbarBox').hide();");
     $exec->addJsCode("$('nav #searchField').hide();");
 } else {
-	$exec->addJsCode("$('#searchBar > .firstBox, #searchBar > .toolbarBox').show();");
     $exec->addJsCode("$('nav #searchField').show();");
 }
 
@@ -73,6 +71,11 @@ if($crtGroupP) $crtGroupP = $groupAS->getGroup($p, $crtGroupP->getId());
 $url = null;
 if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1" && $crtGroupP){    
     $url = $this->includeGroupPortal($crtGroupP, $p, $exec, $transS, $configS);
+}
+
+if($url){
+    $exec->addJsCode("$('nav #searchField').hide();");
+    $exec->addJsCode("$('nav #searchBar').hide();");
 }
 
 /**
@@ -189,7 +192,7 @@ if($crtDate==null) $crtDate = "crtYear=".date("Y")."; crtMonth=".(date("n")-1)."
 
 $exec->addJsCode("$crtDate setListenersToCalendar('".($crtGroupP ? ($crtGroupP->getDbEntity()->getGroupParentId() ? $crtGroupP->getDbEntity()->getGroupParentId() : 0 ) : null)."', '".($crtGroupP ? $transS->h($p, "groupUp") : null)."', '$crtView', crtYear, crtMonth, crtDay);");
 
-?><div class="dataZone calendar"><?
+?><div class="dataZone calendar" style="margin-left:10px; margin-right: 10px;"><?
 /**
  * element List context menu
  */
