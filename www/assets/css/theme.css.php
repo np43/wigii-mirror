@@ -107,6 +107,10 @@ button.publicFormBorder:hover {
 .S {
   background-color:#<?=$selected;?>;
 }
+#moduleView .blog div.dataBlog div.el.S {
+    background-color:#<?=$odd;?>;
+    box-shadow: 2px 2px 5px #888888;
+}
 .M {
   background-color:#<?=$multipleSelected;?>;
 }
