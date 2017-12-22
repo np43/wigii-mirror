@@ -228,6 +228,10 @@ div.fieldGroupRight div.SBIB {
 	background-color:#<?=$toolBar;?>;
 	border:none;
 	padding:4px 0px 4px 10px;
+	box-sizing:content-box;
+}
+div.fieldGroupRight div.SBIB * {
+	box-sizing:border-box;
 }
 div.fieldGroupRight>div.SBIB>div.field{
 	border-bottom:5px solid #fff;
