@@ -41,7 +41,7 @@ body {
 /*
  * Display the label with the wigii style instead of the bootstrap style
  */
-#workZone .label, .ui-dialog .label, #detailElement_form .label, .public .label, #editElement_form .label {
+div.label, span.label {
 	display: block;
 	padding-right: 20px;
 	padding-top: 8px;
