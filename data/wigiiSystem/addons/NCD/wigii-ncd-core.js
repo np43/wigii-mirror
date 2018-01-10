@@ -431,8 +431,8 @@
 			/**
 			 * Creates and emits a Checkbox
 			 */
-			self.createCheckbox = function(cssClass) {
-				return new wigiiNcd.CheckBox(self, cssClass);
+			self.createCheckbox = function(cssClass,index) {
+				return new wigiiNcd.CheckBox(self, cssClass,index);
 			};
 			/**
 			 * Creates and emits a UnorderedList
@@ -1258,18 +1258,13 @@
 		 * NCD CheckBox
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the checkbox component
 		 */
-		wigiiNcd.CheckBox = function(htmlEmitter, cssClass) {
+		wigiiNcd.CheckBox = function(htmlEmitter, cssClass,index) {
 			var self = this;
 			self.className = 'CheckBox';
-			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now()+(index!==undefined?index:'');
 			
-			self.context = {};
-
-			var htmlB = wigiiNcd.getHtmlBuilder();
-			htmlB.putStartTag('input','type','checkbox','class',htmlEmitter.emittedClass()+(cssClass?' '+cssClass:''), "id", self.ctxKey);		
-			htmlB.putEndTag('input');
-			htmlEmitter.putHtml(htmlB.html());
-			
+			self.context = {index:index};
+							
 			// Properties
 			
 			self.$ = function() {return $("#"+self.ctxKey);	};
@@ -1289,12 +1284,7 @@
 			 * Registers a onClick event handler
 			 */
 			self.onClick = function(onClick) {
-				if($.isFunction(onClick)) {
-					if(!self.context.onClickSubscribers) {
-						self.context.onClickSubscribers = [];
-						// registers onclick event handler on checkbox
-						$("#"+self.ctxKey).click(function(){self.toggle();self.onClick();})
-					}
+				if($.isFunction(onClick)) {					
 					self.context.onClickSubscribers.push(onClick);
 				}
 				else if(onClick===undefined) {
@@ -1311,6 +1301,18 @@
 			 * Toggles the value of the checkbox
 			 */
 			self.toggle = function() {self.checked(!self.checked()); return self;}
+			
+			// Html emission
+			var htmlB = wigiiNcd.getHtmlBuilder();
+			htmlB.putStartTag('input','type','checkbox','class',htmlEmitter.emittedClass()+(cssClass?' '+cssClass:''), "id", self.ctxKey);		
+			htmlB.putEndTag('input');
+			htmlEmitter.putHtml(htmlB.html());
+			
+			if(!self.context.onClickSubscribers) {
+				self.context.onClickSubscribers = [];
+				// registers onclick event handler on checkbox
+				$("#"+self.ctxKey).click(function(){self.toggle();self.onClick();})
+			}
 		};
 		
 		/**
@@ -3451,19 +3453,24 @@
 							case "PasswordInput":
 								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createPasswordInput().color(couleurFond, couleurTexte);
 								 break;
+							case "Empty":
+								self.context.display = undefined;
+								break;
 							default: throw wigiiNcd().createServiceException("Le type de champ '"+type+"' n'est pas supporté.",wigiiNcd().errorCodes.INVALID_ARGUMENT);
 						}
 					}
 					else self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextInput().color(couleurFond, couleurTexte);
-					self.context.display.id = function() {return self.context.display.ctxKey;};
-					self.context.display.$ = function() {return $('#'+self.context.display.ctxKey);};
-					self.context.display.couleur = self.context.display.color;
-					
-					// Behavior: 
-					// - when typing, saves text
-					// - on click, changes current form field to this one
-					self.context.display.onInput(function(d,txt){d.context.text=txt;self.context.changed = true;});
-					self.context.display.$().click(function(){self.context.formulaire.context.currentFieldName=self.context.nom;});
+					if(self.context.display) {
+						self.context.display.id = function() {return self.context.display.ctxKey;};
+						self.context.display.$ = function() {return $('#'+self.context.display.ctxKey);};
+						self.context.display.couleur = self.context.display.color;
+						
+						// Behavior: 
+						// - when typing, saves text
+						// - on click, changes current form field to this one
+						self.context.display.onInput(function(d,txt){d.context.text=txt;self.context.changed = true;});
+						self.context.display.$().click(function(){self.context.formulaire.context.currentFieldName=self.context.nom;});
+					}
 					return self;
 				}; 
 				// Méthodes
@@ -3483,6 +3490,27 @@
 					var field = self.fields[nom];
 					if(field) throw wigiiNcd().createServiceException("Le champ "+nom+" existe déjà dans le formulaire, il ne peut pas être créé une deuxième fois. Choisissez un autre nom.",wigiiNcd().errorCodes.INVALID_ARGUMENT);
 					self.fields[nom] = new self.Field(self, nom, label, couleurTexte, couleurFond,"PasswordInput");
+					return self;
+				};
+				self.creerChampCustom = function(nom, label, valueRenderer, couleurTexte, couleurFond) {
+					var field = self.fields[nom];
+					if(field) throw wigiiNcd().createServiceException("Le champ "+nom+" existe déjà dans le formulaire, il ne peut pas être créé une deuxième fois. Choisissez un autre nom.",wigiiNcd().errorCodes.INVALID_ARGUMENT);
+					// creates an empty field
+					self.fields[nom] = new self.Field(self, nom, label, couleurTexte, couleurFond,"Empty");
+					// extracts valueRenderer additional arguments
+					var args;
+					if(arguments.length > 5) args = Array.prototype.slice.call(arguments,5);
+					else args = [];
+					// runs the valueRenderer into the context of the field value div					
+					var valueEmitter = self.fields[nom].$().find('div.etp-value').wncd('html');
+					if($.isFunction(valueRenderer)) {
+						var currentDiv = wncd.currentDiv();
+						wncd.programme.context.html(valueEmitter);
+						var valueHtml = valueRenderer.apply(null,args);
+						if(valueHtml!==undefined) valueEmitter.putHtml(valueHtml);
+						wncd.programme.context.html(currentDiv);
+					}
+					else valueEmitter.putHtml(valueRenderer);
 					return self;
 				};
 				self.champ = function(nom) {
@@ -3509,6 +3537,9 @@
 
 				// English translation
 				self.createField = self.creerChamp;
+				self.createTextField = self.creerChampTexte;
+				self.createPasswordField = self.creerChampPassword;
+				self.createCustomField = self.creerChampCustom;
 				self.field = self.champ;
 				self.fieldExist = self.champExiste;
 				self.currentField = self.champCourant;
@@ -3543,6 +3574,9 @@
 		},
 		// Méthodes
 		creerChamp : function(nom, label, couleurTexte, couleurFond) {return formulaire.no('default').creerChamp(nom, label, couleurTexte, couleurFond);},
+		creerChampTexte : function(nom, label, couleurTexte, couleurFond) {return formulaire.no('default').creerChampTexte(nom, label, couleurTexte, couleurFond);},
+		creerChampPassword : function(nom, label, couleurTexte, couleurFond) {return formulaire.no('default').creerChampPassword(nom, label, couleurTexte, couleurFond);},
+		creerChampCustom : function(nom, label, valueRenderer, couleurTexte, couleurFond) {return formulaire.no('default').creerChampCustom(nom, label, valueRenderer, couleurTexte, couleurFond);},
 		champ : function(nom) {return formulaire.no('default').champ(nom);},
 		champExiste : function(nom) {return formulaire.no('default').champExiste(nom);},
 		champCourant : function(nom) {return formulaire.no('default').champCourant(nom);},
@@ -3596,6 +3630,9 @@
 	
 	wigiiNcdEtp.form = wigiiNcdEtp.formulaire;
 	wigiiNcdEtp.form.createField = wigiiNcdEtp.formulaire.creerChamp;
+	wigiiNcdEtp.form.createTextField = wigiiNcdEtp.formulaire.creerChampTexte;
+	wigiiNcdEtp.form.createPasswordField = wigiiNcdEtp.formulaire.creerChampPassword;
+	wigiiNcdEtp.form.createCustomField = wigiiNcdEtp.formulaire.creerChampCustom;
 	wigiiNcdEtp.form.field = wigiiNcdEtp.formulaire.champ;
 	wigiiNcdEtp.form.currentField = wigiiNcdEtp.formulaire.champCourant;
 	wigiiNcdEtp.form.empty = wigiiNcdEtp.formulaire.vider;
@@ -5756,187 +5793,6 @@ if (wncd.externals.Prism.languages.markup) {
 
 wncd.externals.Prism.languages.js = wncd.externals.Prism.languages.javascript;
 
-/**
- * Prism NormalizeWhitespace plugin
- */
-(function() {
-
-var assign = Object.assign || function (obj1, obj2) {
-	for (var name in obj2) {
-		if (obj2.hasOwnProperty(name))
-			obj1[name] = obj2[name];
-	}
-	return obj1;
-}
-
-function NormalizeWhitespace(defaults) {
-	this.defaults = assign({}, defaults);
-}
-
-function toCamelCase(value) {
-	return value.replace(/-(\w)/g, function(match, firstChar) {
-		return firstChar.toUpperCase();
-	});
-}
-
-function tabLen(str) {
-	var res = 0;
-	for (var i = 0; i < str.length; ++i) {
-		if (str.charCodeAt(i) == '\t'.charCodeAt(0))
-			res += 3;
-	}
-	return str.length + res;
-}
-
-NormalizeWhitespace.prototype = {
-	setDefaults: function (defaults) {
-		this.defaults = assign(this.defaults, defaults);
-	},
-	normalize: function (input, settings) {
-		settings = assign(this.defaults, settings);
-
-		for (var name in settings) {
-			var methodName = toCamelCase(name);
-			if (name !== "normalize" && methodName !== 'setDefaults' &&
-					settings[name] && this[methodName]) {
-				input = this[methodName].call(this, input, settings[name]);
-			}
-		}
-		return input;
-	},
-
-	/*
-	 * Normalization methods
-	 */
-	leftTrim: function (input) {
-		return input.replace(/^\s+/, '');
-	},
-	rightTrim: function (input) {
-		return input.replace(/\s+$/, '');
-	},
-	tabsToSpaces: function (input, spaces) {
-		spaces = spaces|0 || 4;
-		return input.replace(/\t/g, new Array(++spaces).join(' '));
-	},
-	spacesToTabs: function (input, spaces) {
-		spaces = spaces|0 || 4;
-		return input.replace(new RegExp(' {' + spaces + '}', 'g'), '\t');
-	},
-	removeTrailing: function (input) {
-		return input.replace(/\s*?$/gm, '');
-	},
-	// Support for deprecated plugin remove-initial-line-feed
-	removeInitialLineFeed: function (input) {
-		return input.replace(/^(?:\r?\n|\r)/, '');
-	},
-	removeIndent: function (input) {
-		var indents = input.match(/^[^\S\n\r]*(?=\S)/gm);
-
-		if (!indents || !indents[0].length)
-			return input;
-
-		indents.sort(function(a, b){return a.length - b.length; });
-
-		if (!indents[0].length)
-			return input;
-
-		return input.replace(new RegExp('^' + indents[0], 'gm'), '');
-	},
-	indent: function (input, tabs) {
-		return input.replace(/^[^\S\n\r]*(?=\S)/gm, new Array(++tabs).join('\t') + '$&');
-	},
-	breakLines: function (input, characters) {
-		characters = (characters === true) ? 80 : characters|0 || 80;
-
-		var lines = input.split('\n');
-		for (var i = 0; i < lines.length; ++i) {
-			if (tabLen(lines[i]) <= characters)
-				continue;
-
-			var line = lines[i].split(/(\s+)/g),
-			    len = 0;
-
-			for (var j = 0; j < line.length; ++j) {
-				var tl = tabLen(line[j]);
-				len += tl;
-				if (len > characters) {
-					line[j] = '\n' + line[j];
-					len = tl;
-				}
-			}
-			lines[i] = line.join('');
-		}
-		return lines.join('\n');
-	}
-};
-wncd.externals.Prism.plugins.NormalizeWhitespace = new NormalizeWhitespace({
-	'remove-trailing': true,
-	'remove-indent': true,
-	'left-trim': true,
-	'right-trim': true
-	/*'break-lines': 80,
-	'indent': 2,
-	'remove-initial-line-feed': false,
-	'tabs-to-spaces': 4,
-	'spaces-to-tabs': 4*/
-});
-
-wncd.externals.Prism.hooks.add('before-sanity-check', function (env) {
-	var Normalizer = wncd.externals.Prism.plugins.NormalizeWhitespace;
-
-	// Check settings
-	if (env.settings && env.settings['whitespace-normalization'] === false) {
-		return;
-	}	
-
-	// Simple mode if there is no env.element
-	if ((!env.element || !env.element.parentNode) && env.code) {
-		env.code = Normalizer.normalize(env.code, env.settings);
-		return;
-	}
-
-	// Normal mode
-	var pre = env.element.parentNode;
-	var clsReg = /\bno-whitespace-normalization\b/;
-	if (!env.code || !pre || pre.nodeName.toLowerCase() !== 'pre' ||
-			clsReg.test(pre.className) || clsReg.test(env.element.className))
-		return;
-
-	var children = pre.childNodes,
-	    before = '',
-	    after = '',
-	    codeFound = false;
-
-	// Move surrounding whitespace from the <pre> tag into the <code> tag
-	for (var i = 0; i < children.length; ++i) {
-		var node = children[i];
-
-		if (node == env.element) {
-			codeFound = true;
-		} else if (node.nodeName === "#text") {
-			if (codeFound) {
-				after += node.nodeValue;
-			} else {
-				before += node.nodeValue;
-			}
-
-			pre.removeChild(node);
-			--i;
-		}
-	}
-
-	if (!env.element.children.length || !wncd.externals.Prism.plugins.KeepMarkup) {
-		env.code = before + env.code + after;
-		env.code = Normalizer.normalize(env.code, env.settings);
-	} else {
-		// Preserve markup for keep-markup plugin
-		var html = before + env.element.innerHTML + after;
-		env.element.innerHTML = Normalizer.normalize(html, env.settings);
-		env.code = env.element.textContent;
-	}
-});
-
-}());
 /*! END OF PRISM http://prismjs.com */ 
 /**
  *  This file is part of Wigii.
@@ -6180,11 +6036,11 @@ wncd.ObjectDoc = function(obj,options) {
 	}
 	
 	if(!self.options.renderMemberSrc) self.options.renderMemberSrc = function(srcCode,comment) {
-		var Prism = wncd.externals.Prism;
-		// Appends comments
-		srcCode = (comment?"\t\t"+comment+"\n":"")+"\t\t"+srcCode;
+		var Prism = wncd.externals.Prism;		
 		// Normalize indentation
-		srcCode = Prism.plugins.NormalizeWhitespace.normalize(srcCode);
+		srcCode = self.impl.normalizeSrcIndentation(srcCode);
+		// Prepends comments
+		srcCode = (comment?self.impl.normalizeCommentIndentation(comment)+"\n":"")+srcCode;
 		// Highlight syntax
 		wncd.currentDiv().htmlBuilder()
 			.tag('pre').tag('code','class','language-js')
@@ -6195,10 +6051,10 @@ wncd.ObjectDoc = function(obj,options) {
 	
 	if(!self.options.renderClassSrc) self.options.renderClassSrc = function(srcCode,comment) {
 		var Prism = wncd.externals.Prism;
-		// Appends comments
-		srcCode = (comment?"\t\t"+comment+"\n":"")+"\t\t"+srcCode;
 		// Normalize indentation
-		srcCode = Prism.plugins.NormalizeWhitespace.normalize(srcCode);
+		srcCode = self.impl.normalizeSrcIndentation(srcCode);
+		// Prepends comments
+		srcCode = (comment?self.impl.normalizeCommentIndentation(comment)+"\n":"")+srcCode;
 		// Highlight syntax
 		wncd.currentDiv().htmlBuilder()
 			.tag('pre').tag('code','class','language-js')
@@ -6280,6 +6136,34 @@ wncd.ObjectDoc = function(obj,options) {
 	self.impl.initLibModel = function(objModel) {
 		objModel.members = {};			
 		objModel.modelType = 'Lib';
+	};
+	self.impl.normalizeSrcIndentation = function(srcCode) {
+		// searches for indentation block (takes last pre indentation before closing bracket).
+		var indentationRegExp = /[\n\r]([\t ]*)}$/g;
+		var matches = indentationRegExp.exec(srcCode);
+		var indentation = (matches? matches[1]:'');
+		// adds indentation before first line of code
+		var returnValue = indentation+srcCode;
+		// removes extra indentation on all lines
+		if(indentation.length>0) {
+			indentationRegExp = new RegExp('^\\s{0,'+(indentation.length+1)+'}','gm');
+			returnValue = returnValue.replace(indentationRegExp,'');
+		}
+		return returnValue;
+	};
+	self.impl.normalizeCommentIndentation = function(comment) {
+		// searches for indentation block (takes last pre indentation before closing comment).
+		var indentationRegExp = /[\n\r]([\t ]*)\*\/$/g;
+		var matches = indentationRegExp.exec(comment);
+		var indentation = (matches? matches[1]:'');
+		// adds indentation before first line of comment (one char shorter to correctly align comment)
+		var returnValue = indentation.substr(1)+comment;
+		// removes extra indentation on all lines
+		if(indentation.length > 0) {
+			indentationRegExp = new RegExp('^\\s{0,'+(indentation.length)+'}','gm');
+			returnValue = returnValue.replace(indentationRegExp,'');
+		}
+		return returnValue;
 	};
 	
 	// Visitors

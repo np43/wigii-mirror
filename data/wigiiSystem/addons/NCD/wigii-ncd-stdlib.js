@@ -240,11 +240,11 @@ wncd.ObjectDoc = function(obj,options) {
 	}
 	
 	if(!self.options.renderMemberSrc) self.options.renderMemberSrc = function(srcCode,comment) {
-		var Prism = wncd.externals.Prism;
-		// Appends comments
-		srcCode = (comment?"\t\t"+comment+"\n":"")+"\t\t"+srcCode;
+		var Prism = wncd.externals.Prism;		
 		// Normalize indentation
-		srcCode = Prism.plugins.NormalizeWhitespace.normalize(srcCode);
+		srcCode = self.impl.normalizeSrcIndentation(srcCode);
+		// Prepends comments
+		srcCode = (comment?self.impl.normalizeCommentIndentation(comment)+"\n":"")+srcCode;
 		// Highlight syntax
 		wncd.currentDiv().htmlBuilder()
 			.tag('pre').tag('code','class','language-js')
@@ -255,10 +255,10 @@ wncd.ObjectDoc = function(obj,options) {
 	
 	if(!self.options.renderClassSrc) self.options.renderClassSrc = function(srcCode,comment) {
 		var Prism = wncd.externals.Prism;
-		// Appends comments
-		srcCode = (comment?"\t\t"+comment+"\n":"")+"\t\t"+srcCode;
 		// Normalize indentation
-		srcCode = Prism.plugins.NormalizeWhitespace.normalize(srcCode);
+		srcCode = self.impl.normalizeSrcIndentation(srcCode);
+		// Prepends comments
+		srcCode = (comment?self.impl.normalizeCommentIndentation(comment)+"\n":"")+srcCode;
 		// Highlight syntax
 		wncd.currentDiv().htmlBuilder()
 			.tag('pre').tag('code','class','language-js')
@@ -340,6 +340,34 @@ wncd.ObjectDoc = function(obj,options) {
 	self.impl.initLibModel = function(objModel) {
 		objModel.members = {};			
 		objModel.modelType = 'Lib';
+	};
+	self.impl.normalizeSrcIndentation = function(srcCode) {
+		// searches for indentation block (takes last pre indentation before closing bracket).
+		var indentationRegExp = /[\n\r]([\t ]*)}$/g;
+		var matches = indentationRegExp.exec(srcCode);
+		var indentation = (matches? matches[1]:'');
+		// adds indentation before first line of code
+		var returnValue = indentation+srcCode;
+		// removes extra indentation on all lines
+		if(indentation.length>0) {
+			indentationRegExp = new RegExp('^\\s{0,'+(indentation.length+1)+'}','gm');
+			returnValue = returnValue.replace(indentationRegExp,'');
+		}
+		return returnValue;
+	};
+	self.impl.normalizeCommentIndentation = function(comment) {
+		// searches for indentation block (takes last pre indentation before closing comment).
+		var indentationRegExp = /[\n\r]([\t ]*)\*\/$/g;
+		var matches = indentationRegExp.exec(comment);
+		var indentation = (matches? matches[1]:'');
+		// adds indentation before first line of comment (one char shorter to correctly align comment)
+		var returnValue = indentation.substr(1)+comment;
+		// removes extra indentation on all lines
+		if(indentation.length > 0) {
+			indentationRegExp = new RegExp('^\\s{0,'+(indentation.length)+'}','gm');
+			returnValue = returnValue.replace(indentationRegExp,'');
+		}
+		return returnValue;
 	};
 	
 	// Visitors

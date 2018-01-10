@@ -45,28 +45,8 @@ p.title {
 	font-size:32px;
 	padding-top:10px;
 }
-img.logo {
-	margin:15px;
-}
-div.userMenuContainer {
-	padding:8px;	
-}
-div.userMenuContainer > span.userMenuButton {
-	cursor:pointer;
-	font-size:30px;
-	display:none;
-}
-div.headerBar {
-	padding-top: 25px;
-}
-div.footerBar {
-	padding-top:12px;
-	padding-left:5px;
-	border-top: solid black 1px;
-	color:#3333ff;
-}
-div.footerBar span.ncd {
-	font-size:15px;
+div.desktop div.userMenuContainer > span.userMenuButton {
+	/*display:none;*/
 }
 div.headerBar > input.searchBar {
 	width:80%;	
@@ -81,7 +61,28 @@ div.headerBar > div.autocompletionsense {
 div.docBrowser {
 	overflow-y:auto;
 }
-
+div.docBrowserToolbar ul {
+	padding:0;
+	margin:0;
+	margin-top:5px;
+	margin-bottom:5px;
+	margin-right:5px;
+	list-style: none;
+	cursor:pointer;	
+}
+div.docBrowserToolbar ul li {
+	padding-left:5px;
+	padding-top:5px;
+	border: 1px solid #3333ff;
+	border-radius: 5px;
+	padding-bottom:3px;
+	margin-bottom:2px;
+	margin-left:2px;
+	text-align:center;
+}
+div.docBrowserToolbar ul li:hover, div.docBrowserToolbar ul li.selected {
+	background-color: #3333ff;
+}
 div#nullEmitter {
 	display:none;
 }
@@ -156,274 +157,7 @@ window.wigiiNcdEtp = {options:{
  * Wigii NCD Custom libraries
  */
 script(function(){
-	/**
-	 * A desktop user interface which displays a user menu, a header bar, a workzone and a footer bar.
-	 * It accepts  to display desktop components which should display a header bar, a workzone and a footer bar.
-	 * It supports an activate component event and a close event. The activate event is fired when a component is brought to the screen,
-	 * the close event is fired when a component is brought off the screen.
-	 *@param Object options a set of options to configure the desktop component. It supports the following attributes :
-	 * - htmlEmitter: HtmlEmitter|JQuery. A reference of where to render the desktop user interface. Can be an open HtmlEmitter or a JQuery selector.
-	 * - label: Label used to display the desktop
-	 * - height: height of the desktop in his container. Defaults to 100%
-	 * - width: width of the desktop in his container. Defaults to 100%
-	 */
-	wncd.Desktop = function(options) {
-		var self = this;
-		self.className = 'Desktop';
-		self.instantiationTime = Date.now();
-		self.ctxKey = wncd.ctxKey+'_'+self.className;
-		self.options = options || {};
-		self.context = {
-			components: {},
-			currentComponent: undefined
-		};
-		self.impl = {
-			onCloseSubscribers:[],
-			onActivateSubscribers:[]
-		};
 		
-		// Define default options
-		if(!self.options.userMenuLabel) self.options.userMenuLabel = "&#9776;"; //trigram of heaven
-		if(!self.options.label) self.options.label = "&#127968;"; //house building
-		self.options.obj = self;
-		if(!self.options.height) self.options.height = "100%";
-		if(!self.options.width) self.options.width = "100%";
-		
-		/**
-		 *Defines default HtmlEmitter
-		 */
-		if(!self.options.htmlEmitter) self.options.htmlEmitter = wncd.currentDiv();
-		else if($.type(self.options.htmlEmitter)==='string' || self.options.htmlEmitter.className != 'HtmlEmitter') {
-			self.options.htmlEmitter = wncd.html(self.options.htmlEmitter);
-		}
-		
-		/**
-		 * Defines desktop displayHeaderBar function
-		 */
-		if(!self.options.displayHeaderBar) self.options.displayHeaderBar = function(desktop) {
-			wncd.currentDiv().reset();
-		};
-		/**
-		 * Defines desktop displayWorkzone function
-		 */
-		if(!self.options.displayWorkzone) self.options.displayWorkzone = function(desktop) {
-			wncd.currentDiv().reset();
-		};
-		/**
-		 * Defines desktop displayFooterBar function
-		 */
-		if(!self.options.displayFooterBar) self.options.displayFooterBar = function(desktop) {
-			wncd.currentDiv().reset().out("Natural Code Development, Wigii.org (CWE), 27.11.2017");
-			if(program.context.startupLog) {
-				if(program.context.startupLog.ncdEtpReady) wncd.currentDiv().out(", Wigii NCD core v.").out(program.context.startupLog.version);
-				if(program.context.startupLog.ncdEtpFxReady) wncd.currentDiv().out(", Fx layer ready").out("&nbsp").out(wncd.txtDate(new Date()));
-			}
-		};
-		/**
-		 * Defines desktop displayUserMenu function
-		 */
-		if(!self.options.displayUserMenu) self.options.displayUserMenu = function(desktop) {
-			// creates the list of available components in a displayable order
-			self.context.userMenu = [];
-			for(var key in self.context.components) {
-				self.context.userMenu.push(key);
-			}
-			wncd.currentDiv().reset().out(self.options.userMenuLabel,'userMenuButton')
-			.$().find('span.userMenuButton').wncd('menu',{
-				compose:function(n,subMenu,list) {
-					// returns each component in the user menu
-					if(n<self.context.userMenu.length) {
-						var component = self.context.components[self.context.userMenu[n]];
-						// sets the label
-						if(component.options && component.options.label) component.label = component.options.label;
-						else component.label = component.key;
-						return component;
-					}
-				},
-				onItemClick: function(i,component) {self.activate(component.key);},
-				top:5,left:20,
-				cssClass:'userMenu'
-			});			
-		};
-		/**
-		 * Defines desktop layout function
-		 */
-		if(!self.options.layoutDesktop) self.options.layoutDesktop = function(h,v,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,desktop) {
-			return v(
-				x3.h(
-					/* user menu */
-					x1.h(
-						x1(function(){
-							return wncd.getHtmlBuilder()
-							.tag('img','class','logo','src','https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif').$tag('img')
-							.html();
-						}),
-						x1().id(desktop.ctxKey+"_userMenu").cssClass("userMenuContainer")
-					),
-					/* header bar */
-					x10.v(
-						x1(function(){
-							return wncd.getHtmlBuilder()
-							.tag('p','class','title').out("Wigii ").tag('span','style','color:#3333ff').out("NCD").$tag('span').out(" Documentation reference").$tag('p')
-							.html();
-						}),
-						x3().id(desktop.ctxKey+"_headerBar").cssClass("headerBar")
-					)
-				),
-				/* workzone */
-				x10().id(desktop.ctxKey+"_workzone").cssClass("workzone"),
-				/* footer bar */
-				x1().id(desktop.ctxKey+"_footerBar").cssClass("footerBar")
-			).cssClass("desktop").width(desktop.options.width).height(desktop.options.height);
-		};
-		
-		/**
-		 * Registers a new component that can be displayed on the desktop
-		 *@param String key the key under which the component is registered
-		 *@param Function displayHeaderBar a function which display the component header bar using wncd.currentDiv() context. It receives the desktop as parameter.
-		 *@param Function displayWorkzone a function which display the component workzone using wncd.currentDiv() context. It receives the desktop as parameter.
-		 *@param Function displayFooterBar a function which display the component footer bar using wncd.currentDiv() context. It receives the desktop as parameter.
-		 *@param Object options some options to configure the component registration. It supports the following attributes :
-		 * - label: A label to put into a menu or button to activate the component
-		 * - obj: An underlying object instance representing the component itself.
-		 * - subMenu: A configured sub-menu for this component.
-		 *@return wncd.Desktop for chaining
-		 */
-		self.registerComponent = function(key,
-			displayHeaderBar,
-			displayWorkzone,
-			displayFooterBar, 
-			options) {
-			
-			self.context.components[key] = {
-				key: key,
-				displayHeaderBar: displayHeaderBar,
-				displayWorkzone: displayWorkzone,
-				displayFooterBar: displayFooterBar,
-				options: options
-			};
-			
-			// displays user menu
-			wncd.program.context.html(self.options.userMenuEmitter);
-			self.options.displayUserMenu(self);
-			
-			return self;
-		};
-		/**
-		 * Creates an instance of a desktop component given its class name and registers it into the desktop
-		 *@param String className a wncd class which can be registred as a desktop component
-		 *@param Objects options an optional map of options to be passed to the component constructor
-		 *@return wncd.Desktop for chaining
-		 */
-		self.add = function(className,options) {
-			var componentConstructor = wncd[className];
-			if(!$.isFunction(componentConstructor)) throw wncd.createServiceException("Unsupported class "+className,wncd.errorCodes.UNSUPPORTED_OPERATION);
-			new componentConstructor(self,options);
-			return self;
-		};
-		
-		/**
-		 * Activates and brings to the screen a registered component given its key
-		 *@return Object returns underlying component object if defined
-		 */ 
-		self.activate = function(key) {
-			if(!key) throw wncd.createServiceException("key cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
-			var component = self.context.components[key];
-			if(!component) throw wncd.createServiceException("no component registered under key "+key,wncd.errorCodes.INVALID_ARGUMENT);
-			// closes previous component
-			if(self.context.currentComponent) self.onClose();
-			// changes current component key
-			self.context.currentComponent = key;
-			// activates the component
-			self.onActivate();			
-			// Renders component header bar
-			if($.isFunction(component.displayHeaderBar)) {
-				wncd.program.context.html(self.options.headerBarEmitter);
-				component.displayHeaderBar(self);
-			}
-			// Renders component workzone			
-			if($.isFunction(component.displayWorkzone)) {
-				wncd.program.context.html(self.options.workzoneEmitter);
-				component.displayWorkzone(self);
-			}
-			// Renders component footer bar			
-			if($.isFunction(component.displayFooterBar)) {
-				wncd.program.context.html(self.options.footerBarEmitter);
-				component.displayFooterBar(self);			
-			}
-			// keeps current div on workzone.
-			wncd.program.context.html(self.options.workzoneEmitter);
-			
-			return self.getComponentObject(key);
-		};
-		/**
-		 * If the component has an underlying object, then returns it
-		 */
-		self.getComponentObject = function(key) {
-			if(!key) throw wncd.createServiceException("key cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
-			var component = self.context.components[key];
-			if(!component) throw wncd.createServiceException("no component registered under key "+key,wncd.errorCodes.INVALID_ARGUMENT);
-			if(component.options) return component.options.obj;
-		};
-		/**
-		 * Removes the current component off the screen and displays again the desktop
-		 */
-		self.closeCurrentComponent = function() {
-			self.activate(self.ctxKey);
-		};
-		/**
-		 * Registers an eventHandler which is called when a component is closed and took off the screen.
-		 *@param Function closeEventHandler a function which receives the component key which is closed and the desktop
-		 */
-		self.onClose = function(closeEventHandler) {
-			if($.isFunction(closeEventHandler)) {
-				self.impl.onCloseSubscribers.push(closeEventHandler);
-			}
-			else if(closeEventHandler===undefined) {
-				for(var i=0;i<self.impl.onCloseSubscribers.length;i++) {
-					var eh = self.impl.onCloseSubscribers[i];
-					if($.isFunction(eh)) eh(self.context.currentComponent, self);
-				}
-			}
-			return self;
-		};
-		/**
-		 * Registers an eventHandler which is called when a component is activated and took on the screen.
-		 * This event is called before the component is asked to be rendered so that it can optionally prepare itself.
-		 *@param Function activateEventHandler a function which receives the component key which is activated and the desktop
-		 */
-		self.onActivate = function(activateEventHandler) {
-			if($.isFunction(activateEventHandler)) {
-				self.impl.onActivateSubscribers.push(activateEventHandler);
-			}
-			else if(activateEventHandler===undefined) {
-				for(var i=0;i<self.impl.onActivateSubscribers.length;i++) {
-					var eh = self.impl.onActivateSubscribers[i];
-					if($.isFunction(eh)) eh(self.context.currentComponent, self);
-				}
-			}
-			return self;
-		};
-		
-		// Lays out the desktop		
-		self.options.htmlEmitter.layout(self.options.layoutDesktop,self);
-		// Keeps the open emitters into memory
-		self.options.userMenuEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_userMenu"));
-		self.options.headerBarEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_headerBar"));
-		self.options.workzoneEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_workzone"));
-		self.options.footerBarEmitter = self.options.htmlEmitter.clone(self.options.htmlEmitter.$().find("div.desktop div#"+self.ctxKey+"_footerBar"));
-		
-		// Registers the default desktop component 
-		self.registerComponent(self.ctxKey,
-			self.options.displayHeaderBar,
-			self.options.displayWorkzone,
-			self.options.displayFooterBar,
-			self.options);			
-		// Activates the desktop
-		self.activate(self.ctxKey);
-	};
-	wncd.createDesktop = function(options) {return new wncd.Desktop(options);}
-	
 	/**
 	 * Documentation browser which displays a tree view of the documentation, 
 	 * a search bar and a view with the detailed documentation and interactive examples
@@ -436,12 +170,31 @@ script(function(){
 		self.instantiationTime = Date.now();
 		self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
 		self.options = options || {};
-		self.context = {};
-		self.impl = {};
+		self.context = {
+			articles: undefined,
+			articlesIndex: {},
+			currentArticle: undefined
+		};
+		self.impl = {
+			onCloseArticleSubscribers:[],
+			onActivateArticleSubscribers:[]
+		};
 		
-		// Define default options
-		if(!self.options.label) self.options.label = "&#128214;"; // open book
+		// Properties
+	
+		self.$ = function() {return $('#'+self.ctxKey);}
+		
+		// Define default options		
+		if(!self.options.title) self.options.title = wncd.getHtmlBuilder()
+			.tag('p','class','title').out("Wigii ").tag('span','style','color:#3333ff').out("NCD").$tag('span').out(" Documentation reference").$tag('p')
+			.html();
 		if(!self.options.searchButtonLabel) self.options.searchButtonLabel = "&#128270;"; // lense
+		if(!self.options.libInstance) {
+			self.options.libInstance = wncd;
+			self.options.libNamespace = 'wncd';
+		}
+		if(!self.options.libNamespace) self.options.libNamespace = 'Library Doc';
+		if(!self.options.label) self.options.label = "&#128214; "+self.options.libNamespace; // open book
 		
 		/**
 		 * Renders search bar
@@ -458,25 +211,49 @@ script(function(){
 			wncd.currentDiv().reset().layout(function(h,v,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10){
 				return h(
 					x1(function(){
-						//wncd.currentDiv().list(["&#9776;"]);
+						// resets the list of current articles
+						if(self.context.articles) {
+							self.context.articlesIndex = {};
+							self.context.currentArticle = undefined;
+							self.context.articles = undefined;
+						};
+						/*
+						self.addArticle({
+							key: 'test1',
+							label: 'Test 1',
+							content: wncd.ctlSeq(p(),out("Hello 1"),out('&nbsp;'),out(wncd.txtDate(Date.now())),$p())
+						})
+						.addArticle({
+							key: 'test12',
+							label: 'Test 2',
+							content: wncd.ctlSeq(p(),out("Hello 2"),out('&nbsp;'),out(wncd.txtDate(Date.now())),$p())
+						});
+						*/
 					}).cssClass("docBrowserToolbar"),
-					x10(function(){
-						wncd.currentDiv().div("wncd", "method").color("#3333FF").out("wncd").$color();
-						self.context.wncdDoc = wncd.createObjectDoc(wncd,
-							{docOutput:wncd.currentDiv().div("wncd"),
+					x10(function(){						
+						wncd.currentDiv().div(self.options.libNamespace, "method").color("#3333FF").out(self.options.libNamespace).$color();
+						self.context.wncdDoc = wncd.createObjectDoc(self.options.libInstance,
+							{docOutput:wncd.currentDiv().div(self.options.libNamespace),
 								expandLevel:5,
 								noSorting:true,
-								namespace:'wncd',
+								namespace:self.options.libNamespace,
 								privateValues:{}
 							});
 						// collapse all
 						self.collapseAll();
 						// initializes search bar
 						self.context.searchBar.autocomplete(Object.keys(self.context.wncdDoc.context.docModel.members)).$().focus();
-					}).cssClass("docBrowser").id(self.ctxKey)					
-				).width("100%").height("100%");
+					}).cssClass("docBrowser")					
+				).width("100%").height("100%").id(self.ctxKey);
 			});
 		};
+		/**
+		 * Renders footer bar
+		 */
+		if(!self.options.renderFooterBar) self.options.renderFooterBar = function(container) {
+			wncd.currentDiv().reset().out("Natural Code Development, Wigii.org (CWE), 10.01.2018");
+			if(container.context.startupLog) wncd.currentDiv().out(", ").out(container.context.startupLog);
+		}
 		
 		// Implementation
 		
@@ -485,12 +262,12 @@ script(function(){
 		 */
 		self.collapseAll = function() {
 			if(self.context.wncdDoc) {
-				var wncdMembers = self.context.wncdDoc.context.docModel.libs['wncd'].members;
+				var wncdMembers = self.context.wncdDoc.context.docModel.libs[self.options.libNamespace].members;
 				for(var memberName in wncdMembers) {
 					var ss = wncdMembers[memberName].context.selectionSense;
 					if(ss && ss.selected()) ss.onClick();
 				}
-				$("#"+self.ctxKey).scrollTop(0);
+				self.$().find('> div.docBrowser').scrollTop(0);
 			}
 		};
 
@@ -510,20 +287,134 @@ script(function(){
 				m = m.parent;
 			}
 			// scrolls to member
-			$("#"+self.ctxKey).scrollTop(0).scrollTop($("#"+member.uri).offset().top-$("#"+self.ctxKey).offset().top);
+			var docBrowser = self.$().find('> div.docBrowser');
+			docBrowser.scrollTop(0).scrollTop($("#"+member.uri).offset().top-docBrowser.offset().top);
+		};
+		
+		/**
+		 * Adds an article into the doc browser
+		 *@param wncd.ObjectDocArticle an article instance
+		 *@return wncd.ObjectDocBrowser for chaining
+		 */
+		self.addArticle = function(article) {
+			// creates the list of articles if not yet done
+			if(!self.context.articles) {
+				self.context.articles = self.$().find('> div.docBrowserToolbar').wncd('html').list(
+					function(n,list){/* nothing to generate. empty list */},
+					/* renders the article label in the toolbar */
+					function(i,article,list) {
+						return article.label || article.key;
+					},
+					{
+						maxSelection:1,
+						/* activates article on click in the toolbar */
+						onItemClick:function(i,article,selected,list){
+							if(selected) self.activateArticle(article.key);
+							else self.closeCurrentArticle();
+						}
+					}
+				);
+			}
+			// adds the article to the list
+			self.context.articles.add(article);
+			// registers article in index
+			self.context.articlesIndex[article.key] = self.context.articles.size();
+			return self;
+		};		
+		
+		/**
+		 * Activates an article givens its key
+		 *@param String key Key of the article to be activated
+		 *@return wncd.ObjectDocArticle returns the activated article instance
+		 */
+		self.activateArticle = function(key) {
+			if(!key) throw wncd.createServiceException("key cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+			var articleIndex = self.context.articlesIndex[key];
+			if(!articleIndex) throw wncd.createServiceException("no article found under key "+key,wncd.errorCodes.INVALID_ARGUMENT);			
+			// selects article if not already selected
+			if(!self.context.articles.selected(articleIndex)) self.context.articles.selected(articleIndex,true);
+			// gets article
+			var article = self.context.articles.items()[articleIndex-1];		
+			// closes previous article
+			if(self.context.currentArticle) self.onCloseArticle();
+			// changes current article
+			self.context.currentArticle = article;
+			// activates the article			
+			self.onActivateArticle();			
+			// Renders article
+			self.impl.renderArticle(article);
+			return article;
+		};
+		
+		/**
+		 * Renders article in docBrowser space
+		 */
+		self.impl.renderArticle = function(article) {
+			// switches html emitter to docBrowser space
+			wncd.program.context.html(self.$().find('> div.docBrowser').wncd('html').reset());
+			// runs article content function
+			wncd.program(article.content);
+		};
+		
+		/**
+		 * Removes the current article off the screen and displays again the doc browser
+		 */
+		self.closeCurrentArticle = function() {
+			self.activateArticle(self.ctxKey);
+		};
+		/**
+		 * Registers an eventHandler which is called when an article is closed and took off the screen.
+		 *@param Function closeEventHandler a function which receives the article which is closed and the doc browser
+		 */
+		self.onCloseArticle = function(closeEventHandler) {
+			if($.isFunction(closeEventHandler)) {
+				self.impl.onCloseArticleSubscribers.push(closeEventHandler);
+			}
+			else if(closeEventHandler===undefined) {
+				for(var i=0;i<self.impl.onCloseArticleSubscribers.length;i++) {
+					var eh = self.impl.onCloseArticleSubscribers[i];
+					if($.isFunction(eh)) eh(self.context.currentArticle, self);
+				}
+			}
+			return self;
+		};
+		/**
+		 * Registers an eventHandler which is called when an article is activated and took on the screen.
+		 * This event is called before the article is asked to be rendered so that it can optionally prepare itself.
+		 *@param Function activateEventHandler a function which receives the article which is activated and the doc browser
+		 */
+		self.onActivateArticle = function(activateEventHandler) {
+			if($.isFunction(activateEventHandler)) {
+				self.impl.onActivateArticleSubscribers.push(activateEventHandler);
+			}
+			else if(activateEventHandler===undefined) {
+				for(var i=0;i<self.impl.onActivateArticleSubscribers.length;i++) {
+					var eh = self.impl.onActivateArticleSubscribers[i];
+					if($.isFunction(eh)) eh(self.context.currentArticle, self);
+				}
+			}
+			return self;
 		};
 		
 		// Deploys into container		
 		// Only supports wncd.Desktop container
 		if($.type(container)!=='object' || container.className != 'Desktop') throw wncd.createServiceException("container should be a non null instance of wncd.Desktop",wncd.errorCodes.INVALID_ARGUMENT);
 		self.options.obj = self; // passes the ObjectDocBrowser to the Desktop through the component object
-		container.registerComponent(self.ctxKey,self.options.renderSearchBar,self.options.renderBrowserPanel,undefined,self.options);
+		container.registerComponent(self.ctxKey,self.options.renderSearchBar,self.options.renderBrowserPanel,self.options.renderFooterBar,self.options);
 	};
 }),
 /**
  * Main script
  */
 script(function(){	
-	wncd.program.context.desktop = wncd.createDesktop().add("ObjectDocBrowser");
+	wncd.program.context.desktop = wncd.createDesktop()
+	.add("ObjectDocBrowser")
+	.add("ObjectDocBrowser",{
+		title: wncd.getHtmlBuilder().tag('p','class','title')
+			.out("Wigii ").tag('span','style','color:#3333ff').out("API").$tag('span').out(" Documentation reference")
+			.$tag('p').html(),
+		libInstance: wigii(),
+		libNamespace: "wigii"
+	});
 	wncd.program.context.desktop.activate(wncd.program.context.desktop.context.userMenu[1]);
 }));</script></body></html>

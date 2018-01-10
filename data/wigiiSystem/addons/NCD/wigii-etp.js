@@ -429,19 +429,24 @@
 							case "PasswordInput":
 								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createPasswordInput().color(couleurFond, couleurTexte);
 								 break;
+							case "Empty":
+								self.context.display = undefined;
+								break;
 							default: throw wigiiNcd().createServiceException("Le type de champ '"+type+"' n'est pas supporté.",wigiiNcd().errorCodes.INVALID_ARGUMENT);
 						}
 					}
 					else self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextInput().color(couleurFond, couleurTexte);
-					self.context.display.id = function() {return self.context.display.ctxKey;};
-					self.context.display.$ = function() {return $('#'+self.context.display.ctxKey);};
-					self.context.display.couleur = self.context.display.color;
-					
-					// Behavior: 
-					// - when typing, saves text
-					// - on click, changes current form field to this one
-					self.context.display.onInput(function(d,txt){d.context.text=txt;self.context.changed = true;});
-					self.context.display.$().click(function(){self.context.formulaire.context.currentFieldName=self.context.nom;});
+					if(self.context.display) {
+						self.context.display.id = function() {return self.context.display.ctxKey;};
+						self.context.display.$ = function() {return $('#'+self.context.display.ctxKey);};
+						self.context.display.couleur = self.context.display.color;
+						
+						// Behavior: 
+						// - when typing, saves text
+						// - on click, changes current form field to this one
+						self.context.display.onInput(function(d,txt){d.context.text=txt;self.context.changed = true;});
+						self.context.display.$().click(function(){self.context.formulaire.context.currentFieldName=self.context.nom;});
+					}
 					return self;
 				}; 
 				// Méthodes
@@ -461,6 +466,27 @@
 					var field = self.fields[nom];
 					if(field) throw wigiiNcd().createServiceException("Le champ "+nom+" existe déjà dans le formulaire, il ne peut pas être créé une deuxième fois. Choisissez un autre nom.",wigiiNcd().errorCodes.INVALID_ARGUMENT);
 					self.fields[nom] = new self.Field(self, nom, label, couleurTexte, couleurFond,"PasswordInput");
+					return self;
+				};
+				self.creerChampCustom = function(nom, label, valueRenderer, couleurTexte, couleurFond) {
+					var field = self.fields[nom];
+					if(field) throw wigiiNcd().createServiceException("Le champ "+nom+" existe déjà dans le formulaire, il ne peut pas être créé une deuxième fois. Choisissez un autre nom.",wigiiNcd().errorCodes.INVALID_ARGUMENT);
+					// creates an empty field
+					self.fields[nom] = new self.Field(self, nom, label, couleurTexte, couleurFond,"Empty");
+					// extracts valueRenderer additional arguments
+					var args;
+					if(arguments.length > 5) args = Array.prototype.slice.call(arguments,5);
+					else args = [];
+					// runs the valueRenderer into the context of the field value div					
+					var valueEmitter = self.fields[nom].$().find('div.etp-value').wncd('html');
+					if($.isFunction(valueRenderer)) {
+						var currentDiv = wncd.currentDiv();
+						wncd.programme.context.html(valueEmitter);
+						var valueHtml = valueRenderer.apply(null,args);
+						if(valueHtml!==undefined) valueEmitter.putHtml(valueHtml);
+						wncd.programme.context.html(currentDiv);
+					}
+					else valueEmitter.putHtml(valueRenderer);
 					return self;
 				};
 				self.champ = function(nom) {
@@ -487,6 +513,9 @@
 
 				// English translation
 				self.createField = self.creerChamp;
+				self.createTextField = self.creerChampTexte;
+				self.createPasswordField = self.creerChampPassword;
+				self.createCustomField = self.creerChampCustom;
 				self.field = self.champ;
 				self.fieldExist = self.champExiste;
 				self.currentField = self.champCourant;
@@ -521,6 +550,9 @@
 		},
 		// Méthodes
 		creerChamp : function(nom, label, couleurTexte, couleurFond) {return formulaire.no('default').creerChamp(nom, label, couleurTexte, couleurFond);},
+		creerChampTexte : function(nom, label, couleurTexte, couleurFond) {return formulaire.no('default').creerChampTexte(nom, label, couleurTexte, couleurFond);},
+		creerChampPassword : function(nom, label, couleurTexte, couleurFond) {return formulaire.no('default').creerChampPassword(nom, label, couleurTexte, couleurFond);},
+		creerChampCustom : function(nom, label, valueRenderer, couleurTexte, couleurFond) {return formulaire.no('default').creerChampCustom(nom, label, valueRenderer, couleurTexte, couleurFond);},
 		champ : function(nom) {return formulaire.no('default').champ(nom);},
 		champExiste : function(nom) {return formulaire.no('default').champExiste(nom);},
 		champCourant : function(nom) {return formulaire.no('default').champCourant(nom);},
@@ -574,6 +606,9 @@
 	
 	wigiiNcdEtp.form = wigiiNcdEtp.formulaire;
 	wigiiNcdEtp.form.createField = wigiiNcdEtp.formulaire.creerChamp;
+	wigiiNcdEtp.form.createTextField = wigiiNcdEtp.formulaire.creerChampTexte;
+	wigiiNcdEtp.form.createPasswordField = wigiiNcdEtp.formulaire.creerChampPassword;
+	wigiiNcdEtp.form.createCustomField = wigiiNcdEtp.formulaire.creerChampCustom;
 	wigiiNcdEtp.form.field = wigiiNcdEtp.formulaire.champ;
 	wigiiNcdEtp.form.currentField = wigiiNcdEtp.formulaire.champCourant;
 	wigiiNcdEtp.form.empty = wigiiNcdEtp.formulaire.vider;

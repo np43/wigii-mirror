@@ -431,8 +431,8 @@
 			/**
 			 * Creates and emits a Checkbox
 			 */
-			self.createCheckbox = function(cssClass) {
-				return new wigiiNcd.CheckBox(self, cssClass);
+			self.createCheckbox = function(cssClass,index) {
+				return new wigiiNcd.CheckBox(self, cssClass,index);
 			};
 			/**
 			 * Creates and emits a UnorderedList
@@ -1258,18 +1258,13 @@
 		 * NCD CheckBox
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the checkbox component
 		 */
-		wigiiNcd.CheckBox = function(htmlEmitter, cssClass) {
+		wigiiNcd.CheckBox = function(htmlEmitter, cssClass,index) {
 			var self = this;
 			self.className = 'CheckBox';
-			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now()+(index!==undefined?index:'');
 			
-			self.context = {};
-
-			var htmlB = wigiiNcd.getHtmlBuilder();
-			htmlB.putStartTag('input','type','checkbox','class',htmlEmitter.emittedClass()+(cssClass?' '+cssClass:''), "id", self.ctxKey);		
-			htmlB.putEndTag('input');
-			htmlEmitter.putHtml(htmlB.html());
-			
+			self.context = {index:index};
+							
 			// Properties
 			
 			self.$ = function() {return $("#"+self.ctxKey);	};
@@ -1289,12 +1284,7 @@
 			 * Registers a onClick event handler
 			 */
 			self.onClick = function(onClick) {
-				if($.isFunction(onClick)) {
-					if(!self.context.onClickSubscribers) {
-						self.context.onClickSubscribers = [];
-						// registers onclick event handler on checkbox
-						$("#"+self.ctxKey).click(function(){self.toggle();self.onClick();})
-					}
+				if($.isFunction(onClick)) {					
 					self.context.onClickSubscribers.push(onClick);
 				}
 				else if(onClick===undefined) {
@@ -1311,6 +1301,18 @@
 			 * Toggles the value of the checkbox
 			 */
 			self.toggle = function() {self.checked(!self.checked()); return self;}
+			
+			// Html emission
+			var htmlB = wigiiNcd.getHtmlBuilder();
+			htmlB.putStartTag('input','type','checkbox','class',htmlEmitter.emittedClass()+(cssClass?' '+cssClass:''), "id", self.ctxKey);		
+			htmlB.putEndTag('input');
+			htmlEmitter.putHtml(htmlB.html());
+			
+			if(!self.context.onClickSubscribers) {
+				self.context.onClickSubscribers = [];
+				// registers onclick event handler on checkbox
+				$("#"+self.ctxKey).click(function(){self.toggle();self.onClick();})
+			}
 		};
 		
 		/**
