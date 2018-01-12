@@ -1470,8 +1470,8 @@ class TemplateRecordManager extends Model {
 	public function doFormatForNumeric($value, $xml = array(), $doRegroupSimilarValue = false){
 		//we do a groupement on the size
 		if(!$doRegroupSimilarValue){
-			$decimalPosition = strpos($value,".");
-			if($decimalPosition===false && $value!==null && $value!=""){
+		    $decimalPosition = strpos($value,".");
+			if($decimalPosition===false && $value!==null && $value!==""){
 				$value .= ".00";
 				$decimalPosition = strpos($value,".");
 			}
