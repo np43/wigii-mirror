@@ -1474,6 +1474,7 @@ class TemplateRecordManager extends Model {
 			if($decimalPosition===false && $value!==null && $value!=""){
 				$decimalPosition = strlen($value-1);
 				$value .= ".00";
+				$decimalPosition = strpos($value,".");
 			}
 			if($xml["noDecimals"]=="1"){
 				$value = substr($value, 0, $decimalPosition);
