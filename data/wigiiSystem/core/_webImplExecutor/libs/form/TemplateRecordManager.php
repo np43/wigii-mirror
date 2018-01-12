@@ -1472,7 +1472,6 @@ class TemplateRecordManager extends Model {
 		if(!$doRegroupSimilarValue){
 			$decimalPosition = strpos($value,".");
 			if($decimalPosition===false && $value!==null && $value!=""){
-				$decimalPosition = strlen($value-1);
 				$value .= ".00";
 				$decimalPosition = strpos($value,".");
 			}
