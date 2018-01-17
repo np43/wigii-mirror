@@ -3754,15 +3754,15 @@
 						if(newFxCtx.isPaused) return;
 						newFxCtx.argsI++;
 					}
-					html.end();
+					newFxCtx.html().end();
 				}
-				catch(exc) {html.publishException(exc);}
+				catch(exc) {newFxCtx.html().publishException(exc);}
 			}
 			/* returnValue is ignored */
 		};
 		// runs the program
 		try {
-			html.clearErrors();
+			newFxCtx.html().clearErrors();
 			while(newFxCtx.argsI<args.length) {
 				if($.isFunction(args[newFxCtx.argsI])) {
 					returnValue = args[newFxCtx.argsI](newFxCtx);
@@ -3773,9 +3773,109 @@
 				newFxCtx.argsI++;
 			}
 			/* returnValue is ignored */
-			html.end();
+			newFxCtx.html().end();
 		}
-		catch(exc) {html.publishException(exc);}
+		catch(exc) {newFxCtx.html().publishException(exc);}
+	};
+	
+	/**
+	 * Wigii NCD contextual runtime object
+	 *@param wncd.HtmlEmitter htmlEmitter underlying HtmlEmitter on which to plug a Wigii NCD runtime
+	 *@param Object options a set of options to configure the runtime. It supports the following attributes : nothing yet.
+	 */
+	wigiiNcdEtp.Runtime = function(htmlEmitter,options) {
+		var self = this;
+		self.className = 'Runtime';
+		self.instantiationTime = Date.now();
+		self.ctxKey = wigiiNcdEtp.ctxKey+'_'+self.className+self.instantiationTime;
+		self.options = options || {};
+		self.context = {html:htmlEmitter};
+		self.impl = {};
+		
+		// Defines default options
+		/* nothing yet */
+		
+		/**
+		 * Executes a program given as a list of Func Exp
+		 */
+		self.program = function() {
+			// switches to given htmlEmitter
+			self.context.currentDiv = wncd.currentDiv();
+			wncd.program.context.html(self.context.html);
+			// executes the program
+			var args = Array.prototype.slice.call(arguments);
+			var newFxCtx = createFxContext();
+			var returnValue = undefined;
+			newFxCtx.pause = function() {
+				if(!newFxCtx.isPaused) {
+					newFxCtx.isPaused = true;
+				}
+			};
+			newFxCtx.resume = function(retVal) {
+				returnValue = retVal;
+				if(newFxCtx.isPaused) {
+					newFxCtx.isPaused = false;
+					newFxCtx.argsI++;
+					try {
+						while(newFxCtx.argsI<args.length) {
+							if($.isFunction(args[newFxCtx.argsI])) {
+								returnValue = args[newFxCtx.argsI](newFxCtx);
+								if($.isFunction(returnValue)) returnValue = returnValue(newFxCtx);
+							}
+							else throw wigiiNcd().createServiceException('programme instruction number '+newFxCtx.argsI+' is not a function.',wigiiNcd().errorCodes.INVALID_ARGUMENT);
+							if(newFxCtx.isPaused) return;
+							newFxCtx.argsI++;
+						}
+						newFxCtx.html().end();
+					}
+					catch(exc) {newFxCtx.html().publishException(exc);}
+					// switches back html context
+					wncd.program.context.html(self.context.currentDiv);
+				}
+				/* returnValue is ignored */
+			};
+			// runs the program
+			try {
+				newFxCtx.html().clearErrors();
+				while(newFxCtx.argsI<args.length) {
+					if($.isFunction(args[newFxCtx.argsI])) {
+						returnValue = args[newFxCtx.argsI](newFxCtx);
+						if($.isFunction(returnValue)) returnValue = returnValue(newFxCtx);
+					}
+					else throw wigiiNcd().createServiceException('programme instruction number '+newFxCtx.argsI+' is not a function.',wigiiNcd().errorCodes.INVALID_ARGUMENT);
+					if(newFxCtx.isPaused) return;
+					newFxCtx.argsI++;
+				}
+				/* returnValue is ignored */
+				newFxCtx.html().end();
+			}
+			catch(exc) {newFxCtx.html().publishException(exc);}
+			// switches back html context
+			wncd.program.context.html(self.context.currentDiv);
+		};
+		self.programme = self.program;
+	};
+	/**
+	 * Creates a Wigii NCD contextual runtime object
+	 *@param wncd.HtmlEmitter htmlEmitter underlying HtmlEmitter on which to plug a Wigii NCD runtime
+	 *@param Object options some options to configure the Runtime.
+	 *@return wigiiNcdEtp.Runtime
+	 */
+	wigiiNcdEtp.createRuntime = function(htmlEmitter,options) { return new wigiiNcdEtp.Runtime(htmlEmitter,options);}	
+	
+	/**
+	 * JQuery NCD plugin binding a Wigii NCD runtime to a given anchor
+	 *@return wncd.Runtime
+	 */
+	wigiiNcd().getJQueryService().run = function(selection,options) {
+		var returnValue=undefined;
+		// checks we have only one element
+		if(selection && selection.length==1) {		
+			// creates a Runtime
+			returnValue = wigiiNcdEtp.createRuntime(wncd.html(selection),options);
+		}
+		else if(selection && selection.length>1) throw wncd.createServiceException('Wigii NCD run selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
+		return (!returnValue?{$:selection}:returnValue);
 	};
 	
 	/**
@@ -3795,8 +3895,7 @@
 			return fxs;
 		};
 		return returnValue;
-	};
-	
+	};	
 	
 	// FuncExp infrastructure
 
@@ -4441,7 +4540,7 @@
 					try {					
 						fxCtx.resume();
 					}			
-					catch(exc) {html.publishException(exc);}
+					catch(exc) {fxCtx.html().publishException(exc);}
 				},1000*delay);
 			}
 		};
