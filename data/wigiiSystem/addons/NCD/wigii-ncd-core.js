@@ -1255,6 +1255,79 @@
 		};
 		
 		/**		
+		 * NCD Text input wrapper
+		 *@param jQuery|DOM.Element txtInput a text input or text area DOM element to wrap as NCD
+		 */
+		wigiiNcd.TextInputWrapper = function(txtInput, cssClass) {
+			var self = this;
+			self.className = 'TextInputWrapper';
+			txtInput = $(txtInput);
+			if(txtInput.attr('id')) self.ctxKey = txtInput.attr('id');
+			else {
+				self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+				txtInput.attr('id',self.ctxKey);
+			}
+			if(cssClass) {
+				txtInput.addClass(cssClass);			
+			}
+			self.context = {};
+			
+			// Properties
+			
+			self.$ = function() {return $("#"+self.ctxKey);	};
+			
+			/**
+			 * Sets background color and text color
+			 */
+			self.color = function(backgroundC,textC) {
+				var elt = $("#"+self.ctxKey);			
+				if(backgroundC) elt.css('background-color',backgroundC);
+				if(textC) elt.css('color',textC);
+				return self;
+			};
+			/**
+			 * Sets or returns the text contained in this PasswordInput
+			 */
+			self.text = function(txt) {
+				if(txt===undefined) return self.context.text;
+				else {
+					self.context.text = txt;
+					$("#"+self.ctxKey).val(txt);
+					return self;
+				}
+			};
+			/**
+			 * Registers a oninput event handler
+			 */
+			self.onInput = function(onInput) {
+				if($.isFunction(onInput)) {
+					if(!self.context.onInputSubscribers) {
+						self.context.onInputSubscribers = [];
+						// registers oninput event handler on text area
+						$("#"+self.ctxKey).on('input', function(){self.onInput();})
+					}
+					self.context.onInputSubscribers.push(onInput);
+				}
+				else if(onInput===undefined) {
+					if(self.context.onInputSubscribers) {
+						for(var i=0;i<self.context.onInputSubscribers.length;i++) {
+							var eh = self.context.onInputSubscribers[i];
+							if($.isFunction(eh)) eh(self,$("#"+self.ctxKey).val());
+						}
+					}
+				}
+				return self;
+			};
+			/**
+			 * Binds an autocompletion sense on this txt input
+			 */
+			self.autocomplete = function(propositionGenerator,options) {
+				wigiiNcd.bindAutoCompletionSense(self,propositionGenerator,options);
+				return self; 
+			};
+		};
+		
+		/**		
 		 * NCD CheckBox
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the checkbox component
 		 */
@@ -2224,6 +2297,19 @@
 			 * Returns an HtmlEmitter instance linked to the selected DOM element. Alias of HtmlEmitter handler.
 			 */
 			self.html = self.HtmlEmitter;
+			/**
+			 * Returns an TextInputWrapper instance linked to the selected DOM element
+			 */
+			self.wrap = function(selection,options) {
+				var returnValue=undefined;
+				// checks we have only one element
+				if(selection && selection.length==1) {
+					// wraps the given selection as a NCD Text Input
+					returnValue = wigiiNcd.wrapTextInput(selection,options);
+				}
+				else if(selection && selection.length>1) throw wigiiNcd.createServiceException('Wigii NCD wrap selector can only be activated on a JQuery collection containing one element and not '+selection.length, wigiiNcd.errorCodes.INVALID_ARGUMENT);
+				return (!returnValue?{$:selection}:returnValue);
+			};
 		};
 		
 		// Service providing
@@ -2286,6 +2372,13 @@
 		 */
 		wigiiNcd.bindAutoCompletionSense = function(txtInput,propositionGenerator,options) {
 			return wigiiNcd.createAutoCompletionSense(propositionGenerator,options).bind(txtInput);
+		};
+		/**
+		 * Wraps a standard DOM input text, or text area to be compatible with NCD features
+		 *@return wigiiNcd.TextInputWrapper
+		 */
+		wigiiNcd.wrapTextInput = function(txtInput, cssClass) {
+			return new wigiiNcd.TextInputWrapper(txtInput, cssClass);
 		};
 		
 		/**
