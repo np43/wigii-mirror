@@ -314,7 +314,7 @@
 				var self = this;
 				self.index = index;
 				// Inner state
-				self.context = {currentFieldName:undefined};
+				self.context = {currentFieldName:undefined,fieldIndex:0};
 				// Champ
 				self.fields = {};		
 				self.Field = function(formulaire, nom, label, couleurTexte, couleurFond, type, options) {
@@ -420,14 +420,15 @@
 						.html()
 					);
 					
+					formulaire.context.fieldIndex++;/* increments field index to differentiate to fields with same timestamp */
 					// Creates display according to type. Defaults to TextInput
 					if(type) {
 						switch(type) {
 							case "TextArea":
-								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextArea().color(couleurFond, couleurTexte);
+								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextArea(undefined,formulaire.context.fieldIndex).color(couleurFond, couleurTexte);
 								 break;
 							case "PasswordInput":
-								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createPasswordInput().color(couleurFond, couleurTexte);
+								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createPasswordInput(undefined,formulaire.context.fieldIndex).color(couleurFond, couleurTexte);
 								 break;
 							case "Empty":
 								self.context.display = undefined;
@@ -435,7 +436,7 @@
 							default: throw wigiiNcd().createServiceException("Le type de champ '"+type+"' n'est pas supporté.",wigiiNcd().errorCodes.INVALID_ARGUMENT);
 						}
 					}
-					else self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextInput().color(couleurFond, couleurTexte);
+					else self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextInput(undefined,formulaire.context.fieldIndex).color(couleurFond, couleurTexte);
 					if(self.context.display) {
 						self.context.display.id = function() {return self.context.display.ctxKey;};
 						self.context.display.$ = function() {return $('#'+self.context.display.ctxKey);};

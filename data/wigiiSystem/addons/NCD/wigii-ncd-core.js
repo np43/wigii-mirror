@@ -413,26 +413,26 @@
 			/**
 			 * Creates and emits a TextArea to capture a multiline user input
 			 */
-			self.createTextArea = function(cssClass) {
-				return new wigiiNcd.TextArea(self, cssClass);
+			self.createTextArea = function(cssClass, index) {
+				return new wigiiNcd.TextArea(self, cssClass, index);
 			};
 			/**
 			 * Creates and emits a TextInput to capture a single line user input
 			 */
-			self.createTextInput = function(cssClass) {
-				return new wigiiNcd.TextInput(self, cssClass);
+			self.createTextInput = function(cssClass, index) {
+				return new wigiiNcd.TextInput(self, cssClass, index);
 			};
 			/**
 			 * Creates and emits a PasswordInput to capture a secret input
 			 */
-			self.createPasswordInput = function(cssClass) {
-				return new wigiiNcd.PasswordInput(self, cssClass);
+			self.createPasswordInput = function(cssClass, index) {
+				return new wigiiNcd.PasswordInput(self, cssClass, index);
 			};
 			/**
 			 * Creates and emits a Checkbox
 			 */
-			self.createCheckbox = function(cssClass,index) {
-				return new wigiiNcd.CheckBox(self, cssClass,index);
+			self.createCheckbox = function(cssClass, index) {
+				return new wigiiNcd.CheckBox(self, cssClass, index);
 			};
 			/**
 			 * Creates and emits a UnorderedList
@@ -1044,12 +1044,12 @@
 		 * NCD TextArea
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the text area component
 		 */
-		wigiiNcd.TextArea = function(htmlEmitter, cssClass) {
+		wigiiNcd.TextArea = function(htmlEmitter, cssClass, index) {
 			var self = this;
 			self.className = 'TextArea';
-			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now()+(index!==undefined?index:'');
 			
-			self.context = {};
+			self.context = {index:index};
 
 			var htmlB = wigiiNcd.getHtmlBuilder();
 			htmlB.putStartTag('textarea','class',htmlEmitter.emittedClass()+(cssClass?' '+cssClass:''), "id", self.ctxKey);		
@@ -1116,12 +1116,12 @@
 		 * NCD TextInput
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the text input component
 		 */
-		wigiiNcd.TextInput = function(htmlEmitter, cssClass) {
+		wigiiNcd.TextInput = function(htmlEmitter, cssClass, index) {
 			var self = this;
 			self.className = 'TextInput';
-			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now()+(index!==undefined?index:'');
 			
-			self.context = {};
+			self.context = {index:index};
 
 			var htmlB = wigiiNcd.getHtmlBuilder();
 			htmlB.putStartTag('input','type','text','class',htmlEmitter.emittedClass()+(cssClass?' '+cssClass:''), "id", self.ctxKey);		
@@ -1187,12 +1187,12 @@
 		 * NCD Password Input
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the password input component
 		 */
-		wigiiNcd.PasswordInput = function(htmlEmitter, cssClass) {
+		wigiiNcd.PasswordInput = function(htmlEmitter, cssClass, index) {
 			var self = this;
 			self.className = 'PasswordInput';
-			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now()+(index!==undefined?index:'');
 			
-			self.context = {};
+			self.context = {index:index};
 
 			var htmlB = wigiiNcd.getHtmlBuilder();
 			htmlB.putStartTag('input','type','password','class',htmlEmitter.emittedClass()+(cssClass?' '+cssClass:''), "id", self.ctxKey);		
@@ -1258,19 +1258,19 @@
 		 * NCD Text input wrapper
 		 *@param jQuery|DOM.Element txtInput a text input or text area DOM element to wrap as NCD
 		 */
-		wigiiNcd.TextInputWrapper = function(txtInput, cssClass) {
+		wigiiNcd.TextInputWrapper = function(txtInput, cssClass, index) {
 			var self = this;
 			self.className = 'TextInputWrapper';
 			txtInput = $(txtInput);
 			if(txtInput.attr('id')) self.ctxKey = txtInput.attr('id');
 			else {
-				self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
+				self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now()+(index!==undefined?index:'');
 				txtInput.attr('id',self.ctxKey);
 			}
 			if(cssClass) {
 				txtInput.addClass(cssClass);			
 			}
-			self.context = {};
+			self.context = {index:index};
 			
 			// Properties
 			
@@ -3431,7 +3431,7 @@
 				var self = this;
 				self.index = index;
 				// Inner state
-				self.context = {currentFieldName:undefined};
+				self.context = {currentFieldName:undefined,fieldIndex:0};
 				// Champ
 				self.fields = {};		
 				self.Field = function(formulaire, nom, label, couleurTexte, couleurFond, type, options) {
@@ -3537,14 +3537,15 @@
 						.html()
 					);
 					
+					formulaire.context.fieldIndex++;/* increments field index to differentiate to fields with same timestamp */
 					// Creates display according to type. Defaults to TextInput
 					if(type) {
 						switch(type) {
 							case "TextArea":
-								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextArea().color(couleurFond, couleurTexte);
+								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextArea(undefined,formulaire.context.fieldIndex).color(couleurFond, couleurTexte);
 								 break;
 							case "PasswordInput":
-								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createPasswordInput().color(couleurFond, couleurTexte);
+								 self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createPasswordInput(undefined,formulaire.context.fieldIndex).color(couleurFond, couleurTexte);
 								 break;
 							case "Empty":
 								self.context.display = undefined;
@@ -3552,7 +3553,7 @@
 							default: throw wigiiNcd().createServiceException("Le type de champ '"+type+"' n'est pas supporté.",wigiiNcd().errorCodes.INVALID_ARGUMENT);
 						}
 					}
-					else self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextInput().color(couleurFond, couleurTexte);
+					else self.context.display = wigiiNcd().getHtmlEmitter('#'+self.context.id+' div.etp-value').createTextInput(undefined,formulaire.context.fieldIndex).color(couleurFond, couleurTexte);
 					if(self.context.display) {
 						self.context.display.id = function() {return self.context.display.ctxKey;};
 						self.context.display.$ = function() {return $('#'+self.context.display.ctxKey);};
