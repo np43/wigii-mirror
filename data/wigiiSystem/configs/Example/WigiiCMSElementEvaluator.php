@@ -15,12 +15,12 @@
  *  A copy of the GNU General Public License is available in the Readme folder of the source code.
  *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @copyright  Copyright (c) 2016-2018  Wigii.org
  *  @author     <http://www.wigii.org/system>      Wigii.org
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-// version G114
+// version G132
 /**
  * Wigii CMS module Element evaluator
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016
@@ -31,6 +31,7 @@
  * Updated by Wigii.org (Camille Weber) on 15.06.2017 to manage internal url forwarding
  * Updated by Wigii.org (Lionel and Camille Weber) on 27.09.2017 to add public comment management
  * Updated by Weber wwigii-system.net for Wigii.org on 29.11.2017 to enforce the support of javascript into the page rendering process.
+ * Updated by Weber wwigii-system.net for Wigii.org on 22.01.2018 to support NCD based articles.
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -74,10 +75,11 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 	public function cms_authoringOnLoadJS($args) {
 		return '(function(){
 	var displayForm = function() {
-		$("#$$idForm$$__groupSiteMap, #$$idForm$$__groupIntro, #$$idForm$$__groupLogo, #$$idForm$$__groupMenu, #$$idForm$$__groupContent, #$$idForm$$__groupImage, #$$idForm$$__groupFooter, #$$idForm$$__groupCSS, #$$idForm$$__groupJS, #$$idForm$$__groupForward").hide();
+		$("#$$idForm$$__groupSiteMap, #$$idForm$$__groupIntro, #$$idForm$$__groupLogo, #$$idForm$$__groupMenu, #$$idForm$$__groupNCD, #$$idForm$$__groupContent, #$$idForm$$__groupImage, #$$idForm$$__groupFooter, #$$idForm$$__groupCSS, #$$idForm$$__groupJS, #$$idForm$$__groupForward").hide();
 		if($("#$$idForm$$_contentType_value_select").val()=="none") $("#$$idForm$$_contentType_value_select").val("content");
 		switch($("#$$idForm$$_contentType_value_select").val()) {
-		case "content": $("#$$idForm$$__groupContent").show();break;
+		case "content": $("#$$idForm$$__groupContent, #$$idForm$$__contentHTML").show();break;
+		case "ncd": $("#$$idForm$$__groupContent, #$$idForm$$__groupNCD").show();$("#$$idForm$$__contentHTML").hide();break;
 		case "siteMap": $("#$$idForm$$__groupSiteMap").show();break;
 		case "intro": $("#$$idForm$$__groupIntro").show();break;
 		case "logo": $("#$$idForm$$__groupLogo").show();break;
@@ -104,7 +106,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$choosePosition = sel($this->getPrincipal(), elementPList(lxInG(lxEq(fs('id'),$groupId)),
 				lf(
 						fsl(fs('contentPosition'),fs('contentSummary'),fs('contentNextId')),
-						lxEq(fs('contentType'),'content'),
+						lxIn(fs('contentType'),array('content','ncd')),
 						fskl(fsk('contentPosition','value'))
 						)),
 				dfasl(
@@ -181,7 +183,9 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$this->clearUnwantedFields($this->getFslForContentType($contentType));
 		// specific authoring process depending on content type
 		switch($contentType) {
-			case "content": $this->cms_authoringOnSaveContent(); break;
+			case "content": 
+			case "ncd":	
+				$this->cms_authoringOnSaveContent(); break;
 			case "siteMap": $this->cms_auhoringOnSaveSiteMap(); break;
 			case "forward": $this->cms_auhoringOnSaveForward(); break;
 		}
@@ -244,7 +248,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$prevPos = sel($this->getPrincipal(), elementPList(lxInG(lxEq(fs('id'),$groupId)),
 					lf(
 							fsl(fs('contentPosition'),fs('contentNextId')),
-							lxAnd(lxEq(fs('contentType'),'content'),lxSm(fs('contentPosition'),$nextPos)),
+							lxAnd(lxIn(fs('contentType'),array('content','ncd')),lxSm(fs('contentPosition'),$nextPos)),
 							fskl(fsk('contentPosition','value',false)),
 							1,1
 							)), dfasl(
@@ -548,8 +552,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// renders article content
 			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
 				lf(
-					fsl(fs('contentType'),fs('contentTitle'),fs('contentHTML'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
-					lxAnd(lxEq(fs('contentType'),'content'),lxEq(fs('status'),'published')),
+					fsl(fs('contentType'),fs('contentTitle'),fs('contentHTML'),fs('contentNCD'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
+					lxAnd(lxIn(fs('contentType'),array('content','ncd')),lxEq(fs('status'),'published')),
 					fskl(fsk('contentPosition'))
 				)),
 				dfasl(
@@ -559,7 +563,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 						$articleType = $article->getFieldValue('contentType');
 						try {
 							switch($articleType) {
-								case 'content': $this->cms_composeContentArticle($article, $options, $callbackDFA); break;
+								case 'content': $this->cms_composeArticle($article, $options, fx('oCall',$this,'cms_getArticleHtmlContent',$article,$options),$callbackDFA); break;
+								case 'ncd': $this->cms_composeArticle($article, $options, fx('oCall',$this,'cms_getArticleNcdContent',$article,$options),$callbackDFA); break;
 							}
 						}
 						catch(Exception $e) {
@@ -606,18 +611,19 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		}
 	}
 	/**
-	 * Renders an article of type content
-	 * @param Element $contentArticle article of type content
+	 * Renders the article structure
+	 * @param Element $article article of any type
 	 * @param WigiiBPLParameter $options the current set of page options
+	 * @param FuncExp $fxHtmlContent FuncExp returning the article content as HTML or sending some JS code using the addJsCode method.
 	 * @param CallbackDFA $callbackDFA current data flow activity and context
 	 */
-	public function cms_composeContentArticle($contentArticle,$options,$callbackDFA) {
+	public function cms_composeArticle($article,$options,$fxHtmlContent,$callbackDFA) {
 		$transS = ServiceProvider::getTranslationService();
 		$language = $options->getValue('language');
 		$languages = $options->getValue('languages');
 		$atopLink = $options->getValue('atopLink');
 		// uses an Fx to transform the article element to HTML, but could use another piece of code.
-		$returnValue = $this->evaluateFuncExp(fx('element2value',$contentArticle,
+		$returnValue = $this->evaluateFuncExp(fx('element2value',$article,
 			fx('concat',
 				fx('htmlStartTag','div','class','wigii-cms','style',fx('oCall',$this,'cms_getArticleStyle',fs_e('this'))),"\n",
 				fx('htmlStartTag','div','class','wigii-cms title', 'id', fs_e('id')),
@@ -630,7 +636,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				fx('htmlEndTag','div'),
 				fx('htmlStartTag','div','class', 'wigii-cms a-top'),$atopLink,fx('htmlEndTag','div'),
 				fx('htmlEndTag','div'),"\n",
-				fx('htmlStartTag','div','class','wigii-cms content'),fx('first',fx('getAttr',fs('contentHTML'),$language),
+				fx('htmlStartTag','div','class','wigii-cms content'),fx('first',$fxHtmlContent,
 						fx('concat',fx('htmlStartTag', 'p'),$transS->t($principal,"cmsNoContentAvailable",null,$language).$languages[$language],' ',
 								fx('htmlStartTag','a','target','_blank','href', fx('concat',fx('sysSiteRootUrl'),'#',fx('sysCrtWigiiNamespace'),'/',fx('sysCrtModule'),'/item/',fs_e('id'))), '(#',fs_e('id'),')',fx('htmlEndTag','a'),
 								fx('htmlEndTag', 'p'))
@@ -642,6 +648,33 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		);
 		$callbackDFA->writeResultToOutput($returnValue);
 	}
+	/**
+	 * Gets the content of an HTML article<br/>
+	 * @param Element $article A Wigii CMS element of type article content
+	 * @param WigiiBPLParameter $options An optional map of options used to parametrize the rendering process.
+	 * @return String HTML code to be added to article content div
+	 */
+	public function cms_getArticleHtmlContent($article,$options) {
+		if(isset($article)) {
+			$language = $options->getValue('language');			
+			return $article->getFieldValue('contentHTML')[$language];
+		}
+	}
+	/**
+	 * Generates some javascript to run the given NCD article and pushes it to browser through the JS channel<br/>
+	 * @param Element $article A Wigii CMS element of type article content
+	 * @param WigiiBPLParameter $options An optional map of options used to parametrize the rendering process.
+	 * @return String HTML code to be added to article content div
+	 */
+	public function cms_getArticleNcdContent($article,$options) {
+		if(isset($article)) {
+			$ncdCode = $article->getFieldValue('contentNCD');
+			if(!empty($ncdCode)) {
+				$this->addJsCode('$("#'.$article->getId().'").parent().find("div.wigii-cms.content").wncd("run").program('.$ncdCode.')');
+				return ' ';/* returns a non null HTML code string */
+			}
+		}
+	}	
 	/**
 	 * Initializes the bag of options with some key/value pairs found into the intro and site map elements
 	 * @param WigiiBPLParameter $options the bag of options for the current page
@@ -788,6 +821,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$jsQueue = $this->getJsCode();
 		$footer = (!empty($footer)?'<div class="wigii-footer wigii-cms content">'.$footer.'</div>':'');
 		$js = (!empty($js)?"<script>".$js."</script>":'');
+		$ncdProgramOutput = '<div id="programOutput"></div>';
 		
 		// Creates footer
 		$returnValue = <<<PAGEFOOTER
@@ -859,6 +893,8 @@ $(document).ready(function(){
 	$jsQueue
 });
 </script>
+$ncdProgramOutput
+<script src="https://www.wigii.org/system/libs/wigii-ncd-core.min.js"></script>
 $footer
 $js
 </body>
@@ -1051,8 +1087,12 @@ JSPUBLICCOMMENTS;
 		$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
 		//$wigiiCSS = '<link rel="stylesheet" href="https://resource.wigii.org/assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
 		$wigiiCSS = '';/* not compatible yet with CMS */
+		/* 16.01.2018: deprecated usage of old HTML 4.01
 		$returnValue = <<<HTMLHEAD
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+		*/
+		$returnValue = <<<HTMLHEAD
+<!DOCTYPE html>
 <!--
 **
 *  This page has been generated by Wigii.
@@ -1070,7 +1110,7 @@ JSPUBLICCOMMENTS;
 *  A copy of the GNU General Public License is available in the Readme folder of the source code.
 *  If not, see <http://www.gnu.org/licenses/>.
 *
-*  @copyright  Copyright (c) 2016  Wigii.org
+*  @copyright  Copyright (c) 2016-2018  Wigii.org
 *  @author     <http://www.wigii.org/system>      Wigii.org
 *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
 *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
@@ -1086,6 +1126,7 @@ $metaDescription $metaKeywords $metaAuthor
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 $wigiiJS
 $wigiiCSS
+<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-stdlib.css" rel="stylesheet"/>
 <style>
 $css
 </style>
@@ -1505,6 +1546,7 @@ HTMLCSS;
 		$returnValue = null;
 		switch($contentType) {
 			case "content": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentHTML"),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG'),fs('imgArticleBG','url')); break;
+			case "ncd": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentNCD"),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG'),fs('imgArticleBG','url')); break;
 			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("forceHeight"),fs("forceHeightFirst"),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('publicCommentsBgColor'),fs('publicCommentsTextColor'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
 			case "intro": $returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); break;
 			case "logo": $returnValue = fsl(fs("contentLogo")); break;

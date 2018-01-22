@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<!-- Config version G114 -->
+<!-- Config version G132 -->
 <CMS>
 
 	<parameters
@@ -89,6 +89,7 @@
 			<contentType enableDynamicAttributes="1" excelExport="auto" type="Attributs" require="1" expand="1" readonly='eq(onSaveFuncExp,logTrue())' jsCodeInFormExp='cms_authoringOnLoadJS()'><label_l01>Content type</label_l01><label_l02>Type de contenu</label_l02>
 				<attribute disabled="1">none</attribute>
 				<attribute>content<label_l01>Article</label_l01><label_l02>Article</label_l02></attribute>
+				<attribute>ncd<label_l01>Article NCD</label_l01><label_l02>Article NCD</label_l02></attribute>
 				<attribute>siteMap<label_l01>Site Map</label_l01><label_l02>Site Map</label_l02></attribute>
 				<attribute>logo<label_l01>Logo</label_l01><label_l02>Logo</label_l02></attribute>
 				<attribute>menu<label_l01>Menu</label_l01><label_l02>Menu</label_l02></attribute>
@@ -152,14 +153,17 @@
 			<groupContent groupStart="1"><label_l01>Article</label_l01><label_l02>Article</label_l02></groupContent>
 				<contentPosition excelExport="auto" type="Numerics" require="0" hidden="1" clearOnCopy="1"><label_l01>Position</label_l01><label_l02>Position</label_l02></contentPosition>
 				<contentNextId excelExport="auto" type="Strings" require="0" hidden="1" clearOnCopy="1"><label_l01>Next Article ID</label_l01><label_l02>ID de l'article suivant</label_l02></contentNextId>
-				<choosePosition enableDynamicAttributes="1" excelExport="auto" type="Attributs" require='eq(contentType,"content")' allowNewValues='1' disabled='notNullAndNotEq(contentType,"content")' expand="1" jsCodeInFormExp='ctlIf(logIn(ctlCurrentFlow(),"element-edit","element-add","element-copy"), cms_authoringLoadChoosePosition())' onlyInForm="1"><label_l01>Insert before</label_l01><label_l02>Insérer avant</label_l02>
+				<choosePosition enableDynamicAttributes="1" excelExport="auto" type="Attributs" require='logIn(contentType,"content","ncd")' allowNewValues='1' disabled='logAnd(notNullAndNotEq(contentType,"content"),notNullAndNotEq(contentType,"ncd"))' expand="1" jsCodeInFormExp='ctlIf(logIn(ctlCurrentFlow(),"element-edit","element-add","element-copy"), cms_authoringLoadChoosePosition())' onlyInForm="1"><label_l01>Insert before</label_l01><label_l02>Insérer avant</label_l02>
 					<attribute>last<label_l01>the footer, at the end</label_l01><label_l02>avant le pied de page, à la fin</label_l02></attribute>
 				</choosePosition>						
-				<contentTitle enableDynamicAttributes="1" excelExport="auto" type="Texts" require='eq(contentType,"content")' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" fullToolbarHtmlArea="1" isInLine="1"><label_l01>Title</label_l01><label_l02>Titre</label_l02></contentTitle>
+				<contentTitle enableDynamicAttributes="1" excelExport="auto" type="Texts" require='logIn(contentType,"content","ncd")' disabled='logAnd(notNullAndNotEq(contentType,"content"),notNullAndNotEq(contentType,"ncd"))' expand="1" htmlArea="1" fullToolbarHtmlArea="1" isInLine="1"><label_l01>Title</label_l01><label_l02>Titre</label_l02></contentTitle>
 				<contentHTML enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"content")' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentHTML>
-				<articleBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"content")' expand="1" isInLine="0" ><label_l01>Background color of this article</label_l01><label_l02>Couleur de fond de cet article</label_l02></articleBgColor>
-				<articleBgAlpha labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='notNullAndNotEq(contentType,"content")' expand="1" isInLine="0" ><label_l01>Background opacity of the article(0=transp. 1=opac)</label_l01><label_l02>Opacité du fond de l'article (0=transp. 1=opaque)</label_l02></articleBgAlpha>
-				<imgArticleBG enableDynamicAttributes="1"  excelExport="auto" type="Urls" onlyUrl="1" require='0' disabled='notNullAndNotEq(contentType,"content")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Background image url</label_l01><label_l02>Url pour image de fond</label_l02></imgArticleBG>
+				<groupNCD groupStart="1" noFieldset="1"><label_l01>Wigii NCD code</label_l01><label_l02>Code Wigii NCD</label_l02></groupNCD>
+					<contentNCD enableDynamicAttributes="1"  excelExport="auto" type="Blobs" require='eq(contentType,"ncd")' disabled='notNullAndNotEq(contentType,"ncd")' expand="1" noWrap='1' height="250" isInLine="1" noLabel="1"><label_l01>Wigii NCD code</label_l01><label_l02>Code WIgii NCD</label_l02></contentNCD>
+				<groupNCD groupEnd="1" expand="1" noFieldset="1"/>
+				<articleBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='logAnd(notNullAndNotEq(contentType,"content"),notNullAndNotEq(contentType,"ncd"))' expand="1" isInLine="0" ><label_l01>Background color of this article</label_l01><label_l02>Couleur de fond de cet article</label_l02></articleBgColor>
+				<articleBgAlpha labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='logAnd(notNullAndNotEq(contentType,"content"),notNullAndNotEq(contentType,"ncd"))' expand="1" isInLine="0" ><label_l01>Background opacity of the article(0=transp. 1=opac)</label_l01><label_l02>Opacité du fond de l'article (0=transp. 1=opaque)</label_l02></articleBgAlpha>
+				<imgArticleBG enableDynamicAttributes="1"  excelExport="auto" type="Urls" onlyUrl="1" require='0' disabled='logAnd(notNullAndNotEq(contentType,"content"),notNullAndNotEq(contentType,"ncd"))' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Background image url</label_l01><label_l02>Url pour image de fond</label_l02></imgArticleBG>
 			<groupContent groupEnd="1" expand="1"/>
 			<groupImage groupStart="1"><label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></groupImage>
 				<contentImage enableDynamicAttributes="1"  excelExport="auto" type="Files" require='eq(contentType,"image")' disabled='notNullAndNotEq(contentType,"image")' expand="1" displayContentInDetail="1" noLabel="1"><label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></contentImage>
@@ -176,7 +180,7 @@
 			<groupForward groupStart="1"><label_l01>Forward</label_l01><label_l02>Transfert</label_l02></groupForward>
 				<fromUrl enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='eq(contentType,"forward")' disabled='notNullAndNotEq(contentType,"forward")' expand="1" isInLine="0" ><label_l01>From URL</label_l01><label_l02>Depuis l&apos;URL</label_l02></fromUrl>
 				<toUrl enableDynamicAttributes="1"  excelExport="auto" type="Blobs" require='eq(contentType,"forward")' disabled='notNullAndNotEq(contentType,"forward")' expand="1" isInLine="0" ><label_l01>To URL</label_l01><label_l02>Vers l&apos;URL</label_l02></toUrl>
-			<groupForward groupEnd="1" expand="1"/>				
+			<groupForward groupEnd="1" expand="1"/>					
 		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
 
 		<groupRight groupStart="1" noFieldset="1" noLabel="1" labelWidth="100" totalWidth="300" class="fieldGroupRight" />
@@ -201,13 +205,13 @@
 
 	<listView isDefaultView="1">
 		<fields>
-			<c1 field="contentType" width="120" isDefaultGroupByKey="1" />			
-			<c2 field="contentSummary" width="null" />
-			<c3 field="status" width="120" />
+			<c1 field="contentType" width="120" isDefaultGroupByKey="1" ignoreNotification="1"/>			
+			<c2 field="contentSummary" width="null" ignoreNotification="1"/>
+			<c3 field="status" width="120" ignoreNotification="1"/>
 			<ch1 field="contentPosition" hidden="1" isDefaultSortByKey="1"/>
 			<ch2 field="siteTitle" hidden="1" notIgnoreNotification="1"/>
-			<e1 elementAttribut="sys_date" width="120" defaultSorted=" DESC " />
-			<e2 elementAttribut="sys_username" width="140"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
+			<e1 elementAttribut="sys_date" width="120" defaultSorted=" DESC " ignoreNotification="1"/>
+			<e2 elementAttribut="sys_username" width="140" ignoreNotification="1"><label_l01>Last update done by</label_l01><label_l02>Dernière mise à jour par</label_l02></e2>			
 		</fields>
 	</listView>
 	
