@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<!-- 
+ **
+ *  This file is part of Wigii.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016-2018  Wigii.org
+ *  @author     <http://www.wigii.org/system/libs>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>           <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>          GNU General Public License
+ *
+-->
+<html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <LIBRARIES WIGII> -->
+<script src="https://resource.wigii.org/assets/js/wigii-core.js" type="text/javascript"></script>
+<link media="all" type="text/css" href="https://resource.wigii.org/assets/css/wigii-core.css" rel="stylesheet">
+<link media="all" type="text/css" href="https://resource.wigii.org/assets/css/theme.css.php" rel="stylesheet">
+<!-- </LIBRARIES WIGII> -->
+<!-- <LIBRARIES WIGII.ORG NCD> -->
+<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-core.min.css" rel="stylesheet"/>
+<!-- </LIBRARIES WIGII.ORG NCD> -->
+
+<title>Voucher generator</title>
+<style>
+body {
+	margin: 0;
+	padding: 0;
+	background-color: #FAFAFA;
+	font-family: verdana,​helvetica,​arial,​sans-serif;
+	font-size: 12px;
+}
+p#title {
+	font-size:3em;
+	margin-top:0px;
+	margin-bottom:20px;
+	padding:10px;
+	display:inline;
+}
+p#footer {
+	font-size:medium;
+	margin:10px 0px;
+	color:lightblue;
+}
+.introduction {
+	font-size:medium;
+	margin-top:10px;
+	margin-bottom:10px;
+	margin-left:10px;
+}
+/* 
+ * Page format
+ */
+div.page.Letter {
+	width: 8.5in;
+	height: 11in;
+	padding-top: 10px;
+	padding-left: 0;	
+	padding-right: 0;
+	margin: 0 auto;
+	border: 0;
+	background: white;
+	box-sizing: border-box;
+}
+div.page.A4 {
+	width: 21cm;
+	height: 29.7cm;
+	padding-top: 10px;
+	padding-left: 0;	
+	padding-right: 0;
+	margin: 0 auto;
+	border: 0;
+	background: white;
+	box-sizing: border-box;
+}
+div.page.Letter.landscape {
+	height: 8.5in;
+	width: 11in;
+	padding-top: 8mm;
+	padding-left: 8mm;	
+	padding-right: 8mm;
+	padding-bottom: 8mm;
+	margin: 0 auto;
+	border: 0;
+	background: white;
+	box-sizing: border-box;
+}
+div.page.A4.landscape {
+	height: 21cm;
+	width: 29.7cm;
+	padding-top: 8mm;
+	padding-left: 8mm;	
+	padding-right: 8mm;
+	padding-bottom: 8mm;
+	margin: 0 auto;
+	border: 0;
+	background: white;
+	box-sizing: border-box;
+}
+div.page.single_card.landscape {
+	width: 100vw;
+	height: 100vh;
+	padding-top: 0;
+	padding-left: 0;	
+	padding-right: 0;
+	margin: 0 auto;	
+	border: 0;
+	background: white;
+	box-sizing: border-box;
+}
+
+
+/* 
+ * Voucher as a Half Letter format
+ */
+
+div.card.half_letter {
+	margin:0;
+	box-sizing: border-box;
+	margin-left:2px;
+	margin-top:5px;
+	margin-bottom:5px;
+	width:8.4in;
+	height:5.3in;
+	border: 1px black solid;
+}
+div.card_container.half_letter {	
+	height:90%;	
+	overflow-y:hidden;
+}
+div.card_toolbar.half_letter {	
+	height:10%;	
+	border-top: 1px black solid;
+}
+div.card_tool.half_letter {
+	box-sizing: border-box;
+	display: table;
+	width:25%;
+	height:100%;
+	float:left;	
+	text-align:center;
+	font-size:20px;
+}
+div.card_tool.sep.half_letter {	
+	border-right: 1px black solid;
+}
+div.img_container.half_letter {
+	padding-left:10px;
+	width:100%;
+	height:50%;
+	margin: 0 auto;
+	box-sizing: border-box;
+} 
+div.card_purpose.half_letter {	
+	width:100%;
+	height:10px;
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+div.voucher_container.half_letter {
+	padding-left:10px;
+	width:100%;
+	height:40%;
+	margin: 0 auto;
+	margin-top: 20px;
+	box-sizing: border-box;
+}
+div.logo_container.half_letter {
+	float:left;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:50px;
+	padding-left:50px;
+}
+div.qrcode_container.half_letter {
+	float:right;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:40px;
+	padding-left:50px;
+}
+img.logo_partners.half_letter {
+	width:50%;
+}
+img.qrcode.half_letter {
+}
+div.voucher_label.half_letter {
+	display: table;
+	width:50%;
+	height:100%;
+	float:left;
+	font-size:50px;
+}
+div.voucher_number.half_letter {
+	display: table;
+	width:50%;
+	height:100%;
+	float:right;
+	font-size:50px;
+}
+
+
+/* 
+ * Voucher as a Credit card format
+ */
+
+div.card.credit_card {
+	margin:0;
+	box-sizing: border-box;
+	margin-left:50px;
+	margin-top:5px;
+	margin-bottom:5px;
+	width:85.60mm;
+	height:53.98mm;
+	border: 1px black solid;
+	float:left;
+}
+div.card_container.credit_card {	
+	height:90%;	
+	overflow-y:hidden;
+}
+div.card_toolbar.credit_card {	
+	height:10%;	
+	border-top: 1px black solid;
+}
+div.card_tool.credit_card {	
+	box-sizing: border-box;
+	display: table;
+	width:25%;
+	height:100%;
+	float:left;	
+	text-align:center;
+}
+div.card_tool.sep.credit_card {
+	border-right: 1px black solid;
+}
+div.img_container.credit_card {
+	padding-left:10px;
+	width:100%;
+	height:70%;
+	margin: 0 auto;
+	box-sizing: border-box;
+} 
+div.card_purpose.credit_card {
+	width:100%;
+	height:5px;
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+div.voucher_container.credit_card {
+	padding-left:10px;
+	width:100%;
+	height:10%;
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+div.logo_container.credit_card {
+	float:left;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:20px;
+	padding-left:10px;
+}
+div.qrcode_container.credit_card {
+	float:right;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:2px;
+	padding-left:0;
+}
+img.logo_partners.credit_card {
+	width:80%;
+}
+img.qrcode.credit_card {
+	width:150px;
+}
+div.voucher_label.credit_card {
+	float:left;
+	height:100%;
+	width:50%;
+	padding-bottom: 5px;
+	padding-top: 2px;
+	padding-left: 10px;
+	box-sizing: border-box;
+	font-size:12px;
+	font-weight:normal;
+}
+div.voucher_number.credit_card {
+	display: table;
+	width:50%;
+	height:100%;
+	float:right;
+	font-size:16px;
+	font-weight:bold;
+}
+
+/* 
+ * Voucher as a Single Credit card format
+ */
+
+div.card.single_credit_card {
+	margin:0;
+	box-sizing: border-box;
+	width:86.00mm;
+	height:54.8mm;
+	//border: 1px black solid;
+	float:left;
+}
+div.card_container.single_credit_card {
+	height:90%;	
+	overflow-y:hidden;
+}
+div.card_toolbar.single_credit_card {
+	height:10%;	
+	border-top: 1px black solid;
+}
+div.card_tool.single_credit_card {	
+	box-sizing: border-box;
+	display: table;
+	width:25%;
+	height:100%;
+	float:left;	
+	text-align:center;
+}
+div.card_tool.sep.single_credit_card {
+	border-right: 1px black solid;
+}
+div.img_container.single_credit_card {
+	padding-left:10px;
+	width:100%;
+	height:70%;
+	margin: 0 auto;
+	box-sizing: border-box;
+} 
+div.card_purpose.single_credit_card {
+	width:100%;
+	height:5px;
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+div.voucher_container.single_credit_card {
+	padding-left:10px;
+	width:100%;
+	height:10%;
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+div.logo_container.single_credit_card {
+	float:left;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:20px;
+	padding-left:10px;
+}
+div.qrcode_container.single_credit_card {
+	float:right;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:2px;
+	padding-left:0;
+}
+img.logo_partners.single_credit_card {
+	width:80%;
+}
+img.qrcode.single_credit_card {
+	width:150px;
+}
+div.voucher_label.single_credit_card {
+	float:left;
+	height:100%;
+	width:50%;
+	padding-bottom: 5px;
+	padding-top: 2px;
+	padding-left: 10px;
+	box-sizing: border-box;
+	font-size:12px;
+	font-weight:normal;
+}
+div.voucher_number.single_credit_card {
+	display: table;
+	width:50%;
+	height:100%;
+	float:right;
+	font-size:16px;
+	font-weight:bold;
+}
+
+/* 
+ * Voucher as a Single card format
+ */
+
+div.card.single_card {
+	margin:0;
+	padding-right:5px;
+	paddin-bottom:5px;
+	box-sizing: border-box;
+	width:100%;
+	height:100%;
+	//border: 1px black solid;
+	float:left;
+}
+div.card_container.single_card {
+	height:90%;	
+	overflow-y:hidden;
+}
+div.card_toolbar.single_card {	
+	height:10%;	
+	border-top: 1px black solid;
+}
+div.card_tool.single_card {	
+	box-sizing: border-box;
+	display: table;
+	width:25%;
+	height:100%;
+	float:left;	
+	text-align:center;
+	font-size:7vh;
+}
+div.card_tool.sep.single_card {
+	border-right: 1px black solid;	
+}
+div.img_container.single_card {
+	padding-left:10px;
+	width:100%;
+	height:70%;
+	margin: 0 auto;
+	box-sizing: border-box;
+} 
+div.card_purpose.single_card {
+	width:100%;
+	font-size:5vh;
+	margin: 0 auto;
+	box-sizing: border-box;	
+	position:relative;
+	top:-15px;
+}
+div.voucher_container.single_card {
+	padding-left:10px;
+	width:100%;
+	height:25px;	
+	margin: 0 auto;
+	margin-top:20px;
+	box-sizing: border-box;	
+}
+div.logo_container.single_card {
+	float:left;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:20px;
+	padding-left:10px;
+}
+div.qrcode_container.single_card {
+	float:right;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:2px;
+	padding-left:0;
+}
+img.logo_partners.single_card {
+	width:80%;
+}
+img.qrcode.single_card {
+	width:80%;	
+}
+div.voucher_label.single_card {
+	display: table;
+	width:45%;
+	height:100%;
+	float:left;
+	font-size:7vh;
+}
+div.voucher_number.single_card {
+	display: table;
+	width:45%;
+	height:100%;
+	float:right;
+	font-size:8vh;
+	font-weight:bold;
+}
+
+/* 
+ * Voucher as a 4x4
+ */
+
+div.card.m4x4 {
+	margin:0;
+	box-sizing: border-box;
+	margin-left:0px;
+	margin-top:0px;
+	margin-bottom:0px;
+	width:25%;
+	height:25%;
+	border: 1px black solid;
+	float:left;
+}
+div.card_container.m4x4 {
+	height:90%;	
+	overflow-y:hidden;
+}
+div.card_toolbar.m4x4 {	
+	height:10%;	
+	border-top: 1px black solid;
+}
+div.card_tool.m4x4 {	
+	box-sizing: border-box;
+	display: table;
+	width:25%;
+	height:100%;
+	float:left;	
+	text-align:center;
+	font-size:14px;
+}
+div.card_tool.sep.m4x4 {
+	border-right: 1px black solid;	
+}
+div.img_container.m4x4 {
+	padding-left:10px;
+	width:100%;
+	height:70%;
+	margin: 0 auto;
+	box-sizing: border-box;
+} 
+div.card_purpose.m4x4 {
+	width:100%;
+	font-size:5px;
+	margin: 0 auto;
+	box-sizing: border-box;	
+	position:relative;
+	top:5px;
+}
+div.voucher_container.m4x4 {
+	padding-left:10px;
+	width:100%;
+	height:25px;	
+	margin: 0 auto;
+	margin-top:10px;
+	box-sizing: border-box;	
+}
+div.logo_container.m4x4 {
+	float:left;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	height:100%;
+	padding-top:20px;
+	padding-left:10px;
+}
+div.qrcode_container.m4x4 {
+	float:right;
+	margin:0;
+	box-sizing: border-box;
+	width:50%;
+	padding-top:2px;
+	padding-left:0;
+}
+img.logo_partners.m4x4 {
+	height:100%;
+}
+img.qrcode.m4x4 {
+	width:100%;
+}
+div.voucher_label.m4x4 {
+	display: table;
+	width:45%;
+	height:100%;
+	float:left;
+	font-size:16px;
+}
+div.voucher_number.m4x4 {
+	display: table;
+	width:45%;
+	height:100%;
+	float:right;
+	font-size:20px;
+	font-weight:bold;
+}
+
+/*
+ * Other styles
+ */
+span.middle {
+	display: table-cell;
+	vertical-align:middle;
+	text-align:center;
+}
+div#layoutFormatChoice, p.layoutFormatChoice {
+	padding-top:10px;
+	padding-bottom: 10px;
+}
+div.etp-field {
+	max-width:1024px;
+}
+@page {
+	//size: A4 landscape;
+	//size: 100vh 100vw landscape
+	margin: 0;	
+	padding:0;	
+}
+@media print {	
+	body {
+		background-color: white;
+		margin:0;
+		padding:0;
+	}
+	div#programOutput {
+		margin:0;
+		padding:0;
+	}
+	div#cover {
+		margin:1cm;
+	}
+	img#logo {
+		margin-left:1cm;
+	}
+	p#footer {
+		margin-left:1cm;
+	}	
+	.page {
+		margin:0;
+		padding:initial;
+		border: initial;
+		width: initial;		
+		height: initial;
+		background: initial;
+		page-break-before: always;
+		page-break-after: always;
+		box-sizing: border-box;
+	}
+}
+</style>
+</head><body>
+
+<img id="logo" src="https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif" /> 
+<p id="title">Voucher generator</p>
+<div id="cover">
+<p class="introduction">Fill in the <b>base number</b>, the <b>quantity</b> of cards to generate and <b>choose the layout format</b>. Then click on OK and print the cards.</p>
+<p class="introduction">To print it correctly out:</p>
+<ol class="introduction">
+<li>Use Google Chrome browser and choose a pdf printer. <br/><i>NB. The print preview can take a long time to generate, please be patient.</i></li>
+<li>Set color <strong>ON</strong></li>
+<li>Choose paper size <strong>A4</strong> or <strong>Letter</strong></li>
+<li>Set margins to <strong>None</strong></li>
+<li>Tick the option <strong>Background graphics</strong></li>
+</ol>
+</div>
+<div id="programOutput"></div>
+<p id="footer">Wigii.org (CWE), 23.01.2018</p>
+
+<!-- <LIBRAIRIES WIGII.ORG NCD ETP> -->
+<script src="https://www.wigii.org/system/libs/wigii-ncd-core.min.js"></script>
+<!-- </LIBRAIRIES WIGII.ORG NCD ETP> -->
+
+
+<script type="text/javascript">/* Program written in Javascript Wigii NCD (https://www.naturalcodedevelopment.net/) */
+programme.context.voucherCurrentNumber = 0;
+programme.context.voucherCount = 0;
+programme.context.voucherQuantity = 0;
+programme.context.voucherColor = ["white","blue","red","yellow","green"];
+programme.context.voucherFormat = 'credit_card';
+programme.context.voucherLogoUrl = "https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif";
+programme.context.voucherPurpose = "VOUCHER";
+programme.context.voucherTools = [1,2,3,4,5,6,7,8];
+programme.context.voucherToolsIcons = {/* put here some mapping tool name : url */};
+programme.context.pageFormat = 'Letter';
+programme.context.voucherGetNextNumber = function() {
+	var returnValue = programme.context.voucherCurrentNumber;
+	programme.context.voucherCurrentNumber++;
+	return returnValue;
+}
+programme.context.userInput = function() {
+	programme.html().reset();
+	var form = programme.formulaire.no("userInput");
+	form.createField("quantity","Quantity of cards")
+	form.createField("startNumber","Sequence start number").field("startNumber").value(programme.context.voucherCurrentNumber||123450);
+	form.createField("logoUrl","Logo url").field("logoUrl").value(programme.context.voucherLogoUrl);
+	form.createField("cardName","Card name").field("cardName").value(programme.context.voucherPurpose);
+	form.createField("cardColor","Card ribbon color").field("cardColor").value(($.isArray(programme.context.voucherColor)?programme.context.voucherColor.join(', '):undefined));
+	form.createField("nbTools","Number of pin-points").field("nbTools").value(programme.context.voucherTools.length);
+	form.field("quantity").value(programme.context.voucherQuantity||100).focus();
+	programme.context.userChooseLayoutFormat();
+	programme.html().button("OK", function(){
+		// extracts generation options
+		var options = {
+			startNumber: form.field("startNumber").value(),
+			quantity: form.field("quantity").value()
+		};
+		// sets program options
+		programme.context.voucherLogoUrl = form.field("logoUrl").value() || programme.context.voucherLogoUrl;
+		programme.context.voucherPurpose = form.field("cardName").value();
+		var nbTools = form.field("nbTools").value();
+		if(nbTools > 0) {
+			programme.context.voucherTools = [];
+			for(var i=0;i<nbTools;i++) {
+				programme.context.voucherTools[i]=i+1;
+			}
+		}
+		var cardColor = form.field("cardColor").value();
+		if(cardColor) cardColor = cardColor.split(/[\s,;]+/g);
+		else cardColor = undefined;
+		programme.context.voucherColor = cardColor;
+		
+		form.remove();
+		programme.html().reset()
+		.button("More cards",function(){programme.context.userInput();});
+		programme.context.generateCards(options.quantity,options.startNumber);
+	})
+}
+programme.context.userChooseLayoutFormat = function() {
+	var checkBox = undefined;
+	var html = programme.currentDiv().p("layoutFormatChoice").out("Choose layout:").$p().div("layoutFormatChoice"); 
+	programme.context.layoutFormatChoice = [];
+	var userChooseLayoutFormat = function(checkBox,ticked) {
+		// untick the other checkboxes
+		programme.context.layoutFormatChoice.forEach(function(checkBox){checkBox.checked(false);})
+		// ticks the current checkbox
+		checkBox.checked(ticked);
+		// saves the layout format choices
+		if(ticked) {
+			programme.context.voucherFormat = checkBox.context.voucherFormat;
+			programme.context.pageFormat = checkBox.context.pageFormat;
+		}
+	}
+	var createLayoutFormatCheckbox = function(label, voucherFormat, pageFormat) {
+		var checkBox = html.createCheckbox(undefined,programme.context.layoutFormatChoice.length+1);/* ensures id is unique by appending array index */
+		html.out("&nbsp;").out(label).out("&nbsp;");
+		checkBox.context.voucherFormat = voucherFormat;
+		checkBox.context.pageFormat = pageFormat;
+		checkBox.onClick(userChooseLayoutFormat);
+		programme.context.layoutFormatChoice.push(checkBox);
+		return checkBox;
+	};
+	
+	// 1 card/page
+	createLayoutFormatCheckbox("1 card/page, All paper", 'single_card', 'single_card');	
+		
+	html.putHtml("<br/>");
+	
+	// 4x4 format, A4 page
+	var checkBox = createLayoutFormatCheckbox("4x4 layout, A4 paper", 'm4x4', 'A4');	
+	// ticked by default
+	checkBox.$().click();
+	
+	// 4x4 format, Letter page
+	createLayoutFormatCheckbox("4x4, Letter paper", 'm4x4', 'Letter');	
+	
+	html.putHtml("<br/>");
+	/*
+	// Credit card format, A4 page
+	createLayoutFormatCheckbox("Credit card layout, A4 paper", 'credit_card', 'A4');	
+	
+	// Credit card format, Letter page
+	createLayoutFormatCheckbox("Credit card layout, Letter paper", 'credit_card', 'Letter');		
+	
+	// Credit card format, Single page
+	createLayoutFormatCheckbox("Credit card one/page", 'single_credit_card', 'single_card');		
+	
+	html.putHtml("<br/>");
+	*/
+	
+	// 2 cards/page, Letter page
+	createLayoutFormatCheckbox("2 cards/page, Letter paper", 'half_letter', 'Letter');		
+}
+programme.context.generateCards = function(quantity, startNumber) {
+	programme.context.voucherCount = 0;
+	programme.context.voucherQuantity = quantity;
+	programme.context.voucherCurrentNumber = startNumber;
+	programme.context.currentPageNumber = 0;
+	while(programme.context.renderPage() && programme.context.voucherCount <= programme.context.voucherQuantity) {/* loops */}
+}
+programme.context.renderPage = function() {
+	programme.context.currentPageNumber++;		
+	var nCards = 2;
+	var orientation = 'portrait';
+	
+	// if format is credit_card, then 4 lines and 2 columns = 8 per page
+	if(programme.context.voucherFormat == 'credit_card') {
+		nCards = 8;
+	}
+	// if format is single_credit_card, then 1 per page
+	else if(programme.context.voucherFormat == 'single_credit_card') {
+		nCards = 1;
+		orientation = 'landscape'
+	}
+	// else if format is m4x4 the 4 x 4 cards per page
+	else if(programme.context.voucherFormat == 'm4x4') {
+		nCards = 16;	
+		orientation = 'landscape'
+	}
+	// if format is single_card, then 1 per page
+	else if(programme.context.voucherFormat == 'single_card') {
+		nCards = 1;
+		orientation = 'landscape'
+	}
+	
+	var html = programme.html().div("page_"+programme.context.currentPageNumber,"page "+programme.context.pageFormat+' '+orientation).htmlBuilder();	
+	// Renders the cards
+	for(var i=0;i<nCards;i++) {
+		if(programme.context.voucherCount < programme.context.voucherQuantity) {
+			html.insert(programme.context.renderCard, programme.context.voucherGetNextNumber());
+			programme.context.voucherCount++;
+		}
+	}
+	html.emit();
+	return (programme.context.voucherCount < programme.context.voucherQuantity);
+}
+programme.context.renderCard = function(voucherNumber) {
+	var f = " "+programme.context.voucherFormat;
+	var voucherColor = undefined;
+	if($.isArray(programme.context.voucherColor)) voucherColor = programme.context.voucherColor[voucherNumber%programme.context.voucherColor.length];
+	else voucherColor = programme.context.voucherColor;
+	
+	var html = programme.currentDiv().div("card_"+voucherNumber,"card"+f).htmlBuilder();
+	html
+	.tag("div","class","card_container"+f)
+		.tag("div","class","img_container"+f)
+			.tag("div","class","logo_container"+f)
+				.tag("img","class","logo_partners"+f, "src", programme.context.voucherLogoUrl).$tag("img")
+			.$tag("div")
+			.tag("div","class","qrcode_container"+f)
+				.tag("img","class","qrcode"+f, "id", "qrcode_"+voucherNumber,"src", "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl="+voucherNumber).$tag("img")
+			.$tag("div")
+		.$tag("div")
+		.tag("div","class","card_purpose"+f,"style",(voucherColor?"background-color:"+voucherColor:"")).out("&nbsp;").$tag("div")
+		.tag("div","class","voucher_container"+f)
+			.tag("div","class","voucher_label"+f)
+				.tag("span","class","middle").out(programme.context.voucherPurpose).$tag("span")
+			.$tag("div")
+			.tag("div","class","voucher_number"+f)
+				.tag("span","class","middle").out(voucherNumber).$tag("span")
+			.$tag("div")
+		.$tag("div")
+	.$tag("div");	
+
+	html.tag("div","class","card_toolbar"+f);
+	if(programme.context.voucherTools.length>0) {
+		var n = programme.context.voucherTools.length;
+		var width = Math.ceil(100/n);
+		for(var i=0;i<n;i++) {
+			html.tag("div","class","card_tool"+(i<n-1?" sep":"")+f,"style",'width:'+(i==n-1?100-width*(n-1):width)+'%');
+				var icon = programme.context.voucherToolsIcons[programme.context.voucherTools[i]];
+				html.tag("span","class","middle");
+				if(icon) html.tag("img","src",icon).$tag("img");
+				else html.out(programme.context.voucherTools[i]);
+				html.$tag("span");
+			html.$tag("div");
+		}
+	}
+	html.$tag("div")
+	.emit();
+}
+
+programme (
+	script(function(){
+		programme.context.userInput();
+	})
+);
+// program END
+</script>
+</body></html>
