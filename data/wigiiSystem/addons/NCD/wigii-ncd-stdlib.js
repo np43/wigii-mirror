@@ -170,7 +170,7 @@ wncd.ObjectDoc = function(obj,options) {
 			}
 			
 			// displays member name
-			memberDiv.out(member.name,"methodName");
+			memberDiv.htmlBuilder().tag("a","class","methodName selfLink","href","#"+member.uri).out(member.name,"methodName").$tag("a").emit();
 			
 			// follows with parameters	
 			if(member.context.args) {

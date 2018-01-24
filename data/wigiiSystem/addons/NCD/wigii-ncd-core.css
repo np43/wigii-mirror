@@ -368,6 +368,10 @@ pre[class*="language-"] {
   * Wigii Natural Code Development (NCD) standard library CSS
   * Created by Camille Weber (camille@wigii.org), 15.11.2017
   */
+div.ncd.method a.selfLink {
+	text-decoration:none;
+	color:black;
+}	 
 div.autocompletionsense {
 	overflow-y:auto;
 	background-color:white;
