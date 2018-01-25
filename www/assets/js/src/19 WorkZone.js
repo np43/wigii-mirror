@@ -2050,7 +2050,7 @@ function displayLink(anchor, link, marginTop, marginLeft){
 	} else {
 		link = link.replace(" ", "%20");
 		$(anchor)
-		.prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;float:left;margin-top:'+marginTop+'px;margin-left:'+marginLeft+'px;padding:5px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>')
+		.prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;float:left;margin-top:'+marginTop+'px;margin-left:'+marginLeft+'px;padding:4px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>')
 		.find('input').select().next().click(function(e){ $(this).parent().remove(); e.stopPropagation(); return false; });
 	}
 }
@@ -2060,9 +2060,9 @@ function mailToFromLink(elementDialogId, link){
 	} else {
 		link = link.replace(" ", "%20");
 		if(isWorkzoneViewDocked()) {
-			$('#'+elementDialogId+'').prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;left:'+($('#searchBar .el_sendLink').position().left+$('#searchBar .el_sendLink').outerWidth()-425)+'px;top:'+(getTopHeight(true)+28)+'px;padding:5px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>').find('input').select().next().click(function(e){ $(this).parent().remove(); e.stopPropagation(); return false; });
+			$('#'+elementDialogId+'').prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;left:'+($('#searchBar .el_sendLink').position().left+$('#searchBar .el_sendLink').outerWidth()-425)+'px;top:'+(getTopHeight(true)+28)+'px;padding:4px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>').find('input').select().next().click(function(e){ $(this).parent().remove(); e.stopPropagation(); return false; });
 		} else {
-			$('#'+elementDialogId+'').parent().prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;float:left;margin-top:20px;margin-left:'+($('#'+elementDialogId+'').width()-425)+'px;padding:5px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>').find('input').select().next().click(function(e){ $(this).parent().remove(); e.stopPropagation(); return false; });
+			$('#'+elementDialogId+'').parent().prepend('<div class="sendLinkInput ui-corner-all SBB" style="background-color:#fff;z-index:9999999;position:absolute;float:left;margin-top:20px;margin-left:'+($('#'+elementDialogId+'').width()-425)+'px;padding:4px;width:425px;"><input type="text" style="float:left;margin:0px;padding:2px;width:400px;" value="'+link+'" /><div class="H" style="float:left;font-size:x-small;margin-left:8px;"> X </div></div>').find('input').select().next().click(function(e){ $(this).parent().remove(); e.stopPropagation(); return false; });
 		}
 	}
 	//link = link.replace('#', '#').replace(' ', '%2520');
@@ -3747,16 +3747,14 @@ function clickEvent_elementCalendar(domObj, calEvent, jsEvent, view, myWigiiName
 }
 
 var crtBlogViewNbOfColumns = 2;
-blogItemWidth = false;
+var crtBlogViewItemWidth = false;
 function resize_blog(){
 	if($('#moduleView .blog').length>0){
 		var modViewWidth = $('#moduleView').width();
 		var blogWidth = Math.floor((modViewWidth-6-10) / crtBlogViewNbOfColumns); //contains margin 1x + rounding
 		var blogHeight = $(window).height()-$('#moduleView>div.blog .dataBlog').position().top - fb.outerHeight()-3 - $('#moduleView #indicators').height();
 		blogWidth = blogWidth - 42 - 2; //padding 2x, border 2x, margin 1x + rounding
-		if(blogItemWidth){
-			blogWidth = blogItemWidth;
-		}
+		if(crtBlogViewItemWidth) blogWidth = crtBlogViewItemWidth;
 		if(blogHeight<0){
             $('#moduleView').width($('#moduleView').width()-1);
             var blogHeight = $(window).height()-$('#moduleView>div.blog .dataBlog').position().top - fb.outerHeight()-3 - $('#moduleView #indicators').height();

@@ -495,7 +495,12 @@ class TemplateRecordManager extends Model {
 			if($querySource instanceof ElementPListDataFlowConnector) {
 				$querySourceLf = $querySource->getListFilter();
 				if(isset($querySourceLf)) {
-					if(isset($fsl)) $querySourceLf->setFieldSelectorList($fsl);
+				    // Medair (CWE) 08.01.2018: merge given fsl with existing one to preserve extra needed calculated fields dependencies				    
+				    if(isset($fsl)) {
+				        $querySourceFsl = $querySourceLf->getFieldSelectorList();
+				        if($querySourceFsl instanceof FieldSelectorListArrayImpl) $querySourceFsl->mergeFieldSelectorList($fsl);
+				        else $querySourceLf->setFieldSelectorList($fsl);
+				    }
 					if(isset($fskl)) $querySourceLf->setFieldSortingKeyList($fskl);
 					if($limit) {
 						$querySourceLf->setPageSize($limit);
@@ -559,7 +564,10 @@ class TemplateRecordManager extends Model {
 			$elementPList->setElementIsReadonly($elementIsReadonly);
 			$elementPList->actOnBeforeAddElementP($p);
 			if($linkType == Links::LINKS_TYPE_SUBITEM) {
+			    // Medair (CWE) 08.01.2018, adds calculated on fetch dependencies to fsl
+			    $listFilter->setFieldSelectorList(ServiceProvider::getWigiiBPL()->buildFslForSubElementWithFxDependencies($p, $element->getId(), $linkName, $fsl));
 				$nb = $elS->getSubElementsForField($p, $element->getId(), $linkName, $elementPList, $listFilter);
+				$listFilter->setFieldSelectorList($fsl);/* restores original field selector list before serialization to session */
 			}
 			//else : not implemented.
 			
@@ -652,7 +660,12 @@ class TemplateRecordManager extends Model {
             if($querySource instanceof ElementPListDataFlowConnector) {
                 $querySourceLf = $querySource->getListFilter();
                 if(isset($querySourceLf)) {
-                    if(isset($fsl)) $querySourceLf->setFieldSelectorList($fsl);
+                    // Medair (CWE) 08.01.2018: merge given fsl with existing one to preserve extra needed calculated fields dependencies
+                    if(isset($fsl)) {
+                        $querySourceFsl = $querySourceLf->getFieldSelectorList();
+                        if($querySourceFsl instanceof FieldSelectorListArrayImpl) $querySourceFsl->mergeFieldSelectorList($fsl);
+                        else $querySourceLf->setFieldSelectorList($fsl);
+                    }
                     if(isset($fskl)) $querySourceLf->setFieldSortingKeyList($fskl);
                     if($limit) {
                         $querySourceLf->setPageSize($limit);
@@ -716,7 +729,10 @@ class TemplateRecordManager extends Model {
             $elementPList->setElementIsReadonly($elementIsReadonly);
             $elementPList->actOnBeforeAddElementP($p);
             if($linkType == Links::LINKS_TYPE_SUBITEM) {
+                // Medair (CWE) 08.01.2018, adds calculated on fetch dependencies to fsl
+                $listFilter->setFieldSelectorList(ServiceProvider::getWigiiBPL()->buildFslForSubElementWithFxDependencies($p, $element->getId(), $linkName, $fsl));
                 $nb = $elS->getSubElementsForField($p, $element->getId(), $linkName, $elementPList, $listFilter);
+                $listFilter->setFieldSelectorList($fsl);/* restores original field selector list before serialization to session */
             }
             //else : not implemented.
 
@@ -2387,6 +2403,21 @@ class TemplateRecordManager extends Model {
 		$r = Activity::createInstance("BaseEmail");
 		return $r;
 	}
+
+    /**
+     * Giving an array with key/value pairs, return the position of a given key
+     * @param Array $array
+     * @param scalar $key
+     * @return int The position in the array starting from 0, -1 if key is not found
+     */
+    protected function findKeyIndexInArray($array, $key){
+        $i = 0;
+        foreach ($array as $k=>$v){
+            if($k == $key) return $i;
+            $i++;
+        }
+        return -1;
+    }
 }
 
 

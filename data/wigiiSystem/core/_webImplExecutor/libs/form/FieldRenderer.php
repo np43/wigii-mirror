@@ -83,6 +83,9 @@ class FieldRenderer extends Model {
 		} else {
 			$style = "width: 100%; max-width:".($this->getTotalWidth())."px;";
 		}
+        if($fieldXml["displayHidden"]=="1"){
+            $style .= "display:none;";
+        }
 		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" >');
 
 		//display label if necessary, 20 is label padding

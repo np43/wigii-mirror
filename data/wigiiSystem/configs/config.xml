@@ -9,6 +9,7 @@
 			readonly,
 			disabled,
 			hidden,
+			displayHidden,
 			readonlyInPublic,
 			requireInPublic,
 			onlyInForm,

@@ -68,7 +68,7 @@ if(!$this->isForNotification() && $fieldXml["fsl"]!=""){
 
 	$this->put('</div>'); //close current value div and open a new div full width for preview
     if($fieldXml["isBlogView"]=="1"){
-        $this->displayElementPListBlogPreview($this->getP(), $this->getDetailRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, (string)$fieldXml["limit"]);
+        $this->displayElementPListBlogPreview($this->getP(), $this->getDetailRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, /* Medair 08.01.2018: pagination is not implemented in blog view (string)$fieldXml["limit"]*/null);
     }else {
         $this->displayElementPListPreview($this->getP(), $this->getDetailRenderer()->getIsInLineWidth(), $this->getRecord(), $fieldName, $fsl, $fskl, (string)$fieldXml["limit"]);
     }

@@ -8406,7 +8406,12 @@ onUpdateErrorCounter = 0;
 					if($querySource instanceof ElementPListDataFlowConnector) {
 						$querySourceLf = $querySource->getListFilter();
 						if(isset($querySourceLf)) {
-							if(!is_null($listFilter->getFieldSelectorList())) $querySourceLf->setFieldSelectorList($listFilter->getFieldSelectorList());
+							// Medair (CWE) 08.01.2018: merge given fsl with existing one to preserve extra needed calculated fields dependencies
+							if(!is_null($listFilter->getFieldSelectorList())) {
+							    $querySourceFsl = $querySourceLf->getFieldSelectorList();
+							    if($querySourceFsl instanceof FieldSelectorListArrayImpl) $querySourceFsl->mergeFieldSelectorList($listFilter->getFieldSelectorList());
+							    else $querySourceLf->setFieldSelectorList($listFilter->getFieldSelectorList());
+							}
 							if(!is_null($listFilter->getFieldSortingKeyList())) $querySourceLf->setFieldSortingKeyList($listFilter->getFieldSortingKeyList());
 							if($listFilter->getPageSize() > 0) {
 								$querySourceLf->setPageSize($listFilter->getPageSize());
@@ -8454,11 +8459,15 @@ onUpdateErrorCounter = 0;
 				}
 				// else subitem or links
 				else {
-					$elementPList = ElementPListRowsForPreview::createInstance($this->createTRM(), $p, $exec, $this->getConfigurationContext(), $listFilter->getFieldSelectorList(), $sessElementId, $linkName, $elementIsBlocked, $previewListId, $linkType);
+				    $fsl = $listFilter->getFieldSelectorList();
+					$elementPList = ElementPListRowsForPreview::createInstance($this->createTRM(), $p, $exec, $this->getConfigurationContext(), $fsl, $sessElementId, $linkName, $elementIsBlocked, $previewListId, $linkType);
 					$elementPList->setElementIsReadonly($elementIsReadonly);
 					if($linkType == Links::LINKS_TYPE_SUBITEM) {
+					    // Medair (CWE) 08.01.2018, adds calculated on fetch dependencies to fsl
+				        $listFilter->setFieldSelectorList(ServiceProvider::getWigiiBPL()->buildFslForSubElementWithFxDependencies($p, $sessElementId, $linkName, $fsl));
 						$nbRow = $elS->getSubElementsForField($p, $sessElementId, $linkName, $elementPList, $listFilter);
 						$total = $listFilter->getTotalNumberOfObjects();
+						$listFilter->setFieldSelectorList($fsl);/* restores original field selector list before serialization to session */
 					}
 					else {
 						/* not implemented */

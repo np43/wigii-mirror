@@ -843,7 +843,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			($nArgs > 0 ? $this->evaluateArg($args[0]) : null),
 			($nArgs > 1 ? $this->evaluateArg($args[1]) : null),
 			($nArgs > 2 ? $this->evaluateArg($args[2]) : null),
-			($nArgs > 3 ? $this->evaluateArg($args[3]) : null)
+			($nArgs > 3 ? $this->evaluateArg($args[3]) : null),
+		    ($nArgs > 4 ? $this->evaluateArg($args[4]) : null)
 		);
 	}
 
@@ -1885,6 +1886,40 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 */
 	public function elementExists($args) {
 		return ($this->evaluateFuncExp(fx('countElements',$args),$this)>0);
+	}
+	
+	/**
+	 * Returns the group in which is contained the element. If the element is in several groups, takes first writable group or first readable group.
+	 * FuncExp signature : <code>cfgElementGroup(element,returnAttribute=id|groupname|group)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) element: Element. 
+	 * - Arg(1) returnAttribute: String. The name of the group attribute to return. Defaults to id. If 'group' then returns Group object.
+	 * @return Int|String|Group returns null if not found
+	 */
+	public function cfgElementGroup($args) {
+	    $this->debugLogger()->logBeginOperation('cfgElementGroup');
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException('The cfgElementGroup function takes at least one argument which is the element for which to retrieve groups', FuncExpEvalException::INVALID_ARGUMENT);
+	    $element = $this->evaluateArg($args[0]);
+	    $returnAttribute = 'id';
+	    if($nArgs > 1) $returnAttribute = $this->evaluateArg($args[1]);
+	    
+	    $returnValue = GroupListAdvancedImpl::createInstance();
+	    if($this->getElementService()->getAllGroupsContainingElement($this->getPrincipal(), $element, $returnValue) > 0) {
+	        if($returnValue->count() > 1) {
+	            if($returnValue->getWriteGroups()->count() > 0) $returnValue = reset($returnValue->getWriteGroups()->getListIterator());
+	            else if($returnValue->getSGroups()->count() > 0) $returnValue = reset($returnValue->getSGroups()->getListIterator());
+	            else $returnValue = reset($returnValue->getReadGroups()->getListIterator());
+	        }
+	        else $returnValue = reset($returnValue->getListIterator());
+	    }
+	    else $returnValue = null; 
+	    
+	    $this->debugLogger()->logEndOperation('cfgElementGroup');
+	    if(isset($returnValue)) {
+	        if($returnAttribute == 'group') return $returnValue;
+	        else return $returnValue->getAttribute($returnAttribute);
+	    }
 	}
 	
 	// Wigii Administration

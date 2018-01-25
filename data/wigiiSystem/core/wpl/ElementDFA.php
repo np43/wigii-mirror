@@ -344,16 +344,19 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 						$wigiiBag = $element->getWigiiBag();
 						if(method_exists($wigiiBag, 'reset')) $wigiiBag->reset();
 						else {
-							$wigiiBag = $this->createWigiiBagInstance();
+						    if($dataFlowContext->areWigiiEventsEnabled()) $wigiiBag = FormBag::createInstance();
+						    else $wigiiBag = WigiiBagBaseImpl::createInstance();
 							$element->setWigiiBag($wigiiBag);
 						}	
 						// resets the FieldList
 						$fieldList = $element->getFieldList();
 						if(method_exists($fieldList, 'reset')) $fieldList->reset();
 						else {
-							$fieldList = FieldListArrayImpl::createInstance();
+						    if($dataFlowContext->areWigiiEventsEnabled()) $fieldList = FormFieldList::createInstance($wigiiBag);
+						    else $fieldList = FieldListArrayImpl::createInstance();							
 							$element->setFieldList($fieldList);
-						}				
+						}		
+						if($wigiiBag instanceof FormBag && $fieldList instanceof FormFieldList) $wigiiBag->setFormFieldList($fieldList);
 						// fills the element
 						$elementP = $this->getElementService()->fillElement($principal, $element, $fieldSelectorList);
 						$dataFlowContext->writeResultToOutput($elementP, $this);

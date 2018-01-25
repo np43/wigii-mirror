@@ -56,6 +56,8 @@ if((string)$fieldXml["isTimeline"]=="1"){
 
     $options = $this->evalfx(str2fx((string)$fieldXml["timelineOptions"]));
 
+    $history = json_decode($options['global_history']);
+
     //Get nbElement to have in timeline
     $elementNot=$options['exclude'];
     $nbColumn=0;
@@ -110,7 +112,7 @@ if((string)$fieldXml["isTimeline"]=="1"){
             }
         }
     }
-    $this->put("<span class='glyphicon glyphicon-arrow-right' style='margin-top: -56px; margin-right: -38px; color: #f9ebb2; font-size: 57pt;' aria-hidden='true'></span>");
+    $this->put("<span class='glyphicon glyphicon-arrow-right' style='margin-top: -56px; margin-right: -38px; color: #f9ebb2; font-size: 57pt; z-index:-1;' aria-hidden='true'></span>");
     $this->put("</div>");
 
     $firstLoop = true;
@@ -247,16 +249,17 @@ if((string)$fieldXml["isTimeline"]=="1"){
             }
         }
 
+        $temp_tab = array();
+        $checkedAttribute = str_replace(" ", "_", $val);
         foreach($tabId as $k => $v){
-            $temp_tab = $tabId;
-            $key = array_search($v, $temp_tab);
-            $temp_tab = array_slice($temp_tab, 0, $key+1);
-            $jsCode .= "if($('#$v').prop('checked') == true){";
-                foreach ($temp_tab as $k2 => $id){
+            $temp_tab[$k] = $v;
+            if($checkedAttribute==$k) {
+                foreach ($temp_tab as $k2 => $id) {
                     $jsCode .= "$('#$id').prop('checked', true);";
-                    $jsCode .= "$('#".$k2."_date span').show();";
+                    $jsCode .= "$('#" . $k2 . "_date span').show();";
                 }
-            $jsCode .= "}";
+                break;
+            }
         }
 
         $fieldId = $formId.'__'.$fieldName;
@@ -352,7 +355,7 @@ $('div#" . $formId . "__" . $fieldName . " .value').mouseover(function(e) { radi
 				$label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$label.'</span>';
 			}
 			if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
-			else $labelWidth = ($parentWidth-30);
+			else $labelWidth = ($parentWidth-5-30);
 			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;width: 100%; max-width:'.$labelWidth.'px;">'.$label.'</div></label>');
 		}
 		if($useMultipleColumn>0){

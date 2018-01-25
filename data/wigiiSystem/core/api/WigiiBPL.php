@@ -2007,6 +2007,31 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Creates a FieldSelectList instance containing all calculated on fetch dependencies for the given sub elements. 
+	 * @param Principal $principal current principal running the operation
+	 * @param int $parentElementId parent element ID of the requested sub elements
+	 * @param string $linkName the field of type Links containing the sub elements
+	 * @param FieldSelectorList $currentFsl current FieldSelectorList to be cloned and expanded with the FuncExp dependencies.
+	 * @return FieldSelectorList the new FieldSelectorList instance containing all the required field selectors
+	 */
+	public function buildFslForSubElementWithFxDependencies($principal,$parentElementId,$linkName,$currentFsl) {
+	    $this->debugLogger()->logBeginOperation('buildFslForSubElementWithFxDependencies');
+	    $returnValue = FieldSelectorListArrayImpl::createInstance(false,false,$currentFsl);
+        $seCS = $this->getConfigService();
+        $seCS->selectSubElementsConfig($principal, $parentElementId, $linkName);
+        $fieldList = FormFieldList :: createInstance(null);
+        $seCS->getFields($principal, $seCS->getCurrentModule(), null, $fieldList);
+        foreach ($fieldList->getListIterator() as $field) {
+            // Gets dependencies of calculated on fetch fields, present in the actual field selector list
+            if ($field->isCalculated() && $field->shouldCalculateOnFetch() && $returnValue->containsField($field->getFieldName())) {
+                $field->getFuncExpDependencies($returnValue);
+            }
+        }
+        $this->debugLogger()->logEndOperation('buildFslForSubElementWithFxDependencies');
+        return $returnValue;
+	}
+	
+	/**
 	 * Returns a GroupBasedWigiiApiClient centered on the given ConfigSelector.
 	 * @param Principal $principal authenticated user performing the operation. 
 	 * If principal has adaptive WigiiNamespace then binds to specified WigiiNamespace if needed.

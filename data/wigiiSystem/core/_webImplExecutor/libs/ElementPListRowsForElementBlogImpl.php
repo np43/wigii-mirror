@@ -522,9 +522,7 @@ class ElementPListRowsForElementBlogImpl extends ElementPGroupableSelectablePage
 		}
 
 		$this->getExec()->addJsCode("crtBlogViewNbOfColumns = $nbOfColumns;");
-		if($blogItemWidth){
-            $this->getExec()->addJsCode("blogItemWidth = $blogItemWidth");
-        }
+		$this->getExec()->addJsCode("crtBlogViewItemWidth = ".($blogItemWidth?$blogItemWidth:"false"));
 		if(!$this->isDoOnlyRows()){
 			$this->getExec()->addJsCode("crtElementId = '".$this->getListContext()->getCrtSelectedItem()."';");
 			$this->getExec()->addJsCode("setListenersToElementBlog();");

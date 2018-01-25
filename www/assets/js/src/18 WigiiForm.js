@@ -1358,8 +1358,6 @@ function setListenerForTimeline(formId, fieldId, nbColumn, options){
                 var fieldName = $(this).children('input').attr('value');
                 var fieldId = formId+'_'+historyFields[fieldName]+'_value_text';
 
-                console.log(historyFields[fieldName]);
-
                 $(this).children('input').prop('checked', true);
 
                 if(!$('#'+fieldId).attr('value')){
@@ -1369,7 +1367,7 @@ function setListenerForTimeline(formId, fieldId, nbColumn, options){
             $(this).parent().parent().children('div .child:gt(-'+revIndex+')').each(function(){
                 $(this).children('input').prop('checked', false);
             });
-            $("#"+formId+' .value').children('input').each(function(){
+            $("#"+fieldId+' .value').children('input').each(function(){
                 $(this).prop('checked', false);
             });
 
@@ -1377,12 +1375,14 @@ function setListenerForTimeline(formId, fieldId, nbColumn, options){
                 $(this).prop('checked', true);
 
                 var fieldName = $(this).attr('value');
+                var fieldDate = $('#'+fieldName.replace(/ /g , "_")+'_date span');
                 var field = formId+'_'+historyFields[fieldName]+'_value_text';
 
                 $(this).attr('id');
 
                 if(!$('#'+field).attr('value')){
                     $('#'+field).attr('value', date);
+                    fieldDate.html(date).show();
                 }
 
             }else{
