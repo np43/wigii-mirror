@@ -190,6 +190,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		//	- $isCollapse
 		$idField = $this->getFormId()."__".$fieldName;
 		$fieldClass = (string)$fieldXml["class"];
+		$fieldClass .= $rm->getAdditionalFieldClass($fieldName,$dataTypeName);
 		$error = $rm->getRecord()->getWigiiBag()->getError($fieldName);
 		$help = str_replace('"', '&quot;', $transS->t($p, $rm->getRecord()->getWigiiBag()->getHelp($fieldName)));
 		$isRequire = (

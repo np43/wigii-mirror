@@ -177,6 +177,10 @@ button.publicFormBorder:hover {
   color:#<?=$toolBarR;?>;
 }
 
+div.field.updatedRecently {
+	/* background-color:#FFFFE7; */
+	border-right:5px solid #FFFF00; */
+}
 div.field.button .value div a:first-child {
   background-color:#<?=$goButton;?>;
   color:#<?=$goButtonR;?>;

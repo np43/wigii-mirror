@@ -164,6 +164,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 
 		$idField = $this->getDetailId()."__".$fieldName;
 		$fieldClass = (string)$fieldXml["class"];
+		$fieldClass .= $rm->getAdditionalFieldClass($fieldName,$dataTypeName);
 		// CWE 10.02.2016: if element is blocked, enables add comments if allowOnReadOnly
 		if($fieldXml["allowOnReadOnly"]=="1") $fieldClass .=" allowOnReadOnly ";
 		if($rm->getRecord() instanceof Element && $rm->getRecord()->isState_blocked()) {

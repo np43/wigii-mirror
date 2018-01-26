@@ -839,6 +839,48 @@ class TemplateRecordManager extends Model {
 		if($this->getRecord()->getFieldValue($fieldName, "sys_creationDate")) $returnValue .= $this->h("sys_creationDate").": ".date("d.m.Y H:i:s", $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "sys_creationDate")))."<br />";
 		return $returnValue;
 	}
+	
+	/**
+	 * return true if the field has been updated within $nbOfDays:default 7 days
+	 * if sys_date!= sys_creationDate and (sys_date + nbOfDays > today)
+	 */
+	public function isFieldUpdatedRecently($fieldName,$nbOfDays=7){
+		if($this->getRecord() instanceof Element) {
+			if($nbOfDays){
+				$lastUpdate = $this->getRecord()->getFieldValue($fieldName, "sys_date");
+				$creationDate = $this->getRecord()->getFieldValue($fieldName, "sys_creationDate");
+				if($lastUpdate!=$creationDate && ($lastUpdate+($nbOfDays*24*3600))>time()){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * return string with classes separated by space (starting with a space):
+	 * 	- updatedRecently : if isFieldUpdatedRecently (only for fields with DataType)
+	 */
+	public function getAdditionalFieldClass($fieldName, $dataTypeName){
+		$returnValue = "";
+		//add class if not external, listView, Notification or Print
+		if(!$this->isForExternalAccess() && !$this->isForListView() && !$this->isForNotification() && !$this->isForPrint()){
+			//add class on Records
+			if($this->getRecord() instanceof Element) {
+				//add class if udpated recently
+				$highlightLastChanges = (string)$this->getConfigService()->getParameter($this->getP(), $this->getRecord()->getModule(), "Element_highlightLastchanges");
+				$highlightLastChangesClass = (string)$this->getConfigService()->getParameter($this->getP(), $this->getRecord()->getModule(), "Element_highlightLastchangesClass");
+				if($highlightLastChanges!= "" && $dataTypeName){ //updatedRecently is only for fields with datatype
+					if($this->isFieldUpdatedRecently($fieldName,$highlightLastChanges)){
+						if($highlightLastChangesClass) $returnValue .= " ".$highlightLastChangesClass;
+						else $returnValue .= " updatedRecently";
+					}
+				}
+			}
+		}
+		return $returnValue;
+	}
+	
 	/**
 	 * @param additionalRowInfo, is information added in a column per elements (i.e. used to say those element remains elsewhere)
 	 */
