@@ -121,7 +121,7 @@
 		html.impl.a = function(url){html.put(wigiiNcd().getHtmlBuilder().putStartTag('a','href',url,'target','_blank','class',html.emittedClass()).put(url).putEndTag('a').html());return html;};
 		html.impl.color = function(c,backgroundC,cssClass){html.startColor(c,backgroundC, cssClass);return html;};
 		html.impl.$color = function(){html.endColor(); return html;};
-		html.impl.bouton = function(label, onClick, cssClass){html.putButton(label, onClick, cssClass); return html;};
+		html.impl.bouton = function(label, onClick, cssClass, id, context){html.putButton(label, onClick, cssClass, id, context); return html;};
 		html.impl.input = function(cssClass){return html.createTextArea(cssClass);};
 		html.impl.display = function(backgroundC,textC,cssClass) {return html.createTextInput(cssClass).color(backgroundC,textC);};
 		html.impl.insert = function(f) {

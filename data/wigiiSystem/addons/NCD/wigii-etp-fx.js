@@ -902,7 +902,7 @@
 		};
 		return returnValue;
 	};	
-	var bouton = function(label,onClick,cssClass) {return dynImpl_fx_s("bouton",function(fxCtx){return fxCtx.html().button;},label,function(){return onClick;},cssClass);};
+	var bouton = function(label,onClick,cssClass,id,context) {return dynImpl_fx_s("bouton",function(fxCtx){return fxCtx.html().button;},label,function(){return onClick;},cssClass,id,context);};
 	
 
 	
@@ -1148,7 +1148,9 @@
 				else fxCtx.html().htmlBuilder().tag('div',
 						'id',options.id,
 						'class',options.name+(options.cssClass?' '+options.cssClass:''),
-						'style','float:left;width:'+options.width+'%;height:'+options.height+'%;'
+						'style','float:left;'
+						+(options.minWidth?'min-width:'+options.minWidth+';':'')+'width:'+options.width+'%;'+(options.maxWidth?'max-width:'+options.maxWidth+';':'')
+						+(options.minHeight?'min-height:'+options.minHeight+';':'')+'height:'+options.height+'%;'+(options.maxHeight?'max-height:'+options.maxHeight+';':'')
 					)
 					.insert(args[0])
 					.$tag('div').emit();
@@ -1193,7 +1195,9 @@
 				htmlb.tag('div',
 					'id',options.id,
 					'class','h'+(options.cssClass?' '+options.cssClass:''),
-					'style','float:left;width:'+width+';height:'+height+';'
+					'style','float:left;'
+					+(options.minWidth?'min-width:'+options.minWidth+';':'')+'width:'+width+';'+(options.maxWidth?'max-width:'+options.maxWidth+';':'')
+					+(options.minHeight?'min-height:'+options.minHeight+';':'')+'height:'+height+';'+(options.maxHeight?'max-height:'+options.maxHeight+';':'')
 				);
 				// renders all components with relative width
 				for(var i=0;i<args.length;i++) {
@@ -1228,7 +1232,9 @@
 				htmlb.tag('div',
 					'id',options.id,
 					'class','v'+(options.cssClass?' '+options.cssClass:''),
-					'style','float:left;width:'+width+';height:'+height+';'
+					'style','float:left;'
+					+(options.minWidth?'min-width:'+options.minWidth+';':'')+'width:'+width+';'+(options.maxWidth?'max-width:'+options.maxWidth+';':'')
+					+(options.minHeight?'min-height:'+options.minHeight+';':'')+'height:'+height+';'+(options.maxHeight?'max-height:'+options.maxHeight+';':'')
 				);
 				// renders all components with relative height
 				for(var i=0;i<args.length;i++) {
@@ -1245,10 +1251,21 @@
 			 * Creates a FuncExp which wraps the underlying rendering function
 			 *@param String name the name of the underlying rendering function (one of h,v,x1,...,x10)
 			 *@param Array args the array of arguments passed to the FuncExp. These map to children nodes in the layout expression tree.
-			 *@param Object options some rendering options, like the id, cssClass, width or height.
+			 *@param Object options some rendering options, like the id, cssClass, width or height,minWidth,maxWidth,minHeight,maxHeight.
 			 */
 			layout.fx = function(name,args,options) {
-				options = {name:name,id:'',cssClass:'',weight:layout.weightOf(name),h:(options?options.h:undefined),v:(options?options.v:undefined)};
+				options = {
+					name:name,
+					id:'',
+					cssClass:'',
+					minWidth:'',
+					maxWidth:'',
+					minHeight:'',
+					maxHeight:'',
+					weight:layout.weightOf(name),
+					h:(options?options.h:undefined),
+					v:(options?options.v:undefined)
+				};
 				
 				// Func Exp mapping a layout function
 				var returnValue = function(fxCtx) {return layout[name](fxCtx,args,options);};
@@ -1263,6 +1280,22 @@
 				 * Sets a CSS class to the given box
 				 */
 				returnValue.cssClass = function(cssClass) {options.cssClass = cssClass;return returnValue;};
+				/**
+				 * Sets a min Width to the given box
+				 */
+				returnValue.minWidth = function(minWidth) {options.minWidth = minWidth;return returnValue;};
+				/**
+				 * Sets a max Width to the given box
+				 */
+				returnValue.maxWidth = function(maxWidth) {options.maxWidth = maxWidth;return returnValue;};
+				/**
+				 * Sets a min Height to the given box
+				 */
+				returnValue.minHeight = function(minHeight) {options.minHeight = minHeight;return returnValue;};
+				/**
+				 * Sets a max Height to the given box
+				 */
+				returnValue.maxHeight = function(maxHeight) {options.maxHeight = maxHeight;return returnValue;};
 				
 				// For h and v container, allows the user to define initial height and weight
 				if(!layout.weightOf(name)) {
@@ -1301,6 +1334,10 @@
 					fxs += ')';
 					if(options.id) fxs += '.id("'+options.id+'")';
 					if(options.cssClass) fxs += '.cssClass("'+options.cssClass+'")';
+					if(options.minWidth) fxs += '.minWidth("'+options.minWidth+'")';
+					if(options.maxWidth) fxs += '.maxWidth("'+options.maxWidth+'")';
+					if(options.minHeight) fxs += '.minHeight("'+options.minHeight+'")';
+					if(options.maxHeight) fxs += '.maxHeight("'+options.maxHeight+'")';
 					if(name == 'h' || name=='v') {
 						if(options.cssWidth) fxs += '.width("'+options.cssWidth+'")';
 						if(options.cssHeight) fxs += '.height("'+options.cssHeight+'")';
@@ -1425,7 +1462,7 @@
 	programme.a = function(url){programme.currentDiv().a(url);return programme;}; 
 	programme.color = function(c,backgroundC,cssClass) {programme.currentDiv().color(c,backgroundC,cssClass);return programme;};
 	programme.$color = function() {programme.currentDiv().$color();return programme;}; 
-	programme.bouton = function(label,onClick,cssClass) {programme.currentDiv().bouton(label,onClick,cssClass);return programme;};
+	programme.bouton = function(label,onClick,cssClass,id,context) {programme.currentDiv().bouton(label,onClick,cssClass,id,context);return programme;};
 	programme.codeSource = function() {return programme.context.codeSource;}; 
 	programme.libSource = libSource; 
 	programme.libPublic = libPublic;

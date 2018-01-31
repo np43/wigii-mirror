@@ -392,14 +392,19 @@
 			
 			/**
 			 * Emits a button
+			 *@param String label the label of the button
+			 *@param Function onClick the on click callback, compatible with JQuery onClick signature
+			 *@param String cssClass some classes to be added to the button
+			 *@param String id optional HTML ID
+			 *@param Any context an optional context to be passed to the click callback (as last parameter)
 			 */
-			self.putButton = function(label, onClick, cssClass){
-				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('button','class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
+			self.putButton = function(label, onClick, cssClass, id, context){
+				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('button','id',(id?id:''),'class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
 				self.htmlTree.append(label);
 				var b = self.impl.putHtml(self.htmlTree.pop('</button>'), true);
-				if($.isFunction(onClick) && b) b.off().click(function(){
+				if($.isFunction(onClick) && b) b.off().click(function(e){
 					if(window.wigiiNcdEtp && window.wigiiNcdEtp.program.context) window.wigiiNcdEtp.program.context.html(self);
-					try {onClick();}
+					try {onClick.apply(this,[e,context]);}
 					catch(exc) {self.publishException(exc);}
 				});				
 				return self;

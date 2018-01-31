@@ -1001,19 +1001,19 @@ wncd.Desktop = function(options) {
 			x3.h(
 				/* user menu */
 				x1.h(
-					x1(self.options.logo||"&nbsp;"),
-					x1().id(desktop.ctxKey+"_userMenu").cssClass("userMenuContainer")
+					x3(self.options.logo||"&nbsp;"),
+					x2().id(desktop.ctxKey+"_userMenu").cssClass("userMenuContainer")
 				),
 				/* header bar */
-				x10.v(
-					x1().id(desktop.ctxKey+"_titleBar").cssClass("titleBar"),
-					x3().id(desktop.ctxKey+"_headerBar").cssClass("headerBar")
+				x7.v(
+					x1().id(desktop.ctxKey+"_titleBar").cssClass("titleBar").minHeight('20px').maxHeight('40px'),
+					x3().id(desktop.ctxKey+"_headerBar").cssClass("headerBar").minHeight('20px')
 				)
-			),
+			).minHeight('100px'),
 			/* workzone */
 			x10().id(desktop.ctxKey+"_workzone").cssClass("workzone"),
 			/* footer bar */
-			x1().id(desktop.ctxKey+"_footerBar").cssClass("footerBar")
+			x1().id(desktop.ctxKey+"_footerBar").cssClass("footerBar").minHeight('20px').maxHeight('40px')
 		).cssClass("desktop").width(desktop.options.width).height(desktop.options.height);
 	};
 	
