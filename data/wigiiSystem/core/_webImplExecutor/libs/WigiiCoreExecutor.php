@@ -232,6 +232,7 @@ class WigiiCoreExecutor {
 		if(ServiceProvider::getAuthorizationService()->isElementPolicyEvaluatorEnabled($principal, $module)) {
 			$policyEvaluatorClassName = (string)$this->getConfigurationContext()->getParameter($principal, $module, 'Element_policyEvaluator');
 			$policyEvaluator = ServiceProvider::getElementPolicyEvaluator($principal, $policyEvaluatorClassName);
+			if($policyEvaluator instanceof ElementPolicyEvaluator) $policyEvaluator->setWigiiExecutor($this);			 
 		}
 		return $policyEvaluator;
 	}
@@ -10082,19 +10083,7 @@ onUpdateErrorCounter = 0;
 					$transS = ServiceProvider :: getTranslationService();
 
                 $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
-                $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
-                /*
-				$exec->addJS('
-				widthElement = $("#elementDialog").width();
-				
-				if(widthElement < '.$totalWidth.'){
-				    width = '.$totalWidth.';
-				}else{
-				    width = widthElement;
-				}
-				
-				');
-    //*/
+                $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");               
 
 				$elementId = $exec->getCrtParameters(1);
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
@@ -10147,14 +10136,15 @@ onUpdateErrorCounter = 0;
 						$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
 						break;
 					} else if($elementP->getRights() == null ||
-							/* allows only read access on element if it is blocked */
+							/* by default, allows only read access on blocked element except managed exceptions:
+							 * - Medair (CWE) 29.01.2018: allows sharing of blocked elements if Element_Blocked_enableSharing is defined in config 
+							 */
 							(($element->isState_blocked() || $elementP->isParentElementState_blocked()) &&
 							$exec->getCrtParameters(0) != "detail" &&
 							$exec->getCrtParameters(0) != "addJournalItem" &&
 							$exec->getCrtParameters(0) != "copy" &&
-							$exec->getCrtParameters(0) != "print" )/*&&
-							$exec->getCrtParameters(0) != "restore") ||
-							$exec->getCrtParameters(0) == "restore" && $elementP->isParentElementState_blocked()*/
+							$exec->getCrtParameters(0) != "print" &&
+							$exec->getCrtParameters(0) == "setGroupsContainingElement" && !($this->evaluateConfigParameter($p, $exec, $configS->getParameter($p, $exec->getCrtModule(), "Element_Blocked_enableSharing"))=="1") )
 							){
 						$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
 						break;
@@ -10182,7 +10172,7 @@ onUpdateErrorCounter = 0;
 							($exec->getCrtParameters(0) == "delete" && $_POST["action"]!=null) ||
 							($exec->getCrtParameters(0) == "edit" && $_POST["action"]!=null) ||
 							($exec->getCrtParameters(0) == "transfer" && $_POST["action"]!=null) ||
-							$exec->getCrtParameters(0) == "setGroupsContainingElements")) {
+						 	 $exec->getCrtParameters(0) == "setGroupsContainingElements")) {
 
 						$mlc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "multipleElementList");
 						//if multiple operation but no multiple selection:
@@ -10270,15 +10260,18 @@ onUpdateErrorCounter = 0;
 
 						$mlc->setFieldSelectorList($fsl);
 						$mlc->setConfigGroupList($configS->getGroupPList($p, $exec->getCrtModule()));
-						// filters blocked elements
-						$mlc->setFieldSelectorLogExp(lxNotEq(fs_e('state_blocked'), true));
+						// multiple operation needs to have no element blocked, except for managed exceptions:
+						// - Medair (CWE) 29.01.2018: allows sharing of blocked elements if Element_Blocked_enableSharing is defined in config
+						if($exec->getCrtParameters(0) != "setGroupsContainingElements") $mlc->setFieldSelectorLogExp(lxNotEq(fs_e('state_blocked'), true));
 						//sorts according to default sorting key and group by key
 						$mlc->setGroupByFieldSelectorList($fsl);
 						$mlc->setSortByFieldSelectorList($fsl);
 						$mlc->setGroupBy('reset'); $mlc->setSortedBy('reset');
 						$nbRows = $elS->getSelectedElements($p, $lc->getMultipleSelection(), $elementPAList, $mlc);
-						// multiple operation needs to have no element blocked
-						if($elementPAList->atLeastOneHasSpecificAttribut()) throw new AuthorizationServiceException("multiple operation is not authorized on blocked elements.", AuthorizationServiceException::FORBIDDEN);						
+						
+						if($elementPAList->atLeastOneHasSpecificAttribut() 
+						    && !(($exec->getCrtParameters(0) == "setGroupsContainingElements") && ($this->evaluateConfigParameter($p, $exec, $configS->getParameter($p, $exec->getCrtModule(), "Element_Blocked_enableSharing"))=="1"))
+						) throw new AuthorizationServiceException("multiple operation is not authorized on blocked elements.", AuthorizationServiceException::FORBIDDEN);						
 						if($exec->getCrtParameters(0) == "delete" && $configS->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && !$elementPAList->allHaveAdminRights()) throw new AuthorizationServiceException("cannot delete elements in non admin groups.", AuthorizationServiceException::FORBIDDEN);
 					}
 
@@ -10447,7 +10440,7 @@ onUpdateErrorCounter = 0;
 
 					case "getGroupsContainingElement" :
 						$gl = GroupListAdvancedImpl :: createInstance();
-						$element = $this->createElementForForm($p, $exec->getCrtModule(), $elementId);
+						$element = $this->createElementForForm($p, $exec->getCrtModule(), $elementId);						
 						$elS->getAllGroupsContainingElement($p, $element, $gl);
 						echo $transS->t($p, "organizeElementTitle");
 						echo ExecutionServiceImpl :: answerParamSeparator;
@@ -10467,9 +10460,17 @@ onUpdateErrorCounter = 0;
 						$requestedSharing = explode(",", $_POST["actual"]);
 						if(!empty($requestedSharing)) $requestedSharing = array_combine($requestedSharing, $requestedSharing);
 						
+						// Medair (CWE) 02.02.2018 blocks sharing to trashbin or any subfolders if element is blocked.
+						if($element->isState_blocked()) {
+						    $trashBinGroups = ServiceProvider::getWigiiBPL()->groupGetTrashbin($p, $this, wigiiBPLParam('includeSubGroups',true));
+						    if(!empty($trashBinGroups) && !empty(array_intersect_key($requestedSharing, $trashBinGroups))) {
+						        throw new AuthorizationServiceException("A blocked element cannot be shared in trashbin", AuthorizationServiceException::FORBIDDEN);	
+						    }
+						}
+						
 						$originalSharing = explode(",", $_POST["original"]);						
 						if(!empty($originalSharing)) $originalSharing = array_combine($originalSharing, $originalSharing);
-						// if originalSharing contains 'all' keyword the replaces it with all groups containing elements
+						// if originalSharing contains 'all' keyword then replaces it with all groups containing elements
 						if($originalSharing['all']) {
 							$searchContext = true;
 							unset($originalSharing['all']);
@@ -10592,6 +10593,14 @@ onUpdateErrorCounter = 0;
 						if($_POST["changeToSelected"]){
 							$changeToShare = explode(",", $_POST["changeToSelected"]);
 							if(!empty($changeToShare)) $changeToShare = array_combine($changeToShare, $changeToShare);
+							
+							// Medair (CWE) 02.02.2018 blocks sharing to trashbin or any subfolders if one element is blocked.
+							if($elementPAList->atLeastOneHasSpecificAttribut()) {
+							    $trashBinGroups = ServiceProvider::getWigiiBPL()->groupGetTrashbin($p, $this, wigiiBPLParam('includeSubGroups',true));
+							    if(!empty($trashBinGroups) && !empty(array_intersect_key($changeToShare, $trashBinGroups))) {
+							        throw new AuthorizationServiceException("Blocked elements cannot be shared in trashbin", AuthorizationServiceException::FORBIDDEN);
+							    }
+							}
 							
 							//eput("add sharing for ".implode(", ", $changeToShare));
 							$groupPList = $elS->addMultipleElementSharing($this->getRootPrincipal(), $p, $elementPAList, $changeToShare);

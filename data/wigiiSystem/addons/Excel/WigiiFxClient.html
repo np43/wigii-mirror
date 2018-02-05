@@ -1,7 +1,7 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- 
-/**
+ **
  *  This file is part of Wigii.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  
@@ -17,94 +17,235 @@
  *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
  *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  @copyright  Copyright (c) 2016  Wigii.org
- *  @author     <http://www.wigii.org/system>      Wigii.org 
- *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
- *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
- */
+ *  @copyright  Copyright (c) 2016-2018  Wigii.org
+ *  @author     <http://www.wigii.org/system/libs>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>           <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>          GNU General Public License
+ *
 -->
-<head>
-<meta name="Copyright" content="Wigii" />
-<meta name="License" content="GNU GPL 3.0" />
-<meta name="Generator" content="Wigii" />
-<meta name="Description" content="Wigii is a web based system allowing management of any kind of data (contact, document, calendar, and any custom types). Find out project page on: http://code.google.com/p/wigii/" />
-<meta http-equiv="content-type" content="text/html;charset=utf-8" />
-<meta content="width=device-width, minimum-scale=1, maximum-scale=1" name="viewport" />
+
+<!-- <LIBRARIES WIGII> -->
+<script src="https://resource.wigii.org/assets/js/wigii-core.js" type="text/javascript"></script>
+<link media="all" type="text/css" href="https://resource.wigii.org/assets/css/wigii-core.css" rel="stylesheet">
+<link media="all" type="text/css" href="https://resource.wigii.org/assets/css/theme.css.php" rel="stylesheet">
+<!-- </LIBRARIES WIGII> -->
+<!-- <LIBRARIES WIGII.ORG NCD> -->
+<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-core.min.css" rel="stylesheet"/>
+<!-- </LIBRARIES WIGII.ORG NCD> -->
+
 <title>Wigii Fx Client</title>
-<script src="http://localhost/portfolio/assets/js/wigii_1803.js" type="text/javascript"></script>
-<link media="all" type="text/css" href="http://localhost/portfolio/assets/css/wigii_1803.css" rel="stylesheet">
-<link media="all" type="text/css" href="http://localhost/portfolio/assets/css/theme.css.php" rel="stylesheet">
 <style>
 body {
-	padding:0px;
-	margin:0px;
-	font-family:Arial;
+	margin: 0;
+	padding: 0;
+	background-color: #FAFAFA;
+	font-family: verdana,​helvetica,​arial,​sans-serif;
+	font-size: 12px;
 }
-#mainDiv {
-	margin: 20px;
+p#title {
+	font-size:3em;
+	margin-top:0px;
+	margin-bottom:20px;
+	padding:10px;
+	display:inline;
+}
+p#footer {
+	font-size:medium;
+	margin:10px 0px;
+	color:lightblue;
+}
+div#fxResult pre {
+	padding:5px;
+	margin: 5px;
+	border: solid 1px red;
+	overflow-x:auto;
 }
 </style>
-</head>
-<body>
-<script type="text/javascript">
-/**
- * Wigii Fx client plugin
- * Created by CWE on January 7th 2016
- * 
- * @param wigiiFacade wigii the Wigii JS client facade function (defined in /assets/js/wigii_XXXX.js)
- * @param JQuery $ depends on JQuery 1.8.x
- */
-(function(wigii,$,SITE_ROOT) {
-	var wigiiApi = wigii();
-	if(!wigiiApi.SITE_ROOT) wigiiApi.SITE_ROOT = SITE_ROOT;
+</head><body>
+
+<img id="logo" src="https://rise.wigii.org/NCD/CMS/www/etp/logo_wigii_48.gif" /> 
+<p id="title">Wigii Fx Client</p>
+<div id="programOutput"></div>
+<p id="footer">Updated by Medair (CWE), 26.01.2018</p>
+
+<!-- <LIBRAIRIES WIGII.ORG NCD ETP> -->
+<script src="https://www.wigii.org/system/libs/wigii-ncd-core.min.js"></script>
+<!-- </LIBRAIRIES WIGII.ORG NCD ETP> -->
+
+<script type="text/javascript">/* Program written in Javascript Wigii NCD (https://www.naturalcodedevelopment.net/) */
+program(scripte(function(){
 	
-	/**
-	 * Wigii Fx Client class
-	 */
-	var WigiiFxClient = function() {
-		var wigiiFxC = this;
-		wigiiFxC.className = 'WigiiFxClient';
-		wigiiFxC.ctxKey = wigiiApi.ctxKey+'_'+wigiiFxC.className;
-		
-		/**
-		 * Runs a FuncExp on server side and shows the result.
-		 * The FuncExp is given by the user into a TextArea
-		 *@param String selector JQuery selector path to the text area containing the FuncExp
-		 */
-		wigiiFxC.userRun = function(selector) {
-			if(selector) wigiiFxC.run($(selector).val());
-		};
-		/**
-		 * Runs a FuncExp on server side and shows the result
-		 *@param String exp the FuncExp in a String format
-		 */
-		wigiiFxC.run = function(exp) {
-			if(!exp) return;
-			try {
-				var query = wigiiApi.SITE_ROOT+'NoWigiiNamespace/NoModule/fx/'+$.base64EncodeUrl(exp);				
-				var iframe = '<iframe src="'+query+'" style="width:1200px;height:800px;"></iframe>';
-				// opens a popup with an iframe requesting the query
-				wigiiApi.getHelpService().showFloatingHelp($('#mainDiv'),undefined,iframe,
-				{localContent:true, position:'center',width:1230,height:850});
-			}
-			catch(e) {wigiiApi.publishException(e);}
-		};
-		
+	/* Model */
+	
+	var fxEndPoint = 'http://localhost/wigii/NoWigiiNamespace/NoModule/fx'
+	var fxString = 'sysUsername()';
+	
+	
+	/* UI state machine */
+	
+	// display Fx form view
+	var displayFxForm = function() {
+		wncd.html().reset();
+		wncd.form
+		.createField('fxEndPoint',"Wigii Fx endpoint")
+		.createTextField('fxString',"Func Exp input");
+		wncd.form.field('fxEndPoint').value(fxEndPoint);
+		wncd.form.field('fxString').value(fxString).focus().$().tabby();
+		wncd.html().button("Call",function() {
+			fxEndPoint = wncd.form.field('fxEndPoint').value();
+			fxString = wncd.form.field('fxString').value();
+			runFx();
+		});
 		
 	};
-	// registers the WigiiFxClient plugin into the Wigii JS client
-	if(!wigiiApi['getFxC']) wigiiApi.getFxC = function() {
-		if(!wigiiApi['wigiiFxClientInstance']) {
-			wigiiApi.wigiiFxClientInstance = new WigiiFxClient();
+	
+	// execute Fx action
+	var runFx = function() {
+		wigii().callFx(fxString,{fxEndPoint:fxEndPoint,
+			resultHandler:function(data,textStatus,xhr) {				
+				wncd.html().div("fxResult").reset().h1("Fx result").htmlBuilder()
+					.tag('pre').tag('code','class','language-xml')
+						.put(wncd.externals.Prism.highlight(xhr.responseText,wncd.externals.Prism.languages.xml))
+					.$tag('code').$tag('pre')
+				.emit();
+			},
+			exceptionHandler:function(exception,context) {
+				wncd.popup(wigii().exception2html(exception,context));
+			}
+		});
+	};
+	
+	// display login form view
+	var displayLoginForm = function() {
+	};
+
+	// executes login
+	var runLogin = function() {
+	};
+		
+	// Implementation
+
+	var wigiiApi = wigii();
+	/**
+	 * Calls asynchronously a FuncExp on server side through the Fx endpoint.
+	 *@param String fx the FuncExp string to be called on server side
+	 *@param Object options an optional bag of options. The following options are supported:
+	 * - resultHandler: Function. A function to handle the FuncExp result. Function signature is resultHandler(data), where data is the received value of the JQuery ajax call.
+	 * - exceptionHandler: Function. A function which handles any thrown exception from server. Function signature is exceptionHandler(exception,context) where exception is Wigii API exception object of the form {name:string,code:int,message:string}
+	 * and context is an object with some server context information of the form {request:string, wigiiNamespace:string, module:string, action:string, realUsername:string, username:string, principalNamespace:string, version:string}
+	 * If exceptionHandler is not set, then exception is published through the wigii.publishException method.
+	 * - silent: Boolean. If silent is true, then no exception handler is called if an error occurs.
+	 * - fxEndPoint: URL String. A url which points to a Wigii server Fx endpoint. If not defined calls wigii.SITE_ROOT/crtWigiiNamespace/crtModule/fx
+	 * - postData: Object|Array. Some optional data to be posted to the server with the Fx call. The data is serialized as JSON.
+	 * - postAsForm: Boolean. If true, the data is posted as an HTTP form, else posted as JSON.
+	 */
+	if(!wigiiApi.callFx) wigiiApi.callFx = function(fx,options) {
+		if(!fx) throw wigiiApi.createServiceException('fx cannot be null',wigiiApi.errorCodes.INVALID_ARGUMENT);
+		
+		// sets default options
+		options = options || {};
+		if(!options.fxEndPoint) {
+			if(window.crtWigiiNamespace) options.fxEndPoint = wigiiApi.SITE_ROOT+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/fx';
+			else options.fxEndPoint = wigiiApi.SITE_ROOT+'/NoWigiiNamespace/NoModule/fx';
 		}
-		return wigiiApi.wigiiFxClientInstance;
-	};	
-})(wigii,jQuery,"http://localhost/portfolio/")
+		if(!options.fxEndPoint.endsWith('/')) options.fxEndPoint += '/';
+		if(!options.exceptionHandler && !options.silent) options.exceptionHandler = function(exception,context) { wigiiApi.publishException(exception); }
+		
+		// encodes fx call
+		fx = $.base64EncodeUrl(fx)
+		
+		// prepares ajax options		
+		var ajaxOptions = {type:"GET",
+			url:options.fxEndPoint+fx,
+			crossDomain: true,
+			xhrFields: {withCredentials: true}
+		}		
+		if(options.resultHandler) ajaxOptions.success = options.resultHandler;
+		if(!options.silent && options.exceptionHandler) ajaxOptions.error = function(xhr,textStatus) {
+			// if HTTP error 500, assumes we have a server side exception sent as xml
+			if(xhr.status == 500 && xhr.responseXML) {
+				var serverError = $(xhr.responseXML);
+				// extracts exception part
+				var exception = serverError.find('exception');
+				if(exception) {
+					exception = {
+						name: exception.find('name').text(),
+						code: exception.find('code').text(),
+						message: exception.find('message').text()
+					};
+				}
+				// extracts context part
+				var context = serverError.find('context');
+				if(context) {
+					context = {
+						request: context.find('request').text(),
+						wigiiNamespace: context.find('wigiiNamespace').text(),
+						module: context.find('module').text(),
+						action: context.find('action').text(),
+						realUsername: context.find('realUsername').text(),
+						username: context.find('username').text(),
+						principalNamespace: context.find('principalNamespace').text()
+					}
+				}
+				// calls exception handler
+				options.exceptionHandler(exception,context);
+			}
+			// else converts HTTP error to exception
+			else options.exceptionHandler({code:xhr.status||wigiiApi.errorCodes.UNKNOWN_ERROR,message:xhr.responseText||"Ajax status: "+textStatus});
+		};
+		
+		// if data, then HTTP POST
+		if(options.postData) {
+			ajaxOptions.type = "POST";
+			if(options.postAsForm) {
+				ajaxOptions.data = options.postData;
+			}
+			else {
+				ajaxOptions.contentType = 'text/plain';
+				ajaxOptions.dataType = 'json';			
+				ajaxOptions.data = JSON.stringify(options.postData);
+				ajaxOptions.processData = false;
+			}
+		}
+		
+		// Fx Ajax call
+		$.ajax(ajaxOptions);
+	};
+	
+	/**
+	 * Shows a popup on the screen with a message
+	 *@param String|Function message the message to display in the popup. Can be some HTML, a simple string or a function which returns some HTML or write into the currentDiv.
+	 * If message is a function, it receives the wigiiApi.Popup instance as first argument to enable interacting with the popup object (for instance to hide or close it).
+	 *@param Object options an optional bag of options to configure the popup. The bag of options should be compatible with the wigiiApi.Popup options (it supports for instance the closeable or resizable options)
+	 */
+	if(!wncd.popup) wncd.popup = function(message,options) {
+		// sets fixed options
+		options = options || {};
+		options.localContent = true;
+		options.position = "center"
+		options.removeOnClose = true;
+		
+		var wrappedMessage = undefined;
+		if($.isFunction(message)) {			
+			wrappedMessage = function(popupBody,popup) {
+				// creates an html emitter in the popup
+				var html = wncd.html(popupBody);						
+				// resets current div on close
+				var currentDiv = wncd.currentDiv();
+				popup.remove(function(){wncd.program.context.html(currentDiv);});
+				// sets the html emitter as current div and builds custom html
+				wncd.program.context.html(html);
+				message(popup);
+				wncd.program.context.html(currentDiv);
+			};
+		}
+		else wrappedMessage = message;		
+		wigii('HelpService').showFloatingHelp(wncd.html().$(), undefined, wrappedMessage, options);
+	}
+	
+	// Main	
+	displayFxForm();
+}));
+// program END
 </script>
-<div id="mainDiv">
-	<p>Enter the FuncExp and press on the run button</p>
-	<textarea id="fxInput" style="width:300px;height:200px"></textarea>
-	<button id="fxRun" type="button" onclick="wigii().getFxC().userRun('#fxInput')">Run</button>
-</div>
-</body>
-</html>
+</body></html>

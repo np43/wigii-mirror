@@ -2480,6 +2480,93 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			wigiiApi.clearKeepInCache();
 			//wigiiApi.debugLogger().logEndOperation('parseUpdateResult');
 		};
+		/**
+		 * Calls asynchronously a FuncExp on server side through the Fx endpoint.
+		 *@param String fx the FuncExp string to be called on server side
+		 *@param Object options an optional bag of options. The following options are supported:
+		 * - resultHandler: Function. A function to handle the FuncExp result. Function signature is resultHandler(data), where data is the received value of the JQuery ajax call.
+		 * - exceptionHandler: Function. A function which handles any thrown exception from server. Function signature is exceptionHandler(exception,context) where exception is Wigii API exception object of the form {name:string,code:int,message:string}
+		 * and context is an object with some server context information of the form {request:string, wigiiNamespace:string, module:string, action:string, realUsername:string, username:string, principalNamespace:string, version:string}
+		 * If exceptionHandler is not set, then exception is published through the wigii.publishException method.
+		 * - silent: Boolean. If silent is true, then no exception handler is called if an error occurs.
+		 * - fxEndPoint: URL String. A url which points to a Wigii server Fx endpoint. If not defined calls wigii.SITE_ROOT/crtWigiiNamespace/crtModule/fx
+		 * - postData: Object|Array. Some optional data to be posted to the server with the Fx call. The data is serialized as JSON.
+		 * - postAsForm: Boolean. If true, the data is posted as an HTTP form, else posted as JSON.
+		 */
+		wigiiApi.callFx = function(fx,options) {
+			if(!fx) throw wigiiApi.createServiceException('fx cannot be null',wigiiApi.errorCodes.INVALID_ARGUMENT);
+			
+			// sets default options
+			options = options || {};
+			if(!options.fxEndPoint) {
+				if(window.crtWigiiNamespace) options.fxEndPoint = wigiiApi.SITE_ROOT+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/fx';
+				else options.fxEndPoint = wigiiApi.SITE_ROOT+'/NoWigiiNamespace/NoModule/fx';
+			}
+			if(!options.fxEndPoint.endsWith('/')) options.fxEndPoint += '/';
+			if(!options.exceptionHandler && !options.silent) options.exceptionHandler = function(exception,context) { wigiiApi.publishException(exception); }
+			
+			// encodes fx call
+			fx = $.base64EncodeUrl(fx)
+			
+			// prepares ajax options		
+			var ajaxOptions = {type:"GET",
+				url:options.fxEndPoint+fx,
+				crossDomain: true,
+				xhrFields: {withCredentials: true}
+			}		
+			if(options.resultHandler) ajaxOptions.success = options.resultHandler;
+			if(!options.silent && options.exceptionHandler) ajaxOptions.error = function(xhr,textStatus) {
+				// if HTTP error 500, assumes we have a server side exception sent as xml
+				if(xhr.status == 500 && xhr.responseXML) {
+					var serverError = $(xhr.responseXML);
+					// extracts exception part
+					var exception = serverError.find('exception');
+					if(exception) {
+						exception = {
+							name: exception.find('name').text(),
+							code: exception.find('code').text(),
+							message: exception.find('message').text()
+						};
+					}
+					// extracts context part
+					var context = serverError.find('context');
+					if(context) {
+						context = {
+							request: context.find('request').text(),
+							wigiiNamespace: context.find('wigiiNamespace').text(),
+							module: context.find('module').text(),
+							action: context.find('action').text(),
+							realUsername: context.find('realUsername').text(),
+							username: context.find('username').text(),
+							principalNamespace: context.find('principalNamespace').text()
+						}
+					}
+					// calls exception handler
+					options.exceptionHandler(exception,context);
+				}
+				// else converts HTTP error to exception
+				else options.exceptionHandler({code:xhr.status||wigiiApi.errorCodes.UNKNOWN_ERROR,message:xhr.responseText||"Ajax status: "+textStatus});
+			};
+			
+			// if data, then HTTP POST
+			if(options.postData) {
+				ajaxOptions.type = "POST";
+				if(options.postAsForm) {
+					ajaxOptions.data = options.postData;
+				}
+				else {
+					ajaxOptions.contentType = 'text/plain';
+					ajaxOptions.dataType = 'json';			
+					ajaxOptions.data = JSON.stringify(options.postData);
+					ajaxOptions.processData = false;
+				}
+			}
+			
+			// Fx Ajax call
+			$.ajax(ajaxOptions);
+		};
+		
+		
 		
 		// Functions
 		

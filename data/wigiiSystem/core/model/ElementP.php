@@ -102,7 +102,7 @@ class ElementP extends Model implements DbEntity
 		else $this->setRights(null);
 	}
 	
-	// Element state configuration
+	// Element state and action configuration
 	
 	private $enabledElementState_locked;
 	public function isEnabledElementState_locked() {return $this->enabledElementState_locked;}
@@ -144,12 +144,16 @@ class ElementP extends Model implements DbEntity
 	public function isEnabledElementState_hidden() {return $this->enabledElementState_hidden;}
 	public function enableElementState_hidden($bool) {$this->enabledElementState_hidden = $bool;}
 	
-	private $enabledElementState_delete;
-	public function isEnabledElementState_delete() {return $this->enabledElementState_delete;}
-	public function enableElementState_delete($bool) {$this->enabledElementState_delete = $bool;}
+	private $enabledElementAction_delete;
+	public function isEnabledElementAction_delete() {return $this->enabledElementAction_delete;}
+	public function enableElementAction_delete($bool) {$this->enabledElementAction_delete = $bool;}
+	
+	private $enabledElementAction_organize;
+	public function isEnabledElementAction_organize() {return $this->enabledElementAction_organize;}
+	public function enableElementAction_organize($bool) {$this->enabledElementAction_organize = $bool;}
 	
 	/**
-	 * Returns a binary encoding of the "enableElementState"
+	 * Returns a binary encoding of the "enableElementState" and "enableElementAction"
 	 * 2^0: state_locked, 
 	 * 2^1: state_blocked, 
 	 * 2^2: state_important1, 
@@ -160,7 +164,8 @@ class ElementP extends Model implements DbEntity
 	 * 2^7: state_archived, 
 	 * 2^8: state_deprecated, 
 	 * 2^9: state_hidden,
-	 * 2^10: state_delete, 
+	 * 2^10: action_delete,
+	 * 2^11: action_organize 
 	 */
 	public function getEnableElementStateAsInt() {
 		$returnValue = 0;
@@ -174,14 +179,16 @@ class ElementP extends Model implements DbEntity
 		if($this->isEnabledElementState_archived()) $returnValue += 128;
 		if($this->isEnabledElementState_deprecated()) $returnValue += 256;
 		if($this->isEnabledElementState_hidden()) $returnValue += 512;
-		if($this->isEnabledElementState_delete()) $returnValue += 1024;
+		if($this->isEnabledElementAction_delete()) $returnValue += 1024;
+		if($this->isEnabledElementAction_organize()) $returnValue += 2048;
 		return $returnValue;
 	}	
 
 	/**
-	 * Returns true if specific state is enabled
+	 * Returns true if specific state or action is enabled
 	 * @param String $state state name, one of: 'locked', 'blocked', 'important1', 'important2', 'finalized', 
-	 * 'approved', 'dismissed', 'archived', 'deprecated', 'hidden'.
+	 * 'approved', 'dismissed', 'archived', 'deprecated', 'hidden',
+	 * action name, one of 'delete', 'organize'
 	 */
 	public function isEnabledElementState($state) {
 		switch($state) {
@@ -195,15 +202,17 @@ class ElementP extends Model implements DbEntity
 			case 'archived': return $this->isEnabledElementState_archived(); break;
 			case 'deprecated': return $this->isEnabledElementState_deprecated(); break;
 			case 'hidden': return $this->isEnabledElementState_hidden(); break;
-			case 'delete': return $this->isEnabledElementState_delete(); break;
-			default: throw new RecordException("state '$state' is not a valid Element state.", RecordException::INVALID_ARGUMENT);
+			case 'delete': return $this->isEnabledElementAction_delete(); break;
+			case 'organize': return $this->isEnabledElementAction_organize(); break;
+			default: throw new RecordException("state '$state' is not a valid Element state or action.", RecordException::INVALID_ARGUMENT);
 		}
 	}
 	
 	/**
-	 * Enables or not the specific state.
+	 * Enables or not the specific state or action.
 	 * @param String $state state name, one of: 'locked', 'blocked', 'important1', 'important2', 'finalized',
-	 * 'approved', 'dismissed', 'archived', 'deprecated', 'hidden'.
+	 * 'approved', 'dismissed', 'archived', 'deprecated', 'hidden',
+	 * action name, one of 'delete', 'organize'.
 	 * @param Boolean $bool
 	 */
 	public function enableElementState($state, $bool) {
@@ -218,8 +227,9 @@ class ElementP extends Model implements DbEntity
 			case 'archived': return $this->enableElementState_archived($bool); break;
 			case 'deprecated': return $this->enableElementState_deprecated($bool); break;
 			case 'hidden': return $this->enableElementState_hidden($bool); break;
-			case 'delete': return $this->enableElementState_delete($bool); break;
-			default: throw new RecordException("state '$state' is not a valid Element state.", RecordException::INVALID_ARGUMENT);
+			case 'delete': return $this->enableElementAction_delete($bool); break;
+			case 'organize': return $this->enableElementAction_organize($bool); break;
+			default: throw new RecordException("argument '$state' is not a valid Element state or action.", RecordException::INVALID_ARGUMENT);
 		}
 	}
 	

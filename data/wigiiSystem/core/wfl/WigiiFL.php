@@ -1922,6 +1922,42 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    }
 	}
 	
+	/**
+	 * Returns the ID of the trashbin associated to the given module or element.
+	 * FuncExp signature : <code>cfgTrashbinGroup(module)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) forModule: Module|Element. Optional. A module for which to get the trashbin group ID or an element for which to find the associated trashbin. If not given, takes the current module.	 
+	 * @return Int returns the trashbin ID if defined else null
+	 */
+	public function cfgTrashbinGroup($args) {	    
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>0) $forModule = $this->evaluateArg($args[0]);
+	    else $forModule = null;
+	    return $this->getWigiiBPL()->groupGetTrashbin($this->getPrincipal(), $this, wigiiBPLParam(
+	       "forModule",$forModule,
+	       "includeSubGroups", false,
+	       "returnAttribute", "id"
+	    ));
+	}
+	/**
+	 * Returns an array of group ids delimiting the trashbin space. It contains the trashbin group ID and all sub-folders IDs.
+	 * FuncExp signature : <code>cfgTrashbinGroups(module)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) forModule: Module|Element. Optional. A module for which to get the trashbin group ID or an element for which to find the associated trashbin. If not given takes the current module.
+	 * @return Array returns an array of group IDs or null if no defined trashbin.
+	 */
+	public function cfgTrashbinGroups($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>0) $forModule = $this->evaluateArg($args[0]);
+	    else $forModule = null;
+	    return $this->getWigiiBPL()->groupGetTrashbin($this->getPrincipal(), $this, wigiiBPLParam(
+	        "forModule",$forModule,
+	        "includeSubGroups", true,
+	        "returnAttribute", "id"
+	    ));
+	}
+	
+	
 	// Wigii Administration
 	
 	/**

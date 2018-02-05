@@ -644,12 +644,15 @@ function openOrganizeDialog(elementId){
 				textSelected = returnText[3];
 				$('#organizeDialog').prepend('<div class="introduction"><span class="nb">'+nbSelected+'</span>&nbsp;<span>'+textSelected+'</span></div>');
 
+				// Medair (CWE) 02.02.2018 disables trashbin structure if element is blocked
+				if(wigii().context.crtElementState & 2) {
+					$('#organizeDialog>.groupPanel li.trashbin, #organizeDialog>.groupPanel li.trashbin li').removeClass("write").hide();					
+				}
+				
 				//disables read only groups
 				$('#organizeDialog>.groupPanel li:not(.write)').addClass("disabled noRights");
-				$('#organizeDialog>.groupPanel li:not(.write)>div').addClass("disabled noRights");
-
-				unfoldToSelectedGroupButNotChildren('#organizeDialog>.groupPanel');
-
+				$('#organizeDialog>.groupPanel li:not(.write)>div').addClass("disabled noRights");				
+				unfoldToSelectedGroupButNotChildren('#organizeDialog>.groupPanel');				
 				positionSelectedGroup('#organizeDialog>.groupPanel');
 			},
 			error: errorOnUpdate
@@ -734,10 +737,14 @@ function openOrganizeMultipleDialog(){
 					}
 				}
 				$('#organizeDialog>.groupPanel li:not(.selected), #organizeDialog>.groupPanel li>div:not(.selected)').addClass('wasUnselected');
+				// Medair (CWE) 02.02.2018 disables trashbin structure if at least one element is blocked
+				if(multipleElementStatePerm & 2) {
+					$('#organizeDialog>.groupPanel li.trashbin, #organizeDialog>.groupPanel li.trashbin li').removeClass("write").hide();
+				}
 				//disables read only groups
 				$('#organizeDialog>.groupPanel li:not(.write)').addClass('disabled noRights');
-				$('#organizeDialog>.groupPanel li:not(.write)>div').addClass('disabled noRights');
-				unfoldToSelectedGroupButNotChildren('#organizeDialog>.groupPanel');
+				$('#organizeDialog>.groupPanel li:not(.write)>div').addClass('disabled noRights');				
+				unfoldToSelectedGroupButNotChildren('#organizeDialog>.groupPanel');				
 				positionSelectedGroup('#organizeDialog>.groupPanel');
 			},
 			error: errorOnUpdate
@@ -1499,7 +1506,9 @@ function setListenersToRows(listSelector, elSelector, folderSelector, cmSelector
 		//show hide some buttons:
 		elEnableState = $('.elEnableState', this).html();
 		elState = $('.elState', this).html();
-
+		// Medair (CWE) 02.02.2018: saves element state in Wigii Api context for further use
+		wigii().context.crtElementState = Number(elState);
+		
 		if($(this).parent().parent().hasClass('readOnly')){
 			$(cmSelector+' div.write').hide();
 		} else {
@@ -1514,7 +1523,9 @@ function setListenersToRows(listSelector, elSelector, folderSelector, cmSelector
 		if(elState & 2) {
 			$(cmSelector+' #cm_edit').hide();
 			$(cmSelector+' #cm_delete').hide();
-			$(cmSelector+' #cm_organize').hide();
+			// by default, hides organize, except if:
+			// - Medair (CWE) 30.01.2018 if especifically enabled on blocked elements
+			if(!(elEnableState & 2048)) $(cmSelector+' #cm_organize').hide();
 		}
 		// enables lock
 		if(elEnableState & 1) {
@@ -2854,9 +2865,11 @@ function setSelectionMode(isMultiple){
 			$('#multipleDialog div.onlyWriteRights').hide();
 		}
 
-		// hides organize and delete if at least one element is blocked
+		// hides delete if at least one element is blocked
+		// hides organize if at least one element is blocked, except if:
+		// - Medair (CWE) 30.01.2018: Element_Blocked_enableSharing is defined in config 
 		if(multipleElementStatePerm & 2) {
-			$('#multipleDialog div.organizeMultiple').hide();
+			if(!(multipleEnableElementState & 2048)) $('#multipleDialog div.organizeMultiple').hide();
 			$('#multipleDialog div.deleteMultiple').hide();
 		}
 		// hides delete if non admin and enableDeleteOnlyForAdmin config parameter

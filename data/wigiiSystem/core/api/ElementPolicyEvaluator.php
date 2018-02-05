@@ -37,6 +37,13 @@ interface ElementPolicyEvaluator extends WigiiExclusiveAccessObject
 	public function setFormExecutor($formExecutor);
 	
 	/**
+	 * Injects a reference to the WigiiExecutor that launched the ElementPolicyEvaluator.
+	 * This setter is only called in the scope of the GUI. In the API scope, this setter is ignored.
+	 * @param WigiiExecutor $wigiiExecutor
+	 */
+	public function setWigiiExecutor($wigiiExecutor);
+	
+	/**
 	 * Injects a reference to the current ExecutionService instance.
 	 * @param ExecutionService $exec
 	 */

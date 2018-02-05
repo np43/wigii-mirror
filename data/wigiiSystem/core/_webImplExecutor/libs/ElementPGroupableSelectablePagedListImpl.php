@@ -352,7 +352,9 @@ abstract class ElementPGroupableSelectablePagedListImpl extends ElementPListWebI
 				'Element_enableArchivedStatus' => $configS->getParameter($p, $m, 'Element_enableArchivedStatus')=="1",
 				'Element_enableDeprecatedStatus' => $configS->getParameter($p, $m, 'Element_enableDeprecatedStatus')=="1",
 				'Element_enableHiddenStatus' => $configS->getParameter($p, $m, 'Element_enableHiddenStatus')=="1",
-			    'Element_enableHiddenDelete' => $configS->getParameter($p, $m, 'enableDeleteOnlyForAdmin')=="1" || ((string)$configS->getParameter($p, $m, 'Element_beforeDeleteExp')==="0")
+				/* conditional actions */
+			    'Element_enableActionDelete' => $configS->getParameter($p, $m, 'enableDeleteOnlyForAdmin')=="1" || ((string)$configS->getParameter($p, $m, 'Element_beforeDeleteExp')==="0"),
+			    'Element_enableActionOrganize' => ((string)$configS->getParameter($p, $m, 'Element_Blocked_enableSharing')!="")
 			);
 		}
 
@@ -367,8 +369,10 @@ abstract class ElementPGroupableSelectablePagedListImpl extends ElementPListWebI
 		$elementP->enableElementState_archived($this->enableElementStateConfigCache['Element_enableArchivedStatus']);
 		$elementP->enableElementState_deprecated($this->enableElementStateConfigCache['Element_enableDeprecatedStatus']);
 		$elementP->enableElementState_hidden($this->enableElementStateConfigCache['Element_enableHiddenStatus']);
-		$elementP->enableElementState_delete($this->enableElementStateConfigCache['Element_enableHiddenDelete'] && (!$elementP->getRights()->canModify() || ((string)$configS->getParameter($p, $elementP->getElement()->getModule(), 'Element_beforeDeleteExp')==="0")));
-
+		/* conditional actions */
+		$elementP->enableElementAction_delete($this->enableElementStateConfigCache['Element_enableActionDelete'] && (!$elementP->getRights()->canModify() || ((string)$configS->getParameter($p, $elementP->getElement()->getModule(), 'Element_beforeDeleteExp')==="0")));
+		$elementP->enableElementAction_organize($this->enableElementStateConfigCache['Element_enableActionOrganize'] && ((string)$configS->getParameter($p, $elementP->getElement()->getModule(), 'Element_Blocked_enableSharing')!=="0"));
+		
 		// updates policy using the ElementPolicyEvaluator
 		$policyEval = $this->getElementPolicyEvaluator();
 		if(isset($policyEval)) $policyEval->computeEnableElementState($p, $elementP);

@@ -264,6 +264,8 @@ class DetailElementFormExecutor extends FormExecutor {
 
 		//display the status
 		$elS->displayElementStateAsField($p, $this->getTotalWidth(), $this->getLabelWidth(), $element);
+		// Medair (CWE) 02.02.2018: saves element state in Wigii Api context for further use
+		$exec->addJsCode('wigii().context.crtElementState = '.$element->getStateAsInt());
 
 		//since 08.01.2013 groups are displayed in the additional information
 //		//display the groups

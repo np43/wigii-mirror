@@ -149,8 +149,8 @@ class ListContext extends ListFilter {
 	private $multipleSelectedItems;
 	private $multipleEnableElementState = 0;
 	private $multipleEnableElementStateArr;
-	private $multipleElementStateRest = 1023;
-	private $multipleElementStateMedi = 1023;
+	private $multipleElementStateRest = 2047;
+	private $multipleElementStateMedi = 2047;
 	private $multipleElementStateMediPerm = 0;
 	private $multipleElementStatePerm = 0;
 	private $multipleElementStateArr;
@@ -254,8 +254,8 @@ class ListContext extends ListFilter {
 		$this->multipleSelectedItems = null;
 		$this->multipleEnableElementState = 0;
 		$this->multipleEnableElementStateArr = null;
-		$this->multipleElementStateRest = 1023;
-		$this->multipleElementStateMedi = 1023;
+		$this->multipleElementStateRest = 2047;
+		$this->multipleElementStateMedi = 2047;
 		$this->multipleElementStateMediPerm = 0;
 		$this->multipleElementStatePerm = 0;
 		$this->multipleElementStateArr = null;
@@ -297,14 +297,14 @@ class ListContext extends ListFilter {
 
 		if(!isset($this->multipleElementStateArr)) {
 			$this->multipleElementStateArr = array();
-			$this->multipleElementStateRest = 1023 & $elementState;
-			$this->multipleElementStateMedi = 1023 & (1023-$elementEnableState) | $elementEnableState & 1023 & $elementState;
-			$this->multipleElementStateMediPerm = $elementEnableState & 1023 & $elementState;
+			$this->multipleElementStateRest = 2047 & $elementState;
+			$this->multipleElementStateMedi = 2047 & (2047-$elementEnableState) | $elementEnableState & 2047 & $elementState;
+			$this->multipleElementStateMediPerm = $elementEnableState & 2047 & $elementState;
 		}
 		else {
 			$this->multipleElementStateRest = $this->multipleElementStateRest & $elementState;
-			$this->multipleElementStateMedi = $this->multipleElementStateMedi & (1023-$elementEnableState) | $elementEnableState & $this->multipleElementStateMedi & $elementState;
-			$this->multipleElementStateMediPerm = $this->multipleElementStateMediPerm & (1023-$elementEnableState) | $elementEnableState & ($this->multipleElementStateMediPerm | $elementState);
+			$this->multipleElementStateMedi = $this->multipleElementStateMedi & (2047-$elementEnableState) | $elementEnableState & $this->multipleElementStateMedi & $elementState;
+			$this->multipleElementStateMediPerm = $this->multipleElementStateMediPerm & (2047-$elementEnableState) | $elementEnableState & ($this->multipleElementStateMediPerm | $elementState);
 		}
 		$this->multipleElementStateArr[$id] = $elementState;
 
@@ -368,7 +368,7 @@ class ListContext extends ListFilter {
 	public function updateAllElementStateInMultipleSelection($mask, $elementState, $computeMultipleElementState=true) {
 		if(isset($this->multipleElementStateArr)) {
 			foreach($this->multipleElementStateArr as $id => &$val) {
-				$val = $val & (1023-$mask) | $mask & $elementState;
+				$val = $val & (2047-$mask) | $mask & $elementState;
 			}
 			if($computeMultipleElementState) $this->computeMultipleElementStateInt();
 		}
@@ -438,8 +438,8 @@ class ListContext extends ListFilter {
 	public function computeMultipleElementStateInt() {
 		if(isset($this->multipleEnableElementStateArr) && isset($this->multipleElementStateArr)) {
 			$this->multipleEnableElementState = 0;
-			$this->multipleElementStateRest = 1023;
-			$this->multipleElementStateMedi = 1023;
+			$this->multipleElementStateRest = 2047;
+			$this->multipleElementStateMedi = 2047;
 			$this->multipleElementStateMediPerm = 0;
 			$this->multipleElementStatePerm = 0;
 			$first = true;
@@ -447,15 +447,15 @@ class ListContext extends ListFilter {
 				$this->multipleEnableElementState = $this->multipleEnableElementState | $elementEnableState;
 
 				if($first) {
-					$this->multipleElementStateRest = 1023 & $this->multipleElementStateArr[$k];
-					$this->multipleElementStateMedi = 1023 & (1023-$elementEnableState) | $elementEnableState & 1023 & $this->multipleElementStateArr[$k];
-					$this->multipleElementStateMediPerm = $elementEnableState & 1023 & $this->multipleElementStateArr[$k];
+					$this->multipleElementStateRest = 2047 & $this->multipleElementStateArr[$k];
+					$this->multipleElementStateMedi = 2047 & (2047-$elementEnableState) | $elementEnableState & 2047 & $this->multipleElementStateArr[$k];
+					$this->multipleElementStateMediPerm = $elementEnableState & 2047 & $this->multipleElementStateArr[$k];
 					$first = false;
 				}
 				else {
 					$this->multipleElementStateRest = $this->multipleElementStateRest & $this->multipleElementStateArr[$k];
-					$this->multipleElementStateMedi = $this->multipleElementStateMedi & (1023-$elementEnableState) | $elementEnableState & $this->multipleElementStateMedi & $this->multipleElementStateArr[$k];
-					$this->multipleElementStateMediPerm = $this->multipleElementStateMediPerm & (1023-$elementEnableState) | $elementEnableState & ($this->multipleElementStateMediPerm | $this->multipleElementStateArr[$k]);
+					$this->multipleElementStateMedi = $this->multipleElementStateMedi & (2047-$elementEnableState) | $elementEnableState & $this->multipleElementStateMedi & $this->multipleElementStateArr[$k];
+					$this->multipleElementStateMediPerm = $this->multipleElementStateMediPerm & (2047-$elementEnableState) | $elementEnableState & ($this->multipleElementStateMediPerm | $this->multipleElementStateArr[$k]);
 				}
 
 				$this->multipleElementStatePerm = $this->multipleElementStatePerm | $this->multipleElementStateArr[$k];
