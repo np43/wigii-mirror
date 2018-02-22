@@ -25,6 +25,7 @@
  * Created on 4 déc. 09 by LWR
  * Modified by CWE on 25.02.2016 to display a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) on 08.02.2018 to add support of select2 ajax drop-downs.
  */
 
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
@@ -82,7 +83,7 @@ if((string)$fieldXml["isTimeline"]=="1"){
         $nbColumn -= 1;
     }
     $firstLoop = true;
-    $this->put("<div style='width: 100%; height: 30px; background-color: #f9ebb2; text-align: right; margin-bottom:10px; font-weight: bold;'>");
+    $this->put("<div style='width: 100%; height: 30px; background-color: #f9ebb2; text-align: right; margin-bottom:10px; font-weight: bold;' class='timelineBackground'>");
 
     $percentage = (100/($nbColumn));
 
@@ -408,7 +409,29 @@ if((string)$fieldXml["allowNewValues"]=="1") $this->put('allowNewValues ');
 $this->put('"');
 $this->put(' style="'.$valueWidth);
 if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
-$this->put('" >');
+$this->put('"');
+
+// Medair (CWE) 08.02.2018: adds support of ajax drop-downs
+$attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
+if(!empty($attributeMatchExp)) {
+    // parses attribute match exp to a valid FuncExp
+    $attributeMatchExp = str2fx($attributeMatchExp);
+    // retrieves the pattern from the second parameter of the URL
+    // calls the matching FuncExp, converts the result to be compatible with select2 by calling select2Ajax
+    // and then serializes everything as JSON by calling newJsonString
+    $attributeMatchExp = fx('newJsonString',fx('select2Ajax',$attributeMatchExp,fx('sysExecParameter',"1")));
+    // serializes the FuncExp as a callable url
+    $attributeMatchExp = fx2str($attributeMatchExp);
+    //fput($attributeMatchExp);
+    $attributeMatchExp = base64url_encode($attributeMatchExp);
+    // pushes it to browser into a data-attributematchexp attribute
+    $this->put(' data-attributematchexp="'.$attributeMatchExp.'"');
+    $queryDelay = (string)$fieldXml['queryDelay'];
+    if($queryDelay) $this->put(' data-querydelay="'.$queryDelay.'"');
+    $queryMinLength = (string)$fieldXml['queryMinLength'];
+    if($queryMinLength) $this->put(' data-queryminlength="'.$queryMinLength.'"');
+}
+$this->put('>');
 
 $val = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, $subFieldName));
 
@@ -503,7 +526,29 @@ else {
 			$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.$selected.' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" title="'.$labelForTitle.'" >'.$label.'</option>');
 		}
 	}
-	unset($html2text);
+	// Medair (CWE) 08.02.2018: adds support of ajax drop-downs
+	if(!$valExistsInOption && !empty($attributeMatchExp)) {
+	    $attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
+	    // parses attribute match exp to a valid FuncExp
+	    $attributeMatchExp = str2fx($attributeMatchExp);
+	    // takes current value as exact search pattern (wrap into an array for exact matching)
+	    $attributeMatchExp->addArgument(array($val));
+	    // executes pattern matching
+	    $attributeMatchExp = $this->evalfx($attributeMatchExp);
+	    // takes unique matching, and puts it as selected
+	    if(isset($attributeMatchExp) && $attributeMatchExp->count() == 1) {
+	        $attribute = $attributeMatchExp->attribute;
+	        $label = $transS->t($p, $val, $attribute);
+	        // cleans up the html
+	        $html2text->setHtml($label);
+	        $label = $html2text->getText();
+	        $label = trim($label);
+	        $labelForTitle = $label;
+	        $label = str_replace(" ", "&nbsp;", $label);
+	        $this->put('<option '.($attribute["disabled"]=="1" ? 'disabled="on"' : "").' selected="selected" '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>');
+	        $valExistsInOption = true;
+	    }
+	}
 	// Adds non matching value as a new value if allowed
 	if($fieldXml["allowNewValues"]=="1" && !$valExistsInOption){
 		$labelForTitle = $transS->t($p, $val);
@@ -513,7 +558,7 @@ else {
 		}
 		$label = str_replace(" ", "&nbsp;", $label);
 		$this->put('<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>');
-	}
+	}	
 	// CWE 25.02.2016: displays a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
 	elseif(!$valExistsInOption && $val && !$isPublicPrincipal) {
 		$currentFlow = $this->evalfx(fx('ctlCurrentFlow'));
@@ -527,7 +572,8 @@ else {
 				content:'".$deprecatedMessage."'
 			});");
 		}
-	}
+	}	
+	unset($html2text);
 }
 $this->put('</'.$inputNode.'>');
 

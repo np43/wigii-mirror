@@ -216,4 +216,12 @@ class FuncExpVMServiceProvider
 		}
 		return $returnValue;
 	}
+	
+	/**
+	 * Forks current FuncExpVM and returns its configured instance, including parent evaluator.
+	 * @return FuncExpVM
+	 */
+	public function forkFuncExpVM() {
+	    return $this->getFuncExpVM()->forkVM();
+	}
 }

@@ -24,6 +24,7 @@
 /**
  * Created on 3 déc. 09 by LWR
  * Modified on 25.02.2016 by CWE to always display Attribut code if not present in drop-down
+ * Modified by Medair (CWE) on 09.02.2018 to support ajax drop-downs
  */
 class Attributs extends DataTypeInstance {
 
@@ -34,7 +35,7 @@ class Attributs extends DataTypeInstance {
 	*/
 	public function checkValues($p, $elementId, $wigiiBag, $field){
 		//il faut s'assurer que la valeur de retour soit bien une valeur
-		//prévue dans la liste d'option...
+		//prévue dans la liste d'option.
 
 		$transS = ServiceProvider::getTranslationService();
 
@@ -57,6 +58,23 @@ class Attributs extends DataTypeInstance {
 			$field->setValue($value, $elementId, $wigiiBag);
 		}
 
+		// Medair (CWE) 08.02.2018: adds support of ajax drop-downs
+		$attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
+		if(!empty($attributeMatchExp) && (!empty($value) || $value===0)) {
+		    // parses attribute match exp to a valid FuncExp
+		    $attributeMatchExp = str2fx($attributeMatchExp);
+		    // takes current value as exact search pattern (wrap into an array for exact matching)
+		    $attributeMatchExp->addArgument(array(stripslashes($value)));
+		    // executes pattern matching
+		    $attributeMatchExp = ServiceProvider::getWigiiBPL()->evaluateFuncExp($p, $attributeMatchExp);
+		    // extends set of attributes with the matching ones
+		    if(isset($attributeMatchExp)) {
+		        foreach($attributeMatchExp->children() as $attribute) {
+		            $options[(string)$attribute] = $transS->t($p, (string)$attribute, $attribute);
+		        }
+		    }
+		}
+		
 		if($fieldXml["allowNewValues"]!="1" && $value && !array_key_exists(stripslashes($value), $options)){
 			throw new ServiceException("notValidOptionForAttributField", ServiceException::INVALID_ARGUMENT);
 		}
@@ -75,6 +93,22 @@ class Attributs extends DataTypeInstance {
 			if($value != (string)$attr) continue;
 			return $transS->t($p, $value, $attr);
 		}
+		
+		// Medair (CWE) 08.02.2018: adds support of ajax drop-downs
+		$attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
+		if(!empty($attributeMatchExp) && (!empty($value) || $value===0)) {
+		    // parses attribute match exp to a valid FuncExp
+		    $attributeMatchExp = str2fx($attributeMatchExp);
+		    // takes current value as exact search pattern (wrap into an array for exact matching)
+		    $attributeMatchExp->addArgument(array(stripslashes($value)));
+		    // executes pattern matching
+		    $attributeMatchExp = ServiceProvider::getWigiiBPL()->evaluateFuncExp($p, $attributeMatchExp);
+		    // takes unique matching, else ignores
+		    if(isset($attributeMatchExp) && $attributeMatchExp->count() == 1) {
+		        return $transS->t($p, $value, $attributeMatchExp->attribute);
+		    }
+		}
+		
 		//arrive here only if attribute is not found
 		// CWE 25.02.2016: always display code if value is not present in drop-down
 		/*

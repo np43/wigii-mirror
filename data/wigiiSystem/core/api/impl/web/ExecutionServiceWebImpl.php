@@ -161,7 +161,7 @@ class ExecutionServiceWebImpl extends ExecutionServiceImpl
 		//once used reset the cookie to no fragment
 		//this is done directly in the header.php to prevent the update setBrowser to send the cookie wigii_anchor once again
 		//$this->addJsCode("$.cookie('wigii_anchor', '#',  { path: '/' });");
-		return array("wigiiNamespace"=>str_replace("%20", " ", $frag[0]), "module"=>str_replace("%20", " ", $frag[1]), "type"=>$frag[2], "id"=>$frag[3]);
+		return array("wigiiNamespace"=>str_replace("%20", " ", $frag[0]), "module"=>str_replace("%20", " ", $frag[1]), "type"=>$frag[2], "id"=>$frag[3], "targetModifier"=>(count($frag)>4?$frag[4]:null));
 	}
 
 	protected function loadNewContext(){

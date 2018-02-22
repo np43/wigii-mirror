@@ -11396,8 +11396,16 @@ onUpdateErrorCounter = 0;
 
 				// Extracts navigation parameters				
 				$type = $exec->getCrtParameters(0);
-				$typeId = $exec->getCrtParameters(1);				
-				$fromRole = $exec->getCrtParameters(2);
+				$typeId = $exec->getCrtParameters(1);
+				// Medair (CWE) 16.02.2018 extracts target modifier if folder, item or editItem type.
+				if($type == "folder" || $type == "item" || $type == "editItem") {
+				    $fromRole = null;
+				    $targetModifier = $exec->getCrtParameters(2);
+				}
+				else {
+				    $fromRole = $exec->getCrtParameters(2);
+				    $targetModifier = null;
+				}
 				if(!$fromRole) $fromRole = $p->getUserId();
 				$fromWigiiNamespace = $exec->getCrtParameters(3);
 				if(!$fromWigiiNamespace) $fromWigiiNamespace = $p->getWigiiNamespace()->getWigiiNamespaceUrl();
@@ -11416,6 +11424,7 @@ onUpdateErrorCounter = 0;
 						$roleId = $p->getRoleForGroup($typeId);
 						break;
 					case "item":
+					case "editItem":
 						// finds the best matching role for this element
 						$roleId = $p->getRoleForElement($typeId);
 						break; 
@@ -11585,17 +11594,17 @@ onUpdateErrorCounter = 0;
 				$additionalJsCode = null;
 				// Direct url access navigation 
 				if (!$exec->getIsUpdating() || $exec->getIdAnswer() == "mainDiv") {
-					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type=="item" || $type=="folder" ? $type."/".$typeId : "all"));
+				    $exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type=="item" || $type=="editItem" || $type=="folder" ? $type."/".$typeId.($targetModifier?"/".$targetModifier:"") : "all"));
 				}
 				// Full screen update 
-				else if ($type=="item" || $type=="folder" || $type==null){
+				else if ($type=="item" || $type=="editItem" || $type=="folder" || $type==null){
 					//this code is needed to simulate the click made on the element it self.
 					//href$= is to limit ie7 bugs making sometimes local links with the full path
 					$additionalJsCode = "" .
 							"$('#navigateMenu .selected').removeClass('selected');" .
 							'$("#navigateMenu a[href$=\'#"+crtWigiiNamespaceUrl.replace(" ", "%20")+"/"+crtModuleName+"\']").addClass("selected");' .
 							"";
-					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type ? $type."/".$typeId : "all"));					
+					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type ? $type."/".$typeId.($targetModifier?"/".$targetModifier:"") : "all"));					
 				} 
 				// Navigation bar user navigation
 				else {
@@ -11728,6 +11737,7 @@ $additionalJsCode
 						break;
 					case "folder" :
 					case "item" :
+					case "editItem" :
 					case "all" :
 						$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 						if($exec->getCrtParameters(0)=="folder"){
@@ -11740,8 +11750,12 @@ $additionalJsCode
 							if(!$p->getModuleAccess($exec->getCrtModule()) || !$lc->getGroupPList() || ($crtSelectedGroupId!=0 && ($lc->getGroupPList()->count()>1 || reset($lc->getGroupPList()->getListIterator())->getId()!=$crtSelectedGroupId))){
 								$exec->addJsCode("alert('".$transS->h($p, $exec->getCrtParameters(0)."NotFound").": xxx".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."->".$transS->h($p, $exec->getCrtModule()->getModuleName())."->".$exec->getCrtParameters(0)."->".$exec->getCrtParameters(1).". ".$transS->h($p, $exec->getCrtParameters(0)."NotFoundExplanation")."');");
 							}
-						} else if($exec->getCrtParameters(0) == "item"){
-							$elS = ServiceProvider::getElementService();
+							// Medair (CWE) 16.02.2018 if add modifier then opens a form to add element
+							elseif($exec->getCrtParameters(2) == "add") {
+							    $exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/add/".$crtSelectedGroupId);
+							}
+						} else if($exec->getCrtParameters(0) == "item" || $exec->getCrtParameters(0) == "editItem"){						    
+						    $elS = ServiceProvider::getElementService();
 							$configS = $this->getConfigurationContext();
 							//find first group of the item:
 							//reset filters
@@ -11757,13 +11771,20 @@ $additionalJsCode
 									$groupPath = $elS->getGroupsPathContainingElement($p, $elementP);
 								}
 								if($groupPath){
-									reset($groupPath);
-									$crtSelectedGroupId = key($groupPath);
+								    // Medair (CWE) 16.02.2018 if a target group is given, tries to open element in it, else keeps first match								    
+								    $crtSelectedGroupId = $exec->getCrtParameters(2);
+								    if(!(isset($crtSelectedGroupId) && array_key_exists($crtSelectedGroupId, $groupPath))) {
+								        reset($groupPath);
+								        $crtSelectedGroupId = key($groupPath);
+								    }								
 									$lc->setGroupPList($this->getConfigurationContext()->getGroupPList($p, $exec->getCrtModule(), $crtSelectedGroupId), false);
 									$lc->setCrtSelectedItem($exec->getCrtParameters(1));
-									//add request to display details of this detail
-									//$exec->addJsCode("update('elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/detail/".$exec->getCrtParameters(1)."');");
-									$exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/detail/".$exec->getCrtParameters(1));
+									// Medair (CWE) 15.02.2018 if editItem and principal has no edit rights on element shows detail, else opens edit form
+									if($exec->getCrtParameters(0) == "editItem" && $elementP->getRights()->canWriteElement() && !$elementP->getElement()->isState_blocked() && !$elementP->isParentElementState_blocked()) {
+									    $exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/edit/".$exec->getCrtParameters(1));									    
+									}
+									// else displays element detail
+									else $exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/detail/".$exec->getCrtParameters(1));
 								}
 							} else if(!$elementP){
 								$exec->addJsCode("alert('".$transS->h($p, $exec->getCrtParameters(0)."NotFound").": ".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."->".$transS->h($p, $exec->getCrtModule()->getModuleName())."->".$exec->getCrtParameters(1).". ".$transS->h($p, $exec->getCrtParameters(0)."NotFoundExplanation")."');");
@@ -11802,6 +11823,7 @@ $additionalJsCode
 				$query = $exec->getCrtParameters(0);
 				$businessKey = $exec->getCrtParameters(1);
 				$filterOnElements = ($exec->getCrtParameters(2)=='filter');
+				$editElement = ($exec->getCrtParameters(2)=='edit');
 				
 				$strQuery = base64url_decode($query);
 				$strBusinessKey = base64url_decode($businessKey);								
@@ -11860,8 +11882,9 @@ $additionalJsCode
 					$htmlRendererDfa = $this->getElementPListHtmlRendererDFAS(array(
 						'setOutputEnabled' => $outputEnabled,
 						'setRedirectIfOneElement' => !$outputEnabled,
+					    'setOpenElementInEdit' => !$outputEnabled && $editElement,
 						'setRedirectIfOneGroup' => !$outputEnabled,
-						'setFilterOnElements' => !$outputEnabled && $filterOnElements,
+						'setFilterOnElements' => !$outputEnabled && ($filterOnElements || $editElement),
 						'setListIsNavigable' => true,
 						'setWigiiExecutor' => $this
 					));

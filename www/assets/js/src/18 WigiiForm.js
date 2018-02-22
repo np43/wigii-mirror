@@ -465,38 +465,7 @@ function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, tem
 	
 	/*
 	 * CWE 2015.06.18: switches chosen and flex plugin to select2 plugin to improve rendering performances and functionalities
-	$(formId+' select.chosen:not(.allowNewValues)').chosen({
-		//nothing special
-
-	});	
-	$(formId+' select.chosen.allowNewValues').chosen({
-//	    create_option: true,
-//	    // persistent_create_option decides if you can add any term, even if part
-//	    // of the term is also found, or only unique, not overlapping terms
-//	    persistent_create_option: true,
-//	    // with the skip_no_results option you can disable the 'No results match..'
-//	    // message, which is somewhat redundant when option adding is enabled
-//	    skip_no_results: true
-	  });	
-	  
-	$(formId+' select.flex.allowNewValues').flexselect({allowMismatch: true });	
-	$(formId+' select.flex:not(.allowNewValues)').flexselect({allowMismatch: false });
-	
-	*/
-	
-	// flex or chosen class enables select2 plugin
-//	$(formId+' select.chosen').each(function(i) {
-//		var e = $(this);		
-//		if(!e.hasClass("allowNewValues")){		
-//			e.attr("data-max-selection")?e.select2({maximumSelectionLength: e.attr("data-max-selection")}):e.select2();
-//		} else {
-//			e.attr("data-max-selection")?e.select2({tags:[], maximumSelectionLength: e.attr("data-max-selection")}):e.select2({tags:[]});
-//		}	
-//	});
-//	$(formId+' select.flex:not(.allowNewValues)').select2();		
-//	$(formId+' select.flex.allowNewValues').select2({
-//		tags:[]
-//	});	
+	 */	
 	$('select.flex, select.chosen',formId).each(function(i) {
 		var current = $(this);
 		var attrPlaceholder = $.trim(current.attr('data-placeholder')) || false;
@@ -510,6 +479,23 @@ function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, tem
 		if(maxSelection != false && current.hasClass('chosen')) options.maximumSelectionLength = maxSelection;
 		if(current.hasClass('allowNewValues')) options.tags = [];
 
+		// Medair (CWE) 08.02.2018: add support of ajax data sources
+		var attributeMatchExp = current.attr("data-attributematchexp") || false;
+		if(attributeMatchExp) {
+			// configures the ajax object for select2
+			options.ajax = {
+				url:function(params) {
+					return encodeURI(SITE_ROOT+"useContext/"+crtContextId+EXEC_requestSeparator+crtWigiiNamespaceUrl+"/"+crtModuleName+"/fx/"+attributeMatchExp+"/"+params.term);
+				},
+				data:function(params){},
+				dataType:"json",			
+				delay: Number(current.attr("data-querydelay")) || 250,
+				error: wigii().defaultFxErrorHandler
+			};
+			options.minimumInputLength= Number(current.attr("data-queryminlength")) || 1;
+			options.selectId = current.attr('id');
+			options.dataAdapter = $.fn.select2.amd.require('select2/data/wigiiAjaxAdapter');
+		}
 		current.select2(options);
 	});
 	

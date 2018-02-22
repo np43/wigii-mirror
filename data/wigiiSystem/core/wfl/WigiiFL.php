@@ -2580,4 +2580,52 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		$this->assertFxOriginIsNotPublic();
 		return $this->getQlikSenseFormExecutor()->getQlikSenseUrl();
 	}
+	
+	// Select2 Ajax drop-downs integration
+	
+	/**
+	 * Runs a pattern matching selector and transforms the result to be compatible with select2 ajax data-sources.
+	 * This FuncExp is used in the implementation of the attributeMatchExp configuration parameter.
+	 * FuncExp signature : <code>select2Ajax(attributeMatchExp,inputPattern)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) attributeMatchExp: FuncExp. A FuncExp which selects some elements based on an input pattern and returns a SimpleXmlElement compatible with attribute expressions.
+	 * The FuncExp signature is of the form cfgAttrElementFieldMatch(...,inputPattern) : SimpleXmlElement as produced by CfgAttribut2XmlDFA.
+	 * - Arg(1) inputPattern: String. Evaluates to the input pattern passed to the matching function.
+	 * @return StdClass A data object compatible with select2 data model cf. https://select2.org/data-sources/formats.
+	 */
+	public function select2Ajax($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('select2Ajax takes at least one argument which is the attribute matching expresssion', FuncExpEvalException::INVALID_ARGUMENT);
+	    // extracts attribute matching exp
+	    $attributeMatchExp = $args[0];
+	    if(!($attributeMatchExp instanceof FuncExp)) throw new FuncExpEvalException('attributeMatchExp should be a valid FuncExp');
+	    // extracts input pattern and adds it to the selector
+	    if($nArgs>1) $attributeMatchExp->addArgument($args[1]);
+	    // evaluates attribute matching exp
+	    $attributeMatchExp = $this->evaluateFuncExp($attributeMatchExp);
+	    // builds result
+	    $returnValue = array();
+	    if(isset($attributeMatchExp)) {
+	        $transS = $this->getTranslationService();
+	        $p = $this->getPrincipal();
+	        $isPublicPrincipal = ServiceProvider::getAuthorizationService()->isPublicPrincipal($p);
+	        $html2text = new Html2text();
+	        foreach($attributeMatchExp->children() as $attribute) {
+	            $label = $transS->t($p, (string)$attribute, $attribute);
+	            // cleans up the html
+	            $html2text->setHtml($label);
+	            $label = $html2text->getText();
+	            $label = trim($label);
+	            // in public: filters disabled options
+	            if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
+	            // Fills attribute object
+	            $attributeObject = array('id'=>(string)$attribute,'text'=>$label);
+	            if($attribute["disabled"]=="1") $attributeObject["disabled"] = true;
+	            $returnValue[] = (object)$attributeObject;
+	        }
+	        unset($html2text);
+	    }
+	    // packages result
+	    return (object)array("results"=>$returnValue);
+	}
 }

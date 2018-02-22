@@ -2049,6 +2049,28 @@ class WigiiBPL
 		if($returnValue instanceof FuncExp) $returnValue->setOriginIsPublic();
 		return $returnValue;
 	}
+		
+	/**
+	 * Evaluates a FuncExp in the context of the given Record.
+	 * @param Principal $p principal executing the request
+	 * @param FuncExp $fx the FuncExp instance to evaluate
+	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	 * @return Any FuncExp result
+	 */
+	public function evaluateFuncExp($principal,$fx,$rec=null) {
+	    return $this->getWigiiExecutor()->evaluateFuncExp($principal, ServiceProvider::getExecutionService(), $fx, $rec);
+	}
+	
+	/**
+	 * Evaluates a Configuration Parameter which can be either a constant or a FuncExp.
+	 * @param Principal $p principal executing the request
+	 * @param String $parameter the configuration parameter to evaluate
+	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	 * @return Any FuncExp result
+	 */
+	public function evaluateConfigParameter($p,$parameter,$rec=null) {
+	    return $this->getWigiiExecutor()->evaluateConfigParameter($principal, ServiceProvider::getExecutionService(), $parameter, $rec);
+	}
 	
 	// Object builders
 	

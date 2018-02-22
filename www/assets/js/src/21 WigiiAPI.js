@@ -2565,8 +2565,53 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			// Fx Ajax call
 			$.ajax(ajaxOptions);
 		};
-		
-		
+		/**
+		 * Default Fx error handler that can be plugged as an error callback into a jQuery ajax call.
+		 * This error handler publishes the Wigii exception that occured on server side.
+		 */
+		wigiiApi.defaultFxErrorHandler = function(xhr,textStatus) {
+			var context = undefined;
+			var exception = undefined;
+			// tries to extract the error as XML
+			var serverError = xhr.responseXML;
+			if(!serverError) {						
+				serverError = xhr.responseText;
+				try {
+					serverError = $.parseXML(serverError);
+				}
+				catch(e) { serverError = undefined;}
+			}
+			// if HTTP error 500, assumes we have a server side exception sent as xml			
+			if(xhr.status == 500 && serverError) {									
+				serverError = $(serverError);
+				// extracts exception part
+				exception = serverError.find('exception');
+				if(exception) {
+					exception = {
+						name: exception.find('name').text(),
+						code: exception.find('code').text(),
+						message: exception.find('message').text()
+					};
+				}
+				// extracts context part
+				context = serverError.find('context');
+				if(context) {
+					context = {
+						request: context.find('request').text(),
+						wigiiNamespace: context.find('wigiiNamespace').text(),
+						module: context.find('module').text(),
+						action: context.find('action').text(),
+						realUsername: context.find('realUsername').text(),
+						username: context.find('username').text(),
+						principalNamespace: context.find('principalNamespace').text()
+					}
+				}						
+			}
+			// else converts HTTP error to exception (ignores ajax abort) 
+			else if(textStatus != 'abort') exception = {code:xhr.status||wigiiApi.errorCodes.UNKNOWN_ERROR,message:xhr.responseText||"Ajax status: "+textStatus};
+			// shows exception as a centered popup
+			if(exception) wigiiApi.getHelpService().showFloatingHelp(undefined, undefined, wigiiApi.exception2html(exception,context), {localContent:true,position:"center",removeOnClose:true});
+		};
 		
 		// Functions
 		
@@ -2641,7 +2686,55 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			else returnValue += ","+c;
 			
 			return returnValue;
-		};			
+		};		
+		/**
+		 * Returns a string representing a date in a French style (d.m.Y H:i:s).
+		 *@param Integer timestamp timestamp to convert to date string
+		 *@param String options a formating option string. One of : 
+		 * noSeconds: display date and time up to minutes, 
+		 * noTime: displays only date without time, 
+		 * noDate: displays only time without date.
+		 */
+		wigiiApi.txtFrenchDate = function(timestamp, options) {			
+			var d = ($.type(timestamp)== 'date'? timestamp: new Date(timestamp));
+			var returnValue = '';
+			var v = 0;
+			if(options!= 'noDate') {
+				// Day
+				v = d.getDate();
+				if(v<10) returnValue += '0'+v;
+				else returnValue += v;
+				returnValue += '.';			
+				// Month
+				v = d.getMonth()+1;
+				if(v<10) returnValue += '0'+v;
+				else returnValue += v;
+				returnValue += '.';
+				// Year
+				returnValue += d.getFullYear();
+			}
+			if(options != 'noTime') {
+				if(options != 'noDate') returnValue += ' ';
+				// Hour
+				v = d.getHours();
+				if(v<10) returnValue += '0'+v;
+				else returnValue += v;
+				returnValue += ':';
+				// Minute
+				v = d.getMinutes();
+				if(v<10) returnValue += '0'+v;
+				else returnValue += v;
+				if(options != 'noSeconds') {
+					returnValue += ':';
+					// Seconds
+					v = d.getSeconds();
+					if(v<10) returnValue += '0'+v;
+					else returnValue += v;
+				}
+			}
+			
+			return returnValue;
+		};
 		/**
 		 * Serializes an XML Dom object to string
 		 * @param XMLDocument xmlDom an XML DOM document as created by calling jQuery.parseXML

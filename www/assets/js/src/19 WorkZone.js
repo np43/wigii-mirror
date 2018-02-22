@@ -3814,10 +3814,17 @@ function getElementDialogScrollHeight(name, object){
 	return (height -30);
 }
 
+(function($) {
+    $.fn.hasScrollBar = function() {
+        return this.get(0).scrollHeight > this.height();
+    }
+})(jQuery);
+
 //Add gradient on a scroll area
 //if no scroll bar exist, create it
 function addScrollWithShadow(idScrollElement, elementPreviousTop) {
 	if(isWorkzoneViewDocked()) return true;
+	if(!$('#'+idScrollElement).hasScrollBar()) return true;
 	if (arguments.length<2) elementPreviousTop = 0;
 	//change the CSS of an element
 	function changeElementCss(element, cssRules){

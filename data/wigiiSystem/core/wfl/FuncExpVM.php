@@ -289,6 +289,26 @@ class FuncExpVM implements FuncExpEvaluator {
 		}
 	}
 	
+	/**
+	 * Forks current FuncExpVM including configured parent evaluator.
+	 * @return FuncExpVM
+	 */
+	public function forkVM() {
+	    $parentEvaluator = $this->getParentFuncExpEvaluator();
+	    $p = $this->getPrincipal();
+	    // clones parent evaluator
+	    if(isset($parentEvaluator)) {
+	        $parentEvaluator = get_class($parentEvaluator);
+	        $parentEvaluator = ServiceProvider::getRecordEvaluator($p, $parentEvaluator);
+	        $parentEvaluator->setContext($p, null);
+	    }
+	    // gets vm
+	    $returnValue = ServiceProvider::getFuncExpVM($p, $parentEvaluator);
+	    $returnValue->setFreeParentEvaluatorOnFreeMemory(true);
+	    $returnValue->setWigiiExecutor($this->wigiiExecutor);
+	    return $returnValue;
+	}
+	
 	// Scope
 	
 	/**

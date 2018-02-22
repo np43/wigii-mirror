@@ -101,6 +101,7 @@ program(scripte(function(){
 	
 	// execute Fx action
 	var runFx = function() {
+		wncd.html().div("fxResult").reset();
 		wigii().callFx(fxString,{fxEndPoint:fxEndPoint,
 			resultHandler:function(data,textStatus,xhr) {				
 				wncd.html().div("fxResult").reset().h1("Fx result").htmlBuilder()

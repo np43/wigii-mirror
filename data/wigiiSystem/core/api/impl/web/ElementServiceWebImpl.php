@@ -21,8 +21,10 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* wigii ElementService implementation which integrates with wigii web site
+/** 
+ * Wigii ElementService implementation which integrates with wigii web site
  * Created by LWR on 10 sept 09
+ * Modifed by Medair (CWE) in 2018 for maintenance purpose. See SVN log for details.
  */
 class ElementServiceWebImpl extends ElementServiceImpl
 {
@@ -305,13 +307,19 @@ class ElementServiceWebImpl extends ElementServiceImpl
 	public function displayElementId($p, $element, $wigiiNamespace, $module, $label=null, $onlyLink=false, $linkLabel=null, $style=null){
 		echo $this->getHtmlElementId($p, $element, $wigiiNamespace, $module, $label, $onlyLink, $linkLabel, $style);
 	}
-	//element object or id
-	public function getUrlForElement($wigiiNamespace, $module, $element){
+	/**
+	 * Returns a direct link to display or edit the element
+	 * @param WigiiNamespace $wigiiNamespace
+	 * @param Module $module
+	 * @param Element|Int $element element object or id
+	 * @return String the direct link on element for display or edition
+	 */
+	public function getUrlForElement($wigiiNamespace, $module, $element,$forEdit=false){
 		if(is_object($element)){
 			$element = $element->getId();
 		}
-		//return SITE_ROOT.$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'/display/all/do/elementDialog/'.$wigiiNamespace->getWigiiNamespaceUrl().'/'.$module->getModuleUrl().'/element/detail/'.$element.'/';
-		return str_replace(" ", "%20", SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'/item/'.$element.'');
+		if($forEdit) return str_replace(" ", "%20", SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'/editItem/'.$element.'');
+		else return str_replace(" ", "%20", SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'/item/'.$element.'');
 	}
 
 	/**

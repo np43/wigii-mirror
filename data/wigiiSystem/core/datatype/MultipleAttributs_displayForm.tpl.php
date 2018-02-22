@@ -25,6 +25,7 @@
  * Created on 4 déc. 09 by LWR
  * Modified by CWE on 25.02.2016 to display a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) on 09.02.2018 to support ajax drop-downs
  */
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 
@@ -140,7 +141,30 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 	if((string)$fieldXml["maxSelection"]!="") $this->put(' data-max-selection="'.(string)$fieldXml["maxSelection"].'" ');
 	$this->put(' style="'.$valueWidth);
 	if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
-	$this->put('" >');
+	$this->put('"');
+	
+	// Medair (CWE) 08.02.2018: adds support of ajax drop-downs
+	$attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
+	if(!empty($attributeMatchExp)) {
+	    // parses attribute match exp to a valid FuncExp
+	    $attributeMatchExp = str2fx($attributeMatchExp);
+	    // retrieves the pattern from the second parameter of the URL
+	    // calls the matching FuncExp, converts the result to be compatible with select2 by calling select2Ajax
+	    // and then serializes everything as JSON by calling newJsonString
+	    $attributeMatchExp = fx('newJsonString',fx('select2Ajax',$attributeMatchExp,fx('sysExecParameter',"1")));
+	    // serializes the FuncExp as a callable url
+	    $attributeMatchExp = fx2str($attributeMatchExp);
+	    //fput($attributeMatchExp);
+	    $attributeMatchExp = base64url_encode($attributeMatchExp);
+	    // pushes it to browser into a data-attributematchexp attribute
+	    $this->put(' data-attributematchexp="'.$attributeMatchExp.'"');
+	    $queryDelay = (string)$fieldXml['queryDelay'];
+	    if($queryDelay) $this->put(' data-querydelay="'.$queryDelay.'"');
+	    $queryMinLength = (string)$fieldXml['queryMinLength'];
+	    if($queryMinLength) $this->put(' data-queryminlength="'.$queryMinLength.'"');
+	}
+	$this->put('>');
+	
 
 	$val = $this->getRecord()->getFieldValue($fieldName, $subFieldName);
 
@@ -198,10 +222,34 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 		}		
 	}
 	else {
+	    
+	    // Medair (CWE) 08.02.2018: adds support of ajax drop-downs
+	    $attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
+	    if(!empty($attributeMatchExp) && !empty($val)) {
+	        // parses attribute match exp to a valid FuncExp
+	        $attributeMatchExp = str2fx($attributeMatchExp);
+	        // takes current value as exact search pattern
+	        $attributeMatchExp->addArgument($val);
+	        // executes pattern matching
+	        $attributeMatchExp = $this->evalfx($attributeMatchExp);
+	        // prefills set of attributes with existing xml
+	        $attributes = array();
+	        foreach($fieldXml->attribute as $attribute) {
+	            $attributes[(string)$attribute] = $attribute;
+	        }
+	        // extends set of attributes with the matching ones
+	        if(isset($attributeMatchExp)) {
+	            foreach($attributeMatchExp->children() as $attribute) {
+	                $attributes[(string)$attribute] = $attribute;
+	            }
+	        }
+	    }
+	    else $attributes = $fieldXml->attribute;
+	    
 		//define the options:
 		$html2text = new Html2text();
 		$existingKeys = array();
-		foreach($fieldXml->attribute as $attribute_key => $attribute){			
+		foreach($attributes as $attribute_key => $attribute){			
 			// filters dropdown using prefix filter
 			if($filterDropDown && $attribute != "none" && strpos((string)$attribute, $prefixFilter)!==0) continue;
 			// CWE 09.02.2016: in public: filters disabled options

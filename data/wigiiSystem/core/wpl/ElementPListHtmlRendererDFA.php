@@ -31,6 +31,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 {	
 	protected $outputEnabled;
 	protected $redirectIfOneElement;
+	protected $openElementInEdit;
 	protected $redirectIfOneGroup;
 	protected $filterOnElements;
 	protected $listIsNavigable;
@@ -47,6 +48,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 		$this->freeMemory();
 		$this->outputEnabled = false;
 		$this->redirectIfOneElement = false;
+		$this->openElementInEdit = false;
 		$this->redirectIfOneGroup = false;
 		$this->filterOnElements=false;
 		$this->listIsNavigable = true;
@@ -92,8 +94,13 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 	 */
 	public function setRedirectIfOneElement($bool) {
 		$this->redirectIfOneElement = $bool;
+	}	
+	/**
+	 * If true and list has only one element, then returns js code to navigate to this element and open it in edit mode. Default to false.
+	 */
+	public function setOpenElementInEdit($bool) {
+	    $this->openElementInEdit = $bool;
 	}
-	
 	/**
 	 * If true and list contains elements only in one group, then returns js code to navigate to this group
 	 */
@@ -117,7 +124,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 	public function startOfStream($dataFlowContext) {
 		$dataFlowContext->assertOriginIsNotPublic();
 		$this->debugLogger()->write('startOfStream');
-		$this->generateHtml = $this->outputEnabled || !($this->redirectIfOneElement||$this->redirectIfOneGroup);
+		$this->generateHtml = $this->outputEnabled || !($this->redirectIfOneElement || $this->openElementInEdit ||$this->redirectIfOneGroup);
 		$html = null;
 		if($this->generateHtml) {
 			$html = "<div>";
@@ -128,7 +135,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 		}
 		$this->wigiiNamespace = $dataFlowContext->getAttribute('GroupBasedWigiiApiClient')->getWigiiNamespace();
 		// records element ids if redirect is active
-		if($this->redirectIfOneElement || $this->redirectIfOneGroup) $this->elementIds = array();
+		if($this->redirectIfOneElement || $this->openElementInEdit || $this->redirectIfOneGroup) $this->elementIds = array();
 	}
 	public function processDataChunk($data, $dataFlowContext) {
 		$element = $data->getDbEntity();
@@ -178,7 +185,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 		$this->lastElement = $element; 
 		
 		// records element ids if redirect is active
-		if($this->redirectIfOneElement || $this->redirectIfOneGroup) {
+		if($this->redirectIfOneElement || $this->openElementInEdit || $this->redirectIfOneGroup) {
 			$this->elementIds[$element->getId()] = $element->getId();
 		}
 	}
@@ -198,8 +205,8 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 		$p = $dataFlowContext->getPrincipal();
 		
 		// redirects to element if one element
-		if($this->redirectIfOneElement && $this->nElements == 1) {
-			$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "").$this->wigiiNamespace->getWigiiNamespaceUrl()."/".$this->lastElement->getModule()->getModuleUrl()."/navigate/item/".$this->lastElement->getId());
+		if(($this->redirectIfOneElement || $this->openElementInEdit) && $this->nElements == 1) {
+			$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "").$this->wigiiNamespace->getWigiiNamespaceUrl()."/".$this->lastElement->getModule()->getModuleUrl()."/navigate/".($this->openElementInEdit?"editItem":"item")."/".$this->lastElement->getId());
 		}
 		// redirects to group if one group
 		elseif($this->redirectIfOneGroup && !$this->filterOnElements && isset($this->groupList) && $this->groupList->count() == 1) {
@@ -208,7 +215,7 @@ class ElementPListHtmlRendererDFA implements DataFlowActivity
 			$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "").$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/navigate/folder/".$group->getId());
 		}
 		// redirects to advanced search if several elements and redirect is active
-		elseif($this->redirectIfOneElement || $this->redirectIfOneGroup || $this->filterOnElements) {			
+		elseif($this->redirectIfOneElement || $this->openElementInEdit || $this->redirectIfOneGroup || $this->filterOnElements) {			
 			if($this->nElements > 0) {
 				// redirect to advance search.
 				$module = $this->lastElement->getModule();

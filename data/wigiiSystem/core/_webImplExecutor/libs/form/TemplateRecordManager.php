@@ -1738,10 +1738,10 @@ class TemplateRecordManager extends Model {
             if($value == -1){
     	        $status = $this->t('open_ended');
                 $value = '<p>'. $status. '</p>';
-                $value .= '<div style="width: '.$width.'px; margin: 0; height: '.$height.'px; background: lightgrey; padding: 0;"></div>';
+                $value .= '<div style="width: '.$width.'px; margin: 0; height: '.$height.'px; background: lightgrey; padding: 0;" class="progressBarBackground"></div>';
             }else{
                 $value = '<p>'. $status. '</p>';
-                $value .= '<div style="width: '.$width.'px; margin: 0; height: '.$height.'px; background: #FCDF80; padding: 0;"><div style="background: #C3AC5F; margin: 0; padding: 0; height: '.$height.'px; width: '. $percentageWidth. 'px;">&nbsp;</div></div>';
+                $value .= '<div style="width: '.$width.'px; margin: 0; height: '.$height.'px; background: #FCDF80; padding: 0;" class="progressBarBackground"><div style="background: #C3AC5F; margin: 0; padding: 0; height: '.$height.'px; width: '. $percentageWidth. 'px;" class="progressBarProgression">&nbsp;</div></div>';
             }
         } else{
             $value = '<img src="'.SITE_ROOT_forFileUrl.'/assets/css/images_progressBar/percentImage.png" alt="'.$value.'%" class="percentImage'.$colorCode.'" style="background-position: '.$actualWidth.'px 0pt;"/> <span>'.$value.'%</span>';

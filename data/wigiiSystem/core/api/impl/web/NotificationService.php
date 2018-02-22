@@ -25,6 +25,7 @@
  * Wigii email NotificationService 
  * Created on 20 nov. 09 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) on 20.02.2018 to control notifications of sub-elements based on parent config.
  */
 class NotificationService implements MultiplexedEvent {
 
@@ -152,6 +153,24 @@ class NotificationService implements MultiplexedEvent {
 		if($this->getConfigService()->getParameter($p, $module, "Notification_enable")!="1"){
 			throw new NotificationServiceException("Notification is not enabled in module: ".$module->getModuleName(), NotificationServiceException::NO_NOTIFICATION_NEEDED);
 		}
+		// Medair (CWE) 20.02.2018 if sub-element, then notification can be disabled by parent.
+		if($element->isSubElement()) {
+		    $rootElement = $this->getRootElement($p, $element);
+		    // disables notification if root element has notification disabled
+		    if($this->getConfigService()->getParameter($p, $rootElement->getModule(), "Notification_enable")!="1"){
+		        throw new NotificationServiceException("Notification is not enabled in module: ".$rootElement->getModule()->getModuleName(), NotificationServiceException::NO_NOTIFICATION_NEEDED);
+		    }
+		    // if Notification_alwaysForceNotification=0, checks at sub-element field level if forceNotification=0 
+		    if($this->getConfigService()->getParameter($p, $rootElement->getModule(), "Notification_alwaysForceNotification")=="0") {
+		        if($rootElement->getFieldList()->doesFieldExist($element->getLinkName())) {
+		            $fieldXml = $rootElement->getFieldList()->getField($element->getLinkName())->getXml();
+		            $forceNotification = (string)$fieldXml["forceNotification"];
+		            if(ServiceProvider::getWigiiBPL()->evaluateConfigParameter($p, $forceNotification,$rootElement) != "1") {
+		                throw new NotificationServiceException("$eventName on Sub-Element but no ForceNotification on parent field found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+		            }
+		        }
+		    }
+		}
 		switch ($eventName){
 			case "insert":
 				//do notification
@@ -160,7 +179,7 @@ class NotificationService implements MultiplexedEvent {
 				if($this->getConfigService()->getParameter($p, $module, "Notification_alwaysForceNotification")=="1"){
 					//one modification at least needs to be done
 					if(!$element->getWigiiBag()->hasChanges()){
-						throw new NotificationServiceException("$eventName on $entityName but no changes are made", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+						throw new NotificationServiceException("$eventName on Element but no changes are made", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 					}
 				} else {
 					//look for modification on field with forceNotification
@@ -175,11 +194,11 @@ class NotificationService implements MultiplexedEvent {
 							}
 						}
 						if(!$needNotification) {
-							throw new NotificationServiceException("$eventName on $entityName but no ForceNotification fields with changes found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+							throw new NotificationServiceException("$eventName on Element but no ForceNotification fields with changes found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 						}
 					} else {
 						//if no ForceNotificationFound then no notification needed
-						throw new NotificationServiceException("$eventName on $entityName but no ForceNotification field found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+						throw new NotificationServiceException("$eventName on Element but no ForceNotification field found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 					}
 				}
 				break;
@@ -194,13 +213,13 @@ class NotificationService implements MultiplexedEvent {
 				break;
 			case "share":
 				if($this->getConfigService()->getParameter($p, $module, "Notification_enableOnSharing")=="0"){
-					throw new NotificationServiceException("$eventName on $entityName is configured to not do the notification", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+					throw new NotificationServiceException("$eventName on Element is configured to not do the notification", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 				}
 				//else do notification
 				break;
 			case "unshare":
 				if($this->getConfigService()->getParameter($p, $module, "Notification_enableOnSharing")=="0"){
-					throw new NotificationServiceException("$eventName on $entityName is configured to not do the notification", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+					throw new NotificationServiceException("$eventName on Element is configured to not do the notification", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 				}
 				//else do notification
 				break;
@@ -228,7 +247,7 @@ class NotificationService implements MultiplexedEvent {
 				if($this->getConfigService()->getParameter($p, $module, "Notification_alwaysForceNotification")=="1"){
 					//one modification at least needs to be done
 					if(!$rec->getWigiiBag()->hasChanges()){
-						throw new NotificationServiceException("$eventName on $entityName but no changes are made", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+						throw new NotificationServiceException("$eventName on MultipleElement but no changes are made", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 					}
 				} else {
 					//look for modification on field with forceNotification
@@ -243,11 +262,11 @@ class NotificationService implements MultiplexedEvent {
 							}
 						}
 						if(!$needNotification) {
-							throw new NotificationServiceException("$eventName on $entityName but no ForceNotification fields with changes found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+							throw new NotificationServiceException("$eventName on MultipleElement but no ForceNotification fields with changes found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 						}
 					} else {
 						//if no ForceNotificationFound then no notification needed
-						throw new NotificationServiceException("$eventName on $entityName but no ForceNotification field found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+					    throw new NotificationServiceException("$eventName on MultipleElement but no ForceNotification field found", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 					}
 				}
 				break;
@@ -260,13 +279,13 @@ class NotificationService implements MultiplexedEvent {
 			case "share":
 			case "setShare":
 				if($this->getConfigService()->getParameter($p, $module, "Notification_enableOnSharing")=="0"){
-					throw new NotificationServiceException("$eventName on $entityName is configured to not do the notification", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+				    throw new NotificationServiceException("$eventName on MultipleElement is configured to not do the notification", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 				}
 				//else do notification
 				break;
 			case "unshare":
 				if($this->getConfigService()->getParameter($p, $module, "Notification_enableOnSharing")=="0"){
-					throw new NotificationServiceException("$eventName on $entityName is configured to not do the notification", NotificationServiceException::NO_NOTIFICATION_NEEDED);
+				    throw new NotificationServiceException("$eventName on MultipleElement is configured to not do the notification", NotificationServiceException::NO_NOTIFICATION_NEEDED);
 				}
 				//else do notification
 				break;
@@ -278,10 +297,7 @@ class NotificationService implements MultiplexedEvent {
 		}
 		return true;
 	}
-
-	/**
-	 * @param $object could be $pWithElement or $pWithElementWithGroup depending on the eventName
-	 */
+	
 	private $rootElement;
 	public function setRootElement($rec, $rootElement){ $this->rootElement[$rec->getId()] = $rootElement; }
 	protected function getRootElement($p, $rec){
@@ -304,6 +320,9 @@ class NotificationService implements MultiplexedEvent {
 		return $this->rootElement[$rec->getId()];
 	}
 
+	/**
+	 * @param $object could be $pWithElement or $pWithElementWithGroup depending on the eventName
+	 */
 	public function event($eventName, $entityName, $module, $object){
 		$p = $this->getP($object);
 		$this->executionSink()->publishStartOperation("event", $p);

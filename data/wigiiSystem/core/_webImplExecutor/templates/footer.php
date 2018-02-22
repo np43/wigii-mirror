@@ -36,11 +36,9 @@ $this->executionSink()->publishStartOperation("TEMPLATE footer.php");
 if($exec->getCrtAction()!="c") {
 ?>
 <script type="text/javascript" >
-if(!(lookupForItem || lookupForGroup)) {
-	if(reqOnHash != null){
-		self.location = "<?=(HTTPS_ON ? "https" : "http" );?>://<?=$_SERVER['HTTP_HOST']?><?=$_SERVER['REQUEST_URI']?>"+crtHash;
-		update(reqOnHash);
-	}
+if(reqOnHash != null){
+	self.location = "<?=(HTTPS_ON ? "https" : "http" );?>://<?=$_SERVER['HTTP_HOST']?><?=$_SERVER['REQUEST_URI']?>"+crtHash;
+	update(reqOnHash);
 }
 </script>
 <? } ?>

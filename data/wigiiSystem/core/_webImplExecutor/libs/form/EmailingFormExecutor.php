@@ -24,6 +24,7 @@
 /**
  * Created on 15 sept. 09 by LWR
  * Updated by Medair in 2017 for maintenance purposes (see SVN log for details)
+ * Modified by Medair (CWE) on 15.02.2018 to add $link$ and $editlink$ mail merge token allowing to access and modify an element with a valid Wigii login.
  */
 class EmailingFormExecutor extends FormExecutor {
 
@@ -239,6 +240,8 @@ class EmailingFormExecutor extends FormExecutor {
 			strpos($subject, '$confirmation$')!==false ||
 			strpos($subject, '$unsubscribe$')!==false ||
 			strpos($subject, '$access$')!==false ||
+		    strpos($subject, '$link$')!==false ||
+		    strpos($subject, '$editlink$')!==false ||
 			strpos($body, '$label$')!==false ||
 			strpos($body, '$other1$')!==false ||
 			strpos($body, '$other2$')!==false ||
@@ -246,7 +249,9 @@ class EmailingFormExecutor extends FormExecutor {
 			strpos($body, '$email$')!==false ||
 			strpos($body, '$confirmation$')!==false ||
 			strpos($body, '$unsubscribe$')!==false ||
-			strpos($body, '$access$')!==false
+			strpos($body, '$access$')!==false ||
+		    strpos($body, '$link$')!==false ||
+		    strpos($body, '$editlink$')!==false
 			){
 			$mergeData = array();
 			foreach($this->getEmailLabels("email") as $emailFieldName){
@@ -270,7 +275,8 @@ class EmailingFormExecutor extends FormExecutor {
 						$mergeData[$crtEmail]['$confirmation$']= $elS->getEmailValidationLinkFromCode($p, $val[$emailFieldName]["proofKey"]);
 						$mergeData[$crtEmail]['$unsubscribe$']= $elS->getEmailUnsubscribeLinkFromCode($p, $val[$emailFieldName]["proofKey"]);
 						$mergeData[$crtEmail]['$access$']= $elS->getExternalAccessLinkFromCode($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $val[$emailFieldName]["externalCode"]);
-						//$this->debugLogger()->write("Access code for $crtEmail is '".$mergeData[$crtEmail]['$access$']."'");
+						$mergeData[$crtEmail]['$link$']= $elS->getUrlForElement($exec->getCrtWigiiNamespace(), $exec->getCrtModule(),$elementId);
+						$mergeData[$crtEmail]['$editlink$']= $elS->getUrlForElement($exec->getCrtWigiiNamespace(), $exec->getCrtModule(),$elementId,true);
 					}
 				}
 			}
@@ -421,7 +427,7 @@ class EmailingFormExecutor extends FormExecutor {
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
 
 		//add emailLabels merging fields:
-		$label = $label1 = $label2 = $label3 = $other1 = $other2 = $other3 = $confirmation = $unsubscribe = $access = null;
+		$label = $label1 = $label2 = $label3 = $other1 = $other2 = $other3 = $confirmation = $unsubscribe = $access = $link = $editlink = null;
 		$trm = $this->getWigiiExecutor()->createTrm();
 		if($emailLabels["label1"]){
 			foreach($emailLabels["label1"] as $emailFieldname=>$val) $label[$emailFieldname][0] = $transS->h($p, $val, $fieldList->getField($val)->getXml());
@@ -463,6 +469,8 @@ class EmailingFormExecutor extends FormExecutor {
 		$confirmation = $transS->h($p, "Emails_proofKeyLink");
 		$unsubscribe = $transS->h($p, "Emails_proofKeyUnsubscribeLink");
 		$access = $transS->h($p, "Emails_externalCodeLink");
+		$link = $transS->h($p, "Emails_directAccessLink");
+		$editlink = $transS->h($p, "Emails_directAccessEditLink");
 		if($label || $other1 || $other2 || $other3 || $confirmation || $unsubscribe || $access){
 			$code = '$("#'.$this->getFormId().' #Emailing_form__message>.label").append(\'';
 			$code .= '<div class="R">'.$transS->h($p, "unsubscribeLinkIsMandatoryForLegalReason")."</div>";
@@ -474,6 +482,8 @@ class EmailingFormExecutor extends FormExecutor {
 			if($confirmation) $code .= '<span class="H G SBIB ui-corner-all" title="'.'$confirmation$'.'">&nbsp;'.str_replace(" ", "&nbsp;", $confirmation)."&nbsp;</span> ";
 			if($unsubscribe) $code .= '<span class="H G SBIB ui-corner-all" title="'.'$unsubscribe$'.'">&nbsp;'.str_replace(" ", "&nbsp;", $unsubscribe)."&nbsp;</span> ";
 			if($access) $code .= '<span class="H G SBIB ui-corner-all" title="'.'$access$'.'" onmouseover="showHelp(this, \\\''.str_replace("'", "\\\'", $transS->h($p, "externalAccessMailMerge_help")).'\\\',20, \\\'fromCenter\\\', 200, 200, 0);" onmouseout="hideHelp();">&nbsp;'.str_replace(" ", "&nbsp;", $access)."&nbsp;</span> ";
+			if($link) $code .= '<span class="H G SBIB ui-corner-all" title="'.'$link$'.'" onmouseover="showHelp(this, \\\''.str_replace("'", "\\\'", $transS->h($p, "directLinkMailMerge_help")).'\\\',20, \\\'fromCenter\\\', 200, 200, 0);" onmouseout="hideHelp();">&nbsp;'.str_replace(" ", "&nbsp;", $link)."&nbsp;</span> ";
+			if($editlink) $code .= '<span class="H G SBIB ui-corner-all" title="'.'$editlink$'.'" onmouseover="showHelp(this, \\\''.str_replace("'", "\\\'", $transS->h($p, "directEditLinkMailMerge_help")).'\\\',20, \\\'fromCenter\\\', 200, 200, 0);" onmouseout="hideHelp();">&nbsp;'.str_replace(" ", "&nbsp;", $editlink)."&nbsp;</span> ";
 			$code .= '</div>\');';
 			$exec->addJsCode($code);
 			$exec->addJsCode('setListenerForEmailMerge("'.$this->getFormId().'");');
