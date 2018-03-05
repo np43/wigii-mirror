@@ -24,6 +24,7 @@
 /**
  * Created on 3 déc. 09 by LWR
  * Modified on 25.02.2016 by CWE to always display MultipleAttribut codes not present in drop-down
+ * Modified by Medair (CWE) on 09.02.2018 to support ajax drop-downs
  */
 class MultipleAttributs extends DataTypeInstance {
 
@@ -34,7 +35,7 @@ class MultipleAttributs extends DataTypeInstance {
 	*/
 	public function checkValues($p, $elementId, $wigiiBag, $field){
 		//il faut s'assurer que la valeur de retour soit bien une valeur
-		//prévue dans la liste d'option...
+		//prévue dans la liste d'option
 
 		$transS = ServiceProvider::getTranslationService();
 
@@ -48,6 +49,24 @@ class MultipleAttributs extends DataTypeInstance {
 		}
 
 		$value = $field->getValue($elementId, $wigiiBag);
+		
+		// Medair (CWE) 08.02.2018: adds support of ajax drop-downs
+		$attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
+		if(!empty($attributeMatchExp) && !empty($value)) {
+		    // parses attribute match exp to a valid FuncExp
+		    $attributeMatchExp = str2fx($attributeMatchExp);
+		    // takes current value as exact search pattern		    
+		    $attributeMatchExp->addArgument(array_map('stripslashes',$value));
+		    // executes pattern matching
+		    $attributeMatchExp = ServiceProvider::getWigiiBPL()->evaluateFuncExp($p, $attributeMatchExp);
+		    // extends set of attributes with the matching ones
+		    if(isset($attributeMatchExp)) {
+		        foreach($attributeMatchExp->children() as $attribute) {
+		            $options[(string)$attribute] = $transS->t($p, (string)$attribute, $attribute);
+		        }
+		    }
+		}
+		
 		$ok = true;
 		//la définition est dans params[options]
 		//contrôle que le résultat fourni corrsepond à une clé du tableau d'options
@@ -59,7 +78,7 @@ class MultipleAttributs extends DataTypeInstance {
 			}
 		}
 		if (!$ok){
-			throw new ServiceException("notValidOptionForMultippleAttributField", ServiceException::INVALID_ARGUMENT);
+			throw new ServiceException("notValidOptionForMultipleAttributField", ServiceException::INVALID_ARGUMENT);
 		}
 
 	}
@@ -72,10 +91,34 @@ class MultipleAttributs extends DataTypeInstance {
 		if($value!=null){
 			//$value = formatMultipleValues($value);
 			$translated = array();
-			$fieldXml = $field->getXml();
+			$fieldXml = $field->getXml();			
+			
+			// Medair (CWE) 08.02.2018: adds support of ajax drop-downs
+			$attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
+			if(!empty($attributeMatchExp) && !empty($value)) {
+			    // parses attribute match exp to a valid FuncExp
+			    $attributeMatchExp = str2fx($attributeMatchExp);
+			    // takes current value as exact search pattern
+			    $attributeMatchExp->addArgument($value);
+			    // executes pattern matching
+			    $attributeMatchExp = ServiceProvider::getWigiiBPL()->evaluateFuncExp($p, $attributeMatchExp);
+			    // prefills set of attributes with existing xml
+			    $attributes = array();
+			    foreach($fieldXml->attribute as $attribute) {
+			        $attributes[(string)$attribute] = $attribute;
+			    }
+			    // extends set of attributes with the matching ones
+			    if(isset($attributeMatchExp)) {
+			        foreach($attributeMatchExp->children() as $attribute) {
+			            $attributes[(string)$attribute] = $attribute;
+			        }
+			    }
+			}
+			else $attributes = $fieldXml->attribute;
+			
 			$existingKeys = array();
 			$isDisplayDbValueSet = ($fieldXml["displayDBValue"]=="1");
-			foreach($fieldXml->attribute as $attr){
+			foreach($attributes as $attr){
 //				eput($attr);
 				$color = (string)$attr["color"];			
 				$sAttr = (string)$attr;

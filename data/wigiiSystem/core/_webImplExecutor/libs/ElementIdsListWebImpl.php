@@ -97,7 +97,9 @@ class ElementIdsListWebImpl extends ObjectListArrayImpl implements ElementPList 
 				'Element_enableArchivedStatus' => $configS->getParameter($principal, $module, 'Element_enableArchivedStatus')=="1",
 				'Element_enableDeprecatedStatus' => $configS->getParameter($principal, $module, 'Element_enableDeprecatedStatus')=="1",
 				'Element_enableHiddenStatus' => $configS->getParameter($principal, $module, 'Element_enableHiddenStatus')=="1",
-		        'Element_enableHiddenDelete' => $configS->getParameter($principal, $module, 'enableDeleteOnlyForAdmin')=="1" || ((string)$configS->getParameter($principal, $module, 'Element_beforeDeleteExp')==="0")
+		        /* conditional actions */
+		        'Element_enableActionDelete' => $configS->getParameter($principal, $module, 'enableDeleteOnlyForAdmin')=="1" || ((string)$configS->getParameter($principal, $module, 'Element_beforeDeleteExp')==="0"),
+		        'Element_enableActionOrganize' => ((string)$configS->getParameter($principal, $module, 'Element_Blocked_enableSharing')!="")
 		);
 		$this->principal = $principal;
 		$this->configS = $configS;
@@ -124,7 +126,9 @@ class ElementIdsListWebImpl extends ObjectListArrayImpl implements ElementPList 
 			$elementP->enableElementState_archived($this->elementEnableStateConfig['Element_enableArchivedStatus']);
 			$elementP->enableElementState_deprecated($this->elementEnableStateConfig['Element_enableDeprecatedStatus']);
 			$elementP->enableElementState_hidden($this->elementEnableStateConfig['Element_enableHiddenStatus']);
-			$elementP->enableElementState_delete($this->elementEnableStateConfig['Element_enableHiddenDelete'] && (!$elementP->getRights()->canModify() || ((string)$this->configS->getParameter($this->principal, $elementP->getElement()->getModule(), 'Element_beforeDeleteExp')==="0")));
+			/* conditional actions */
+			$elementP->enableElementAction_delete($this->elementEnableStateConfig['Element_enableActionDelete'] && (!$elementP->getRights()->canModify() || ((string)$this->configS->getParameter($this->principal, $elementP->getElement()->getModule(), 'Element_beforeDeleteExp')==="0")));
+			$elementP->enableElementAction_organize($this->elementEnableStateConfig['Element_enableActionOrganize'] && ((string)$this->configS->getParameter($this->principal, $elementP->getElement()->getModule(), 'Element_Blocked_enableSharing')!=="0"));
 			
 			// updates policy using the ElementPolicyEvaluator
 			if(isset($this->elementPolicyEvaluator)) $this->elementPolicyEvaluator->computeEnableElementState($this->principal, $elementP);

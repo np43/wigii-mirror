@@ -98,8 +98,12 @@ if($elementP->getRights()->canWriteElement() || $element->isSubElement()){
             ?></div><?
             ?></div><?
         }
+        
+        // Medair (CWE) 29.01.2018: if Element_Blocked_enableSharing is defined in config, allows sharing of blocked elements
+        $enableSharingOfBlockedElement = $element->isState_blocked() && ($this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $config->getParameter($p, $exec->getCrtModule(), "Element_Blocked_enableSharing"))=="1");
+        
         //modify groups sharing
-        if(!$element->isSubElement() && !$element->isState_blocked() && !$parentReadonly){
+        if(!$element->isSubElement() && !$parentReadonly && (!$element->isState_blocked() || $enableSharingOfBlockedElement)) {            
             ?><div class="H el_organize"><span class="glyphicon glyphicon-th-list" aria-hidden="true"></span> <?=$transS->t($p, "organize");?></div><?
         }
 

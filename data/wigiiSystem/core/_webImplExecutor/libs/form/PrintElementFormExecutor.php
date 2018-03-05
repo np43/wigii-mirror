@@ -255,7 +255,9 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 
 		//display the status
 		$elS->displayElementStateAsField($p, $this->getTotalWidth(), $this->getLabelWidth(), $element);
-	
+		// Medair (CWE) 02.02.2018: saves element state in Wigii Api context for further use
+		$exec->addJsCode('wigii().context.crtElementState = '.$element->getStateAsInt());
+		
 		if($element->isState_locked()){
 			echo '</fieldset> ';
 			$this->setTotalWidth($this->getTotalWidth()+45);

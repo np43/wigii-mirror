@@ -445,9 +445,13 @@ Emails_externalConfigGroup:#Group# id to use for config:Id du #-group# à utilis
 Emails_externalAccessLevel:External access level:Niveau d'accès externe:::::::::
 Emails_externalCode:External access code:Code d'accès externe:::::::::
 Emails_externalCodeLink:Access link:Lien d'accès:::::::::
+Emails_directAccessLink:Direct link:Lien direct:::::::::
+Emails_directAccessEditLink:Direct edit link:Lien direct pour la modification:::::::::
 Emails_externalAccessEndDate:External access end date:Date de fin de l'accès externe:::::::::
 availableMailMergeField:Add in the message:Ajouter dans le message::::
 externalAccessMailMerge_help:This will add a link to access #thoseElements# directly from the email owner. This will result in an invalid link if no external access are defined for #anElement#.:Cette opération ajoutera un lien permettant au propriétaire de l'email d'accéder à #thoseElements#. Ce lien sera invalide dans le cas où aucun accès externe n'a été défini pour #anElement#.:::::
+directLinkMailMerge_help:This will add a link to access #thoseElements# directly. This link asks for user to login first and works only if the email owner has access to #thisElement#. For external access, use the $access$ token.:Cette opération ajoutera un lien permettant d'accéder à #thoseElements#. Ce lien demandera à l'utilisateur de s'authentifier et fonctionnera uniquement si l'utilisateur a accès à #thisElement#. Pour un accès externe, utiliser le tag $access$.:::::
+directEditLinkMailMerge_help:This will add a link to modify #thoseElements# directly. This link asks for user to login first and works only if the email owner has access to #thisElement#. For external access, use the $access$ token.:Cette opération ajoutera un lien permettant de modifier directement #thoseElements#. Ce lien demandera à l'utilisateur de s'authentifier et fonctionnera uniquement si l'utilisateur a accès à #thisElement#. Pour un accès externe, utiliser le tag $access$.:::::
 Ok:Ok:Ok:::::::::
 TimeRanges_begDate:Start date:Date de début:::::::::
 TimeRanges_begTime:Start time:Heure de début:::::::::
@@ -557,6 +561,8 @@ compulsory_whenField:when:lorsque:::::::::
 compulsory_isFilled:is filled:est rempli:::::::::
 removeDeprecatedValue:Existing value $value$ is not present in the list, it will be removed:La valeur existante $value$ n&apos;est pas dans la liste, elle sera effacée:::::::::
 removeDeprecatedValues:The existing values $value$ are deprecated and will be removed:Les valeurs existantes $value$ sont obsolètes et seront effacées:::::::::
+notValidOptionForAttributField:Selected option is not valid:L&apos;option sélectionnée n&apos;est pas une option valide:::::::::
+notValidOptionForMultipleAttributField:At least one selected option is not valid:Au moins une des options sélectionnées n&apos;est pas une option valide:::::::::
 confNewPassword:Confirm new password:Confirmer le mot-de-passe:::::::::
 date:Date:Date:::::::::
 defaultChildrenAreAttachedToParents:By default, children will be attached to the current parent #group#.:Par défaut, les enfants seront attachés au #-group# parent.:::::::::

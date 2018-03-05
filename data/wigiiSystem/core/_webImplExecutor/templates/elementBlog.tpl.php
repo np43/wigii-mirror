@@ -121,7 +121,11 @@ if(!$url){ //displays list only if no url
 /** INDICATORS */
 ?><div class="clear"></div><?
 
-?><div class="dataZone blog"><?
+    //add class if classExp is defined in BlogView activity
+    $class= $configS->ma($p, $exec->getCrtModule(), Activity::createInstance("blogView"));
+    $class = (string)($class["class"]);
+
+?><div class="dataZone blog <?= $class ?>"><?
 	/**
 	 * element List context menu
 	 */

@@ -1859,6 +1859,73 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Returns the trashbin group associated to a module or an element. Or an array with the trashbin and all its sub-groups.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the groupGetTrashbin business process needs the following parameters to run :
+	 * - forModule: Module|Element|ElementP|String. Optional. Module or module name or Element for which to fetch the trashbin. If not given, takes the current module.
+	 * - includeSubGroups: Boolean. It true, trashbin sub-folders are also fetched, else only takes the trashbin. By default, subfolders are not fetched. 
+	 * - returnAttribute: String. The name of the group attribute to return. Defaults to id. If 'group' then returns Group object.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return int|Group|Array the trashbin ID or the trashbin group or an array of group ids or groups, or null if no trashbin defined.
+	 * If an array is returned, then the trashbin comes first, followed by the sub-groups.
+	 */
+	public function groupGetTrashbin($principal, $caller, $parameter, $executionSink=null) {
+	    $this->executionSink()->publishStartOperation("groupGetTrashbin", $principal);
+	    $returnValue = null;
+	    try {
+	        if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        // extracts module where to fetch the trashbin
+	        $forModule = $parameter->getValue('forModule');
+	        if($forModule instanceof ElementP) $forModule = $forModule->getElement();
+	        if($forModule instanceof Element) $forModule = $forModule->getModule();
+	        if(!isset($forModule)) $forModule = ServiceProvider::getExecutionService()->getCrtModule();
+	        if(!($forModule instanceof Module)) $forModule = $this->getModuleAdminService()->getModule($principal, $forModule);
+	        
+	        $returnAttribute = $parameter->getValue('returnAttribute');
+	        if(!isset($returnAttribute)) $returnAttribute = 'id';
+	        
+	        // extracts trashbin id
+	        $trashBinGroupId = (string)$this->getConfigService()->getParameter($principal, $forModule, 'trashBinGroup');
+	        if(isset($trashBinGroupId)) {
+	            $groupAS = $this->getGroupAdminService();
+    	        // checks trashbin validity
+    	        $trashBinGroup = $groupAS->getGroupWithoutDetail($principal, $trashBinGroupId);
+    	        if(is_null($trashBinGroup) || $trashBinGroup->getModule() !==  $forModule) {
+    	            throw new GroupAdminServiceException("trashBinGroup $trashBinGroupId is not valid group of module ".$forModule->getModuleName(), GroupAdminServiceException::CONFIGURATION_ERROR);
+    	        }
+    	        // extracts subfolders
+    	        if($parameter->getValue('includeSubGroups')) {
+    	            $trashBinSubGroups = GroupListArrayImpl::createInstance();
+    	            $groupAS->getSelectedGroupsWithChildrenWithoutDetail($principal,lxEq(fs('id'),$trashBinGroupId),$trashBinSubGroups);
+    	            // builds multiple result and puts trashbin first.
+    	            $returnValue = array();
+    	            if($returnAttribute == 'group') $returnValue[$trashBinGroupId] = $trashBinGroup;
+    	            else $returnValue[$trashBinGroupId] = $trashBinGroup->getAttribute($returnAttribute);
+    	            foreach ($trashBinSubGroups->getListIterator() as $subgroup) {
+    	                if($returnAttribute == 'group') $returnValue[$subgroup->getId()] = $subgroup;
+    	                else $returnValue[$subgroup->getId()] = $subgroup->getAttribute($returnAttribute);
+    	            }
+    	        }
+    	        // builds single result
+    	        else {
+    	            if($returnAttribute == 'group') $returnValue = $trashBinGroup;
+    	            else $returnValue = $trashBinGroup->getAttribute($returnAttribute);
+    	        }
+	        }
+	    }
+	    catch(Exception $e) {
+	        $this->executionSink()->publishEndOperationOnError("groupGetTrashbin", $e, $principal);
+	        throw $e;
+	    }
+	    $this->executionSink()->publishEndOperation("groupGetTrashbin", $principal);
+	    return $returnValue;
+	}	
+	
+	/**
 	 * Fetches some posted data from HTTP POST request and builds an object based on the provided type
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @param Object $caller the object calling the Wigii business process.
@@ -1981,6 +2048,28 @@ class WigiiBPL
 		// sets Origin as Public
 		if($returnValue instanceof FuncExp) $returnValue->setOriginIsPublic();
 		return $returnValue;
+	}
+		
+	/**
+	 * Evaluates a FuncExp in the context of the given Record.
+	 * @param Principal $p principal executing the request
+	 * @param FuncExp $fx the FuncExp instance to evaluate
+	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	 * @return Any FuncExp result
+	 */
+	public function evaluateFuncExp($principal,$fx,$rec=null) {
+	    return $this->getWigiiExecutor()->evaluateFuncExp($principal, ServiceProvider::getExecutionService(), $fx, $rec);
+	}
+	
+	/**
+	 * Evaluates a Configuration Parameter which can be either a constant or a FuncExp.
+	 * @param Principal $p principal executing the request
+	 * @param String $parameter the configuration parameter to evaluate
+	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	 * @return Any FuncExp result
+	 */
+	public function evaluateConfigParameter($p,$parameter,$rec=null) {
+	    return $this->getWigiiExecutor()->evaluateConfigParameter($principal, ServiceProvider::getExecutionService(), $parameter, $rec);
 	}
 	
 	// Object builders

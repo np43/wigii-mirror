@@ -19,6 +19,7 @@
 			notInPublic,
 			displayEvenIfEmpty,
 			forceCollapse,
+			forceNotification,
 			protectExistingEntries,
 			doNotPersist,
 			allowOnReadOnly,
@@ -42,7 +43,10 @@
 			jsCodeInDetailExp,
 			jsCodeInFormExp,			
 			prefixFilter,
-			class"
+			class,
+			totalWidth,
+			labelWidth,
+			noLabel"
 		Field_enableDynamicAttributes="1"
 	/>
 	

@@ -122,7 +122,11 @@ if(!$url){ //displays list only if no url
 /** INDICATORS */
 ?><div class="clear"></div><?
 
-?><div class="dataZone list"><?
+    //add class if classExp is defined in ListView activity
+    $class= $configS->ma($p, $exec->getCrtModule(), Activity::createInstance("listView"));
+    $class = (string)($class["class"]);
+
+?><div class="dataZone list <?= $class ?>"><?
 	/**
 	 * element List context menu
 	 */

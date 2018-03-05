@@ -24,12 +24,14 @@
 /**
  * ElementPolicyEvaluator base implementation
  * Created by CWE on 03 July 2014
+ * Modified by Medair (CWE) on 30.01.2018 to inject WigiiExecutor and calculate dynamically the Element_enableAction_organize based on configuration parameter Element_Blocked_enableSharing
  */
 class ElementPolicyEvaluatorBaseImpl implements ElementPolicyEvaluator
 {
 	private $_debugLogger;
 	private $lockedForUse = true;
-
+	private $enableSharingForBlockedElement=null;
+    
 	// Object lifecycle
 
 	public function reset() {
@@ -39,7 +41,10 @@ class ElementPolicyEvaluatorBaseImpl implements ElementPolicyEvaluator
 	public function freeMemory() {
 		unset($this->formExecutor);
 		unset($this->executionService);
+		unset($this->wigiiExecutor);
+		unset($this->configS);
 		unset($this->multipleSelect);
+		unset($this->enableSharingForBlockedElement);
 		$this->lockedForUse = false;
 	}
 	public function isLockedForUse() {
@@ -66,12 +71,41 @@ class ElementPolicyEvaluatorBaseImpl implements ElementPolicyEvaluator
 		return $this->formExecutor;
 	}
 
+	private $wigiiExecutor;
+	public function setWigiiExecutor($wigiiExecutor) {
+	    $this->wigiiExecutor = $wigiiExecutor;
+	}
+	protected function getWigiiExecutor() {
+	    return $this->wigiiExecutor;
+	}
+	
+	private $configS;
+	public function setConfigService($configService)
+	{
+	    $this->configS = $configService;
+	}
+	protected function getConfigService()
+	{
+	    // autowired
+	    if(!isset($this->configS))
+	    {
+	        if(isset($this->wigiiExecutor)) $this->configS = $this->wigiiExecutor->getConfigurationContext();
+	        elseif(isset($this->formExecutor)) $this->configS = $this->formExecutor->getWigiiExecutor()->getConfigurationContext();
+	        else $this->configS = ServiceProvider::getConfigService();
+	    }	    
+	    return $this->configS;
+	}
+	
 	private $executionService;
 	public function setExecutionService($exec) {
 		$this->executionService = $exec;
 	}
 	protected function getExecutionService() {
-		return $this->executionService;
+		// autowired
+		if(!isset($this->executionService)) {
+		    $this->executionService = ServiceProvider::getExecutionService();
+		}
+	    return $this->executionService;
 	}
 
 	private $multipleSelect;
@@ -81,7 +115,7 @@ class ElementPolicyEvaluatorBaseImpl implements ElementPolicyEvaluator
 	protected function isMultiple() {
 		return $this->multipleSelect;
 	}
-
+	
 	// Configuration
 
 	private $enableApprovalForNonAdminUser = false;
@@ -203,7 +237,28 @@ class ElementPolicyEvaluatorBaseImpl implements ElementPolicyEvaluator
 
 	public function computeEnableElementState($principal, $elementP, $state=null) {
 		$element = $elementP->getElement();
-		// keeps configuration policy, except if :
+		$exec = $this->getExecutionService();
+		$configS = $this->getConfigService();
+		
+		// Element actions management
+		
+		// evaluates Element_Blocked_enableSharing
+		if($elementP->isEnabledElementAction_organize()) {
+		    if(!isset($this->enableSharingForBlockedElement)) {		    
+		        $wigiiExecutor = $this->getWigiiExecutor();
+		        if(isset($wigiiExecutor)) {
+		            $this->enableSharingForBlockedElement = ($wigiiExecutor->evaluateConfigParameter($principal, $exec, $configS->getParameter($principal, $element->getModule(), "Element_Blocked_enableSharing"))=="1");
+		        }
+		        else {
+		            $this->enableSharingForBlockedElement=false;
+		        }
+		    }		    
+		    $elementP->enableElementAction_organize($this->enableSharingForBlockedElement);
+		}
+		
+		// Element state management
+		
+		// Keeps configuration policy, except if :
 		// - subelement and parent blocked then all states are disabled.
 		if($elementP->getElement()->isSubElement() && $elementP->isParentElementState_blocked()) {
 			$this->disableAllElementStates($elementP);
@@ -243,7 +298,7 @@ class ElementPolicyEvaluatorBaseImpl implements ElementPolicyEvaluator
 			if($element->isState_blocked() && !$elementP->isEnabledElementState_blocked() && !$element->isState_locked()) {
 				$elementP->enableElementState_locked(false);
 			}
-		}
+		}		
 	}
 
 	public function updateElementStateOnSave($principal, $element, $fieldSelectorList=null) {

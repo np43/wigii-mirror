@@ -118,11 +118,12 @@ if(file_exists(CLIENT_WEB_PATH."favicon.ico")){
 <?
 }
 
-//Google analytics for Wigii Project
+//Enables Google analytics for Wigii instance if needed
+if(defined("GOOGLE_ANALYTICS_ACCOUNT")) {
 ?>
 <script type="text/javascript">
 var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-37057508-4']);
+_gaq.push(['_setAccount', '<?=GOOGLE_ANALYTICS_ACCOUNT;?>']);
 _gaq.push(['_trackPageview']);
 (function() {
 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
@@ -130,6 +131,7 @@ ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www')
 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
 </script>
+<? } ?>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/js/wigii_<?=ASSET_REVISION_NUMBER;?>.js"></script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>swfobject.js"></script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.6.2/ckeditor.js"></script>
@@ -265,20 +267,6 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 
 // Wigii default client
 else {
-//translation of v3 url type to v4
-?>
-lookupForItem = window.location.href.match(/\/do\/\D*\/(\D*)\/(\D*)\/element\/detail\/([0-9]+)/);
-lookupForGroup = window.location.href.match(/\/do\/\D*\/(\D*)\/(\D*)\/groupSelectorPanel\/selectGroupAsConfig\/([0-9]+)/);
-if(lookupForItem){
-	crtHash = "#"+lookupForItem[1]+"/"+lookupForItem[2]+"/item/"+lookupForItem[3];
-	$.cookie('wigii_anchor', crtHash,  { path: '/' });
-	window.location = "<?=SITE_ROOT;?>"+crtHash;
-} else if(lookupForGroup){
-	crtHash = "#"+lookupForGroup[1]+"/"+lookupForGroup[2]+"/folder/"+lookupForGroup[3];
-	$.cookie('wigii_anchor', crtHash,  { path: '/' });
-	window.location = "<?=SITE_ROOT;?>"+crtHash;
-} else {
-<?
 //wigii_anchor cookie reload process and check
 ?>
 $.cookie('wigii_anchor', '#',  { path: '/' });
@@ -300,6 +288,7 @@ if(reqOnHash.length > 0) {
 		module:(reqOnHash.length > 1 ? (reqOnHash[1] != null ? reqOnHash[1].replace('%20', ' ') : '<?=Module::EMPTY_MODULE_URL; ?>'): '<?=Module::EMPTY_MODULE_URL; ?>'),
 		type:(reqOnHash.length > 2 ? (reqOnHash[2] != null ? reqOnHash[2].replace('%20', ' ') : null): null),
 		id:(reqOnHash.length > 3 ? (reqOnHash[3] != null ? reqOnHash[3].replace('%20', ' ') : null): null),
+		targetModifier:(reqOnHash.length > 4 ? reqOnHash[4]: null),
 		remainingParams:(reqOnHash.length > 4 ? reqOnHash.slice(4).join('/') : null)
 	};
 	if(reqOnHash.module == 'Home') {
@@ -309,7 +298,7 @@ if(reqOnHash.length > 0) {
 		reqOnHash = 'NoAnswer/'+reqOnHash.wigiiNamespace+'/'+reqOnHash.module+'/find/'+reqOnHash.id+(reqOnHash.remainingParams != null ? '/'+reqOnHash.remainingParams : '');
 	}
 	else {
-		reqOnHash = 'NoAnswer/'+reqOnHash.wigiiNamespace+'/'+reqOnHash.module+'/navigate'+((reqOnHash.type != null && reqOnHash.type != '') ? '/'+reqOnHash.type+'/'+reqOnHash.id : '');
+		reqOnHash = 'NoAnswer/'+reqOnHash.wigiiNamespace+'/'+reqOnHash.module+'/navigate'+((reqOnHash.type != null && reqOnHash.type != '') ? '/'+reqOnHash.type+'/'+reqOnHash.id+(reqOnHash.targetModifier != null ? '/'+reqOnHash.targetModifier : '') : '');
 	}
 }
 else {
@@ -325,8 +314,6 @@ reqOnHash = null;
 $.cookie('wigii_anchor', crtHash,  { path: '/' });
 if(reqOnHash != null) self.location = "<?=(HTTPS_ON ? "https" : "http" );?>://<?=$_SERVER['HTTP_HOST']?><?=$_SERVER['REQUEST_URI']?>"+crtHash;
 update('<?=EMPTY_ANSWER_ID_URL; ?>/<?=WigiiNamespace::EMPTY_NAMESPACE_URL; ?>/<?=Module::EMPTY_MODULE_URL; ?>/setBrowser/'+browserName+'/'+version);
-
-}
 <?
 //add a listener on windows unload to put in the wigii_anchor the last content of #
 //this allow to reload the page having directly the correct hash tag in the cookie

@@ -271,7 +271,7 @@ class ExecutionServiceImpl implements ExecutionService {
 	}
 
 	/**
-	 * return an array(wigiiNamespace=>val, module=>val, type=>val, id=>val).
+	 * return an array(wigiiNamespace=>val, module=>val, type=>val, id=>val, targetModifier=>null|val).
 	 * if no fragment availabe it return an empty array
 	 * (www.domain.ch/#fragment)
 	 */
@@ -299,7 +299,7 @@ class ExecutionServiceImpl implements ExecutionService {
 			if($this->crtFragment["module"]==Module::HOME_MODULE){
 				$this->addRequests(($this->getIsUpdating() ? "mainDiv/":'').WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
 			} else {
-				$this->addRequests(($this->getIsUpdating() ? "mainDiv/":'').$this->crtFragment["wigiiNamespace"] . "/" . $this->crtFragment["module"] . "/navigate/" . $this->crtFragment["type"] . "/" . $this->crtFragment["id"]);
+			    $this->addRequests(($this->getIsUpdating() ? "mainDiv/":'').$this->crtFragment["wigiiNamespace"] . "/" . $this->crtFragment["module"] . "/navigate/" . $this->crtFragment["type"] . "/" . $this->crtFragment["id"] .($this->crtFragment["targetModifier"]?"/".$this->crtFragment["targetModifier"]:''));
 			}
 		}
 	}

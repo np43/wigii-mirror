@@ -165,6 +165,7 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 	 * - scalar : mime text/plain with scalar value
 	 * - array|stdClass|WplObjectList : mime text/xml with <wigiiFxAnswer>result as xml</wigiiFxAnswer>
 	 * - Record|Element : mime text/xml serialize Record or Element as xml
+	 * - SimpleXmlElement : mime text/xml
 	 * - Object : exception UNSUPPORTED_OPERATION
 	 */
 	protected function serializeFxResult($p, $exec, $result) {
@@ -196,6 +197,10 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 			$result = $result->getDbEntity();
 			if(!$isIntegrated) header("Content-Type: text/xml; charset=UTF-8");
 			echo TechnicalServiceProvider::getWplToolbox()->record2xml($p, $result->getFieldList(), $result->getWigiiBag(), false, null, $result->getId());
+		}
+		elseif($result instanceof SimpleXMLElement) {
+		    if(!$isIntegrated) header("Content-Type: text/xml; charset=UTF-8");
+		    echo $result->asXML();
 		}
 		elseif($result instanceof WplObjectList) {
 			if(!$isIntegrated) header("Content-Type: text/xml; charset=UTF-8");

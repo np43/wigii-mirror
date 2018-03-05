@@ -224,7 +224,7 @@ class PhpStdFL extends FuncExpVMAbstractFL
 	 */
 	public function number_format($args) {
 		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs < 1) throw new FuncExpEvalException("number_format function takes at one parameter the number", FuncExpEvalException::INVALID_ARGUMENT);
+		if($nArgs < 1) throw new FuncExpEvalException("number_format function takes at least one parameter the number", FuncExpEvalException::INVALID_ARGUMENT);
 		$number = $this->evaluateArg($args[0]);
 		if($nArgs>1) $decimals = $this->evaluateArg($args[1]);
 		else $decimals=2;
@@ -233,6 +233,20 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		if($nArgs>3) $thousands_sep = $this->evaluateArg($args[3]);
 		else $thousands_sep = "";
 		return number_format($number,$decimals,$dec_point,$thousands_sep);
+	}
+	/**
+	 * round. See http://www.php.net/round
+	 * By default rounds half up to integer
+	 */
+	public function round($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException("round function takes at least one parameter the number", FuncExpEvalException::INVALID_ARGUMENT);
+	    $number = $this->evaluateArg($args[0]);
+	    if($nArgs>1) $precision = $this->evaluateArg($args[1]);
+	    else $precision=0;
+	    if($nArgs>2) $mode = $this->evaluateArg($args[2]);
+	    else $mode=PHP_ROUND_HALF_UP;
+	    return round($number,$precision,$mode);
 	}
 	
 	/**

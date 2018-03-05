@@ -35,6 +35,9 @@ define ("DB_NAME", "wigii_example");
 // Medair 22.07.2016: if defined then disables Box integration in whole client (useful for testing and dev environments)
 //define ("DISABLE_BOX_INTEGRATION", true);
 
+// Defines a Google Analytics account to use for this Wigii instance. (see header.php for more details) 
+//define("GOOGLE_ANALYTICS_ACCOUNT","XYZ");
+
 //starts the Wigii Client implementation
 
 define ("TEST_ON", false); //this will launch the test impl (no wigii GUI)

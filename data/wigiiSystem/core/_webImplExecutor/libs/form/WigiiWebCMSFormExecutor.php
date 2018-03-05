@@ -23,7 +23,8 @@
 
 /**
  * Web CMS end point which serves content stored into a CMS module
- * See CMS_config.xml and class WigiiCMSElementEvaluator in configs/Example
+ * See CMS_config.xml in configs/Example
+ * And class WigiiCMSElementEvaluator for engine details
  * 
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016
  */

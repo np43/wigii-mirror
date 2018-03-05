@@ -840,9 +840,8 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 			!($args[0] instanceof FuncExp)) throw new FuncExpEvalException("funcExp dfasfx takes at least one argument which should be a non null instance of a FuncExp", FuncExpEvalException::INVALID_ARGUMENT);
 		$returnValue = DataFlowActivitySelector::createInstance('FuncExpDFA');
 		$returnValue->setDataFlowActivityParameter('setFuncExp', $args[0]);
-		// forks the current vm (except parent evaluator)
-		// and sets it as the func exp evaluator to be used by the FuncExpDFA
-		$returnValue->setDataFlowActivityParameter('setFuncExpEvaluator', ServiceProvider::getFuncExpVM($this->getPrincipal(), null, get_class($this->getFuncExpVM())));
+		// forks the current vm and sets it as the func exp evaluator to be used by the FuncExpDFA
+		$returnValue->setDataFlowActivityParameter('setFuncExpEvaluator', $this->getFuncExpVMServiceProvider()->forkFuncExpVM());
 		if($isOriginPublic) $returnValue->setOriginIsPublic();
 		return $returnValue;
 	}
@@ -865,7 +864,6 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		$nArgs = $this->getNumberOfArgs($args);
 		$returnValue = null;
 		if($nArgs > 0) {
-			$vmClass = get_class($this->getFuncExpVM());
 			$p = $this->getPrincipal();
 			for($i = 0; $i < $nArgs; $i++) {
 				if(!empty($args[$i])) {
@@ -873,9 +871,8 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 					if(!isset($returnValue)) $returnValue = DataFlowActivitySelectorListArrayImpl::createInstance();
 					$dfas = DataFlowActivitySelector::createInstance('FuncExpDFA');
 					$dfas->setDataFlowActivityParameter('setFuncExp', $args[$i]);
-					// forks the current vm (except parent evaluator)
-					// and sets it as the func exp evaluator to be used by the FuncExpDFA
-					$dfas->setDataFlowActivityParameter('setFuncExpEvaluator', ServiceProvider::getFuncExpVM($p, null, $vmClass));
+					// forks the current vm and sets it as the func exp evaluator to be used by the FuncExpDFA
+					$dfas->setDataFlowActivityParameter('setFuncExpEvaluator', $this->getFuncExpVMServiceProvider()->forkFuncExpVM());
 					$returnValue->addDataFlowActivitySelectorInstance($dfas);
 				}
 			}

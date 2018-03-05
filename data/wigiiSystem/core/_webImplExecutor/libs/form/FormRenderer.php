@@ -155,7 +155,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		//before any field display if the form contains error
 		if($this->first && $rm->getRecord()->getWigiiBag()->hasErrors()){
 			$rm->put('<div class="fieldError" style="border-top-style:none;border-bottom-style:dotted;font-weight:bold;padding-bottom:10px;margin-bottom:5px;width: 100%; max-width:'.($this->getTotalWidth()).'px;">');
-			if($rm->isForExternalAccess()){
+			if($rm->isForExternalAccess() || $this->getFormExecutor()->getWigiiExecutor()->getConfigurationContext()->getParameter($p,$exec->getCrtModule(),"displayErrorSummary") == "1"){
 				$rm->put($transS->t($p, "errorSummary").":<br />");
 				foreach($rm->getRecord()->getWigiiBag()->getErrors() as $tempFieldName=>$tempError){
 					if($tempFieldName=="captcha_code"){
@@ -457,7 +457,9 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		//display value
 		if($dataType==null || ($countSubFields > 1 || $fieldXml["isInLine"] =="1" || $fieldXml["noLabel"] =="1")){
 			$valueWidth = $this->getIsInLineWidth();
-		} else {
+		} elseif($dataType instanceof Links) { //To prevent the showing on multiple line
+            $valueWidth = $this->getValueWidth()-5;
+        }else {
             $valueWidth = $this->getValueWidth();
         }
         if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){

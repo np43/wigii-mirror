@@ -62,7 +62,7 @@ if((string)$xml["isTimeline"]=="1"){
         $nbColumn -= 1;
     }
     $firstLoop = true;
-    $this->put("<div style='width: 100%; height: 30px; background-color: #f9ebb2; text-align: right; margin-bottom:10px; font-weight: bold;'>");
+    $this->put("<div style='width: 100%; height: 30px; background-color: #f9ebb2; text-align: right; margin-bottom:10px; font-weight: bold;' class='timelineBackground'>");
 
     $percentage = (100/($nbColumn));
 
@@ -93,7 +93,7 @@ if((string)$xml["isTimeline"]=="1"){
             }
         }
     }
-    $this->put("<span class='glyphicon glyphicon-arrow-right' style='margin-top: -56px; margin-right: -38px; color: #f9ebb2; font-size: 57pt; z-index:-1;' aria-hidden='true'></span>");
+    $this->put("<span class='glyphicon glyphicon-arrow-right' style='margin-top: -56px; margin-right: -35px; color: #f9ebb2; font-size: 57pt; z-index:-1;' aria-hidden='true'></span>");
     $this->put("</div>");
 
     $firstLoop = true;
