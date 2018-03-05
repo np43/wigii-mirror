@@ -20,7 +20,6 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-// version G132
 /**
  * Wigii CMS module Element evaluator
  * Created by Weber wwigii-system.net for Wigii.org on 15.08.2016
@@ -32,6 +31,7 @@
  * Updated by Wigii.org (Lionel and Camille Weber) on 27.09.2017 to add public comment management
  * Updated by Weber wwigii-system.net for Wigii.org on 29.11.2017 to enforce the support of javascript into the page rendering process.
  * Updated by Weber wwigii-system.net for Wigii.org on 22.01.2018 to support NCD based articles.
+ * Updated by Wigii.org (Camille Weber) on 05.03.2018 to move it to standard Wigii distribution
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -1084,13 +1084,9 @@ JSPUBLICCOMMENTS;
 		if(isset($metaKeywords)) $metaKeywords = '<meta name="keywords" content="'.str_replace('"','',$metaKeywords).'"/>'."\n";
 		$metaAuthor = $options->getValue('metaAuthor');
 		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";
-		$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
-		//$wigiiCSS = '<link rel="stylesheet" href="https://resource.wigii.org/assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
+		$wigiiJS = '<script type="text/javascript" src="'.SITE_ROOT_forFileUrl.'assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
+		//$wigiiCSS = '<link rel="stylesheet" href="'.SITE_ROOT_forFileUrl.'/assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
 		$wigiiCSS = '';/* not compatible yet with CMS */
-		/* 16.01.2018: deprecated usage of old HTML 4.01
-		$returnValue = <<<HTMLHEAD
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-		*/
 		$returnValue = <<<HTMLHEAD
 <!DOCTYPE html>
 <!--
@@ -1537,8 +1533,10 @@ HTMLCSS;
 			if($fieldName == 'status') continue;
 			if($fieldName == 'comments') continue;
 			if(!$fslForUpdate->containsFieldSelector($fieldName)) {
-				$formBag->emptyFieldValue($fieldName);
-				$formBag->setChanged($fieldName);
+				if(!is_null($field->getDataType()) && $formBag->isFilled($fieldName)) {
+					$formBag->emptyFieldValue($fieldName);
+					$formBag->setChanged($fieldName);
+				}
 			}
 		}
 	}
