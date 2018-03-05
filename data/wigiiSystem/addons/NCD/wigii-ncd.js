@@ -2277,6 +2277,62 @@
 			};		
 		};
 		
+		// Connectors
+		
+		/**
+		 * Shows a popup on the screen with a message
+		 *@param String|Function message the message to display in the popup. Can be some HTML, a simple string or a function which returns some HTML or write into the currentDiv.
+		 * If message is a function, it receives the wigiiApi.Popup instance as first argument to enable interacting with the popup object (for instance to hide or close it).
+		 *@param Object options an optional bag of options to configure the popup. The bag of options should be compatible with the wigiiApi.Popup options (it supports for instance the closeable or resizable options)
+		 */
+		wigiiNcd.popup = function(message,options) {
+			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, popup fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);
+			// sets fixed options
+			options = options || {};
+			options.localContent = true;
+			options.position = "center"
+			options.removeOnClose = true;
+			
+			var wrappedMessage = undefined;
+			if($.isFunction(message)) {			
+				wrappedMessage = function(popupBody,popup) {
+					// creates an html emitter in the popup
+					var html = wncd.html(popupBody);						
+					// resets current div on close
+					var currentDiv = wncd.currentDiv();
+					popup.remove(function(){wncd.program.context.html(currentDiv);});
+					// sets the html emitter as current div and builds custom html
+					wncd.program.context.html(html);
+					message(popup);
+					wncd.program.context.html(currentDiv);
+				};
+			}
+			else wrappedMessage = message;		
+			wigii('HelpService').showFloatingHelp(undefined, undefined, wrappedMessage, options);
+		}
+		
+		/**
+		 * Publishes a server side Wigii Exception into a popup
+		 *@param Object exception server side Wigii Exception received through a json ajax call.
+		 *@param Object context server side execution context details, packaged into the json ajax response.
+		 */
+		wigiiNcd.publishWigiiException = function(exception,context) {
+			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, publishWigiiException fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);			
+			wigiiNcd.popup(wigii().exception2html(exception,context));
+		};
+		
+		/**
+		 *@return WigiiApi.WncdContainer returns a Wigii Api WNCD container to host NCD components into a Wigii Module View
+		 */
+		wigiiNcd.wigiiContainer = function() {
+			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, wigiiContainer fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);
+			return wigii().getWncdContainer(wncd);
+		};
+		/**		 
+		 *@return WigiiApi.WncdContainer returns a Wigii Api WNCD container to host NCD components into a Wigii Module View
+		 */
+		wigiiNcd.getWigiiContainer = wigiiNcd.wigiiContainer;
+		
 		/**
 		 * JQuery collection event handlers
 		 */

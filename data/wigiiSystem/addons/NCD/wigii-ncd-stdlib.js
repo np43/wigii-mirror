@@ -1165,3 +1165,649 @@ wncd.Desktop = function(options) {
 	self.activate(self.ctxKey);
 };
 wncd.createDesktop = function(options) {return new wncd.Desktop(options);}
+
+
+/**
+ * A task list which remembers past tasks and proposes matching when typing
+ * @param wncd.Desktop container the container in which to deploy the component. Today supports only wncd.Desktop.
+ * @param Object options a set of options to configure the desktop component. It supports the following attributes :
+ */
+wncd.SelfLearningTaskList = function(container, options) {
+	var self = this;
+	self.className = 'SelfLearningTaskList';
+	self.instantiationTime = Date.now();
+	self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
+	self.options = options || {};
+	self.context = {
+		taskCatalog:[],
+		tasks:[],
+		taskIndex:{}
+	};
+	self.impl = {
+	};
+	
+	// Properties
+
+	self.$ = function() {return $('#'+self.ctxKey);}
+	
+	// Define default options		
+	if(!self.options.label) self.options.label = "&#128203;" // clipboard
+	if(!self.options.title) self.options.title = wncd.getHtmlBuilder()
+		.tag('p','class','title').out("&#128203;&nbsp;").out("Task List").$tag('p')
+		.html();
+	if(self.options.enableTimeTracking===undefined) self.options.enableTimeTracking = true;
+	if(self.options.enableTaskAbort===undefined) self.options.enableTaskAbort = true;		
+	if(self.options.multiTasking===undefined) self.options.multiTasking = true;
+	if(!self.options.runButtonLabel) self.options.runButtonLabel = "&#9654;" // play button		
+	if(!self.options.pauseButtonLabel) self.options.pauseButtonLabel = "&#9208;" // pause button
+	if(self.options.defaultOnTaskEnd===undefined) self.options.defaultOnTaskEnd = function(task,action) {
+		var actionLabel = (action=='completed'?'Completed':'Aborted');			
+		$('#task_'+task.id).addClass(action).find('span.taskLabel').append("&nbsp;"+actionLabel+(task.duration>0?"&nbsp;duration: "+(task.duration/1000)+"s":''));
+	};		
+	
+	/**
+	 * Renders search bar
+	 */
+	if(!self.options.renderSearchBar) self.options.renderSearchBar = function(container) {
+		self.context.searchBar = wncd.currentDiv().reset().display(undefined,undefined,"searchBar");
+		var selectTask = function(e){
+			var taskLabel = $(this).val();
+			// CWE 14.01.2018 to prevent duplicated 'on change' event, taskLabel should be different than last one to be added.
+			if(self.context.tasks.length == 0 || self.context.tasks[self.context.tasks.length-1].label != taskLabel) {
+				// adds task to list
+				var task = self.impl.createTask(taskLabel);					
+				self.addTask(task);
+			}
+		};
+		self.context.searchBar.$().on('change',selectTask);
+	};
+	/**
+	 * Renders task
+	 */
+	if(!self.options.renderTask) self.options.renderTask = function(i,task) {
+		// displays only task which status is not completed and not aborted
+		if(task.status != 'completed' && task.status != 'aborted') {
+			var html = wncd.currentDiv().div(self.ctxKey).htmlBuilder();
+			html.tag("p","id","task_"+task.id,"class","task")
+				.tag("span","class","taskCompleted").out("&#10004;").$tag("span");
+				if(self.options.enableTimeTracking) {
+					// displays pause button if status is running
+					if(task.status == 'running') html.tag("span","class","taskRun").out(self.options.pauseButtonLabel).$tag("span");
+					// else displays play button
+					else html.tag("span","class","taskRun").out(self.options.runButtonLabel).$tag("span");
+				}
+				if(self.options.enableTaskAbort) {
+					html.tag("span","class","taskAborted").out("&#10006;").$tag("span");
+				}
+				html.tag("span","class","taskIndex").out(i).$tag("span")
+				.tag("span","class","taskLabel").out(task.label).$tag("span")
+			.$tag("p")
+			.emit();
+			
+			// binds on click events
+			$("#task_"+task.id+" span.taskCompleted").click(self.impl.onClickTaskCompleted);
+			if(self.options.enableTimeTracking) $("#task_"+task.id+" span.taskRun").click(self.impl.onClickTaskRunPause);
+			if(self.options.enableTaskAbort) $("#task_"+task.id+" span.taskAborted").click(self.impl.onClickTaskAborted);
+		}
+	};
+	/**
+	 * Renders task list
+	 */
+	if(!self.options.renderTaskList) self.options.renderTaskList = function(container) {
+		// creates task list container
+		wncd.currentDiv().reset().div(self.ctxKey, "taskList");
+		// displays the task list
+		for(var i=0;i<self.context.tasks.length;i++) {
+			self.options.renderTask(i+1,self.context.tasks[i]);
+		}
+		// initializes search bar
+		self.context.searchBar.autocomplete(self.context.taskCatalog).$().focus();
+	};
+	/**
+	 * Renders footer bar
+	 */
+	if(!self.options.renderFooterBar) self.options.renderFooterBar = function(container) {
+		wncd.currentDiv().reset().out("Wigii.org, NCD App (CWE), 05.03.2018, Self Learning Task List");
+		if(container.context.startupLog) wncd.currentDiv().out(", ").out(container.context.startupLog);
+	}
+	
+	// Task list service
+	
+	self.addTask = function(task) {
+		if(!task) throw wncd.createServiceException('task cannot be null',wncd.errorCodes.INVALID_ARGUMENT);
+		if(self.context.taskIndex[task.id]) throw wncd.createServiceException("task '"+task.id+"' already exists in the list",wncd.errorCodes.ALREADY_EXISTS);
+		var i = self.context.tasks.push(task);
+		self.context.taskIndex[task.id] = task;
+		// adds task to catalog if not present
+		if(!self.context.taskCatalog.includes(task.label)) {
+			self.context.taskCatalog.push(task.label);
+			self.context.taskCatalog.sort();
+		}
+		// renders task
+		self.options.renderTask(i,task);
+	};		
+	self.completeTask = function(taskId) {
+		var task = self.context.taskIndex[taskId];
+		if(!task) throw wncd.createServiceException("task '"+task.id+"' doesn't exists in the list",wncd.errorCodes.DOES_NOT_EXIST);
+		self.impl.taskController(task,'completed');
+	};
+	self.abortTask = function(taskId) {
+		var task = self.context.taskIndex[taskId];
+		if(!task) throw wncd.createServiceException("task '"+task.id+"' doesn't exists in the list",wncd.errorCodes.DOES_NOT_EXIST);
+		self.impl.taskController(task,'aborted');
+	};
+	self.startTask = function(taskId) {
+		var task = self.context.taskIndex[taskId];
+		if(!task) throw wncd.createServiceException("task '"+task.id+"' doesn't exists in the list",wncd.errorCodes.DOES_NOT_EXIST);
+		self.impl.taskController(task,'run');
+	};
+	self.pauseTask = function(taskId) {
+		var task = self.context.taskIndex[taskId];
+		if(!task) throw wncd.createServiceException("task '"+task.id+"' doesn't exists in the list",wncd.errorCodes.DOES_NOT_EXIST);
+		self.impl.taskController(task,'pause');
+	};		
+	/**
+	 * Registers an event handler which is called each time a task is ended (completed or aborted)
+	 *@param Function eventHandler a function with signature eventHandler(task, action) where action is one of 'completed' or 'aborted'
+	 */
+	self.onTaskEnd = function(eventHandler) {
+		if(!$.isFunction(eventHandler)) throw wigiiNcd.createServiceException('task end event handler should be a function', wigiiNcd.errorCodes.INVALID_ARGUMENT);
+		self.onTaskEndSubscribers.push(eventHandler);
+	};
+	self.onTaskEndSubscribers = [];
+	/**
+	 * Registers an event handler which is called each time a task is controlled (run, pause, resume)
+	 *@param Function eventHandler a function with signature eventHandler(task, action) where action is one of 'run', 'pause', or 'resume'
+	 */
+	self.onTaskControl = function(eventHandler) {
+		if(!$.isFunction(eventHandler)) throw wigiiNcd.createServiceException('task end event handler should be a function', wigiiNcd.errorCodes.INVALID_ARGUMENT);
+		self.onTaskControlSubscribers.push(eventHandler);
+	};
+	self.onTaskControlSubscribers = [];
+	
+	// Implementation
+	self.impl.createTask = function(taskLabel) {
+		return {label:taskLabel,id:Date.now(),duration:0};
+	};		
+	self.impl.onClickTaskCompleted = function(evt) {
+		var taskId = $(this).parent().attr('id').replace('task_','');
+		self.impl.taskController(self.context.taskIndex[taskId],'completed');
+	};
+	self.impl.onClickTaskRunPause = function(evt) {
+		var taskId = $(this).parent().attr('id').replace('task_','');
+		var task = self.context.taskIndex[taskId];
+		self.impl.taskController(task,(task.status == 'running'?'pause':'run'));
+	};
+	self.impl.onClickTaskAborted = function(evt) {
+		var taskId = $(this).parent().attr('id').replace('task_','');
+		self.impl.taskController(self.context.taskIndex[taskId],'aborted');
+	};
+	self.impl.taskController = function(task,action) {
+		// state machine
+		switch(task.status) {
+		case 'running':
+			if(action == 'pause') {
+				task.status = 'paused';
+				self.impl.endTask(task);
+			}
+			else if(action == 'completed') {
+				task.status = 'completed';
+				self.impl.endTask(task);
+			}
+			else if(action == 'aborted') {
+				task.status = 'aborted';
+				self.impl.endTask(task);
+			}
+			break;
+		case undefined:
+		case 'paused':
+			if(action == 'run') {
+				// if not multiTasking then pauses current task before context switching
+				if(!self.options.multiTasking && self.context.currentTask && self.context.currentTask.id != task.id) {
+					self.impl.taskController(self.context.currentTask,'pause');
+					self.context.currentTask = task;
+				}
+				task.status = 'running';
+				self.impl.startTask(task);
+			}
+			else if(action == 'completed') {
+				task.status = 'completed';
+				self.impl.endTask(task);
+			}
+			else if(action == 'aborted') {
+				task.status = 'aborted';
+				self.impl.endTask(task);
+			}
+			break;
+		case 'completed':
+		case 'aborted':
+			/* nothing to do */
+			break;
+		}
+	};
+	self.impl.startTask = function(task) {
+		var startDate = Date.now();
+		// records first start date
+		if(!task.startDate) task.startDate = startDate;
+		// records resume date for duration calculation
+		else task.resumeDate = startDate;
+		// calls any registred eventHandlers
+		if(self.onTaskControlSubscribers.length>0) {
+			for(var i=0;i<self.onTaskControlSubscribers.length;i++) {
+				// if a resume date, then action is 'resume', else action is first 'run'
+				self.onTaskControlSubscribers[i](task, (task.resumeDate?'resume':'run'));
+			}
+		}
+	};
+	self.impl.endTask = function(task) {
+		var endDate = Date.now();
+		// sums up duration
+		if(task.resumeDate) task.duration += (endDate - task.resumeDate);
+		else task.duration += (endDate - task.startDate);
+		// sets end date
+		task.endDate = endDate;
+		// calls any registred eventHandlers
+		if(self.onTaskControlSubscribers.length>0 && task.status == 'paused') {
+			for(var i=0;i<self.onTaskControlSubscribers.length;i++) {					
+				self.onTaskControlSubscribers[i](task, 'pause');
+			}
+		}
+		else if(self.onTaskEndSubscribers.length>0 && (task.status == 'completed' || task.status == 'aborted')) {
+			for(var i=0;i<self.onTaskEndSubscribers.length;i++) {					
+				self.onTaskEndSubscribers[i](task, task.status);
+			}
+		}
+	};
+	
+	// Registers default event handlers
+	if(self.options.defaultOnTaskEnd!==false) self.onTaskEnd(self.options.defaultOnTaskEnd);
+	if(self.options.enableTimeTracking) self.onTaskControl(function(task,action) {
+		if(action=='pause') $("#task_"+task.id+" span.taskRun").html(self.options.runButtonLabel);
+		else $("#task_"+task.id+" span.taskRun").html(self.options.pauseButtonLabel);
+	});
+	
+	// Deploys into container		
+	// Only supports wncd.Desktop container
+	if($.type(container)!=='object' || container.className != 'Desktop') throw wncd.createServiceException("container should be a non null instance of wncd.Desktop",wncd.errorCodes.INVALID_ARGUMENT);
+	self.options.obj = self; // passes the SelfLearningTaskList to the Desktop through the component object
+	container.registerComponent(self.ctxKey,self.options.renderSearchBar,self.options.renderTaskList,self.options.renderFooterBar,self.options);
+};
+wncd.createSelfLearningTaskList = function(container, options) {return new wncd.SelfLearningTaskList(container,options);};
+
+/**
+ * A story board which implements Agile Kanban methodology
+ * @param wncd.Desktop container the container in which to deploy the component. Supports wncd.Desktop or WigiiApi.WncdContainer.
+ * @param Object options a set of options to configure the desktop component. It supports the following attributes :
+ * - height: String. CSS height of the board. Defaults to 100%.
+ * - width: String. CSS width of the board. Defaults to 100%.
+ * - noOrdering: Boolean. If true, then the stories cannot be re-ordered.
+ * If deployed into a Wigii WncdContainer, then also supports:
+ * - noNotification: Boolean. If true, then changing the status or the position of a story will not trigger a Wigii notification,
+ * - noCalculation: Boolean. If true, then changing the status or the position of a story will not launch the re-calculation of calculated fields on server side.
+ * - mapElement2Story: Function. Function which maps a given element to a given story.
+ */
+wncd.AgileStoryBoard = function(container, options) {
+	var self = this;
+	self.className = 'AgileStoryBoard';
+	self.instantiationTime = Date.now();
+	self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
+	self.options = options || {};
+	self.context = {
+		storyAssignees:[],
+		stories:[],
+		storiesIndex:{}
+	};
+	self.impl = {
+	};
+	
+	// Properties
+
+	self.$ = function() {return $('#'+self.ctxKey);}
+	
+	// Define default options		
+	if(!self.options.label) self.options.label = "&#9096;" // helm symbol
+	if(!self.options.title) self.options.title = wncd.getHtmlBuilder()
+		.tag('p','class','title').out("&#9096;&nbsp;").out("Agile Story Board").$tag('p')
+		.html();
+	if(!self.options.storyStatuses) self.options.storyStatuses = ["Pipeline","Design","Execute","Ready for release","Pre-Production","Done"];
+	if(!self.options.height) self.options.height = '100%';
+	if(!self.options.width) self.options.width = '100%';
+	if(container && container.className == 'WncdContainer' && !self.options.mapElement2Story) self.options.mapElement2Story = function(element,story) {
+		story.id=element.__element.id,
+		story.assignee=element.assignee.value;
+		story.label=element.label.value;
+		story.description=element.description.value;
+		story.status=element.status.value;
+	};
+	
+	/**
+	 * Renders footer bar
+	 */
+	if(!self.options.renderFooterBar) self.options.renderFooterBar = function(container) {
+		wncd.currentDiv().reset().out("Wigii.org, NCD App (CWE), 05.03.2018, Agile Story Board v.1.01");
+		if(container.context.startupLog) wncd.currentDiv().out(", ").out(container.context.startupLog);
+	}
+	
+	// Implementation
+	
+	self.impl.renderFilters = function(container) {			
+		self.impl.headerBarEmitter = wncd.currentDiv();
+		wncd.currentDiv().reset();
+		// Create button (only if not deployed in Wigii Wncd container)
+		if(!container || container.className != 'WncdContainer') {
+			wncd.currentDiv().button("+ Story",function(){
+				self.impl.createStoryInColumn(self.options.storyStatuses[0]);
+			},"storyBoardCreateButton");
+		}
+		wncd.currentDiv().out("Show:","storyBoardFilterLabel");
+		// Adds "All" button which removes filter
+		wncd.currentDiv().button("All",function(){
+			self.impl.setAssigneeFilter();
+		},"storyBoardFilter","storyBoardFilter_all");
+		// Adds one button per assignee which adds assignee as a filter
+		for(var i=0;i<self.context.storyAssignees.length;i++) {
+			var assignee = self.context.storyAssignees[i];
+			wncd.currentDiv().button(assignee,function(e,assignee){
+				self.impl.setAssigneeFilter(assignee);
+			},"storyBoardFilter","storyBoardFilter_"+i,assignee);
+		}			
+		// selects current filter
+		self.impl.setAssigneeFilter(self.context.assigneeFilter);
+	};
+	self.impl.setAssigneeFilter = function(assignee) {
+		// unselects previous filter
+		var filter = 'storyBoardFilter_all';
+		if(self.context.assigneeFilter) { 
+			filter = self.context.storyAssignees.indexOf(self.context.assigneeFilter);
+			if(filter >= 0) filter = 'storyBoardFilter_'+filter;
+			else filter = 'storyBoardFilter_all';
+		}
+		$('#'+filter).removeClass('activeFilter');
+		// selects new filter
+		filter = 'storyBoardFilter_all';
+		if(assignee) { 
+			filter = self.context.storyAssignees.indexOf(assignee);
+			if(filter >= 0) filter = 'storyBoardFilter_'+filter;
+			else filter = 'storyBoardFilter_all';
+		}
+		$('#'+filter).addClass('activeFilter');
+		// refreshes dashboard if assignee changed
+		if(self.context.assigneeFilter!=assignee) {
+			self.context.assigneeFilter=assignee;
+			wncd.program.context.html(self.impl.workzoneEmitter);
+			self.impl.renderStoryBoard(container);
+		}			
+	};
+	self.impl.renderStoryBoard = function(container) {
+		self.impl.workzoneEmitter = wncd.currentDiv();
+		// Creates agile board
+		wncd.currentDiv().reset().layout(function(h,v,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10){
+			var boardColumns = [];
+			for(var i=0;i<self.options.storyStatuses.length;i++) {
+				var statusLabel;
+				if(self.options.storyStatusesLabel && self.options.storyStatusesLabel.length>i) statusLabel = self.options.storyStatusesLabel[i];
+				else statusLabel = self.options.storyStatuses[i];
+				
+				var boardColumn = x1.v(
+					x1(statusLabel).cssClass("storyBoardColumnHeader").minHeight("50px"),
+					x9().cssClass("storyBoardColumnContent")
+				).id(self.ctxKey+"_"+i).cssClass("storyBoardColumn");
+				boardColumns.push(boardColumn);
+			}				
+			
+			// board template
+			return h.apply(undefined,boardColumns).id(self.ctxKey).cssClass("storyBoard").width("100%").height("100%");
+		});	
+		self.$().find("div.storyBoardColumnContent").droppable({
+			accept:"div.story",
+			hoverClass:"dragOn",
+			drop:function(event,ui) {
+				var statusIndex = Number($(this).parent().attr("id").replace(self.ctxKey+"_",''));
+				var storyId = ui.draggable.attr("id").replace("story_","");
+				ui.draggable.draggable("option","revert",false);
+				self.impl.moveStoryToColumn(self.context.storiesIndex[storyId],self.options.storyStatuses[statusIndex])
+			}
+		});
+		// Adds stories to board
+		for(var i=0;i<self.context.stories.length;i++) {
+			var story = self.context.stories[i];
+			// only shows story compatible with assignee filter
+			// and not deleted
+			if(!story.deleted && (!self.context.assigneeFilter || self.context.assigneeFilter == story.assignee)) {
+				self.impl.addStoryToBoard(story);
+			}
+		}	
+	};
+	
+	self.impl.addStoryToBoard = function(story) {
+		var statusIndex = self.options.storyStatuses.indexOf(story.status);		
+		if(statusIndex>=0) {
+			var storyHtml = $('#'+self.ctxKey+"_"+statusIndex+" div.storyBoardColumnContent").wncd("html")
+			.div("story_"+story.id,"story");
+			storyHtml
+			/*.out(story.position,"storyPosition")*/
+			.out(story.assignee,"storyAssignee")
+			.out("&#9998;","storyEditButton")
+			.out("&#10006;","storyDeleteButton");
+			if(self.options.noOrdering!=true) storyHtml.out("&#129093;","storyMoveUpButton");
+			// if deployed in Wigii container, adds a lense icon to open the card
+			if(container && container.className == 'WncdContainer') storyHtml.out("&#128270;","storyShowDetailButton");
+			storyHtml
+			.out(story.label,"storyLabel")
+			.out(story.description,"storyDescription");
+			$("#story_"+story.id)				
+			.draggable({
+				containment:"#"+self.ctxKey,
+				cursor:"move",
+				revert:true,
+				stop:function(event,ui) {
+					ui.helper.css("position","relative");
+				}
+			})				
+			.mousedown(function(){
+				var offset = $(this).offset();
+				$(this).css({"top":offset.top+"px","left":offset.left+"px",
+					"position":"absolute","z-index":50,
+					"height":$(this).height()+"px","width":$(this).width()+"px",
+					"border-width":"2px","border-color":"#16167f"
+				});
+			})
+			.mouseup(function(){
+				$(this).css({"top":"","left":"","position":"relative","height":"","width":"","border-width":"","border-color":""});
+			});
+			var f;
+			// binds edit event				
+			// if deployed in Wigii container, then binds to Wigii edit url
+			if(container && container.className == 'WncdContainer') f = function() {
+				container.editElement(story.id);
+			}				
+			// else if standalone, then binds internal editStory function
+			else f = function(){
+				var storyId = $(this).parent().attr("id").replace("story_","");
+				self.impl.editStory(self.context.storiesIndex[storyId]);
+			}				
+			$("#story_"+story.id+" span.storyEditButton").click(f).mousedown(function(e){e.stopPropagation();}).mouseup(function(e){e.stopPropagation();});
+			// binds delete event
+			// if deployed in Wigii container, then binds to Wigii delete url
+			if(container && container.className == 'WncdContainer') f = function() {
+				container.deleteElement(story.id);
+			}				
+			// else if standalone, then binds internal editStory function
+			else f = function(){
+				var storyId = $(this).parent().attr("id").replace("story_","");
+				self.impl.deleteStory(self.context.storiesIndex[storyId]);
+			}
+			$("#story_"+story.id+" span.storyDeleteButton").click(f).mousedown(function(e){e.stopPropagation();}).mouseup(function(e){e.stopPropagation();});
+			// binds move up event
+			if(self.options.noOrdering!=true) $("#story_"+story.id+" span.storyMoveUpButton").click(function(e){
+				var storyId = $(this).parent().attr("id").replace("story_","");
+				var story = self.context.storiesIndex[storyId];
+				// retrieves higher story
+				var higherStory = $("#story_"+storyId).prev();
+				if(higherStory) {
+					storyId = higherStory.attr("id").replace("story_","");
+					higherStory = self.context.storiesIndex[storyId];						
+				}
+				// swaps stories
+				if(higherStory) {
+					$("#story_"+story.id).insertBefore($("#story_"+higherStory.id));
+					var higherPosition = higherStory.position;
+					higherStory.position = story.position;
+					story.position = higherPosition;
+					/*
+					$("#story_"+story.id+" span.storyPosition").html(story.position);
+					$("#story_"+higherStory.id+" span.storyPosition").html(higherStory.position);
+					*/
+				}
+			}).mousedown(function(e){e.stopPropagation();}).mouseup(function(e){e.stopPropagation();});
+			// binds show details button
+			// if deployed in Wigii container, then binds to Wigii show detail url
+			if(container && container.className == 'WncdContainer') $("#story_"+story.id+" span.storyShowDetailButton").click(function() {
+				container.showElement(story.id);
+			}).mousedown(function(e){e.stopPropagation();}).mouseup(function(e){e.stopPropagation();});
+		}
+	};
+	self.impl.createStoryInColumn = function(status) {
+		var statusIndex = self.options.storyStatuses.indexOf(status);
+		if(statusIndex==-1) throw wncd.createServiceException("status '"+status+"' is not on the board",wncd.errorCodes.INVALID_ARGUMENT);
+		var story = {
+			id:Date.now(),
+			status:status,
+			position:self.context.stories.length+1,
+			label:"",
+			assignee:"",
+			description:"",
+			deleted:false
+		};
+		self.impl.editStory(story);
+	};
+	self.impl.editStory = function(story) {
+		// clears the screen
+		wncd.program.context.html(self.impl.workzoneEmitter);			
+		wncd.currentDiv().reset().htmlBuilder().tag("div","class","storyBoardForm").insert(function(story){
+			// renders a form to input the story
+			wncd.form.no("editStory").supprimer();
+			wncd.form.no("editStory")
+			.createField("storyLabel","Titre du déliverable")
+			.createField("storyAssignee","Assigné à")
+			.createTextField("storyDescription","Décrire succintement le travail à accomplir")
+			.field("storyLabel").value(story.label).focus();
+			wncd.form.no("editStory").field("storyDescription").value(story.description);
+			wncd.form.no("editStory").field("storyAssignee").value(story.assignee).context.display.autocomplete(self.context.storyAssignees);
+			// shows an OK button to save the story
+			wncd.currentDiv().button("OK",function(){
+				story.label = wncd.form.no("editStory").field("storyLabel").value();
+				story.assignee = wncd.form.no("editStory").field("storyAssignee").value();
+				story.description = wncd.form.no("editStory").field("storyDescription").value();
+				// creates story if needed
+				if(!self.context.storiesIndex[story.id]) {
+					self.context.stories.push(story);
+					self.context.storiesIndex[story.id] = story;
+				}
+				// adds assignee if new one
+				if(self.context.storyAssignees.indexOf(story.assignee)<0) {
+					self.context.storyAssignees.push(story.assignee);
+					wncd.program.context.html(self.impl.headerBarEmitter);
+					self.impl.renderFilters(container);
+				}
+				// refreshes the story board
+				wncd.program.context.html(self.impl.workzoneEmitter);		
+				self.impl.renderStoryBoard(container);
+			})
+			/* shows a cancel button which displays again board without changes */
+			.button("Cancel",function(){ 
+				wncd.program.context.html(self.impl.workzoneEmitter);		
+				self.impl.renderStoryBoard(container); }
+			);			
+		},story).$tag("div").emit();
+	};
+	self.impl.deleteStory = function(story) {
+		story.deleted = true;
+		self.impl.removeStoryFromBoard(story);
+	};
+	self.impl.removeStoryFromBoard = function(story) {
+		$("#story_"+story.id).remove();
+	};
+	self.impl.moveStoryToColumn = function(story, status) {			
+		// if deployed into a Wigii Wncd container, then updates the status on server (if changed)
+		if(container && container.className == 'WncdContainer' && status!=story.status) {
+			var rollbackStatus = story.status;
+			container.saveFieldValue(story.id,'status',status,{
+				exceptionHandler:function(exception,context){
+					// rollbacks
+					self.impl.removeStoryFromBoard(story);
+					story.status = rollbackStatus;			
+					self.impl.addStoryToBoard(story);
+					// displays exception
+					wncd.publishWigiiException(exception,context);
+				},
+				noCalculation:(self.options.noCalculation==true),
+				noNotification:(self.options.noNotification==true)
+			});
+		}
+		// do the local changes
+		self.impl.removeStoryFromBoard(story);
+		story.status = status;			
+		self.impl.addStoryToBoard(story);
+	};
+	
+	// Deploys into desktop if defined		
+	if(container && container.className == 'Desktop') {
+		self.options.obj = self; // passes the AgileStoryBoard to the Desktop through the component object
+		container.registerComponent(self.ctxKey,self.impl.renderFilters,self.impl.renderStoryBoard,self.options.renderFooterBar,self.options);
+	}
+	// else deploys in current div
+	else {
+		// if deployed into Wigii Wncd container, then pre-loads the data
+		if(container && container.className == 'WncdContainer') {
+			var wigiiModel = container.getWigiiDataModel();
+			container.iterateOnElementList(wigiiModel,function(index,elementId,element){
+				var story = {};
+				self.options.mapElement2Story(element,story);
+				self.context.stories.push(story);
+				self.context.storiesIndex[story.id] = story;
+				// adds assignee if new one
+				if(self.context.storyAssignees.indexOf(story.assignee)<0) {
+					self.context.storyAssignees.push(story.assignee);
+				}
+			});
+			// registers on dataChange event
+			container.dataChange(function(container,wigiiModel) {
+				container.iterateOnElementList(wigiiModel,function(index,elementId,element){
+					var story = {};
+					self.options.mapElement2Story(element,story);
+					// adds or replaces story object
+					self.context.storiesIndex[story.id] = story;
+					// adds assignee if new one
+					if(self.context.storyAssignees.indexOf(story.assignee)<0) {
+						self.context.storyAssignees.push(story.assignee);
+					}
+					// re-builds story array
+					self.context.stories = Object.values(self.context.storiesIndex);
+					// re-paints the filters and board
+					wncd.program.context.html(self.impl.headerBarEmitter);
+					self.impl.renderFilters(container);
+					wncd.program.context.html(self.impl.workzoneEmitter);		
+					self.impl.renderStoryBoard(container);
+				});
+			});
+			// registers on elementDeleted event
+			container.elementDeleted(function(container,elementId){
+				var story = self.context.storiesIndex[elementId];
+				if(story) self.impl.deleteStory(story);
+			});
+			
+		}
+		wncd.currentDiv().layout(function(h,v,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10){
+			return v(
+				x1().id(self.ctxKey+"_filters"),
+				x5().id(self.ctxKey+"_storyBoard")
+			).width(self.options.width).height(self.options.height)
+		});			
+		wncd.program.context.html($("#"+self.ctxKey+"_filters").wncd('html'));
+		self.impl.renderFilters(container);
+		wncd.program.context.html($("#"+self.ctxKey+"_storyBoard").wncd('html'));
+		self.impl.renderStoryBoard(container);
+	}
+};
+wncd.createAgileStoryBoard = function(container, options) {return new wncd.AgileStoryBoard(container,options);};
