@@ -1,0 +1,11 @@
+/**
+ * Main script
+ */
+script(function(){	
+	/* creates a wncd AgileStoryBoard */
+	wncd.program.context.kanbanBoard = wncd.createAgileStoryBoard(wncd.wigiiContainer(),{
+		storyStatuses : ["1notStarted","2inProgress","3toBeTested","4completed"],
+		storyStatusesLabel : ["1. Non commencé","2. En cours","3. A tester","4. Terminé"],
+		noOrdering:true
+	});	
+})

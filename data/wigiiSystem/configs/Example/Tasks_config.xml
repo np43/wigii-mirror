@@ -1,0 +1,160 @@
+<?xml version='1.0' standalone='yes'?>
+<tasks>
+	
+	<parameters
+	
+		FeedbackOnSystem_enable="1"
+		FeedbackOnElement_enable="1"
+
+		Notification_enable="1"
+		Notification_enableOnSharing="1"
+		Notification_enableDynamicSubscription="1"
+		Notification_alwaysForceNotification="1"
+		Notification_enableMessage="0"
+		Notification_enableMessageOnDelete="0"
+		Notification_includeSenderInNotification="0"
+		Notification_includeOtherNamespaceInUpdateOrSetState="0"
+		Notification_hideElementView="0"
+		Notificatin_hideAccessButton="0"
+
+		ExcelExport_enableSysDate="0"
+		ExcelExport_enableCreationSysDate="0"
+		ExcelExport_enableId="0"
+
+		Element_enableLockedStatus="0"
+		Element_enableImportant1Status="1"
+		Element_enableImportant2Status="0"
+		Element_enableArchivedStatus="0"
+		Element_enableDeprecatedStatus="1"
+		Element_enableHiddenStatus="0"
+		Element_viewVersion="0"
+		Element_viewInfo="1"
+		Element_viewId="0"
+		Element_evaluator="CustomizedElementEvaluator"
+
+		Group_selectAllGroupsOnFirstLoad="0"
+		Group_selectAllGroupsOnSearch="1"
+		Group_enableDynamicConfig="1"
+		Group_enablePortal="1"
+		Group_enableSubscription="1"
+		Group_enableXmlPublish="1"
+		nbOfLevelToExpandOnInit="2"
+
+		elementTotalWidth="760"
+		elementLabelWidth="300"
+
+		reloadDetailAfterModify="0"
+		useGoogleServiceToPreviewOfficeDocuments="0"
+
+		trashBinGroup=""
+		/>
+	<feedbackOnElement>
+		<template path="feedbackOnElement.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" redirect="sponsorEmail" >sponsor<label_l01>Sponsor</label_l01><label_l02>Demandeur</label_l02></attribute>
+				<attribute checked="0" redirect="assigntoEmail" >assigntoEmail<label_l01>Assigned to</label_l01><label_l02>Assigné à</label_l02></attribute>
+				<attribute checked="0" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnElement>
+	<feedbackOnSystem>
+		<template path="feedbackOnSystem.php" inClientFolder="1" />
+		<fields>
+			<feedback_email type="Emails" require="1" ignoreNotification="1" />
+			<feedback_for type="Attributs" require="1" >
+				<attribute checked="1" email="support@xxx.xx">Support<label_l01>Support</label_l01><label_l02>Support</label_l02></attribute>
+			</feedback_for>
+			<feedback_file type="Files" require="0" noLabel="1" ignoreNotification="1" />
+			<feedback_text type="Blobs" require="1" isInLine="1"  htmlArea="1" activateHtmlArea="0" />
+		</fields>
+	</feedbackOnSystem>
+
+	<Notification>
+		<template path="Notification.php" inClientFolder="1" />
+	</Notification>
+
+	<Emailing>
+		<template path="Emailing.php" inClientFolder="1" />
+	</Emailing>
+
+	<fields>
+		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="470"  /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+		
+			<phases notInPublic="1" excelExport="auto" type="Attributs" displayAsTag="1" require="1" forceNotification="1">
+				<label_l01>Phase</label_l01><label_l02>Phase</label_l02>
+				<attribute>1Initiation<label_l01>1. Initiation</label_l01><label_l02>1. Initiation</label_l02></attribute>
+				<attribute>2Planning<label_l01>2. Planning and design</label_l01><label_l02>2. Planning et design</label_l02></attribute>
+				<attribute>3Execution<label_l01>3. Execution and construction</label_l01><label_l02>3. Execution et construction</label_l02></attribute>
+				<attribute>4Monitoring<label_l01>4. Monitoring and controlling systems</label_l01><label_l02>4. Monitoring et contrôle</label_l02></attribute>
+				<attribute>5Completion<label_l01>5. Completion</label_l01><label_l02>5. Achèvement</label_l02></attribute>
+			</phases>
+			<subject excelExport="auto" type="Strings" require="1" forceNotification="1"><label_l01>Subject</label_l01><label_l02>Sujet</label_l02></subject>
+			<description excelExport="0" type="Blobs" require="0" forceNotification="1" isInLine="1" expand="1" htmlArea="1" mediumToolbarHtmlArea="1"><label_l01>Description</label_l01><label_l02>Description</label_l02></description>
+			<sponsorEmail excelExport="auto" type="Emails" require="0" forceNotification="1" enableForEmailing="1" enableForNotification="1" expand="1" ><label_l01>Requester</label_l01><label_l02>Demandeur</label_l02></sponsorEmail>
+			<assigntoEmail excelExport="auto" type="Emails" require="1" forceNotification="1" enableForEmailing="1" enableForNotification="1" expand="1" autoFillWithPrincipalEmail="1"><label_l01>Assign to (email)</label_l01><label_l02>Assigné à (email)</label_l02></assigntoEmail>
+			
+			<priority excelExport="auto" type="Attributs" displayAsTag="1" require="1" forceNotification="0">
+				<label_l01>Priority</label_l01>
+				<attribute>P1<label_l01>High</label_l01><label_l02>Haute</label_l02></attribute>
+				<attribute checked="1">P2<label_l01>Normal</label_l01><label_l02>Normale</label_l02></attribute>
+				<attribute>P3<label_l01>Low</label_l01><label_l02>Basse</label_l02></attribute>
+			</priority>
+			
+		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
+
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="230" labelWidth="110" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+		
+			<status notInPublic="1" excelExport="auto" type="Attributs" displayAsTag="1" require="1" forceNotification="1">
+				<label_l01>Status</label_l01><label_l02>Status</label_l02>
+				<attribute>1notStarted<label_l01>1. Not Started</label_l01><label_l02>1. Non commencé</label_l02></attribute>
+				<attribute>2inProgress<label_l01>2. In Progress</label_l01><label_l02>2. En cours</label_l02></attribute>
+				<attribute>3toBeTested<label_l01>3. To be tested</label_l01><label_l02>3. A tester</label_l02></attribute>
+				<attribute>4completed<label_l01>4. Completed</label_l01><label_l02>4. Terminé</label_l02></attribute>
+				<attribute>5postpone<label_l01>5. Postpone</label_l01><label_l02>5. Différé</label_l02></attribute>
+				<attribute>6aborted<label_l01>6. Aborted</label_l01><label_l02>6. Abandonné</label_l02></attribute>
+			</status>
+			<duedate excelExport="auto" type="Dates" displayAsTag="0" require="0" forceNotification="1" expand="1"><label_l01>Due date</label_l01><label_l02>Pour le</label_l02></duedate>
+			<progress excelExport="auto" type="Numerics" isProgressBar="1" progressBarColor="1" require="0" forceNotification="0" expand="1" ><label_l01>Progress (%)</label_l01><label_l02>Avancement (%)</label_l02></progress>
+			<comments excelExport="none" type="Blobs" require="0" searchable="1" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" forceNotification="1" ><label_l01>Comments</label_l01><label_l02>Commentaire</label_l02></comments>
+			<groupFile groupStart="1" ><label_l01>Add document</label_l01><label_l02>Ajouter des documents</label_l02></groupFile>
+				<file type="Files" ><label_l01>Doc 1</label_l01><label_l02>Doc 1</label_l02></file>
+				<file2 type="Files" ><label_l01>Doc 2</label_l01><label_l02>Doc 2</label_l02></file2>
+			<groupFile groupEnd="1" />
+		<groupright groupEnd="1" expand="1" noFieldset="1" />
+	</fields>
+	
+	<selectSearchBar>
+		<fields>
+			<c1 field="priority" width="120" />
+			<c2 field="status" width="120" />
+			<e1 elementAttribut="sys_date" defaultSorted=" DESC " ><label_l01>Last updated</label_l01><label_l02>Dernière mise à jour</label_l02></e1>
+			<e2 elementAttribut="sys_creationDate" defaultSorted=" DESC " ><label_l01>Date of creation</label_l01><label_l02>Date de création</label_l02></e2>
+		</fields>
+	</selectSearchBar>
+	
+	<listView isDefaultView="1" >
+		<fields>
+			<c1 field="subject" width="null" />
+			<c2 field="assigntoEmail" width="120"><label_l01>Assigned to</label_l01><label_l02>Assigné à</label_l02></c2>
+			<c4 field="duedate" width="80" defaultSorted=" ASC "  />
+			<c7 field="status" width="100" />
+			<c5 field="progress" width="150" />
+			<c8 isDefaultGroupByKey="1" field="phases" width="50" hidden="1" />
+			<c9 isDefaultSortingKey="1" elementAttribut="sys_date" width="120" defaultSorted=" DESC " hidden="1" />
+		</fields>
+	</listView>
+	
+	<kanbanView isWncdView="1" wncdModule="Tasks_KanbanBoard">
+		<label>Kanban Board</label>
+		<fields>
+			<label field="subject" />
+			<assignee field="assigntoEmail" />
+			<description field="description"  />
+			<status field="status" />
+		</fields>
+	</kanbanView>
+</tasks>

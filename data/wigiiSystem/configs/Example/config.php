@@ -20,11 +20,13 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-// Config version G99
+// Config version G144
 
 //******************
-/* CONFIG FIL */
+/* CONFIG FILE */
 //******************
+
+define("WEB_WNCD",true);
 
 //*******************
 //* SMTP parameters */
