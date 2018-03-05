@@ -33,12 +33,15 @@ abstract class ElementPGroupableSelectablePagedListImpl extends ElementPListWebI
     public function reset($wigiiExecutor, $listContext){
         $this->setWigiiExecutor($wigiiExecutor);
         $this->setListContext($listContext);
-        $this->_isGroupedBy = ($listContext->getGroupBy() != null && $listContext->getGroupBy() !== 'null');
-        $this->crtGroupByValue = $listContext->getGroupByItemCurrentValue();
-        $this->_isSorted = ($listContext->getSortedBy()!=null);
+        $this->refreshGroupByAndSortByInfo();
         return $this;
     }
-    
+    protected function refreshGroupByAndSortByInfo() {
+    	$listContext = $this->getListContext();
+    	$this->_isGroupedBy = ($listContext->getGroupBy() != null && $listContext->getGroupBy() !== 'null');
+    	$this->crtGroupByValue = $listContext->getGroupByItemCurrentValue();
+    	$this->_isSorted = ($listContext->getSortedBy()!=null);
+    }
     
     // Configuration
     

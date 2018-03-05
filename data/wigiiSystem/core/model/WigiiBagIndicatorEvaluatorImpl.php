@@ -221,9 +221,9 @@ class WigiiBagIndicatorEvaluatorImpl implements WigiiBag, IndicatorEvaluator {
 		return $result;
 	}
 	
-	public function getValue($elementId, $dataTypeName, $fieldName, $subFieldName=null){ new ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
+	public function getValue($elementId, $dataTypeName, $fieldName, $subFieldName=null){ throw new ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
 	
-	public function applyOperator($operator, $value, $dataTypeName, $fieldName, $subFieldName=null, $field=null){ new ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
+	public function applyOperator($operator, $value, $dataTypeName, $fieldName, $subFieldName=null, $field=null){ throw new ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
 }
 
 

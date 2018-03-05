@@ -157,8 +157,9 @@ class WigiiBagBaseImpl extends Model implements BulkLoadableWigiiBag
 		
 		if(is_null($subFieldName)) $subFieldName = "value";
 		$keys = $this->getWigiiBagKeysFromFieldIndex($fieldName, $subFieldName);
-		if($operator != SUPDOP_SET && $operator != SUPDOP_SET_IF_NULL && $keys == null){
-		}
+		if($field) $fieldXml = $field->getXml();
+		else $fieldXml = null;
+		
 		//if nothing is setup in the WigiiBag for this field+subField then create them
 		//if the operator is set or set if null
 		if($keys == null && ($operator == SUPDOP_SET || $operator == SUPDOP_SET_IF_NULL)){
@@ -208,7 +209,7 @@ class WigiiBagBaseImpl extends Model implements BulkLoadableWigiiBag
 									$this->storeValue($key, $newValue);
 									break;
 								case "MultipleAttributs":
-									//performe a merge
+									//perform a merge
 									$newValue = array_combine(array_values($newValue), array_values($newValue));
 									if($value != null){
 										$value = array_merge($value, $newValue);
@@ -220,15 +221,14 @@ class WigiiBagBaseImpl extends Model implements BulkLoadableWigiiBag
 									//perform an add
 									$this->storeValue($key, str_update($value, $newValue, SUPDOP_ADD, '/'.ValueListArrayMapper::Natural_Separators.'/', ", "));
 									break;
-								case "Blobs":
-									$fieldXml = $field->getXml();
+								case "Blobs":									
 									if($fieldXml && $fieldXml["isJournal"]=="1"){
 										//in the case of the isJournal the string is already prepared to add new lines in between
 										$this->storeValue($key, $newValue.$value);
 									} else {
 										//perform a concatenation with at the end
 										if($value != null ){
-											if($fieldXml["htmlArea"]=="1"){
+											if($fieldXml &&  $fieldXml["htmlArea"]=="1"){
 												$value .= "<p>&nbsp;</p>";
 											} else {
 												$value .= "\n";
@@ -240,7 +240,7 @@ class WigiiBagBaseImpl extends Model implements BulkLoadableWigiiBag
 								case "Numerics":
 								case "Floats":
 									//perform an addition
-									if($value != null ) $value = 0;
+									if($value == null ) $value = 0;
 									$this->storeValue($key, $value+(double)$newValue);
 									break;
 								case "Texts":
@@ -248,9 +248,9 @@ class WigiiBagBaseImpl extends Model implements BulkLoadableWigiiBag
 									if($lang == null) throw new ServiceException("try to perform add operation on a Texts field without defining the lang parameter for field: $fieldName and subField: $subFieldName", ServiceException::INVALID_ARGUMENT);
 									if($value[$lang] != null ){
 										if($fieldXml && $fieldXml["htmlArea"]=="1"){
-											$value .= "<p></p>";
+											$value[$lang].= "<p></p>";
 										} else {
-											$value .= "\n";
+											$value[$lang].= "\n";
 										}
 									}
 									$value[$lang] .= $newValue;

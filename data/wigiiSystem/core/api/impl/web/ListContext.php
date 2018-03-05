@@ -22,12 +22,15 @@
  */
 
 /**
- * Created on 2 nov. 09 by LWR
+ * Wigii List Context
+ * Created by LWR on 2 nov. 2009
  * Enhanced by CWE on 09.10.2015 to constraint search space with a list of included/excluded groups.
+ * Modified by CWE on 07.02.2018 to handle Wigii NCD module views
  */
-
 class ListContext extends ListFilter {
 
+	// Advanced search fields
+	
 	const GroupByField = "__groupBySearch";
 	const SortByField = "__sortBySearch";
 	const TextSearchField = "__textSearch";
@@ -43,14 +46,19 @@ class ListContext extends ListFilter {
 	const LimitFilterInGroupSearchField = "limitFilterInGroup";
 	const ExcludeGroupsSearchField = "excludeGroups";
 	
+	// Module views management
+	
 	const listView = "list";
 	const listViewTemplate = "elementList.tpl.php";
 	const calendarView = "calendar";
 	const calendarViewTemplate = "elementCalendar.tpl.php";
 	const blogView = "blog";
 	const blogViewTemplate = "elementBlog.tpl.php";
+	const wncdView = "wncd";
+	const wncdViewTemplate = "elementWncd.tpl.php";
+	
 	public function setCrtViewToList(){
-		$this->crtView = ListContext::listView;
+		$this->setCrtView(ListContext::listView);
 	}
 	public function isCrtViewList(){
 		$this->getCrtView() == ListContext::listView;
@@ -67,12 +75,23 @@ class ListContext extends ListFilter {
 	public function isCrtViewBlog(){
 		return $this->getCrtView() == ListContext::blogView;
 	}
+	public function isCrtViewWncd() {
+		return ($this->getCrtView() == ListContext::wncdView) || 
+		($this->getCrtTemplate() == ListContext::wncdViewTemplate);
+	}
+	private $viewsTemplate;
 	public function getViewsTemplate(){
-		return array(
-			ListContext::listView=>ListContext::listViewTemplate,
-			ListContext::calendarView=>ListContext::calendarViewTemplate,
-			ListContext::blogView=>ListContext::blogViewTemplate
+		if(!isset($this->viewsTemplate)) {
+			$this->viewsTemplate = array(
+				/* standard system views */
+				ListContext::listView=>ListContext::listViewTemplate,
+				ListContext::calendarView=>ListContext::calendarViewTemplate,
+				ListContext::blogView=>ListContext::blogViewTemplate,
+				/* customized views */
+				ListContext::wncdView=>ListContext::wncdViewTemplate
 			);
+		}
+		return $this->viewsTemplate;
 	}
 	private $crtView;
 	public function getCrtTemplate(){
@@ -84,7 +103,7 @@ class ListContext extends ListFilter {
 	}
 	public function setCrtView($view){
 		$this->crtView = $view;
-	}
+	}	
 	public function getCrtViewActivityName(){
 		return $this->getCrtView()."View";
 	}
@@ -101,7 +120,9 @@ class ListContext extends ListFilter {
 		$this->viewsParam[$this->getCrtView()][$param] = $value;
 	}
 	
-	//Get customer UI pref
+	/**
+	 * Gets customer UI pref
+	 */
 	public function getListViewUIPref($fieldName, $key) {
 		if(!isset($this->viewsParam)) return null;
 		if($this->viewsParam[$this->getCrtView()]==null) return null;
@@ -109,7 +130,9 @@ class ListContext extends ListFilter {
 		return $this->viewsParam[$this->getCrtView()][(string) $fieldName][$key];
 	}
 	
-	//Save customer UI pref like the new width of a colunm
+	/**
+	 * Saves customer UI pref like for example the new width of a colunm
+	 */
 	public function setListViewUIPref($fieldName, $key, $value) {
 		if(!isset($this->viewsParam)) $this->viewParam = array();
 		if(!isset($this->viewsParam[$this->getCrtView()])) $this->viewsParam[$this->getCrtView()] = array();
@@ -117,23 +140,39 @@ class ListContext extends ListFilter {
 		$this->viewsParam[$this->getCrtView()][$fieldName][$key] = $value;
 	}
 
-	//return the list of possible views define in the config
+	/**
+	 *@return Array returns the list of possible views defined in the config 
+	 */
 	public function getAvailableTemplates($p, $module, $configS){
 		$fa = $configS->m($p, $module);
 		$returnValue = $this->getViewsTemplate();
 		foreach($this->getViewsTemplate() as $view=>$template){
-			if(empty($fa->{$view."View"})) unset($returnValue[$view]);
+			if($view == ListContext::wncdView) {
+				unset($returnValue[$view]);
+				// Looks for all activities with isWncdView=1
+				$wncdActivities = $fa->xpath('/'.$fa->getName().'/*[contains(name(),"View") and @isWncdView="1"]');
+				if($wncdActivities) {
+					foreach($wncdActivities as $wncdActivity) {
+						$returnValue[str_replace('View', '', $wncdActivity->getName())] = ListContext::wncdViewTemplate;
+					}
+				}
+			}
+			elseif(empty($fa->{$view."View"})) unset($returnValue[$view]);
 		}
+		// stores available views and templates
+		$this->viewsTemplate = $returnValue;
+		// and returns the array 
 		return $returnValue;
 	}
 
-	//takes either the list view, either the view with isDefaultView = 1
+	/**
+	 *@return String returns either the view with isDefaultView = 1 or the first available view 
+	 */
 	public function getDefaultView($p, $module, $configS){
 		$fa = $configS->m($p, $module);
-		$views = $this->getViewsTemplate();
+		$views = $this->getAvailableTemplates($p, $module, $configS);
 		$defaultView = null;
-		foreach($this->getViewsTemplate() as $view=>$template){
-			if(empty($fa->{$view."View"})) unset($views[$view]);
+		foreach($views as $view=>$template){
 			if($fa->{$view."View"}["isDefaultView"]=="1") $defaultView = $view;
 		}
 		if(!$defaultView){
@@ -143,6 +182,8 @@ class ListContext extends ListFilter {
 		return $defaultView;
 	}
 
+	// Object lifecycle
+	
 	private $groupPList;
 	private $includeChildrenGroups;
 	private $crtSelectedItem;
@@ -156,11 +197,11 @@ class ListContext extends ListFilter {
 	private $multipleElementStateArr;
 	private $allHaveWriteRights;
 	private $sortedBy;
-    private $ascendingSort;
+	private $ascendingSort;
 	private $groupBy;
-    private $defaultGroupByKey;
+	private $defaultGroupByKey;
 	private $defaultGroupByAscending;
-    private $searchBar;
+	private $searchBar;
 
     public static function createInstance($p, $module, $configS)
 	{
@@ -169,12 +210,16 @@ class ListContext extends ListFilter {
 		return $returnValue;
 	}
 
-	//must be an FieldSelectorListForActivity
+	// ListFilter properties
+	
 	private $fieldSelectorList;
 	public function getFieldSelectorList()
 	{
 		return $this->fieldSelectorList;
 	}
+	/**
+	 * @param FieldSelectorListArrayWebImpl $fieldSelectorList
+	 */
 	public function setFieldSelectorList($fieldSelectorList)
 	{
 		if(isset($fieldSelectorList) && !is_a($fieldSelectorList, "FieldSelectorListArrayWebImpl")) throw new ServiceException("fieldSelectorList must be an FieldSelectorListArrayWebImpl in ListContext", ServiceException::FORBIDDEN);
@@ -798,30 +843,8 @@ class ListContext extends ListFilter {
 		return $returnValue;
 	}
 
-//	public function getGroupByItemFieldName(){
-//		if(!isset($this->groupByInformation)) return null;
-//		$value = $this->getGroupBy();
-//		if($value == null) return null;
-//		$value = $this->groupByInformation["fieldSelectorList"]->getFieldSelectorFromKey($value);
-//		if(isset($value)) return null;
-//		return $value->getFieldName();
-//	}
-//	public function getGroupByItemSubFieldName(){
-//		if(!isset($this->groupByInformation)) return null;
-//		$value = $this->getGroupBy();
-//		if($value == null) return null;
-//		$value = $this->groupByInformation["fieldSelectorList"]->getFieldSelectorFromKey($value);
-//		if(isset($value)) return null;
-//		return $value->getSubFieldName();
-//	}
-//	public function getGroupByItemDataTypeName(){
-//		if(!isset($this->groupByInformation)) return null;
-//		$value = $this->getGroupBy();
-//		if($value == null) return null;
-//		return $this->groupByInformation[$value]["dataTypeName"];
-//	}
 	//this allows to store the actual value of the groupBy, to be able to continue
-	//next pages without repating the current groupBy title
+	//next pages without repeating the current groupBy title
 	//this value is always reset when redefining the searchBar
 	private $groupByItemCurrentValue;
 	public function getGroupByItemCurrentValue(){
@@ -848,26 +871,6 @@ class ListContext extends ListFilter {
 		$this->setSearchBar($p, $wigiiExecutor, $this->searchBar);
 	}
 
-	//WARNING, the searchBar data is raw data from the post. no addslashes added
-//	public function setSearchBarWithoutCalculationOffLogExp($post){
-//		//reset the GroupByItmeCurrentValue
-//		$this->setGroupByItemCurrentValue(null); //reinitialize the currentValue of groupBy, because this is used only when loading new page
-//		if(ini_get("magic_quotes_gpc")){
-//			$magicQuotes = true;
-//			if(is_array($post)){
-//			foreach ($post as $key=>$value){
-//				if(is_array($value)){
-//					foreach($value as $tempKey=>$tempValue){
-//						if($magicQuotes && $post[$key][$tempKey]!=null) $post[$key][$tempKey] = stripslashes($post[$key][$tempKey]);
-//					}
-//				} else {
-//					if($magicQuotes && $post[$key]!=null) $post[$key] = stripslashes($post[$key]);
-//				}
-//			}
-//			}
-//		}
-//		$this->searchBar = $post; //serialize($post);
-//	}
 	/**
 	 * Sets the search bar from the POST or a computed array.
 	 * @param Principal $p the current principal
@@ -896,8 +899,6 @@ class ListContext extends ListFilter {
 			}
 		}
 
-//		$this->setSearchBarWithoutCalculationOffLogExp($post);
-		
 		//reset the LogExp before adding them the search criterias
 		$this->setFieldSelectorLogExp(null);
 		try { $this->addLogExpOnTextSearch($p, $wigiiExecutor); }

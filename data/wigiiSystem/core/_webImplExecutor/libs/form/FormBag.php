@@ -583,7 +583,7 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 		else return false;
 	}
 
-	public function applyOperator($operator, $value, $dataTypeName, $fieldName, $subFieldName=null, $field=null){ ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
+	public function applyOperator($operator, $value, $dataTypeName, $fieldName, $subFieldName=null, $field=null){ throw new ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
 
 	/**
 	 * empty the values for a field. if subFieldName is not set then the whole field values

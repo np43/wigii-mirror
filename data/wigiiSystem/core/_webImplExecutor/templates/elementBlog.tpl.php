@@ -157,6 +157,7 @@ if(!$url){ //displays list only if no url
 	$this->includeSortByMenu($lc, $sortByOptions, $p, $exec, $transS, $configS);
 ?></div><?
 
+$exec->addJsCode('wigii().context.crtView="'.$lc->getCrtView().'"');
 $this->bindJsServicesOnModuleView($p,$exec);
 
 /**

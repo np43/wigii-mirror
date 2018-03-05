@@ -56,7 +56,7 @@ class WigiiBagExtractFilesImpl implements WigiiBag {
 
 	public function getValue($elementId, $dataTypeName, $fieldName, $subFieldName=null){ throw new ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
 	
-	public function applyOperator($operator, $value, $dataTypeName, $fieldName, $subFieldName=null, $field=null){ ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
+	public function applyOperator($operator, $value, $dataTypeName, $fieldName, $subFieldName=null, $field=null){ throw new ServiceException('unsupported by this implementation', ServiceException::UNSUPPORTED_OPERATION); }
 }
 
 

@@ -208,6 +208,7 @@ $exec->addJsCode("$crtDate setListenersToCalendar('".($crtGroupP ? ($crtGroupP->
 	//echo $table;
 ?></div><?
 
+$exec->addJsCode('wigii().context.crtView="'.$lc->getCrtView().'"');
 $this->bindJsServicesOnModuleView($p,$exec);
 
 /**

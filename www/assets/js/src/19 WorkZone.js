@@ -126,6 +126,7 @@ function resize_elementList(){
 	resize_coverPage();
 	resize_calendar();
 	resize_blog();
+	resize_wncd();
 	if(!isWorkzoneViewDocked()||crtModuleName=='Admin'){
 		resize_scrollArea(true);
 	}
@@ -753,11 +754,17 @@ function openOrganizeMultipleDialog(){
 }
 
 function removeElementInList(elementId){
-	//if the item was selected, then remove the higliths in the group panel
-	if($("#moduleView #row_"+elementId).hasClass('S')){
-		$('#groupPanel div.highlight').removeClass('highlight');
+	//if WNCD view, then notifies js client of deletion
+	if($("#moduleView div.dataZone.wncd").length > 0) {
+		wigii().getWncdContainer().elementDeleted(elementId);
 	}
-	$("#moduleView #row_"+elementId).remove();
+	else {
+		//if the item was selected, then remove the highlights in the group panel
+		if($("#moduleView #row_"+elementId).hasClass('S')){
+			$('#groupPanel div.highlight').removeClass('highlight');
+		}
+		$("#moduleView #row_"+elementId).remove();
+	}
 }
 
 function addElementInList(elementId){
@@ -2222,6 +2229,7 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 		resize_elementList();
 		resize_calendar();
 		resize_blog();
+		resize_wncd();
 		resize_workzoneViewDocked();			
 	}
 
@@ -3776,6 +3784,13 @@ function resize_blog(){
 		$('#moduleView>div.blog .dataBlog').height(blogHeight);
     }
 }
+function resize_wncd(){
+	// only changes height. width of wncd view is assumed to be always 100%.
+	if($('#moduleView div.dataZone.wncd').length>0){
+		$('#moduleView div.dataZone.wncd').height($('#groupPanel').height() - parseInt($('#moduleView div.dataZone.wncd').css('margin-top'),10) - $('#moduleView #indicators').height() - $('#moduleView .toolBar').height());
+	}
+}
+
 
 //Normalizing mousewheel speed across browsers
 //find on http://stackoverflow.com/questions/5527601/normalizing-mousewheel-speed-across-browsers

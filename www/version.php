@@ -23,10 +23,11 @@
 
 
 /**
- * wigii version
+ * Standard Wigii version 
+ * and specific version type including customer name and revision number
  */
-define("VERSION_NUMBER", "4.603");
-define("REVISION_NUMBER", "2583");
-define("ASSET_REVISION_NUMBER", "2583"); //this number will be the one used to load wigii_...js and wigii_...css
-define("VERSION_TYPE", "");
-define("VERSION_LABEL", "Wigii system, " . VERSION_TYPE . " v." . VERSION_NUMBER." R".REVISION_NUMBER."-A".ASSET_REVISION_NUMBER);
+define("VERSION_NUMBER", "4.604");
+define("REVISION_NUMBER", "G144");
+define("ASSET_REVISION_NUMBER", "G144"); // this token will be used to load wigii_...js and wigii_...css
+define("VERSION_TYPE", ""); // use the version type to version the customer customization, for example 'MyCompany R1234'
+define("VERSION_LABEL", "Wigii system, v.".VERSION_NUMBER." ".REVISION_NUMBER." ".VERSION_TYPE." A-".ASSET_REVISION_NUMBER);

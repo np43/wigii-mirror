@@ -172,7 +172,10 @@ class WigiiCoreExecutor {
 		return $p;
 	}
 	
-	
+	private $authoSStamp;
+	public function setAuthorizationServiceStamp($stamp) {
+		$this->authoSStamp = $stamp;
+	}
 	
 	
 	
@@ -1402,20 +1405,22 @@ class WigiiCoreExecutor {
 	    $moduleTemplates = $lc->getAvailableTemplates($p, $exec->getCrtModule(), $configS);
 	    if(count($moduleTemplates)>1){
 	        $first = true;
-	        foreach($lc->getAvailableTemplates($p, $exec->getCrtModule(), $configS) as $moduleView=>$moduleTemplate){
+	        foreach($moduleTemplates as $moduleView=>$moduleTemplate){
 	            if($lc->getCrtView() == $moduleView) continue;
+	            $moduleViewActivity = Activity::createInstance($moduleView."View");
+	            $moduleViewXml = $configS->ma($p, $exec->getCrtModule(),$moduleViewActivity);
 	            if($first){
 	                $exec->addJsCode("" .
 	                    "$('#searchBar .toolbarBox .switchView')" .
 	                    ".removeClass('disabledR')" .
-	                    ".html('".$transS->h($p, $moduleView."View")."')" .
+	                    ".html('".$transS->h($p, $moduleViewActivity->getActivityName(),$moduleViewXml)."')" .
 	                    ".unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); })" .
 	                    ".show();");
 	                $first = false;
 	            } else {
 	                $exec->addJsCode("" .
 	                    "$('#searchBar .toolbarBox .switchView:first')" .
-	                    ".clone().html('".$transS->h($p, $moduleView."View")."')" .
+	                		".clone().html('".$transS->h($p, $moduleViewActivity->getActivityName(),$moduleViewXml)."')" .
 	                    ".unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); })" .
 	                    ".insertAfter($('#searchBar .toolbarBox .switchView:first'));");
 	            }
@@ -1549,7 +1554,55 @@ class WigiiCoreExecutor {
 		}
 		return $html;
 	}
-	
+	/**
+	 * Prepares ListContext to filter on duplicates
+	 * @param ListContext $listContext
+	 */
+	public function prepareListContextForDuplicates($listContext,$p,$exec) {
+		$elS = ServiceProvider :: getElementService();
+		$configS = $this->getConfigurationContext();
+		
+		if($listContext->isGroupByOnlyDuplicates()){
+			$groupLogExp = $listContext->getGroupLogExp();
+			// remove trashbin if exists
+			$trashBinGroup = (string)$configS->getParameter($p, $exec->getCrtModule(), "trashBinGroup");
+			if($trashBinGroup && ($groupLogExp instanceof LogExpInGroup)) {
+				$groupLogExp = $groupLogExp->reduceNegation(true);
+				$lx = $groupLogExp->getGroupSelectionLogExp();
+				if(isset($lx) && ($lx instanceof LogExpBin) && ($lx->getOperator() == 'IN')) {
+					$ids = $lx->getValue();
+					if(is_array($ids)) {
+						$ids = array_diff($ids, array($trashBinGroup));
+						if(!empty($ids)) {
+							$lx->setValue($ids);
+						}
+					}
+				}
+			}
+			
+			// Medair 20.03.2017: computes duplicate Ids and filters on duplicated element
+			$duplicatedIds = $listContext->getDuplicatesIds();
+			if(empty($duplicatedIds) && isset($groupLogExp)) {
+				$duplicatedIds = ValueListArrayImpl::createInstance();
+				$elS->findDuplicatesFromSelectedElementsInGroups($p, $groupLogExp, $listContext->getGroupByItemFieldSelector(), $duplicatedIds);
+				$duplicatedIds = $duplicatedIds->getListIterator();
+				$listContext->setDuplicatesIds($duplicatedIds);
+			}
+			// adds filter on duplicate Ids
+			$lx = $listContext->getFieldSelectorLogExp();
+			if(!empty($duplicatedIds)) {
+				if(isset($lx)) $lx = lxAnd(lxIn(fs_e('id'), $duplicatedIds), $lx);
+				else $lx = lxIn(fs_e('id'), $duplicatedIds);
+			}
+			//if no duplicate generate negative where clause to show an empty list
+			else {
+				if(isset($lx)) $lx = lxAnd(lxEq(fs_e('id'), null), $lx);
+				else $lx = lxEq(fs_e('id'), null);
+			}
+			$listContext->setFieldSelectorLogExp($lx);			
+		}
+		return $listContext;
+	}
 	public function operationSuccessfullMessage($domId, $width, $messageTitle, $messageText, $iconType = "info"){
 		$exec = ServiceProvider :: getExecutionService();
 		$transS = ServiceProvider :: getTranslationService();
@@ -2326,6 +2379,50 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
+	 * Fetches the list of elements
+	 * Do not define the fieldSelectorList, this will be defined automatically from the config
+	 * @param $onlyRows = false, if true only the data rows are generated
+	 * @param $onlyRowsContent = false, if true only the content of the row is generated
+	 * @return StdClass the wncd model
+	 */
+	protected function getAllElementsInWncdView($p, $exec, $listContext, $onlyRows = false, $onlyRowsContent = false, $desiredPage = null, $resetGroupBy=false) {
+		$this->executionSink()->publishStartOperation("getAllElementsInWncdView");
+		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start getAllElementsInWncdView"] = microtime(true);
+		$transS = ServiceProvider :: getTranslationService();
+		$configS = $this->getConfigurationContext();
+		$elS = ServiceProvider :: getElementService();
+		
+		$elementPList = ElementPListStdClassImpl::createInstance($this, $listContext);
+		$elementPList->configureForActivity($p, $exec, 
+			Activity::createInstance($listContext->getCrtViewActivityName()),
+			wigiiBPLParam('doOnlyRows',$onlyRows,'doOnlyRowsContent',$onlyRowsContent,'resetGroupBy',$resetGroupBy)
+		);		
+		
+		$elementPList->actOnBeforeAddElementP();
+		
+		if ($listContext->doesGroupListIncludeChildren() || $listContext->getGroupPList()->count() == 1) {
+			$groupLogExp = $listContext->getGroupLogExp();
+			$nbRow = $elS->getSelectedElementsInGroups($p, $groupLogExp,
+				$elementPList,
+				$listContext
+			);
+		} else {
+			$nbRow = 0;
+		}
+		
+		$total = $listContext->getTotalNumberOfObjects();
+		$elementPList->actOnFinishAddElementP($total);
+		
+		$this->setTempTotalElementsIdsForListView($elementPList->getTotalElementsIds());
+		
+		$this->executionSink()->publishEndOperation("getAllElementsInWncdView");
+		
+		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end getAllElementsInWncdView"] = microtime(true);
+		
+		return $elementPList->getStdClass();
+	}
+	
+	/**
 	 * fetches the table of elements
 	 * Do not define the fieldSelectorList, this will be defined automatically from the config
 	 * fromGetNextElementInCalendar will prevent recalculating searchBar. this should be used
@@ -2751,7 +2848,7 @@ invalidCompleteCache();
 			}
 		}
 		if(is_array($data) || $data instanceof stdClass) {
-			$data = @json_encode($data);
+			$data = @json_encode($data,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
 			if(json_last_error() !== JSON_ERROR_NONE) throw new ServiceException('JSON encoding syntax error', ServiceException::INVALID_ARGUMENT);
 		}
 		elseif(!is_string($data)) throw new ServiceException('data is not a JSON string', ServiceException::INVALID_ARGUMENT);
@@ -2880,7 +2977,7 @@ invalidCompleteCache();
 
 		$element = $elementP->getElement();
 
-		if($element->isState_blocked() || $elementP->isParentElementState_blocked()) throw new ServiceException("blockedElementsOperationImpossible", ServiceException::FORBIDDEN);
+		if($element->isState_blocked() || $elementP->isParentElementState_blocked()) throw new ServiceException($transS->t($p,"blockedElementsOperationImpossible"), ServiceException::FORBIDDEN);
 
 		if($fsl==null){
 			$fsl = FieldSelectorListArrayImpl::createInstance();
@@ -2895,8 +2992,10 @@ invalidCompleteCache();
 		//clone current element instead of reloading it from the DB
 		$oldRecord = clone($element);
 		$oldRecord->setWigiiBag(clone($element->getWigiiBag()));
+		$storeFileInWigiiBag = $configS->getParameter($p, null, "storeFileContentIntoDatabase") == "1";
+		
 		$fe->setRecord($element);
-
+		
 		$field = $element->getFieldList()->getField($fieldName);
 		if($isForExternalAccess && $field->getDataType() && $field->getDataType()->getDataTypeName()=="Emails"){
 			//if the email is changed, the proofStatus, proofkey and proof should be reset
@@ -2906,69 +3005,129 @@ invalidCompleteCache();
 			$externalAccessEndDate = $element->getFieldValue($fieldName, "externalAccessEndDate");
 			$externalCode = $element->getFieldValue($fieldName, "externalCode");
 		}
-
+		
 		//check the form, and fill in the element accordingly
 		$fe->CheckForm($p, $exec);
-
+		
 		$autoSaveFieldId = $_POST["autoSaveFieldId"];
 		$autoSaveMesssageTargetId = $_POST["autoSaveMesssageTargetId"];
-		//check if there is some errors
-		if($fe->hasError()){
-			//if yes, display an error and do not save
-			$error = $element->getWigiiBag()->getError($fieldName);
-			$exec->addJsCode("" .
-				"if($('#$autoSaveMesssageTargetId .fieldError.$fieldName').length){ $('#$autoSaveMesssageTargetId .fieldError.$fieldName').remove(); }" .
-				"else if($('#$autoSaveMesssageTargetId .fieldError').length){ $('#$autoSaveMesssageTargetId .fieldError, #$autoSaveMesssageTargetId .label img').remove(); }" .
-				"$('#$autoSaveMesssageTargetId').prepend('<div class=\"fieldError $fieldName\">$error</div><div class=\"clear\"></div>');" .
-				"$('#$autoSaveMesssageTargetId .autoSaveConfirmation').fadeOut(function(){ $(this).remove(); });" .
-				"");
-		} else {
-
-			$autoSaveConfirmationText = "";
-			$storeFileInWigiiBag = $configS->getParameter($p, null, "storeFileContentIntoDatabase") == "1";
-
-			$newFileFieldSelectorList = $fe->updateHiddenFields($p, $exec, $storeFileInWigiiBag, $oldRecord);
-			if($newFileFieldSelectorList) $fsl->mergeFieldSelectorList($newFileFieldSelectorList);
-
-			if($isForExternalAccess && $field->getDataType() && $field->getDataType()->getDataTypeName()=="Emails"){
-				//if the email is changed, the proofStatus, proofkey and proof should be reset
-				//but the external access code must remain to prevent loosing external access while updating the address
-				$element->setFieldValue($externalConfigGroup, $fieldName, "externalConfigGroup");
-				$element->setFieldValue($externalAccessLevel, $fieldName, "externalAccessLevel");
-				$element->setFieldValue($externalAccessEndDate, $fieldName, "externalAccessEndDate");
-				$element->setFieldValue($externalCode, $fieldName, "externalCode");
+		
+		// CWE 02.03.2018 handles Wigii Api WncdContainer autosave requests
+		if($exec->getIsUpdating() && $exec->getIdAnswer() == 'Wigii_WncdContainer') {
+			try {
+				// stops if there is some errors in the form
+				if($fe->hasError()) throw new FormCheckerException($element->getWigiiBag()->getError($fieldName),FormCheckerException::UNKNOWN_ERROR);
+				
+				// prepares FieldSelectorList				
+				$newFileFieldSelectorList = $fe->updateHiddenFields($p, $exec, $storeFileInWigiiBag, $oldRecord);
+				if($newFileFieldSelectorList) $fsl->mergeFieldSelectorList($newFileFieldSelectorList);
+				if($isForExternalAccess && $field->getDataType() && $field->getDataType()->getDataTypeName()=="Emails"){
+					//if the email is changed, the proofStatus, proofkey and proof should be reset
+					//but the external access code must remain to prevent loosing external access while updating the address
+					$element->setFieldValue($externalConfigGroup, $fieldName, "externalConfigGroup");
+					$element->setFieldValue($externalAccessLevel, $fieldName, "externalAccessLevel");
+					$element->setFieldValue($externalAccessEndDate, $fieldName, "externalAccessEndDate");
+					$element->setFieldValue($externalCode, $fieldName, "externalCode");
+				}
+				
+				// prepares data flow
+				$noCalculation = formatBoolean($_POST["noCalculation"]);
+				$noNotification = formatBoolean($_POST["noNotification"]);
+				$dfasl = dfasl(dfas("NullDFA","setAttributesInContext",array('FieldSelectorList'=>$fsl,'oldRecord'=>$oldRecord,'storeFileInWigiiBag'=>$storeFileInWigiiBag,'isForExternalAccess'=>$isForExternalAccess)));				
+				/* 1. recopy element subfields */ $dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec,$fe,$element){
+					$dfContext = $callbackDFA->getDataFlowContext();
+					$updatedElement = $elementP->getElement();
+					foreach($dfContext->getAttribute('FieldSelectorList')->getListIterator() as $fs) {
+						$updatedElement->setFieldValue($element->getFieldValue($fs->getFieldName(),$fs->getSubFieldName()),$fs->getFieldName(),$fs->getSubFieldName());
+					}
+					$callbackDFA->writeResultToOutput($elementP);
+				}));
+				/* 2. element recalculation */if(!$noCalculation) $dfasl->addDataFlowActivitySelectorInstance(dfas('ElementRecalcDFA'));
+				/* 3. persist element */$dfasl->addDataFlowActivitySelectorInstance(dfas('ElementDFA','setMode',1));
+				/* 4. update files on disk */ $dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec,$fe){
+					$dfContext = $callbackDFA->getDataFlowContext();					
+					$fe->updateFilesOnDisk($dfContext->getPrincipal(), $exec, $dfContext->getAttribute('storeFileInWigiiBag'), $dfContext->getAttribute('oldRecord'), false);
+					$callbackDFA->writeResultToOutput($elementP);
+				}));
+				/* 5. outputs updated field with all subfields */$dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($fieldName,$exec) {
+					$dfContext = $callbackDFA->getDataFlowContext();
+					$element = $elementP->getDbEntity();
+					$field = FieldWithSelectedSubfields::createInstance($element->getFieldList()->getField($fieldName));
+					$field->selectAllsubfields();
+					if($field->hasSelectedSubfields()) {
+						$returnValue = array();
+						foreach($field->getSelectedSubfieldsIterator() as $subFieldName) {
+							$returnValue[$subFieldName] = $element->getFieldValue($fieldName, $subFieldName);
+						}
+						$callbackDFA->writeResultToOutput((object)$returnValue);
+					}
+				}));
+				// executes data flow and pushes json result to client
+				$returnValue = ServiceProvider::getDataFlowService()->processDataSource($p, elementP($element->getId()), $dfasl,true,($noNotification?null:$this->throwEvent()));
+				if(isset($returnValue)) $this->pushJson($p,$exec,$returnValue);
 			}
-
-			$elS->updateElement($p, $element, $fsl);
-
-			$fe->updateFilesOnDisk($p, $exec, $storeFileInWigiiBag, $oldRecord, false);
-
-			//if uploaded a file, then update hidden fields
-			if($field->getDataType() && $field->getDataType()->getDataTypeName()=="Files"){
+			catch(Exception $e) {$this->pushJson($p,$exec,$e);}			
+		}
+		// else standard Wigii autosave feature
+		else {
+			
+			//check if there is some errors
+			if($fe->hasError()){
+				//if yes, display an error and do not save
+				$error = $element->getWigiiBag()->getError($fieldName);
 				$exec->addJsCode("" .
-					"$('#".str_replace("__", "_", $autoSaveFieldId)."_file_file').val('');" .
-					"$('#".str_replace("__", "_", $autoSaveFieldId)."_path_hidden').val('".$element->getFieldValue($fieldName, "path")."');" .
-					"$('#".str_replace("__", "_", $autoSaveFieldId)."_type_hidden').val('".$element->getFieldValue($fieldName, "type")."');" .
-					"$('#".str_replace("__", "_", $autoSaveFieldId)."_mime_hidden').val('".$element->getFieldValue($fieldName, "mime")."');" .
-					"$('#".str_replace("__", "_", $autoSaveFieldId)."_size_hidden').val('".$element->getFieldValue($fieldName, "size")."');" .
-					"$('#".str_replace("__", "_", $autoSaveFieldId)."_date_hidden').val('".$element->getFieldValue($fieldName, "date")."');" .
-					"$('#".str_replace("__", "_", $autoSaveFieldId)."_user_hidden').val('".$element->getFieldValue($fieldName, "user")."');" .
-					"$('#".str_replace("__", "_", $autoSaveFieldId)."_username_hidden').val('".$element->getFieldValue($fieldName, "username")."');" .
+					"if($('#$autoSaveMesssageTargetId .fieldError.$fieldName').length){ $('#$autoSaveMesssageTargetId .fieldError.$fieldName').remove(); }" .
+					"else if($('#$autoSaveMesssageTargetId .fieldError').length){ $('#$autoSaveMesssageTargetId .fieldError, #$autoSaveMesssageTargetId .label img').remove(); }" .
+					"$('#$autoSaveMesssageTargetId').prepend('<div class=\"fieldError $fieldName\">$error</div><div class=\"clear\"></div>');" .
+					"$('#$autoSaveMesssageTargetId .autoSaveConfirmation').fadeOut(function(){ $(this).remove(); });" .
+					"");
+			} else {
+	
+				$autoSaveConfirmationText = "";				
+	
+				$newFileFieldSelectorList = $fe->updateHiddenFields($p, $exec, $storeFileInWigiiBag, $oldRecord);
+				if($newFileFieldSelectorList) $fsl->mergeFieldSelectorList($newFileFieldSelectorList);
+	
+				if($isForExternalAccess && $field->getDataType() && $field->getDataType()->getDataTypeName()=="Emails"){
+					//if the email is changed, the proofStatus, proofkey and proof should be reset
+					//but the external access code must remain to prevent loosing external access while updating the address
+					$element->setFieldValue($externalConfigGroup, $fieldName, "externalConfigGroup");
+					$element->setFieldValue($externalAccessLevel, $fieldName, "externalAccessLevel");
+					$element->setFieldValue($externalAccessEndDate, $fieldName, "externalAccessEndDate");
+					$element->setFieldValue($externalCode, $fieldName, "externalCode");
+				}
+	
+				$elS->updateElement($p, $element, $fsl);
+	
+				$fe->updateFilesOnDisk($p, $exec, $storeFileInWigiiBag, $oldRecord, false);
+	
+				//if uploaded a file, then update hidden fields
+				if($field->getDataType() && $field->getDataType()->getDataTypeName()=="Files"){
+					$exec->addJsCode("" .
+						"$('#".str_replace("__", "_", $autoSaveFieldId)."_file_file').val('');" .
+						"$('#".str_replace("__", "_", $autoSaveFieldId)."_path_hidden').val('".$element->getFieldValue($fieldName, "path")."');" .
+						"$('#".str_replace("__", "_", $autoSaveFieldId)."_type_hidden').val('".$element->getFieldValue($fieldName, "type")."');" .
+						"$('#".str_replace("__", "_", $autoSaveFieldId)."_mime_hidden').val('".$element->getFieldValue($fieldName, "mime")."');" .
+						"$('#".str_replace("__", "_", $autoSaveFieldId)."_size_hidden').val('".$element->getFieldValue($fieldName, "size")."');" .
+						"$('#".str_replace("__", "_", $autoSaveFieldId)."_date_hidden').val('".$element->getFieldValue($fieldName, "date")."');" .
+						"$('#".str_replace("__", "_", $autoSaveFieldId)."_user_hidden').val('".$element->getFieldValue($fieldName, "user")."');" .
+						"$('#".str_replace("__", "_", $autoSaveFieldId)."_username_hidden').val('".$element->getFieldValue($fieldName, "username")."');" .
+						"");
+				}
+	
+				$autoSaveConfirmationText = $transS->h($p, "autoSaveConfirmation");
+	
+				//tooltip seem not to be the good solution here
+				//just append a div position absolute class ui-widget
+				//add timeout to remove it
+				//display it just above the field
+				$exec->addJsCode("" .
+					"if($('#$autoSaveMesssageTargetId .fieldError.$fieldName').length){ $('#$autoSaveMesssageTargetId .fieldError.$fieldName').remove(); }" .
+					"else if($('#$autoSaveMesssageTargetId .fieldError').length){ $('#$autoSaveMesssageTargetId .fieldError, #$autoSaveMesssageTargetId .label img').remove(); }" .
+					"$('#$autoSaveMesssageTargetId .autoSaveConfirmation').html('".$autoSaveConfirmationText."');" .
+					"$('#$autoSaveMesssageTargetId .autoSaveConfirmation').fadeOut(function(){ $(this).remove(); });" .
 					"");
 			}
-
-			$autoSaveConfirmationText = $transS->h($p, "autoSaveConfirmation");
-
-			//tooltip seem not to be the good solution here
-			//just append a div position absolute class ui-widget
-			//add timeout to remove it
-			//display it just above the field
-			$exec->addJsCode("" .
-				"if($('#$autoSaveMesssageTargetId .fieldError.$fieldName').length){ $('#$autoSaveMesssageTargetId .fieldError.$fieldName').remove(); }" .
-				"else if($('#$autoSaveMesssageTargetId .fieldError').length){ $('#$autoSaveMesssageTargetId .fieldError, #$autoSaveMesssageTargetId .label img').remove(); }" .
-				"$('#$autoSaveMesssageTargetId .autoSaveConfirmation').html('".$autoSaveConfirmationText."');" .
-				"$('#$autoSaveMesssageTargetId .autoSaveConfirmation').fadeOut(function(){ $(this).remove(); });" .
-				"");
 		}
 	}
 
@@ -4449,7 +4608,7 @@ invalidCompleteCache();
 					$p = $this->getPublicPrincipal();
 				}
 				// checks if MinimalPrincial is authorized
-				elseif (!$webExec->isMinimalPrincipalAuthorized()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				elseif (!$webExec->isMinimalPrincipalAuthorized()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 			}
 					
 			// runs WebExecutor
@@ -4552,7 +4711,7 @@ invalidCompleteCache();
 				break;
 			case "toggleAdmin" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule()) {
 					$this->getAdminContext($p)->setWorkingModule($exec->getCrtModule());
 					$exec->addRequests("mainDiv/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . Module :: ADMIN_MODULE . "/display/all");
@@ -4568,7 +4727,7 @@ invalidCompleteCache();
 					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
 				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4604,7 +4763,7 @@ invalidCompleteCache();
 					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
 				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4623,7 +4782,7 @@ invalidCompleteCache();
 					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
 				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4643,7 +4802,7 @@ invalidCompleteCache();
 					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $tmpArray[0]));
 				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4665,7 +4824,7 @@ invalidCompleteCache();
 					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
 				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4687,7 +4846,7 @@ invalidCompleteCache();
 					$this->getAdminContext($p)->setWorkingModule(ServiceProvider :: getModuleAdminService()->getModule($p, $exec->getCrtParameters(1)));
 				}
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4710,7 +4869,7 @@ invalidCompleteCache();
 				}
 	
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4741,7 +4900,7 @@ invalidCompleteCache();
 				break;
 			case "switchModuleInAdminTo" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4750,7 +4909,7 @@ invalidCompleteCache();
 				break;
 			case "GroupUserMatrix" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4821,7 +4980,7 @@ invalidCompleteCache();
 				break;
 			case "UserAdminMatrix" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4908,7 +5067,7 @@ invalidCompleteCache();
 				break;
 			case "UserUserMatrix" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4947,7 +5106,7 @@ invalidCompleteCache();
 				break;
 			case "UserRoleMatrix" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -4985,7 +5144,7 @@ invalidCompleteCache();
 				break;
 			case "groupDetail" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5021,7 +5180,7 @@ invalidCompleteCache();
 				break;
 			case "groupNew" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5095,7 +5254,7 @@ invalidCompleteCache();
 				break;
 			case "groupNewCopy" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5173,7 +5332,7 @@ invalidCompleteCache();
 				break;
 			case "groupEdit" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5261,7 +5420,7 @@ invalidCompleteCache();
 				break;
 			case "groupDelete" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5327,7 +5486,7 @@ invalidCompleteCache();
 				break;
 			case "groupEmpty" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 					if (!$exec->getCrtModule()->isAdminModule())
 						throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5387,7 +5546,7 @@ invalidCompleteCache();
 					break;
 			case "groupConfigEdit" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5428,7 +5587,7 @@ invalidCompleteCache();
 				break;
 			case "groupEmailNotification" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5477,7 +5636,7 @@ invalidCompleteCache();
 				break;
 			case "groupPortal" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5531,7 +5690,7 @@ invalidCompleteCache();
 
 			case "groupHtmlContent" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5586,7 +5745,7 @@ invalidCompleteCache();
 				break;
 			case "groupXmlPublish" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5635,7 +5794,7 @@ invalidCompleteCache();
 				break;
 			case "groupSubscription" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5690,7 +5849,7 @@ invalidCompleteCache();
 				break;
 			case "userDetail" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5719,7 +5878,7 @@ invalidCompleteCache();
 			case "roleNew" :
 			case "userNew" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5769,7 +5928,7 @@ invalidCompleteCache();
 				break;
 			case "userEdit" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5821,7 +5980,7 @@ invalidCompleteCache();
 				break;
 			case "userDelete" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -5860,7 +6019,7 @@ invalidCompleteCache();
 				break;
 			case "roleUserAllocation" :
 			case "userRoleAllocation" :
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule()) throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 				if (!isset ($transS)) $transS = ServiceProvider :: getTranslationService();
 				if (!isset ($userAS)) $userAS = ServiceProvider :: getUserAdminService();
@@ -5991,7 +6150,7 @@ onUpdateErrorCounter = 0;
 
 				break;
 			case "userRights" :
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule()) throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 				if (!isset ($transS)) $transS = ServiceProvider :: getTranslationService();
 				if (!isset ($userAS)) $userAS = ServiceProvider :: getUserAdminService();
@@ -6127,7 +6286,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "userConfigEdit" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -6830,7 +6989,7 @@ onUpdateErrorCounter = 0;
 				// Prefer a more controlled approach through multiple selection or batch.
 				throw new ServiceException('This functionality is no more supported. Use multiple modify instead.', ServiceException::DEPRECATED);
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 				if (!$p->isModuleEditor())
@@ -6863,7 +7022,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "moduleEditorDelete" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 				if (!$p->isWigiiNamespaceCreator())
@@ -6906,7 +7065,7 @@ onUpdateErrorCounter = 0;
 					$moduleEditorIsNew = false;
 
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 				if (!$p->isModuleEditor())
@@ -6946,7 +7105,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "moduleEditorNewNamespace":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 				if (!$p->isModuleEditor())
@@ -6988,7 +7147,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "moduleEditorRemoveNamespace":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 				if (!$p->isModuleEditor())
@@ -7022,7 +7181,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "moduleEditorRemoveEmailNotification":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 				if (!$p->isModuleEditor())
@@ -7110,7 +7269,7 @@ onUpdateErrorCounter = 0;
 //			//DEPRECATED
 //			case "changeRole" :
 //				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-//					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+//					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 //
 //				$lastAttachedUserId = $p->getUserId(); //used to go back to last one on error
 //
@@ -7184,7 +7343,7 @@ onUpdateErrorCounter = 0;
 //
 //				break;
 			case "changeSortByKey":
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS)) $configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
 
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
@@ -7207,7 +7366,7 @@ onUpdateErrorCounter = 0;
 
 				break;
 			case "changeGroupByKey":
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS)) $configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
 
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
@@ -7225,7 +7384,7 @@ onUpdateErrorCounter = 0;
 
 				break;
 			case "saveListViewUIPref":
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS)) $configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
 				
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
@@ -7234,7 +7393,7 @@ onUpdateErrorCounter = 0;
 				$exec->invalidCache($p, 'moduleView');
 				break;
 			case "changeGroupByToFindDuplicates":
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS)) $configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
 
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
@@ -7259,7 +7418,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "addIndicator" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS))
 					$configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
 				if (!isset ($transS))
@@ -7359,7 +7518,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "closeIndicator" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				$indicatorList = $this->getIndicatorList($p, $exec);
 				$indicatorList->removeIndicator($exec->getCrtParameters(0));
 				$this->serializeIndicatorsInContext($p, $exec, $indicatorList);
@@ -7369,7 +7528,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "showIndicators" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 					$p->setValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl(), true);
 				$exec->addRequests('indicators/' . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '/' . $exec->getCrtModule()->getModuleUrl() . '/display/indicators');
 				//persist context in DB;
@@ -7378,7 +7537,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "closeIndicators" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 					$p->setValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl(), false);
 				$exec->addRequests('indicators/' . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '/' . $exec->getCrtModule()->getModuleUrl() . '/display/indicators');
 				//persist context in DB;
@@ -7387,7 +7546,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "evaluateIndicators" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($elS))
 					$elS = ServiceProvider :: getElementService();
 				if (!isset ($configS))
@@ -7451,7 +7610,7 @@ onUpdateErrorCounter = 0;
 			case "getKeepNotifiedDialogContent" :
 			case "changeKeepNotifiedEmail" :
 			case "setKeepNotifiedEmail" :
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				$transS = ServiceProvider :: getTranslationService();
 				$configS = $this->getConfigurationContext();
 				if ($configS->getParameter($p, $exec->getCrtModule(), "Notification_enable") != "1" || $configS->getParameter($p, $exec->getCrtModule(), "Notification_enableDynamicSubscription") != "1") throw new ServiceException("Notification_enableDynamicSubscription is disabled", ServiceException :: FORBIDDEN);
@@ -7511,7 +7670,7 @@ onUpdateErrorCounter = 0;
 				}
 				break;
 			case "setKeepNotifiedGroupsForEmail" :
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				$transS = ServiceProvider :: getTranslationService();
 				$configS = $this->getConfigurationContext();
 				if ($configS->getParameter($p, $exec->getCrtModule(), "Notification_enable") != "1" || $configS->getParameter($p, $exec->getCrtModule(), "Notification_enableDynamicSubscription") != "1") throw new ServiceException("Notification_enableDynamicSubscription is disabled", ServiceException :: FORBIDDEN);
@@ -7554,7 +7713,7 @@ onUpdateErrorCounter = 0;
 				break;
 //			case "toggleEmailAlert" :
 //				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-//					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+//					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 //
 //				$configS = $this->getConfigurationContext();
 //				if ($configS->getParameter($p, $exec->getCrtModule(), "Notification_enable") != "1" || $configS->getParameter($p, $exec->getCrtModule(), "Notification_enableDynamicSubscription") != "1")
@@ -7574,7 +7733,7 @@ onUpdateErrorCounter = 0;
 				//		case "setEmailAccountForPFromEditEmailAlertForm":
 				//			$setEmailAccountForPFromEditEmailAlertForm = true;
 				//		case "setEmailAccountForP":
-				//			if(ServiceProvider::getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction()." need login", AuthenticationServiceException::FORBIDDEN_MINIMAL_PRINCIPAL);
+				//			if(ServiceProvider::getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction()." needs login", AuthenticationServiceException::FORBIDDEN_MINIMAL_PRINCIPAL);
 				//
 				//			$emailAccountForP = $exec->getCrtParameters(0);
 				//
@@ -7625,7 +7784,7 @@ onUpdateErrorCounter = 0;
 				//			break;
 			case "giveFeedback" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				if (!isset ($configS))
 					$configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
@@ -7695,7 +7854,7 @@ onUpdateErrorCounter = 0;
 			//unsubscribe emails is the black list feature, do not mix with the usual unsubscribeEmail that the email owner would do
 			case "unsubscribeEmails" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				if (!isset ($configS))
 					$configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
@@ -7843,7 +8002,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "Emailing" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				if (!isset ($configS))
 					$configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
@@ -7920,7 +8079,7 @@ onUpdateErrorCounter = 0;
 			case "ExportDownload" :
 			case "Downloading" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				if (!isset ($configS))
 					$configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
@@ -8014,7 +8173,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "changePassword" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$totalWidth = 450;
 				$labelWidth = 250;
@@ -8083,7 +8242,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "importElementIn" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($groupAS)) $groupAS = ServiceProvider :: getGroupAdminService();
 				if (!isset ($configS)) $configS = $this->getConfigurationContext();
 
@@ -8129,7 +8288,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "updateElementIn" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($groupAS)) $groupAS = ServiceProvider :: getGroupAdminService();
 				if (!isset ($configS)) $configS = $this->getConfigurationContext();
 				if (!isset ($transS)) $transS = ServiceProvider :: getTranslationService();
@@ -8206,7 +8365,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "findDuplicatesIn" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($groupAS)) $groupAS = ServiceProvider :: getGroupAdminService();
 				if (!isset ($configS)) $configS = $this->getConfigurationContext();
 				if (!isset ($transS)) $transS = ServiceProvider :: getTranslationService();
@@ -8276,7 +8435,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "updateElementsInList":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 				//add logExp on element
@@ -8284,61 +8443,81 @@ onUpdateErrorCounter = 0;
 				$elementIds = explode("-", $elementIds);
 				$logExp = LogExp::createInExp(FieldSelector::createElementAttributeSelector("id"), $elementIds);
 				$originalLogExp = $lc->getFieldSelectorLogExp();
-				//$lc->setDesiredPageNumber(1); //only one result is found
 				$lc->resetPagination();
 
 				$lc->setFieldSelectorLogExp($logExp);
 				switch ($lc->getCrtView()){
 					case "list":
 						list ($total, $nbRow) = $this->getAllElementsInListView($p, $exec, $lc, true, true);
+						$exec->addJsCode("$('#moduleView tr.S').removeClass('S');");
 						break;
 					case "blog":
 						list ($total, $nbRow) = $this->getAllElementsInBlogView($p, $exec, $lc, true, true);
+						break;
+					default:
+						// wncd custom views
+						if($lc->isCrtViewWncd()) {
+							// loads wncd model with updated elements
+							$wncdModel = $this->getAllElementsInWncdView($p, $exec, $lc, true, true);
+							// sends wncd model to client
+							$wncdModel = json_encode($wncdModel,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+							if($wncdModel=== false) throw new ServiceException('JSON encode error '.json_last_error().' '.json_last_error_msg(), ServiceException::UNEXPECTED_ERROR);
+							$exec->addJsCode('wncd.program.context.'.$lc->getCrtView().'='.$wncdModel);
+							// triggers data model change on client
+							$exec->addJsCode('wigii().getWncdContainer(wncd).dataChange()');
+						}
 						break;
 				}
 
 				//add back the original logExp
 				$lc->setFieldSelectorLogExp($originalLogExp);
-
-				$exec->addJsCode("$('#moduleView tr.S').removeClass('S');");
-
 				break;
 			case "updateElementInList":
 			case "addElementInList":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 				//add logExp on element
 				$elementId = $exec->getCrtParameters(0);
 				$logExp = LogExp::createEqualExp(FieldSelector::createElementAttributeSelector("id"), $elementId);
 				$originalLogExp = $lc->getFieldSelectorLogExp();
-				//$lc->setDesiredPageNumber(1); //only one result is found
 				$lc->resetPagination();
 
 				$lc->setFieldSelectorLogExp($logExp);
 
-				$lc->setFieldSelectorLogExp($logExp);
 				switch ($lc->getCrtView()){
 					case "list":
-						list ($total, $nbRow) = $this->getAllElementsInListView($p, $exec, $lc, true, ($exec->getCrtAction()=="updateElementInList"), 1);
+						list ($total, $nbRow) = $this->getAllElementsInListView($p, $exec, $lc, true, ($exec->getCrtAction()=="updateElementInList"), 1);						
 						break;
 					case "blog":
 						list ($total, $nbRow) = $this->getAllElementsInBlogView($p, $exec, $lc, true, ($exec->getCrtAction()=="updateElementInList"), 1);
 						break;
+					default:
+						// wncd custom views
+						if($lc->isCrtViewWncd()) {
+							// loads wncd model with updated element
+							$wncdModel = $this->getAllElementsInWncdView($p, $exec, $lc, true, ($exec->getCrtAction()=="updateElementInList"), 1);
+							// sends wncd model to client
+							$wncdModel = json_encode($wncdModel,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+							if($wncdModel=== false) throw new ServiceException('JSON encode error '.json_last_error().' '.json_last_error_msg(), ServiceException::UNEXPECTED_ERROR);
+							$exec->addJsCode('wncd.program.context.'.$lc->getCrtView().'='.$wncdModel);
+							// triggers data model change on client
+							$exec->addJsCode('wigii().getWncdContainer(wncd).dataChange()');
+						}
+						break;
 				}
 
-
+				//select the element
+				if(!$lc->isCrtViewWncd()) $exec->addJsCode("$('#moduleView tr.S').removeClass('S');$('#moduleView #row_".$elementId."').addClass('S');");
+				
 				//add back the original logExp
 				$lc->setFieldSelectorLogExp($originalLogExp);
-
-				//select the element
-				$exec->addJsCode("$('#moduleView tr.S').removeClass('S');$('#moduleView #row_".$elementId."').addClass('S');");
 
 				break;
 			case "getNextElementInList" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 				$lc->setDesiredPageNumber(addslashes($_POST["page"]));
@@ -8353,7 +8532,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "getNextElementInBlog" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList"); //keep the same context than the list, ordering, filtering, group by is shared
 				$lc->setDesiredPageNumber(addslashes($_POST["page"]));
@@ -8366,9 +8545,33 @@ onUpdateErrorCounter = 0;
 				$exec->flushJsCode();
 
 				break;
+			case "getNextElementInWncd" :
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					
+				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+				$lc->setDesiredPageNumber(addslashes($_POST["page"]));
+				
+				// loads wncd model for next page
+				$wncdModel = $this->getAllElementsInWncdView($p, $exec, $lc, true, false, addslashes($_POST["page"]));
+				// sends wncd model to client
+				$wncdModel = json_encode($wncdModel,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+				if($wncdModel=== false) throw new ServiceException('JSON encode error '.json_last_error().' '.json_last_error_msg(), ServiceException::UNEXPECTED_ERROR);
+				// if updating, puts model in wncd context under idAnswer key
+				if($exec->getIsUpdating()) {
+					$idAnswer = $exec->getIdAnswer();
+					if(empty($idAnswer)) $idAnswer = $lc->getCrtView();
+					$exec->addJsCode('wncd.program.context.'.$idAnswer.'='.$wncdModel);
+				}
+				// else sends json string directly.
+				else {
+					echo $wncdModel;
+				}
+			
+				break;
 			case "getNextElementInPreviewList" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$elS = ServiceProvider::getElementService();
 				$sessAS = ServiceProvider::getSessionAdminService();
@@ -8483,7 +8686,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "getCalendarEvents" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 
@@ -8505,7 +8708,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "CKEditor":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$param = array();
 				parse_str($_SERVER["REQUEST_URI"], $param);
@@ -8578,7 +8781,7 @@ onUpdateErrorCounter = 0;
 						exit;
 					case "checkoutFile" :
 						if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-							throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+							throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 						$elementId = $exec->getCrtParameters(1);
 						$fieldName = $exec->getCrtParameters(2);
@@ -8648,7 +8851,7 @@ onUpdateErrorCounter = 0;
 						break;
 					case "moduleEditorZip" :
 						if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-							throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+							throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 						if (!$exec->getCrtModule()->isAdminModule())
 							throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 						if (!$p->isWigiiNamespaceCreator())
@@ -8684,7 +8887,7 @@ onUpdateErrorCounter = 0;
 					case "groupXmlPublish" :
 					case "groupSubscription" :
 						if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-							throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+							throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 						if (!$exec->getCrtModule()->isAdminModule())
 							throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
 
@@ -8758,7 +8961,7 @@ onUpdateErrorCounter = 0;
 							$p = $this->getPublicPrincipal();
 						} else {
 							if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-								throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+								throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 						}
 
 						if (!isset ($transS))
@@ -9076,7 +9279,7 @@ onUpdateErrorCounter = 0;
 			case "exportAndDownload" :
 			case "export" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				$configS = $this->getConfigurationContext();
 
 				$what = $exec->getCrtParameters(0);
@@ -9137,7 +9340,7 @@ onUpdateErrorCounter = 0;
 //					$headerText = 'Content-type: application/vnd.ms-excel';
 //
 //				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-//					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+//					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 //
 //				$what = $exec->getCrtParameters(0);
 //
@@ -9266,7 +9469,7 @@ onUpdateErrorCounter = 0;
 //				exit;
 			case "groupSelectorPanel" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				$groupAS = ServiceProvider :: getGroupAdminService();
 				$groupIds = array_slice($exec->getCrtParameters(), 1);
@@ -9334,7 +9537,7 @@ onUpdateErrorCounter = 0;
 
 				break;
 			case "filterOnMultipleSelection":
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS)) $configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
 				if (!isset ($transS)) $transS = ServiceProvider :: getTranslationService();
 				if (!isset ($elS)) $elS = ServiceProvider :: getElementService();
@@ -9354,7 +9557,7 @@ onUpdateErrorCounter = 0;
 
 				break;
 			case "removeFilters":
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS)) $configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
 				if (!isset ($transS)) $transS = ServiceProvider :: getTranslationService();
 				if (!isset ($elS)) $elS = ServiceProvider :: getElementService();
@@ -9374,7 +9577,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "filters":
 			case "simpleFilters": //when only the input text, (no reset of others filters)
-				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS)) $configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
 				if (!isset ($transS)) $transS = ServiceProvider :: getTranslationService();
 				if (!isset ($groupAS)) $groupAS = ServiceProvider :: getGroupAdminService();
@@ -9570,7 +9773,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "countElementsInGroupPanel":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS)) $configS = $this->getConfigurationContext();
 				if($this->getTempTotalElementsIdsForListView()){
 					$elS = ServiceProvider::getElementService();
@@ -9624,7 +9827,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "searchBar" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 				//define a fieldSelectorList
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
@@ -9691,7 +9894,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "unlock" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				$dbEntityName = $exec->getCrtParameters(0);
 				$entityId = $exec->getCrtParameters(1);
 				switch ($dbEntityName) {
@@ -9709,7 +9912,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "toggleElementState_deprecated" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS))
 					$configS = $this->getConfigurationContext();
 				if (!isset ($elS))
@@ -9756,7 +9959,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "setElementState":
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($transS))
 					$transS = ServiceProvider::getTranslationService();
 				if (!isset ($configS))
@@ -10056,7 +10259,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "autoSave" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($elS))
 					$elS = ServiceProvider :: getElementService();
 				$element = $this->createElementForForm($p, $exec->getCrtModule(), $exec->getCrtParameters(0));
@@ -10074,7 +10277,7 @@ onUpdateErrorCounter = 0;
 				break;
 			case "element" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!isset ($configS))
 					$configS = $this->getConfigurationContext();
 				if (!isset ($elS))
@@ -10643,7 +10846,7 @@ onUpdateErrorCounter = 0;
 						break;
 					case "restore" :
 						if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-							throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+							throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 						if (!isset ($configS))
 							$configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
@@ -10663,7 +10866,7 @@ onUpdateErrorCounter = 0;
 						break;
 					case "transfer" :
 						if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-							throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+							throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 						if (!isset ($configS))
 							$configS = $this->getConfigurationContext(); //ServiceProvider::getConfigService();
@@ -10907,7 +11110,7 @@ onUpdateErrorCounter = 0;
 						break;
 					case "addJournalItem":
 						if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-								throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+								throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 
 						$this->addJournalItem($p, $exec, $transS, $elS, $elementP, false);
 						break;
@@ -11223,7 +11426,7 @@ onUpdateErrorCounter = 0;
 				//			break;
 			case "subelement" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				$configS = $this->getConfigurationContext();
 				$elS = ServiceProvider::getElementService();
 				if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
@@ -11335,7 +11538,7 @@ onUpdateErrorCounter = 0;
 				$configS = $this->getConfigurationContext();
 				$mAS = ServiceProvider :: getModuleAdminService();
 				if ($authS->isMainPrincipalMinimal())
-					throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				//the role expiration is managed in UserAdminService::calculateAllMergedRoles($p)
 				if ($p->passwordExpired()) {
 					if ($p->canModifyRealUserPassword()) {
@@ -11378,7 +11581,7 @@ onUpdateErrorCounter = 0;
 				if ($authS->isMainPrincipalMinimal()){
 					// tries to log as public
 					if(!$authS->autoLoginAsPublic()) {
-						throw new AuthenticationServiceException($exec->getCrtAction() . " need login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+						throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 					}
 					else {
 						$this->storeAdminAndCalculatedRoleIdsInSession($authS->getMainPrincipal());
@@ -11950,7 +12153,26 @@ $additionalJsCode
 				// if(!empty($result)) $exec->addJsCode($result);				
 				
 				break;				
-				
+			case "wncd":
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
+					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (!isset ($configS)) $configS = $this->getConfigurationContext();
+				// extracts WNCD module name
+				$wncdModule = $exec->getCrtParameters(0);
+				// reads wncd src code from wncdModule.ncd file into configuration folder
+				if(!empty($wncdModule) && file_exists(CLIENT_CONFIG_PATH.$wncdModule.".ncd")) {
+					$wncdSrc = file_get_contents(CLIENT_CONFIG_PATH.$wncdModule.".ncd"); 
+				}
+				else $wncdSrc = null;
+				if(empty($wncdSrc)) throw new ServiceException("No Wigii NCD source code found for module '$wncdModule'", ServiceException::NOT_FOUND);
+				// pushes wncd code to browser to be executed in current target.
+				if($exec->getIsUpdating()) {
+					$crtTarget = $exec->getIdAnswer();
+					if(!isset($crtTarget)) $crtTarget = 'mainDiv';
+				}
+				else $crtTarget = 'mainDiv';
+				$exec->addJsCode('$("#'.$crtTarget.'").wncd("run").program('.$wncdSrc.');');
+				break;
 			default :
 				// looks for a WebExecutor plugin to handle the action.
 				$webExecClass = $this->findWebExecutorForAction($exec->getCrtAction());

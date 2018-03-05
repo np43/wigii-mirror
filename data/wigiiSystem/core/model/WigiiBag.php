@@ -29,15 +29,21 @@ interface WigiiBag
 {
 	/**
 	 * Returns an element field value stored in the wigii bag
-	 * elementId: the DB id of this element, can be null if it is a new element not stored yet in DB
-	 * subFieldName: the dataType subfield name. If null, then uses the predefined "value" subfield
+	 * @param Int $elementId the DB id of this element, can be null if it is a new element not stored yet in DB
+	 * @param String $dataTypeName the name of the Wigii DataType of the field beeing read
+	 * @param String $fieldName the name of the field beeing read
+	 * @param String $subFieldName the dataType subfield name. If null, then uses the predefined "value" subfield
+	 * @return Scalar
 	 */
 	public function getValue($elementId, $dataTypeName, $fieldName, $subFieldName=null);
 
 	/**
 	 * Sets an element field value in the wigii bag. Replaces the actual value if already exists in the bag.
-	 * elementId: the DB id of this element, can be null if it is a new element not stored yet in DB
-	 * subFieldName: the dataType subfield name. If null, then uses the predefined "value" subfield
+	 * @param Scalar $value the value stored into the field
+	 * @param Int $elementId the DB id of this element, can be null if it is a new element not stored yet in DB
+	 * @param String $dataTypeName the name of the Wigii DataType of the field beeing read
+	 * @param String $fieldName the name of the field beeing read
+	 * @param String $subFieldName the dataType subfield name. If null, then uses the predefined "value" subfield
 	 */
 	public function setValue($value, $elementId, $dataTypeName, $fieldName, $subFieldName=null);
 

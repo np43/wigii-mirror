@@ -1894,6 +1894,203 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				//self.debugLogger.logEndOperation('bindHelpService');
 			};	
 			
+			/**
+			 * WNCD container instance
+			 */
+			wigiiApi.WncdContainer = function(wncd) {
+				var self = this;
+				self.className = 'WncdContainer';
+				self.ctxKey = wigiiApi.ctxKey+'_'+self.className;	
+				//self.debugLogger = wigiiApi.getDebugLogger(self.className);
+				self.impl = {
+					onDataChangeSubscribers:undefined,
+					onElementDeletedSubscribers:undefined
+				};
+				
+				/**
+				 * Returns Wigii ElementPList JSON data model linked to current WNCD view
+				 * @return Object module view object model as specified in https://resource.wigii.org/#Public/Documentation/item/2075
+				 */
+				self.getWigiiDataModel = function() {
+					if(!wncd) throw wigiiApi.createServiceException("wncd libraries have not been correctly loaded, wncd symbol is not available.", wigiiApi.errorCodes.UNSUPPORTED_OPERATION);
+					return wncd.program.context[wigiiApi.context.crtView];
+				};
+				
+				/**
+				 * Registers an event handler on the Wigii data model changes
+				 * or triggers a dataChange event.
+				 * The event handler signature is of the form eventHandler(wncdContainer,wigiiDataModel).
+				 * @return wigiiApi.WncdContainer for chaining
+				 */
+				self.dataChange = function(onDataChange) {
+					if($.isFunction(onDataChange)) {
+						if(!self.impl.onDataChangeSubscribers) {
+							self.impl.onDataChangeSubscribers = [];
+						}
+						self.impl.onDataChangeSubscribers.push(onDataChange);
+					}
+					else if(onDataChange===undefined) {
+						if(self.impl.onDataChangeSubscribers) {
+							var dataModel = self.getWigiiDataModel();
+							for(var i=0;i<self.impl.onDataChangeSubscribers.length;i++) {
+								var eh = self.impl.onDataChangeSubscribers[i];
+								if($.isFunction(eh)) eh(self,dataModel);
+							}
+						}
+					}
+					return self;
+				};
+				
+				/**
+				 * Iterates through each element in current data model.
+				 * On each element calls the given callback of the form callback(index,elementId, element)
+				 * @return wigiiApi.WncdContainer for chaining
+				 */
+				self.forEachElement = function(callback) {
+					self.iterateOnElementList(self.getWigiiDataModel(),callback);
+					return self;
+				};
+				
+				/**
+				 * Iterates through each element in the given data model.
+				 * On each element calls the given callback of the form callback(index,elementId, element)
+				 * @return wigiiApi.WncdContainer for chaining
+				 */
+				self.iterateOnElementList = function(wigiiDataModel,callback) {
+					if(!wigiiDataModel) throw wigiiApi.createServiceException('wigiiDataModel cannot be null',wigiiApi.errorCode.INVALID_ARGUMENT);
+					if(!$.isFunction(callback)) throw wigiiApi.createServiceException('callback should be a function of the form callback(index,elementId, element)',wigiiApi.errorCode.INVALID_ARGUMENT);
+					var elementList = wigiiDataModel.elementList;
+					if(elementList) {
+						var index = 1;
+						for(var eltId in elementList) {
+							var element = elementList[eltId];
+							callback(index,element.__element.id,element);
+							index++;
+						}
+					}
+				};	
+				
+				/**
+				 * Shows the details of the element
+				 */
+				self.showElement = function(elementId) {
+					update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/detail/'+elementId);
+				};
+				
+				/**
+				 * Opens a Wigii Form to edit the element
+				 */
+				self.editElement = function(elementId) {
+					update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/edit/'+elementId);
+				};
+				
+				/**
+				 * Asks Wigii to delete the element
+				 */
+				self.deleteElement = function(elementId) {
+					update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/delete/'+elementId+'/elementDialog');
+				};
+				/**
+				 * Registers an event handler when an element has been successfully deleted from Wigii
+				 * The event handler signature is of the form eventHandler(wncdContainer,elementId).
+				 * @return wigiiApi.WncdContainer for chaining
+				 */
+				self.elementDeleted = function(onElementDeleted) {
+					if($.isFunction(onElementDeleted)) {
+						if(!self.impl.onElementDeletedSubscribers) {
+							self.impl.onElementDeletedSubscribers = [];
+						}
+						self.impl.onElementDeletedSubscribers.push(onElementDeleted);
+					}
+					else if(onElementDeleted) {						
+						if(self.impl.onElementDeletedSubscribers) {
+							var elementId = onElementDeleted;
+							for(var i=0;i<self.impl.onElementDeletedSubscribers.length;i++) {
+								var eh = self.impl.onElementDeletedSubscribers[i];
+								if($.isFunction(eh)) eh(self,elementId);
+							}
+						}
+					}
+					return self;
+				};
+				
+				/**
+				 * Saves the value of an Element Field into the database.
+				 * @param Int elementId id of the element to update
+				 * @param String fieldName name of the field to update
+				 * @param Object|String value value to be updated.
+				 * To update subfields, an object with the subfields should be given.
+				 * @param Object options an optional bag of options. The following options are supported:
+				 * - onSuccessCallback: Function. A function to be called if save went well. Function signature is onSuccessCallback(fieldValue), where fieldValue is an object with all the Field subfields.
+				 * - exceptionHandler: Function. A function which handles any thrown exception from server. Function signature is exceptionHandler(exception,context) where exception is Wigii API exception object of the form {name:string,code:int,message:string}
+				 * and context is an object with some server context information of the form {request:string, wigiiNamespace:string, module:string, action:string, realUsername:string, username:string, principalNamespace:string, version:string}
+				 * If exceptionHandler is not set, then exception is published through the wigii.publishException method.
+				 * - silent: Boolean. If silent is true, then no exception handler is called if an error occurs.
+				 * - noCalculation: Boolean. If true, then element calculated fields are not re-calculated. By default calculation is active.
+				 * - noNotification: Boolean. If true, then Notifications are not sent out on field update. By default notifications are enabled following what is defined in configuration file.
+				 */
+				self.saveFieldValue = function(elementId,fieldName,value,options) {
+					options = options || {};
+					options.caller = 'saveFieldValue';
+					// initializes autosave form
+					var target = 'Wigii_'+self.className;					
+					var autosaveForm = {
+						'autoSaveFieldId':target,
+						'autoSaveMesssageTargetId':target,
+						'noCalculation':(options.noCalculation==true),
+						'noNotification':(options.noNotification==true)
+					};
+					// puts field value
+					if($.isPlainObject(value)) {
+						for(var subField in value) {
+							autosaveForm[fieldName+"_"+subField] = value[subField];
+						}
+					}
+					else autosaveForm[fieldName+"_value"] = value;
+					// call Wigii autosave method
+					setVis('busyDiv', true);
+					$.ajax({
+						type:"POST",
+						url: wigiiApi.buildUpdateUrl(target+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/autoSave/'+elementId+'/'+fieldName),
+						data:autosaveForm,
+						success: wigiiApi.buildUpdateCallback(options)
+					});
+				};
+				/**
+				 * JSON event handler
+				 * @param Object object the JSON response already parsed into an object
+				 */
+				self.json = function(object,context) {
+					// json callback with default error handling or on success callback
+					if(context) {
+						setVis('busyDiv', false);
+						// extracts return data
+						var exception = undefined;
+						var exceptionContext = undefined;
+						if($.isPlainObject(object)) {
+							if(object.exception) {
+								exception = object.exception;
+								exceptionContext = object.context;
+							}
+						}
+						// handles exceptions
+						if(exception) {
+							if(!context.silent) {
+								if($.isFunction(context.exceptionHandler)) {
+									context.exceptionHandler(exception,exceptionContext);
+								}
+								else wigiiApi.publishException(exception);
+							}
+						}
+						// else handles success
+						else if($.isFunction(context.onSuccessCallback)) {
+							context.onSuccessCallback(object);
+						}
+					}					
+					// else nothing to do.
+				};
+			};
+			
 			self.FieldHelper = function(selection,options) {
 				//var ctxKey = self.ctxKey+"_FieldHelper";
 				var returnValue=undefined;
@@ -2224,6 +2421,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				wigiiApi.jQueryServiceInstance = new wigiiApi.JQueryService();
 			}
 			return wigiiApi.jQueryServiceInstance;
+		};
+		/**
+		 * Returns a WncdContainer instance
+		 * @param Object wncd A Wigii NCD Lib instance (normally the defined wncd symbol)
+		 */
+		wigiiApi.getWncdContainer = function(wncd) {
+			if(!wigiiApi['wncdContainerInstance']) {
+				wigiiApi.wncdContainerInstance = new wigiiApi.WncdContainer(wncd);
+			}
+			return wigiiApi.wncdContainerInstance;
 		};
 		/**
 		 * Creates an HtmlBuilder instance

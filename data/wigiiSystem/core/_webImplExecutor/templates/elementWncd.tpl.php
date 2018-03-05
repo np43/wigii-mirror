@@ -22,13 +22,12 @@
  */
 
 /**
- * Module view template displaying elements as a table (list)
- * Created by LWR, on 21 July 2011
- * Refactored by Medair (CWE) on 28.09.2017 componentize sort by and group by menus management.
+ * Module view template displaying Wigii NCD components
+ * Created by CWE, on 08.02.2018
  */
 
-//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start elementList.tpl.php"] = microtime(true);
-$this->executionSink()->publishStartOperation("TEMPLATE elementList.tpl.php");
+//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start elementWncd.tpl.php"] = microtime(true);
+$this->executionSink()->publishStartOperation("TEMPLATE elementWncd.tpl.php");
 
 if(!isset($groupAS)) $groupAS = ServiceProvider::getGroupAdminService();
 if(!isset($sessAS)) $sessAS = ServiceProvider::getSessionAdminService();
@@ -122,43 +121,46 @@ if(!$url){ //displays list only if no url
 /** INDICATORS */
 ?><div class="clear"></div><?
 
-    //add class if classExp is defined in ListView activity
-    $class= $configS->ma($p, $exec->getCrtModule(), Activity::createInstance("listView"));
-    $class = (string)($class["class"]);
-
-?><div class="dataZone list <?= $class ?>"><?
-	/**
-	 * element List context menu
-	 */
-	?><div class="cm SBB"><?
-		?><div id="cm_exit" class="exit SBB">x</div><?
-		?><div id="cm_open" class="H fB"><?=$transS->t($p, "openElement");?></div><?
-		?><div id="cm_addElementInList" class="H fB"><?=$transS->t($p, "addElement");?></div><?
-		?><div id="cm_edit" class="write H fB"><?=$transS->t($p, "editElement");?>...</div><?
-		?><div id="cm_delete" class="write H fB"><?=$transS->t($p, "deleteElement");?>...</div><?
-		?><div id="cm_copy" class="write H fB"><?=$transS->t($p, "copyElement");?>...</div><?
-		?><div id="cm_organize" class="write H fB"><?=$transS->t($p, "organizeElement");?>...</div><?
-		?><div id="cm_lock" class="write H fB"><?=$transS->t($p, "state_lock");?></div><?
-		?><div id="cm_block" class="write H fB unchecked"><?=$transS->t($p, "state_block");?></div><?
-		?><div id="cm_state_important1" class="write H fB unchecked"><?=$transS->t($p, "state_make_important1");?></div><?
-		?><div id="cm_state_important2" class="write H fB unchecked"><?=$transS->t($p, "state_make_important2");?></div><?
-		?><div id="cm_finalize" class="write H fB unchecked"><?=$transS->t($p, "state_finalize");?></div><?
-		?><div id="cm_approve" class="write H fB unchecked"><?=$transS->t($p, "state_approve");?></div><?
-		?><div id="cm_dismiss" class="write H fB unchecked"><?=$transS->t($p, "state_dismiss");?></div><?
-		?><div id="cm_state_archived" class="write H fB unchecked"><?=$transS->t($p, "state_mark_archived");?></div><?
-		?><div id="cm_state_deprecated" class="write H fB unchecked"><?=$transS->t($p, "state_mark_deprecated");?></div><?
-		?><div id="cm_hide" class="write H fB unchecked"><?=$transS->t($p, "state_hide");?></div><?
-	?></div><?
-
-	//reset the groupBy if config change
-	//groupBy and sortBy are defined in getAllElementsInListView if there where empty
-	list($total, $nbRow) = $this->getAllElementsInListView($p, $exec, $lc, false, false, 1, $configChanged);
-	
+?><div class="dataZone wncd"><?
+	$wncdXml = $configS->ma($p, $exec->getCrtModule(), Activity::createInstance($lc->getCrtViewActivityName()));
+	// loads wncd template if defined
+	$wncdFile = (string)$wncdXml['wncdTemplate'];
+	// reads wncd template from wncdTemplate.tpl file into configuration folder
+	if(!empty($wncdFile) && file_exists(CLIENT_CONFIG_PATH.$wncdFile.".tpl")) {
+		readfile(CLIENT_CONFIG_PATH.$wncdFile.".tpl");
+	}
+	// loads wncd model
+	$wncdModel = $this->getAllElementsInWncdView($p, $exec, $lc, false, false, 1, $configChanged)/*reset the groupBy if config change*/;
+	// refreshes group by and sort by menus
 	$this->includeGroupByMenu($lc, $groupByOptions, $p, $exec, $transS, $configS);
 	$this->includeSortByMenu($lc, $sortByOptions, $p, $exec, $transS, $configS);
 ?></div><?
 
+// sends wncd model to client
+$wncdModel= json_encode($wncdModel,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+if($wncdModel=== false) throw new ServiceException('JSON encode error '.json_last_error().' '.json_last_error_msg(), ServiceException::UNEXPECTED_ERROR);
+if (!defined("WEB_WNCD")) throw new AuthorizationServiceException("wncd views are not supported in this Wigii instance.",AuthorizationServiceException::UNSUPPORTED_OPERATION);
+$exec->addJsCode('wncd.program.context.'.$lc->getCrtView().'='.$wncdModel);
+
+// loads wncd view
 $exec->addJsCode('wigii().context.crtView="'.$lc->getCrtView().'"');
+
+// loads wncd module if defined
+$wncdFile = (string)$wncdXml['wncdModule'];
+
+// reads wncd src code from wncdModule.ncd file into configuration folder
+if(!empty($wncdFile) && file_exists(CLIENT_CONFIG_PATH.$wncdFile.".ncd")) {
+	$wncdSrc = file_get_contents(CLIENT_CONFIG_PATH.$wncdFile.".ncd");
+}
+else $wncdSrc = null;
+// sends wncd view to client
+if(!empty($wncdSrc)) $exec->addJsCode('$("#moduleView div.dataZone.wncd").wncd("run").program('.$wncdSrc.');');
+
+// runs wncd expression if defined
+$wncdSrc= (string)$wncdXml['wncd'];
+if(!empty($wncdSrc)) $exec->addJsCode('$("#moduleView div.dataZone.wncd").wncd("run").program(scripte(function(){'.$wncdSrc.'}));');
+
+// loads other js services
 $this->bindJsServicesOnModuleView($p,$exec);
 
 /**
@@ -170,6 +172,6 @@ if($configS->getParameter($p, $exec->getCrtModule(), "Group_enablePortal") == "1
 
 } //display list only if no url
 
-$this->executionSink()->publishEndOperation("TEMPLATE elementList.tpl.php");
+$this->executionSink()->publishEndOperation("TEMPLATE elementWncd.tpl.php");
 
-//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end elementList.tpl.php"] = microtime(true);
+//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end elementWncd.tpl.php"] = microtime(true);

@@ -530,24 +530,20 @@ class AuthorizationServiceImpl implements AuthorizationService
 	 */
 	protected function assertObjectAuthorizedToGetStamp($object) {
 		if(!isset($object) || !is_object($object)) throw new AuthorizationServiceException('object should be a non null object.', AuthorizationServiceException::INVALID_ARGUMENT);
-		// checks if class is authorized to get stamps.
-		$className = get_class($object);
-		if(!$this->isClassAuthorizedToGetStamp($className)) throw new AuthorizationServiceException("class '$className' is not authorized to get AuthorizationServiceStamps.", AuthorizationServiceException::FORBIDDEN);		
+		// checks if object is authorized to get stamps.
+		if(!$this->isObjectAuthorizedToGetStamp($object)) throw new AuthorizationServiceException("class '$className' is not authorized to get AuthorizationServiceStamps.", AuthorizationServiceException::FORBIDDEN);		
 	}
 	/**
 	 * Checks if the given class is authorized to get stamps.
 	 * @param String $className the class name to check for authorization
 	 * @return boolean returns true if authorized, else false.
 	 */
-	protected function isClassAuthorizedToGetStamp($className) {
-	    switch($className) {
-	        case "ElementPListDataFlowConnector":
-	        case "ElementPDataFlowConnector":
-	        case "MapObject2ElementDFA":
-	           return true; 
-	           break;
-	        default: return false;
-	    }		
+	protected function isObjectAuthorizedToGetStamp($object) {
+		if(is_a($object,"ElementPListDataFlowConnector")) return true;
+		if(is_a($object,"ElementPDataFlowConnector")) return true;
+		if(is_a($object,"MapObject2ElementDFA")) return true;
+		if(is_a($object,"WigiiCoreExecutor")) return true;
+		return false;
 	}
 	
 	protected function createStamp($id, $microTime) {

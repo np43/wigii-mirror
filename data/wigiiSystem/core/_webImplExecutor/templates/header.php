@@ -148,6 +148,12 @@ if(TechnicalServiceProvider::getBoxServiceFormExecutor()->isBoxEnabled()) {
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii_<?=ASSET_REVISION_NUMBER;?>.css" type="text/css" media="all" />
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/theme.css.php" type="text/css" media="all" />
 <?
+if(defined("WEB_WNCD")) {
+?>
+<!-- link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-stdlib.css" rel="stylesheet"/-->
+<link media="all" type="text/css" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii-ncd-stdlib.css" rel="stylesheet"/>
+<?
+}
 if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".css")){
 ?>
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.css?v=<?=ASSET_REVISION_NUMBER;?>" type="text/css" media="all" />
@@ -242,6 +248,7 @@ if($exec->getCrtAction()=="c") {
 ?>
 </script>
 <?
+if(defined("WEB_WNCD")) { include(TEMPLATE_PATH . "header.wncd.php");}
 if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".js")){
 ?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script><?
 }
@@ -385,6 +392,7 @@ DIALOG_doYouWantToSave_exportDialog = '<?=$transS->h($p, "doYouWantToSave_export
 DIALOG_doYouWantToSave_changePasswordDialog = '<?=$transS->h($p, "doYouWantToSave_changePasswordDialog");?>';
 </script>
 <?
+if(defined("WEB_WNCD")) { include(TEMPLATE_PATH . "header.wncd.php");}
 if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".js")){
 ?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script><?
 }
