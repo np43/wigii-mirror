@@ -31,7 +31,10 @@ class ExceptionSinkCliImpl extends ExceptionSink
 	 */
 	protected function doPublish($exception)
 	{
-		echo udate('Y-m-d H:i:s:u')." EXCEPTION: ".$exception;
+		if($exception instanceof ServiceException) {
+		    $exception = $exception->getWigiiRootException();
+		}
+	    echo udate('Y-m-d H:i:s:u')." EXCEPTION: ".$exception;
 	}
 }
 

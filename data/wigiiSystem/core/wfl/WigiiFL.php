@@ -1889,6 +1889,54 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}
 	
 	/**
+	 * Reads an Element state info and returns the corresponding array, 
+	 * or creates an array compatible with Element state info format given a message and returns it as a serialized string.
+	 * FuncExp signature 1 : <code>elementStateInfo(elementStateInfoSelector,element)</code><br/>	 
+	 * Where arguments are :
+	 * - Arg(0) elementStateInfoSelector: FieldSelector. A FieldSelector of type element attribute pointing to a valid Element state info (approved, locked, etc.)
+	 * One of state_lockedInfo, state_important1Info, state_important2Info, state_hiddenInfo, state_archivedInfo, state_deprecatedInfo, state_finalizedInfo, state_approvedInfo, state_dismissedInfo, state_blockedInfo
+	 * - Arg(1) element: Element. Element instance from which to retrieve the Element state info
+	 * FuncExp signature 2 : <code>elementStateInfo(msg)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) msg: String. Optional message to put into the Element State info array.
+	 * @return Array | String
+	 */
+	public function elementStateInfo($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    
+	    // if signature 1: return state info as array
+	    if($nArgs>=2 && ($args[0] instanceof FieldSelector) && $args[0]->isElementAttributeSelector()) {
+	        $element = $this->evaluateArg($args[1]);
+	        if(!($element instanceof Element)) throw new FuncExpEvalException("elementStateInfo needs a non null Element");
+	        $returnValue = $element->getAttribute($args[0]);
+	        if(!empty($returnValue)) $returnValue = str2array($returnValue);
+	        else $returnValue = null;	            
+	    }
+	    // else if signature 2: creates state info array
+	    else {
+	        if($nArgs>1) $msg = $this->evaluateArg($args[0]);
+	        else $msg = null;
+	        
+	        $returnValue = array();
+	        $principal = $this->getPrincipal();
+	        if($principal->getRealUser()){
+	            $returnValue["realUsername"] = $principal->getRealUser()->getUsername();
+	            $returnValue["realUserWigiiNamespace"] = $principal->getRealUser()->getWigiiNamespace()->getWigiiNamespaceName();
+	            $returnValue["realUserId"] = $principal->getRealUser()->getId();
+	        }
+	        if($principal->getAttachedUser()){
+	            $returnValue["username"] = $principal->getAttachedUser()->getUsername();
+	            $returnValue["userWigiiNamespace"] = $principal->getAttachedUser()->getWigiiNamespace()->getWigiiNamespaceName();
+	            $returnValue["userId"] = $principal->getAttachedUser()->getId();
+	        }
+	        $returnValue["timestamp"] = time();
+	        $returnValue["message"] = $msg;
+	        $returnValue = array2str($returnValue);
+	    }
+	    return $returnValue;
+	}
+	
+	/**
 	 * Returns the group in which is contained the element. If the element is in several groups, takes first writable group or first readable group.
 	 * FuncExp signature : <code>cfgElementGroup(element,returnAttribute=id|groupname|group)</code><br/>
 	 * Where arguments are :

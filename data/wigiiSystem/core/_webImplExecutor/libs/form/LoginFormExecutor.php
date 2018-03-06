@@ -154,6 +154,8 @@ class LoginFormExecutor extends FormExecutor {
 				if($exec->getRemainingRequests() == null){
 					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/":'').WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
 				}
+				// else resets form status to make sure next request starts at the beginning.
+				elseif($_POST["action"] != null) unset($_POST["action"]); 
 			}
 				//$exec->addJsCode("self.location.reload();");
 	//			//all the logic and checks are done in the navigate process

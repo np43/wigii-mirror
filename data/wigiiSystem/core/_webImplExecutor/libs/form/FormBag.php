@@ -613,7 +613,7 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 		return $this->getSystemVersion()."##_v_##".$this->doExportAsSerializedArray($activity, $fieldSelectorList);
 	}
 	protected function doExportAsSerializedArray($activity = null, $fieldSelectorList=null){
-		if($activity==null) throw new ServiceExpception("this implementation requires activity", ServiceException::INVALID_ARGUMENT);
+	    if($activity==null) throw new ServiceException("this implementation requires activity", ServiceException::INVALID_ARGUMENT);
 		if(isset($this->fixedBag) && !$this->loadedFromFixedBag) $this->loadFromFixedBag();
 		//else $this->debugLogger()->write("doExportAsSerializedArray using local bag");
 
@@ -653,7 +653,7 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 		return $this->doImportFromSerializedArray($versionNb, $string, $activity);
 	}
 	protected function doImportFromSerializedArray($versionNb, $string, $activity = null){
-		if($activity==null) throw new ServiceExpception("this implementation requires activity", ServiceException::INVALID_ARGUMENT);
+	    if($activity==null) throw new ServiceException("this implementation requires activity", ServiceException::INVALID_ARGUMENT);
 		if(isset($this->fixedBag) && !$this->loadedFromFixedBag) $this->loadFromFixedBag();
 		//else $this->debugLogger()->write("doImportFromSerializedArray using local bag");
 

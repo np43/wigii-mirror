@@ -150,8 +150,8 @@ if(TechnicalServiceProvider::getBoxServiceFormExecutor()->isBoxEnabled()) {
 <?
 if(defined("WEB_WNCD")) {
 ?>
-<!-- link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-stdlib.css" rel="stylesheet"/-->
-<link media="all" type="text/css" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii-ncd-stdlib.css" rel="stylesheet"/>
+<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-stdlib.css" rel="stylesheet"/>
+<!-- link media="all" type="text/css" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii-ncd-stdlib.css" rel="stylesheet"/-->
 <?
 }
 if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".css")){

@@ -11976,7 +11976,17 @@ $additionalJsCode
 								if($groupPath){
 								    // Medair (CWE) 16.02.2018 if a target group is given, tries to open element in it, else keeps first match								    
 								    $crtSelectedGroupId = $exec->getCrtParameters(2);
-								    if(!(isset($crtSelectedGroupId) && array_key_exists($crtSelectedGroupId, $groupPath))) {
+								    $foundCrtSelectedGroupId=false;
+								    if(isset($crtSelectedGroupId)) {
+								        foreach($groupPath as $eltGroup => $path) {
+								            // checks if target group belongs to element group path. If yes, then opens the card in the matching element group.
+								            if(array_key_exists($crtSelectedGroupId, $path)) {
+								                $foundCrtSelectedGroupId=true;
+								                $crtSelectedGroupId = $eltGroup;
+								            }
+								        }
+								    }
+								    if(!$foundCrtSelectedGroupId) {
 								        reset($groupPath);
 								        $crtSelectedGroupId = key($groupPath);
 								    }								
