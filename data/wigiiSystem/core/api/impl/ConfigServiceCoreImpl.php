@@ -25,6 +25,8 @@
  * Config Service core implementation, intented to be subclassed or used internally.
  * Created by CWE on 2 juin 09.
  * Renamed in ConfigServiceCoreImpl by CWE on February 26th 2014.
+ * Modified by CWE on 07.03.2018 to handle group config files with namespace prefix 
+ * and support cascading down from namespace config instead of module config only. 
  */
 class ConfigServiceCoreImpl implements ConfigService
 {
@@ -566,16 +568,26 @@ class ConfigServiceCoreImpl implements ConfigService
 		}
 	}
 	/**
-	 * return the config file path for a global config for this group (without wigiiNamespace selection)
-	 * the reason of making the wigiiNamespace to null, is to make the configuration available from any principal
+	 * return the config file path for a config for this group (it takes into account the principal's namespace)
 	 */
 	public function getGroupConfigFilename($principal, $group){
-		$files = $this->buildConfigFilePath($group->getModule()->getModuleName(), $group->getWigiiNamespace()->getClient()->getClientName(), null, $group->getId(), null, null);
-		return reset($files);
+		/*
+		* Modified by CWE on 07.03.2018 to handle group config files with namespace prefix
+		* to support cascading down from namespace config instead of module config only.
+		* Global group config are still supported for backward compatibility, but by default a group config is always prefixed by a namespace.
+		*/
+		// checks if group config file in principal namespace exists
+		$returnValue = reset($this->buildConfigFilePath($group->getModule()->getModuleName(), $group->getWigiiNamespace()->getClient()->getClientName(), $principal->getWigiiNamespace()->getWigiiNamespaceName(), $group->getId(), null, null));
+		if(!file_exists($returnValue)) {
+			// checks if global group config file exists
+			$groupConfig = reset($this->buildConfigFilePath($group->getModule()->getModuleName(), $group->getWigiiNamespace()->getClient()->getClientName(), null, $group->getId(), null, null));
+			if(file_exists($groupConfig)) $returnValue = $groupConfig;
+		}
+		return $returnValue;
 	}
 	private $doesGroupHasConfigFile_file_exists = null;
 	public function doesGroupHasConfigFile($principal, $group){
-		$key = $group->getId().$group->getModule()->getModuleName();
+		$key = $principal->getWigiiNamespace()->getWigiiNamespaceName().$group->getId().$group->getModule()->getModuleName();
 		if(!isset($this->doesGroupHasConfigFile_file_exists)) $this->doesGroupHasConfigFile_file_exists = array();
 		if(!isset($this->doesGroupHasConfigFile_file_exists[$key])){
 			$this->doesGroupHasConfigFile_file_exists[$key] = file_exists($this->getGroupConfigFilename($principal, $group));
