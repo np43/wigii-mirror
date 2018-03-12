@@ -158,6 +158,40 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		return array_values($arr);
 	}
 	/**
+	 * Returns the difference of two arrays
+	 * FuncExp signature : <code>array_diff(array1,array2)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) array1: Array. The source array
+	 * - Arg(1) array2: Array. The array to diff against
+	 * @return Array returns an array containing all elements in array1 which are not in array2
+	 */
+	public function array_diff($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new FuncExpEvalException("array_diff function takes two parameters, the array1 and array2", FuncExpEvalException::INVALID_ARGUMENT);
+	    $arr1 = $this->evaluateArg($args[0]);
+	    if(!is_array($arr1)) throw new FuncExpEvalException('array1 should be an array',FuncExpEvalException::INVALID_ARGUMENT);
+	    $arr2 = $this->evaluateArg($args[1]);
+	    if(!is_array($arr2)) throw new FuncExpEvalException('array2 should be an array',FuncExpEvalException::INVALID_ARGUMENT);
+	    return array_diff($arr1, $arr2);
+	}
+	/**
+	 * Returns the intersection of two arrays
+	 * FuncExp signature : <code>array_diff(array1,array2)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) array1: Array. The source array
+	 * - Arg(1) array2: Array. The array to intersect with
+	 * @return Array returns an array containing all elements in array1 which are in array2
+	 */
+	public function array_intersect($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new FuncExpEvalException("array_diff function takes two parameters, the array1 and array2", FuncExpEvalException::INVALID_ARGUMENT);
+	    $arr1 = $this->evaluateArg($args[0]);
+	    if(!is_array($arr1)) throw new FuncExpEvalException('array1 should be an array',FuncExpEvalException::INVALID_ARGUMENT);
+	    $arr2 = $this->evaluateArg($args[1]);
+	    if(!is_array($arr2)) throw new FuncExpEvalException('array2 should be an array',FuncExpEvalException::INVALID_ARGUMENT);
+	    return array_intersect($arr1, $arr2);
+	}
+	/**
 	 * array_unique. See http://www.php.net/array_unique
 	 */
 	public function array_unique($args) {

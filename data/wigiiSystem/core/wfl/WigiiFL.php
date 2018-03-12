@@ -2079,6 +2079,32 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		else return false;
 	}
 	
+	/**
+	 * Validates an array of usernames against the Users stored in the database and returns any users missing.
+	 * FuncExp signature : <code>adminFindMissingUsernames(usernames)</code>	
+	 * Where arguments are :
+	 * - Arg(0) usernames: Array. An array of usernames to check.
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * @return Array the list of usernames given as argument, but which are not declared in the database
+	 */
+	public function adminFindMissingUsernames($args) {	    
+	    $this->assertFxOriginIsNotPublic();
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('adminFindMissingUsernames takes one parameter which is a non empty array of usernames');
+	    $usernames = $this->evaluateArg($args[0]);
+	    if(empty($usernames)) throw new FuncExpEvalException('usernames should be a non empty array');
+	    if(!is_array($usernames)) $usernames = array($usernames);
+	    $mySqlF = TechnicalServiceProvider::getMySqlFacade();
+	    $sqlB = $mySqlF->getSqlBuilder();
+	    $selectedUsernames = ValueListArrayImpl::createInstance();
+	    $mySqlF->selectAll($this->getPrincipal(),
+	        'select username from Users where '.$sqlB->formatBinExp('username', 'IN', $usernames, MySqlQueryBuilder::SQLTYPE_VARCHAR),
+	        ServiceProvider::getDbAdminService()->getDbConnectionSettings($this->getPrincipal()),
+	        ValueListMapper::createInstance($selectedUsernames, 'username')
+	        );
+	    return array_diff($usernames, $selectedUsernames->getListIterator());
+	}	
+	
 	// Control Flow
 	
 	/**

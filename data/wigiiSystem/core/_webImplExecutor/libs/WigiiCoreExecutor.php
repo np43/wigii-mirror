@@ -10352,6 +10352,21 @@ onUpdateErrorCounter = 0;
 						$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
 						break;
 					}
+					// Medair (CWE) 12.03.2018: filters element against listFilterExp if defined in config
+					$listFilterExp=(string)$configS->getParameter($p,$exec->getCrtModule(),'listFilterExp');
+					if(!empty($listFilterExp)) {
+					    $listFilterExp = $this->evaluateFuncExp($p, $exec, str2fx($listFilterExp));
+					    if(isset($listFilterExp)) {
+    					    if($listFilterExp instanceof LogExp) {
+    					        // if filter evaluates to false, then element cannot be accessed.
+    					        if(!TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($element, $listFilterExp)) {
+    					            $this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
+    					            break;
+    					        }
+    					    }
+    					    else throw new ListContextException('listFilterExp is not a valid LogExp', ListContextException::CONFIGURATION_ERROR);
+					    }
+					}
 					//on edit or on doDelete lock try to lock the element:
 					//do not lock on addJournalItem as it is a one shot action. This will be done with the appropriate p in $this->addJournalItem
 					if ($exec->getCrtParameters(0) == "edit" || $exec->getCrtParameters(0) == "lockAndModify" || $exec->getCrtParameters(0) == "checkInAndModify" || $exec->getCrtParameters(0) == "checkinFile" || $exec->getCrtParameters(0) == "delete") {
