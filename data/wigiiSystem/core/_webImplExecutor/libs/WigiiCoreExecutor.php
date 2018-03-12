@@ -11712,10 +11712,10 @@ onUpdateErrorCounter = 0;
 					// updates group panel and module view through cache
 					$groupPanelCacheKey = $exec->getCurrentCacheLookup($p, 'groupPanel', 'display/groupPanel');
 					$exec->addJsCode("if(foundInCache){setTimeout(function() {if((getCache('groupPanel', '".$groupPanelCacheKey."') != null) || (getCache('moduleView', getModuleViewKeyCacheForNavigate()) != null)){".
-							"update('workZone/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/workZoneStructure', false, null, function(tabReq, textStatus){".
+							"update('workZone/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/display/workZoneStructure', false, null, function(tabReq, textStatus){".
 								"parseUpdateResult(tabReq, textStatus);".
-								"updateThroughCache('groupPanel', '".$groupPanelCacheKey."', 'groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel', false, false);".
-					 			"updateThroughCache('moduleView', getModuleViewKeyCacheForNavigate(), 'moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView', false, false);".
+							"updateThroughCache('groupPanel', '".$groupPanelCacheKey."', 'groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/display/groupPanel', false, false);".
+							"updateThroughCache('moduleView', getModuleViewKeyCacheForNavigate(), 'moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/display/moduleView', false, false);".
 							"});".
 						"}else{update(url, true);}}, 100);}");
 				}
