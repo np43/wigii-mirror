@@ -65,7 +65,8 @@ $groupPTree->end($p, $exec);
 				$activities[] = "groupEdit";
 				$activities[] = "groupDelete";
 				//$activities[] = "groupEmpty"; // CWE 12.08.2016: do not show empty group action in admin console but only in contextual menu.
-				if($this->getConfigurationContext()->allowGroupDynamicConfig($p, $ac->getWorkingModule())) $activities[] = "groupConfigEdit";
+				// Medair(CWE) 13.03.2018: only allows group config edit if Config Editor admin rights
+				if($this->getConfigurationContext()->allowGroupDynamicConfig($p, $ac->getWorkingModule()) && $p->isModuleEditor()) $activities[] = "groupConfigEdit";
 			}
 			if($this->getConfigurationContext()->getParameter($p, $ac->getWorkingModule(), "Group_enableSubscription")=="1") $activities[] = "groupSubscription";
 			if($this->getConfigurationContext()->getParameter($p, $ac->getWorkingModule(), "Notification_enable")=="1") $activities[] = "groupEmailNotification";

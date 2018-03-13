@@ -196,14 +196,35 @@ class ElementPDataFlowConnector implements DataFlowDumpable
 		// fetches the elementP
 		$element = $this->createElementInstance($dataFlowContext);
 		$element->setId($this->eltId);		
-		$element = $eltS->fillElement($principal, $element, $this->fieldSelectorList);
+		$elementP = $eltS->fillElement($principal, $element, $this->fieldSelectorList);
+		
+		// Medair(CWE) 13.03.2018 applies listFilterExp if data flow is called from public space
+		if($dataFlowContext->isOriginPublic()) {
+		    // forbids direct access to subelement if origin is public (because a listFilterExp could apply on root element and we cannot know at this stage)
+		    if($element->isSubElement()) throw new DataFlowServiceException('Sub-element cannot be accessed from public space',DataFlowServiceException::FORBIDDEN);
+		    
+		    $listFilterExp=(string)$apiClient->getConfigService()->getParameter($principal,$element->getModule(),'listFilterExp');
+    		if(!empty($listFilterExp)) {
+    		    $listFilterExp = ServiceProvider::getWigiiBPL()->evaluateFuncExp($principal, str2fx($listFilterExp));
+    		    if(isset($listFilterExp)) {
+    		        if($listFilterExp instanceof LogExp) {
+    		            // if filter evaluates to false, then element cannot be accessed.
+    		            if(!TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($element, $listFilterExp)) {
+    		                throw new DataFlowServiceException('Element cannot be access',DataFlowServiceException::FORBIDDEN);
+    		            }
+    		        }
+    		        else throw new DataFlowServiceException('listFilterExp is not a valid LogExp', DataFlowServiceException::CONFIGURATION_ERROR);
+    		    }
+    		}
+		}
+		
 		// extracts element info and stamps it
-		if(isset($element) && $this->getAuthorizationService()->getStamp($this, "setAuthorizationServiceStamp")) $element->computeElementInfo($principal,null,$this->authoSStamp);
+		if(isset($elementP) && $this->getAuthorizationService()->getStamp($this, "setAuthorizationServiceStamp")) $elementP->computeElementInfo($principal,null,$this->authoSStamp);
 		// sets dataflow context
 		$dataFlowContext->setAttribute('GroupBasedWigiiApiClient', $apiClient, true);
 		if(isset($this->fieldSelectorList))$dataFlowContext->setAttribute('FieldSelectorList', $this->fieldSelectorList);
 		// pushes the elementP into the dataflow
-		if(isset($element)) $dataFlowService->processDataChunk($element, $dataFlowContext);
+		if(isset($elementP)) $dataFlowService->processDataChunk($elementP, $dataFlowContext);
 	}	
 	
 	// Implementation

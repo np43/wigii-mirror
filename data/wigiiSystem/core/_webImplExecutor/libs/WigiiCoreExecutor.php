@@ -5549,7 +5549,9 @@ invalidCompleteCache();
 					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
-
+                // Medair(CWE) 13.03.2018: allows group config to be edited only by ConfigEditors
+				if (!$p->isModuleEditor()) throw new ServiceException('insufficient rights to edit group config. Needs Config Editor admin rights.', ServiceException :: FORBIDDEN);
+					
 				if (!isset ($transS))
 					$transS = ServiceProvider :: getTranslationService();
 				if (!isset ($groupAS))
@@ -10353,19 +10355,21 @@ onUpdateErrorCounter = 0;
 						break;
 					}
 					// Medair (CWE) 12.03.2018: filters element against listFilterExp if defined in config
-					$listFilterExp=(string)$configS->getParameter($p,$exec->getCrtModule(),'listFilterExp');
-					if(!empty($listFilterExp)) {
-					    $listFilterExp = $this->evaluateFuncExp($p, $exec, str2fx($listFilterExp));
-					    if(isset($listFilterExp)) {
-    					    if($listFilterExp instanceof LogExp) {
-    					        // if filter evaluates to false, then element cannot be accessed.
-    					        if(!TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($element, $listFilterExp)) {
-    					            $this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
-    					            break;
-    					        }
+					if(!$element->isSubElement()) {
+    					$listFilterExp=(string)$configS->getParameter($p,$exec->getCrtModule(),'listFilterExp');
+    					if(!empty($listFilterExp)) {
+    					    $listFilterExp = $this->evaluateFuncExp($p, $exec, str2fx($listFilterExp));
+    					    if(isset($listFilterExp)) {
+        					    if($listFilterExp instanceof LogExp) {
+        					        // if filter evaluates to false, then element cannot be accessed.
+        					        if(!TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($element, $listFilterExp)) {
+        					            $this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
+        					            break;
+        					        }
+        					    }
+        					    else throw new ListContextException('listFilterExp is not a valid LogExp', ListContextException::CONFIGURATION_ERROR);
     					    }
-    					    else throw new ListContextException('listFilterExp is not a valid LogExp', ListContextException::CONFIGURATION_ERROR);
-					    }
+    					}
 					}
 					//on edit or on doDelete lock try to lock the element:
 					//do not lock on addJournalItem as it is a one shot action. This will be done with the appropriate p in $this->addJournalItem
