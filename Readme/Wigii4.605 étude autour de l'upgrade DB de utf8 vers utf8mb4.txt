@@ -1,0 +1,68 @@
+Action entreprise pour migrer la base de donnée mysql de wigii vers le support utf8mb4 (full utf8)
+
+Site de référence:
+https://dev.mysql.com/doc/refman/5.6/en/charset-unicode-conversion.html
+https://dev.mysql.com/doc/refman/5.6/en/storage-requirements.html
+site intéressant: https://mathiasbynens.be/notes/mysql-utf8mb4
+
+La limitation entre l'utf8 et l'utf8mb4 est uniquement une limitation MySQL. Php n'a aucunement cette limitation. Toutes les méthodes de types stripslashes, addslashes, preg_replace, utf8_decode, utf8_encode, etc ne pause aucun problème.
+
+Modification nécessaire dans le code:
+- MySqlFacade.php, line 1059, 1060, changed utf8 to utf8mb4
+- MySqlFacadeWithPConnection.php, line 85, 86, changed utf8 to utf8mb4
+- DbAdminServiceImpl.php, line 1191, 1196, 1199, 1207, changed utf8 to utf8mb4
+Que faudrait-il changer dans l'ElementQueryPlanner.php à la ligne 697 et suivante?
+
+
+//Option 1 : update de la base de donnée actuelle
+désavantage il est plus difficile de garantir la non perte de donnée et un réindexage correcte après conversion
+
+//contrôle pour éviter les pertes de données:
+SELECT length(`value`) as `length`, id_blob, id_element FROM `blobs` order by `length` DESC
+Dans mon dev je constate que l'item 583 dans est le plus grand.
+J'ajoute aussi un élément qui contient dans un champ string la valeur suivante: (longueur 249, car 250 caractère engendre une erreur sql)
+sans espace
+012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345xxx
+avec des espaces
+012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345xxx
+
+Modification nécessaire dans la base de donnée:
+(il est essentiel de faire l'ALTER database car autrement nous avons les ? qui se mette lors du storage dans la DB)
+(il n'est pas nécessaire de faire une modification pour chaque colonne, la requête convert effectue ceci pour nous)
+ALTER DATABASE `wigii_class` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+ALTER TABLE `Blobs` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `Files` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+etc
+
+//pour reconstruire tous les index (repair table n'est pas valide pour InnoDB)
+ALTER TABLE `Blobs` ENGINE = InnoDB;
+ALTER TABLE `Files` ENGINE = InnoDB;
+etc
+
+//contrôle perte de donnée
+Recherche de l'item 583 tout le contenu est là
+Je regarde l'élément avec le champ string long, tout ok, les trois xxx sont bien à la fin. Modifier, sauver ok. Remplacement de certain char avec des emojis, toutjours ok
+
+//Option 2 : export + import
+Etapes:
+Effectuer les opérations suivantes sans inclure les tables: ElementStatistic, EmailService, EmailServiceAttachementsToDelete, FileStatistic, GlobalStatistic
+exporter la structure en sql (inclure les drop table, supprimer les entrées des auto increments si importé)
+exporter les données de toutes les tables en sql (sans la structure, supprimer les lignes de drop et create table si nécessaire)
+effectuer un search and replace de utf8 avec utf8mb4 sur le fichier de structure
+executer: (les tables de stat ou d'historique ne pose moins de risque de perte de donnée
+ALTER DATABASE `MyDatabaseName` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+ALTER TABLE `ElementStatistic` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `EmailService` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `EmailServiceAttachementsToDelete` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `FileStatistic` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `GlobalStatistic` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `ElementStatistic` ENGINE = InnoDB;
+ALTER TABLE `EmailService` ENGINE = InnoDB;
+ALTER TABLE `EmailServiceAttachementsToDelete` ENGINE = InnoDB;
+ALTER TABLE `FileStatistic` ENGINE = InnoDB;
+ALTER TABLE `GlobalStatistic` ENGINE = InnoDB;
+
+importer le nouveau fichier de structure dans la base de donnée
+importer le fichier des données
+
+-> tout est bon mais c'est long et sujet a des erreurs lors de réimport suivant le format des données

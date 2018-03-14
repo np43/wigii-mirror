@@ -680,6 +680,7 @@ class ElementQueryPlanner extends Model implements FieldList
 	}
 	/**
 	 * Returns the relative weight of the sql type of a DataType subfield.
+	 * see: https://dev.mysql.com/doc/refman/5.6/en/storage-requirements.html
 	 * @param string $sqlTypeName one of :
 	 * "varchar","text","boolean","date","bigint","datetime","int","longblob","blob","double","decimal","time"
 	 * @param string $sqlLength optional constant. One of : 'valueLength', 'numberLength', 'nameLength'
@@ -690,14 +691,16 @@ class ElementQueryPlanner extends Model implements FieldList
 		else {
 			$sqlTypeName = strtolower($sqlTypeName);
 			$sqlLength = strtolower($sqlLength);
+			$nbBytesPerChar = 4; //default utf8mb4
+			if(DB_CHARSET=="utf8") $nbBytesPerChar = 3;
 			switch($sqlTypeName)
 			{
 				case "varchar": 
 					switch($sqlLength) {
-						case "valueLength": $returnValue =  764; break; /* VARCHAR(254) UTF8 = 254*3 + prefix (2 bytes) */
-						case "nameLength": $returnValue =  97; break; /* VARCHAR(32) UTF8 = 32*3 + prefix (1 byte) */
-						case "numberLength": $returnValue =  49; break; /* VARCHAR(16) UTF8 = 16*3 + prefix (1 byte)*/
-						default: $returnValue =  193; break; /* VARCHAR(64) UTF8 = 64*3 + prefix (1 byte) */							
+						case "valueLength": $returnValue =  (254*$nbBytesPerChar)+2; break; /* VARCHAR(254) UTF8 = 254*3 + prefix (2 bytes) UTF8MB4 = 254*4 + prefix (2 bytes) */
+						case "nameLength": $returnValue =  (32*$nbBytesPerChar)+1; break; /* VARCHAR(32) UTF8 = 32*3 + prefix (1 byte) UTF8MB4 = 32*4 + prefix (1 byte) */
+						case "numberLength": $returnValue =  (16*$nbBytesPerChar)+1; break; /* VARCHAR(16) UTF8 = 16*3 + prefix (1 byte) UTF8MB4 = 16*4 + prefix (1 byte)*/
+						default: $returnValue =  (64*$nbBytesPerChar)+1; break; /* VARCHAR(64) UTF8 = 64*3 + prefix (1 byte) UTF8MB4 = 64*4 + prefix (1 byte) */							
 					}
 					break;
 				case "text": $returnValue =  2; break; /* prefix size 2 bytes */

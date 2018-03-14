@@ -1052,11 +1052,10 @@ class MySqlFacade
 			if(!mysqli_select_db($returnValue, $cnxSettings->getDbName())){
 				throw new MySqlFacadeException("No database: ".$cnxSettings->getDbName()." on host: ".$cnxSettings->getHost(), MySqlFacadeException::INVALID_ARGUMENT);
 			}
-			//set the charset to UTF8
-			// 10.08.2016: lets server manage UTF8 details to handle correctly emoticons in text
-			// 11.08.2016: regression on datatype Files with htmlArea=1 => force again UTF8
-			mysqli_query($returnValue, "SET NAMES utf8;");
-			mysqli_query($returnValue, "SET CHARACTER SET utf8;");
+			//set the charset of the DB, default utf8mb4 (full UTF8)
+			if (!defined("DB_CHARSET")) define ("DB_CHARSET", "utf8mb4");
+			mysqli_query($returnValue, "SET NAMES ".DB_CHARSET.";");
+			mysqli_query($returnValue, "SET CHARACTER SET ".DB_CHARSET.";");
 			$this->cacheDbConnection($cnxSettings, $returnValue);
 		}
 		return $returnValue;
