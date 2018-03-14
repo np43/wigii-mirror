@@ -5,7 +5,7 @@ ALTER DATABASE `MyDatabaseName` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicod
 ALTER TABLE `Addresses` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE `Attributs` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE `Blobs` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE `Booleans` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4;
+ALTER TABLE `Booleans` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE `ConfigService_parameters` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE `ConfigService_parameters` 
 	CHANGE `xmlLp` `xmlLp` VARCHAR(254) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL, 
