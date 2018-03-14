@@ -8,7 +8,6 @@
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -69,7 +68,7 @@ CREATE TABLE `Blobs` (
   `id_Blob` int(11) NOT NULL,
   `id_element` int(11) DEFAULT NULL,
   `field` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `value` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value` longtext COLLATE utf8mb4_unicode_ci,
   `sys_creationUser` int(10) UNSIGNED DEFAULT NULL,
   `sys_creationUsername` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `sys_creationDate` int(10) UNSIGNED DEFAULT NULL,
@@ -107,7 +106,7 @@ CREATE TABLE `Booleans` (
 DROP TABLE IF EXISTS `ConfigService_parameters`;
 CREATE TABLE `ConfigService_parameters` (
   `id_params` int(11) NOT NULL,
-  `lp` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `lp` varchar(254) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `xmlLp` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `name` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `value` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -124,7 +123,7 @@ CREATE TABLE `ConfigService_parameters` (
 DROP TABLE IF EXISTS `ConfigService_xml`;
 CREATE TABLE `ConfigService_xml` (
   `id_xml` int(11) NOT NULL,
-  `xmlLp` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `xmlLp` varchar(254) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `xml` mediumtext COLLATE utf8mb4_unicode_ci,
   `sys_creationDate` int(10) UNSIGNED DEFAULT NULL,
   `sys_date` int(10) UNSIGNED DEFAULT NULL
@@ -179,16 +178,16 @@ CREATE TABLE `Elements` (
   `state_approved` tinyint(1) DEFAULT NULL,
   `state_dismissed` tinyint(1) DEFAULT NULL,
   `state_blocked` tinyint(1) DEFAULT NULL,
-  `state_lockedInfo` text COLLATE utf8mb4_unicode_ci,
-  `state_hiddenInfo` text COLLATE utf8mb4_unicode_ci,
-  `state_archivedInfo` text COLLATE utf8mb4_unicode_ci,
-  `state_deprecatedInfo` text COLLATE utf8mb4_unicode_ci,
-  `state_important1Info` text COLLATE utf8mb4_unicode_ci,
-  `state_important2Info` text COLLATE utf8mb4_unicode_ci,
-  `state_finalizedInfo` text COLLATE utf8mb4_unicode_ci,
-  `state_approvedInfo` text COLLATE utf8mb4_unicode_ci,
-  `state_dismissedInfo` text COLLATE utf8mb4_unicode_ci,
-  `state_blockedInfo` text COLLATE utf8mb4_unicode_ci,
+  `state_lockedInfo` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_hiddenInfo` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_archivedInfo` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_deprecatedInfo` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_important1Info` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_important2Info` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_finalizedInfo` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_approvedInfo` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_dismissedInfo` mediumtext COLLATE utf8mb4_unicode_ci,
+  `state_blockedInfo` mediumtext COLLATE utf8mb4_unicode_ci,
   `sys_creationDate` int(10) UNSIGNED DEFAULT NULL,
   `sys_date` int(10) UNSIGNED DEFAULT NULL,
   `sys_creationUsername` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -259,7 +258,7 @@ CREATE TABLE `Emails` (
   `id_Email` int(11) NOT NULL,
   `id_element` int(11) DEFAULT NULL,
   `field` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `value` text COLLATE utf8mb4_unicode_ci,
+  `value` mediumtext COLLATE utf8mb4_unicode_ci,
   `proofKey` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `proof` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `proofStatus` tinyint(1) DEFAULT NULL,
@@ -294,13 +293,13 @@ CREATE TABLE `EmailService` (
   `realUserId` int(11) DEFAULT NULL,
   `realUsername` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `charset` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `attachement` text COLLATE utf8mb4_unicode_ci,
+  `attachement` mediumtext COLLATE utf8mb4_unicode_ci,
   `to` longtext COLLATE utf8mb4_unicode_ci,
   `cc` longtext COLLATE utf8mb4_unicode_ci,
   `bcc` longtext COLLATE utf8mb4_unicode_ci,
   `replyTo` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `from` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `subject` text COLLATE utf8mb4_unicode_ci,
+  `subject` mediumtext COLLATE utf8mb4_unicode_ci,
   `bodyHtml` longtext COLLATE utf8mb4_unicode_ci,
   `bodyText` longtext COLLATE utf8mb4_unicode_ci,
   `sys_lockId` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -316,7 +315,7 @@ CREATE TABLE `EmailService` (
 DROP TABLE IF EXISTS `EmailServiceAttachementsToDelete`;
 CREATE TABLE `EmailServiceAttachementsToDelete` (
   `id_attachementToDelete` int(11) NOT NULL,
-  `path` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `path` varchar(254) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `nb` int(11) DEFAULT NULL,
   `timestamp` int(10) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -427,14 +426,14 @@ CREATE TABLE `Groups` (
   `groupname` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `modulename` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `wigiiNamespace` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `description` mediumtext COLLATE utf8mb4_unicode_ci,
   `portal` longtext COLLATE utf8mb4_unicode_ci,
   `htmlContent` longtext COLLATE utf8mb4_unicode_ci,
   `id_group_parent` int(11) DEFAULT NULL,
   `subscription` longtext COLLATE utf8mb4_unicode_ci,
   `emailNotification` longtext COLLATE utf8mb4_unicode_ci,
   `xmlPublish` longtext COLLATE utf8mb4_unicode_ci,
-  `activities` text COLLATE utf8mb4_unicode_ci,
+  `activities` mediumtext COLLATE utf8mb4_unicode_ci,
   `sys_date` int(10) UNSIGNED DEFAULT NULL,
   `sys_user` int(10) UNSIGNED DEFAULT NULL,
   `sys_lockId` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -457,7 +456,7 @@ CREATE TABLE `Groups_Activities` (
   `id_group` int(11) DEFAULT NULL,
   `activityname` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `field` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `value` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value` longtext COLLATE utf8mb4_unicode_ci,
   `sys_creationUser` int(10) UNSIGNED DEFAULT NULL,
   `sys_creationUsername` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `sys_creationDate` int(10) UNSIGNED DEFAULT NULL,
@@ -511,7 +510,7 @@ CREATE TABLE `MultipleAttributs` (
   `id_MultipleAttribut` int(11) NOT NULL,
   `id_element` int(11) DEFAULT NULL,
   `field` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `value` text COLLATE utf8mb4_unicode_ci,
+  `value` mediumtext COLLATE utf8mb4_unicode_ci,
   `sys_creationUser` int(10) UNSIGNED DEFAULT NULL,
   `sys_creationUsername` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `sys_creationDate` int(10) UNSIGNED DEFAULT NULL,
@@ -549,7 +548,7 @@ CREATE TABLE `Numerics` (
 DROP TABLE IF EXISTS `SessionAdminService`;
 CREATE TABLE `SessionAdminService` (
   `id_data` int(11) NOT NULL,
-  `key` varchar(224) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `key` varchar(224) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `value` mediumtext COLLATE utf8mb4_unicode_ci,
   `sys_creationDate` int(10) UNSIGNED DEFAULT NULL,
   `sys_date` int(10) UNSIGNED DEFAULT NULL
@@ -586,16 +585,16 @@ CREATE TABLE `Texts` (
   `id_Text` int(11) NOT NULL,
   `id_element` int(11) DEFAULT NULL,
   `field` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `value_l01` text COLLATE utf8mb4_unicode_ci,
-  `value_l02` text COLLATE utf8mb4_unicode_ci,
-  `value_l03` text COLLATE utf8mb4_unicode_ci,
-  `value_l04` text COLLATE utf8mb4_unicode_ci,
-  `value_l05` text COLLATE utf8mb4_unicode_ci,
-  `value_l06` text COLLATE utf8mb4_unicode_ci,
-  `value_l07` text COLLATE utf8mb4_unicode_ci,
-  `value_l08` text COLLATE utf8mb4_unicode_ci,
-  `value_l09` text COLLATE utf8mb4_unicode_ci,
-  `value_l10` text COLLATE utf8mb4_unicode_ci,
+  `value_l01` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l02` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l03` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l04` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l05` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l06` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l07` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l08` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l09` mediumtext COLLATE utf8mb4_unicode_ci,
+  `value_l10` mediumtext COLLATE utf8mb4_unicode_ci,
   `sys_creationUser` int(10) UNSIGNED DEFAULT NULL,
   `sys_creationUsername` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `sys_creationDate` int(10) UNSIGNED DEFAULT NULL,
@@ -679,7 +678,7 @@ CREATE TABLE `Urls` (
 DROP TABLE IF EXISTS `Users`;
 CREATE TABLE `Users` (
   `id_user` int(11) NOT NULL,
-  `username` varchar(254) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `username` varchar(254) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `wigiiNamespace` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `password` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `passwordHistory` text COLLATE utf8mb4_unicode_ci,
@@ -792,7 +791,7 @@ CREATE TABLE `Varchars` (
 ALTER TABLE `Addresses`
   ADD PRIMARY KEY (`id_Addresse`),
   ADD UNIQUE KEY `id_element` (`id_element`,`field`),
-  ADD KEY `street` (`street`),
+  ADD KEY `street` (`street`(191)),
   ADD KEY `zip_code` (`zip_code`),
   ADD KEY `city` (`city`),
   ADD KEY `state` (`state`),
@@ -808,7 +807,7 @@ ALTER TABLE `Addresses`
 ALTER TABLE `Attributs`
   ADD PRIMARY KEY (`id_Attribut`),
   ADD UNIQUE KEY `id_element` (`id_element`,`field`),
-  ADD KEY `value` (`value`),
+  ADD KEY `value` (`value`(191)),
   ADD KEY `sys_creationUser` (`sys_creationUser`),
   ADD KEY `sys_creationDate` (`sys_creationDate`),
   ADD KEY `sys_user` (`sys_user`),
@@ -843,7 +842,7 @@ ALTER TABLE `Booleans`
 ALTER TABLE `ConfigService_parameters`
   ADD PRIMARY KEY (`id_params`),
   ADD UNIQUE KEY `lp` (`lp`),
-  ADD KEY `xmlLp` (`xmlLp`),
+  ADD KEY `xmlLp` (`xmlLp`(191)),
   ADD KEY `sys_creationDate` (`sys_creationDate`),
   ADD KEY `sys_date` (`sys_date`);
 
@@ -876,7 +875,7 @@ ALTER TABLE `Elements`
   ADD UNIQUE KEY `id_element` (`id_element`,`modulename`),
   ADD KEY `created_by` (`sys_creationUser`),
   ADD KEY `last_modif_user` (`sys_user`),
-  ADD KEY `tags` (`tags`),
+  ADD KEY `tags` (`tags`(191)),
   ADD KEY `sys_lockId` (`sys_lockId`),
   ADD KEY `state_locked` (`state_locked`),
   ADD KEY `sys_lockMicroTime` (`sys_lockMicroTime`),
@@ -971,14 +970,14 @@ ALTER TABLE `EmailServiceAttachementsToDelete`
 ALTER TABLE `Files`
   ADD PRIMARY KEY (`id_File`),
   ADD UNIQUE KEY `id_element` (`id_element`,`field`),
-  ADD KEY `name` (`name`),
+  ADD KEY `name` (`name`(191)),
   ADD KEY `date` (`date`),
   ADD KEY `type` (`type`),
   ADD KEY `mime` (`mime`),
   ADD KEY `size` (`size`),
   ADD KEY `user` (`user`),
   ADD KEY `username` (`username`),
-  ADD KEY `path` (`path`),
+  ADD KEY `path` (`path`(191)),
   ADD KEY `sys_creationUser` (`sys_creationUser`),
   ADD KEY `sys_creationDate` (`sys_creationDate`),
   ADD KEY `sys_user` (`sys_user`),
@@ -1030,7 +1029,7 @@ ALTER TABLE `GlobalStatistic`
 --
 ALTER TABLE `Groups`
   ADD PRIMARY KEY (`id_group`),
-  ADD KEY `groupname` (`groupname`,`modulename`,`wigiiNamespace`),
+  ADD KEY `groupname` (`groupname`(191),`modulename`,`wigiiNamespace`),
   ADD KEY `id_group_parent` (`id_group_parent`),
   ADD KEY `sys_lockId` (`sys_lockId`),
   ADD KEY `sys_lockMicroTime` (`sys_lockMicroTime`),
@@ -1107,7 +1106,7 @@ ALTER TABLE `SessionAdminService`
 ALTER TABLE `Strings`
   ADD PRIMARY KEY (`id_String`),
   ADD UNIQUE KEY `id_element` (`id_element`,`field`),
-  ADD KEY `value` (`value`),
+  ADD KEY `value` (`value`(191)),
   ADD KEY `sys_creationUser` (`sys_creationUser`),
   ADD KEY `sys_creationDate` (`sys_creationDate`),
   ADD KEY `sys_user` (`sys_user`),
@@ -1158,8 +1157,8 @@ ALTER TABLE `Times`
 ALTER TABLE `Urls`
   ADD PRIMARY KEY (`id_url`),
   ADD UNIQUE KEY `id_element` (`id_element`,`field`),
-  ADD KEY `name` (`name`),
-  ADD KEY `url` (`url`),
+  ADD KEY `name` (`name`(191)),
+  ADD KEY `url` (`url`(191)),
   ADD KEY `sys_creationUser` (`sys_creationUser`),
   ADD KEY `sys_creationDate` (`sys_creationDate`),
   ADD KEY `sys_user` (`sys_user`),
@@ -1181,7 +1180,7 @@ ALTER TABLE `Users`
   ADD KEY `sys_user` (`sys_user`),
   ADD KEY `sys_creationUser` (`sys_creationUser`),
   ADD KEY `sys_creationDate` (`sys_creationDate`),
-  ADD KEY `email` (`email`);
+  ADD KEY `email` (`email`(191));
 
 --
 -- Indexes for table `Users_Groups_Rights`
@@ -1207,16 +1206,16 @@ ALTER TABLE `Users_Users`
 ALTER TABLE `Varchars`
   ADD PRIMARY KEY (`id_Varchar`),
   ADD UNIQUE KEY `id_element` (`id_element`,`field`),
-  ADD KEY `value_l01` (`value_l01`),
-  ADD KEY `value_l02` (`value_l02`),
-  ADD KEY `value_l03` (`value_l03`),
-  ADD KEY `value_l04` (`value_l04`),
-  ADD KEY `value_l05` (`value_l05`),
-  ADD KEY `value_l06` (`value_l06`),
-  ADD KEY `value_l07` (`value_l07`),
-  ADD KEY `value_l08` (`value_l08`),
-  ADD KEY `value_l09` (`value_l09`),
-  ADD KEY `value_l10` (`value_l10`),
+  ADD KEY `value_l01` (`value_l01`(191)),
+  ADD KEY `value_l02` (`value_l02`(191)),
+  ADD KEY `value_l03` (`value_l03`(191)),
+  ADD KEY `value_l04` (`value_l04`(191)),
+  ADD KEY `value_l05` (`value_l05`(191)),
+  ADD KEY `value_l06` (`value_l06`(191)),
+  ADD KEY `value_l07` (`value_l07`(191)),
+  ADD KEY `value_l08` (`value_l08`(191)),
+  ADD KEY `value_l09` (`value_l09`(191)),
+  ADD KEY `value_l10` (`value_l10`(191)),
   ADD KEY `sys_creationUser` (`sys_creationUser`),
   ADD KEY `sys_creationDate` (`sys_creationDate`),
   ADD KEY `sys_user` (`sys_user`),
@@ -1396,7 +1395,6 @@ ALTER TABLE `Users_Users`
 --
 ALTER TABLE `Varchars`
   MODIFY `id_Varchar` int(11) NOT NULL AUTO_INCREMENT;
-
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
