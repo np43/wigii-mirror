@@ -227,9 +227,9 @@ $("#systemConsole .messages").append("<div><div class='message' ><?=$message;?><
 			// CWE 10.03.2018: transforms inline double slash comments into slash start comments
 			// 1. line starts with double slash
 			// 2. or any character except colon followed by double slash.
-			// 3. manages Windows or Unix new line codes
-			$src = preg_replace('/^\/\/(.*?)(\\r?)$/m','/*$1*/$2',$src);
-			$src = preg_replace('/([^:])\/\/(.*?)(\\r?)$/m','$1;/*$2*/$3',$src);
+			// 3. manages Windows or Unix new line codes			
+			//$src = preg_replace('/^\/\/(.*?)(\\r?)$/m','/*$1*/$2',$src);
+			//$src = preg_replace('/([^:])\/\/(.*?)(\\r?)$/m','$1;/*$2*/$3',$src);			
 			echo $src;
 			unset($this->JSCode);
 		}
@@ -253,9 +253,9 @@ $("#systemConsole .messages").append("<div><div class='message' ><?=$message;?><
 			// CWE 10.03.2018: transforms inline double slash comments into slash start comments
 			// 1. line starts with double slash
 			// 2. or any character except colon followed by double slash.
-			// 3. manages Windows or Unix new line codes
-			$src = preg_replace('/^\/\/(.*?)(\\r?)$/m','/*$1*/$2',$src);
-			$src = preg_replace('/([^:])\/\/(.*?)(\\r?)$/m','$1;/*$2*/$3',$src);
+			// 3. manages Windows or Unix new line codes			
+			//$src = preg_replace('/^\/\/(.*?)(\\r?)$/m','/*$1*/$2',$src);
+			//$src = preg_replace('/([^:])\/\/(.*?)(\\r?)$/m','$1;/*$2*/$3',$src);			
 			echo $src;
 			unset($this->JSCode[$requestId]);
 		}
