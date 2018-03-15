@@ -931,11 +931,19 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					// ajusts neighbor width to allow displaying help span					
 					if(neighbor) {
 						var w = neighbor.width();
-						if(w>=75) neighbor.width(w-25);
+						if(w>=75) {
+							// forces resize of element
+							neighbor.width(w-25);
+							neighbor.css("width",(w-25)+"px").resize();							
+						}
 						neighbor.children('div,span,select').each(function(){
 							var e = $(this);
 							w = e.width();
-							if(w>=75) e.width(w-25);
+							if(w>=75) {
+								// forces resize of element
+								e.width(w-25);
+								e.css("width",(w-25)+"px").resize();
+							}
 						});
 					}
 					// inserts popup after helpSpan
