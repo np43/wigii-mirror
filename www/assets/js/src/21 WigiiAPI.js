@@ -929,20 +929,33 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				
 				if(helpSpan) {
 					// ajusts neighbor width to allow displaying help span					
-					if(neighbor) {
+					if(neighbor) {						
 						var w = neighbor.width();
+						// special case for select2
+						if(neighbor.hasClass("flex")||neighbor.hasClass("chosen")) {
+							// checks if we have a fixed width
+							var cssW = neighbor.css("width");
+							if(cssW && cssW.indexOf("%")>=0) cssW=undefined;
+							// else takes max-width
+							if(!cssW) cssW = neighbor.css("max-width");
+							// else takes parent max-width
+							if(!cssW) cssW = neighbor.parent().css("max-width");
+							if(cssW) {
+								try{w = Number.parseInt(cssW.replace('px',''))-5;} catch(exc){/* nothing to change */}							
+							}
+						}
 						if(w>=75) {
 							// forces resize of element
 							neighbor.width(w-25);
 							neighbor.css("width",(w-25)+"px").resize();							
-						}
+						}						
 						neighbor.children('div,span,select').each(function(){
 							var e = $(this);
 							w = e.width();
 							if(w>=75) {
 								// forces resize of element
 								e.width(w-25);
-								e.css("width",(w-25)+"px").resize();
+								e.css("width",(w-25)+"px").resize();								
 							}
 						});
 					}
