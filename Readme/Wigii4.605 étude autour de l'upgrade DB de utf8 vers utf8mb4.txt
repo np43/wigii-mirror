@@ -1,34 +1,34 @@
-Action entreprise pour migrer la base de donnÈe mysql de wigii vers le support utf8mb4 (full utf8)
+Action entreprise pour migrer la base de donn√©e mysql de wigii vers le support utf8mb4 (full utf8)
 
-Site de rÈfÈrence:
+Site de r√©f√©rence:
 https://dev.mysql.com/doc/refman/5.6/en/charset-unicode-conversion.html
 https://dev.mysql.com/doc/refman/5.6/en/storage-requirements.html
-site intÈressant: https://mathiasbynens.be/notes/mysql-utf8mb4
+site int√©ressant: https://mathiasbynens.be/notes/mysql-utf8mb4
 
-La limitation entre l'utf8 et l'utf8mb4 est uniquement une limitation MySQL. Php n'a aucunement cette limitation. Toutes les mÈthodes de types stripslashes, addslashes, preg_replace, utf8_decode, utf8_encode, etc ne pause aucun problËme.
+La limitation entre l'utf8 et l'utf8mb4 est uniquement une limitation MySQL. Php n'a aucunement cette limitation. Toutes les m√©thodes de types stripslashes, addslashes, preg_replace, utf8_decode, utf8_encode, etc ne pause aucun probl√®me.
 
-Modification nÈcessaire dans le code:
+Modification n√©cessaire dans le code:
 - MySqlFacade.php, line 1059, 1060, changed utf8 to utf8mb4
 - MySqlFacadeWithPConnection.php, line 85, 86, changed utf8 to utf8mb4
 - DbAdminServiceImpl.php, line 1191, 1196, 1199, 1207, changed utf8 to utf8mb4
-Que faudrait-il changer dans l'ElementQueryPlanner.php ‡ la ligne 697 et suivante?
+- ElementQueryPlanner.php √† la ligne 697 et suivante, mise √† jour de la taille des champs.
 
 
-//Option 1 : update de la base de donnÈe actuelle
-dÈsavantage il est plus difficile de garantir la non perte de donnÈe et un rÈindexage correcte aprËs conversion
+//Option 1 : update de la base de donn√©e actuelle
+d√©savantage il est plus difficile de garantir la non perte de donn√©e et un r√©indexage correcte apr√®s conversion
 
-//contrÙle pour Èviter les pertes de donnÈes:
+//contr√¥le pour √©viter les pertes de donn√©es:
 SELECT length(`value`) as `length`, id_blob, id_element FROM `blobs` order by `length` DESC
 Dans mon dev je constate que l'item 583 dans est le plus grand.
-J'ajoute aussi un ÈlÈment qui contient dans un champ string la valeur suivante: (longueur 249, car 250 caractËre engendre une erreur sql)
+J'ajoute aussi un √©l√©ment qui contient dans un champ string la valeur suivante: (longueur 249, car 250 caract√®re engendre une erreur sql)
 sans espace
 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345xxx
 avec des espaces
 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345678 012345xxx
 
-Modification nÈcessaire dans la base de donnÈe:
+Modification n√©cessaire dans la base de donn√©e:
 (il est essentiel de faire l'ALTER database car autrement nous avons les ? qui se mette lors du storage dans la DB)
-(il n'est pas nÈcessaire de faire une modification pour chaque colonne, la requÍte convert effectue ceci pour nous)
+(il n'est pas n√©cessaire de faire une modification pour chaque colonne, la requ√™te convert effectue ceci pour nous)
 ALTER DATABASE `wigii_class` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 ALTER TABLE `Blobs` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE `Files` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -39,17 +39,17 @@ ALTER TABLE `Blobs` ENGINE = InnoDB;
 ALTER TABLE `Files` ENGINE = InnoDB;
 etc
 
-//contrÙle perte de donnÈe
-Recherche de l'item 583 tout le contenu est l‡
-Je regarde l'ÈlÈment avec le champ string long, tout ok, les trois xxx sont bien ‡ la fin. Modifier, sauver ok. Remplacement de certain char avec des emojis, toutjours ok
+//contr√¥le perte de donn√©e
+Recherche de l'item 583 tout le contenu est l√†
+Je regarde l'√©l√©ment avec le champ string long, tout ok, les trois xxx sont bien √† la fin. Modifier, sauver ok. Remplacement de certain char avec des emojis, toutjours ok
 
 //Option 2 : export + import
 Etapes:
-Effectuer les opÈrations suivantes sans inclure les tables: ElementStatistic, EmailService, EmailServiceAttachementsToDelete, FileStatistic, GlobalStatistic
-exporter la structure en sql (inclure les drop table, supprimer les entrÈes des auto increments si importÈ)
-exporter les donnÈes de toutes les tables en sql (sans la structure, supprimer les lignes de drop et create table si nÈcessaire)
+Effectuer les op√©rations suivantes sans inclure les tables: ElementStatistic, EmailService, EmailServiceAttachementsToDelete, FileStatistic, GlobalStatistic
+exporter la structure en sql (inclure les drop table, supprimer les entr√©es des auto increments si import√©)
+exporter les donn√©es de toutes les tables en sql (sans la structure, supprimer les lignes de drop et create table si n√©cessaire)
 effectuer un search and replace de utf8 avec utf8mb4 sur le fichier de structure
-executer: (les tables de stat ou d'historique ne pose moins de risque de perte de donnÈe
+executer: (les tables de stat ou d'historique ne pose moins de risque de perte de donn√©e
 ALTER DATABASE `MyDatabaseName` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 ALTER TABLE `ElementStatistic` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE `EmailService` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -62,7 +62,7 @@ ALTER TABLE `EmailServiceAttachementsToDelete` ENGINE = InnoDB;
 ALTER TABLE `FileStatistic` ENGINE = InnoDB;
 ALTER TABLE `GlobalStatistic` ENGINE = InnoDB;
 
-importer le nouveau fichier de structure dans la base de donnÈe
-importer le fichier des donnÈes
+importer le nouveau fichier de structure dans la base de donn√©e
+importer le fichier des donn√©es
 
--> tout est bon mais c'est long et sujet a des erreurs lors de rÈimport suivant le format des donnÈes
+-> tout est bon mais c'est long et sujet a des erreurs lors de r√©import suivant le format des donn√©es

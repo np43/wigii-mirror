@@ -3037,6 +3037,11 @@ invalidCompleteCache();
 				/* 1. recopy element subfields */ $dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec,$fe,$element){
 					$dfContext = $callbackDFA->getDataFlowContext();
 					$updatedElement = $elementP->getElement();
+					// saves current auto-sharing group ids
+					$oldGids = ValueListArrayMapper::createInstance ( true, ValueListArrayMapper::Natural_Separators, true );
+					$updatedElement->getLinkedIdGroupInRecord ( $dfContext->getPrincipal(), $oldGids);
+					$dfContext->setAttribute('oldGids',$oldGids->getListIterator());
+					// recopies element subfields
 					foreach($dfContext->getAttribute('FieldSelectorList')->getListIterator() as $fs) {
 						$updatedElement->setFieldValue($element->getFieldValue($fs->getFieldName(),$fs->getSubFieldName()),$fs->getFieldName(),$fs->getSubFieldName());
 					}
@@ -3049,7 +3054,17 @@ invalidCompleteCache();
 					$fe->updateFilesOnDisk($dfContext->getPrincipal(), $exec, $dfContext->getAttribute('storeFileInWigiiBag'), $dfContext->getAttribute('oldRecord'), false);
 					$callbackDFA->writeResultToOutput($elementP);
 				}));
-				/* 5. outputs updated field with all subfields */$dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($fieldName,$exec) {
+				/* 5. updates autosharing */if(!$noCalculation) $dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec,$fe){
+					$dfContext = $callbackDFA->getDataFlowContext();
+					$fe->updateFilesOnDisk($dfContext->getPrincipal(), $exec, $dfContext->getAttribute('storeFileInWigiiBag'), $dfContext->getAttribute('oldRecord'), false);
+					ServiceProvider::getWigiiBPL()->elementUpdateSharing($dfContext->getPrincipal(), $callbackDFA, wigiiBPLParam(
+						'element',$elementP->getElement(),
+						'oldGroupIds',$dfContext->getAttribute('oldGids'),
+						'wigiiEventsSubscriber',($noNotification?false:$this->throwEvent())
+					));
+					$callbackDFA->writeResultToOutput($elementP);
+				}));
+				/* 6. outputs updated field with all subfields */$dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($fieldName,$exec) {
 					$dfContext = $callbackDFA->getDataFlowContext();
 					$element = $elementP->getDbEntity();
 					$field = FieldWithSelectedSubfields::createInstance($element->getFieldList()->getField($fieldName));

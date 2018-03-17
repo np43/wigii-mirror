@@ -121,6 +121,8 @@ class ElementPListStdClassImpl extends ElementPGroupableSelectablePagedListImpl 
 		$listContext = $this->getListContext();
 		$wigiiExecutor = $this->getWigiiExecutor();
 		$module = $exec->getCrtModule();
+		$configS = $this->getConfigService();
+		$activityXml = $configS->ma($p, $module, $activity);
 		
 		// do only rows options for ElementPGroupableSelectablePagedListImpl
 		$doOnlyRows = $options->getValue('doOnlyRows');
@@ -167,7 +169,7 @@ class ElementPListStdClassImpl extends ElementPGroupableSelectablePagedListImpl 
 		if(!$multiLanguageFields) $fsl->setSelectedLanguages(array($language=>$language));
 		
 		// Fills FieldSelectorList based on Activity fields and maps to underlying Element Fields
-		$this->getConfigService()->getFields($p, $module, $activity, $fsl);
+		$configS->getFields($p, $module, $activity, $fsl);
 		
 		// Maps element fields to activity fields
 		$this->setFieldMapping($this->createFieldMapping($fsl));
@@ -187,6 +189,11 @@ class ElementPListStdClassImpl extends ElementPGroupableSelectablePagedListImpl 
 		// Recalculates search bar
 		if(!$doOnlyRows) {
 			$listContext->recalculateSearchBar($p, $wigiiExecutor);
+		}
+		
+		// Forces fetch of children groups if includeChildrenGroupsOnSelect=1 in activity
+		if($activityXml['includeChildrenGroupsOnSelect']=="1") {
+			$listContext->setGroupPList($listContext->getGroupPList(), true);
 		}
 		
 		// Configures the parent list with updated ListContext and options
