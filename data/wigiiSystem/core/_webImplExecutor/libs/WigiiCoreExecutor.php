@@ -3056,7 +3056,6 @@ invalidCompleteCache();
 				}));
 				/* 5. updates autosharing */if(!$noCalculation) $dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec,$fe){
 					$dfContext = $callbackDFA->getDataFlowContext();
-					$fe->updateFilesOnDisk($dfContext->getPrincipal(), $exec, $dfContext->getAttribute('storeFileInWigiiBag'), $dfContext->getAttribute('oldRecord'), false);
 					ServiceProvider::getWigiiBPL()->elementUpdateSharing($dfContext->getPrincipal(), $callbackDFA, wigiiBPLParam(
 						'element',$elementP->getElement(),
 						'oldGroupIds',$dfContext->getAttribute('oldGids'),
