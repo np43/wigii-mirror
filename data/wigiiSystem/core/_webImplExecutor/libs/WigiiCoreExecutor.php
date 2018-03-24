@@ -3037,6 +3037,11 @@ invalidCompleteCache();
 				/* 1. recopy element subfields */ $dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec,$fe,$element){
 					$dfContext = $callbackDFA->getDataFlowContext();
 					$updatedElement = $elementP->getElement();
+					// saves current auto-sharing group ids
+					$oldGids = ValueListArrayMapper::createInstance ( true, ValueListArrayMapper::Natural_Separators, true );
+					$updatedElement->getLinkedIdGroupInRecord ( $dfContext->getPrincipal(), $oldGids);
+					$dfContext->setAttribute('oldGids',$oldGids->getListIterator());
+					// recopies element subfields
 					foreach($dfContext->getAttribute('FieldSelectorList')->getListIterator() as $fs) {
 						$updatedElement->setFieldValue($element->getFieldValue($fs->getFieldName(),$fs->getSubFieldName()),$fs->getFieldName(),$fs->getSubFieldName());
 					}
@@ -3049,7 +3054,16 @@ invalidCompleteCache();
 					$fe->updateFilesOnDisk($dfContext->getPrincipal(), $exec, $dfContext->getAttribute('storeFileInWigiiBag'), $dfContext->getAttribute('oldRecord'), false);
 					$callbackDFA->writeResultToOutput($elementP);
 				}));
-				/* 5. outputs updated field with all subfields */$dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($fieldName,$exec) {
+				/* 5. updates autosharing */if(!$noCalculation) $dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec,$fe){
+					$dfContext = $callbackDFA->getDataFlowContext();
+					ServiceProvider::getWigiiBPL()->elementUpdateSharing($dfContext->getPrincipal(), $callbackDFA, wigiiBPLParam(
+						'element',$elementP->getElement(),
+						'oldGroupIds',$dfContext->getAttribute('oldGids'),
+						'wigiiEventsSubscriber',($noNotification?false:$this->throwEvent())
+					));
+					$callbackDFA->writeResultToOutput($elementP);
+				}));
+				/* 6. outputs updated field with all subfields */$dfasl->addDataFlowActivitySelectorInstance(dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($fieldName,$exec) {
 					$dfContext = $callbackDFA->getDataFlowContext();
 					$element = $elementP->getDbEntity();
 					$field = FieldWithSelectedSubfields::createInstance($element->getFieldList()->getField($fieldName));
@@ -5549,7 +5563,9 @@ invalidCompleteCache();
 					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
-
+                // Medair(CWE) 13.03.2018: allows group config to be edited only by ConfigEditors
+				if (!$p->isModuleEditor()) throw new ServiceException('insufficient rights to edit group config. Needs Config Editor admin rights.', ServiceException :: FORBIDDEN);
+					
 				if (!isset ($transS))
 					$transS = ServiceProvider :: getTranslationService();
 				if (!isset ($groupAS))
@@ -10352,6 +10368,23 @@ onUpdateErrorCounter = 0;
 						$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
 						break;
 					}
+					// Medair (CWE) 12.03.2018: filters element against listFilterExp if defined in config
+					if(!$element->isSubElement()) {
+    					$listFilterExp=(string)$configS->getParameter($p,$exec->getCrtModule(),'listFilterExp');
+    					if(!empty($listFilterExp)) {
+    					    $listFilterExp = $this->evaluateFuncExp($p, $exec, str2fx($listFilterExp));
+    					    if(isset($listFilterExp)) {
+        					    if($listFilterExp instanceof LogExp) {
+        					        // if filter evaluates to false, then element cannot be accessed.
+        					        if(!TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($element, $listFilterExp)) {
+        					            $this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
+        					            break;
+        					        }
+        					    }
+        					    else throw new ListContextException('listFilterExp is not a valid LogExp', ListContextException::CONFIGURATION_ERROR);
+    					    }
+    					}
+					}
 					//on edit or on doDelete lock try to lock the element:
 					//do not lock on addJournalItem as it is a one shot action. This will be done with the appropriate p in $this->addJournalItem
 					if ($exec->getCrtParameters(0) == "edit" || $exec->getCrtParameters(0) == "lockAndModify" || $exec->getCrtParameters(0) == "checkInAndModify" || $exec->getCrtParameters(0) == "checkinFile" || $exec->getCrtParameters(0) == "delete") {
@@ -11697,10 +11730,10 @@ onUpdateErrorCounter = 0;
 					// updates group panel and module view through cache
 					$groupPanelCacheKey = $exec->getCurrentCacheLookup($p, 'groupPanel', 'display/groupPanel');
 					$exec->addJsCode("if(foundInCache){setTimeout(function() {if((getCache('groupPanel', '".$groupPanelCacheKey."') != null) || (getCache('moduleView', getModuleViewKeyCacheForNavigate()) != null)){".
-							"update('workZone/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/workZoneStructure', false, null, function(tabReq, textStatus){".
+							"update('workZone/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/display/workZoneStructure', false, null, function(tabReq, textStatus){".
 								"parseUpdateResult(tabReq, textStatus);".
-								"updateThroughCache('groupPanel', '".$groupPanelCacheKey."', 'groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel', false, false);".
-					 			"updateThroughCache('moduleView', getModuleViewKeyCacheForNavigate(), 'moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView', false, false);".
+							"updateThroughCache('groupPanel', '".$groupPanelCacheKey."', 'groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/display/groupPanel', false, false);".
+							"updateThroughCache('moduleView', getModuleViewKeyCacheForNavigate(), 'moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/display/moduleView', false, false);".
 							"});".
 						"}else{update(url, true);}}, 100);}");
 				}
@@ -11976,7 +12009,17 @@ $additionalJsCode
 								if($groupPath){
 								    // Medair (CWE) 16.02.2018 if a target group is given, tries to open element in it, else keeps first match								    
 								    $crtSelectedGroupId = $exec->getCrtParameters(2);
-								    if(!(isset($crtSelectedGroupId) && array_key_exists($crtSelectedGroupId, $groupPath))) {
+								    $foundCrtSelectedGroupId=false;
+								    if(isset($crtSelectedGroupId)) {
+								        foreach($groupPath as $eltGroup => $path) {
+								            // checks if target group belongs to element group path. If yes, then opens the card in the matching element group.
+								            if(array_key_exists($crtSelectedGroupId, $path)) {
+								                $foundCrtSelectedGroupId=true;
+								                $crtSelectedGroupId = $eltGroup;
+								            }
+								        }
+								    }
+								    if(!$foundCrtSelectedGroupId) {
 								        reset($groupPath);
 								        $crtSelectedGroupId = key($groupPath);
 								    }								

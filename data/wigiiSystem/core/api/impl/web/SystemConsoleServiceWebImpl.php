@@ -218,16 +218,19 @@ $("#systemConsole .messages").append("<div><div class='message' ><?=$message;?><
 
 	}
 
-//	public function getJSCode(){
-//		echo $this->JSCode;
-//	}
 	public function flushJSCode()
 	{
 		$this->executionSink()->publishStartOperation("flushJSCode");
 		if(isset($this->JSCode))
 		{
-//			echo preg_replace('/([^\']?.*\/\/.*)/', '', implode("", $this->JSCode));
-			echo implode("", $this->JSCode);
+			$scr = implode("",$this->JSCode);
+			// CWE 10.03.2018: transforms inline double slash comments into slash start comments
+			// 1. line starts with double slash
+			// 2. or any character except colon followed by double slash.
+			// 3. manages Windows or Unix new line codes			
+			//$src = preg_replace('/^\/\/(.*?)(\\r?)$/m','/*$1*/$2',$src);
+			//$src = preg_replace('/([^:])\/\/(.*?)(\\r?)$/m','$1;/*$2*/$3',$src);			
+			echo $src;
 			unset($this->JSCode);
 		}
 		$this->executionSink()->publishEndOperation("flushJSCode");
@@ -246,8 +249,14 @@ $("#systemConsole .messages").append("<div><div class='message' ><?=$message;?><
 		$this->executionSink()->publishStartOperation("flushJSCodeForRequest");
 		if(isset($this->JSCode) && isset($this->JSCode[$requestId]))
 		{
-//			echo preg_replace('/([^\']?.*\/\/.*)/', '', $this->JSCode[$requestId]);
-			echo $this->JSCode[$requestId];
+			$src = $this->JSCode[$requestId];
+			// CWE 10.03.2018: transforms inline double slash comments into slash start comments
+			// 1. line starts with double slash
+			// 2. or any character except colon followed by double slash.
+			// 3. manages Windows or Unix new line codes			
+			//$src = preg_replace('/^\/\/(.*?)(\\r?)$/m','/*$1*/$2',$src);
+			//$src = preg_replace('/([^:])\/\/(.*?)(\\r?)$/m','$1;/*$2*/$3',$src);			
+			echo $src;
 			unset($this->JSCode[$requestId]);
 		}
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++."end SystemConsoleService flushJSCodeForRequest $requestId"] = microtime(true);

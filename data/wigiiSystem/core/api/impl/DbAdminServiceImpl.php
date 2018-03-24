@@ -1186,17 +1186,19 @@ class DbAdminServiceImpl implements DbAdminService
 		$this->executionSink()->publishEndOperation("createTempTablesIndex", $principal);
 	}	
 	protected function getSqlForCreateTempTablesIndex() {
+		//default charset utf8mb4 (full UTF8)
+		if (!defined("DB_CHARSET")) define ("DB_CHARSET", "utf8mb4");
 		return "CREATE TABLE IF NOT EXISTS `".$this->getTempTablesIndexName()."` (
   `id_TempTablesIndex` int(11) NOT NULL AUTO_INCREMENT,
-  `tableName` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `tableName` varchar(64) COLLATE ".DB_CHARSET."_unicode_ci NOT NULL,
   `leaseTime` int(4) DEFAULT NULL,
   `expirationDate` DATETIME DEFAULT NULL,
   `locked` tinyint(1) DEFAULT NULL,
   `sys_creationUser` int(10) unsigned DEFAULT NULL,
-  `sys_creationUsername` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `sys_creationUsername` varchar(64) COLLATE ".DB_CHARSET."_unicode_ci DEFAULT NULL,
   `sys_creationDate` int(10) unsigned DEFAULT NULL,
   `sys_user` int(10) unsigned DEFAULT NULL,
-  `sys_username` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `sys_username` varchar(64) COLLATE ".DB_CHARSET."_unicode_ci DEFAULT NULL,
   `sys_date` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`id_TempTablesIndex`),
   UNIQUE KEY `tableName` (`tableName`), 
@@ -1204,7 +1206,7 @@ class DbAdminServiceImpl implements DbAdminService
   KEY `sys_creationDate` (`sys_creationDate`),
   KEY `sys_user` (`sys_user`),
   KEY `sys_date` (`sys_date`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+) ENGINE=InnoDB  DEFAULT CHARSET=".DB_CHARSET." COLLATE=".DB_CHARSET."_unicode_ci";
 	}
 	protected function getTempTablesIndexName() {
 		return 'TempTablesIndex';

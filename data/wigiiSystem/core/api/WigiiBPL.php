@@ -1199,6 +1199,121 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Updates element sharing.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementUpdateSharing business process needs the following parameters to run :
+	 * - element: Element. The filled element for which to update the sharing.
+	 * - newGroupIds: Array. Array of group IDs in which to share the element. 
+	 *   If not given, calls the method getLinkedIdGroupInRecord on the element to determine in which group to share the element.
+	 *   If sharing groups are determined based on element values, then movePriority is also considered and 
+	 *   if appropriate, the element will be moved in corresponding folder instead of shared.
+	 * - oldGroupIds: Array. An array with the existing/deprecated groups from which to remove the sharing. 
+	 *   If a group ID is present in newGroupIds and oldGroupIds then sharing will remain active.
+	 * - wigiiEventsSubscriber: Boolean|MultiplexedEvent|WigiiEvents. If an instance of MultiplexedEvent or WigiiEvents is given, 
+	 *   then Wigii Share events are triggered and passed trough the given subscriber,
+	 *   if explicit boolean false is given, then no share events are triggered,
+	 *   by default share events are triggered and passed to the standard Wigii events dispatcher.
+	 * - refreshGUI: Boolean. If true, then Wigii web user interface is asked to clear its group caches when sharing of element changes.
+	 *   If explicitely set to false, then nothing is sent to Wigii GUI. By default, GUI is refreshed.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 */
+	public function elementUpdateSharing($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementUpdateSharing", $principal);
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			
+			$element = $parameter->getValue('element');
+			if(is_null($element)) throw new WigiiBPLException('element cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			if($element->isSubElement()) throw new WigiiBPLException('subelement cannot be shared into groups',WigiiBPLException::UNSUPPORTED_OPERATION);
+			
+			$wigiiEventsSubscriber = $parameter->getValue('wigiiEventsSubscriber');
+			if(is_null($wigiiEventsSubscriber)) $wigiiEventsSubscriber = $this->getWigiiExecutor()->throwEvent();
+			
+			$refreshGUI = $parameter->getValue('refreshGUI');
+			if(is_null($refreshGUI)) $refreshGUI = true;
+			
+			$exec = ServiceProvider::getExecutionService();
+			$elS = $this->getElementService();
+			$configS = $this->getConfigService();
+			
+			// gets new group ids
+			$newGids = $parameter->getValue('newGroupIds');
+			$moveId=null;
+			if($newGids == null) {
+				$gids = ValueListArrayMapper::createInstance ( true, ValueListArrayMapper::Natural_Separators, true );
+				$element->getLinkedIdGroupInRecord ( $principal, $gids );
+				$newGids = $gids->getListIterator ();
+				// new group ids are given from element value, then also consider moveId
+				$moveId=true;
+			}
+			if ($newGids == null) $newGids = array ();
+			
+			// gets old group ids
+			$oldGids = $parameter->getValue('oldGroupIds');
+			if ($oldGids == null) $oldGids = array ();			
+			
+			// only add the ones which was not set before
+			if ($newGids && $oldGids) {
+				$orgNew = $newGids;
+				$newGids = array_diff_key ( $newGids, $oldGids ); 
+				$oldGids = array_diff_key ( $oldGids, $orgNew );
+			}
+						
+			// checks if element should be moved instead of shared 
+			if($moveId) $moveId = $element->getMoveGroupInRecord();
+			if($moveId) {
+				$moveId = $this->getWigiiExecutor()->evaluateConfigParameter($principal, $exec, $moveId, $element);
+			}
+			
+			if($wigiiEventsSubscriber) $this->getWigiiExecutor ()->getNotificationService ()->blockNotificationPostingValue ();
+			if ($newGids || $moveId) {
+				if($moveId){
+					$this->debugLogger()->write( "Move element in " . $moveId );
+					$elS->moveElement ( $this->getRootPrincipal (), $element->getId (), $moveId );
+					$newGids[$moveId] = $moveId;
+				} else{
+					$this->debugLogger()->write( "Share element in " . implode(",",$newGids) );
+					$elS->shareElement ( $this->getRootPrincipal (), $element->getId (), $newGids );
+				}
+				$gpl = GroupListArrayImpl::createInstance ();
+				$this->getGroupAdminService()->getGroupsWithoutDetail ( $principal, $newGids, $gpl );
+				foreach ( $gpl->getListIterator () as $group ) {
+					// notification here do not follow the skipNotification as it is a sharing notification and not an update notification
+					$this->getWigiiExecutor ()->throwEvent ()->shareElement ( PWithElementWithGroup::createInstance ( $principal, $element, $group ) );
+					$exec->invalidCache ( $principal, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $group->getId () );
+				}
+			}
+			if ($oldGids) {
+				$this->debugLogger()->write( "Unshare element from " . implode(",",$oldGids) );
+				$elS->unshareElement ( $this->getRootPrincipal (), $element->getId (), $oldGids );
+				$gpl = GroupListArrayImpl::createInstance ();
+				ServiceProvider::getGroupAdminService ()->getGroupsWithoutDetail ( $principal, $oldGids, $gpl );
+				$currentGroups = $configS->getGroupPList ( $principal, $exec->getCrtModule () )->getIds ();
+				$removeCurrentItemFromList = false;
+				foreach ( $gpl->getListIterator () as $group ) {
+					// notification here do not follow the skipNotification as it is a sharing notification and not an update notification
+					if($wigiiEventsSubscriber) $wigiiEventsSubscriber->unshareElement ( PWithElementWithGroup::createInstance ( $principal, $element, $group ) );
+					if($refreshGUI) $exec->invalidCache ( $principal, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $group->getId () );
+					unset ( $currentGroups [$group->getId ()] );
+				}
+				if (! $currentGroups) {
+					// if the item is moved out of all the current groups then remove it from the list
+					if($refreshGUI) $exec->addJsCode ( "removeElementInList('" . $element->getId () . "');" );
+				}
+			}
+			if($wigiiEventsSubscriber) $this->getWigiiExecutor ()->getNotificationService ()->unblockNotificationPostingValue ();
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("elementUpdateSharing", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementUpdateSharing", $principal);
+	}
+	
+	/**
 	 * Evaluates the calculated fields of an Element
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @param Object $caller the object calling the Wigii business process.

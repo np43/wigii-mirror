@@ -26,7 +26,7 @@
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  */
 $exec = $this->getExecutionService();
-$readonly = $this->getRecord()->getWigiiBag()->isReadonly($fieldName);
+$readonly = $this->getRecord()->getWigiiBag()->isReadonly($fieldName) || !$this->getDetailRenderer()->getRecordIsWritable();
 $disabled = $this->getRecord()->getWigiiBag()->isDisabled($fieldName);
 
 $fieldXml = $field->getXml();

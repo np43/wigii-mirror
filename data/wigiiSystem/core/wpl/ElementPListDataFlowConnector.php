@@ -251,6 +251,9 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		$principal = $dataFlowContext->getPrincipal();
 		
 		if($isSubitem) {
+		    // forbids direct access to subelements if origin is public (because a listFilterExp could apply on root element and we cannot know at this stage)
+		    if($dataFlowContext->isOriginPublic()) throw new DataFlowServiceException('Sub-elements cannot be accessed from public space',DataFlowServiceException::FORBIDDEN);
+		    
 			// sets configuration if defined
 			$configSel = $this->linkSelector->getRootConfigSelector();
 			$apiClient = $this->injectedApiClient;
@@ -299,6 +302,31 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		} 	
 		else {
 			if(isset($this->linkSelector)) $dataFlowContext->setAttribute('linkSelector', $this->linkSelector);
+			
+			// Medair(CWE) 13.03.2018 applies listFilterExp if data flow is called from public space
+			if($dataFlowContext->isOriginPublic()) {
+			    $apiClient = ServiceProvider::getGroupBasedWigiiApiClient($principal, $this->inGroupLogExp);
+			    $wbpl = ServiceProvider::getWigiiBPL();
+			    
+			    // if one group is selected, then centers on eventual group config
+			    if($apiClient->getGroupList()->count() == 1) {
+			        $gcs = $wbpl->buildConfigSelectorForGroup($principal, reset($apiClient->getGroupList()->getListIterator()));
+			        $apiClient->selectGroups($principal, $gcs->getGroupLogExp());
+			    }
+			    $listFilterExp=(string)$apiClient->getConfigService()->getParameter($principal,$apiClient->getModule(),'listFilterExp');
+			    if(!empty($listFilterExp)) {
+			        $listFilterExp = $wbpl->evaluateFuncExp($principal, str2fx($listFilterExp));
+			        if(isset($listFilterExp)) {
+			            if($listFilterExp instanceof LogExp) {
+			                $lx = $lf->getFieldSelectorLogExp();
+			                if(isset($lx)) $lx = lxAnd($lx,$listFilterExp);
+			                else $lx = $listFilterExp;
+			                $lf->setFieldSelectorLogExp($lx);
+			            }
+			            else throw new DataFlowServiceException('listFilterExp is not a valid LogExp', DataFlowServiceException::CONFIGURATION_ERROR);
+			        }
+			    }
+			}
 			
 			$n = $this->getElementService()->getSelectedElementsInGroups($principal, $this->inGroupLogExp, $this, $lf);
 		}

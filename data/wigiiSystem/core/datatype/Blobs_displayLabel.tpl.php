@@ -45,8 +45,7 @@ $this->put($this->t($fieldName, $fieldXml));
 if($fieldXml["isJournal"]=="1" && !$this->isForNotification() && !$this->isForPrint() && 
 	(!$this->isForExternalAccess() || $this->isForExternalAccess() && $this->getExternalAccessLevel()==Emails::EXTERNAL_ACCESS_EDIT)){
 	$fieldId = $this->getDetailRenderer()->getDetailId()."__".$fieldName;
-	// Medair(CWE) 10.02.2016: if element is blocked enables to add comments if allowOnReadOnly	
-	if(!($this->getRecord() instanceof Element && $this->getRecord()->isState_blocked()) || $fieldXml["allowOnReadOnly"]=="1"){
+	if($this->getDetailRenderer()->getRecordIsWritable() || $fieldXml["allowOnReadOnly"]=="1"){
 		if($this->isForExternalAccess()){
 			$code = $exec->getCrtParameters(0);
 			$actionUrl = "confirmationDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/externalAccess/".$code."/addJournalItem/".$this->getRecord()->getId()."";

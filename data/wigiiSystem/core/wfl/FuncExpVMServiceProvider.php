@@ -222,6 +222,9 @@ class FuncExpVMServiceProvider
 	 * @return FuncExpVM
 	 */
 	public function forkFuncExpVM() {
-	    return $this->getFuncExpVM()->forkVM();
+	    $returnValue = $this->getFuncExpVM()->forkVM();
+	    $obj = $this->getExecutionSink();
+	    if(isset($obj)) $returnValue->getFuncExpVMServiceProvider()->setExecutionSink($obj);
+	    return $returnValue;
 	}
 }

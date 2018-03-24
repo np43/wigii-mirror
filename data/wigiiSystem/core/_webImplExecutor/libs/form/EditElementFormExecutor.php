@@ -474,8 +474,16 @@ class EditElementFormExecutor extends FormExecutor {
 		$this->getWigiiExecutor ()->throwEvent ()->updateElement ( PWithElementWithGroupPList::createInstance ( $p, $this->getRecord (), ($configS->getGroupPList ( $p, $exec->getCrtModule () )->count () == 1 ? $configS->getGroupPList ( $p, $exec->getCrtModule () ) : null) ) );
 		
 		// autosharing is available only if not subElement
-	if (! $this->getRecord ()->isSubElement ()) {
-		// autosharing in new record to other group coming from attribut idGroup
+	if (! $this->getRecord ()->isSubElement ()) {		
+		// autosharing in new record to other group coming from attribut idGroup				
+		// CWE 17.03.2018 logic refactored in method WigiiBPL->elementUpdateSharing
+		$oldGids = ValueListArrayMapper::createInstance ( true, ValueListArrayMapper::Natural_Separators, true );
+		$oldRecord->getLinkedIdGroupInRecord ( $p, $oldGids);
+		ServiceProvider::getWigiiBPL()->elementUpdateSharing($p, $this, wigiiBPLParam(
+			'element',$this->getRecord(),
+			'oldGroupIds',$oldGids->getListIterator()
+		));
+		/* deprecated logic, moved to WigiiBPL->elementUpdateSharing
 		$gids = ValueListArrayMapper::createInstance ( true, ValueListArrayMapper::Natural_Separators, true );
 		$this->getRecord ()->getLinkedIdGroupInRecord ( $p, $gids );
 		$newGids = $gids->getListIterator ();
@@ -539,6 +547,7 @@ class EditElementFormExecutor extends FormExecutor {
 			}
 		}
 		$this->getWigiiExecutor ()->getNotificationService ()->unblockNotificationPostingValue ();
+		*/
 	}
 	
 	$elS->unLock ( $p, $this->getRecord () );

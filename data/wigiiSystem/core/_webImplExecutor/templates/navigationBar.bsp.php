@@ -61,6 +61,7 @@ if($roleList){
 }
 
 $companyLogo = $config->getParameter($p, null, "companyLogo");
+$companyLogoMargins = $config->getParameter($p, null, "companyLogoMargin");
 $crtWigiiNamespace = $defaultWigiiNamespace;
 $menuItem = array();
 $crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
@@ -148,7 +149,7 @@ if($p->isRealUserPublic()) {
             <?php if($companyLogo){
                 if(!$companyLogoMargins) $companyLogoMargins = "0 5px 0 0";
                 $homeClick = $exec->getUpdateJsCode($p->getRealUserId(), $p->getUserId(), WigiiNamespace::EMPTY_NAMESPACE_URL, Module::HOME_MODULE, "workZone", Module::HOME_MODULE, "start'+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true);
-                echo '<div class="" style="padding:'.($companyLogoMargins).';px;float:left;border-left:none;border-right:none;border-top:none;cursor: pointer;" onclick="'.$homeClick.'"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
+                echo '<div class="" style="padding:'.($companyLogoMargins).';px;float:left;border-left:none;border-right:none;border-top:none;cursor: pointer;margin-right:10px;" onclick="'.$homeClick.'"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
             } ?>
         </div>
             <ul id="navigateMenuBsp" class="nav navbar-nav">

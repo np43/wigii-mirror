@@ -26,6 +26,7 @@
  * Created by LWR on 2 nov. 2009
  * Enhanced by CWE on 09.10.2015 to constraint search space with a list of included/excluded groups.
  * Modified by CWE on 07.02.2018 to handle Wigii NCD module views
+ * Modified by Medair(CWE) 12.03.2018 to handle listFilterExp config parameter to always predefine as filtering LogExp on the module view.
  */
 class ListContext extends ListFilter {
 
@@ -880,7 +881,9 @@ class ListContext extends ListFilter {
 	 * @throws ListContextException
 	 */
 	public function setSearchBar($p, $wigiiExecutor, $post, $groupPTreeArrayImpl=null){
-
+	    $configS = $wigiiExecutor->getConfigurationContext();
+	    $exec = ServiceProvider::getExecutionService();
+	    
 		$this->searchBar = array();
 		//the post injections controles are already done in the FiltersFormExecutor
 		//don't fill in searchBar empty values
@@ -912,6 +915,16 @@ class ListContext extends ListFilter {
 		try { $this->addLogExpOnTextGroupSearch($p, $wigiiExecutor); }
 		catch (StringTokenizerException $e) { throw new ListContextException($e->getMessage(), ListContextException::INVALID_TextGroupFilter); }
 
+		// Medair (CWE) 12.03.2018: adds listFilterExp if defined in config
+		$listFilterExp=(string)$configS->getParameter($p,$exec->getCrtModule(),'listFilterExp');
+		if(!empty($listFilterExp)) {
+		  $listFilterExp = $wigiiExecutor->evaluateFuncExp($p, $exec, str2fx($listFilterExp));
+		  if(isset($listFilterExp)) {
+		      if($listFilterExp instanceof LogExp) $this->addFieldSelectorLogExp($listFilterExp);
+		      else throw new ListContextException('listFilterExp is not a valid LogExp', ListContextException::CONFIGURATION_ERROR);
+		  }
+		}
+		
 		//$this->setGroupBy($this->getGroupBy()/*,$this->isGroupByOnlyDuplicates()*/);
 		$this->setSortedBy();
 
