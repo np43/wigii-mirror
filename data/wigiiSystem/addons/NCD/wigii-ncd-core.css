@@ -498,22 +498,33 @@ div.taskList p.task.aborted {
 /**************************************
 * Wigii NCD AgileStoryBoard styling
 **************************************/
-button.storyBoardCreateButton {
+button.ncd.storyBoardCreateButton {
 	font-size:large;
 	background-color:green;
 	color:white;
 	border:none;
 	padding:5px;
+	margin-right:20px;
+	margin-left:5px;
+}
+div.storyBoardFilters {
+	min-height:40px;
 }
 span.storyBoardFilterLabel {
-	padding-left:50px;
+	padding-left:5px;
 	padding-right:10px;
 }
-button.storyBoardFilter {
-	font-size:large;
+button.ncd.storyBoardFilter {
+	font-size:medium;
+}
+button#storyBoardFilter_all {
+	margin-left:5px;
 }
 button.storyBoardFilter.activeFilter {
-	background-color:#0cd2ff;
+	background-color:#aac9ff;
+}
+div.h.storyBoard {
+	/*overflow-y:auto;*/
 }
 div.storyBoardColumn {
 	border: solid 1px black;		
@@ -524,14 +535,18 @@ div.storyBoardColumnHeader {
 	padding-top:10px;	
 	border-bottom: solid 1px black;
 	background-color:#0cd2ff;
+	font-weight:bold;
 }
 div.storyBoardColumnContent {
-	overflow-y:auto;
+	overflow-y:auto;	
 	overflow-x:visible;
 	padding-bottom:3px;
 }
 div.storyBoardColumnContent.dragOn {
 	border: solid 1px blue;
+}
+div.story.ui-draggable.ui-draggable-dragging {
+	max-width:200px;
 }
 div.storyBoardColumnContent div.story {
 	cursor:pointer;
@@ -541,45 +556,45 @@ div.storyBoardColumnContent div.story {
 	margin:2px;
 	padding-left:2px;
 	padding-right:2px;	
+	max-height:200px;
+	overflow-y:hidden;	
 }
 div.storyBoardColumnContent div.story span {	
 	display:block;	
 }
-div.storyBoardColumnContent div.story span.storyPosition {		
-	font-size:12px;
-	font-weight:bold;
-	display:inline;
-	padding-right:5px;
-}
-div.storyBoardColumnContent div.story span.storyAssignee {		
-	font-size:12px;
-	font-weight:bold;
-	color:#3333ff;
-	display:inline;
-}
 div.storyBoardColumnContent div.story span.storyEditButton {		
 	display:inline;	
-	padding-left:15px;
+	float:left;
 }
 div.storyBoardColumnContent div.story span.storyDeleteButton {		
 	display:inline;
 	color:red;
 	padding-left:5px;
+	float:left;
 }
-div.storyBoardColumnContent div.story span.storyMoveUpButton {		
+div.storyBoardColumnContent div.story span.storyMoveUpButton{		
 	display:inline;
 	color:#3333ff;
 	padding-left:5px;
+	float:left;
 }
-div.storyBoardColumnContent div.story span.storyShowDetailButton {		
+div.storyBoardColumnContent div.story span.storyMoveUpButton, div.storyBoardColumnContent div.story span.storyMoveDownButton{		
 	display:inline;
 	color:#3333ff;
-	padding-left:5px;
-	padding-right:5px;
+	padding-left:2px;
+	float:left;
+}
+div.storyBoardColumnContent div.story span.storyAssignee {		
+	font-size:12px;
+	font-weight:bold;
+	color:#3333ff;
+	clear:both;
 }
 div.storyBoardColumnContent div.story span.storyLabel {		
 	font-size:12px;
 	font-weight:bold;
+	padding-top:4px;
+	padding-bottom:4px;
 }
 div.storyBoardColumnContent div.story span.storyDescription {	
 	font-size:12px;
