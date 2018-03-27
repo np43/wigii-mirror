@@ -87,7 +87,7 @@ if(defined("PREVENT_INDEXING") && PREVENT_INDEXING){
 if($this->shouldBeResponsive($exec->getCrtAction())) {
     echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1,user-scalable=yes\">";
 }else{
-    echo "<meta name=\"viewport\" content=\"height=device-height, width=800px, initial-scale=1,user-scalable=yes\">";
+    echo "<meta name=\"viewport\" content=\"height=device-height, min-height=400px, width=800px, initial-scale=1,user-scalable=yes\">";
 }
 ?>
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />

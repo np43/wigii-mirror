@@ -343,7 +343,7 @@ $('div#" . $formId . "__" . $fieldName . " .value').mouseover(function(e) { radi
 		if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
 
 		if(($val != null && (string)$attribute==$val)) $this->put(' checked="on" ');
-		$this->put(' style="width:17px;height:17px;vertical-align:bottom;');
+		$this->put(' style="width:17px;height:17px;vertical-align:top;margin-top:0px;');
 		if($fieldXml["displayAsTag"]=="1") $this->put(' float:left; '); //the label will be float left, so the input should be as well
 		if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
 		$this->put('" />');
