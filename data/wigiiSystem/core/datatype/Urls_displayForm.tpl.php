@@ -32,9 +32,9 @@ $dtXml = $field->getDataType()->getXml();
 
 //defining width if existant
 if($parentWidth != null && $labelWidth != null){
-	$selectWidth = " width: 100%; max-width:".($parentWidth-$labelWidth-5)."px; ";  //select we don't need to make it smaller
-	$valueWidth = " width: 100%; max-width:".($parentWidth-$labelWidth-5)."px;";
-	$labelWidth = " width: 100%; max-width:".($labelWidth-21)."px; ";
+	$selectWidth = " width: 100%; max-width:".($parentWidth-$labelWidth)."px; ";  //select we don't need to make it smaller
+	$valueWidth = " width: 100%; max-width:".($parentWidth-$labelWidth)."px;";
+	$labelWidth = " width: 100%; max-width:".($labelWidth)."px; ";
 }
 
 //defining readOnly or disabled

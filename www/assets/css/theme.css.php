@@ -231,7 +231,7 @@ div.fieldGroupRight{
 div.fieldGroupRight div.SBIB {
 	background-color:#<?=$toolBar;?>;
 	border:none;
-	padding:4px 0px 4px 10px;
+	padding:4px 0px 4px 5px;
 	box-sizing:content-box;
 }
 div.fieldGroupRight div.SBIB * {

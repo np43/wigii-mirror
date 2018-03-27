@@ -82,7 +82,7 @@ if(!($readonly || $disabled) && $fieldXml["isBirthDate"]!="1") {
 	$this->getExecutionService()->addJsCode("
 $('#".$inputId."')
 .datepicker({ dateFormat: 'dd.mm.yy', changeYear: true, firstDay:1,	constrainInput:false, showOn:'button' })
-.click(function(){ $(this).datepicker('hide'); }).width(".($parentWidth-50).").next().css('margin',0).width(10)
+.click(function(){ $(this).datepicker('hide'); }).css('max-width',".($parentWidth-30).")
 ".($isNotExpanded ? ".hide()" : "").";");
 }
 if($minDate) {

@@ -247,24 +247,39 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 			if(($h || $i || $s) && !($h==0 && $i==0 && $s==0)) $time = "$h:$i:$s";
 			else $time = "";
 			$startDateInt = strtotime("$y/$m/$d $time");
-
+			
 			$endDate = $element->getFieldValue($fMap["period"], "endDate");
-			if($endDate == null) $endDate = $startDate;
+// 			fput("------------------");
+// 			fput("begDate: ".$startDate);
+// 			fput("startDateInt: ".$startDateInt);
+// 			fput("endDate: ".$endDate);
+// 			fput("endDateInt: ".$endDateInt);
+			if($endDate == null){
+				$endDate = $startDate;
+				$endDateInt = $startDateInt;
+			}
 			$endTime = $element->getFieldValue($fMap["period"], "endTime");
-			//if no endTime default to one hour
+			//if no endTime default to one hour or one day
 			if($endTime==null && $endDate==$startDate){
-				$endDateInt = ($startDateInt + 3600);
+				if($element->getFieldValue($fMap["period"], "isAllDay")){
+					$endDateInt = ($startDateInt+ 24*3600);
+				} else {
+					$endDateInt = ($startDateInt+ 3600);
+				}
 			} else {
 				$d = $m = $y = $h = $i = $s = null;
 				Dates::fromString($endDate." ".$endTime, $d, $m, $y, $h, $i, $s);
 				if(($h || $i || $s) && !($h==0 && $i==0 && $s==0)) $time = "$h:$i:$s";
 				else $time = "";
 				$endDateInt = strtotime("$y/$m/$d $time");
+				if(!$time) $endDateInt += 24*3600; //if no end time, move it to midnight (for correct display in fullCalendar)
 			}
 
 			$allDay = $element->getFieldValue($fMap["period"], "isAllDay");
 			if($allDay == null || $allDay == 0) $allDay = "false";
 			else $allDay = "true";
+// 			fput("endDate: ".$endDate);
+// 			fput("endDateInt: ".$endDateInt);
 		}
 		if($fMap["startdate"]){
 			$startDate = $element->getFieldValue($fMap["startdate"], "value");
@@ -275,7 +290,7 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 			$startDateInt = strtotime("$y/$m/$d $time");
 			if($time==null){
 				$allDay = "true";
-				$endDateInt = $startDateInt;
+				$endDateInt = $startDateInt+24*3600;
 			} else {
 				$allDay = "false";
 				//add one hour
@@ -290,6 +305,7 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 			if(($h || $i || $s) && !($h==0 && $i==0 && $s==0)) $time = "$h:$i:$s";
 			else $time = "";
 			$endDateInt = strtotime("$y/$m/$d $time");
+			if(!$time) $endDateInt += 24*3600; //if no end time, move it to midnight (for correct display in fullCalendar)
 		}
 
 		//rendering the JSCode
@@ -317,18 +333,24 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 		//ajust time zone offset settings / handle correctly if only one date is set
 		if($startDateInt) $startDateInt = $startDateInt + $this->getTimeZoneOffset();
 		if($endDateInt) $endDateInt = $endDateInt + $this->getTimeZoneOffset();
-		if(!$startDateInt && $endDateInt) $startDateInt = $endDateInt;
-		if($startDateInt && !$endDateInt) $endDateInt = $startDateInt;
 
+		$startDateISO = date("Y-m-d H:i", $startDateInt);
+		$endDateISO = date("Y-m-d H:i", $endDateInt);
+		
+// 		fput("begDateISO: ".$startDateISO);
+// 		fput("startDateInt: ".$startDateInt);
+// 		fput("endDateISO: ".$endDateISO);
+// 		fput("endDateInt: ".$endDateInt);
+		
 		echo "{";
 		echo "id:'$elementId',";
 		echo "title:'$text',";
 		echo "description:'$description',";
-		echo "start:'$startDateInt',";
-		echo "end:'$endDateInt',";
+		echo "start:'$startDateISO',";
+		echo "end:'$endDateISO',";
 		echo "allDay: $allDay,";
 		echo "className:'".($this->isHighlight() ? ' highlight ' : '')." ".($elementP->getRights()==null || !$elementP->getRights()->canWriteElement() ? ' readOnly ' : '')."".($element->isState_important1() ? ' important1 ' : '')."".($element->isState_important2() ? ' important2 ' : '')."".($element->isState_locked() ? ' locked ' : '')."',"; //"+(elementCalendar_currentEventSelected == $elementId ? 'selected' : '')";
-		if(!$this->isHighlight() && $color){
+		if($color){
 			echo "color:'#".$color."',";
 			echo "textColor:'#".getBlackOrWhiteFromBackgroundColor($color)."',";
 		}

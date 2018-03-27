@@ -340,10 +340,10 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			//20 is the label padding
 			$noPadding = "";
 			if(!$isCollapse && ($countSubFields > 1 || $fieldXml["isInLine"] =="1")){
-				$labelWidth = $this->getIsInLineWidth()-20;
+				$labelWidth = $this->getIsInLineWidth();
 				$noPadding = "padding-right:0px;"; //don't need the right padding if is inline
 			} else {
-				$labelWidth = $this->getLabelWidth()-20;
+				$labelWidth = $this->getLabelWidth();
 			}
 			if($fieldName == 'stayConnected'){
                 $style = "width:auto;$noPadding";

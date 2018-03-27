@@ -85,9 +85,9 @@ if(defined("PREVENT_INDEXING") && PREVENT_INDEXING){
 <?
 }
 if($this->shouldBeResponsive($exec->getCrtAction())) {
-    echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1,maximum-scale=1, user-scalable=yes\">";
+    echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1,user-scalable=yes\">";
 }else{
-    echo "<meta name=\"viewport\" content=\"height=device-height, width=800px, initial-scale=1,maximum-scale=1, user-scalable=yes\">";
+    echo "<meta name=\"viewport\" content=\"height=device-height, width=800px, initial-scale=1,user-scalable=yes\">";
 }
 ?>
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
@@ -117,6 +117,41 @@ if(file_exists(CLIENT_WEB_PATH."favicon.ico")){
 <link rel="shortcut icon" href="<?=SITE_ROOT_forFileUrl;?>favicon.gif" type="image/x-icon" />
 <?
 }
+?>
+<script type="text/javascript" ><?
+//Definition of JS constante
+?>
+SITE_ROOT = '<?=SITE_ROOT;?>';
+CLIENT_NAME = '<?=CLIENT_NAME;?>';
+crtContextId = <?=$exec->getCrtContext();//prevent creating new context on setBrowser?>;
+EXEC_answerRequestSeparator = '<?=ExecutionServiceImpl::answerRequestSeparator;?>';
+EXEC_answerParamSeparator = '<?=ExecutionServiceImpl::answerParamSeparator;?>';
+EXEC_requestSeparator = '<?=ExecutionServiceImpl::requestSeparator;?>';
+EXEC_foundInJSCache = '<?=ExecutionServiceImpl::answerFoundInJSCache;?>';
+DIALOG_okLabel = '<?=$transS->h($p, "ok");?>';
+DIALOG_noLabel = '<?=$transS->h($p, "no");?>';
+DIALOG_cancelLabel = '<?=$transS->h($p, "cancel");?>';
+DIALOG_closeLabel = '<?=$transS->h($p, "close");?>';
+DIALOG_doYouWantToSaveChage = '<?=$transS->h($p, "doYouWantToSaveChange");?>';
+DIALOG_finishCurrentAction = '<?=$transS->h($p, "pleaseFinishYourCurrentAction");?>';
+DIALOG_keepSelectionLabel = '<?=$transS->h($p, "keepSelection");?>'; //multiple
+DIALOG_discardSelectionLabel = '<?=$transS->h($p, "discardSelection");?>'; //multiple
+DIALOG_selectAtLeastOneGroup = '<?=$transS->h($p, "pleaseSelectAtLeastOneGroup");?>';
+DIALOG_doYouWantToMoveThisFolderUnderParent = '<?=$transS->h($p, "doYouWantToMoveThisFolderUnderParent");?>';
+DIALOG_doYouWantToMoveOrKeepInBoth = '<?=$transS->h($p, "doYouWantToMoveOrKeepInBoth");?>';
+DIALOG_move = '<?=$transS->h($p, "move");?>';
+DIALOG_keepInBoth = '<?=$transS->h($p, "keepInBoth");?>';
+DIALOG_copyToFolder = '<?=$transS->h($p, "copyToFolder");?>';
+DIALOG_copyToFolder_help = '<?=$transS->h($p, "copyToFolder_help");?>';
+DIALOG_doYouWantToSave_organizeDialog = '<?=$transS->h($p, "doYouWantToSave_organizeDialog");?>';
+DIALOG_doYouWantToSave_filtersDialog = '<?=$transS->h($p, "doYouWantToSave_filtersDialog");?>';
+DIALOG_doYouWantToSave_confirmationDialog = '<?=$transS->h($p, "doYouWantToSave_confirmationDialog");?>';
+DIALOG_doYouWantToSave_feedbackDialog = '<?=$transS->h($p, "doYouWantToSave_feedbackDialog");?>';
+DIALOG_doYouWantToSave_emailingDialog = '<?=$transS->h($p, "doYouWantToSave_emailingDialog");?>';
+DIALOG_doYouWantToSave_importDialog = '<?=$transS->h($p, "doYouWantToSave_importDialog");?>';
+DIALOG_doYouWantToSave_exportDialog = '<?=$transS->h($p, "doYouWantToSave_exportDialog");?>';
+DIALOG_doYouWantToSave_changePasswordDialog = '<?=$transS->h($p, "doYouWantToSave_changePasswordDialog");?>';
+</script><?
 
 //Enables Google analytics for Wigii instance if needed
 if(defined("GOOGLE_ANALYTICS_ACCOUNT")) {
@@ -191,27 +226,7 @@ if(file_exists(CLIENT_CONFIG_PATH.CLIENT_NAME.".css")){
 <body>
 
 <script type="text/javascript" ><?
-//Definition of JS constante
 ?>
-SITE_ROOT = '<?=SITE_ROOT;?>';
-CLIENT_NAME = '<?=CLIENT_NAME;?>';
-crtContextId = <?=$exec->getCrtContext();//prevent creating new context on setBrowser?>;
-EXEC_answerRequestSeparator = '<?=ExecutionServiceImpl::answerRequestSeparator;?>';
-EXEC_answerParamSeparator = '<?=ExecutionServiceImpl::answerParamSeparator;?>';
-EXEC_requestSeparator = '<?=ExecutionServiceImpl::requestSeparator;?>';
-EXEC_foundInJSCache = '<?=ExecutionServiceImpl::answerFoundInJSCache;?>';
-DIALOG_okLabel = '<?=$transS->h($p, "ok");?>';
-DIALOG_cancelLabel = '<?=$transS->h($p, "cancel");?>';
-DIALOG_closeLabel = '<?=$transS->h($p, "close");?>';
-DIALOG_doYouWantToSaveChage = '<?=$transS->h($p, "doYouWantToSaveChange");?>';
-DIALOG_finishCurrentAction = '<?=$transS->h($p, "pleaseFinishYourCurrentAction");?>';
-DIALOG_selectAtLeastOneGroup = '<?=$transS->h($p, "pleaseSelectAtLeastOneGroup");?>';
-DIALOG_doYouWantToMoveThisFolderUnderParent = '<?=$transS->h($p, "doYouWantToMoveThisFolderUnderParent");?>';
-DIALOG_doYouWantToMoveOrKeepInBoth = '<?=$transS->h($p, "doYouWantToMoveOrKeepInBoth");?>';
-DIALOG_move = '<?=$transS->h($p, "move");?>';
-DIALOG_keepInBoth = '<?=$transS->h($p, "keepInBoth");?>';
-DIALOG_copyToFolder = '<?=$transS->h($p, "copyToFolder");?>';
-DIALOG_copyToFolder_help = '<?=$transS->h($p, "copyToFolder_help");?>';
 wigii().initContext();
 wigii().context.fileDownloadingWaitingMsg = '<?=$transS->h($p, "fileDownloading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>';
 wigii().context.serverSavingWaitingMsg = '<?=$transS->h($p, "wigiiBusySaving");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/>';
@@ -382,14 +397,6 @@ if( $('#downloadingDialog').is(':ui-dialog')) { $('#downloadingDialog').dialog("
 actOnCloseDialog("downloadingDialog");
 emptyDialog("downloadingDialog");
 }
-DIALOG_doYouWantToSave_organizeDialog = '<?=$transS->h($p, "doYouWantToSave_organizeDialog");?>';
-DIALOG_doYouWantToSave_filtersDialog = '<?=$transS->h($p, "doYouWantToSave_filtersDialog");?>';
-DIALOG_doYouWantToSave_confirmationDialog = '<?=$transS->h($p, "doYouWantToSave_confirmationDialog");?>';
-DIALOG_doYouWantToSave_feedbackDialog = '<?=$transS->h($p, "doYouWantToSave_feedbackDialog");?>';
-DIALOG_doYouWantToSave_emailingDialog = '<?=$transS->h($p, "doYouWantToSave_emailingDialog");?>';
-DIALOG_doYouWantToSave_importDialog = '<?=$transS->h($p, "doYouWantToSave_importDialog");?>';
-DIALOG_doYouWantToSave_exportDialog = '<?=$transS->h($p, "doYouWantToSave_exportDialog");?>';
-DIALOG_doYouWantToSave_changePasswordDialog = '<?=$transS->h($p, "doYouWantToSave_changePasswordDialog");?>';
 </script>
 <?
 if(defined("WEB_WNCD")) { include(TEMPLATE_PATH . "header.wncd.php");}
@@ -416,7 +423,7 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 <div id="loadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiBusyLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="filteringBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiFilteringLoading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="fileDownloadingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:30%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "fileDownloading");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
-<div id="formProgressBar" style="background-color:#fff;position:absolute; top:40%; left:40%; width:20%; display:none; z-index:999999;padding:10px;"></div>
+<div id="formProgressBar" style="background-color:#fff;position:absolute; top:30%; left:40%; width:20%; display:none; z-index:999999;padding:10px;"></div>
 <div id="savingBar" class="ui-corner-all SBIB" style="background-color:#fff;font-size:large;position:absolute; top:40%; left:40%; display:none; z-index:999999; padding:5px 10px;"><?=$transS->t($p, "wigiiBusySaving");?>&nbsp;&nbsp;&nbsp;<img src="<?=SITE_ROOT_forFileUrl;?>images/gui/busyBlue.gif" style="vertical-align:middle;"/></div>
 <div id="help" style="display:none;"></div>
 <div id="systemConsole" class="ui-corner-all" style="display:none;" ></div>

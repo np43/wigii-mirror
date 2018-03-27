@@ -44,6 +44,7 @@ crtContextId = 0; //id of the current JS context, this is used to manage context
 crtWigiiNamespaceUrl = null;
 crtModuleName = null;
 crtWorkingModuleName = null;
+crtLanguage = null;
 
 function object2Array(obj){
 	r = new Array;
@@ -590,8 +591,13 @@ decHTML = function(text) {
  * @param {} textStatus
  */
 function parseUpdateResult(tabReq, textStatus){
-	// hides progress bar
-	setVis('formProgressBar', false);
+	/* do not hide long run waiting message neither form submission progress bar until it is done
+	 * 	the code bellow is deprecated since the 22.03.2018 to prevent user thinking things are completed when not yet
+	 *  the risk is that the long run waiting message never goes away in some cases, which then is still preferable that the user
+	 *  refresh than having the message removed by itself
+		// hides progress bar
+		setVis('formProgressBar', false);
+	 */
 	// hides long run waiting message
 	if(savingBarTimeout) {clearTimeout(savingBarTimeout);savingBarTimeout=null;}
 	setVis('savingBar', false);

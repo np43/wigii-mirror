@@ -256,7 +256,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		}
 		return $this->totalWidth;
 	}
-	public function setTotalWidth($width) {$this->totalWidth = $width-$this->getCorrectionWidth(); }
+	public function setTotalWidth($width) {$this->totalWidth = $width; }
 	private $correctionWidth;
 	public function getCorrectionWidth() {return $this->correctionWidth; }
 	public function setCorrectionWidth($width) { $this->correctionWidth = $width; }

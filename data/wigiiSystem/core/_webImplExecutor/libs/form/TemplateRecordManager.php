@@ -1042,7 +1042,6 @@ class TemplateRecordManager extends Model {
 		$this->put(' enctype="multipart/form-data" ');
 		$this->put(' action="'.$submitAction.'" ');
 		if($class)	$this->put(' class="'.$class.'" ');
-		
 		// CWE 26.08.2016: prevents autofilling forms into Admin module, except for login page
 		// autocomplete=off doesn't work at field level for special login fields like username,password,email. autocomplete=off should be put at form level		
 		$crtModule = ServiceProvider::getExecutionService()->getCrtModule();
@@ -1279,8 +1278,8 @@ class TemplateRecordManager extends Model {
 		if($value){
 			if($value[0]!="#"){
 				$value = "#".$value;
-				return '<div style="float:left;height:15px;width: 100%; max-width:25px;background-color:'.$value.';"></div>';
 			}
+			return '<div style="float:left;height:15px;width: 100%; max-width:25px;background-color:'.$value.';"></div>&nbsp;<span style="color:#666;font-size:x-small;">('.$value.')</span>';
 		}
 		return "";
 	}
@@ -2016,7 +2015,7 @@ class TemplateRecordManager extends Model {
 									$options = "";
 									foreach($menuItems as $item){
 										//$options .= "<input type='radio' name='".$emailManageButtonId."[]' value='$item' />".$this->t($item).'<br />';
-										$options .= '<input type="radio" name="'.$emailManageButtonId.'" value="'.$item.'" /><span style="cursor:pointer;margin-top:-2px;" onclick="$(this).prev().click();">'.($item == "externalAccessMenuStop" && $externalAccessLevel==Emails::EXTERNAL_ACCESS_EDIT ? $this->h("externalAccessMenuStopEdit") : ($item == "externalAccessMenuStop" && $externalAccessLevel==Emails::EXTERNAL_ACCESS_VIEW ? $this->h("externalAccessMenuStopRead") : $this->h($item))).'</span><br />';
+										$options .= '<input type="radio" name="'.$emailManageButtonId.'" value="'.$item.'" /><span style="cursor:pointer;margin-top:-2px;" onclick="$(this).prev().click();"> '.($item == "externalAccessMenuStop" && $externalAccessLevel==Emails::EXTERNAL_ACCESS_EDIT ? $this->h("externalAccessMenuStopEdit") : ($item == "externalAccessMenuStop" && $externalAccessLevel==Emails::EXTERNAL_ACCESS_VIEW ? $this->h("externalAccessMenuStopRead") : $this->h($item))).'</span><br />';
 									}
 
 

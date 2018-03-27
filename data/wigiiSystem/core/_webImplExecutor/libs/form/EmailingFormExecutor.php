@@ -377,7 +377,7 @@ class EmailingFormExecutor extends FormExecutor {
 //			eput($table);
 			$exec->addJsCode("" .
 				"$('#Emailing_form__to_email div.label')" .
-				".append('&nbsp;&nbsp;<select name=\"__emailingEmailFields\"><option value=\"all\">".$transS->h($p, "allEmailingEmailFields")."</option>".$options."</select>')." .
+				".append('&nbsp;&nbsp;<select name=\"__emailingEmailFields\" style=\"float:right;width:100%;max-width:".$this->getFormRenderer()->getValueWidth()."px;\"><option value=\"all\">".$transS->h($p, "allEmailingEmailFields")."</option>".$options."</select>')." .
 				"find('select').change(function(){" .
 					"$table" .
 					"v = $(this).val();" .

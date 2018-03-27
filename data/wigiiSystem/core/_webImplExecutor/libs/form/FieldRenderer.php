@@ -30,27 +30,28 @@ class FieldRenderer extends Model {
 	private $fieldGroupHasError = array();
 	private $fieldGroupIsFilled = array();
 	private $fieldGroupStack = array();
-	private $fieldGroupParentOffset = 8; //number of pixel the inner group is less wide than the group.
+	private $fieldGroupParentOffset = 12; //number of pixel the inner group is less wide than the group. padding 10 + 2 border
 	private $crtFieldGroupName;
 	private $crtFieldGroupDepth = 0;
 	private $fieldTotalWidth; //the total width can be more than label + value as there is some possible margins or paddings
 	private $fieldLabelWidth;
 	private $fieldValueWidth;
 	private $fieldIsInLineWidth;
-	private $fieldOffset = 0; //number of pixel the value is smaller than the total - label
+	private $fieldOffset = 5; //padding right of 5px for the fields
+	private $rootOffset = 0; //padding of the dialog div;
 
 	public function reset(){
 		$this->fieldGroupHasError = array();
 		$this->fieldGroupIsFilled = array();
 		$this->fieldGroupStack = array();
-		$this->fieldGroupParentOffset = 8;
+		$this->fieldGroupParentOffset = 12;
 		$this->crtFieldGroupName = null;
 		$this->crtFieldGroupDepth = 0;
 		$this->fieldTotalWidth = null;
 		$this->fieldLabelWidth = null;
 		$this->fieldValueWidth = null;
 		$this->fieldIsInLineWidth = null;
-		$this->fieldOffset = 0;
+		$this->fieldOffset = 5;
 	}
 	/**
 	 * Field group stack management.
@@ -68,12 +69,10 @@ class FieldRenderer extends Model {
 		if($this->crtFieldGroupName==null){
 			$this->crtFieldGroupName = "root";
 		}
-//		$this->setFieldWidth($this->crtFieldGroupName, $totalWidth, $labelWidth);
 		$this->fieldTotalWidth[$this->crtFieldGroupName] = $totalWidth;
 		$this->fieldLabelWidth[$this->crtFieldGroupName] = $labelWidth;
-		//in root do not reduce by $this->getFieldOffset
-		$this->fieldValueWidth[$this->crtFieldGroupName] = $totalWidth-$labelWidth;
-		$this->fieldIsInLineWidth[$this->crtFieldGroupName] = $totalWidth;
+		$this->fieldValueWidth[$this->crtFieldGroupName] = $totalWidth-$this->getFieldOffset()-$labelWidth;
+		$this->fieldIsInLineWidth[$this->crtFieldGroupName] = $totalWidth-$this->getFieldOffset();
 	}
 	protected function enterFieldGroup($rm, $fieldXml, $fieldName, $idField){
 		$fieldClass = (string)$fieldXml["class"];
@@ -88,12 +87,12 @@ class FieldRenderer extends Model {
         }
 		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" >');
 
-		//display label if necessary, 20 is label padding
+		//display label if necessary
 		if($fieldXml["noLabel"]!="1"){
 			if((string)$fieldXml["totalWidth"]!=null){
-				$labelWidth = ((string)$fieldXml["totalWidth"]-$this->getFieldGroupParentOffset()-20);
+				$labelWidth = ((string)$fieldXml["totalWidth"]);
 			} else {
-				$labelWidth = ($this->getIsInLineWidth()-20);
+				$labelWidth = ($this->getIsInLineWidth());
 			}
 
             $style = "width: 100%; max-width:".$labelWidth."px;";
@@ -106,18 +105,14 @@ class FieldRenderer extends Model {
             if($fieldXml["displayAsTag"]=="1") $rm->put('<div class="displayAsTag"></div>');
 		}
 
-		//create the group container, 10 is group padding
+		//create the group container
 		$rm->put('<div id="'.$idField.'_group" ');
 		$rm->put('class="value fieldGroup SBIB ui-corner-all'.($fieldXml["noFieldset"] =="1" ? ' noFieldset ' : '').'" ');
-		//add in CSS background-color:#fff; position:relative;margin-left:20px;margin-top:0px;margin-bottom:5px;padding:4px;
-		//or border-bottom
-        //-width:2px;border-bottom-style:solid;border-top-width:2px;border-top-style:solid;
-		//+10 when noFieldset is to take advantage of the unused margin-right
-        //$padding = ($rm->isForExternalAccess())?'padding-right: 20px;':'';
+
 		if((string)$fieldXml["totalWidth"]!=null){
-			$rm->put('style="'. $padding. ' width: 100%; max-width:'.(($fieldXml["noFieldset"]=="1" ? (string)$fieldXml["totalWidth"]+10 : ((string)$fieldXml["totalWidth"]-$this->getFieldGroupParentOffset()-10-4))).'px;"'); //-10 is for left padding, 4 is for the two borders of 4 px;
+			$rm->put('style="'. $padding. ' width: 100%; max-width:'.(string)$fieldXml["totalWidth"].'px;"');
 		} else {
-            $rm->put('style="'. $padding.  ' width: 100%; max-width:'.(($fieldXml["noFieldset"]=="1" ? $this->getIsInLineWidth()+10 : ($this->getIsInLineWidth()-10-4))).'px;"'); //-10 is for left padding, 4 is for the two borders of 4 px;
+            $rm->put('style="'. $padding.  ' width: 100%; max-width:'.$this->getIsInLineWidth().'px;"');
 		}
 		$rm->put('>');
 
@@ -172,37 +167,40 @@ class FieldRenderer extends Model {
 	protected function updateWidthOnEnterField($fieldGroupName, $fieldGroupXml){
 		$parentTotalWidth = $this->getTotalWidth();
 		$parentLabelWidth = $this->getLabelWidth();
+		//eput($fieldGroupName." ".$parentTotalWidth." ".$parentLabelWidth);
+		
 		$totalWidth = (string)$fieldGroupXml["totalWidth"];
 		if($totalWidth==null) $totalWidth = $parentTotalWidth;
 		$labelWidth = (string)$fieldGroupXml["labelWidth"];
 		//if($labelWidth==null) $labelWidth = $parentLabelWidth;
-
+		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		
 		$this->pushFieldGroup($fieldGroupName);
 		$useMultipleColumn = (int)(string)$fieldGroupXml["useMultipleColumn"];
 
 		//if group with fieldset change the width
 		if(($fieldGroupXml["groupStart"]=="1" || $fieldGroupXml["groupEnd"]=="1") && $fieldGroupXml["noFieldset"]!="1"){
+			//the content of the group is the offset of the group + the offset of the parent field
 			$totalWidth = $totalWidth - $this->getFieldGroupParentOffset();
-			$totalWidth = $totalWidth - 20; //fieldGroup padding, this is not the real padding but it is to make a good blank proportion on the right
-
-			//note: a fieldGroup always take the full width of the parent. --> no need to check here the isInLine property.
-
 		}
-
+		$totalWidth = $totalWidth-$this->getFieldOffset();
+		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		
 		//define the useMultiplecolumn
 		if(($fieldGroupXml["groupStart"]=="1" || $fieldGroupXml["groupEnd"]=="1") && $useMultipleColumn){
-			//take in consideration the margin-right of 10 for each column except the last one
-			//$totalWidth = floor(($totalWidth-(($useMultipleColumn-1)*10)) / $useMultipleColumn);
-            $totalWidth = floor(($totalWidth-(($useMultipleColumn)*10)) / $useMultipleColumn) - 10;
-            //$totalWidth = (($totalWidth-5)/$useMultipleColumn);
+			$totalWidth = floor($totalWidth/ $useMultipleColumn);
 		}
-
+		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		
 		if($labelWidth == null) $labelWidth = floor($totalWidth * ($parentLabelWidth / $parentTotalWidth));
-
+		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		
 		//if label is too big making the value size less than 10 then adapt the label to leave the value minimum with a size of 10
 		if(10>=($totalWidth-$labelWidth-$this->getFieldOffset())){
 			$labelWidth = $totalWidth-10-$this->getFieldOffset();
 		}
+		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		
 		$this->setFieldWidth($fieldGroupName, $totalWidth, $labelWidth);
 
 	}
@@ -268,7 +266,7 @@ class FieldRenderer extends Model {
 	protected function setFieldWidth($fieldGroupName, $totalWidth, $labelWidth){
 		$this->fieldTotalWidth[$fieldGroupName] = $totalWidth;
 		$this->fieldLabelWidth[$fieldGroupName] = $labelWidth;
-		$this->fieldValueWidth[$fieldGroupName] = $totalWidth-$labelWidth-$this->getFieldOffset()-5;
+		$this->fieldValueWidth[$fieldGroupName] = $totalWidth-$labelWidth-$this->getFieldOffset();
 		$this->fieldIsInLineWidth[$fieldGroupName] = $totalWidth-$this->getFieldOffset();
 	}
 }

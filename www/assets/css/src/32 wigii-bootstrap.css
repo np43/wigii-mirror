@@ -38,6 +38,18 @@ body {
 	-moz-box-sizing: content-box;
 }
 
+#workZone .calendar *{
+	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+#workZone div.elementDialog.docked, #workZone div.elementDialog.docked * {
+	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
 /*
  * Display the label with the wigii style instead of the bootstrap style
  */

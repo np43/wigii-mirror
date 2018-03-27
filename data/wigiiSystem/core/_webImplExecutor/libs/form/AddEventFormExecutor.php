@@ -111,7 +111,7 @@ class AddEventFormExecutor extends AddElementFormExecutor {
 					if($startDate){
 						$startDate = date_parse($startDate);
 						$element->setFieldValue($startDate["day"].".".$startDate["month"].".".$startDate["year"]." ".$startDate["hour"].":".$startDate["minute"], $field->getFieldName(), "value");
-						if($endDate && field2) {
+						if($endDate && $field2) {
 							$endDate = date_parse($endDate);
 							$element->setFieldValue($endDate["day"].".".$endDate["month"].".".$endDate["year"]." ".$endDate["hour"].":".$endDate["minute"], $field2->getFieldName(), "value");
 						}

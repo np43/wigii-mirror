@@ -31,10 +31,11 @@ $dtXml = $field->getDataType()->getXml();
 
 //defining width if existant
 if($parentWidth != null && $labelWidth != null){
-	$inputWithDatePickerWidth = $parentWidth-$labelWidth-5-35;
-	$halfInputWidth = ((($parentWidth)/2)-5);
-	$valueWidth = " width: 100%; max-width:".($parentWidth-$labelWidth-6)."px; text-align: left;";
-	$labelWidth = " width: 100%; max-width:".($labelWidth-20)."px; ";
+	//$inputWithDatePickerWidth = $parentWidth-$labelWidth-5-35;
+	//$halfInputWidth = ((($parentWidth)/2)-5);
+	$valueWidthPx = $parentWidth-$labelWidth;
+	$valueWidth = " width: 100%; max-width:".($valueWidthPx)."px;";
+	$labelWidth = " width: 100%; max-width:".($labelWidth)."px; ";
 }
 
 //defining readOnly or disabled
@@ -58,7 +59,7 @@ if($fieldXml["onlyDate"]!="1"){
 	$inputName = $fieldName.'_'.$subFieldName;
 	$isRequire = $fieldXml["require"]=="1" && $dtXml->{$subFieldName}["require"]="1";
 
-	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, 'max-width: 14px;', $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
+	$this->displayForm_0_TillPossibleAdditionalAttribute($labelWidth, 'width:17px;height:17px;vertical-align:bottom;margin-bottom:5px;', $subFieldName, $field->getDataType()->getDataTypeName(), $inputNode, $inputType, $inputId, $inputName, $isRequire);
 	$val = $this->getRecord()->getFieldValue($fieldName, $subFieldName);
 	//if($fieldXml["onlyDate"]=="1"){
 	//	//si l'on veut le onlyDate, on modifie le onClick en l'obligeant d'être toujours valide..
@@ -194,7 +195,7 @@ if($fieldXml["onlyDate"]!="1"){
 //jquery small calendar for date
 if(!($readonly || $disabled)) {
 	if($fieldXml["onlyDate"]!="1"){
-		$this->getExecutionService()->addJsCode("
+	$this->getExecutionService()->addJsCode("
 $('#".$begDateInputId.", #".$endDateInputId."')
 	.datepicker({
 		dateFormat: 'dd.mm.yy',
@@ -206,9 +207,9 @@ $('#".$begDateInputId.", #".$endDateInputId."')
 	.click(function(){
 		$(this).datepicker('hide');
 	})
-	.width(".$inputWithDatePickerWidth.")
-	.next().css('margin',0).width(34);
-;");
+	.css('max-width',".($valueWidthPx-30).");
+;
+");
 	} else {
 		$this->getExecutionService()->addJsCode("
 $('#".$begDateInputId.", #".$endDateInputId."')
@@ -219,8 +220,11 @@ $('#".$begDateInputId.", #".$endDateInputId."')
 		constrainInput:false,
 		showOn:'focus'
 	})
-	.width(".($halfInputWidth-27).");
-	");
+	.css('width','100%')
+	.css('max-width',".($parentWidth/2 /* the two on the same line */ -30 /* the label From / To */).");
+;
+");
+		
 	}
 	//if begDate is more than end date, then clear endate
 	$this->getExecutionService()->addJsCode("

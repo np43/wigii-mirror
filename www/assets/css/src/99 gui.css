@@ -16,7 +16,7 @@
 }
 
 .ui-dialog { padding:2px; overflow:visible; }
-.ui-dialog .ui-dialog-content { border: 0; padding: .7em .7em; background: none; overflow: visible; }
+.ui-dialog .ui-dialog-content { border: 0; padding: 10px 10px; background: none; overflow: visible; }
 /* background color are redefined in theme.css */
 .ui-dialog .ui-dialog-buttonpane { background:#f00; border:none; }
 
@@ -28,6 +28,9 @@
 /* border color are redefined in theme.css */
 .ui-tabs .ui-tabs-nav { border:none; border-bottom:1px solid #f00;  background:none; margin-left:5px;margin-right:0px; padding:0px; }
 
+.ui-tabs .ui-tabs-nav li { border-bottom-width:1px;}
+.ui-tabs .ui-tabs-nav li.ui-tabs-active { background-color:#fff;color:#000;border-color:#000;border-bottom-color:#fff;}
+.ui-tabs .ui-tabs-nav li.ui-tabs-active a { color:#000;}
 .ui-tabs .ui-tabs-nav li a { float: left; text-decoration: none; padding: 0.2em 0.4em; }
 .ui-tabs .ui-tabs-panel { padding: 0px; border-width: 0; border-bottom-width:1px; background: none; }
 
@@ -324,3 +327,20 @@ div.cm div.checked {
 .ui-dialog .ui-dialog-title{
     line-height: 25px;
 }
+
+/*****************************************
+* FullCalendar
+*****************************************/
+.fc-toolbar.fc-header-toolbar {
+	margin-bottom:0px;
+}
+.fc-event.highlight {
+	border-width:6px;
+	border-style:double;
+}
+.fc-event.highlight .fc-content:before {
+    content: "✅";
+    margin-right: 6px;
+}
+
+

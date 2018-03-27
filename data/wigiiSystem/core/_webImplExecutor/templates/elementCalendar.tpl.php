@@ -187,12 +187,18 @@ if(!$url){ //displays list only if no url
 $crtView = $lc->getCrtViewParams("crtView");
 if($crtView==null) $crtView = "month";
 $crtDate = $lc->getCrtViewParams("crtDate");
-if($crtDate==null) $crtDate = "crtYear=".date("Y")."; crtMonth=".(date("n")-1)."; crtDay=".date("j").";";
+if($crtDate==null) $crtDate = "crtDate='".date("Y-m-d")."';";
+else $crtDate = "crtDate='".date("Y-m-d",$crtDate)."';";
 //eput($crtView." ".$crtDate);
+switch($transS->getLanguage()){
+	case "l02" : $crtLanguage= "fr"; break;
+	case "l01" :
+	default:
+		$crtLanguage = "en";
+}
+$exec->addJsCode("$crtDate setListenersToCalendar('".($crtGroupP ? ($crtGroupP->getDbEntity()->getGroupParentId() ? $crtGroupP->getDbEntity()->getGroupParentId() : 0 ) : null)."', '".($crtGroupP ? $transS->h($p, "groupUp") : null)."', '$crtLanguage', '$crtView', crtDate);");
 
-$exec->addJsCode("$crtDate setListenersToCalendar('".($crtGroupP ? ($crtGroupP->getDbEntity()->getGroupParentId() ? $crtGroupP->getDbEntity()->getGroupParentId() : 0 ) : null)."', '".($crtGroupP ? $transS->h($p, "groupUp") : null)."', '$crtView', crtYear, crtMonth, crtDay);");
-
-?><div class="dataZone calendar" style="margin-left:10px; margin-right: 10px;"><?
+?><div class="dataZone calendar" style="margin-left:3px; margin-right: 3px;"><?
 /**
  * element List context menu
  */

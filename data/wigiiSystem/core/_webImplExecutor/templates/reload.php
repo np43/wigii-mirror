@@ -31,6 +31,13 @@ header("Content-Type: text/html; charset=UTF-8");
 "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
 <HEAD>
+<script type="text/javascript" >
+<? //Definition of JS constante needed in the wigii_XXX.js file ?>
+DIALOG_okLabel = 'Ok';
+DIALOG_noLabel = 'No';
+DIALOG_cancelLabel = 'Cancel';
+DIALOG_closeLabel = 'Close';
+</script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/js/wigii_<?=ASSET_REVISION_NUMBER;?>.js"></script>
 <script language="JavaScript" type="text/JavaScript">
 <?

@@ -44,9 +44,9 @@
 		overlayOpacity: 0.4,                // transparency level of overlay
 		overlayColor: '#000',               // base color of overlay
 		draggable: true,                    // make the dialogs draggable (requires UI Draggables plugin)
-		okButton: '&nbsp;OK&nbsp;',         // text for the OK button
-		noButton: '&nbsp;No&nbsp;',         // text for the NO button
-		cancelButton: '&nbsp;Cancel&nbsp;', // text for the Cancel button
+		okButton: '&nbsp;'+DIALOG_okLabel+'&nbsp;',         // text for the OK button
+		noButton: '&nbsp;'+DIALOG_noLabel+'&nbsp;', //'&nbsp;No&nbsp;',         // text for the NO button
+		cancelButton: '&nbsp;'+DIALOG_cancelLabel+'&nbsp;', //'&nbsp;Cancel&nbsp;', // text for the Cancel button
 		dialogClass: 'ui-dialog ui-widget ui-corner-all', // if specified, this class will be applied to all dialogs
 		
 		// Public methods

@@ -1742,7 +1742,6 @@ class WigiiCoreExecutor {
 		$exec = ServiceProvider :: getExecutionService();
 		$transS = ServiceProvider :: getTranslationService();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
-		
 		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
 			//27.09.2016 added in form position relative to ensure that help popup position is correctly calculated in WigiiAPI.js
 			$exec->addJsCode("
@@ -1752,19 +1751,19 @@ class WigiiCoreExecutor {
 					elementDialogButtons.first().click(function(){".$cancelJsCode . ' ' . $closeJsCode . ' actOnCancelDialog("' . $domId . '");  ' . ($scrollTopOnEnd ? ' $(window).scrollTop(0); ' : '')." manageWorkzoneViewDocked('hide')});
 					if(!$('#scrollElement').children().first().hasClass('elementDetail')) $('#scrollElement').children().first().css('position','relative');
 			".
-                '$("#scrollElement").css("max-width", "'. ($width + 17). 'px");
+                '$("#scrollElement").css("max-width", "'. ($width). 'px");
                 $("#scrollElement").css("width", "100%");
-                margin = (($(window).width()-'. ($width + 17). ')/2);
+                margin = (($(window).width()-'. ($width). ')/2);
                 $(".ui-dialog").css("left", margin+"px");
                 $(window).resize(function(){
-                    if($(window).width() < ' . ($width + 17) . '){
+                    if($(window).width() < ' . ($width) . '){
                         $(".ui-dialog").css("left", "0px");
                         $(".ui-dialog").css("width", "100%");
-                        $(".ui-dialog").css("max-width", '. ($width + 17). ');
+                        $(".ui-dialog").css("max-width", '. ($width). ');
                     }else{
-                        margin = (($(window).width()-'. ($width + 17). ')/2);
+                        margin = (($(window).width()-'. ($width). ')/2);
                         $(".ui-dialog").css("left", margin+"px");
-                        $(".ui-dialog").css("width", '. ($width + 17). ');
+                        $(".ui-dialog").css("width", '. ($width). ');
                         
                     }
                  });');
@@ -1805,31 +1804,31 @@ class WigiiCoreExecutor {
 		        $exec->addJsCode( '
 		        ariaForm = "[aria-describedBy=\"' . $domId . '\"]";
 		        
-		        margin = (($(window).width()-'. ($width + 17). ')/2);
+		        margin = (($(window).width()-'. ($width). ')/2);
                 $(ariaForm).css("left", margin+"px");
                 $(ariaForm).css("top", "0px");
                 $(ariaForm).css("width", "100%");
-                $(ariaForm).css("max-width", '. ($width + 17). ');
+                $(ariaForm).css("max-width", '. ($width). ');
         
-                if($(window).width() < ' . ($width + 17) . '){
+                if($(window).width() < ' . ($width) . '){
                     $(ariaForm).css("left", "0px");
                     $(ariaForm).css("top", "0px");
                     $(ariaForm).css("width", "100%");
-                    $(ariaForm).css("max-width", '. ($width + 17). ');
+                    $(ariaForm).css("max-width", '. ($width). ');
                 }else{
-                    margin = (($(window).width()-'. ($width + 17). ')/2);
+                    margin = (($(window).width()-'. ($width). ')/2);
                     $(ariaForm).css("top", "0px");
                     $(ariaForm).css("left", margin+"px");
                 }
         
                 $(window).resize(function(){
-                    if($(window).width() < ' . ($width + 17) . '){
+                    if($(window).width() < ' . ($width) . '){
                         $(ariaForm).css("left", "0px");
                         $(ariaForm).css("top", "0px");
                         $(ariaForm).css("width", "100%");
-                        $(ariaForm).css("max-width", '. ($width + 17). ');
+                        $(ariaForm).css("max-width", '. ($width). ');
                     }else{
-                        margin = (($(window).width()-'. ($width + 17). ')/2);
+                        margin = (($(window).width()-'. ($width). ')/2);
                         $(ariaForm).css("width", "100%");
                         $(ariaForm).css("top", "0px");
                         $(ariaForm).css("left", margin+"px");
@@ -1921,27 +1920,27 @@ class WigiiCoreExecutor {
 				'}).dialog("moveToTop");' .
 				' $(".elementDialog").css("float","none"); ' .
 				''.
-        ' margin = (($(window).width()-'. ($width + 17). ')/2);
+        ' margin = (($(window).width()-'. ($width). ')/2);
         ariaForm3B = "[aria-describedBy=\"' . $domId . '\"]";
-        if($(window).width() < ' . ($width + 17) . '){
+        if($(window).width() < ' . ($width) . '){
             $(ariaForm3B).css("left", "0px");
             $(ariaForm3B).css("width", "100%");
-            $(ariaForm3B).css("max-width", '. ($width + 17). ');
+            $(ariaForm3B).css("max-width", '. ($width). ');
         }else{
-            margin = (($(window).width()-'. ($width + 17). ')/2);
+            margin = (($(window).width()-'. ($width). ')/2);
             $(ariaForm3B).css("left", margin+"px");
             /* $(ariaForm3B).css("height", $(window).height()); */
         }
 
         $(window).resize(function(){
-            if($(window).width() < ' . ($width + 17) . '){
+            if($(window).width() < ' . ($width) . '){
                 $(ariaForm3B).css("left", "0px");
                 $(ariaForm3B).css("width", "100%");
-                $(ariaForm3B).css("max-width", '. ($width + 17). ');
+                $(ariaForm3B).css("max-width", '. ($width). ');
             }else{
-                margin = (($(window).width()-'. ($width + 17). ')/2);
+                margin = (($(window).width()-'. ($width). ')/2);
                 $(ariaForm3B).css("left", margin+"px");
-                $(ariaForm3B).css("width", '. ($width + 17). ');
+                $(ariaForm3B).css("width", '. ($width). ');
             }
         });
 
@@ -1960,7 +1959,7 @@ class WigiiCoreExecutor {
 					$('#elementDialog').dialog('destroy');
 				}
 				manageWorkzoneViewDocked('show',".$this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "elementTotalWidth").");".
-				'$("#scrollElement").css("max-width", "'. ($width + 17). 'px");
+				'$("#scrollElement").css("max-width", "'. ($width). 'px");
                 $("#scrollElement").css("width", "100%");
 			');
 			return true;
@@ -1968,7 +1967,7 @@ class WigiiCoreExecutor {
 		$exec->addJsCode('' .
 				'myPosition = dialogPos["' . $domId . '"]; if(myPosition == null){ myPosition = { my : "center", at: "center" }; }' .
 				'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
-				'title: "' . $dialogTitle . '", width:' . ($width + 17) . ', position: myPosition,' .
+				'title: "' . $dialogTitle . '", width:' . ($width) . ', position: myPosition,' .
             'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
 				'beforeClose: function(){ ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '"); $(this).dialog("destroy"); $(window).scrollTop(0); },' .
 				'closeOnEscape: true, resizable:false' .
@@ -1977,32 +1976,32 @@ class WigiiCoreExecutor {
             '
             aria = "[aria-describedBy=\"'.$domId .'\"]";
 		        
-            margin = (($(window).width()-'. ($width + 17). ')/2);
+            margin = (($(window).width()-'. ($width). ')/2);
                   $(aria).css("left", margin+"px");
                   $(aria).css("width", "100%");
-                  $(aria).css("max-width", '. ($width + 17). ');
+                  $(aria).css("max-width", '. ($width). ');
                   
                   
-                  if($(window).width() < ' . ($width + 17) . '){
+                  if($(window).width() < ' . ($width) . '){
                         $(aria).css("left", "0px");
                         $(aria).css("top", "0px");
                         $(aria).css("width", "100%");
-                        $(aria).css("max-width", '. ($width + 17). ');
+                        $(aria).css("max-width", '. ($width). ');
                     }else{
-                        margin = (($(window).width()-'. ($width + 17). ')/2);
+                        margin = (($(window).width()-'. ($width). ')/2);
                         $(aria).css("left", margin+"px");
                     }
                   
             $(window).resize(function(){
-                    if($(window).width() < ' . ($width + 17) . '){
+                    if($(window).width() < ' . ($width) . '){
                         $(aria).css("left", "0px");
                         $(aria).css("top", "0px");
                         $(aria).css("width", "100%");
-                        $(aria).css("max-width", '. ($width + 17). ');
+                        $(aria).css("max-width", '. ($width). ');
                     }else{
-                        margin = (($(window).width()-'. ($width + 17). ')/2);
+                        margin = (($(window).width()-'. ($width). ')/2);
                         $(aria).css("left", margin+"px");
-                        $(aria).css("width", '. ($width + 17). ');
+                        $(aria).css("width", '. ($width). ');
                     }
                  });');
 		$exec->addJsCode('addScrollWithShadow("elementDialog");
@@ -2465,23 +2464,34 @@ class WigiiCoreExecutor {
 		$listContext->matchFetchCriteria($originalListContext);
 	
 		//adding fieldLogExp on period field
-		$startDate = $exec->getCrtParameters(0);
-		$endDate = (int) $exec->getCrtParameters(1);
-		$crtView = (int) $exec->getCrtParameters(2);
-		$crtDate = $exec->getCrtParameters(3);
-		$timeZoneOffset = (int) $exec->getCrtParameters(4);
-		//ajust the timeZone to the current swiss one
-		$temp_offset = - (int) date("O") * 36; //gives +100 if GMT+1
-		$timeZoneOffset = $timeZoneOffset - $temp_offset;
-	
-		//substract the timezone from the browser
-		$startDate = $startDate - $timeZoneOffset;
-		$endDate = $endDate - $timeZoneOffset;
-	
-		//		fput(date("d.m.Y h:i",$endDate));
-		//		fput($crtDate);
-		//		fput($timeZoneOffset);
-		//		fput($temp_offset);
+		$startDate = $exec->getCrtParameters(0); //receive with no time zone, -> the GMT time
+		$endDate = (int) $exec->getCrtParameters(1); //receive with no time zone, -> receive the GMT time
+		$crtView = (int) $exec->getCrtParameters(2); 
+		$crtDate = $exec->getCrtParameters(3); //receive with no time zone, -> receive the GMT time
+		//since new version of FullCalendar, it is confirured with no timezone. Considering it is more
+		//natural that the calendar is used in one current timezone and there everyone refers to 
+		//14h of the local time if it is written 14h
+// 		$timeZoneOffset = (int) $exec->getCrtParameters(4); //with new fullCalendar no more timezone
+//  	//ajust the timeZone to the current swiss one
+// 		$temp_offset = - (int) date("O") * 36; //gives +100 if GMT+1
+//  	$timeZoneOffset = $timeZoneOffset - $temp_offset;
+// 		//substract the timezone from the browser
+// 		$startDate = $startDate - $timeZoneOffset;
+// 		$endDate = $endDate - $timeZoneOffset;
+		
+ 		//the server here will convert the timestamp to the swiss one. So to prevent errors we need to remove
+ 		//the swiss timezone for the start and end date
+		$timeZoneOffset = null;
+		$temp_offset_startDate = (int) date("O",$startDate) * 36; //gives +100 if GMT+1
+		$temp_offset_endDate = (int) date("O",$endDate) * 36; //gives +100 if GMT+1
+		$temp_offset_crtDate = (int) date("O",$crtDate) * 36; //gives +100 if GMT+1
+		$startDate = $startDate - $temp_offset_startDate;
+		$endDate = $endDate - $temp_offset_endDate;
+		$crtDate= $crtDate- $temp_offset_crtDate;
+		
+// 		fput(date("d.m.Y h:i",$startDate)." ".$startDate);
+// 		fput(date("d.m.Y h:i",$endDate)." ".$endDate);
+// 		fput(date("d.m.Y h:i",$crtDate)." ".$crtDate);
 		if ($crtView)
 			$originalListContext->setCrtViewParams($crtView, "crtView");
 		if ($crtDate)
@@ -2508,6 +2518,8 @@ class WigiiCoreExecutor {
 					$and2LogExp->addOperand(LogExp :: createGreaterEqExp($fsStartDate, $startDate));
 					$orLogExp->addOperand($and2LogExp);
 					$dateExp->addOperand($orLogExp);
+					
+// 					fput($dateExp);
 	
 					$crtLogExp = $listContext->getFieldSelectorLogExp();
 					if (isset ($crtLogExp)) {
@@ -2594,7 +2606,7 @@ class WigiiCoreExecutor {
 	
 		$lookForNext = false;
 		if ($nbRow == 0 && $originalListContext->getCrtViewParams("redefineSearchCriterias") && $originalListContext->getFieldSelectorLogExp() != null) {
-			//						fput("look for next");
+			//fput("look for next");
 			$lookForNext = true;
 			//redo the fetch but without the dates limit
 			$originalListContext->setSortedBy("reset"); //reset to default sorting by
@@ -2641,6 +2653,7 @@ class WigiiCoreExecutor {
 		//if no result found then display message: ?????
 	
 		//if there is a text search then add any other events without highlight.
+		//fput($originalListContext->getTextSearch());
 		if (true && !$lookForNext && $originalListContext->getTextSearch() != null) {
 	
 			$elementPList->setHighlight(false);
@@ -5179,7 +5192,7 @@ invalidCompleteCache();
 
 				//$this->throwEvent()->readElement(PWithElement::createInstance($p, $element));
 				$form = $this->createDetailGroupFormExecutor($groupP, $groupEditRec, "detailGroup_form", null);
-				$form->setCorrectionWidth(26);
+				$form->setCorrectionWidth(43);
 
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
@@ -5248,7 +5261,7 @@ invalidCompleteCache();
 				}
 
 				$form = $this->createNewGroupFormExecutor($groupP, $groupEditRec, "newGroup_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5326,7 +5339,7 @@ invalidCompleteCache();
 				}
 
 				$form = $this->createNewCopyGroupFormExecutor($groupP, $groupEditRec, "newCopyGroup_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5415,7 +5428,7 @@ invalidCompleteCache();
 				}
 
 				$form = $this->createEditGroupFormExecutor($groupP, $groupEditRec, "editGroup_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5489,7 +5502,7 @@ invalidCompleteCache();
 
 				$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupDelete"), $exec->getCrtModule());
 				$form = $this->createDeleteGroupFormExecutor($groupP, $groupEditRec, "deleteGroup_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5549,7 +5562,7 @@ invalidCompleteCache();
 
 					$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupEmpty"), $exec->getCrtModule());
 					$form = $this->createEmptyGroupFormExecutor($groupP, $groupEditRec, "emptyGroup_form", $action, $request);
-					$form->setCorrectionWidth(19);
+					$form->setCorrectionWidth(43);
 					$form->setLabelWidth($labelWidth);
 					$form->setTotalWidth($totalWidth);
 
@@ -5590,7 +5603,7 @@ invalidCompleteCache();
 				$request = "elementDetail/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/groupDetail/" . $workingModuleName . "/" . $groupId;
 
 				$form = $this->createConfigEditGroupFormExecutor($groupP, $rec, "configEditGroup_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5636,7 +5649,7 @@ invalidCompleteCache();
 				}
 
 				$form = $this->createEmailNotificationGroupFormExecutor($groupP, $rec, "groupEmailNotification_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5690,7 +5703,7 @@ invalidCompleteCache();
 				}
 
 				$form = $this->createPortalGroupFormExecutor($groupP, $rec, "portalGroup_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5745,7 +5758,7 @@ invalidCompleteCache();
 				}
 
 				$form = $this->createHtmlContentGroupFormExecutor($groupP, $rec, "htmlContentGroup_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5794,7 +5807,7 @@ invalidCompleteCache();
 				}
 
 				$form = $this->createXmlPublishGroupFormExecutor($groupP, $rec, "groupXmlPublish_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5849,7 +5862,7 @@ invalidCompleteCache();
 				}
 
 				$form = $this->createSubscriptionGroupFormExecutor($groupP, $rec, "groupSubscription_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5884,7 +5897,7 @@ invalidCompleteCache();
 				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("userDetail"), $exec->getCrtModule());				
 				//$this->throwEvent()->readElement(PWithElement::createInstance($p, $element));
 				$form = $this->createDetailUserFormExecutor(ServiceProvider :: getModuleAdminService()->getModule($p, $workingModuleName), $userP, $userEditRec, "detailUser_form", null);
-				$form->setCorrectionWidth(26);
+				$form->setCorrectionWidth(43);
 
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
@@ -5923,7 +5936,7 @@ invalidCompleteCache();
 				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/" . $this->getAdminContext($p)->getSubScreen();
 
 				$form = $this->createNewUserFormExecutor($userP, $userEditRec, "newUser_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -5974,7 +5987,7 @@ invalidCompleteCache();
 				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/" . $this->getAdminContext($p)->getSubScreen();
 
 				$form = $this->createEditUserFormExecutor($userP, $userEditRec, "editUser_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -6023,7 +6036,7 @@ invalidCompleteCache();
 				$request = "elementDetail/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/userDetail/" . $workingModuleName . "/" . $userId;
 
 				$form = $this->createDeleteUserFormExecutor($userP, $rec, "deleteUser_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -6330,7 +6343,7 @@ onUpdateErrorCounter = 0;
 				$request = "elementDetail/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/userDetail/" . $workingModuleName . "/" . $userId;
 
 				$form = $this->createConfigEditUserFormExecutor(ServiceProvider :: getModuleAdminService()->getModule($p, $workingModuleName), $userP, $rec, "configEditUser_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -6532,7 +6545,7 @@ onUpdateErrorCounter = 0;
 				$form = $this->createExternalAccessRequestFormExecutor($groupP, $externalAccessRequestRec, $record, "externalAccessRequest_form", $action);
 				$form->getTrm()->setP($p);
 				$form->setIsDialog(false);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -6667,7 +6680,7 @@ onUpdateErrorCounter = 0;
 				$form->getTrm()->setP($p);
 				$form->setIsForExternalAccess(true);
 				$form->setIsDialog(false);
-				//$form->setCorrectionWidth(19);
+				//$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				if($groupSubscriptionRecord && $groupSubscriptionRecord->getFieldValue("subscriptionEnableCaptcha")){
@@ -6977,7 +6990,7 @@ onUpdateErrorCounter = 0;
 				$form->getTrm()->setP($p);
 				$form->setIsForExternalAccess(true);
 				$form->setIsDialog(false);
-				//$form->setCorrectionWidth(19);
+				//$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				if($record->getFieldValue("subscriptionEnableCaptcha")){
@@ -7108,7 +7121,7 @@ onUpdateErrorCounter = 0;
 				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/adminModuleEditor";
 
 				$form = $this->createModuleConfigEditFormExecutor($moduleEditorIsNew, $configFileName, $rec, "moduleConfigEdit_form", $action, $request);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -7150,7 +7163,7 @@ onUpdateErrorCounter = 0;
 				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/adminModuleEditor";
 
 				$form = $this->createModuleEditorNewNamespaceFormExecutor($rec, "moduleEditorNewNamespace_form", $action);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -7184,7 +7197,7 @@ onUpdateErrorCounter = 0;
 				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/adminModuleEditor";
 
 				$form = $this->createModuleEditorRemoveNamespaceFormExecutor($rec, "moduleEditorRemoveNamespace_form", $action);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -7216,7 +7229,7 @@ onUpdateErrorCounter = 0;
 				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/adminModuleEditor";
 
 				$form = $this->createModuleEditorRemoveEmailNotificationFormExecutor($rec, "moduleEditorRemoveEmailNotification_form", $action);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -7244,7 +7257,7 @@ onUpdateErrorCounter = 0;
 				$form->setLabelWidth(200);
 				$form->setTotalWidth(450);
 				if ($idAnswer == "elementDialog") {
-					$form->setCorrectionWidth(19);
+					$form->setCorrectionWidth(43);
 					$form->setIsDialog(true);
 				} else {
 					$form->setIsDialog(false);
@@ -7502,7 +7515,7 @@ onUpdateErrorCounter = 0;
 
 				$action = $exec->getCrtRequest();
 				$form = $this->createAddIndicatorFormExecutor($indicatorRec, "addIndicator_form", $action);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -7853,7 +7866,7 @@ onUpdateErrorCounter = 0;
 
 				$action = $exec->getCrtRequest();
 				$form = $this->createFeedbackFormExecutor($feedbackRec, "giveFeedback_form", $action);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				//			$form->setDottedLineSeparatorBetweenField(true);
@@ -8080,7 +8093,7 @@ onUpdateErrorCounter = 0;
 				$form = $this->createEmailingFormExecutor($EmailingRec, "Emailing_form", $action, $elementIds);
 				$form->setEmailLabels($emailLabels);
 				$form->setFieldList($fieldList);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				$form->setEmails($emails);
@@ -8202,7 +8215,7 @@ onUpdateErrorCounter = 0;
 					$action = "mainDiv/".$action; //add the container, because the action is done through an update url
 				}
 				$form = $this->createChangePasswordFormExecutor($changePasswordRec, "changePassword_form", $action);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				//			$form->setDottedLineSeparatorBetweenField(true);
@@ -8279,7 +8292,7 @@ onUpdateErrorCounter = 0;
 					//				$crtSelectedGroupP = ServiceProvider::getGroupAdminService()->getGroup($p, $crtSelectedGroup->getId());
 				}
 				$form = $this->createImportElementInFormExecutor($importToRec, "importElementIn_form", $action, $this->getRootPrincipal(), $crtSelectedGroupP);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				//			$form->setDottedLineSeparatorBetweenField(true);
@@ -8337,7 +8350,7 @@ onUpdateErrorCounter = 0;
 				$inGroupIdF->setXml(simplexml_load_string($inGroupModuleXml));
 
 				$form = $this->createUpdateElementInFormExecutor($updateToRec, "updateElementIn_form", $action, $this->getRootPrincipal(), $groupPTreeArrayImpl->getWriteGroupPList());
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -8401,7 +8414,7 @@ onUpdateErrorCounter = 0;
 					}
 				}
 				$form = $this->createFindDuplicatesInFormExecutor($updateToRec, "findDuplicatesIn_form", $action, $this->getRootPrincipal(), $crtSelectedGroupP);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -9313,7 +9326,7 @@ onUpdateErrorCounter = 0;
 
 				$action = $exec->getCrtRequest();
 				$form = $this->createExportFormExecutor($exportRec, $what . "_form", $action);
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
@@ -9661,7 +9674,7 @@ onUpdateErrorCounter = 0;
 				$action = $exec->getCrtRequest();
 				$form = $this->createFiltersFormExecutor($filtersRec, "filters_form", $action);
 				$form->setIsSimpleFilters($exec->getCrtAction() =="simpleFilters");
-				$form->setCorrectionWidth(19);
+				$form->setCorrectionWidth(43);
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				$form->setListContext($lc);
@@ -10541,7 +10554,8 @@ onUpdateErrorCounter = 0;
 							if(isset($policyEval)) $policyEval->initializeElementStateOnCopy($p, $element);
 							$form = $this->createCopyElementFormExecutor($element, "copyElement_form", $action, $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList"));
 						}
-						$form->setCorrectionWidth(19);
+						if($this->isWorkzoneViewDocked()) $form->setCorrectionWidth(0);
+						else $form->setCorrectionWidth(43);
 						$form->setLabelWidth($labelWidth);
 						$form->setTotalWidth($totalWidth);
 						//					$form->setDottedLineSeparatorBetweenField(true);
@@ -10560,11 +10574,12 @@ onUpdateErrorCounter = 0;
 							$this->throwEvent()->readElement(PWithElement :: createInstance($p, $element));
 							if($exec->getCrtParameters(0)=="detail"){
 								$form = $this->createDetailElementFormExecutor($element, $elementP, "detailElement_form", null);
-								//$form->setCorrectionWidth(26); //Commented by medair (LMA) No longer applicable with width to 100%
+								//$form->setCorrectionWidth(43); //Commented by medair (LMA) No longer applicable with width to 100%
 							} else {
 								$form = $this->createPrintElementFormExecutor($element, $elementP, "detailElement_form", null);
 							}
-
+							if($this->isWorkzoneViewDocked()) $form->setCorrectionWidth(0);
+							else $form->setCorrectionWidth(43);
 							$form->setLabelWidth($labelWidth);
 							$form->setTotalWidth($totalWidth);
 							$form->setElementPolicyEvaluator($this->getElementPolicyEvaluator($p, $element->getModule()));
@@ -10580,7 +10595,8 @@ onUpdateErrorCounter = 0;
 							$element = Element :: createInstance($exec->getCrtModule());
 							$form = $this->createEditMultipleElementFormExecutor($element, "editMultipleElement_form", $action, $this->getRootPrincipal(), $elementPAList);
 							$form->setIsMultiple(true);
-							$form->setCorrectionWidth(19);
+							if($this->isWorkzoneViewDocked()) $form->setCorrectionWidth(0);
+							else $form->setCorrectionWidth(43);
 							$form->setLabelWidth($labelWidth);
 							$form->setTotalWidth($totalWidth);
 							$form->setListContext($mlc);
@@ -10616,7 +10632,8 @@ onUpdateErrorCounter = 0;
 								} else {
 									$form = $this->createEditElementFormExecutor($element, "editElement_form", $action, $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList"));
 								}
-							$form->setCorrectionWidth(19);
+							if($this->isWorkzoneViewDocked()) $form->setCorrectionWidth(0);
+							else $form->setCorrectionWidth(46);
 							$form->setLabelWidth($labelWidth);
 							$form->setTotalWidth($totalWidth);
 							//						$form->setDottedLineSeparatorBetweenField(true);
@@ -10637,7 +10654,7 @@ onUpdateErrorCounter = 0;
 							$form = $this->createDeleteMultipleElementFormExecutor($elementsDeleteRec, "deleteMultipleElement_form", $action, $this->getRootPrincipal(), $elementPAList);
 							$form->setElementPAList($elementPAList);
 							$form->setFileFields($fileFields);
-							$form->setCorrectionWidth(19);
+							$form->setCorrectionWidth(43);
 							$form->setLabelWidth($labelWidth);
 							$form->setTotalWidth($totalWidth);
 							$form->setListContext($mlc);
@@ -10651,7 +10668,7 @@ onUpdateErrorCounter = 0;
 							$form = $this->createDeleteElementFormExecutor($elementDeleteRec, "deleteElement_form", $action, $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList"));
 							$form->setElementPToDelete($elementP);
 							$form->setFileFields($fileFields);
-							$form->setCorrectionWidth(19);
+							$form->setCorrectionWidth(43);
 							$form->setLabelWidth($labelWidth);
 							$form->setTotalWidth($totalWidth);
 
@@ -10916,7 +10933,7 @@ onUpdateErrorCounter = 0;
 
 						$action = $exec->getCrtRequest();
 						$form = $this->createTransferMultipleElementFormExecutor($transferMultipleElementRec, "transferMultipleElement_form", $action, $this->getRootPrincipal(), $elementPAList, $lc);
-						$form->setCorrectionWidth(19);
+						$form->setCorrectionWidth(43);
 						$form->setLabelWidth($labelWidth);
 						$form->setTotalWidth($totalWidth);
 
@@ -11483,7 +11500,7 @@ onUpdateErrorCounter = 0;
 						$element->setSys_creationDate(time());
 						$element->setSys_date(time());
 						$form = $this->createAddSubElementFormExecutor($element, "addElement_form", $action, $masterEltId, $linkName);
-						$form->setCorrectionWidth(19);
+						$form->setCorrectionWidth(43);
 						$totalWidth = 0 + $configS->getParameter($p, $configS->getCurrentModule(), "elementTotalWidth");
 						$labelWidth = 0 + $configS->getParameter($p, $configS->getCurrentModule(), "elementLabelWidth");
 						$form->setLabelWidth($labelWidth);
@@ -11549,7 +11566,7 @@ onUpdateErrorCounter = 0;
 						$element->getWigiiBag()->loadFromFixedBag(); //recopy the fixed bag as normal bag without elementId
 						if(isset($policyEval)) $policyEval->initializeElementStateOnCopy($p, $element);
 						$form = $this->createCopySubElementFormExecutor($element, "copyElement_form", $action, $masterEltId, $linkName);
-						$form->setCorrectionWidth(19);
+						$form->setCorrectionWidth(43);
 						$totalWidth = 0 + $configS->getParameter($p, $configS->getCurrentModule(), "elementTotalWidth");
 						$labelWidth = 0 + $configS->getParameter($p, $configS->getCurrentModule(), "elementLabelWidth");
 						$form->setLabelWidth($labelWidth);
@@ -11874,6 +11891,7 @@ onUpdateErrorCounter = 0;
 				}
                 $exec->addJsCode("
 closeStandardsDialogs();
+crtLanguage = '" . $transS->getLanguage(true) . "';
 crtModuleLabel = '" . $currentModuleLabel . "';
 defaultWigiiNamespaceUrl = '" . $defaultWigiiNamespaceUrl . "';
 crtRoleId = '" . $roleId . "';

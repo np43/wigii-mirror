@@ -1180,8 +1180,8 @@ function setListenersToGroupPanel(doYouWantToRemoveYouMultipleSelectionText){
 		//if there is a multiple selection dialog box open, ask if we want to keep the current multiple selection
 //		alert($('#multipleDialog .multipleSelectionNb').text());
 		if(!crtMultipleSelectionDialogKeep && crtGroupSelectorId != idGroup && $('#multipleDialog .multipleSelectionNb').length && $('#multipleDialog .multipleSelectionNb').text()!="0"){
-			$.alerts.noButton = '&nbsp;Keep&nbsp;';
-			$.alerts.okButton = '&nbsp;Discard&nbsp;';
+			$.alerts.noButton = '&nbsp;'+DIALOG_keepSelectionLabel+'&nbsp;';
+			$.alerts.okButton = '&nbsp;'+DIALOG_discardSelectionLabel+'&nbsp;';
 			var crtGroupHref = $('>div>a.H', this).attr('href').replace('#','');
 			jConfirm(doYouWantToRemoveYouMultipleSelectionText, null, function(check){
 				if(check===true){
@@ -3519,38 +3519,44 @@ elementCalendar_currentEventSelected = null;
 elementCalendar_contextMenuIdElement = null;
 lastResizeOrDragRevertFunction = null;
 lastModifiedEvent = null;
-function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMonth, crtDay){
+function setListenersToCalendar(groupUpId, groupUpLabel, crtLanguage, crtView, crtDate){
 	
 	var cmSelector = '#moduleView .calendar>.cm';
-	var elSelector = '#moduleView .dataZone div.fc-event';
+	var elSelector = '#moduleView .dataZone a.fc-event';
 	
 	$('#moduleView .calendar').fullCalendar({
+		locale : crtLanguage, 
 		defaultView: crtView,
-		year: crtYear,
-		month: crtMonth,
-		date: crtDay,
+		defaultDate: crtDate,
+		slotLabelFormat: 'H:mm',
 		header: {
-			left: 'today',
+			left: 'prev,next today',
 			center: 'title',
-			right: 'month,agendaWeek prev,next'
+			right: 'month,agendaWeek,listWeek'
 		},
-		timeFormat: {
-		    agenda: 'H:mm{ - H:mm}',
-		    '': 'H:mm'
+		businessHours: {
+			// days of week. an array of zero-based day of week integers (0=Sunday)
+			dow: [ 1, 2, 3, 4, 5 ], // Monday - Thursday
+			start: '08:00', // a start time (10am in this example)
+			end: '17:00', // an end time (6pm in this example)
 		},
-		axisFormat: 'H:mm',
-		columnFormat: {
-		    month: 'ddd',
-		    week: 'ddd, dd MMM',
-		    day: 'dddd, dd MMM'
-		},
-		titleFormat: {
-		    month: 'MMMM yyyy',
-		    week: 'dd [ MMM][ yyyy]{ - dd MMM yyyy}',
-		    day: 'dddd, d MMM, yyyy'
+		views: {
+			month : {
+				columnHeaderFormat: 'ddd',
+				titleFormat: 'MMMM YYYY',
+				timeFormat: 'H:mm',
+				displayEventTime : true
+			},
+			agendaWeek : {
+				columnHeaderFormat: 'ddd DD MMM',
+				titleFormat: 'DD MMM YYYY',
+				timeFormat: 'H:mm',
+				displayEventTime : true,
+				displayEventEnd : true
+			}
 		},
 		lazyFetching: false,
-		ignoreTimezone: false,
+		timezone: false,
 		height: $('#moduleView').height() - parseInt($('#moduleView .calendar').css('margin-top'),10),
 		firstDay: 1,
 		editable: calendarIsEditable,
@@ -3560,27 +3566,34 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 		eventResizeStart: function(event, jsEvent, ui, view){
 
 		},
-		eventDrop: function(event,dayDelta,minuteDelta,allDay,revertFunc) {
+		eventDrop: function(event,delta,revertFunc, jsEvent, ui, view) {
 			if($(this).hasClass('readOnly')){
 				revertFunc();
 			} else {
 				start = event.start;
 				end = event.end;
-				if(end == null) end = start;
+				allDay = event.allDay;
+				if(end == null) end = start.add(1,'day');
+				if(allDay || !end.hasTime() || end.format("HH:mm:mm")=="00:00:00"){
+					end.subtract(1, 'second'); //to prevent change of date when selecting a day or to the end of the day
+				}
 				lastResizeOrDragRevertFunction = revertFunc;
-				update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/edit/'+event.id+'/'+start.getFullYear()+'-'+(start.getMonth()+1)+'-'+start.getDate()+' '+start.getHours()+':'+start.getMinutes()+'/'+end.getFullYear()+'-'+(end.getMonth()+1)+'-'+end.getDate()+' '+end.getHours()+':'+end.getMinutes()+'/'+allDay);
+				update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/edit/'+event.id+'/'+start.format('YYYY-MM-DD HH:mm')+'/'+end.format('YYYY-MM-DD HH:mm')+'/'+allDay);
 			}
 	    },
-		eventResize: function(event, dayDelta, minuteDelta, revertFunc, jsEvent, ui, view){
+		eventResize: function(event, delta, revertFunc, jsEvent, ui, view){
 			if((event.className+'').search('readOnly')!=-1){
 				revertFunc();
 			} else {
 				start = event.start;
 				end = event.end;
 				allDay = event.allDay;
-				if(end == null) end = start;
+				if(end == null) end = start.add(1,'day');
+				if(allDay || !end.hasTime() || end.format("HH:mm:mm")=="00:00:00"){
+					end.subtract(1, 'second'); //to prevent change of date when selecting a day or to the end of the day
+				}
 				lastResizeOrDragRevertFunction = revertFunc;
-				update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/edit/'+event.id+'/'+start.getFullYear()+'-'+(start.getMonth()+1)+'-'+start.getDate()+' '+start.getHours()+':'+start.getMinutes()+'/'+end.getFullYear()+'-'+(end.getMonth()+1)+'-'+end.getDate()+' '+end.getHours()+':'+end.getMinutes()+'/'+allDay);
+				update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/edit/'+event.id+'/'+start.format('YYYY-MM-DD HH:mm')+'/'+end.format('YYYY-MM-DD HH:mm')+'/'+allDay);
 			}
 		},
 		eventAfterRender: function(event, element, view){
@@ -3588,17 +3601,19 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 		},
 		selectable: calendarIsEditable,
 		selectHelper: true,
-		select: function(start, end, allDay) {
-			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/add/'+$('#groupPanel li.selected').attr('id').split('_')[1]+'/'+start.getFullYear()+'-'+(start.getMonth()+1)+'-'+start.getDate()+' '+start.getHours()+':'+start.getMinutes()+'/'+end.getFullYear()+'-'+(end.getMonth()+1)+'-'+end.getDate()+' '+end.getHours()+':'+end.getMinutes()+'/'+allDay);
+		select: function(start, end, jsEvent) {
+			allDay = !start.hasTime();
+			if(allDay || !end.hasTime() || end.format("HH:mm:mm")=="00:00:00"){
+				end.subtract(1, 'second'); //to prevent change of date when selecting a day or to the end of the day
+			}
+			update('elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/element/add/'+$('#groupPanel li.selected').attr('id').split('_')[1]+'/'+start.format('YYYY-MM-DD HH:mm')+'/'+end.format('YYYY-MM-DD HH:mm')+'/'+allDay);
 		},
-		events: function(start, end, callback) {
+		events: function(start, end, timezone, callback) {
 			crtView = $('#moduleView .calendar').fullCalendar('getView').name;
 			crtDate = $('#moduleView .calendar').fullCalendar('getDate');
-			d = new Date();
-			timeZoneOffset = d.getTimezoneOffset()*60;
-			crtDate = 'crtYear='+crtDate.getFullYear()+';crtMonth='+crtDate.getMonth()+';crtDay='+crtDate.getDate()+';';
+			//crtDate = 'crtYear='+crtDate.getFullYear()+';crtMonth='+crtDate.getMonth()+';crtDay='+crtDate.getDate()+';';
 	        $.ajax({
-	            url: encodeURI(SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+crtWigiiNamespaceUrl+'/'+crtModuleName+'/getCalendarEvents/'+Math.round(start.getTime() / 1000)+'/'+Math.round(end.getTime() / 1000)+'/'+crtView+'/'+crtDate+'/'+timeZoneOffset),
+	            url: encodeURI(SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+crtWigiiNamespaceUrl+'/'+crtModuleName+'/getCalendarEvents/'+start.unix()+'/'+end.unix()+'/'+crtView+'/'+crtDate.unix()),
 		            dataType: 'text',
 					cache:false,
 					error: errorOnUpdate,
@@ -3609,9 +3624,8 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 //								tempFirstDate = new Date(parseInt(firstEvent.start)*1000);
 //								alert(tempFirstDate.getFullYear()+'.'+tempFirstDate.getMonth()+'.'+tempFirstDate.getDate());
 //								alert(firstEvent.end*1000>=start.getTime()+' '+firstEvent.start*1000<=end.getTime());
-							if(!(firstEvent.end*1000 >= start.getTime() && firstEvent.start*1000 <= end.getTime())){
-								goDate = new Date(firstEvent.start*1000);
-								$('#moduleView .calendar').fullCalendar('gotoDate', goDate.getFullYear(), goDate.getMonth(), goDate.getDate());
+							if(!(moment(firstEvent.end).unix() >= start.unix() && moment(firstEvent.start).unix() <= end.unix())){
+								$('#moduleView .calendar').fullCalendar('gotoDate', firstEvent.start);
 							}
 						}
 						callback(events);
@@ -3737,8 +3751,10 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtView, crtYear, crtMo
 }
 function resize_calendar(){
 	if($('#moduleView .calendar').length>0){
-		$('#moduleView .calendar').height($('#groupPanel').height() - parseInt($('#moduleView .calendar').css('margin-top'),10) - $('#moduleView #indicators').height() - $('#moduleView .toolBar').height());
-		$('#moduleView .calendar').fullCalendar('option', 'height', $('#moduleView .calendar').height());
+		$('#moduleView .calendar').height($('#groupPanel').height() - parseInt($('#moduleView .calendar').css('margin-top'),10) - $('#moduleView .toolBar').height());
+		if ( $('#moduleView .calendar .fc-view-container').length > 0 ) { //do this only if calendar is already rendered
+			$('#moduleView .calendar').fullCalendar('option', 'height', $('#moduleView .calendar').height()-3);
+		}
 	}
 }
 function selectEvent_elementCalendar(){
@@ -3965,7 +3981,7 @@ function manageWorkzoneViewDocked(action, cardSize){
 	
 	switch (action){
 		case 'show':		
-			cardSize+=10;
+			cardSize+=20; //padding 10px
 			elementDialog.css({'display':'block','float':'left','width':cardSize+'px'});
 			collapseBar.css('display','block');
 			moduleView.css({'float':'left'});

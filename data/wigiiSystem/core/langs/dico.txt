@@ -724,7 +724,9 @@ changeView:Change view:Changer la vue::::::::
 apply:Apply:Appliquer::::::::
 noGroupSelected:Please create #aGroup#.:Veuillez créer #aGroup#.:
 
-doYouWantToRemoveYouMultipleSelectionText:Discard current multiple selection?:Annuler la sélection multiple courante?:
+doYouWantToRemoveYouMultipleSelectionText:Do you want to keep the current multiple selection?:Voulez-vous garder la sélection multiple courante?:
+keepSelection:Yes, continue:Oui, continuer:::::::::
+discardSelection:No:Non:::::::::
 
 groupBy:Group by:Grouper par:::::::::
 groupConfigEdit:#Group# XML config:Configuration XML du #-group#:::::::::
