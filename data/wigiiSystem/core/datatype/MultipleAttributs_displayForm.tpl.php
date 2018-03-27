@@ -93,7 +93,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 		if($tempDisabled) $this->put(' disabled ');
 		if($readonly) $this->put(' disabled class="removeDisableOnSubmit" ');
 		if(($val != null && array_search((string)$attribute, $val) !== false)) $this->put(' checked="on" ');
-		$this->put(' style="width:17px;height:17px;vertical-align:top;margin-top:0px;');
+		$this->put(' style="width:17px;height:17px;vertical-align:top;margin-top:4px;');
 		if($fieldXml["displayAsTag"]=="1") $this->put(' float:left; '); //the label will be float left, so the input should be as well
 		if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
 		$this->put('" />');
@@ -108,7 +108,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 			if($useMultipleColumn>0) $labelWidth = ($parentWidth/$useMultipleColumn)-17; //17 is the width of the checkbox
 			else $labelWidth = ($parentWidth-17);//17 is the width of the checkbox
 			//as the label has a padding-left of 5, remove 5 in the div containing the text. The div for the label is important to prevent multiple lines to align bellow the input box
-			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;width:100%;max-width:'.($labelWidth-5).'px;">'.$label.'</div></label>');
+			$this->put('<label style="padding-left:5px;" for="'.$inputId.'" ><div style="display: inline-table;width:100%;max-width:'.($labelWidth-5).'px;margin-top:5px;">'.$label.'</div></label>');
 		}
 		if($useMultipleColumn>0){
 			$this->put('</div>');

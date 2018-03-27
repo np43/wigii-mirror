@@ -519,6 +519,7 @@ function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, tem
 		preferredFormat: "hex",
 		chooseText: DIALOG_okLabel,
 		cancelText: DIALOG_cancelLabel,
+		allowEmpty:true,
 	    showInput: true,
 	    showPalette: true,
 	    maxPaletteSize: 10,

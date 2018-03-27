@@ -353,6 +353,9 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 		if($color){
 			echo "color:'#".$color."',";
 			echo "textColor:'#".getBlackOrWhiteFromBackgroundColor($color)."',";
+			echo "borderColor:'#ccc',";
+		} else {
+			echo "borderColor:'#ccc',";
 		}
 		echo "editable:".($elementP->getRights()==null || !$elementP->getRights()->canWriteElement() ? "false" : "true");
 		echo "}";

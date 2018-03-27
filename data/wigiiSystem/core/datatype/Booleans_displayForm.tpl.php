@@ -47,7 +47,7 @@ if($this->getRecord()->getFieldValue($fieldName, $subFieldName)){
 	$this->put(' checked="on" ');
 }
 
-$this->put(' style="width:17px;height:17px;vertical-align:top;margin-top:0px;');
+$this->put(' style="width:17px;height:17px;vertical-align:top;margin-top:4px;');
 if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
 
 $this->put('" />');
