@@ -193,7 +193,10 @@ class LoginFormExecutor extends FormExecutor {
 				$transS->t($p, "ok"), $transS->t($p, "cancel"));
 
 			    //To prevent the background color
-                $exec->addJsCode("$('#elementDialog').css('background-color', 'white');");
+                $exec->addJsCode("
+					$('#elementDialog').css('background-color', 'white');
+					$('#login_form__stayConnected .label').css('width','100%').css('max-width','".$this->getLabelWidth()."px');
+					");
 
 		} else {
 			//format login form to fit login speciality
@@ -214,30 +217,34 @@ class LoginFormExecutor extends FormExecutor {
 			//rearrange			
 			if(!$authS->isPublicAccessEnabledForClient($p->getWigiiNamespace()->getClient()->getClientName())){
 				$exec->addJsCode("" .
-					"$('#loginForm #login_form__username').after($('#loginForm #login_form__stayConnected'));" .
-					"$('#login_form__stayConnected .value').width(15).after($('#login_form__stayConnected .label'));" .
-					"$('#loginForm #login_form__password').css('clear','left').after($('#loginForm button'));" .
-					"$('#loginForm button').css('float','left');" .
+					//move the stay connected label after the stay connected input
+					"$('#login_form__stayConnected .value').width(17).after($('#login_form__stayConnected .label')).find('input').css('margin-top','0px');" .
+					"$('#login_form__stayConnected .label').css('margin','0px 0px 5px 5px').css('cursor','pointer').css('width','auto').click(function(){ $(this).parent().find('input').click(); });" .
+					//move the username and the password in one div
+					"$('#loginForm #login_form__username').before($('<div id=\"login_form__groupLeft\" style=\"float:left;width:100%;max-width:".$this->getTotalWidth()."px;margin-right:20px;\"></div>'));" .
+ 					"$('#loginForm #login_form__username').appendTo($('#login_form__groupLeft'));" .
+ 					"$('#loginForm #login_form__password').appendTo($('#login_form__groupLeft'));" .
+					//move the stay connected field + the button in one div and make it floating beside the username and password
+					"$('#loginForm #login_form__groupLeft').after($('<div id=\"login_form__groupRight\" style=\"float:left;width:100%;max-width:150px;\"></div>'));" .
+ 					"$('#loginForm #login_form__stayConnected').appendTo($('#login_form__groupRight'));" .
+ 					"$('#loginForm button').css('float','left').css('margin-left','0px').appendTo($('#login_form__groupRight'));" .
 					"$('#loginForm div.publicFormBorder').remove();" .
-                    "$('#login_form__username').css('width', '". $this->getTotalWidth(). "');".
-                    "$('#login_form__username').css('max-width', '');".
-                    "$('#login_form__password').css('width', '". $this->getTotalWidth(). "');".
-                    "$('#login_form__password').css('max-width', '');".
-                    "$('#login_form__stayConnected').css('width', '". ($this->getTotalWidth()-290). "');".
-                    "$('#login_form__stayConnected').css('max-width', '');".					
+					//move login captcha before groupLeft
+					"$('#loginForm #login_form__groupRight').before($('#login_form_captcha').css('width','100%').css('max-width','380px').css('margin-right','20px').css('padding-bottom','0px').css('clear','both'));" .
+					"if($('#login_form_captcha').length){ $('#loginForm #login_form__groupRight').css('clear','both').css('margin-bottom','20px'); }" .
 					"");				
 			}			
 			if($_POST["action"]!=null) {
 				$exec->addJsCode("" .
-				//CWE 03.02.2016: keep errors in red instead of rCompanyColor "$('#loginForm .label, #loginForm a, #loginForm .fieldError').css('color', '$rCompanyColor');" .
+				//error message are in rCompany (to ensure reading, but add lines in red)
 				"$('#loginForm .label, #loginForm a').css('color', '$rCompanyColor');" .
 				"$('#loginForm .fieldError').css('font-weight','bold').css('color','$rCompanyColor').css('border-width','2px').css('border-bottom-style','solid').css('border-color', 'red');" .
 				"");
 			}
 
 			//allow both way to write hideIntroductionTextAndGlobalEmailonLoginPage and hideIntroductionTextAndGlobalEmailOnLoginPage
-			if($configS->getParameter($p, null, "hideIntroductionTextAndGlobalEmailonLoginPage")!="1" && $configS->getParameter($p, null, "hideIntroductionTextAndGlobalEmailOnLoginPage")!="1"){
-				$exec->addJsCode("$('#login_form').css('float','left').after('<div style=\"float:left;margin:5px 10px 0px 50px;\">".$this->getTrm()->h('wigiiLoginIntroductionText')."<a href=\"mailto:".$globalContactEmail."\">".$globalContactEmail."</a></div>');");
+			if($configS->getParameter($p, null, "hideIntroductionTextAndGlobalEmailonLoginPage")!="1"){
+				$exec->addJsCode("$('#login_form').css('float','left').after('<div style=\"float:left;margin:6px 10px 20px 0px;\">".$this->getTrm()->h('wigiiLoginIntroductionText')."<a href=\"mailto:".$globalContactEmail."\">".$globalContactEmail."</a></div>');");
 			}
 			$this->getTrm()->put('<div class="clear"></div>');
 		}

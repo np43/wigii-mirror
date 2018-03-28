@@ -107,16 +107,14 @@
 			
 		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
 
-		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="230" labelWidth="110" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="270" labelWidth="130" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
 		
-			<status notInPublic="1" excelExport="auto" type="Attributs" displayAsTag="1" require="1" forceNotification="1">
+			<status notInPublic="1" excelExport="auto" type="Attributs" require="1" forceNotification="1">
 				<label_l01>Status</label_l01><label_l02>Status</label_l02>
-				<attribute>1notStarted><label_l01>1. Not Started</label_l01><label_l02>1. Non commencé</label_l02></attribute>
-				<attribute>2inProgress><label_l01>2. In Progress</label_l01><label_l02>2. En cours</label_l02></attribute>
-				<attribute>3toBeTested><label_l01>3. To be tested</label_l01><label_l02>3. A tester</label_l02></attribute>
-				<attribute>4completer><label_l01>4. Completed</label_l01><label_l02>4. Terminé</label_l02></attribute>
-				<attribute>5postpone><label_l01>5. Postpone</label_l01><label_l02>5. Différé</label_l02></attribute>
-				<attribute>6aborted><label_l01>6. Aborted</label_l01><label_l02>6. Abondonné</label_l02></attribute>
+				<attribute>1. En attente<label_l01>1. Pending</label_l01><label_l02>1. En attente</label_l02></attribute>
+				<attribute>2. Accepté<label_l01><font style="padding:2px 5px;background-color:\#95C33B">2. Approved</font></label_l01><label_l02><font style="padding:2px 5px;background-color:\#95C33B">2. Approuvé</font></label_l02></attribute>
+				<attribute>3. Reporté<label_l01><font style="padding:2px 5px;background-color:\#E0E2E5">3. Postponed</font></label_l01><label_l02><font style="padding:2px 5px;background-color:\#E0E2E5">3. Reporté</font></label_l02></attribute>
+				<attribute>4. Décliné<label_l01><font style="padding:2px 5px;background-color:\#fe0000">4. Declined</font></label_l01><label_l02><font style="padding:2px 5px;background-color:\#fe0000">4. Décliné</font></label_l02></attribute>
 			</status>
 			<duedate excelExport="auto" type="Dates" displayAsTag="0" require="0" forceNotification="1" expand="1"><label_l01>Due date</label_l01><label_l02>Pour le</label_l02></duedate>
 			<progress excelExport="auto" type="Numerics" isProgressBar="1" progressBarColor="1" require="0" forceNotification="0" expand="1" ><label_l01>Progress (%)</label_l01><label_l02>Progrès (%)</label_l02></progress>

@@ -295,7 +295,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		} else if((($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1") || $dataType==null || $fieldXml["noLabel"] =="1"){
 			$valueWidth = $this->getIsInLineWidth();
 		} else {
-			$valueWidth = $this->getValueWidth()-20; //remove 20px to prevent the return to line
+			$valueWidth = $this->getValueWidth();
 		}
 		$style = "width: 100%; max-width:".$valueWidth."px;overflow:hidden;";
 		$class = "";

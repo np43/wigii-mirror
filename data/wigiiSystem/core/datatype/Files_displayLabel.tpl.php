@@ -81,8 +81,13 @@ if($fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification()){
  ******************/
 } else {
 	if(!$this->getRecord()->getFieldValue($fieldName, "size") && !(strstr($this->getRecord()->getFieldValue($fieldName, "path"), "box://"))){
-		$src = SITE_ROOT_forFileUrl."images/preview/preview.46.jpg";
-		$this->put('<img class="prev" style="width: 100%; max-width:'.min(46, $parentWidth-20).'px;" src="'.$src.'" />');
+		if($fieldXml["displaySmall"]=="1"){
+			$src = SITE_ROOT_forFileUrl."images/preview/preview.18.jpg";
+			$this->put('<img class="prev" style="width: 100%; max-width:18px;" src="'.$src.'" />');
+		} else {
+			$src = SITE_ROOT_forFileUrl."images/preview/preview.46.jpg";
+			$this->put('<img class="prev" style="width: 100%; max-width:'.min(46, $parentWidth-20).'px;" src="'.$src.'" />');
+		}
 	} else {
 		//display the whole file in label, display button to interact in value:
 		if($fieldXml["displayContentInDetail"]!="1" && !$this->isForNotification()){
@@ -95,21 +100,33 @@ if($fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification()){
 				$src = SITE_ROOT."useContext/".$exec->getCrtContext().ExecutionServiceImpl::requestSeparator.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/download/".$elementId."/".$field->getFieldName();
 			}
 			//if the size of label is smaller than usual, define a width
+			$style = "";
 			if($parentWidth && $parentWidth<(100-20)){
 				$style = 'style="width: 100%; max-width:'.$parentWidth.'px;"';
-			} else $style = "";
+			}
+			if($fieldXml["displaySmall"]=="1"){
+				$style = 'style="width: 100%; max-width:18px;"';				
+			}
 			//the default preview management is done into the download part
 			//add the time to prevent preview caching!!!
 			$this->put('<img class="prev" '.$style.' src="'.$src.'/thumbs?_'.time().'" />');
 		} else if($fieldXml["displayContentInDetail"]=="1" && !$this->isForNotification()){
 			$type = $this->getRecord()->getFieldValue($fieldName, "type");
-
-			if (file_exists("./images/preview/prev.46$type.png")){
-				$path = SITE_ROOT_forFileUrl."images/preview/prev.46".$type.".png";
+			if($fieldXml["displaySmall"]=="1"){
+				if (file_exists("./images/preview/prev.18$type.png")){
+					$path = SITE_ROOT_forFileUrl."images/preview/prev.18".$type.".png";
+				} else {
+					$path = SITE_ROOT_forFileUrl."images/preview/prev.18.jpg";
+				}
+				$this->put('<img class="prev" style="width: 100%; max-width:18px;" src="'.$path.'" />');
 			} else {
-				$path = SITE_ROOT_forFileUrl."images/preview/prev.46.jpg";
+				if (file_exists("./images/preview/prev.46$type.png")){
+					$path = SITE_ROOT_forFileUrl."images/preview/prev.46".$type.".png";
+				} else {
+					$path = SITE_ROOT_forFileUrl."images/preview/prev.46.jpg";
+				}
+				$this->put('<img class="prev" style="width: 100%; max-width:'.min(46, $parentWidth-20).'px;" src="'.$path.'" />');
 			}
-			$this->put('<img class="prev" style="width: 100%; max-width:'.min(46, $parentWidth-20).'px;" src="'.$path.'" />');
 		} else {
 			//in notification mode, we just add a link to a standard preview (which work without rights)
 			$type = $this->getRecord()->getFieldValue($fieldName, "type");

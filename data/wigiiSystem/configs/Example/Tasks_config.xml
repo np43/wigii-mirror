@@ -106,7 +106,7 @@
 			
 		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
 
-		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="230" labelWidth="110" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="270" labelWidth="130" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
 		
 			<status notInPublic="1" excelExport="auto" type="Attributs" displayAsTag="1" require="1" forceNotification="1">
 				<label_l01>Status</label_l01><label_l02>Status</label_l02>

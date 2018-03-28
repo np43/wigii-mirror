@@ -39,7 +39,7 @@ $companyLogo = $configS->getParameter($p, null, "companyLogo");
 $companyLogoMargins = $configS->getParameter($p, null, "companyLogoMargin");
 if($companyLogo){
 	if(!$companyLogoMargins) $companyLogoMargins = "2px 5px 2px 15px";
-	echo '<div class="" style="padding:'.($companyLogoMargins).';background-color:'.$companyColor.';border-left:none;border-right:none;border-top:none;margin-right:10px;"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
+	echo '<div class="" style="padding:'.($companyLogoMargins).';background-color:'.$companyColor.';border-left:none;border-right:none;border-top:none;"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
 }
 
 

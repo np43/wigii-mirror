@@ -153,7 +153,8 @@ div.elementDetail h4, div.elementDetail h3 {
 /* FIELD */
 div.field {
 	float:left;
-	margin-right:7px;
+	padding-right:5px; 
+	margin-right:0px;
 }
 div.label,
 div.field div.label {

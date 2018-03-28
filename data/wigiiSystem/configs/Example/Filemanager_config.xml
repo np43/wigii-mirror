@@ -84,7 +84,7 @@
 			<description 			excelExport="0" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" expand="1" ><label_l01>Keywords / Description</label_l01><label_l02>Mots-clés / Description</label_l02></description>
 		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
 		
-		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="300" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="340" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
 			<author 				excelExport="20" type="Emails" require="1" enableForNotification="1" autoFillWithPrincipalEmail="1" forceNotification="1" expand="1"><label_l01>Owner email</label_l01><label_l02>Email du référant</label_l02></author>
 			<type excelExport="20" type="Attributs" require="1" >
 				<attribute>none</attribute>

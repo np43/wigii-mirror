@@ -85,7 +85,7 @@
 	</Notification>
 
 	<fields >
-		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="640"  />
+		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="680"  />
 			<contentType enableDynamicAttributes="1" excelExport="auto" type="Attributs" require="1" expand="1" readonly='eq(onSaveFuncExp,logTrue())' jsCodeInFormExp='cms_authoringOnLoadJS()'><label_l01>Content type</label_l01><label_l02>Type de contenu</label_l02>
 				<attribute disabled="1">none</attribute>
 				<attribute>content<label_l01>Article</label_l01><label_l02>Article</label_l02></attribute>

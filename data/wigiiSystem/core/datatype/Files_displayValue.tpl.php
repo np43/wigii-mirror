@@ -139,8 +139,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	//file details
 
 	//if parentWidth is small, then display the file details as short as possible
-	$isSmall = ($parentWidth && $parentWidth < 300) || $fieldXml["displayPreviewOnly"]=="1";
-
+	$isSmall = ($parentWidth && $parentWidth < 300) || $fieldXml["displayPreviewOnly"]=="1" || $fieldXml["displaySmall"]=="1";
 
 	//filename and date
 	if(!$this->isForNotification()) $this->put('<div class="fdet '.($isSmall ? 'small' : '').'" style="'.($fieldXml["displayPreviewOnly"]=="1" ? 'font-weight:normal;' : '').'width: 100%; max-width:'.$parentWidth.'px;" >');
@@ -152,7 +151,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	if($fieldXml["displayPreviewOnly"]!="1"){
 		$this->put(' ');
 		$this->put('<font class="grayFont">(');
-		if(($this->isForNotification() || $isSmall) && $size>0) $this->put($size.', ');
+		if(($this->isForNotification() || $isSmall || $fieldXml["noDownloadButton"]=="1") && $size>0) $this->put($size.', ');
 		$this->put($date);
 		$this->put(')</font>');
 	}
@@ -170,9 +169,10 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	}
 	if(!$this->isForNotification() && !$isSmall) $this->put('</div>');
 	if(!$this->isForNotification() && !$isSmall) $this->put('<div class="clear"></div>');
+	
 
 	//add the download button
-	if(!$this->isForNotification()){
+	if($fieldXml["noDownloadButton"]!="1" && !$this->isForNotification()){
 		//download button
 		//$this->put('<a href="'.$src.'" target="_self" style="text-decoration:none;"><div class="generalButton G ui-corner-all " style="margin-top:4px;"><img style="border:none; float:left;" src="'.SITE_ROOT_forFileUrl.'images/icones/sanscons/download.png" /><span style="float:left; margin-left:5px; ">'.$this->t("download").'</span></div></a>');
 		$this->put(' <a class="fdet fileDownload" href="#" target="_self">');
@@ -181,11 +181,12 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 		$this->put('</a>');
 		$exec->addJsCode("setListenerToDownloadFile('$fieldId', '".$field->getFieldName()."', '$src');");
 	}
+		
 
 	/**
 	 * Add other specific buttons based on the file type
 	 */
-	if(!$this->isForPrint() && !$this->isForNotification() && !is_a($this->getRecord(), "ActivityRecord")){
+	if($fieldXml["noPreviewButton"]!="1" && !$this->isForPrint() && !$this->isForNotification() && !is_a($this->getRecord(), "ActivityRecord")){
 		// CWE 20.09.2016: if file is located into Box, then always proposes a preview (from Box)
 		if(strstr($path, "box://")) {
 			if($isSmall){
@@ -202,23 +203,34 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 				case ".aiff":
 				case ".mid":
 				case ".midi":
-				case ".ogg":
 				case ".au":
 				case ".aac":
 				case ".rm":
 				case ".ra":
+				case ".m4a":
 					break;
 				case ".mp3":
+				case ".ogg":
 				case ".wav":
+				case ".wave":
+				case ".flac":
+					//the player is after the download button
+					break;
 				case ".wma":
+					//the player is after the download button
+					break;
+				case ".webm":
+				case ".ogv":
+				case ".mp4":
+				case ".h264":
+				case ".h.264":
+				case ".H.264":
 					//the player is after the download button
 					break;
 				case ".wmv":
 				case ".avi":
 				case ".mpg":
 				case ".mpeg":
-				case ".mp4":
-				case ".h264":
 				case ".3g2":
 				case ".mov":
 				case ".ram":
@@ -226,9 +238,6 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 					//no player for those format
 					break;
 				case ".flv":
-				case ".h264":
-				case ".h.264":
-				case ".H.264":
 					//the player is after the download button
 					break;
 				case ".zip":
@@ -279,6 +288,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 				case ".html":
 				case ".htm":
 				case ".svg":
+				case ".ncd":
 				case ".txt":
 				case ".csv":
 				case ".sql":
@@ -328,7 +338,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 		}
 
 		//add the check-in/out button
-		if(!$this->isForExternalAccess() && $fieldXml["displayPreviewOnly"]!="1" && $this->getRecord() instanceof Element && !$readonly && !$disabled){
+		if($fieldXml["noCheckoutButton"]!="1" && !$this->isForExternalAccess() && $fieldXml["displayPreviewOnly"]!="1" && $this->getRecord() instanceof Element && !$readonly && !$disabled){
 			if(!$this->getRecord()->isState_blocked()){
 				// 1) the element is not locked -> check-out button
 				$isCheckout = false;
@@ -367,15 +377,27 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 		switch ($type){
 			case ".mp3":
 			case ".wav":
+			case ".ogg":
+			case ".wave":
+			case ".flac":
+				//the player is after the download button
+				$this->put('<audio style="float:left;margin-top:5px;width: 100%; max-width:'.$parentWidth.'px;" id="'.$mediaId.'" controls><source src="'.$src.'/test'.$type.'" type="'.typeMime($type).'">Your browser does not support the video tag.</audio>');
+				break;
+			case ".webm":
+			case ".ogv":
+			case ".mp4":
+			case ".h264":
+			case ".h.264":
+			case ".H.264":
+				//the player is after the download button
+				$this->put('<video style="float:left;margin-top:5px;width: 100%; max-width:'.$parentWidth.'px;" id="'.$mediaId.'" controls><source src="'.$src.'/test'.$type.'" type="'.typeMime($type).'">Your browser does not support the video tag.</video>');
+				break;
 			case ".wma":
 				//flowplayer
 				$this->put('<a href="'.$src.'/test'.$type.'" style="float:left;margin-top:5px;width: 100%; max-width:'.$parentWidth.'px;height:26px" id="'.$mediaId.'"></a>');
 				$exec->addJsCode("displayAudioPlayer('$mediaId');");
 				break;
 			case ".flv":
-			case ".h264":
-			case ".h.264":
-			case ".H.264":
 				//VIDEO files
 				$width = $this->getDetailRenderer()->getTotalWidth();
 //				//flowplayer

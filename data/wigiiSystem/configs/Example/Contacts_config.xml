@@ -102,7 +102,7 @@
 			<groupContactInfo groupEnd="1" expand="1" />
 		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
 
-		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="200" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" totalWidth="240" class="fieldGroupRight" /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
 			<photo excelExport="none" type="Files" require="0" ignoreNotification="1" displayPreviewOnly="1" />
 			<comments excelExport="0" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" ><label_l01>Notes</label_l01><label_l02>Notes</label_l02></comments>
 		<groupright groupEnd="1" expand="1" noFieldset="1" />

@@ -124,7 +124,7 @@
 			<groupScriptHistory groupEnd="1" noFieldset="1" forceCollapse="1" expand="0"/>
 		<groupLeft groupEnd="1" expand="1" noFieldset="1" />
 
-		<groupRight groupStart="1" noFieldset="1" noLabel="1" labelWidth="100" totalWidth="300" class="fieldGroupRight" />
+		<groupRight groupStart="1" noFieldset="1" noLabel="1" labelWidth="120" totalWidth="340" class="fieldGroupRight" />
 			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="0" height="450" funcExp='trackHistory(scriptStatus)' clearOnCopy="1"><label_l01>Execution Comments</label_l01><label_l02>Journal d&apos;exécution</label_l02></comments>
 			<callableUrl excelExport="auto" type="Blobs" readonly="0" isInLine="1" expand="1"
 				funcExp='ctlIf(logAnd(isNotNull(script),ctlCheckNoError()),concat(sysSiteRootUrl(), sysCrtWigiiNamespace(), "/", sysCrtModule(), "/fx/", str2fxBase64url(script)))'

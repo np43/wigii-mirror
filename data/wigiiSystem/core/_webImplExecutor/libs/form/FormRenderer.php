@@ -310,7 +310,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			unset($html2text);
 			$help = ' title="'.$help.'" ';
 		}
-            $style = "width: 100%; max-width:".$this->getTotalWidth()."px;padding-right:5px; margin-right:0px;";
+            $style = "width: 100%; max-width:".$this->getTotalWidth()."px;";
 		if($fieldXml["noMargin"]=="1"){
 			$style .= "margin-right:0px;";
 		}
