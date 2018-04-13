@@ -1136,6 +1136,43 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    return TechnicalServiceProvider::getFuncExpBuilder()->elementFile2df($element, $fieldName, $chunkSize);
 	}
 	
+	/**
+	 * Dumps the fields of a Wigii xml configuration file as cfgField stdClass instances into a DataFlow
+	 * cfgField StdClasses are of the form {name, attributes, label, cfgAttributs}. See cfgField FuncExp for more details.
+	 * See method 'moduleXml2df' in FuncExpBuilder class.<br/>
+	 * FuncExp signature : <code>moduleXml2df(xmlFile,listFilter=null,setterI,valueI,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) xmlFile: String|ElementFileDataFlowConnector. The name of an existing Wigii configuration file to load or an already open connector to an xml file attached to current element
+	 * - Arg(1) listFilter: ListFilter. An optional ListFilter instance to filter the fields to extract based on some attribute values
+	 * - Arg(i) setterI,valueI: Pairs of (setter,value) which configures the ModuleXmlDataFlowConnector. Each setter should map to an existing public setter method in the ModuleXmlDataFlowConnector instance.
+	 * @return ModuleXmlDataFlowConnector returns a ModuleXmlDataFlowConnector instance that can be used as a DataFlow source.
+	 */
+	public function moduleXml2df($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException('The moduleXml2df function takes at least one argument which is the Wigii configuration file. Can be an existing configuration file name or an open connector to a file attached to current element', FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue = $this->getFuncExpBuilder()->moduleXml2df($this->evaluateArg($args[0]),($nArgs > 1 ? $this->evaluateArg($args[1]) : null));
+	    // Extracts any additional configuration
+	    if($nArgs>2) {
+	        $configurator = ObjectConfigurator::createInstance();
+	        $i = 2;
+	        while($i < $nArgs) {
+	            $setter = $this->evaluateArg($args[$i]);
+                $i++;
+                if($i < $nArgs) {
+                    $v = $this->evaluateArg($args[$i]);
+                    $configurator->setConfigValue($setter, $v);
+                }
+                else {
+                    $configurator->setConfigValue($setter, null);                    
+                }
+	            $i++;
+	        }
+	        // configures ModuleXmlDataFlowConnector instance
+	        $configurator->configure($returnValue);
+	    }
+	    return $returnValue;
+	}
+	
 	// Transformations
 	
 	/**

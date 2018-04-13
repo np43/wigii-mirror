@@ -67,6 +67,44 @@ class WplToolbox
 		return $this->fsFuncExpParser;
 	}
 
+	private $fxBuilder;
+	/**
+	 * Injects the FuncExpBuilder to be used by this library
+	 * @param FuncExpBuilder $funcExpBuilder
+	 */
+	public function setFuncExpBuilder($funcExpBuilder)
+	{
+	    $this->fxBuilder = $funcExpBuilder;
+	}
+	/**
+	 * Gets the injected FuncExpBuilder
+	 * @return FuncExpBuilder
+	 */
+	protected function getFuncExpBuilder()
+	{
+	    // autowired
+	    if(!isset($this->fxBuilder))
+	    {
+	        $this->fxBuilder = TechnicalServiceProvider::getFuncExpBuilder();
+	    }
+	    return $this->fxBuilder;
+	}
+	
+	private $transS;
+	public function setTranslationService($translationService)
+	{
+	    $this->transS = $translationService;
+	}
+	protected function getTranslationService()
+	{
+	    // autowired
+	    if(!isset($this->transS))
+	    {
+	        $this->transS = ServiceProvider::getTranslationService();
+	    }
+	    return $this->transS;
+	}
+	
 	// Implementation
 
 	/**
@@ -168,6 +206,35 @@ class WplToolbox
 		return $returnValue;
 	}
 
+	/**
+	 * Converts a Wigii Field from its XML representation to a cfgField StdClass instance
+	 * See function 'cfgField' in FuncExpBuilder class. 
+	 * @param SimpleXMLElement $fieldXml
+	 * @return StdClass returns an StdClass instance with the properties {name, attributes, label, cfgAttributs}
+	 */
+	public function xml2cfgField($fieldXml) {
+	    if(!isset($fieldXml)) throw new DataFlowServiceException('fieldXml cannot be null',DataFlowServiceException::INVALID_ARGUMENT);
+	    // dumps attributes
+	    $attributes = array();
+	    foreach($fieldXml->attributes() as $k=>$v) {
+	        $attributes[(string)$k] = (string)$v;
+	    }
+	    // dumps label
+	    if($fieldXml->label) {
+	        // keeps any inner html tags (but gets rid of surrounding label tag)
+	        $label = substr($fieldXml->label->asXML(), strlen("label")+2, -(strlen("label")+3));	        
+	    }
+	    else {
+	        $label = array();
+	        foreach($this->getTranslationService()->getVisibleLanguage() as $lang=>$language) {
+	            if($fieldXml->{'label_'.$lang}) {
+	                $label[$lang] = substr($fieldXml->{'label_'.$lang}->asXML(), strlen("label_".$lang)+2, -(strlen("label_".$lang)+3));
+	            }
+	        }
+	    }
+	    return $this->getFuncExpBuilder()->cfgField($fieldXml->getName(),$attributes,$label);
+	}
+	
 	/**
 	 * Converts a cfgAttribut StdClass instance to a SimpleXmlElement class
 	 * See function 'cfgAttribut' in FuncExpBuilder class.

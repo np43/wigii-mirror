@@ -1026,6 +1026,33 @@ class TechnicalServiceProvider
 		return ServiceProvider::createWigiiObject('QlikSenseFormExecutor');
 	}
 	
+	/**
+	 * default as CfgFieldLogExpEvaluator
+	 */
+	protected function createCfgFieldLogExpEvaluatorInstance()
+	{
+	    return new CfgFieldLogExpEvaluator();
+	}
+	
+	private $cfgFieldLogExpEvaluator;
+	
+	public static function getCfgFieldLogExpEvaluator()
+	{
+	    return self::getInstance()->getCfgFieldLogExpEvaluatorInstance();
+	}
+	/**
+	 * default singleton
+	 */
+	protected function getCfgFieldLogExpEvaluatorInstance()
+	{
+	    if(!isset($this->cfgFieldLogExpEvaluator))
+	    {
+	        $this->cfgFieldLogExpEvaluator = $this->createCfgFieldLogExpEvaluatorInstance();
+	    }
+	    return $this->cfgFieldLogExpEvaluator;
+	}
+	
+	
 	// base infrastructure
 
 	/**

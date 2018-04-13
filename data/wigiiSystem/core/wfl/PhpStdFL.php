@@ -253,6 +253,14 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		return str_replace($search, $replace, $subject);
 	}
 	/**
+	 * urlencode. See http://www.php.net/urlencode
+	 */
+	public function urlencode($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException("urlencode function takes at least one parameter, the url string to encode", FuncExpEvalException::INVALID_ARGUMENT);
+	    return urlencode($this->evaluateArg($args[0]));
+	}
+	/**
 	 * number_format. See http://www.php.net/number_format
 	 * By default takes 2 decimals, uses point to separate decimal part, and no thousand sep.
 	 */

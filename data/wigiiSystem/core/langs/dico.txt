@@ -421,11 +421,11 @@ inGroupTestCases:Choose #group#:Choisissez #group#:::::::::
 inGroupWorship:Choose #group#:Choisissez #group#:::::::::
 inGroupSubscriptions:Choose #group#:Choisissez #group#:::::::::
 
-Addresses_city:City:Ville:::::::::
-Addresses_country:Country:Pays:::::::::
-Addresses_state:State / Country:Etat / Canton:::::::::
-Addresses_street:Street:Rue:::::::::
-Addresses_zip_code:Zip code / Postal code:NPA / Code postal:::::::::
+Addresses_city:City:Ville:Stadt::::::::
+Addresses_country:Country:Pays:Land::::::::
+Addresses_state:State / Country:Etat / Canton:Wohnort / Kanton::::::::
+Addresses_street:Street:Rue:Strasse::::::::
+Addresses_zip_code:Zip code / Postal code:NPA / Code postal:Postleitzahl::::::::
 Admin:Admin:Admin:::::::::
 CSVPretty:CSV (formatted):CSV (formaté):::::::::
 CSVRaw:CSV (raw data):CSV (données brut):::::::::

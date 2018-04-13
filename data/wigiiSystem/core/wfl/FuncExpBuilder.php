@@ -1113,6 +1113,24 @@ class FuncExpBuilder {
 	    return ElementFileDataFlowConnector::createInstance($element, $fieldName, $chunkSize);
 	}
 	
+	/**
+	 * Dumps the fields of a Wigii xml configuration file as cfgField stdClass instances into a DataFlow
+	 * cfgField StdClasses are of the form {name, attributes, label, cfgAttributs}. See cfgField FuncExp for more details.
+	 * @param String|ElementFileDataFlowConnector $xmlFile The name of an existing Wigii configuration file to load or an already open connector to an xml file attached to current element
+	 * @param ListFilter $listFilter An optional ListFilter instance to filter the fields to extract based on some attribute values
+	 * @return ModuleXmlDataFlowConnector returns a ModuleXmlDataFlowConnector instance that can be used as a DataFlow source.
+	 */
+	public function moduleXml2df($xmlFile, $listFilter=null) {
+	    $returnValue = ServiceProvider::getExclusiveAccessObject('ModuleXmlDataFlowConnector');
+	    $returnValue->setXmlFile($xmlFile);
+	    if($xmlFile instanceof FuncExpParameter) $xmlFile->registerSetterMethod('setXmlFile', $returnValue);
+	    if(isset($listFilter)) {
+	        $returnValue->setListFilter($listFilter);
+	        if($listFilter instanceof FuncExpParameter) $listFilter->registerSetterMethod('setListFilter', $returnValue);
+	    }
+	    return $returnValue;
+	}
+	
 	// ListFilter builder
 	
 	/**

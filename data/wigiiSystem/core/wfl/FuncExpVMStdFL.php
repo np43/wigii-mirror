@@ -2013,6 +2013,72 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    }
 	    return date("Y-m-d H:i:s",max($result));
 	}
+	
+	/**
+	 * Returns the difference between two dates in a given unit (year,month,day,hour,minute,second)
+	 * FuncExp signature : <code>ctlDateDiff(startDate,endDate,unit)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) startDate: String|Timestamp. The start date in Wigii format (yyyy-mm-dd hh:mm:ss) or now if null. Also supports timestamps.
+	 * - Arg(1) endDate: String|Timestamp. The end date in Wigii format (yyyy-mm-dd hh:mm:ss) or now if null. Also supports timestamps.
+	 * - Arg(2) unit: String. Specifies the return unit. One of 'year','y','month','m','day','d','hour','h','minute',i','second','s'. Defaults to 's'
+	 * @return Float the date difference in the given unit. Can be negative if endDate is smaller than startDate.
+	 */ 
+	public function ctlDateDiff($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    
+	    if($nArgs>0) $startDate = $this->evaluateArg($args[0]);
+	    else $startDate = null;
+	    if($startDate==null) $startDate = time();
+	    else {
+	        $d = strtotime($startDate);
+	        if($d===false) throw new FuncExpEvalException('invalid startDate format '.$startDate,FuncExpEvalException::INVALID_ARGUMENT);
+	        else $startDate = $d;
+	    }
+	    
+	    if($nArgs>1) $endDate = $this->evaluateArg($args[1]);
+	    else $endDate = null;
+	    if($endDate==null) $endDate = time();
+	    else {
+	        $d = strtotime($endDate);
+	        if($d===false) throw new FuncExpEvalException('invalid endDate format '.$endDate,FuncExpEvalException::INVALID_ARGUMENT);
+	        else $endDate = $d;
+	    }
+	    
+	    if($nArgs>2) $unit = $this->evaluateArg($args[2]);
+	    else $unit = 's';
+	    
+	    // calculates date diff in seconds
+	    $returnValue = $endDate-$startDate;
+	    // converts date diff in desired format
+	    switch($unit) {
+	        case 'y':
+	        case 'year':
+	            $returnValue = floatval($returnValue)/(3600*24*365);
+	            break;
+	        case 'm':
+	        case 'month':
+	            $returnValue = floatval($returnValue)/(3600*24*30);
+	            break;
+	        case 'd':
+	        case 'day':
+	            $returnValue = floatval($returnValue)/(3600*24);
+	            break;
+	        case 'h':
+	        case 'hour':
+	            $returnValue = floatval($returnValue)/(3600);
+	            break;
+	        case 'i':
+	        case 'minute':
+	            $returnValue = floatval($returnValue)/(60);
+	            break;
+	        case 's':
+	        case 'second':
+	            $returnValue = floatval($returnValue);
+	            break;
+	        default: throw new FuncExpEvalException('unsupported interval unit. Should be one of year,month,day,minute,second', FuncExpEvalException::INVALID_ARGUMENT);
+	    }
+	    return $returnValue;
+	}
 
     /**
      * Give the percentage of already elapsed time between startDate and endDate (Based on now)
@@ -2150,7 +2216,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * FuncExp signature : <code>txtFormatEmail(str)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) str : String. The string representing an email address to be checked and formatted.
-	 * @return String the email checked and well formatted, or false if not a valid email.
+	 * @return String the email checked and well formatted, or null if not a valid email.
 	 */
 	public function txtFormatEmail($args) {
 	    if(is_array($args)) {
@@ -2181,18 +2247,18 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    if($nArgs<1) throw new FuncExpEvalException('txtAcceptEmail takes one argument which is the email string value to be checked and formatted', FuncExpEvalException::INVALID_ARGUMENT);
 	    $str = trim($this->evaluateArg($args[0]));
 	    $returnValue = $this->txtFormatEmail($str);
-	    if($str != '' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid email address.");
+	    if($str != '' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid email address.", FuncExpEvalException::ASSERTION_FAILED);
 	    return $returnValue;
 	}
 	
 	/**
 	 * Checks a given string to be a valid phone number and formats it.
 	 * Returns null if not a valid phone number.
-	 * FuncExp signature : <code>txtFormatPhone(str)</code><br/>
+	 * FuncExp signature : <code>txtFormatPhone(str,defaultCountryPrefix)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) str : String. The string representing a phone number to be checked and formatted.
 	 * - Arg(1) defaultCountryPrefix : String. Optional string used as a default country prefix if given phone number doesn't have a country code. By default, no country code is added. 
-	 * @return String the phone number checked and well formatted, or false if not a valid phone number.
+	 * @return String the phone number checked and well formatted, or null if not a valid phone number.
 	 */
 	public function txtFormatPhone($args) {
 	    $defaultCountryPrefix = null;
@@ -2323,7 +2389,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	/**
 	 * Checks a given string to be a valid phone number and formats it.
 	 * If not, throws an exception. Use txtFormatPhone to have a silent version.
-	 * FuncExp signature : <code>txtFormatPhone(str)</code><br/>
+	 * FuncExp signature : <code>txtAcceptPhone(str,defaultCountryPrefix)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) str : String. The string representing a phone number to be checked and formatted.
  	 * - Arg(1) defaultCountryPrefix : String. Optional string used as a default country prefix if given phone number doesn't have a country code. By default, no country code is added.
@@ -2334,9 +2400,67 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    $nArgs = $this->getNumberOfArgs($args);
 	    if($nArgs<1) throw new FuncExpEvalException('txtFormatPhone takes one argument which is the phone number string value to be checked and formatted', FuncExpEvalException::INVALID_ARGUMENT);
 	    $str = trim($this->evaluateArg($args[0]));
-	    if($nArgs>1) $returnValue = $this->evaluateFuncExp(fx('txtFormatPhone'),$str,$this->evaluateArg($args[1]));
+	    if($nArgs>1) $returnValue = $this->evaluateFuncExp(fx('txtFormatPhone',$str,$this->evaluateArg($args[1])));
 	    else $returnValue = $this->txtFormatPhone($str);
-	    if($str!='' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid phone number.");
+	    if($str!='' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid phone number.", FuncExpEvalException::ASSERTION_FAILED);
+	    return $returnValue;
+	}
+	
+	/**
+	 * Checks a given string to be a valid big positive integer and formats it.
+	 * Returns null if not a valid big positive integer number.
+	 * FuncExp signature : <code>txtFormatBigPosInt(str,allowLeadingZeros,maxLength)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string representing a big positive integer number to be checked and formatted.
+	 * - Arg(1) allowLeadingZeros : Boolean. Optional, if true, then leading 0 are accepted and kept. If false, leading zeros are removed. By default leading zeros are removed.
+	 * - Arg(2) maxLength: Int. If provided, then length of final cleaned up number should not exceed the specified number of digits.
+	 * @return String the big positive integer number checked and well formatted, or null if not a valid number.
+	 */
+	public function txtFormatBigPosInt($args) {
+	    $allowLeadingZeros = false;
+	    $maxLength = null;
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs<1) throw new FuncExpEvalException('txtFormatBigPosInt takes one argument which is the big positive integer string value to be checked and formatted', FuncExpEvalException::INVALID_ARGUMENT);
+	        $str = $this->evaluateArg($args[0]);
+	        if($nArgs>1) $allowLeadingZeros = ($this->evaluateArg($args[1])==true);
+	        if($nArgs>2) $maxLength = $this->evaluateArg($args[2]);
+	    }
+	    else $str = $args;
+	    $returnValue = null;
+	    if($str != null) $str = trim($str);
+	    if(!empty($str)) {
+	        $str = preg_replace("/[^0-9]/","", $str);
+	        // removes leading zeros
+	        if(!empty($str) && !$allowLeadingZeros) $str = preg_replace("/^0+/","", $str);
+	        if(isset($maxLength) && $maxLength>0 && strlen($str)>$maxLength) throw new FuncExpEvalException('The number can only have a maximum of '.$maxLength.' digits.', FuncExpEvalException::INVALID_ARGUMENT); 
+            if(!empty($str)) $returnValue = $str;	        
+	    }
+	    return $returnValue;
+	}	
+	/**
+	 * Checks a given string to be a valid big positive integer and formats it.
+	 * If not, throws an exception. Use txtFormatBigPosInt to have a silent version.
+	 * FuncExp signature : <code>txtAcceptBigPosInt(str,allowLeadingZeros,maxLength)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string representing a big positive integer number to be checked and formatted.
+	 * - Arg(1) allowLeadingZeros : Boolean. Optional, if true, then leading 0 are accepted and kept. If false, leading zeros are removed. By default leading zeros are removed.
+	 * - Arg(2) maxLength: Int. If provided, then length of final cleaned up number should not exceed the specified number of digits.
+	 * @return String the big positive integer number checked and well formatted
+	 * @throws FuncExpEvalException::ASSERTION_FAILED if given string cannot be parsed as a valid big positive integer number.
+	 */
+	public function txtAcceptBigPosInt($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtAcceptBigPosInt takes one argument which is the big positive integer string value to be checked and formatted', FuncExpEvalException::INVALID_ARGUMENT);
+	    $str = trim($this->evaluateArg($args[0]));
+	    if($nArgs>1) {
+	        $fx = fx('txtFormatBigPosInt');
+	        $args[0] = $str;
+	        $fx->setArguments($args);
+	        $returnValue = $this->evaluateFuncExp($fx);
+	    }
+	    else $returnValue = $this->txtFormatBigPosInt($str);
+	    if($str!='' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid big positive integer number.", FuncExpEvalException::ASSERTION_FAILED);
 	    return $returnValue;
 	}
 	
