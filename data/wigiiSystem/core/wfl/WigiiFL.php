@@ -2659,6 +2659,63 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		}
 	}
 	
+	/**
+	 * Sends an email out using the Wigii system
+	 * FuncExp signature : <code>sysSendEmail(to,subject,content,options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) to: String|Array|ValueList. The recipient email or list of recipients emails.
+	 * - Arg(1) subject: String. The email subject.
+	 * - Arg(2) content: String. The email content. Supports HTML.
+	 * - Arg(3) options: WigiiBPLParameter. An optional bag of parameters to configure the email process like :
+	 * - from: String. The sender's email address. If not specified uses the principal's email. If explicitely set to false, then uses the notification from address (no-reply@xxx)
+	 * - hideRecipients: Boolean. If true, then recipients addresses are hidden to each other using bcc technology. (explicit cc list is always visible)
+	 * - copySender: Boolean. If true, then sender receives a copy of the sent email.
+	 * - mergeData: Array. Mail merge data array of array of the form 
+	 * array(
+	 *    'email1@server.com' => array("$token1$"=>"token replacement text","$token2$"=>"some more text"),
+	 *    'email2@server.com' => array("$token1$"=>"token replacement text for email2","$token2$"=>"some more text for email2"),
+	 * ) 
+	 * - cc: String|Array|ValueList. Visible copy email or list of emails.
+	 * - bcc: String|Array|ValueList. Hidden copy email or list of emails.
+	 * - mailActivity: String|Activity. A specific activity from which to retrieve the email template. By default uses 'BaseEmail' activity.
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * This function is a synonym of sysMailTo.
+	 */
+	public function sysSendEmail($args) {
+	    $this->assertFxOriginIsNotPublic();
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>3) $options = $this->evaluateArg($args[3]);
+	    else $options = wigiiBPLParam();
+	    if($nArgs>0) $options->setValue('to', $this->evaluateArg($args[0]));
+	    if($nArgs>1) $options->setValue('subject', $this->evaluateArg($args[1]));
+	    if($nArgs>2) $options->setValue('content', $this->evaluateArg($args[2]));
+	    return $this->getWigiiBPL()->sendEmail($this->getPrincipal(), $this, $options,$this->getFuncExpVMServiceProvider()->getExecutionSink());
+	}
+	/**
+	 * Sends an email out using the Wigii system
+	 * FuncExp signature : <code>sysMailTo(to,subject,content,options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) to: String|Array|ValueList. The recipient email or list of recipients emails.
+	 * - Arg(1) subject: String. The email subject.
+	 * - Arg(2) content: String. The email content. Supports HTML.
+	 * - Arg(3) options: WigiiBPLParameter. An optional bag of parameters to configure the email process like :
+	 * - from: String. The sender's email address. If not specified uses the principal's email. If explicitely set to false, then uses the notification from address (no-reply@xxx)
+	 * - hideRecipients: Boolean. If true, then recipients addresses are hidden to each other using bcc technology. (explicit cc list is always visible)
+	 * - copySender: Boolean. If true, then sender receives a copy of the sent email.
+	 * - mergeData: Array. Mail merge data array of array of the form 
+	 * array(
+	 *     'email1@server.com' => array("$token1$"=>"token replacement text","$token2$"=>"some more text"),
+	 *     'email2@server.com' => array("$token1$"=>"token replacement text for email2","$token2$"=>"some more text for email2"),
+	 * )
+	 * - cc: String|Array|ValueList. Visible copy email or list of emails.
+	 * - bcc: String|Array|ValueList. Hidden copy email or list of emails.
+	 * - mailActivity: String|Activity. A specific activity from which to retrieve the email template. By default uses 'BaseEmail' activity.
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * This function is a synonym of sysSendEmail.
+	 */
+	public function sysMailTo($args) {
+	    return $this->sysSendEmail($args);
+	}
 	
 	// Box integration
 	

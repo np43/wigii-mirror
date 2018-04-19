@@ -224,6 +224,14 @@ class WigiiBPL
 		return $this->eltS;
 	}
 	
+	private $emailService;
+	public function getEmailService() {
+	    if (!isset ($this->emailService)) {
+	        $this->emailService = TechnicalServiceProvider :: getEmailService();
+	    }
+	    return $this->emailService;
+	}
+	
 	// System principal management
 	
 	/**
@@ -2165,6 +2173,147 @@ class WigiiBPL
 		return $returnValue;
 	}
 		
+	/**
+	 * Send email process using the underlying Wigii EmailService queue.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter A WigiiBPLParameter instance with the following parameters :
+	 * - to: String|Array|ValueList. The recipient email or list of recipients emails.
+	 * - subject: String. The email subject.
+	 * - content: String. The email content. Supports HTML.
+	 * Optional parameters:
+	 * - from: String. The sender's email address. If not specified uses the principal's email. If explicitely set to false, then uses the notification from address (no-reply@xxx)
+	 * - hideRecipients: Boolean. If true, then recipients addresses are hidden to each other using bcc technology. (explicit cc list is always visible)
+	 * - copySender: Boolean. If true, then sender receives a copy of the sent email.
+	 * - mergeData: Array. Mail merge data array. See Wigii EmailService for more information on the format.
+	 * - cc: String|Array|ValueList. Visible copy email or list of emails.
+	 * - bcc: String|Array|ValueList. Hidden copy email or list of emails.
+	 * - mailActivity: String|Activity. A specific activity from which to retrieve the email template. By default uses 'BaseEmail' activity.
+	 * If a mail activity is defined, then the bag of parameters is accessible through the $parameter variable allowing to do some mail merge activity.
+	 * The $body variable is initialized with the provided email content.
+	 * Standard variables are accessible like $p, $exec, $configS and $trm.	 
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 */
+	public function sendEmail($principal, $caller, $parameter, $executionSink=null) {
+	    $this->executionSink()->publishStartOperation("sendEmail", $principal);
+	    $returnValue = null;
+	    try {
+	        if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        $to = $parameter->getValue('to');
+	        if(empty($to) || ($to instanceOf ValueList) && $to->isEmpty()) throw new WigiiBPLException('recipients list cannot be empty', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        $exec = ServiceProvider::getExecutionService();
+	        $configS = $this->getConfigService();
+	        $p = $principal;
+	        $trm = $this->getWigiiExecutor()->createTRM();
+	        
+	        // gets email activity and email template
+	        $mailActivity = $parameter->getValue('mailActivity');
+	        if(!isset($mailActivity)) $mailActivity = Activity::createInstance("BaseEmail");
+	        if(!($mailActivity instanceof Activity)) $mailActivity = Activity::createInstance($mailActivity);
+	        $templatePath = $configS->getTemplatePath($p, $exec->getCrtModule(), $mailActivity);
+	        
+	        // prepares email body based on email template
+	        $body = $parameter->getValue('content');
+	        ob_start();
+	        include($templatePath);
+	        $body = ob_get_clean();
+	        
+	        // creates email instance
+	        $emailS = $this->getEmailService();
+	        $email = $emailS->getEmailInstance();
+	        
+	        // fills subject and body
+	        $subject = $parameter->getValue('subject');
+	        if(empty($subject)) $subject = $trm->getBaseEmailSubject();
+	        $email->setSubject($subject);
+	        $email->setBodyHtml($body);
+	        
+	        // fills senders address
+	        $copySender = $parameter->getValue('copySender');
+	        $from = $parameter->getValue('from');
+	        if($from===false) $from = (string)$configS->getParameter($p, null, "emailNotificationFrom");
+	        elseif(empty($from)) {
+	            $from = $p->getValueInGeneralContext("email");
+	            if(empty($from)) $from = (string)$configS->getParameter($p, null, "emailNotificationFrom");
+	        }
+	        if($from == (string)$configS->getParameter($p, null, "emailNotificationFrom")) $copySender = false;	        
+	        // Checks for authorized direct sender
+	        elseif(defined("EmailService_sendOnBehalfOfUser") && EmailService_sendOnBehalfOfUser) $emailS->isEmailAuthorizedDirectSender($p,$from,$p->getRealUsername());
+	        $email->setFrom($from);
+	        
+	        // fills recipients
+	        $email->clearRecipients();
+	        $hideRecipients = ($parameter->getValue('hideRecipients')==true);
+	        if(is_array($to)) {
+	            foreach($to as $recEmail) {
+	                if($recEmail != $from) {
+	                    if($hideRecipients) $email->addBcc($recEmail);
+	                    else $email->addTo($recEmail);
+	                }
+	            }
+	        }
+	        elseif($to instanceof ValueList) {
+	            foreach($to->getListIterator() as $recEmail) {
+	                if($recEmail != $from) {
+	                    if($hideRecipients) $email->addBcc($recEmail);
+	                    else $email->addTo($recEmail);
+	                }
+	            }
+	        }
+	        elseif($to != $from) {
+	            if($hideRecipients) $email->addBcc($to);
+	            else $email->addTo($to);
+	        }
+	        if($copySender) $email->addTo($from);
+	        elseif($hideRecipients)  $email->addTo((string)$configS->getParameter($p, null, "emailNotificationFrom"));
+	        
+	        // Add cc
+	        $cc = $parameter->getValue('cc');
+	        if(is_array($cc)) {
+	            foreach($cc as $recEmail) {
+	                if($recEmail != $from) $email->addCc($recEmail);
+	            }
+	        }
+	        elseif($cc instanceof ValueList) {
+	            foreach($cc->getListIterator() as $recEmail) {
+	                if($recEmail != $from) $email->addCc($recEmail);               
+	            }
+	        }
+	        elseif($cc != $from) {
+	            $email->addCc($cc);
+	        }
+	        // Add cc
+	        $bcc = $parameter->getValue('bcc');
+	        if(is_array($bcc)) {
+	            foreach($bcc as $recEmail) {
+	                if($recEmail != $from) $email->addBcc($recEmail);
+	            }
+	        }
+	        elseif($bcc instanceof ValueList) {
+	            foreach($bcc->getListIterator() as $recEmail) {
+	                if($recEmail != $from) $email->addBcc($recEmail);
+	            }
+	        }
+	        elseif($bcc != $from) {
+	            $email->addBcc($bcc);
+	        }
+	        
+	        // sends email using EmailService
+	        if($email->hasRecipients()) $emailS->send($p,$email,$parameter->getValue('mergeData'));
+	        elseif($executionSink) $executionSink->log('mail not sent, no recipients');
+	    }
+	    catch(Exception $e) {
+	        $this->executionSink()->publishEndOperationOnError("sendEmail", $e, $principal);
+	        throw $e;
+	    }
+	    $this->executionSink()->publishEndOperation("sendEmail", $principal);
+	    return $returnValue;
+	}
+	
 	/**
 	 * Evaluates a FuncExp in the context of the given Record.
 	 * @param Principal $p principal executing the request
