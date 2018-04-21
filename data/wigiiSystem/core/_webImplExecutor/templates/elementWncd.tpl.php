@@ -144,6 +144,8 @@ $exec->addJsCode('wncd.program.context.'.$lc->getCrtView().'='.$wncdModel);
 
 // loads wncd view
 $exec->addJsCode('wigii().context.crtView="'.$lc->getCrtView().'"');
+// resets wncd container
+$exec->addJsCode('wigii().getWncdContainer(wncd).reset()');
 
 // loads wncd module if defined
 $wncdFile = (string)$wncdXml['wncdModule'];

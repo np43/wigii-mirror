@@ -1927,6 +1927,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					onDataChangeSubscribers:undefined,
 					onElementDeletedSubscribers:undefined
 				};
+				/**
+				 * Resets the current WncdContainer
+				 * This method is called each time the moduleView is repainted from scratch.
+				 */
+				self.reset = function() {
+					self.impl.onDataChangeSubscribers=undefined;
+					self.impl.onElementDeletedSubscribers=undefined;
+				};
 				
 				/**
 				 * Returns Wigii ElementPList JSON data model linked to current WNCD view
