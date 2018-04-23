@@ -326,7 +326,7 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 //			fput($this->getWigiiExecutor()->getConfigurationContext()->getCrtConfigGroupId($p, $exec));
 //			fput($this->getWigiiExecutor()->getConfigurationContext()->m($p, $exec->getCrtModule())->fields);
 			$color = $element->getFieldList()->getField($fMap["label"])->getXml()->xpath('attribute[@color and (text()="'.$label.'")]');
-			if($color){ $color = (string)$color[0]["color"]; }
+			if($color){ $color = str_replace("#", "", (string)$color[0]["color"]); }
 		}
 
 
