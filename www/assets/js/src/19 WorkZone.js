@@ -3519,7 +3519,8 @@ elementCalendar_currentEventSelected = null;
 elementCalendar_contextMenuIdElement = null;
 lastResizeOrDragRevertFunction = null;
 lastModifiedEvent = null;
-function setListenersToCalendar(groupUpId, groupUpLabel, crtLanguage, crtView, crtDate){
+//callbackOnEventFetch is a function to call when events are fetched. Typically used to update indicators calculation
+function setListenersToCalendar(groupUpId, groupUpLabel, crtLanguage, crtView, crtDate, callbackOnEventFetch){
 	
 	var cmSelector = '#moduleView .calendar>.cm';
 	var elSelector = '#moduleView .dataZone a.fc-event';
@@ -3627,6 +3628,9 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtLanguage, crtView, c
 							if(!(moment(firstEvent.end).unix() >= start.unix() && moment(firstEvent.start).unix() <= end.unix())){
 								$('#moduleView .calendar').fullCalendar('gotoDate', firstEvent.start);
 							}
+						}
+						if(callbackOnEventFetch){
+							callbackOnEventFetch();
 						}
 						callback(events);
 						//colorize();

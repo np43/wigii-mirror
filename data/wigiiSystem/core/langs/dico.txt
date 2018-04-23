@@ -1464,6 +1464,9 @@ updateExistingOnLineFile:update content:changer le contenu:::::::::
 removeExistingOnLineFile:remove content:supprimer le contenu:::::::::
 newDocument:New document:Nouveau document:::::::::
 boxChooseFile:Pick file from box...:Choisir un doc dans box...:::::::::
+startAudioRecording:Record:Rec:::::::::
+pauseAudioRecording:Pause:Pause:::::::::
+saveAudioRecording:Save:Stocker:::::::::
 
 onlyInWrite_help:This document is visible only if the user has a modification right.:Ce document est visible uniquement si l'utilisateur à un droit de modification.:::::::::
 creationDateField_help:Please fill an approximate date if #thisElement# has been created before today.:Veuillez remplir une date approximative dans le cas où #thisElement# a été créé avant aujourd'hui:::::::::

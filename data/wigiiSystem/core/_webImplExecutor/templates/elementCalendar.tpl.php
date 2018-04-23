@@ -196,7 +196,14 @@ switch($transS->getLanguage()){
 	default:
 		$crtLanguage = "en";
 }
-$exec->addJsCode("$crtDate setListenersToCalendar('".($crtGroupP ? ($crtGroupP->getDbEntity()->getGroupParentId() ? $crtGroupP->getDbEntity()->getGroupParentId() : 0 ) : null)."', '".($crtGroupP ? $transS->h($p, "groupUp") : null)."', '$crtLanguage', '$crtView', crtDate);");
+//refresh indicators if defined
+$indicatorsAreShown= $p->getValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl());
+$indicatorList = $this->getIndicatorList($p, $exec);
+$addCallBackOnEventFetch = null;
+if($indicatorsAreShown && $indicatorList!=null && !$indicatorList->isEmpty()){
+	$addCallBackOnEventFetch = "function(){ update('JSCode/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/evaluateIndicators'); }";
+}
+$exec->addJsCode("$crtDate setListenersToCalendar('".($crtGroupP ? ($crtGroupP->getDbEntity()->getGroupParentId() ? $crtGroupP->getDbEntity()->getGroupParentId() : 0 ) : null)."', '".($crtGroupP ? $transS->h($p, "groupUp") : null)."', '$crtLanguage', '$crtView', crtDate, $addCallBackOnEventFetch);");
 
 ?><div class="dataZone calendar" style="margin-left:3px; margin-right: 3px;"><?
 /**

@@ -1097,7 +1097,7 @@ class TemplateRecordManager extends Model {
 			//the ok button is always the second one (index 1, startin on 0). because the buttons are stored
 			//in reverse order
 			//I'm not able to make the ESC event working for Forms: $('#$formId').keydown(function(e){ if(e.keyCode == 27){ e.stopPropagation(); e.preventDefault(); $('#$formId').closest('.ui-dialog').find('.ui-dialog-titlebar-close').click(); }});
-			$this->getExecutionService()->addJsCode(" $('#$formId :not(textarea):input').keydown(function(e){ if(e.keyCode == 13){ $('#$formId').closest('.ui-dialog').find('.ui-dialog-buttonpane .ok').click(); e.stopPropagation(); e.preventDefault(); }});");
+			$this->getExecutionService()->addJsCode(" $('#$formId :not(textarea):input').keydown(function(e){ if(e.keyCode == 13){ $('#$formId').closest('.ui-dialog').find('.ui-dialog-buttonpane .ok:not(:disabled)').click(); e.stopPropagation(); e.preventDefault(); }});");
 		} else {
 			//to prevent compatibility problems on clickin on the normal submit button
 			//we create buttons reflecting the forms buttons:

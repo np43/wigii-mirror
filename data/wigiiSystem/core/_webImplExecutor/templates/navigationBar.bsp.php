@@ -123,16 +123,24 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 if($p->isRealUserPublic()) {
     $username = $transS->t($p, $realUser->getUsername(), $authS->getPublicUserConfigForPrincipal($p));
 } else{
-    $un = explode('.', $realUser->getUsername());
-    if(!$un[1]){
-        $un = explode('_', $realUser->getUsername());
-        if(!$un[1]){
-            $un = explode('-', $realUser->getUsername());
-        }
-    }
-    $fl = strtoupper($un[0][0]);
-    $ll = strtoupper($un[1][0]);
-    $username = $fl. $ll;
+	$usernameToSplit = $realUser->getUsername();
+	$usernameToSplit = explode("@", $usernameToSplit);
+	$usernameToSplit = $usernameToSplit[0]; //take only left part of an @ style user
+	$usernameParts = preg_split( "/(\.|-|_| )/", $usernameToSplit);
+	$username = "";
+	foreach($usernameParts as $part) {
+		$username .= strtoupper($part[0]); //take the first letter
+	}
+// 	$un = explode('.', $realUser->getUsername());
+//     if(!$un[1]){
+//         $un = explode('_', $realUser->getUsername());
+//         if(!$un[1]){
+//             $un = explode('-', $realUser->getUsername());
+//         }
+//     }
+//     $fl = strtoupper($un[0][0]);
+//     $ll = strtoupper($un[1][0]);
+//     $username = $fl. $ll;
 }
 ?>
 

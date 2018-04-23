@@ -243,6 +243,79 @@ if($fieldXml["keepHistory"]>0){
 	}
 }
 
+//if allow audio recording
+if($fieldXml["allowAudioRecording"]=="1"){
+	$audioRecordingButtonId = $formId.'_'.$fieldName.'_audioRecording_startButton';
+	$audioRecordingSaveButtonId = $formId.'_'.$fieldName.'_audioRecording_saveButton';
+	$this->put('<div id="'.$audioRecordingButtonId.'" class="audioRecordingButton">'.$transS->t($p,"startAudioRecording").'</div>');
+	$this->put('<div id="'.$audioRecordingSaveButtonId.'" class="audioRecordingButton">'.$transS->t($p,"saveAudioRecording").'</div>');
+	$this->getExecutionService()->addJsCode("
+
+function addJsCodeOnFileAudioRecording(inputFileId, audioRecordingButtonId, audioRecordingSaveButtonId, startRecordingLabel, pauseRecordingLabel, saveRecordingLabel){
+	window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+	/*check if navigator allows MediaDevices*/
+	if(navigator.mediaDevices.getUserMedia){
+		var chunks = [];
+		
+		var onError = function(error) {
+		  console.error('Error: ', error);
+		};
+		
+		var onSuccess = function(stream){
+			var audioRecorder = new MediaRecorder(stream);
+			
+			$('#'+audioRecordingButtonId).click(function(){ 
+				if(audioRecorder.state=='inactive'){
+					audioRecorder.start();
+				} else if(audioRecorder.state=='paused'){
+					audioRecorder.resume();
+				} else if(audioRecorder.state=='recording'){
+					audioRecorder.pause();
+				}
+				if(audioRecorder.state=='recording'){
+					$(this).addClass('isRecording');
+					$(this).text(pauseRecordingLabel);
+				} else {
+					$(this).removeClass('isRecording');
+					$(this).text(startRecordingLabel);
+				}
+			});
+			
+			$('#'+audioRecordingSaveButtonId).click(function(){ 
+				if(audioRecorder.state!='inactive'){
+					audioRecorder.stop();
+					$('#record').text(saveRecordingLabel).removeClass('isRecording');
+				}
+			});
+			
+			audioRecorder.onstop = function(e) {
+				/*store the audio data in a blob*/
+				var file = new File(chunks, { 'type' : 'audio/ogg; codecs=opus', 'name':moment().format('YYYY-MM-DD HH:mm') });
+				var blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+				chunks = [];
+				/*window.URL.createObjectURL(blob)*/
+				$('#'+inputFileId).val(file);
+			};
+			
+			audioRecorder.ondataavailable = function(e) {
+				chunks.push(e.data);
+			};
+		};
+		
+		/*gain access to the mic*/
+		navigator.mediaDevices.getUserMedia({audio: true}).then(onSuccess,onError);
+		
+	}
+
+};
+addJsCodeOnFileAudioRecording('$inputFileId', '$audioRecordingButtonId', '$audioRecordingSaveButtonId','".$transS->t($p,"startAudioRecording")."','".$transS->t($p,"pauseAudioRecording")."','".$transS->t($p,"saveAudioRecording")."');
+");
+	
+	//$this->getExecutionService()->addJsCode("addJsCodeOnFileAudioRecording('#$audioRecordingButtonId','".str_replace("//", "\/\/",SITE_ROOT_forFileUrl)."');");
+	
+}
+
 //HIDDEN FIELDS
 
 //path

@@ -7588,6 +7588,8 @@ onUpdateErrorCounter = 0;
 					$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "EvaluateIndicators");
 					//take the elementListContext
 					$elementListContext = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+					//if the current view is a calendar, take the calendar view Context to include the date range
+					if($elementListContext->isCrtViewCalendar()) $elementListContext = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementCalendar");
 					$lc->matchFetchCriteria($elementListContext);
 					$trm = $this->createTRM();
 					$fl = FieldListArrayImpl :: createInstance(false, true);
@@ -8500,6 +8502,13 @@ onUpdateErrorCounter = 0;
 
 				//add back the original logExp
 				$lc->setFieldSelectorLogExp($originalLogExp);
+				
+				//refresh indicators if defined
+				$indicatorsAreShown= $p->getValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl());
+				$indicatorList = $this->getIndicatorList($p, $exec);
+				if($indicatorsAreShown && $indicatorList!=null && !$indicatorList->isEmpty()){
+					$exec->addJsCode("update('JSCode/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/evaluateIndicators');");
+				}
 				break;
 			case "updateElementInList":
 			case "addElementInList":
@@ -8542,7 +8551,13 @@ onUpdateErrorCounter = 0;
 				
 				//add back the original logExp
 				$lc->setFieldSelectorLogExp($originalLogExp);
-
+				
+				//refresh indicators if defined
+				$indicatorsAreShown= $p->getValueInRoleContext("indicators_areShown_".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . '_' . $exec->getCrtModule()->getModuleUrl());
+				$indicatorList = $this->getIndicatorList($p, $exec);
+				if($indicatorsAreShown && $indicatorList!=null && !$indicatorList->isEmpty()){
+					$exec->addJsCode("update('JSCode/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/evaluateIndicators');");
+				}
 				break;
 			case "getNextElementInList" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
