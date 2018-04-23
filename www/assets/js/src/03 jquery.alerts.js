@@ -26,6 +26,13 @@
 // is copyright 2008 A Beautiful Site, LLC. 
 //
 
+//global variables for translation, defined in the index.php file
+//defined them if not to ensure no error if using the librairie as is.
+if(typeof DIALOG_okLabel === "undefined"){DIALOG_okLabel='ok';}
+if(typeof DIALOG_noLabel === "undefined"){DIALOG_noLabel='no';}
+if(typeof DIALOG_cancelLabel === "undefined"){DIALOG_cancelLabel='cancel';}
+if(typeof DIALOG_closeLabel === "undefined"){DIALOG_closeLabel='close';}
+
 /**
  * changes done by LWR to adapt for WigiiProject
  * add yescancel
