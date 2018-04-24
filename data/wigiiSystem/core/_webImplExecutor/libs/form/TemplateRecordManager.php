@@ -768,7 +768,11 @@ class TemplateRecordManager extends Model {
 	 */
 	public function displayHeaderLabel($fieldSelector, $fieldXml=null, $xmlHeader=null, $forceDisplayElementState=false){
 		if($xmlHeader != null && count($xmlHeader->children()) > 0){
-			$label = str_replace(" ", "&nbsp;", $this->t($fieldSelector->getFieldName(), $xmlHeader));
+			if($xmlHeader["displayHTMLinLabel"]=="1"){
+				$label = $this->t($fieldSelector->getFieldName(), $xmlHeader);
+			} else {
+				$label = str_replace(" ", "&nbsp;", $this->t($fieldSelector->getFieldName(), $xmlHeader));
+			}
 			$this->put(preg_replace("#<a&nbsp;class=\"(\w+)\"&nbsp;href=\"(\d+)\">&nbsp;</a>#i","<a class=\"$1\" href=\"$2\"> </a>", $label));
 		} else if($fieldSelector->isElementAttributeSelector()){
 			//if states, then by default no label
@@ -783,9 +787,17 @@ class TemplateRecordManager extends Model {
 			if(($fieldSelector->getSubFieldName() == "path" || $fieldSelector->getSubFieldName() == "mime") && $fieldXml["type"]=="Files"){
 				$this->put("&nbsp;");
 			} else if($fieldSelector->getSubFieldName() == null || $fieldSelector->getSubFieldName() == 'value'){
-				$this->put(str_replace(" ", "&nbsp;", $this->t($fieldSelector->getFieldName(), $fieldXml)));
+				if($xmlHeader["displayHTMLinLabel"]=="1"){
+					$this->put($this->t($fieldSelector->getFieldName(), $fieldXml));
+				} else {
+					$this->put(str_replace(" ", "&nbsp;", $this->t($fieldSelector->getFieldName(), $fieldXml)));
+				}
 			} else {
-				$this->put(str_replace(" ", "&nbsp;", $this->t($fieldSelector->getFieldName(), $fieldXml)." ".$this->t($fieldSelector->getSubFieldName())));
+				if($xmlHeader["displayHTMLinLabel"]=="1"){
+					$this->put($this->t($fieldSelector->getFieldName(), $fieldXml)." ".$this->t($fieldSelector->getSubFieldName()));
+				} else {
+					$this->put(str_replace(" ", "&nbsp;", $this->t($fieldSelector->getFieldName(), $fieldXml)." ".$this->t($fieldSelector->getSubFieldName())));
+				}
 			}
 		}
 	}

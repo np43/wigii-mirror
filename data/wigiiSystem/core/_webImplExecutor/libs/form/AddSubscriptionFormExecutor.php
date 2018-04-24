@@ -308,7 +308,7 @@ class AddSubscriptionFormExecutor extends AddElementFormExecutor {
 		$backgroundColor = $subR->getFieldValue("subscriptionBackgroundColorCode");
 		if($backgroundColor){
 			if($backgroundColor[0]!="#") $backgroundColor = "#".$backgroundColor;
-			$exec->addJsCode(" $('html').css('background-color','$backgroundColor'); ");
+			$exec->addJsCode(" $('body').css('background-color','$backgroundColor'); ");
 		}
 
 		$title = $subR->getFieldValue("title");

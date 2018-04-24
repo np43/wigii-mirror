@@ -3480,7 +3480,7 @@ invalidCompleteCache();
 				$count = $elementCounter->getTotal();
 				if ($max <= $count) {
 					$state = "closed";
-					$form->addAdditionalText($transS->t($p, "subscriptionMaxNbReached") . ": " . ($max)); //changed on the 17/11/2017 by LWR, it is not good to indicate to the public what is the real number of final subscribers, as mybe we are ok to add some manual entries and we don't want that the public sees it (taht for example allow overboocking)   
+					$form->addAdditionalText($transS->t($p, "subscriptionMaxNbReached")); //changed on the 24.04.2018, there is no added value showing the max number . ($max)); //changed on the 17/11/2017 by LWR, it is not good to indicate to the public what is the real number of final subscribers, as mybe we are ok to add some manual entries and we don't want that the public sees it (taht for example allow overboocking)   
 				}
 			}
 //			echo $max."<br>";
@@ -7621,7 +7621,11 @@ onUpdateErrorCounter = 0;
 									case "Dates" :
 									case "TimeRanges" :
 										$xml = $field->getXml();
-										$val = $trm->doFormatForDate($val, false, $xml["isBirthDate"] == "1", $xml["includeTime"] == "1");
+										if($xml["isBirthDate"] == "1" && $val){
+											$val = floor((time()-$val)/(24*3600*365.25)); //only calculate the age
+										} else {
+											$val = $trm->doFormatForDate($val, false, $xml["isBirthDate"] == "1", $xml["includeTime"] == "1");
+										}
 										break;
 									case "Numerics" :
 										$val = $trm->doFormatForNumeric($val);
@@ -8089,7 +8093,9 @@ onUpdateErrorCounter = 0;
 
 				//the to email is filled in in the doRenderForm
 				//$EmailingRec->setFieldValue(implode(", ", array_keys($emails["allFields"])), "to_email");
-				$EmailingRec->setFieldValue($p->getValueInGeneralContext("email"), "from_email");
+				$defaultFromEmail = (string)$configS->getParameter($p, $exec->getCrtModule(), "defaultEmailingFrom");
+				if($defaultFromEmail==null) $defaultFromEmail= $p->getValueInGeneralContext("email");
+				$EmailingRec->setFieldValue($defaultFromEmail, "from_email");
 
 				$action = $exec->getCrtRequest();
 				$form = $this->createEmailingFormExecutor($EmailingRec, "Emailing_form", $action, $elementIds);

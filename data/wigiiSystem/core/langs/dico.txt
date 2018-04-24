@@ -1377,7 +1377,7 @@ subscriptionConfEmailFromIsAddedTitle:Email added in notification:Email ajouté 
 subscriptionConfEmailFromIsAddedExpl:The following emails are added for notification when #newElement# is added in the #group#:Les emails suivant sont ajouté pour être notifié lorsque un #newElement# est ajouté dans ce #-group#:::::::
 subscriptionPeriodToEarly:The form will be available on :Le formulaire sera disponible dés le :::::::::
 subscriptionPeriodToLate:Subscription period finished on :La période d'inscription s'est terminée le :::::::::
-subscriptionMaxNbReached:Maximum number of subscription reached:Nombre maximum d'inscription atteint:::::::::
+subscriptionMaxNbReached:The maximum number of subscription is reached.:Le nombre maximum d'inscription est atteint.:::::::::
 subscriptionMaxNbLefted: subscriptions still possible: inscriptions encore possibles:::::::::
 subscriptionPeriodWillEnd:This form is available until :Ce formulaire est disponible jusqu'au :Dieses Formular ist verfügbar bis zum ::::::::
 subscriptionClosed:Form unavailable:Formulaire indisponible:::::::::
