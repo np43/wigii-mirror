@@ -23,7 +23,7 @@
 /**
  * Rise.wigii.org NCD Web Service JS client
  * Created by Camille Weber on 08.11.2016
- * 
+ * Modified by Camille Weber on 18.04.2018 to include Move Forward project
  * @param wigiiFacade wigii the Wigii JS client facade function (defined in /assets/js/wigii_XXXX.js)
  * @param JQuery $ depends on JQuery 1.8.x
  */
@@ -40,7 +40,9 @@
 		riseNcd.instantiationTime = (new Date()).getTime();
 		riseNcd.ctxKey = wigiiApi.ctxKey+'_'+riseNcd.className+'_'+riseNcd.instantiationTime;		
 		
-		riseNcd.context = {};		
+		riseNcd.context = {
+			mfCodeCache: {}
+		};		
 		
 		riseNcd.login = function(username, password) {				
 			return riseNcd.call('sysLogin("'+username+'","'+password+'")');			
@@ -73,16 +75,16 @@
 			return riseNcd.call('riseNcd_createDataStorage("'+groupId+'"'+(description?',"'+description+'"':'')+')');
 		};
 		/**
-		 * Calls Rise NCD Web service and returns the result as a String
+		 * Calls synchronously Rise NCD Web service and returns the result as a String
 		 *@param String fx the FuncExp to call as a web service expression
 		 *@param Object|Array data optional data to post with the Fx call. (if null, then calls using GET, else POSTS)
 		 */
 		riseNcd.call = function(fx,data) {		
-			var url = wigii().SITE_ROOT+'NCD/Espace/fx/'+$.base64EncodeUrl(fx);			
+			var url = wigiiApi.SITE_ROOT+'NCD/Espace/fx/'+$.base64EncodeUrl(fx);
 			var returnValue;
 			if(data) {
 				$.ajax({type:"POST",
-					url:wigii().SITE_ROOT+'NCD/Espace/fx/'+$.base64EncodeUrl(fx),
+					url:url,
 					dataType:'json',
 					contentType: 'text/plain',
 					data: JSON.stringify(data),
@@ -94,13 +96,13 @@
 			}
 			else {
 				$.ajax({type:"GET",
-					url:wigii().SITE_ROOT+'NCD/Espace/fx/'+$.base64EncodeUrl(fx),
+					url:url,
 					crossDomain: true,
 					xhrFields: {withCredentials: true},
 					async:false,
 					success: function(data) {returnValue=data;}					
 				});
-			}			
+			}
 			return returnValue;
 		};
 		
@@ -115,6 +117,74 @@
 		riseNcd.partage_sauverContenu = function(repositoryId,contenus) {
 			riseNcd.call('partage_sauverContenu("'+repositoryId+'")', contenus);
 		};
+		
+		// Projet ATELIER ENCODE / MOVE Forward
+		
+		/**
+		 * Fetches asynchronously an object into Rise.wigii.org Move Forward catalog and executes some action on the fetched code
+		 *@param String codeId ID of the object stored into the catalog
+		 *@param Function callback action to do on the fetched code. Callback is a function which takes one parameter of type object of the form
+		 *{ id: object ID in catalog,
+		 *  type: svg|ncd type of code fetched,
+		 *  svg: String. SVG code fetched if defined,
+		 *  ncd: String. WNCD code fetched if defined
+		 *  objectName: String. Name of object in catalog
+	     *  objectType: String. Type of object in catalog
+		 *}
+		 * If type is ncd both svg and ncd code can be defined. In that case, ncd holds an expression which uses in some way the svg code.
+		 *@param Function exceptionHandler an optional exception handler in case of error. Function signature is exceptionHandler(exception,context) where exception is Wigii API exception object of the form {name:string,code:int,message:string}
+		 * and context is an object with some server context information of the form {request:string, wigiiNamespace:string, module:string, action:string, realUsername:string, username:string, principalNamespace:string, version:string}
+		 */
+		riseNcd.mf_actOnCode = function(codeId,callback,exceptionHandler) {
+			// if code is already in cache, then executes directly action on it
+			if(riseNcd.context.mfCodeCache[codeId]) {
+				if($.isFunction(callback)) callback(riseNcd.context.mfCodeCache[codeId]);
+			}
+			// else loads it first and puts it in cache.
+			wigiiApi.callFx('mf_jsonEncode(mf_getCode("'+codeId+'"))',{
+				fxEndPoint:wigiiApi.SITE_ROOT+'NCD/Catalog/fx/',
+				resultHandler:function(code) {
+					try {
+						code = JSON.parse(code);
+						// cleans up svg code from non needed elements and keeps defs separated
+						if(code.svg) {
+							// parses SVG as XML and loads jQuery on it
+							var svgCode = $.parseXML(code.svg);
+							svgCode = $(svgCode).find('svg');
+							// extracts SVG defs and saves it into code.svgDefs
+							var svgElt = svgCode.children('defs');
+							if(svgElt.length>0) code.svgDefs = wigiiApi.xml2string(svgElt[0]);
+							// extracts first valuable group of objects
+							svgElt = svgCode.children('g');
+							if(svgElt.length>1) {
+								svgElt.wrapAll('<g/>');
+								svgElt = svgCode.children('g');
+							}
+							if(svgElt.length==1) {
+								svgCode = svgElt;
+								svgElt = svgCode.children();
+								if(svgElt.length==1) svgElt = svgCode.children('g');
+								if(svgElt.length!=1) svgElt = svgCode;
+								code.svg = wigiiApi.xml2string(svgElt[0]);
+							}
+						}
+						riseNcd.context.mfCodeCache[codeId] = code;
+						if($.isFunction(callback)) callback(code);
+					}
+					catch(exc) {						
+						if($.isFunction(exceptionHandler)) exceptionHandler(exc);
+						else wigiiApi.publishException(exc);
+					}
+				},
+				exceptionHandler:exceptionHandler
+			});
+		};
+		/**
+		 * Clears current Move Forward cache 
+		 */
+		riseNcd.mf_clearCache = function() {
+			riseNcd.context.mfCodeCache = {};
+		};		
 	};
 	// registers the RiseNcd plugin into the Wigii JS client
 	if(!wigiiApi['getRiseNcd']) wigiiApi.getRiseNcd = function() {
