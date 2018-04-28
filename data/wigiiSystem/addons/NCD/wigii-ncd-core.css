@@ -368,10 +368,79 @@ pre[class*="language-"] {
   * Wigii Natural Code Development (NCD) standard library CSS
   * Created by Camille Weber (camille@wigii.org), 15.11.2017
   */
+
+/**************************************
+* Wigii NCD ObjectDocBrowser styling
+**************************************/
 div.ncd.method a.selfLink {
 	text-decoration:none;
 	color:black;
-}	 
+}
+div.docBrowser {
+	overflow-y:auto;
+}
+div.docBrowserToolbar ul {
+	padding:0;
+	margin:0;
+	margin-top:5px;
+	margin-bottom:5px;
+	margin-right:5px;
+	list-style: none;
+	cursor:pointer;	
+}
+div.docBrowserToolbar ul li {
+	padding-left:5px;
+	padding-top:5px;
+	border: 1px solid #3333ff;
+	border-radius: 5px;
+	padding-bottom:3px;
+	margin-bottom:2px;
+	margin-left:2px;
+	text-align:center;
+}
+div.docBrowserToolbar ul li:hover, div.docBrowserToolbar ul li.selected {
+	background-color: #3333ff;
+}
+div#nullEmitter {
+	display:none;
+}
+div.docBrowser div.method {
+	margin:10px 30px;
+}
+div.docBrowser a.methodName {	
+}
+div.docBrowser span.classKeyword {
+	padding-right: 8px;
+}
+div.docBrowser span.functionKeyword {
+	padding-right: 8px;
+}
+div.docBrowser span.keyword {
+	color:blue;
+}
+div.docBrowser span.methodExpand {
+	cursor:pointer;
+	padding-right:8px;	
+}
+div.docBrowser div.methodSrc, div.docBrowser div.classSrc {
+	display:none;
+}
+div.docBrowser div.methodSrc textarea, div.docBrowser div.classSrc textarea {
+	white-space:pre;
+}
+div.docBrowser span.methodSrcExpand, div.docBrowser span.classSrcExpand {
+	cursor:pointer;
+	padding-left:8px;	
+}
+div.docBrowser span.typeAssignement {
+	padding-left: 8px;
+	padding-right: 8px;
+}
+div.docBrowser span.scalarValue {
+}
+/**************************************
+* Wigii NCD AutocompletionSense styling
+**************************************/	 
 div.autocompletionsense {
 	overflow-y:auto;
 	background-color:white;
@@ -396,6 +465,9 @@ div.autocompletionsense ul li.highlighted {
 	border-radius: 2px;
 	padding-left:5px;
 }
+/**************************************
+* Wigii NCD ContextualMenu styling
+**************************************/
 div.contextualMenu ul {
 	list-style: none;
 	cursor:pointer;
