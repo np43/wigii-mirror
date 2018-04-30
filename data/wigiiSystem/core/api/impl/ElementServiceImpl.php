@@ -4378,13 +4378,16 @@ order by isParent DESC
 		return $returnValue;
 	}
 	
-	public function moveElement($principal, $elementId, $groupId)
+	public function moveElement($principal, $elementId, $groupIds)
 	{	
 		$this->executionSink()->publishStartOperation("moveElement", $principal);
 		
 		try {
-			if(is_null($groupId)) throw new ElementServiceException("groupId cannot be null", ElementServiceException::INVALID_ARGUMENT);
-			
+			if(is_null($groupIds)) throw new ElementServiceException("groupIds cannot be null", ElementServiceException::INVALID_ARGUMENT);
+			if(!is_array($groupIds))
+			{
+				$groupIds= array($groupIds=> $groupIds);
+			}
 			//fetches elementP
 			$elementP = $this->getElementPWithoutFields($principal, $elementId);
 			if(is_null($elementP)) throw new ElementServiceException("element $elementId does not exists in database", ElementServiceException::INVALID_ARGUMENT);
@@ -4399,38 +4402,38 @@ order by isParent DESC
 			$dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
 			$returnValue = 0;
 			
-			// fetches groupP
-			$groupP = $groupAS->getGroup($principal, $groupId, $fsl);
-			
 			//retreive groupPList to unshare
-			$groupPList = GroupListAdvancedImpl::createInstance();
-			$this->getAllGroupsContainingElement($principal, $element, $groupPList,lf($fsl,
-				lxAnd(lxNotEq(fs('id'),$groupId), lxEq(fs('wigiiNamespace'),$groupP->getGroup()->getWigiiNamespace()->getWigiiNamespaceName()))
+			$groupPListToUnshare = GroupListAdvancedImpl::createInstance();
+			$this->getAllGroupsContainingElement($principal, $element, $groupPListToUnshare,lf($fsl,
+				lxNotIn(fs('id'),$groupIds)
 			));
 			
-			
-			//Move element
-			if(isset($groupP))
+			foreach($groupIds as $groupId)
 			{
-				// checks if principal has rights to move element in this group
-				if($this->checkPrincipalAuthorizedToMoveElementInGroup($principal, $element, $groupP))
+				// fetches groupP
+				$groupP = $groupAS->getGroup($principal, $groupId, $fsl);
+				// if groupP exists in database ok to update sharing
+				if(isset($groupP))
 				{
-					$changes = $mySqlF->update($principal,
-							$this->getSqlForUpdateElementGroup($elementId, $groupId),
-							$dbCS);
-					if($changes > 0) $returnValue ++;
+					// checks if principal has rights to share element in this group
+					if($this->checkPrincipalAuthorizedToShareElementInGroup($principal, $element, $groupP))
+					{
+						$changes = $mySqlF->update($principal,
+								$this->getSqlForUpdateElementGroup($elementId, $groupId),
+								$dbCS);
+						if($changes > 0) $returnValue ++;
+					}
+					unset($groupP);
 				}
-				unset($groupP);
-				
-				//Unshare all elements
-				$groupIds = $groupPList->getGroupIds();
-				if(!empty($groupIds)){					
-				    $changes = $mySqlF->delete($principal, $this->getSqlForDeleteMultipleElementSharing($principal, $elementP->getId(), $groupIds), $dbCS);
-				}					
 			}
 			
-			
-			
+			if($returnValue > 0) {
+				//Unshare all other groups
+				$groupIds = $groupPListToUnshare->getGroupIds();
+				if(!empty($groupIds)){
+					$changes = $mySqlF->delete($principal, $this->getSqlForDeleteMultipleElementSharing($principal, $elementP->getId(), $groupIds), $dbCS);
+				}	
+			}
 		}
 		catch (ElementServiceException $ese){
 			$this->executionSink()->publishEndOperationOnError("moveElement", $ese, $principal);

@@ -1280,8 +1280,15 @@ class WigiiBPL
 			if ($newGids || $moveId) {
 				if($moveId){
 					$this->debugLogger()->write( "Move element in " . $moveId );
+					$moveId = explode(";", $moveId); //if the moveId contains multiple groups then move in multiple
+					if(is_array($moveId)) $moveId = array_combine($moveId, $moveId);
+					//move in multiple groups is still taking the move piority logic, it is just the one being selected could be a result of multiple groups and not only one
 					$elS->moveElement ( $this->getRootPrincipal (), $element->getId (), $moveId );
-					$newGids[$moveId] = $moveId;
+					if(is_array($moveId)){
+						$newGids = array_merge($newGids, $moveId);
+					} else {
+						$newGids[$moveId] = $moveId;
+					}
 				} else{
 					$this->debugLogger()->write( "Share element in " . implode(",",$newGids) );
 					$elS->shareElement ( $this->getRootPrincipal (), $element->getId (), $newGids );

@@ -310,11 +310,11 @@ interface ElementService
 	 * Move element to provided group
 	 *@param Principal $principal authenticated user performing the operation
 	 *@param int $elementId element database id from which to retrieve the element to move
-	 *@param $groupId a group id to which the element is moved
+	 *@param $groupIds a group id or and array of group ids to which the element is moved to
 	 *@throws ElementServiceException if an error occurs
 	 *@returns total number of changes
 	 */
-	public function moveElement($principal, $elementId, $groupId);
+	public function moveElement($principal, $elementId, $groupIds);
 
 	/**
 	 * Updates the elements sharing to match exactly the list of provided groups

@@ -38,6 +38,8 @@ month_9:Sept:Sept:::::::::
 month_10:Oct:Oct:::::::::
 month_11:Nov:Nov:::::::::
 month_12:Dec:Déc:::::::::
+week_short:W:Sem:::::::::
+week:Week:Semaine:::::::::
 Home:Home:Accueil:::::::::
 Events:Calendar:Calendrier:::::::::
 Contacts:Contacts:Contacts:::::::::

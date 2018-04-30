@@ -167,10 +167,12 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 		
 		$moveId = $this->getRecord()->getMoveGroupInRecord();
 		if($moveId) $moveId = $this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $moveId, $this->getRecord());
+		$moveId = explode(";", $moveId); //if the moveId contains multiple groups then move in multiple
+		if(is_array($moveId)) $moveId = array_combine($moveId, $moveId);
 		
 		
 		if($moveId){
-			$elS->insertElement($p, $this->getRecord(), $moveId, $fslForUpdate);
+			$elS->insertElement($p, $this->getRecord(), reset($moveId), $fslForUpdate);
 		}else{
 			$elS->insertElement($p, $this->getRecord(), $this->getGroupIdInWhichToAdd($p, $exec), $fslForUpdate);
 		}
@@ -198,6 +200,18 @@ class AddElementFormExecutor extends EditElementFormExecutor {
                 }
                 $this->getWigiiExecutor()->getNotificationService()->unblockNotificationPostingValue();
             }
+        } else if(count($moveId)>1) {
+        	array_shift($moveId); //remove first group as already inserted in that group
+        	//in case multiple result in moveId then add sharing
+        	$elS->shareElement($this->getRootPrincipal(), $this->getRecord()->getId(), $moveId);
+        	$gpl = GroupListArrayImpl::createInstance();
+        	$groupAS->getGroupsWithoutDetail($p, $moveId, $gpl);
+        	$this->getWigiiExecutor()->getNotificationService()->blockNotificationPostingValue();
+        	foreach($gpl->getListIterator() as $group){
+        		//notification here do not follow the skipNotification as it is a sharing notification and not an update notification
+        		$this->getWigiiExecutor()->throwEvent()->shareElement(PWithElementWithGroup :: createInstance($p, $this->getRecord(), $group));
+        	}
+        	$this->getWigiiExecutor()->getNotificationService()->unblockNotificationPostingValue();
         }
 		$elS->unlock($p, $this->getRecord());
 
