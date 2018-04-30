@@ -4421,7 +4421,7 @@ order by isParent DESC
 						$changes = $mySqlF->update($principal,
 								$this->getSqlForUpdateElementGroup($elementId, $groupId),
 								$dbCS);
-						if($changes > 0) $returnValue ++;
+						$returnValue ++;
 					}
 					unset($groupP);
 				}
