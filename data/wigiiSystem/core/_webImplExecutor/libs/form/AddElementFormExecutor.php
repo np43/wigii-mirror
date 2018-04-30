@@ -166,9 +166,11 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 		else $fslForUpdate = $fsl;
 		
 		$moveId = $this->getRecord()->getMoveGroupInRecord();
-		if($moveId) $moveId = $this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $moveId, $this->getRecord());
-		$moveId = explode(";", $moveId); //if the moveId contains multiple groups then move in multiple
-		if(is_array($moveId)) $moveId = array_combine($moveId, $moveId);
+		if($moveId) {
+			$moveId = $this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $moveId, $this->getRecord());
+			$moveId = explode(";", $moveId); //if the moveId contains multiple groups then move in multiple
+			if(is_array($moveId)) $moveId = array_combine($moveId, $moveId);
+		}
 		
 		
 		if($moveId){
