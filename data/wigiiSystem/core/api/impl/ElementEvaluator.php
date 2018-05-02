@@ -761,20 +761,19 @@ class ElementEvaluator extends RecordEvaluator
 	public function ctlRefreshGroupPanel($args) {
 		$this->debugLogger()->logBeginOperation('ctlRefreshGroupPanel');
 		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs < 1) $group = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'group'), $this, true);
+		if($nArgs < 1) $group = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'group', true), $this);
 		else $group = $this->evaluateArg($args[0]);
 		
 		$p = $this->getPrincipal();		
 		if($group != null && !($group instanceof Group)) {
 			$group = ServiceProvider::getGroupAdminService()->getGroupWithoutDetail($p, $group);
 		}
-		if($group != null) {			
-			$this->debugLogger()->write('invalids group panel cache');
-			$exec = ServiceProvider::getExecutionService();
-			$exec->addRequests("groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel");
-			$exec->addJsCode("invalidCache('moduleView');");
-			$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
-		}
+		//refresh group panel and moduleView
+		$this->debugLogger()->write('invalids group panel cache');
+		$exec = ServiceProvider::getExecutionService();
+		$exec->addRequests("groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel");
+		$exec->addJsCode("invalidCache('moduleView');");
+		$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
 		$this->debugLogger()->logEndOperation('ctlRefreshGroupPanel');
 	}
 	
