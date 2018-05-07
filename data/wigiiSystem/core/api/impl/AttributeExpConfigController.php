@@ -141,7 +141,13 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 						//$this->debugLogger()->write($funcExp);
 						$funcExp = str2fx($funcExp);
 						// looks in cache if we have already something
-						$cacheKey = md5(TechnicalServiceProvider::getFieldSelectorFuncExpParser()->funcExpToString($funcExp));
+						//calculate cacheKeyToken if cacheKeyToken parameter is defined
+						$cacheToken = (string)$attributeExp['cacheKeyToken'];
+						if($cacheToken){
+							$cacheToken = $this->evaluateFuncExp(str2fx($cacheToken));
+							if($cacheToken) $cacheToken = "_".md5($cacheToken);
+						} else $cacheToken = "";
+						$cacheKey = md5(TechnicalServiceProvider::getFieldSelectorFuncExpParser()->funcExpToString($funcExp)).$cacheToken;
 						$result = $this->getCachedAttributes($cacheKey, $cacheLevel);
 						// else evaluates the func exp
 						if(!isset($result)) {
