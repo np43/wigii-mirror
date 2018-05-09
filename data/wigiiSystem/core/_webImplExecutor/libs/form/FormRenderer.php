@@ -398,17 +398,25 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 //			$rm->put('</label>');
 			//add a "+add" button
 			if($dataTypeName == "Blobs" && $fieldXml["isJournal"]=="1"){
-				$textAreaId = $this->getFormId()."_".$fieldName."_value_textarea";
-				//readonly is added in Blobs_displayForm on the textarea field.
-				if($fieldXml["protectExistingEntries"]=="1"){
-					$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
-					$rm->put('&nbsp;&nbsp;&nbsp; (<span class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
-				} else {
-					$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
-					if($fieldXml["htmlArea"]=="1"){ //if htmlArea then make the editor editable
-						$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="CKEDITOR.instances[\''.$textAreaId.'\'].setReadOnly(false);" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
-					} else { //if none htmlArea enable the textarea after
-						$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="$(\'#'.$textAreaId.'\').removeAttr(\'disabled\').css(\'background-color\', \'#fff\');" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
+				// CWE 09.05.2018: if field is readonly and allowOnReadOnly=0, then add button is disabled
+				if($rm->getRecord()->getWigiiBag()->isReadonly($fieldName) ||
+				   $rm->getRecord()->getWigiiBag()->isDisabled($fieldName)) {
+					$allowJournal = ($fieldXml["allowOnReadOnly"]!="0");
+				}
+				else $allowJournal = true;
+				if($allowJournal) {
+					$textAreaId = $this->getFormId()."_".$fieldName."_value_textarea";
+					//readonly is added in Blobs_displayForm on the textarea field.
+					if($fieldXml["protectExistingEntries"]=="1"){
+						$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
+						$rm->put('&nbsp;&nbsp;&nbsp; (<span class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
+					} else {
+						$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
+						if($fieldXml["htmlArea"]=="1"){ //if htmlArea then make the editor editable
+							$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="CKEDITOR.instances[\''.$textAreaId.'\'].setReadOnly(false);" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
+						} else { //if none htmlArea enable the textarea after
+							$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="$(\'#'.$textAreaId.'\').removeAttr(\'disabled\').css(\'background-color\', \'#fff\');" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
+						}
 					}
 				}
 			}
