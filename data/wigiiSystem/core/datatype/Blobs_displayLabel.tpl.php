@@ -37,8 +37,6 @@
  */
 if(!isset($exec)) $exec = $this->getExecutionService();
 $fieldXml = $field->getXml();
-$readonly = $this->getRecord()->getWigiiBag()->isReadonly($fieldName);
-$disabled = $this->getRecord()->getWigiiBag()->isDisabled($fieldName);
 //display the label
 $this->put($this->t($fieldName, $fieldXml));
 
@@ -48,7 +46,7 @@ if($fieldXml["isJournal"]=="1" && !$this->isForNotification() && !$this->isForPr
 	(!$this->isForExternalAccess() || $this->isForExternalAccess() && $this->getExternalAccessLevel()==Emails::EXTERNAL_ACCESS_EDIT)){
 	$fieldId = $this->getDetailRenderer()->getDetailId()."__".$fieldName;
 	// CWE 09.05.2018: if field is readonly and allowOnReadOnly=0, then add button is disabled
-	if($readonly||$disabled) $allowJournal = ($fieldXml["allowOnReadOnly"]!="0");	
+	if($fieldXml["readonly"]=="1"||$fieldXml["disabled"]=="1") $allowJournal = ($fieldXml["allowOnReadOnly"]!="0");	
 	else $allowJournal = true;
 	if($this->getDetailRenderer()->getRecordIsWritable() && $allowJournal || $fieldXml["allowOnReadOnly"]=="1"){
 		if($this->isForExternalAccess()){
