@@ -2154,6 +2154,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 *   'role': clears user calculated roles. Postcondition: principal is bound back to real user.
 	 *   'cfgAttributeExp': clears one specific calculated drop-down
 	 * - Arg(1) key: String|FuncExp. Optional cache key name if supported by the cache type.
+	 * - Arg(2) cacheTokens: String|Array Optional cacheTokens to add to the cache key if supported by the cache type, this argument is always evaluated
 	 * If cache type is 'cfgAttributeExp', then the key is mandatory and has to be the AttributeExp FuncExp used to populate the drop-down.
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 */
@@ -2189,10 +2190,23 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 				if($nArgs<2) throw new FuncExpEvalException("If cache type is 'cfgAttributeExp' then cache is mandatory and should be the AttributeExp FuncExp used to populate the drop-down.", FuncExpEvalException::INVALID_ARGUMENT);
 				if($args[1] instanceof FuncExp) $key=fx2str($args[1]);
 				else $key=$this->evaluateArg($args[1]);
+				$cacheTokens = "";
+				if($args[2]){
+					$cacheTokens=$this->evaluateArg($args[2]);
+				}
+				if(!is_array($cacheTokens)){
+					$cacheTokens = [$cacheTokens];
+				}
 				$this->debugLogger()->write('ctlClearCache cfgAttributeExp '.$key);
 				$key = "AttributeExpConfigController_".md5($key);
-				$this->debugLogger()->write($key);
-				$this->getSessionAdminService()->clearDataKey($key);
+				foreach($cacheTokens as $cacheToken){
+					if($cacheToken!==null && $cacheToken !== ""){
+						$this->debugLogger()->write('cacheToken : '.$cacheToken);
+						$keyAndToken = $key."_".md5($cacheToken);
+					} else $keyAndToken = $key;
+					$this->debugLogger()->write('key and Token after md5 : '.$keyAndToken);
+					$this->getSessionAdminService()->clearDataKey($keyAndToken);
+				}
 				break;
 			default: throw new FuncExpEvalException((empty($type)?'Cache type cannot be null.':"Cache type '".$type."' is not supported. Cache type should be one of 'session','config','sharedData','role' or 'cfgAttributeExp'"), FuncExpEvalException::INVALID_ARGUMENT);
 		}
