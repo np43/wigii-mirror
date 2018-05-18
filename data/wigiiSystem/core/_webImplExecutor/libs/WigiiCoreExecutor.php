@@ -9271,7 +9271,7 @@ onUpdateErrorCounter = 0;
 						header("Last-Modified: " . gmdate("D, d M Y H:i:s") . "GMT");
 						if (!$isThumbs){
 							if($type==".svg"){ //if svg we need to define the content type as text/html in order to allow browsers to embed it
-								header('Content-type: text/html');
+								header('Content-type: image/svg+xml');
 							} else if(
 								$type== ".csv" ||
 								$type== ".sql" ||

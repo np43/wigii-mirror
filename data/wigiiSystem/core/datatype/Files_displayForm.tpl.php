@@ -63,6 +63,16 @@ $textContentId = $formId.'_'.$fieldName.'_textContent_textarea';
 $inputBoxFileId =  $formId.'_'.$fieldName.'_box_hidden';
 $boxFolderIdTag = (string)$fieldXml["boxFolderId"];
 
+//if allow audio recording
+if($fieldXml["allowAudioRecording"]=="1"){
+	//audioContent
+	$audioRecordingButtonId = $formId.'_'.$fieldName.'_audioRecording_startButton';
+	$this->put('<div id="'.$audioRecordingButtonId.'" class="audioRecordingButton record ui-button ui-corner-all" style="margin-top:5px;margin-right:5px;"><img src="images/icones/tango/16x16/devices/audio-input-microphone.png" style="float:left;margin-right:5px;"/>'.$transS->t($p,"startAudioRecording").'</div>');
+	$audioRecordingSaveButtonId = $formId.'_'.$fieldName.'_audioRecording_saveButton';
+	$this->put('<div id="'.$audioRecordingSaveButtonId.'" class="audioRecordingButton save ui-button ui-corner-all" style="margin-top:5px;display:none;"><img src="images/icones/tango/16x16/actions/media-playback-stop.png" style="float:left;margin-right:5px;"/>'.$transS->t($p,"saveAudioRecording").'</div>');
+	$this->getExecutionService()->addJsCode('addJsCodeOnFileAudioRecording("'.$formId."_".$fieldName.'","'.$fieldName.'", "'.$audioRecordingButtonId.'", "'.$audioRecordingSaveButtonId.'", "'.$transS->t($p,"continueAudioRecording").'","'.$transS->t($p,"pauseAudioRecording").'","'.$transS->t($p,"stopedAudioRecording").'");');
+	$this->put('<div class="clear" style="margin-top:5px;"></div>');
+}
 //display the type preview
 $this->put('<div class="filePreview" style="'.(!($path || $textContent)? "display:none;" : "").'float:left; background:url(\''.SITE_ROOT_forFileUrl.'images/preview/prev.26'.$type.'.png\') no-repeat 0px -1px; margin-right:4px;width:26px;height:26px;"></div>');
 
@@ -241,79 +251,6 @@ if($fieldXml["keepHistory"]>0){
 		}
 		if(!$disabled && !$readonly) $exec->addJsCode("setListenerToPreviousVersions('$inputPathId', '".$this->h("areYouSureToDeleteVersion")."');");
 	}
-}
-
-//if allow audio recording
-if($fieldXml["allowAudioRecording"]=="1"){
-	$audioRecordingButtonId = $formId.'_'.$fieldName.'_audioRecording_startButton';
-	$audioRecordingSaveButtonId = $formId.'_'.$fieldName.'_audioRecording_saveButton';
-	$this->put('<div id="'.$audioRecordingButtonId.'" class="audioRecordingButton">'.$transS->t($p,"startAudioRecording").'</div>');
-	$this->put('<div id="'.$audioRecordingSaveButtonId.'" class="audioRecordingButton">'.$transS->t($p,"saveAudioRecording").'</div>');
-	$this->getExecutionService()->addJsCode("
-
-function addJsCodeOnFileAudioRecording(inputFileId, audioRecordingButtonId, audioRecordingSaveButtonId, startRecordingLabel, pauseRecordingLabel, saveRecordingLabel){
-	window.AudioContext = window.AudioContext || window.webkitAudioContext;
-
-	/*check if navigator allows MediaDevices*/
-	if(navigator.mediaDevices.getUserMedia){
-		var chunks = [];
-		
-		var onError = function(error) {
-		  console.error('Error: ', error);
-		};
-		
-		var onSuccess = function(stream){
-			var audioRecorder = new MediaRecorder(stream);
-			
-			$('#'+audioRecordingButtonId).click(function(){ 
-				if(audioRecorder.state=='inactive'){
-					audioRecorder.start();
-				} else if(audioRecorder.state=='paused'){
-					audioRecorder.resume();
-				} else if(audioRecorder.state=='recording'){
-					audioRecorder.pause();
-				}
-				if(audioRecorder.state=='recording'){
-					$(this).addClass('isRecording');
-					$(this).text(pauseRecordingLabel);
-				} else {
-					$(this).removeClass('isRecording');
-					$(this).text(startRecordingLabel);
-				}
-			});
-			
-			$('#'+audioRecordingSaveButtonId).click(function(){ 
-				if(audioRecorder.state!='inactive'){
-					audioRecorder.stop();
-					$('#record').text(saveRecordingLabel).removeClass('isRecording');
-				}
-			});
-			
-			audioRecorder.onstop = function(e) {
-				/*store the audio data in a blob*/
-				var file = new File(chunks, { 'type' : 'audio/ogg; codecs=opus', 'name':moment().format('YYYY-MM-DD HH:mm') });
-				var blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
-				chunks = [];
-				/*window.URL.createObjectURL(blob)*/
-				$('#'+inputFileId).val(file);
-			};
-			
-			audioRecorder.ondataavailable = function(e) {
-				chunks.push(e.data);
-			};
-		};
-		
-		/*gain access to the mic*/
-		navigator.mediaDevices.getUserMedia({audio: true}).then(onSuccess,onError);
-		
-	}
-
-};
-addJsCodeOnFileAudioRecording('$inputFileId', '$audioRecordingButtonId', '$audioRecordingSaveButtonId','".$transS->t($p,"startAudioRecording")."','".$transS->t($p,"pauseAudioRecording")."','".$transS->t($p,"saveAudioRecording")."');
-");
-	
-	//$this->getExecutionService()->addJsCode("addJsCodeOnFileAudioRecording('#$audioRecordingButtonId','".str_replace("//", "\/\/",SITE_ROOT_forFileUrl)."');");
-	
 }
 
 //HIDDEN FIELDS

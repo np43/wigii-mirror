@@ -331,6 +331,7 @@ function addJsCodeOnOnLineFileInput(textContentId, inputNameId, template, cancel
 
 var progressBarTimeout = null;
 var savingBarTimeout = null;
+var jsFileContentInForm = null;
 function getAjaxformOption(formId){
 	return {
 		success: parseUpdateResult,
@@ -340,8 +341,8 @@ function getAjaxformOption(formId){
 				$(formId+' .removeDisableOnSubmit').removeAttr('disabled');
 			}
 		},
-		beforeSubmit:  function(){
-			hideHelp(); setVis('busyDiv', true); 
+		beforeSubmit:  function(formData, jqForm, options){
+			hideHelp(); setVis('busyDiv', true);
 			// show long run loading bar if server side response takes more than 2 seconds
 			if(savingBarTimeout==null){
 				savingBarTimeout = setTimeout(function(){ 
@@ -360,6 +361,14 @@ function getAjaxformOption(formId){
 					}
 				}, 2000);
 		    }
+			//add any jsFile content in form data
+			if(jsFileContentInForm){
+				for(var jsFileContent in jsFileContentInForm){
+					formData[formData.length] = { name: jsFileContent, value: jsFileContentInForm[jsFileContent] };
+				}
+				jsFileContentInForm = null;
+			}
+			closeAnyJsOnGoingStreams();
 		},
 		uploadProgress: function(event, position, total, percentComplete) {
 	        $("#formProgressBar").progressbar({
@@ -376,7 +385,97 @@ function getAjaxformOption(formId){
 		error: errorOnUpdate, cache:false };
 }
 
+//stop any on going streams (currently only audio)
+//called in WigiiExecutor.js actOnCancelDialog and in WigiiForm.js getAjaxformOption
+function closeAnyJsOnGoingStreams(){
+	if(jsOnGoingStreams){
+		for(var jsStreams in jsOnGoingStreams){
+			if(typeof jsOnGoingStreams[jsStreams] == "object"){
+				var audioTracks = jsOnGoingStreams[jsStreams].getAudioTracks();
+				if(audioTracks){
+					for(var audioTrack in audioTracks){
+						audioTracks[audioTrack].stop();
+					}
+				}
+			}
+		}
+		jsOnGoingStreams = null;
+	}
+}
+var jsOnGoingStreams = null; //each audio streams are stoped if still opened will be stopped in getAjaxformOption->beforeSubmit
+function addJsCodeOnFileAudioRecording(formIdFielname, audioFieldname, audioRecordingButtonId, audioRecordingSaveButtonId, continueRecordingLabel, pauseRecordingLabel, stopedRecordingLabel){
+	window.AudioContext = window.AudioContext || window.webkitAudioContext;
+	/*check if navigator allows MediaDevices*/
+	if(navigator.mediaDevices.getUserMedia){
+		var chunks = [];
+		var stream = null;
+		
+		var onError = function(error) {
+		  console.error('Error: ', error);
+		};
+		
+		var onSuccess = function(stream){
+			if(!jsOnGoingStreams){ jsOnGoingStreams = {}; }
+			jsOnGoingStreams[audioFieldname] = stream;
+			var audioRecorder = new MediaRecorder(stream);
+			
+			$('#'+audioRecordingButtonId).click(function(){ 
+				if(audioRecorder.state=='inactive'){
+					audioRecorder.start();
+				} else if(audioRecorder.state=='paused'){
+					audioRecorder.resume();
+				} else if(audioRecorder.state=='recording'){
+					audioRecorder.pause();
+				}
+				$('#'+audioRecordingSaveButtonId).show();
+				if(audioRecorder.state=='recording'){
+					$(this).addClass('isRecording');
+					$(this).html('<img src="images/icones/tango/16x16/actions/media-playback-pause.png" style="float:left;margin-right:5px;"/>'+pauseRecordingLabel);
+				} else {
+					$(this).removeClass('isRecording');
+					$(this).html('<img src="images/icones/tango/16x16/devices/audio-input-microphone.png" style="float:left;margin-right:5px;"/>'+continueRecordingLabel);
+				}
+			});
+			
+			$('#'+audioRecordingSaveButtonId).click(function(){ 
+				if(audioRecorder.state!='inactive'){
+					audioRecorder.stop();
+					stream.getAudioTracks()[0].stop();
+					$('#'+audioRecordingButtonId).hide();
+					$(this).html('<img src="images/icones/18px/accept.png" style="float:left;margin-right:5px;"/>'+stopedRecordingLabel);
+				}
+			});
+			
+			audioRecorder.onstop = function(e) {
+				/*store the audio data in a file */
+				var filename = String(moment().format('YYYY-MM-DD HH:mm'))+'.ogg';
+				var file = new File(chunks, filename, { 'type' : 'audio/ogg; codecs=opus'});
+				/* add file information in the wigii Files subfields */
+				$('#'+formIdFielname+'_name_text').val(filename.replace('.ogg',''));
+				$('#'+formIdFielname+'_type_hidden').val('.ogg');
+				$('#'+formIdFielname+'_size_hidden').val(file.size);
+				$('#'+formIdFielname+'_path_hidden').val('');
+				chunks = [];
+				jsFileContentInForm[audioFieldname] = file;
+			};
+			
+			audioRecorder.ondataavailable = function(e) {
+				chunks.push(e.data);
+			};
+		};
+		
+		/*gain access to the mic*/
+		try {
+			navigator.mediaDevices.getUserMedia({audio: true}).then(onSuccess,onError);
+		} catch (error){
+			console.error('Error: ', error);
+		}
+	}
+}
+
 function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, templateFile){
+	//reset any jsFileContent
+	jsFileContentInForm = {};
 	$(formId+' textarea.htmlArea').each(function(){
 		var editorID = $(this).attr('id');
 		var instance = CKEDITOR.instances[editorID];

@@ -184,7 +184,7 @@ class FormChecker implements FieldListVisitor {
 		//to empty them before checking if the file has content based only on values in require subfields.
 		$oldBoxId=null;
 		if($dataTypeName == "Files"){
-			if(($fieldParams["htmlArea"]!="1" && $get[$fieldName."_path"]==null) || ($fieldParams["htmlArea"]=="1" && $get[$fieldName."_textContent"]==null)){
+			if((!($fieldParams["htmlArea"]=="1" || $fieldParams["allowAudioRecording"]=="1") && $get[$fieldName."_path"]==null) || ($fieldParams["htmlArea"]=="1" && $get[$fieldName."_textContent"]==null) || ($fieldParams["allowAudioRecording"]=="1" && $get[$fieldName."_path"]==null && $get[$fieldName."_audioContent"]==null)){
 				$get[$fieldName."_name"] = null;
 				$get[$fieldName."_size"] = null;
 				$get[$fieldName."_type"] = null;
@@ -209,7 +209,29 @@ class FormChecker implements FieldListVisitor {
 				if((!$ff->isMultiple() || ($ff->isMultiple() && $recBag->isMultipleChecked($fieldName))) && $isRequire){
 					$ff->addErrorToField($transS->h($p, "mustToUploadAtLeastOneFile"), $fieldName);
 				}
-			}
+			} else
+				//manage if audio recording content is available
+				if($fieldParams["allowAudioRecording"]=="1" && $get[$fieldName."_audioContent"]!=null) {
+					fput("audio recording found");
+					$filename = date("d.m.Y H:i");
+					$fileext = ".ogg";
+					$uploadfile = $p->getWigiiNamespace()->getWigiiNamespaceName()."_".time().ipToStr($_SERVER["REMOTE_ADDR"]).$p->getUsername().$fieldName.substr(basename($filename), 0, 5);
+					$uploadfile = preg_replace('/[^a-zA-Z0-9\.\-\_]/',"",$uploadfile).$fileext;
+					$filepath = $uploadfile;
+					$uploadfile = $this->getFormExecutor()->getTemporaryUploadedFilePath().$uploadfile;
+					$uploadfile = str_replace("\\", "/", $uploadfile);
+					$filesize = file_put_contents($uploadfile, $get[$fieldName."_audioContent"]);
+					if($filesize){
+						$get[$fieldName."_type"] = strtolower($fileext);
+						$get[$fieldName."_size"] = $filesize;
+						$get[$fieldName."_path"] = $filepath;
+						$get[$fieldName."_name"] = $filename.$fileext;
+						
+					} else {
+						fput("problem!!");
+						$this->executionSink()->log("!!!! problem in creating audio file ".$filename." in ".$uploadfile." !!!!\n");
+					}
+				}
 			// Medair (CWE) 2017.03.14: expects file details, but checks that posted file date is newer than element file date
 			// an inversion could happen if autosave is active, because autosave posting is concurrent to click on OK button.
 			else {

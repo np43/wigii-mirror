@@ -129,6 +129,7 @@ function actOnCancelDialog(id){
 	$('#'+id).stopTime(); //very important to stop all the timers on elements that we will destroy.
 	$('#'+id+" *").stopTime(); //very important to stop all the timers on elements that we will destroy.
 	$('#'+id).html('');
+	closeAnyJsOnGoingStreams();
 }
 function emptyDialog(id){
 	$('#'+id).stopTime(); //very important to stop all the timers on elements that we will destroy.
