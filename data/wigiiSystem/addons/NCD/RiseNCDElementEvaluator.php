@@ -1,5 +1,5 @@
 <?php
-if(file_exists(CLIENT_CONFIG_PATH.'CustomizedElementEvaluator.php')) include_once(CLIENT_CONFIG_PATH.'CustomizedElementEvaluator.php'); /* loads parent class */
+if(file_exists(CLIENT_CONFIG_PATH.'WigiiOrgElementEvaluator.php')) include_once(CLIENT_CONFIG_PATH.'WigiiOrgElementEvaluator.php'); /* loads parent class */
 /**
  *  Rise.wigii.org NCD Web Service
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
@@ -27,7 +27,7 @@ if(file_exists(CLIENT_CONFIG_PATH.'CustomizedElementEvaluator.php')) include_onc
   * Created by Camille Weber on 05.09.2016
   * Modified by Camille Weber on 18.04.2018 to include Move Forward project
   */
-class RiseNCDElementEvaluator extends CustomizedElementEvaluator
+class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 {		
 	private $_debugLogger;
 	private $_executionSink;
@@ -622,84 +622,5 @@ class RiseNCDElementEvaluator extends CustomizedElementEvaluator
 			$this->dataConfig = (object)$this->dataConfig;
 		}
 		return $this->dataConfig;
-	}
-	
-	// Core services
-	
-	/**
-	 * Get the next code of a field in a group. This method select the last
-	 * values within a the selected group (recursive) that starts with the CodePrefix and calculate the
-	 * next value by adding 1
-	 * FuncExp signature : <code>getNextCode(groupID or "namespace|module", fieldname, codePrefix, digits=3, startValue=1)</code><br/>
-	 * Where arguments are :
-	 * - Arg(0) groupID: Int. The ID of the group in which to look at.
-	 * 					 String: namespace|modulename the "|" is used as a separator between the namespace and the module. Groups containing "trahsbin" or "corbeille" are ignored.
-	 * 					 String: id1|id2|id3... multiple group ids separated by a |
-	 * - Arg(1) fieldname: String. The name of the field containing the code.
-	 * - Arg(2) codePrefix: String. The prefix of the Dimension
-	 * - Arg(3) digits: Int. Optional number of digit to use for the dimension numbering. Default is 3.
-	 * - Arg(4) startValue: Int. Optional start number from which to begin the incrementation. Default is 1.
-	 * If -1, then uses lower case letters, starting from a (then b, c, d, e, ...)
-	 * - Arg(5) attributeExpCacheToDelete: String Optional string to cleanup AttributeExp cache.
-	 * @return String the value of the next code
-	 */
-	public function getNextCode($args){
-		$rootGroupId = $this->evaluateArg($args[0]);
-		$fieldname = $this->evaluateArg($args[1]);
-		$codePrefix = $this->evaluateArg($args[2]);
-		if($this->getNumberOfArgs($args) > 3){
-			$digits = $this->evaluateArg($args[3]);
-		} else {
-			$digits = 3;
-		}
-		if($this->getNumberOfArgs($args)>4) {
-			$startValue = $this->evaluateArg($args[4]);
-		} else {
-			$startValue = 1;
-		}
-		
-		$p = $this->getRootPrincipal();
-		$origNS = $p->getWigiiNamespace();
-		$p->bindToWigiiNamespace($this->getPrincipal()->getWigiiNamespace());
-		// builds dimension selector
-		if(is_numeric($rootGroupId)){
-			$selector = lxEq(fs('id'), $rootGroupId);			
-		} else {
-			$rootGroupId = explode("|", $rootGroupId);
-			if(is_numeric($rootGroupId[0])){
-				$selector = lxIn(fs('id'), $rootGroupId);				
-			} else {
-				$selector = lxAnd(lxEq(fs('module'), $rootGroupId[1]), lxEq(fs('wigiiNamespace'), $rootGroupId[0]), lxOr(lxEq(fs('id_group_parent'),0),lxIsNull(fs('id_group_parent'))), lxAnd(lxNotLike(fs('groupname'), '%trashbin%'), lxNotLike(fs('groupname'), '%corbeille%')));
-			}
-		}
-		$returnValue = sel(
-				$p,
-				elementPList(
-						lxInGR($selector),
-						lf(NULL, lxLike(fs($fieldname), $codePrefix."%"), fskl(fsk($fieldname, "value", false)),1,1)
-						),
-				dfasl(
-						dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", fs($fieldname))
-						)
-				);
-		$returnValue = str_replace($codePrefix, "", $returnValue);
-		// if letter increment, starts with 'a'
-		if($digits == -1 && !$returnValue) $returnValue = 'a';
-		elseif(!$returnValue) $returnValue = $startValue;
-		else $returnValue++;
-		
-		if($digits){
-			$returnValue = str_pad($returnValue, $digits, "0", STR_PAD_LEFT);
-		}
-		$returnValue = $codePrefix.($returnValue);
-		$p->bindToWigiiNamespace($origNS);
-		
-		if($this->getNumberOfArgs($args)>5) {
-			// clears session cache
-			$sessAS = ServiceProvider::getSessionAdminService();
-			$sessAS->clearDataKey("AttributeExpConfigController_".md5($this->evaluateArg($args[5])));
-		}
-		
-		return $returnValue;
 	}
 }

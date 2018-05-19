@@ -875,6 +875,39 @@
 		return returnValue;
 	};
 	
+	/**
+	 * Interrupts the current FuncExp flow and stores the context so that it can be resumed in future.
+	 *@param String fxCtxHolder key under which the fxCtx is stored. Defaults to 'interruption'
+	 *@param Object fxCtxStorage object in which the fxCtx is stored. Defaults to programme.context.
+	 *@example To interrupt the current flow, call interrupt() Fx.
+	 * To resume the interrupted Fx flow, call programme.context.interruption.resume();
+	 * To identify the current interrupted flow, call interrupt("myFlow")
+	 * Then call: programme.context.myFlow.resume();
+	 */
+	var interrupt = function(fxCtxHolder,fxCtxStorage) {
+		var returnValue = function(fxCtx){			
+			if(fxCtx) {
+				if(!fxCtxStorage) fxCtxStorage = programme.context;
+				if(!fxCtxHolder) fxCtxHolder = 'interruption';
+				// stores fxCtx
+				fxCtxStorage[fxCtxHolder] = fxCtx;
+				// pauses fx flow
+				fxCtx.pause();
+			}
+		};
+		returnValue.toFxString = function() {
+			var fxs = 'interrupt(';
+			if(fxCtxHolder) fxs += wigiiNcd().obj2FxString(fxCtxHolder);
+			else fxs += '"interruption"';
+			fxs += ',';
+			if(fxCtxStorage) fxs += wigiiNcd().obj2FxString(fxCtxStorage);
+			else fxs += 'programme.context';
+			fxs += ')';
+			return fxs;
+		};
+		return returnValue;
+	};	
+	
 	var boutonDePause = function(label,onclick,cssClass) {
 		var returnValue = function(fxCtx){			
 			fxCtx.html().button(label,function(){
@@ -1493,6 +1526,7 @@
 	wigiiNcdEtp.libSource = libSource; 
 	wigiiNcdEtp.menu = menu; 
 	wigiiNcdEtp.pause = pause; 
+	wigiiNcdEtp.interrupt = interrupt; 
 	wigiiNcdEtp.boutonDePause = boutonDePause; 
 	wigiiNcdEtp.bouton = bouton;
 	wigiiNcdEtp.tortue = tortue; 

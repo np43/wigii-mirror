@@ -4708,6 +4708,39 @@
 		return returnValue;
 	};
 	
+	/**
+	 * Interrupts the current FuncExp flow and stores the context so that it can be resumed in future.
+	 *@param String fxCtxHolder key under which the fxCtx is stored. Defaults to 'interruption'
+	 *@param Object fxCtxStorage object in which the fxCtx is stored. Defaults to programme.context.
+	 *@example To interrupt the current flow, call interrupt() Fx.
+	 * To resume the interrupted Fx flow, call programme.context.interruption.resume();
+	 * To identify the current interrupted flow, call interrupt("myFlow")
+	 * Then call: programme.context.myFlow.resume();
+	 */
+	var interrupt = function(fxCtxHolder,fxCtxStorage) {
+		var returnValue = function(fxCtx){			
+			if(fxCtx) {
+				if(!fxCtxStorage) fxCtxStorage = programme.context;
+				if(!fxCtxHolder) fxCtxHolder = 'interruption';
+				// stores fxCtx
+				fxCtxStorage[fxCtxHolder] = fxCtx;
+				// pauses fx flow
+				fxCtx.pause();
+			}
+		};
+		returnValue.toFxString = function() {
+			var fxs = 'interrupt(';
+			if(fxCtxHolder) fxs += wigiiNcd().obj2FxString(fxCtxHolder);
+			else fxs += '"interruption"';
+			fxs += ',';
+			if(fxCtxStorage) fxs += wigiiNcd().obj2FxString(fxCtxStorage);
+			else fxs += 'programme.context';
+			fxs += ')';
+			return fxs;
+		};
+		return returnValue;
+	};	
+	
 	var boutonDePause = function(label,onclick,cssClass) {
 		var returnValue = function(fxCtx){			
 			fxCtx.html().button(label,function(){
@@ -5326,6 +5359,7 @@
 	wigiiNcdEtp.libSource = libSource; 
 	wigiiNcdEtp.menu = menu; 
 	wigiiNcdEtp.pause = pause; 
+	wigiiNcdEtp.interrupt = interrupt; 
 	wigiiNcdEtp.boutonDePause = boutonDePause; 
 	wigiiNcdEtp.bouton = bouton;
 	wigiiNcdEtp.tortue = tortue; 
@@ -7811,6 +7845,7 @@ wncd.AgileStoryBoard = function(container, options) {
 	if(!self.options.createStoryButtonLabel) self.options.createStoryButtonLabel = "+ Story";
 	if(self.options.filterLabel===undefined) self.options.filterLabel="Show:";
 	if(!self.options.filterAllLabel) self.options.filterAllLabel="All";
+	if(!self.options.filterUnassignedLabel) self.options.filterUnassignedLabel="Unassigned";
 	if(container && container.className == 'WncdContainer') {
 		if(!self.options.elementStatusField) self.options.elementStatusField = 'status';
 		if(!self.options.elementPositionField) self.options.elementPositionField = 'position';
@@ -7829,13 +7864,20 @@ wncd.AgileStoryBoard = function(container, options) {
 		.out("&#9998;","storyEditButton")
 		.out("&#10006;","storyDeleteButton");
 		if(self.options.noOrdering!=true) {
+			storyHtml.out("&#11121;","storyMoveTopButton");
 			storyHtml.out("&#129093;","storyMoveUpButton");
+			//storyHtml.out("&#11014;","storyMoveUpButton");
+			//storyHtml.out("&#11105;","storyMoveUpButton");
 			storyHtml.out("&#129095;","storyMoveDownButton");
+			//storyHtml.out("&#11015;","storyMoveDownButton");
+			//storyHtml.out("&#11107;","storyMoveDownButton");
+			storyHtml.out("&#11123;","storyMoveBottomButton");
 		}
 		storyHtml
-		.out(story.assignee,"storyAssignee")
-		.out(story.label,"storyLabel")
-		.out(story.description,"storyDescription");
+		.out((story.assignee===null?self.options.filterUnassignedLabel:story.assignee),"storyAssignee")
+		//.out(story.position,"storyPosition")
+		if(story.label!==null) storyHtml.out(story.label,"storyLabel");
+		if(story.description!==null) storyHtml.out(story.description,"storyDescription");
 	};
 	/**
 	 * Renders footer bar
@@ -7864,7 +7906,7 @@ wncd.AgileStoryBoard = function(container, options) {
 		// Adds one button per assignee which adds assignee as a filter
 		for(var i=0;i<self.context.storyAssignees.length;i++) {
 			var assignee = self.context.storyAssignees[i];
-			wncd.currentDiv().button(assignee,function(e,assignee){
+			wncd.currentDiv().button((assignee===null?self.options.filterUnassignedLabel:assignee),function(e,assignee){
 				self.impl.setAssigneeFilter(assignee);
 			},"storyBoardFilter","storyBoardFilter_"+i,assignee);
 		}			
@@ -7874,7 +7916,7 @@ wncd.AgileStoryBoard = function(container, options) {
 	self.impl.setAssigneeFilter = function(assignee) {
 		// unselects previous filter
 		var filter = 'storyBoardFilter_all';
-		if(self.context.assigneeFilter) { 
+		if(self.context.assigneeFilter!==undefined) { 
 			filter = self.context.storyAssignees.indexOf(self.context.assigneeFilter);
 			if(filter >= 0) filter = 'storyBoardFilter_'+filter;
 			else filter = 'storyBoardFilter_all';
@@ -7882,14 +7924,14 @@ wncd.AgileStoryBoard = function(container, options) {
 		$('#'+filter).removeClass('activeFilter');
 		// selects new filter
 		filter = 'storyBoardFilter_all';
-		if(assignee) { 
+		if(assignee!==undefined) { 
 			filter = self.context.storyAssignees.indexOf(assignee);
 			if(filter >= 0) filter = 'storyBoardFilter_'+filter;
 			else filter = 'storyBoardFilter_all';
 		}
 		$('#'+filter).addClass('activeFilter');
 		// refreshes dashboard if assignee changed
-		if(self.context.assigneeFilter!=assignee) {
+		if(self.context.assigneeFilter!==assignee) {
 			self.context.assigneeFilter=assignee;
 			wncd.program.context.html(self.impl.workzoneEmitter);
 			self.impl.renderStoryBoard(container);
@@ -7938,29 +7980,34 @@ wncd.AgileStoryBoard = function(container, options) {
 			var story = self.context.stories[i];
 			// only shows story compatible with assignee filter
 			// and not deleted
-			if(!story.deleted && (!self.context.assigneeFilter || self.context.assigneeFilter == story.assignee)) {
+			if(!story.deleted && (self.context.assigneeFilter===undefined || self.context.assigneeFilter == story.assignee)) {
 				self.impl.addStoryToBoard(story);
 			}
 		}	
 	};
 	
-	self.impl.addStoryToBoard = function(story) {
+	/**
+	 * Adds a story to the board in the right column
+	 *@param Boolean reorder if true, then story visual position is calculated based on its position, else story is just appended at the end of the column.
+	 * By default, stories are added to the board already in the right order, re-ordering is not necessary. Re-ordering is necessary only on drag & drop between columns.
+	 */
+	self.impl.addStoryToBoard = function(story,reorder) {
 		var statusIndex = self.options.storyStatuses.indexOf(story.status);		
 		if(statusIndex>=0) {
 			//wigii().log(story.status+'#'+self.ctxKey+"_"+statusIndex+" div.storyBoardColumnContent");
 			var storyHtml = $('#'+self.ctxKey+"_"+statusIndex+" div.storyBoardColumnContent").wncd("html")
 			.div("story_"+story.id,"story");
-			// puts story at right place in column
-			// retrieves higher story
-			/* todo.
-				var higherStory = $("#story_"+storyId).prev();
-				if(higherStory) {
-					storyId = higherStory.attr("id").replace("story_","");
-					higherStory = self.context.storiesIndex[storyId];
-					// swaps stories
-					self.impl.swapStoryUp(story,higherStory);					
+			// records story position as an attribute
+			storyHtml.$().attr('data-storypos',story.position);
+			if(reorder) {
+				// retrieves lower priority story (ie with higher position)
+				var lowerStory = storyHtml.$().parent().find("div.story").filter(function(index,elt){
+					return $(this).attr('data-storypos') > story.position;
+				});
+				if(lowerStory.length > 0) {
+					storyHtml.$().insertBefore(lowerStory[0]);
 				}
-			*/
+			}				
 			// renders story
 			self.options.renderStory(self,storyHtml,story);				
 			// binds drag&drop + action buttons
@@ -8004,6 +8051,13 @@ wncd.AgileStoryBoard = function(container, options) {
 				self.impl.deleteStory(self.context.storiesIndex[storyId]);
 			}
 			$("#story_"+story.id+" span.storyDeleteButton").click(f);
+			// binds move top event
+			if(self.options.noOrdering!=true) $("#story_"+story.id+" span.storyMoveTopButton").click(function(e){
+				var storyId = $(this).parent().attr("id").replace("story_","");
+				var story = self.context.storiesIndex[storyId];
+				self.impl.moveStoryToTop(story);
+				e.stopPropagation();
+			});
 			// binds move up event
 			if(self.options.noOrdering!=true) $("#story_"+story.id+" span.storyMoveUpButton").click(function(e){
 				var storyId = $(this).parent().attr("id").replace("story_","");
@@ -8031,6 +8085,13 @@ wncd.AgileStoryBoard = function(container, options) {
 					self.impl.swapStoryUp(lowerStory,story);					
 				}
 				e.stopPropagation();
+			});	
+			// binds move bottom event
+			if(self.options.noOrdering!=true) $("#story_"+story.id+" span.storyMoveBottomButton").click(function(e){
+				var storyId = $(this).parent().attr("id").replace("story_","");
+				var story = self.context.storiesIndex[storyId];
+				self.impl.moveStoryToBottom(story);
+				e.stopPropagation();
 			});			
 		}
 	};
@@ -8050,6 +8111,43 @@ wncd.AgileStoryBoard = function(container, options) {
 			});
 		}
 		$("#story_"+story.id).insertBefore($("#story_"+higherStory.id));
+		// updates position in dom
+		$("#story_"+story.id).attr('data-storypos',story.position);
+		$("#story_"+higherStory.id).attr('data-storypos',higherStory.position);
+	};
+	self.impl.moveStoryToTop = function(story) {
+		// retrieves first story of column
+		var firstStory = $("#story_"+story.id).parent().children("div:first-child");
+		if(firstStory.attr('id') != "story_"+story.id) {
+			// updates position of story to firstStory.position - 100
+			story.position = firstStory.attr('data-storypos') - 100;
+			// if deployed into a Wigii Wncd container, then updates the position on server
+			if(container && container.className == 'WncdContainer') {
+				container.saveFieldValue(story.id,self.options.elementPositionField,story.position,{							
+					noCalculation:(self.options.noCalculation==true),
+					noNotification:(self.options.noNotification==true)
+				});
+			}
+			// updates position in dom
+			$("#story_"+story.id).insertBefore(firstStory).attr('data-storypos',story.position);
+		}
+	};
+	self.impl.moveStoryToBottom = function(story) {
+		// retrieves last story of column
+		var lastStory = $("#story_"+story.id).parent().children("div:last-child");
+		if(lastStory.attr('id') != "story_"+story.id) {
+			// updates position of story to lastStory.position + 100
+			story.position = lastStory.attr('data-storypos') + 100;
+			// if deployed into a Wigii Wncd container, then updates the position on server
+			if(container && container.className == 'WncdContainer') {
+				container.saveFieldValue(story.id,self.options.elementPositionField,story.position,{							
+					noCalculation:(self.options.noCalculation==true),
+					noNotification:(self.options.noNotification==true)
+				});
+			}
+			// updates position in dom
+			$("#story_"+story.id).insertAfter(lastStory).attr('data-storypos',story.position);
+		}
 	};
 	self.impl.createStoryInColumn = function(status) {
 		var statusIndex = self.options.storyStatuses.indexOf(status);
@@ -8122,7 +8220,7 @@ wncd.AgileStoryBoard = function(container, options) {
 						// rollbacks
 						self.impl.removeStoryFromBoard(story);
 						story.status = rollbackStatus;			
-						self.impl.addStoryToBoard(story);
+						self.impl.addStoryToBoard(story,true);
 						// displays exception
 						wncd.publishWigiiException(exception,context);
 					},
@@ -8133,7 +8231,7 @@ wncd.AgileStoryBoard = function(container, options) {
 			// do the local changes
 			self.impl.removeStoryFromBoard(story);
 			story.status = status;			
-			self.impl.addStoryToBoard(story);
+			self.impl.addStoryToBoard(story,true);
 		}
 	};
 	

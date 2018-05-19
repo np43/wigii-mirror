@@ -138,46 +138,109 @@
 		riseNcd.mf_actOnCode = function(codeId,callback,exceptionHandler) {
 			// if code is already in cache, then executes directly action on it
 			if(riseNcd.context.mfCodeCache[codeId]) {
-				if($.isFunction(callback)) callback(riseNcd.context.mfCodeCache[codeId]);
+				if($.isFunction(callback)) {
+					try {callback(riseNcd.context.mfCodeCache[codeId]);}
+					catch(exc) {						
+						if($.isFunction(exceptionHandler)) exceptionHandler(exc);
+						else wigiiApi.publishException(exc);
+					}
+				}
 			}
 			// else loads it first and puts it in cache.
-			wigiiApi.callFx('mf_jsonEncode(mf_getCode("'+codeId+'"))',{
-				fxEndPoint:wigiiApi.SITE_ROOT+'NCD/Catalog/fx/',
-				resultHandler:function(code) {
+			else {
+				// extracts any postfixed svgId
+				var svgId = undefined;
+				if(codeId.indexOf('__'>=0)) {
+					codeId = codeId.split('__');
+					svgId = codeId[1];
+					codeId = codeId[0];
+				}
+				// code parts loader
+				var loadSvgCodeParts = function(code,svgCode,svgId) {
+					svgElt = svgCode.find('#'+svgId);
+					// if specified svgId is found in svg code, 
+					// then clones code as a codePart and assigns it to this svgId
+					if(svgElt.length==1) {
+						var codePart = Object.assign({},code);
+						codePart.id += '__'+svgId;
+						svgElt[0].id = codePart.id;
+						codePart.svg = wigiiApi.xml2string(svgElt[0]);
+						riseNcd.context.mfCodeCache[codePart.id] = codePart;
+						// extracts all siblings element which have a defined id
+						svgElt.siblings().each(function(i,elt){
+							if(elt.id) {
+								// clones code as a codePart and assigns it the specified id
+								codePart = Object.assign({},code);
+								codePart.id += '__'+elt.id;
+								elt.id = codePart.id;
+								codePart.svg = wigiiApi.xml2string(elt);
+								// clears any attached NCD code to prevent duplicate execution
+								codePart.ncd = undefined;
+								codePart.type = 'svg';
+								riseNcd.context.mfCodeCache[codePart.id] = codePart;
+							}
+						});
+					}
+				};
+				// if loading a part, checks that root code is not already present in cache
+				if(svgId && riseNcd.context.mfCodeCache[codeId]) {
 					try {
-						code = JSON.parse(code);
-						// cleans up svg code from non needed elements and keeps defs separated
+						var code = riseNcd.context.mfCodeCache[codeId];
 						if(code.svg) {
 							// parses SVG as XML and loads jQuery on it
 							var svgCode = $.parseXML(code.svg);
-							svgCode = $(svgCode).find('svg');
-							// extracts SVG defs and saves it into code.svgDefs
-							var svgElt = svgCode.children('defs');
-							if(svgElt.length>0) code.svgDefs = wigiiApi.xml2string(svgElt[0]);
-							// extracts first valuable group of objects
-							svgElt = svgCode.children('g');
-							if(svgElt.length>1) {
-								svgElt.wrapAll('<g/>');
-								svgElt = svgCode.children('g');
-							}
-							if(svgElt.length==1) {
-								svgCode = svgElt;
-								svgElt = svgCode.children();
-								if(svgElt.length==1) svgElt = svgCode.children('g');
-								if(svgElt.length!=1) svgElt = svgCode;
-								code.svg = wigiiApi.xml2string(svgElt[0]);
-							}
+							loadSvgCodeParts(code,$(svgCode),svgId);
+							if($.isFunction(callback)) callback(riseNcd.context.mfCodeCache[codeId+(svgId?'__'+svgId:'')]);
 						}
-						riseNcd.context.mfCodeCache[codeId] = code;
-						if($.isFunction(callback)) callback(code);
 					}
 					catch(exc) {						
 						if($.isFunction(exceptionHandler)) exceptionHandler(exc);
 						else wigiiApi.publishException(exc);
 					}
-				},
-				exceptionHandler:exceptionHandler
-			});
+				}
+				else {
+					wigiiApi.callFx('mf_jsonEncode(mf_getCode("'+codeId+'"))',{
+						fxEndPoint:wigiiApi.SITE_ROOT+'NCD/Catalog/fx/',
+						resultHandler:function(code) {
+							try {
+								code = JSON.parse(code);
+								// cleans up svg code from non needed elements and keeps defs separated
+								if(code.svg) {
+									// parses SVG as XML and loads jQuery on it
+									var svgCode = $.parseXML(code.svg);
+									svgCode = $(svgCode).find('svg');
+									// extracts SVG defs and saves it into code.svgDefs
+									var svgElt = svgCode.children('defs');
+									if(svgElt.length>0) code.svgDefs = wigiiApi.xml2string(svgElt[0]);
+									// loads code parts 
+									if(svgId) loadSvgCodeParts(code,svgCode,svgId);
+									// extracts first valuable group of objects
+									svgElt = svgCode.children('g');
+									if(svgElt.length>1) {
+										svgElt.wrapAll('<g/>');
+										svgElt = svgCode.children('g');
+									}
+									if(svgElt.length==1) {
+										svgCode = svgElt;
+										svgElt = svgCode.children();
+										if(svgElt.length==1) svgElt = svgCode.children('g');
+										if(svgElt.length!=1) svgElt = svgCode;
+										svgElt[0].id = code.id;
+										code.svg = wigiiApi.xml2string(svgElt[0]);
+									}
+								}
+								riseNcd.context.mfCodeCache[codeId] = code;
+								if($.isFunction(callback)) callback(riseNcd.context.mfCodeCache[codeId+(svgId?'__'+svgId:'')]);
+							}
+							catch(exc) {						
+								if($.isFunction(exceptionHandler)) exceptionHandler(exc);
+								else wigiiApi.publishException(exc);
+							}
+						},
+						exceptionHandler:exceptionHandler
+					});
+				}
+			}
 		};
 		/**
 		 * Clears current Move Forward cache 
