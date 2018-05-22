@@ -210,6 +210,10 @@ div.field.narrow div.value{
 	margin:0px;
 	padding:2px 0px;
 }
+/* make the ability to display multiple fields on the same line if their width defined in a blogView is smaller than the item size. */
+.noClear, div.field.noClear, #moduleView .blog div.dataBlog div.el div.field.noClear{
+	clear: none;
+}
 div.field.jointV div.value{
 	min-height:0px;
 	margin:0px;

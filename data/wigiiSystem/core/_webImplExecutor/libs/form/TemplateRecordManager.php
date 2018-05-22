@@ -1597,6 +1597,9 @@ class TemplateRecordManager extends Model {
 		}
 		return $value;
 	}
+	public function doFormatForThumbs($id, $fieldname){
+		return '<img align="absmiddle" src="'.SITE_ROOT.'/'.$this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceUrl().'/'.$this->getExecutionService()->getCrtModule()->getModuleUrl().'/download/'.$id.'/'.$fieldname.'/thumbs"/>';
+	}
 	public function doFormatForIsDocAvailable($value, $doRegroupSimilarValue = false){
 		if($value){
 			$value = '<img align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/status/mail-attachment.png"/>';
@@ -2049,6 +2052,11 @@ class TemplateRecordManager extends Model {
 					case "name":
 					case "content":
 						return $this->doFormatForText($value);
+						break;
+					case "thumbnail":
+						if($this->getRecord()!=null){
+							return $this->doFormatForThumbs($this->getRecord()->getId(), $fieldName);
+						}
 						break;
 					case "textContent":
 						if($xml["htmlArea"]=="1"){
