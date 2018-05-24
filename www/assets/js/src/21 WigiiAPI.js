@@ -2717,6 +2717,27 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			//wigiiApi.debugLogger().logEndOperation('parseUpdateResult');
 		};
 		/**
+		 * Shows the details of the element
+		 */
+		wigiiApi.showElement = function(wigiiNamespaceUrl,moduleName,elementId) {			
+			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/detail/'+elementId);
+		};
+		
+		/**
+		 * Opens a Wigii Form to edit the element
+		 */
+		wigiiApi.editElement = function(wigiiNamespaceUrl,moduleName,elementId) {
+			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/edit/'+elementId);
+		};
+		
+		/**
+		 * Opens a Wigii Form to add a new element
+		 */
+		wigiiApi.addElement = function(wigiiNamespaceUrl,moduleName,groupId) {
+			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/add/'+groupId);
+		};
+		
+		/**
 		 * Calls asynchronously a FuncExp on server side through the Fx endpoint.
 		 *@param String fx the FuncExp string to be called on server side
 		 *@param Object options an optional bag of options. The following options are supported:
@@ -2735,7 +2756,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			// sets default options
 			options = options || {};
 			if(!options.fxEndPoint) {
-				if(window.crtWigiiNamespace) options.fxEndPoint = wigiiApi.SITE_ROOT+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/fx';
+				if(window.crtWigiiNamespaceUrl) options.fxEndPoint = wigiiApi.SITE_ROOT+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/fx';
 				else options.fxEndPoint = wigiiApi.SITE_ROOT+'/NoWigiiNamespace/NoModule/fx';
 			}
 			if(!options.fxEndPoint.endsWith('/')) options.fxEndPoint += '/';
