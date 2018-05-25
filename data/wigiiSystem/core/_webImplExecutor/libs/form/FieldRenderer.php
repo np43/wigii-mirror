@@ -39,6 +39,7 @@ class FieldRenderer extends Model {
 	private $fieldIsInLineWidth;
 	private $fieldOffset = 5; //padding right of 5px for the fields
 	private $rootOffset = 0; //padding of the dialog div;
+	private $fieldCorrectionDueToExternalFactors = 0; //this can be updated based on additional classes, this correction is reset after each field
 
 	public function reset(){
 		$this->fieldGroupHasError = array();
@@ -52,6 +53,7 @@ class FieldRenderer extends Model {
 		$this->fieldValueWidth = null;
 		$this->fieldIsInLineWidth = null;
 		$this->fieldOffset = 5;
+		$this->fieldCorrectionDueToExternalFactors = 0;
 	}
 	/**
 	 * Field group stack management.
@@ -228,6 +230,15 @@ class FieldRenderer extends Model {
 	protected function setFieldGroupParentOffset($offset){
 		$this->fieldGroupParentOffset = $offset;
 	}
+	protected function getFieldCorrectionDueToExternalFactors(){
+		return $this->fieldCorrectionDueToExternalFactors;
+	}
+	protected function increaseFieldCorrectionDueToExternalFactors($offset){
+		$this->fieldCorrectionDueToExternalFactors += $offset;
+	}
+	public function resetFieldCorrectionDueToExternalFactors(){
+		$this->fieldCorrectionDueToExternalFactors= 0;
+	}
 	protected function pushFieldGroup($fieldGroupName){
 		if($fieldGroupName=="root") throw new FieldRendererException("cannot define a field group with 'root'. 'root' is reserved.", FieldRendererException::INVALID_ARGUMENT);
 		$this->fieldGroupDepth++;
@@ -247,11 +258,11 @@ class FieldRenderer extends Model {
 	}
 	public function getLabelWidth(){
 		if(!$this->fieldLabelWidth) return null;
-		return $this->fieldLabelWidth[$this->getCrtFieldGroup()];
+		return $this->fieldLabelWidth[$this->getCrtFieldGroup()]; //the correction due to external factor is already added from the value, no need to remove from the label
 	}
 	public function getValueWidth(){
 		if(!$this->fieldValueWidth) return null;
-		return $this->fieldValueWidth[$this->getCrtFieldGroup()];
+		return $this->fieldValueWidth[$this->getCrtFieldGroup()]+$this->fieldCorrectionDueToExternalFactors;
 	}
 	public function getIsInLineWidth(){
 		if(!$this->fieldIsInLineWidth) return null;

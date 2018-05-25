@@ -132,7 +132,8 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		} else {
 			$isPublicPrincipal = false;
 		}
-
+		$this->resetFieldCorrectionDueToExternalFactors(); //remove any field correction first
+		
 		//if field is hidden, or onlyInForm, or onlyInWrite with a none writable record, or not in Public and principal is public -> skip it
 		if(($isPublicPrincipal && $fieldXml["notInPublic"]=="1")) return;
 		if((!$isPublicPrincipal && $fieldXml["onlyInPublic"]=="1")) return;
@@ -165,6 +166,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		$idField = $this->getDetailId()."__".$fieldName;
 		$fieldClass = (string)$fieldXml["class"];
 		$fieldClass .= $rm->getAdditionalFieldClass($fieldName,$dataTypeName);
+		if(strpos($fieldClass, "updatedRecently")!==false) $this->increaseFieldCorrectionDueToExternalFactors(-5); //updatedRecently adds 5px of right border.
 		// CWE 10.02.2016: if element is blocked, enables add comments if allowOnReadOnly
 		if($fieldXml["allowOnReadOnly"]=="1") $fieldClass .=" allowOnReadOnly ";
 		if($rm->getRecord() instanceof Element && $rm->getRecord()->isState_blocked()) {
@@ -243,6 +245,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		if($dataType && $rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName())) $this->setCrtFieldGroupIsFilled();
 
 		//open field div
+		
 		$style = "width: 100%; max-width:".$this->getTotalWidth()."px;";
 		if($fieldXml["noMargin"]=="1"){
 			$style .= "margin-right:0px;";

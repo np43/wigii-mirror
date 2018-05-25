@@ -44,8 +44,8 @@ body {
 	-moz-box-sizing: border-box;
 }
 
-#workZone div.elementDialog.docked, 
-#workZone div.elementDialog.docked *,
+#workZone div.elementDialog, 
+#workZone div.elementDialog *,
 #workZone #adminWorkZone div#elementDetail,
 #workZone #adminWorkZone div#elementDetail * 
 {

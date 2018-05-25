@@ -687,10 +687,17 @@ class WigiiCoreExecutor {
 	
 	private $workzoneViewDocked = null;
 	/**
-	 * Returns true if Workzone has a docked ListView and ElementDialog, 
+	 * Returns true if Workzone has a docked ListView and ElementDialog,
+	 * @param wigiiModule : String|WigiiModule = null, if defined then return isWorkzoneViewDocked on this module
 	 * Returns false if ElementDialog shows as a popup.	 
 	 */
-	public function isWorkzoneViewDocked() {
+	public function isWorkzoneViewDocked($wigiiModule=null) {
+		if($wigiiModule){
+			if (is_string($wigiiModule)){
+				$wigiiModule= ServiceProvider :: getModuleAdminService()->getModule(ServiceProvider::getAuthenticationService()->getMainPrincipal(), $wigiiModule);
+			}
+			return ($this->getConfigurationContext()->getParameter(ServiceProvider::getAuthenticationService()->getMainPrincipal(), $wigiiModule, "workZoneViewDocked") == '1');
+		}
 		if(!isset($this->workzoneViewDocked)) {
 			$this->workzoneViewDocked = ($this->getConfigurationContext()->getParameter(ServiceProvider::getAuthenticationService()->getMainPrincipal(), ServiceProvider::getExecutionService()->getCrtModule(), "workZoneViewDocked") == '1');
 		}
@@ -1742,7 +1749,7 @@ class WigiiCoreExecutor {
 		$exec = ServiceProvider :: getExecutionService();
 		$transS = ServiceProvider :: getTranslationService();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
-		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
+		if($this->isWorkzoneViewDocked() && $domId=='elementDialog') { // && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()
 			//27.09.2016 added in form position relative to ensure that help popup position is correctly calculated in WigiiAPI.js
 			$exec->addJsCode("
 					manageWorkzoneViewDocked('show',".$this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "elementTotalWidth").");
@@ -1882,7 +1889,7 @@ class WigiiCoreExecutor {
 	}
 	public function openAsDialogForm3B($domId, $width, $okJsCode = null, $dialogTitle = null, $okLabel = "Ok", $intermediateLabel = "Skip", $cancelLabel = "Cancel", $cancelJsCode = null, $intermediateJsCode = null, $defaultPosition = '{ my : "center", at: "center" }', $closeJsCode = null, $modal = false, $forcePosition = false, $scrollTopOnEnd = false, $closeDialogAfterOk = true, $closeDialogAfterIntermediate = true) {
 		$exec = ServiceProvider :: getExecutionService();
-		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
+		if($this->isWorkzoneViewDocked() && $domId=='elementDialog') { // && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()
 			$exec->addJsCode('manageWorkzoneViewDocked("hide");');
 			$okJsCode = "$('form', this).submit(); manageWorkzoneViewDocked('clear');";
 // 			$cancelJsCode .= 'manageWorkzoneViewDocked("hide");';
@@ -1953,7 +1960,7 @@ class WigiiCoreExecutor {
 		$exec = ServiceProvider :: getExecutionService();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
 
-		if($this->isWorkzoneViewDocked() && $domId=='elementDialog' && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()) {
+		if($this->isWorkzoneViewDocked() && $domId=='elementDialog') { // && !ServiceProvider::getExecutionService()->getCrtModule()->isAdminModule()
 			$exec->addJsCode("
 				if($('#elementDialog').is(':ui-dialog')) {
 					$('#elementDialog').dialog('destroy');
@@ -5179,7 +5186,7 @@ invalidCompleteCache();
 					$transS = ServiceProvider :: getTranslationService();
 				if (!isset ($groupAS))
 					$groupAS = ServiceProvider :: getGroupAdminService();
-
+				$i = 0;
 				$workingModuleName = $exec->getCrtParameters($i++);
 				$groupId = $exec->getCrtParameters($i++);
 				$isFromGroupPanel = $exec->getCrtParameters($i++)=="groupPanel";
@@ -5187,6 +5194,10 @@ invalidCompleteCache();
 
 				$totalWidth = 850;
 				$labelWidth = 200;
+				
+				if($isFromGroupPanel){
+					$this->setWorkzoneViewDocked($this->isWorkzoneViewDocked($workingModuleName));
+				}
 
 				$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupDetail"), $exec->getCrtModule());
 
@@ -5200,9 +5211,8 @@ invalidCompleteCache();
 
 				if($isFromGroupPanel){
 					$this->openAsDialog(
-						$exec->getIdAnswer(), $totalWidth,
+						$exec->getIdAnswer(), $totalWidth+$form->getCorrectionWidth(),
 						$transS->t($p, "groupDetail")." id:".$groupId, "");
-
 				}
 				break;
 			case "groupNew" :

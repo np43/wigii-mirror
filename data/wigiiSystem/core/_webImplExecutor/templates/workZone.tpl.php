@@ -48,13 +48,13 @@ switch($exec->getCrtModule()->getModuleName()){
 		?></div><?
 		// 20.12.2016 Medair (LMA): moved elementDialog div to allow workzone docking
 		?><div id="dockingContainer" style=""><?
-		?><div id="moduleView" class="docked"><?
+		?><div id="moduleView" class="<?if($this->isWorkzoneViewDocked()){ echo "docked"; }?>"><?
 			if($exec->getIsUpdating() && !$displayOnlyStructure) $this->includeTemplateModuleView($p, $exec);
 			//asynch call module view --> this allow caching and accelerate rendering
 			//$exec->addJsCode($exec->getCurrentUpdateJsCode($p, 'moduleView', 'display/moduleView'));
 		?></div><?		
 		?><div class="collapse SB grayFont"><span>&laquo;</span></div><?
-		?><div id='elementDialog' class='elementDialog docked'></div><?
+		?><div id='elementDialog' class='elementDialog <?if($this->isWorkzoneViewDocked()){ echo "docked"; }?>'></div><?
 		?></div><?
 		/*
 		else {		

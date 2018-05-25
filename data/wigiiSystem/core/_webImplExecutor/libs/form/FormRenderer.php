@@ -146,7 +146,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		$fieldName = $field->getFieldName();
 		$dataTypeName = ($dataType!=null?$dataType->getDataTypeName():null);
 		$rm = $this->getTemplateRecordManager();
-
+		$this->resetFieldCorrectionDueToExternalFactors(); //remove any field correction first
+		
 		//if field is hidden, or onlyInDetail, or not in Public and principal is public -> skip it
         if(($isPublicPrincipal && $fieldXml["notInPublic"]=="1")) return;
 		if((!$isPublicPrincipal && $fieldXml["onlyInPublic"]=="1")) return;
@@ -191,6 +192,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		$idField = $this->getFormId()."__".$fieldName;
 		$fieldClass = (string)$fieldXml["class"];
 		$fieldClass .= $rm->getAdditionalFieldClass($fieldName,$dataTypeName);
+		if(strpos($fieldClass, "updatedRecently")!==false) $this->increaseFieldCorrectionDueToExternalFactors(-5); //updatedRecently adds 5px of right border.
+		
 		$error = $rm->getRecord()->getWigiiBag()->getError($fieldName);
 		$help = str_replace('"', '&quot;', $transS->t($p, $rm->getRecord()->getWigiiBag()->getHelp($fieldName)));
 		$isRequire = (
