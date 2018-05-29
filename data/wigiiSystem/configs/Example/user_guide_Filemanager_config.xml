@@ -45,7 +45,7 @@
 		WigiiHelp_onEdit='wigiiHelpOnEdit("0")'
 		
 		reloadDetailAfterModify="0"
-		useGoogleServiceToPreviewOfficeDocuments="1"
+		useGoogleServiceToPreviewOfficeDocuments="0"
 
 		trashBinGroup=""
 		/>

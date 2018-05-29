@@ -27,40 +27,42 @@
  */
 class FieldRenderer extends Model {
 
-	private $fieldGroupHasError = array();
-	private $fieldGroupIsFilled = array();
-	private $fieldGroupStack = array();
+	private $fieldHasError = array();
+	private $fieldIsFilled = array();
+	private $fieldStack = array();
 	private $fieldGroupParentOffset = 12; //number of pixel the inner group is less wide than the group. padding 10 + 2 border
-	private $crtFieldGroupName;
-	private $crtFieldGroupDepth = 0;
+	private $crtFieldName;
+	private $crtFieldDepth = 0;
 	private $fieldTotalWidth; //the total width can be more than label + value as there is some possible margins or paddings
+	private $fieldMultipleColumn;
 	private $fieldLabelWidth;
 	private $fieldValueWidth;
 	private $fieldIsInLineWidth;
-	private $fieldOffset = 5; //padding right of 5px for the fields
+	private $fieldOffset = 10; //padding right of 10px for the fields
 	private $rootOffset = 0; //padding of the dialog div;
 	private $fieldCorrectionDueToExternalFactors = 0; //this can be updated based on additional classes, this correction is reset after each field
 
 	public function reset(){
-		$this->fieldGroupHasError = array();
-		$this->fieldGroupIsFilled = array();
-		$this->fieldGroupStack = array();
+		$this->fieldHasError = array();
+		$this->fieldIsFilled = array();
+		$this->fieldStack = array();
 		$this->fieldGroupParentOffset = 12;
-		$this->crtFieldGroupName = null;
-		$this->crtFieldGroupDepth = 0;
+		$this->crtFieldName = null;
+		$this->crtFieldDepth = 0;
 		$this->fieldTotalWidth = null;
 		$this->fieldLabelWidth = null;
+		$this->fieldMultipleColumn= null;
 		$this->fieldValueWidth = null;
 		$this->fieldIsInLineWidth = null;
 		$this->fieldOffset = 5;
-		$this->fieldCorrectionDueToExternalFactors = 0;
+		$this->resetFieldCorrectionDueToExternalFactors();
 	}
 	/**
-	 * Field group stack management.
+	 * Field  stack management.
 	 * Field group is a group of field. This is defined in the configuration with groupStart="1" and groupEnd="1" on a field without any type.
 	 * Field groups can be imbricated.
-	 * CrtFieldGroup is the name of the current group in which the renderer opperates (=root if not in a fieldGroup)
-	 * CrtfieldGroupDepth is the depth of groups, 0 is outside of any group (root)
+	 * CrtField is the name of the current field in which the renderer opperates (=root if not in a fieldGroup)
+	 * CrtfieldDepth is the depth of groups/fields, 0 is outside of any group (root)
 	 *
 	 */
 
@@ -68,34 +70,38 @@ class FieldRenderer extends Model {
 	 * Field renderer must call this method on createInstance
 	 */
 	protected function initializeFieldWidth($totalWidth, $labelWidth){
-		if($this->crtFieldGroupName==null){
-			$this->crtFieldGroupName = "root";
+		if($this->crtFieldName==null){
+			$this->crtFieldName = "root";
 		}
-		$this->fieldTotalWidth[$this->crtFieldGroupName] = $totalWidth;
-		$this->fieldLabelWidth[$this->crtFieldGroupName] = $labelWidth;
-		$this->fieldValueWidth[$this->crtFieldGroupName] = $totalWidth-$this->getFieldOffset()-$labelWidth;
-		$this->fieldIsInLineWidth[$this->crtFieldGroupName] = $totalWidth-$this->getFieldOffset();
+		$this->setFieldWidth($this->crtFieldName, $totalWidth, $labelWidth);
 	}
 	protected function enterFieldGroup($rm, $fieldXml, $fieldName, $idField){
 		$fieldClass = (string)$fieldXml["class"];
-		//open fieldGroup div
-		if((string)$fieldXml["totalWidth"]!=null){
-			$style = "width: 100%; max-width:".((string)$fieldXml["totalWidth"])."px;";
-		} else {
-			$style = "width: 100%; max-width:".($this->getTotalWidth())."px;";
+		
+		$parentTotalWidth = $this->getTotalWidth();
+		$parentLabelWidth = $this->getLabelWidth();
+		//eput($fieldName." ".$parentTotalWidth." ".$parentLabelWidth);
+		
+		$totalWidth = (string)$fieldXml["totalWidth"];
+		if($totalWidth==null){
+			if($fieldXml["expandOnMultipleColumn"]!=""){
+				$factor = floatval($fieldXml["expandOnMultipleColumn"]);
+			} else {
+				$factor = 1;
+			}
+			$totalWidth = $parentTotalWidth*$factor;
 		}
+		
+		//open fieldGroup div
+		$style = "width: 100%; max-width:".($totalWidth)."px;";
         if($fieldXml["displayHidden"]=="1"){
             $style .= "display:none;";
         }
-		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" >');
+		$rm->put('<div id="'.$idField.'" class="field '.($fieldXml["noFieldset"] =="1" ? ' noFieldset ' : '').$fieldClass.'" style="'.$style.'" >');
 
 		//display label if necessary
 		if($fieldXml["noLabel"]!="1"){
-			if((string)$fieldXml["totalWidth"]!=null){
-				$labelWidth = ((string)$fieldXml["totalWidth"]);
-			} else {
-				$labelWidth = ($this->getIsInLineWidth());
-			}
+			$labelWidth = $totalWidth;
 
             $style = "width: 100%; max-width:".$labelWidth."px;";
 			$rm->put('<div class="label" style="'.$style.'" >');
@@ -111,11 +117,12 @@ class FieldRenderer extends Model {
 		$rm->put('<div id="'.$idField.'_group" ');
 		$rm->put('class="value fieldGroup SBIB ui-corner-all'.($fieldXml["noFieldset"] =="1" ? ' noFieldset ' : '').'" ');
 
-		if((string)$fieldXml["totalWidth"]!=null){
-			$rm->put('style="'. $padding. ' width: 100%; max-width:'.(string)$fieldXml["totalWidth"].'px;"');
-		} else {
-            $rm->put('style="'. $padding.  ' width: 100%; max-width:'.$this->getIsInLineWidth().'px;"');
-		}
+// 		if((string)$fieldXml["totalWidth"]!=null){
+// 			$rm->put('style="'. $padding. ' width: 100%; max-width:'.(string)$fieldXml["totalWidth"].'px;"');
+// 		} else {
+// 			$rm->put('style="'. $padding.  ' width: 100%; max-width:'.($this->getIsInLineWidth()+($fieldXml["noFieldset"]=="1" ? $this->getFieldOffset() : 0)).'px;"');
+// 		}
+		$rm->put('style="'. $padding.  ' width: 100%; max-width:'.($totalWidth).'px;"');
 		$rm->put('>');
 
 		$this->updateWidthOnEnterField($fieldName, $fieldXml);
@@ -134,139 +141,144 @@ class FieldRenderer extends Model {
 	}
 
 
-	protected function isCrtFieldGroupFilled(){
-		return $this->fieldGroupIsFilled[$this->getCrtFieldGroup()];
+	protected function isCrtFieldFilled(){
+		return $this->fieldIsFilled[$this->getCrtField()];
 	}
 	/**
-	 * set the current FieldGroup as filled.
+	 * set the current Field as filled.
 	 */
-	protected function setCrtFieldGroupIsFilled(){
-		//mark as filled the whole fieldGroup stack
-		foreach($this->fieldGroupStack as $fieldGroupName){
-			if($fieldGroupName=="root") continue;
-			$this->fieldGroupIsFilled[$fieldGroupName] = true;
+	protected function setCrtFieldIsFilled(){
+		//mark as filled the whole field stack
+		foreach($this->fieldStack as $fieldName){
+			if($fieldName=="root") continue;
+			$this->fieldIsFilled[$fieldName] = true;
 		}
 	}
-	protected function isCrtFieldGroupHasError(){
-		return $this->fieldGroupHasError[$this->getCrtFieldGroup()];
+	protected function isCrtFieldHasError(){
+		return $this->fieldHasError[$this->getCrtField()];
 	}
 	/**
-	 * set the current FieldGroup as hasError.
+	 * set the current Field as hasError.
 	 */
-	protected function setCrtFieldGroupHasError(){
-		//mark as filled the whole fieldGroup stack
-		foreach($this->fieldGroupStack as $fieldGroupName){
-			if($fieldGroupName=="root") continue;
-			$this->fieldGroupHasError[$fieldGroupName] = true;
+	protected function setCrtFieldHasError(){
+		//mark as filled the whole field stack
+		foreach($this->fieldStack as $fieldName){
+			if($fieldName=="root") continue;
+			$this->fieldHasError[$fieldName] = true;
 		}
 	}
 
 	/**
-	 * Enter in a new fieldGroup (typically called when field with groupStart="1")
-	 * @param $fieldGroupName : name of the fieldGroup (this name is not always equal to $fieldGroupXml->getName() in the case of there is multiple times the same name in the configuration for a fieldGroup
-	 * @param $fieldGroupXml : xml, contains the xml with all the parameters of this new fieldGroup.
+	 * Enter in a new field or fieldGroup
+	 * @param $fieldName : name of the field or fieldGroup (this name is not always equal to $fieldGroupXml->getName() in the case of there is multiple times the same name in the configuration for a fieldGroup
+	 * @param $fieldXml : xml, contains the xml with all the parameters of this new field.
 	 */
-	protected function updateWidthOnEnterField($fieldGroupName, $fieldGroupXml){
+	protected function updateWidthOnEnterField($fieldName, $fieldXml){
 		$parentTotalWidth = $this->getTotalWidth();
 		$parentLabelWidth = $this->getLabelWidth();
-		//eput($fieldGroupName." ".$parentTotalWidth." ".$parentLabelWidth);
+		//eput($fieldName." ".$parentTotalWidth." ".$parentLabelWidth);
 		
-		$totalWidth = (string)$fieldGroupXml["totalWidth"];
-		if($totalWidth==null) $totalWidth = $parentTotalWidth;
-		$labelWidth = (string)$fieldGroupXml["labelWidth"];
-		//if($labelWidth==null) $labelWidth = $parentLabelWidth;
-		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
-		
-		$this->pushFieldGroup($fieldGroupName);
-		$useMultipleColumn = (int)(string)$fieldGroupXml["useMultipleColumn"];
-
-		//if group with fieldset change the width
-		if(($fieldGroupXml["groupStart"]=="1" || $fieldGroupXml["groupEnd"]=="1") && $fieldGroupXml["noFieldset"]!="1"){
-			//the content of the group is the offset of the group + the offset of the parent field
-			$totalWidth = $totalWidth - $this->getFieldGroupParentOffset();
+		$totalWidth = (string)$fieldXml["totalWidth"];
+		if($totalWidth==null){
+			if($fieldXml["expandOnMultipleColumn"]!=""){
+				$factor = floatval($fieldXml["expandOnMultipleColumn"]);
+			} else {
+				$factor = 1;
+			}
+			$totalWidth = $parentTotalWidth*$factor;
 		}
-		$totalWidth = $totalWidth-$this->getFieldOffset();
-		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		$labelWidth = (string)$fieldXml["labelWidth"];
+		//if($labelWidth==null) $labelWidth = $parentLabelWidth;
+		//eput($fieldName." ".$totalWidth." ".$labelWidth);
+		
+		$this->pushField($fieldName);
+		$useMultipleColumn = (int)(string)$fieldXml["useMultipleColumn"];
+		
+		//if group with fieldset change the width
+		if(($fieldXml["groupStart"]=="1" || $fieldXml["groupEnd"]=="1") && $fieldXml["noFieldset"]!="1"){
+			$totalWidth = $totalWidth - $this->getFieldGroupParentOffset() - $this->getFieldOffset();
+		}
+		//eput($fieldName." ".$totalWidth." ".$labelWidth);
 		
 		//define the useMultiplecolumn
-		if(($fieldGroupXml["groupStart"]=="1" || $fieldGroupXml["groupEnd"]=="1") && $useMultipleColumn){
+		if(($fieldXml["groupStart"]=="1" || $fieldXml["groupEnd"]=="1") && $useMultipleColumn){
 			$totalWidth = floor($totalWidth/ $useMultipleColumn);
 		}
-		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		//eput($fieldName." ".$totalWidth." ".$labelWidth);
 		
 		if($labelWidth == null) $labelWidth = floor($totalWidth * ($parentLabelWidth / $parentTotalWidth));
-		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		//eput($fieldName." ".$totalWidth." ".$labelWidth);
 		
 		//if label is too big making the value size less than 10 then adapt the label to leave the value minimum with a size of 10
-		if(10>=($totalWidth-$labelWidth-$this->getFieldOffset())){
-			$labelWidth = $totalWidth-10-$this->getFieldOffset();
+		if(10>=($totalWidth-$labelWidth)){
+			$labelWidth = $totalWidth-10;
 		}
-		//eput($fieldGroupName." ".$totalWidth." ".$labelWidth);
+		//eput($fieldName." ".$totalWidth." ".$labelWidth);
 		
-		$this->setFieldWidth($fieldGroupName, $totalWidth, $labelWidth);
+		$this->setFieldWidth($fieldName, $totalWidth, $labelWidth);
 
 	}
 
 	/**
-	 * Leave crt fieldGroup (typically called when field with groupEnd="1")
+	 * Leave crt field or group
 	 */
 	protected function updateWidthOnLeaveField(){
-		$this->popFieldGroup();
-		return $this->getCrtFieldGroup();
+		$this->popField();
+		return $this->getCrtField();
 	}
 
 
 	// implementation
 
-	protected function getCrtFieldGroup(){
-		return $this->crtFieldGroupName;
+	protected function getCrtField(){
+		return $this->crtFieldName;
 	}
-	protected function getCrtFieldGroupDepth(){
-		return $this->fieldGroupDepth;
+	protected function getCrtFieldDepth(){
+		return $this->fieldDepth;
 	}
 	protected function getFieldGroupParentOffset(){
 		return $this->fieldGroupParentOffset;
 	}
 	protected function setFieldGroupParentOffset($offset){
-		$this->fieldGroupParentOffset = $offset;
+		$this->fieldGroupParentOffset = floatval($offset);
 	}
 	protected function getFieldCorrectionDueToExternalFactors(){
 		return $this->fieldCorrectionDueToExternalFactors;
 	}
 	protected function increaseFieldCorrectionDueToExternalFactors($offset){
-		$this->fieldCorrectionDueToExternalFactors += $offset;
+		$this->fieldCorrectionDueToExternalFactors += floatval($offset);
 	}
 	public function resetFieldCorrectionDueToExternalFactors(){
 		$this->fieldCorrectionDueToExternalFactors= 0;
 	}
-	protected function pushFieldGroup($fieldGroupName){
-		if($fieldGroupName=="root") throw new FieldRendererException("cannot define a field group with 'root'. 'root' is reserved.", FieldRendererException::INVALID_ARGUMENT);
-		$this->fieldGroupDepth++;
-		$this->crtFieldGroupName = $fieldGroupName;
-		array_push($this->fieldGroupStack, $fieldGroupName);
+	protected function pushField($fieldName){
+		if($fieldName=="root") throw new FieldRendererException("cannot define a field  with 'root'. 'root' is reserved.", FieldRendererException::INVALID_ARGUMENT);
+		$this->fieldDepth++;
+		$this->crtFieldName = $fieldName;
+		array_push($this->fieldStack, $fieldName);
 	}
-	protected function popFieldGroup(){
-		$this->fieldGroupDepth--;
-		array_pop($this->fieldGroupStack);
-		if($this->fieldGroupStack) $this->crtFieldGroupName = end($this->fieldGroupStack);
-		else $this->crtFieldGroupName = "root";
+	protected function popField(){
+		$this->fieldDepth--;
+		array_pop($this->fieldStack);
+		if($this->fieldStack) $this->crtFieldName = end($this->fieldStack);
+		else $this->crtFieldName = "root";
 	}
 
 	public function getTotalWidth(){
 		if(!$this->fieldTotalWidth) return null;
-		return $this->fieldTotalWidth[$this->getCrtFieldGroup()];
+		return $this->fieldTotalWidth[$this->getCrtField()];
 	}
 	public function getLabelWidth(){
 		if(!$this->fieldLabelWidth) return null;
-		return $this->fieldLabelWidth[$this->getCrtFieldGroup()]; //the correction due to external factor is already added from the value, no need to remove from the label
+		return $this->fieldLabelWidth[$this->getCrtField()]; //the correction due to external factor is already added from the value, no need to remove from the label
 	}
 	public function getValueWidth(){
 		if(!$this->fieldValueWidth) return null;
-		return $this->fieldValueWidth[$this->getCrtFieldGroup()]+$this->fieldCorrectionDueToExternalFactors;
+		return $this->fieldValueWidth[$this->getCrtField()]+$this->fieldCorrectionDueToExternalFactors;
 	}
 	public function getIsInLineWidth(){
 		if(!$this->fieldIsInLineWidth) return null;
-		return $this->fieldIsInLineWidth[$this->getCrtFieldGroup()];
+		return $this->fieldIsInLineWidth[$this->getCrtField()];
 	}
 	protected function getFieldOffset(){
 		return $this->fieldOffset;
@@ -274,11 +286,11 @@ class FieldRenderer extends Model {
 	protected function setFieldOffset($offset){
 		$this->fieldOffset = $offset;
 	}
-	protected function setFieldWidth($fieldGroupName, $totalWidth, $labelWidth){
-		$this->fieldTotalWidth[$fieldGroupName] = $totalWidth;
-		$this->fieldLabelWidth[$fieldGroupName] = $labelWidth;
-		$this->fieldValueWidth[$fieldGroupName] = $totalWidth-$labelWidth-$this->getFieldOffset();
-		$this->fieldIsInLineWidth[$fieldGroupName] = $totalWidth-$this->getFieldOffset();
+	protected function setFieldWidth($fieldName, $totalWidth, $labelWidth){
+		$this->fieldTotalWidth[$fieldName] = $totalWidth;
+		$this->fieldLabelWidth[$fieldName] = $labelWidth;
+		$this->fieldValueWidth[$fieldName] = $totalWidth-$labelWidth-$this->getFieldOffset();
+		$this->fieldIsInLineWidth[$fieldName] = $totalWidth-$this->getFieldOffset();
 	}
 }
 

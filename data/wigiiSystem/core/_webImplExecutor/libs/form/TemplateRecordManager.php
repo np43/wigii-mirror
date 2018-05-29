@@ -364,7 +364,14 @@ class TemplateRecordManager extends Model {
 		if($field->getDataType()!=null && $field->getDataType()->getDataTypeName()=="Files" && $fieldXml["displayLabel"]=="1"){
 			$this->put('<font class="grayFont" >'.$this->t($fieldName, $field->getXml()).':</font><br />');
 		}
-		$this->emptyContent();
+		if($field->getDataType()!=null && ($field->getDataType()->getDataTypeName()=="Numerics" || $field->getDataType()->getDataTypeName()=="Floats")){
+			$this->emptyNumber();
+		} else {
+			$this->emptyContent();
+		}
+	}
+	public function emptyNumber(){
+		$this->put('<font style="font-weight:normal;color:#aaa;">-</font>');
 	}
 	public function emptyContent(){
 		$this->put('<font style="font-weight:normal;color:#aaa;">'.$this->t("displayEvenIfEmpty").'</font>');

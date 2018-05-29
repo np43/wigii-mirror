@@ -243,8 +243,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			}
 			return;
 		} else if($fieldXml["groupEnd"]=="1"){
-			//we need to take the getCrtFieldGroup as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique
-			$crtFieldGroupId = $this->getFormId()."__".$this->getCrtFieldGroup();
+			//we need to take the getCrtField as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique
+			$crtFieldGroupId = $this->getFormId()."__".$this->getCrtField();
 			//add fieldGroup expand/colapse feature
 			$rm->addJsCode("" .
 				"$('#".$crtFieldGroupId.">.label').css('cursor','pointer').click(function(){" .
@@ -273,8 +273,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
                     "});");
             }
 			//collapse a fieldGroup only if there is no data and nothing is required
-			if(((!$this->isCrtFieldGroupFilled() && $fieldXml["expand"]!="1") || $fieldXml["forceCollapse"]=="1")
-			   && !$this->isCrtFieldGroupHasError()){
+			if(((!$this->isCrtFieldFilled() && $fieldXml["expand"]!="1") || $fieldXml["forceCollapse"]=="1")
+			   && !$this->isCrtFieldHasError()){
 				$rm->addJsCode("" .
 					"if($('#".$crtFieldGroupId.">.label').length){" .
 						"$('#".$crtFieldGroupId."_group').hide();" .
@@ -284,9 +284,12 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			}
 			$this->leaveCrtFieldGroup($rm, $fieldXml);
 			return;
-		} else if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
-			$this->updateWidthOnEnterField($fieldName, $fieldXml);
 		}
+		$this->updateWidthOnEnterField($fieldName, $fieldXml);
+		
+// 		else if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
+// 			$this->updateWidthOnEnterField($fieldName, $fieldXml);
+// 		}
 
         //field management
 
@@ -296,9 +299,9 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			$rm->getRecord()->getWigiiBag()->hasError($fieldName) ||
 			$isRequire
 			){
-			$this->setCrtFieldGroupIsFilled();
+			$this->setCrtFieldIsFilled();
 			if($rm->getRecord()->getWigiiBag()->hasError($fieldName)){
-				$this->setCrtFieldGroupHasError();
+				$this->setCrtFieldHasError();
 			}
 		}
 
@@ -522,9 +525,10 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		//close the field div
 		$rm->put('</div>');
 
-		if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
-			$this->updateWidthOnLeaveField($fieldName, $fieldXml);
-		}
+// 		if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
+// 			$this->updateWidthOnLeaveField($fieldName, $fieldXml);
+// 		}
+		$this->updateWidthOnLeaveField($fieldName, $fieldXml);
 	}
 
 	public function finish(){
@@ -563,7 +567,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
      */
     public function getValueWidth(){
         $returnValue = parent::getValueWidth();
-        if($this->getFormExecutor()->isForExternalAccess() && $this->getCrtFieldGroup() == 'root') $returnValue -= 5;
+        if($this->getFormExecutor()->isForExternalAccess() && $this->getCrtField() == 'root') $returnValue -= 5;
         return $returnValue;
     }
 }

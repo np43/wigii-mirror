@@ -55,6 +55,20 @@ function object2Array(obj){
 	return r;
 }
 
+/* ceil a value up to the number. IE: ceilTo(10.34, 0.05) returns 10.35
+ * the third parameter is optional and allows to fixe the number of decimals returned 
+ * this function is typically used for financial fields */
+function ceilTo(value, number, fixed) {
+	if (arguments.length<3) fixed = null;
+	number = 1.0*number; //transform in numbers if not
+	value = 1.0*value; //transform in numbers if not
+	var ceil = Math.ceil(value);
+	var remain = value % number;
+	if (remain > 0) value = value - remain + number;
+	if(fixed) return value.toFixed(2);
+	return value;
+}
+
 // prepends #ctrWigiiNamespace/crtModule/ to url. 
 function prependCrtWigiiNamespaceAndModule2Url(url) {
 	return '#'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/'+url;

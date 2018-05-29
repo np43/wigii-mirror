@@ -184,10 +184,10 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			$this->enterFieldGroup($rm, $fieldXml, $fieldName, $idField);
 			return;
 		} else if($fieldXml["groupEnd"]=="1"){
-			//we need to take the getCrtFieldGroup as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique
-			$crtFieldGroupId = $this->getDetailId()."__".$this->getCrtFieldGroup();
+			//we need to take the getCrtField as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique
+			$crtFieldGroupId = $this->getDetailId()."__".$this->getCrtField();
 			//check if data in group
-			if($this->isCrtFieldGroupFilled() || $fieldXml["displayEvenIfEmpty"]=="1"){
+			if($this->isCrtFieldFilled() || $fieldXml["displayEvenIfEmpty"]=="1"){
 				$rm->addJsCode("" .
 						"$('#".$crtFieldGroupId.">.label').css('cursor','pointer').click(function(){ " .
 						"if($('#".$crtFieldGroupId."_group:visible').length){ " .
@@ -224,9 +224,12 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			}
 			$this->leaveCrtFieldGroup($rm, $fieldXml);
 			return;
-		} else if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
-			$this->updateWidthOnEnterField($fieldName, $fieldXml);
 		}
+		$this->updateWidthOnEnterField($fieldName, $fieldXml);
+		
+// 		else if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
+// 			$this->updateWidthOnEnterField($fieldName, $fieldXml);
+// 		}
 
 		/**
 		 * Exception for Integrated html files with displayContentInDetail
@@ -242,7 +245,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		//field management
 
 		//if we render this area that means fieldGroup is filled (freetexts don't count as filling group)
-		if($dataType && $rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName())) $this->setCrtFieldGroupIsFilled();
+		if($dataType && $rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName())) $this->setCrtFieldIsFilled();
 
 		//open field div
 		
@@ -365,9 +368,10 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		//close the field div
 		$rm->put('</div>');
 
-		if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
-			$this->updateWidthOnLeaveField($fieldName, $fieldXml);
-		}
+// 		if($fieldXml["totalWidth"]!="" || $fieldXml["labelWidth"]!="" || ($fieldXml["useMultipleColumn"]!="" && $fieldXml["useRadioButtons"]!="1" && $fieldXml["useCheckboxes"]!="1")) {
+// 			$this->updateWidthOnLeaveField($fieldName, $fieldXml);
+// 		}
+		$this->updateWidthOnLeaveField($fieldName, $fieldXml);
 	}
 
 	public function finish(){

@@ -229,7 +229,7 @@ div.field.jointH {
 }
 /* displayOnRightSide replacement */
 div.fieldGroupRight{
-	margin-left:10px;
+	margin-left:0px;
 	margin-right:0px;
 }
 div.fieldGroupRight div.SBIB {
