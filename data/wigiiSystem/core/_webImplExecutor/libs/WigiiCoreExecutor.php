@@ -5195,10 +5195,12 @@ invalidCompleteCache();
 				$totalWidth = 850;
 				$labelWidth = 200;
 				
+				/*
 				if($isFromGroupPanel){
 					$this->setWorkzoneViewDocked($this->isWorkzoneViewDocked($workingModuleName));
 				}
-
+                */
+				
 				$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupDetail"), $exec->getCrtModule());
 
 				//$this->throwEvent()->readElement(PWithElement::createInstance($p, $element));
