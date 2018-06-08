@@ -726,6 +726,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// background-color
 			$s = $article->getFieldValue('articleBgColor');
 			if($s){
+				//remove any # inside
+				$s = str_replace("#","", $s);
 				if(strlen($s)>3) list($r, $g, $b) = sscanf($s, "%02x%02x%02x");
 				else list($r, $g, $b) = sscanf($s, "%1x%1x%1x");
 				$returnValue .= 'background-color: rgba('.$r.', '.$g.', '.$b.', ';
@@ -759,6 +761,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		// background-color
 		$s = $options->getValue('introBgColor');
 		if($s){
+			$s = str_replace("#","", $s);
 			if(strlen($s)>3) list($r, $g, $b) = sscanf($s, "%02x%02x%02x");
 			else list($r, $g, $b) = sscanf($s, "%1x%1x%1x");
 			$style .= 'background-color: rgba('.$r.', '.$g.', '.$b.', ';
@@ -1137,23 +1140,23 @@ HTMLHEAD;
 	 */
 	protected function cms_getHtmlStyles($options) {
 		$marginWidth = $options->getValue("marginWidth");
-		$logoTextColor = $options->getValue("logoTextColor");
+		$logoTextColor = str_replace("#", "", $options->getValue("logoTextColor"));
 		$logoTextSize = $options->getValue("logoTextSize");
-		$menuBgColor = $options->getValue("menuBgColor");
-		$menuTextColor = $options->getValue("menuTextColor");
-		$menuTextHoverColor = $options->getValue("menuTextHoverColor");
-		$titleTextColor = $options->getValue("titleTextColor");
-		$titleTextSize = $options->getValue("titleTextSize");
-		$publicCommentsBgColor = $options->getValue("publicCommentsBgColor");
-		$publicCommentsTextColor = $options->getValue("publicCommentsTextColor");
-		$footerBgColor = $options->getValue("footerBgColor");
-		$footerTextColor = $options->getValue("footerTextColor");
-		$linkTextColor = $options->getValue("linkTextColor");
-		$evenArticleBgColor = $options->getValue("evenArticleBgColor");
-		$oddArticleBgColor = $options->getValue("oddArticleBgColor");
+		$menuBgColor = str_replace("#", "", $options->getValue("menuBgColor"));
+		$menuTextColor = str_replace("#", "", $options->getValue("menuTextColor"));
+		$menuTextHoverColor = str_replace("#", "", $options->getValue("menuTextHoverColor"));
+		$titleTextColor = str_replace("#", "", $options->getValue("titleTextColor"));
+		$titleTextSize = str_replace("#", "", $options->getValue("titleTextSize"));
+		$publicCommentsBgColor = str_replace("#", "", $options->getValue("publicCommentsBgColor"));
+		$publicCommentsTextColor = str_replace("#", "", $options->getValue("publicCommentsTextColor"));
+		$footerBgColor = str_replace("#", "", $options->getValue("footerBgColor"));
+		$footerTextColor = str_replace("#", "", $options->getValue("footerTextColor"));
+		$linkTextColor = str_replace("#", "", $options->getValue("linkTextColor"));
+		$evenArticleBgColor = str_replace("#", "", $options->getValue("evenArticleBgColor"));
+		$oddArticleBgColor = str_replace("#", "", $options->getValue("oddArticleBgColor"));
 		$enablePublicComments = $options->getValue("enablePublicComments");
-		$publicCommentsBgColor = $options->getValue("publicCommentsBgColor");
-		$publicCommentsTextColor = $options->getValue("publicCommentsTextColor");
+		$publicCommentsBgColor = str_replace("#", "", $options->getValue("publicCommentsBgColor"));
+		$publicCommentsTextColor = str_replace("#", "", $options->getValue("publicCommentsTextColor"));
 		
 		$articleWidth = "100%";
 		if($enablePublicComments) $articleWidth = "80%";
