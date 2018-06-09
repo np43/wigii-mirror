@@ -222,6 +222,21 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			} else {
 				$rm->addJsCode("$('#".$crtFieldGroupId."').hide(); ");
 			}
+			// CWE 09.06.2018 interprets htmlExp or htmlInDetailExp
+			if((string)$fieldXml["htmlExp"]!=null) {
+				$htmlExp = str2fx((string)$fieldXml["htmlExp"]);
+				if($htmlExp) {
+					$htmlExp = $this->getFuncExpEval()->evaluateFuncExp($htmlExp,$this);
+					if(!empty($htmlExp)) $rm->put($htmlExp);
+				}
+			}
+			if((string)$fieldXml["htmlInDetailExp"]!=null) {
+				$htmlExp = str2fx((string)$fieldXml["htmlInDetailExp"]);
+				if($htmlExp) {
+					$htmlExp = $this->getFuncExpEval()->evaluateFuncExp($htmlExp,$this);
+					if(!empty($htmlExp)) $rm->put($htmlExp);
+				}
+			}
 			$this->leaveCrtFieldGroup($rm, $fieldXml);
 			return;
 		}

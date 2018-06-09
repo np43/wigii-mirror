@@ -282,6 +282,21 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 					"}" .
 					"");
 			}
+			// CWE 09.06.2018 interprets htmlExp or htmlInFormExp
+			if((string)$fieldXml["htmlExp"]!=null) {
+				$htmlExp = str2fx((string)$fieldXml["htmlExp"]);
+				if($htmlExp) {
+					$htmlExp = $this->getFuncExpEval()->evaluateFuncExp($htmlExp,$this);
+					if(!empty($htmlExp)) $rm->put($htmlExp);
+				}
+			}
+			if((string)$fieldXml["htmlInFormExp"]!=null) {
+				$htmlExp = str2fx((string)$fieldXml["htmlInFormExp"]);
+				if($htmlExp) {
+					$htmlExp = $this->getFuncExpEval()->evaluateFuncExp($htmlExp,$this);
+					if(!empty($htmlExp)) $rm->put($htmlExp);
+				}
+			}
 			$this->leaveCrtFieldGroup($rm, $fieldXml);
 			return;
 		}
