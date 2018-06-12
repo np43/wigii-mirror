@@ -2298,10 +2298,10 @@ class WigiiBPL
 	                if($recEmail != $from) $email->addCc($recEmail);               
 	            }
 	        }
-	        elseif($cc != $from) {
+	        elseif(!empty($cc) && $cc != $from) {
 	            $email->addCc($cc);
 	        }
-	        // Add cc
+	        // Add bcc
 	        $bcc = $parameter->getValue('bcc');
 	        if(is_array($bcc)) {
 	            foreach($bcc as $recEmail) {
@@ -2313,7 +2313,7 @@ class WigiiBPL
 	                if($recEmail != $from) $email->addBcc($recEmail);
 	            }
 	        }
-	        elseif($bcc != $from) {
+	        elseif(!empty($bcc) && $bcc != $from) {
 	            $email->addBcc($bcc);
 	        }
 	        

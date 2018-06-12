@@ -2791,9 +2791,6 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	        $rec = $element; 
 	        $gObj = $this->evaluateFuncExp(fx('cfgCurrentGroup','group',true)); 
 	        
-	        // to
-	        $to = $this->evaluateArg($args[1]);
-	        	        
 	        // gets options bag or creates an empty one
 	        if($nArgs>4) $options = $this->evaluateArg($args[4]);
 	        else $options = wigiiBPLParam();
@@ -2814,7 +2811,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	        $options->setValue('fslForNotif',$forFields);
 	        
 	        // sends notification email
-	        $this->evaluateFuncExp(fx('sysSendEmail',$to,$subject,
+	        $this->evaluateFuncExp(fx('sysSendEmail',$args[1],$subject,
 	            $notifS->getHtml($p, $eventName, $entityName, $module, $rec, $gObj, $options)
 	           ,$options));
 	    }
