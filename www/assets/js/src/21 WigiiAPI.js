@@ -1151,8 +1151,25 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 			};
 			
+			/**
+			 * Iterates through the list of fields and calls doAction on each of them
+			 * @param Function doAction callback of the form doAction(fieldHelper) where fieldHelper is a FieldHelper instance centered on the Field.
+			 * @return FieldHelper for chaining
+			 */
+			self.forEachField = function(doAction) {
+				if($.isFunction(doAction)) {
+					if(self.list){
+						var iterator = self.getIterator();
+						self.iterate(iterator,function(){doAction(iterator);});
+					} else {
+						doAction(self);
+					}
+				}				
+				return self;
+			};
+			
 			// FieldHelper functional implementation
-						
+			
 			/**
 			 * Sets a value in the field or the list of fields
 			 * @param String value value to set
@@ -1168,9 +1185,31 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				// single element implementation
 				else {
-					subFieldName = subFieldName || 'value';
-					wigiiApi.throwNotImplemented();
-					self.debugLogger.write(self.fieldName+'.'+subFieldName+' setValue '+value);
+					if(subFieldName!=undefined){
+						wigiiApi.throwNotImplemented();
+						self.debugLogger.write(self.fieldName+'.'+subFieldName+' setValue '+value);
+					} else {
+						$('#'+self.fieldId()+' :input').val(value);
+					}
+				}
+				return self;
+			};
+			
+			/**
+			 * Sets a numeric value in the field or the list of fields and format it with thousand separator
+			 * @param String value value to set
+			 * @return FieldHelper for chaining
+			 */
+			self.setNumValue = function(value) {	
+				// list iteration
+				if(self.list) {
+					var iterator = self.getIterator();
+					var actions = function(){iterator.setNumValue(value);};
+					self.iterate(iterator,actions);
+				}
+				// single element implementation
+				else {
+					self.setValue(wigiiApi.txtNumeric(value));
 				}
 				return self;
 			};
@@ -1191,12 +1230,69 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				// single element implementation
 				else {
-					subFieldName = subFieldName || 'value';
-					wigiiApi.throwNotImplemented();
-					self.debugLogger.write(self.fieldName+'.'+subFieldName+' getValue '+value);
+					if(subFieldName!=undefined){
+						wigiiApi.throwNotImplemented();
+						self.debugLogger.write(self.fieldName+'.'+subFieldName+' getValue '+value);
+					} else {
+						returnValue = $('#'+self.fieldId()+' :input').val();
+					}
 				}
 				return returnValue;
 			};
+			/**
+			 * Gets the numeric value of the field
+			 * @returns Float|Array the numeric field value or an array of numeric field value if FieldHelper is attached to a list
+			 */
+			self.getNumValue = function() {
+				var returnValue = undefined;
+				// list iteration
+				if(self.list) {
+					returnValue=[];
+					var iterator = self.getIterator();
+					var actions = function(){returnValue.push(iterator.getNumValue());};
+					self.iterate(iterator,actions);
+				}
+				// single element implementation
+				else {
+					returnValue = wigiiApi.str2float(self.getValue());
+				}
+				return returnValue;
+			};
+			
+			/**
+			 * sum the numeric value of the fields
+			 * @returns Float the numeric field value or an array of numeric field value if FieldHelper is attached to a list
+			 */
+			self.sum = function() {
+				var returnValue = 0;
+				self.forEachField(function(fh){
+					returnValue += fh.getNumValue();
+				});
+				return returnValue;
+			};
+
+			/**
+			 * update the value of the numeric field to a ceiled value
+			 * @param Float number up to the number. IE: ceilTo(0.05) returns 10.35 if field value is 10.34
+			 * @return Float value of the field after ceiling
+			 */
+			self.ceilTo = function (number, fixed){
+				var returnValue = undefined;
+				// list iteration
+				if(self.list) {
+					returnValue=[];
+					var iterator = self.getIterator();
+					var actions = function(){returnValue.push(iterator.ceilTo(number, fixed));};
+					self.iterate(iterator,actions);
+				}
+				// single element implementation
+				else {
+					self.setNumValue(wigiiApi.ceilTo(self.getNumValue(), number, fixed));
+					returnValue = self.getNumValue();
+				}
+				return returnValue;
+			};
+			
 			/**
 			 * Gets the value of a field
 			 * @param String subFieldName optional subfield name. If not defined, takes default 'value' subfield 
@@ -1376,7 +1472,27 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					self.context.formEventSubscribers.push({eventHandler:eventHandler,options:options});
 				}
 				return self;
-			};					
+			};	
+			
+			/**
+			 * bind/trigger change on the field
+			 */
+			self.change = function(eventHandler){
+				// list iteration
+				if(self.list) {
+					var iterator = self.getIterator();
+					var actions = function(){ iterator.change(eventHandler);};
+					self.iterate(iterator,actions);
+				}
+				// single element implementation
+				else if(self.context) {
+					if(eventHandler==undefined){
+						return $('#'+self.fieldId()+' :input').change();
+					}
+					return $('#'+self.fieldId()+' :input').change(eventHandler);
+				}
+			}
+			
 		};
 		
 		/**
@@ -1431,20 +1547,88 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 */
 			self.field = function(fieldName) {
 				var returnValue = undefined;
-				if(fieldName) {
+				if($.isArray(fieldName)){
+					returnValue = self.fields(fieldName);
+				} else if(fieldName) {
 					returnValue = $('#'+self.formId()+'__'+fieldName).wigii('FieldHelper');
 				}
 				return returnValue;
 			};
-			
+
 			/**
 			 * Returns a selection of fields in the Wigii Form			 
-			 * @param String selector JQuery selector to filter the Fields of the form (for instance based on data-wigii-datatype or other attribute). If not defined, takes all the Fields.
+			 * @param String|Array selector JQuery or array of fieldNames, to filter the Fields of the form (for instance based on data-wigii-datatype or other attribute). If not defined, takes all the Fields.
 			 * @return FieldHelper an instance of FieldHelper attached to the selected list of Fields.
 			 */
 			self.fields = function(selector) {
-				if(selector) return self.$.find('div.field[data-wigii-datatype]').filter(selector).wigii('FieldHelper');
+				if($.isArray(selector)){
+					return self.fields('#'+self.formId()+'__'+selector.join(', #'+self.formId()+'__'));
+				} else if(selector) return self.$.find('div.field[data-wigii-datatype]').filter(selector).wigii('FieldHelper');
 				else return self.$.find('div.field[data-wigii-datatype]').wigii('FieldHelper');
+			};
+			
+			/**
+			 * Get/Set wigii field value
+			 * @param String fieldName the field selector
+			 * @param Mixed value for the field : optional, use '' to empty the field value
+			 * @return Mixed value of the field
+			 */
+			self.val = function (fieldName, value){
+				if(value!=undefined){
+					self.field(fieldName).setValue(value);
+				}
+				return self.field(fieldName).getValue();
+			};
+			/**
+			 * Get/Set wigii numeric field value
+			 * @param String fieldName the field selector
+			 * @param Float value for the field : optional
+			 * @return Float value of the field
+			 */
+			self.numVal = function (fieldName, value){
+				if(value!=undefined){
+					self.field(fieldName).setNumValue(value);
+				}
+				return self.field(fieldName).getNumValue();
+			};
+			
+			/**
+			 * update the value of a wigii numeric field to a ceiled value
+			 * @param String fieldName the field selector
+			 * @param Float number up to the number. IE: ceilTo(fieldName, 0.05) returns 10.35 if field value is 10.34
+			 * @return Float value of the field after ceiling
+			 */
+			self.ceilTo = function (fieldName, number, fixed){
+				return self.field(fieldName).ceilTo(number, fixed);
+			};
+			
+			/**
+			 * Copies a set of fields, inserts them into the DOM and renames them.
+			 * @param Array fromFields the array of field names to copy
+			 * @param Array toFields the array of copied field names
+			 * @param JQuery|String beforeTarget optional jQuery selector before which to insert the copied fields. 
+			 * If not defined, the copied fields are appended to the end of the parent element.
+			 * @example copyFields(['articleNumber_1,label_1,quantity_1'],['articleNumber_2,label_2,quantity_2'])
+			 * @return FieldHelper a FieldHelper instance centered on the copied fields
+			 */
+			self.copyFields = function(fromFields,toFields,beforeTarget) {
+				var i = 0;				
+				if(!$.isArray(toFields)) toFields = [toFields];
+				// iterates on the selected fields
+				self.fields(fromFields).forEachField(function(field){
+					var fieldHtml = field.$[0].outerHTML;
+					// replaces current field name by new field name (in every reference
+					fieldHtml = fieldHtml.replace(new RegExp(field.fieldName(),'g'),toFields[i]);
+					// insert html
+					if(beforeTarget==undefined) field.$.parent().append(fieldHtml);
+					else field.formHelper().$.insertBefore(beforeTarget);
+					// binds js events on new field
+					var newField = field.formHelper().field(toFields[i])
+					newField.$.find('.select2, .cke').remove();					
+					addJsCodeAfterFormIsShown('#'+newField.fieldId());
+					i++;
+				});
+				if(i>0) return self.fields(toFields);
 			};
 			
 			// Event handling
@@ -2872,6 +3056,43 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		
 		// Functions
 		
+		/**
+		 * remove any ' , or spaces from a string and multiply it with 1.0 to cast it in a real number
+		 * @param value : string representing a number
+		 * @return float : a clean numercic value
+		 */
+		wigiiApi.str2float = function (value){
+			return 1.0*value.replace(/'/g,'').replace(/,/g,'').replace(/ /g,'');
+		}
+		/**
+		 * format a numeric value with thousand separatos
+		 * @param numeric
+		 * @return string : a formated numeric value
+		 */
+		wigiiApi.txtNumeric = function (value){
+			value += '';
+		    var x = value.split('.');
+		    var x1 = x[0];
+		    var x2 = x.length > 1 ? '.' + x[1] : '';
+		    var rgx = /(\d+)(\d{3})/;
+		    while (rgx.test(x1)) {
+		            x1 = x1.replace(rgx, '$1' + "'" + '$2');
+		    }
+		    return x1 + x2;
+		}
+		/** ceil a value up to the number. IE: ceilTo(10.34, 0.05) returns 10.35
+		 * the third parameter is optional and allows to fixe the number of decimals returned 
+		 * this function is typically used for financial fields 
+		 */
+		wigiiApi.ceilTo = function (value, number, fixed) {
+			if (arguments.length<3) fixed = null;
+			var ceil = Math.ceil(value);
+			var remain = value % number;
+			if (remain > 0) value = value - remain + number;
+			if(fixed) return value.toFixed(2);
+			return value;
+		}
+
 		/**
 		 * Converts a date to a string in format YYYY-MM-DD
 		 * @param Date date the date instance to convert to string. If undefined takes current date.

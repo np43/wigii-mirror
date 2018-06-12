@@ -383,6 +383,10 @@ class ExecutionServiceImpl implements ExecutionService {
 			$this->setCrtParameters(array_slice($crtRequest, $i++));
 			$this->setCrtRequest(implode(ExecutionServiceImpl::paramSeparator, $crtRequest));
 
+			// CWE 24.05.2018: activates adaptive wigii namespace selection if module is not admin			
+			if(!$this->getCrtModule()->isAdminModule()) $p->setAdaptiveWigiiNamespace(true);
+			else $p->setAdaptiveWigiiNamespace(false);			
+			
 			//if new context, then select appropriate calculated role
 			//else bind last role id used in context
 			if(!$this->getCrtContext()){
@@ -391,17 +395,15 @@ class ExecutionServiceImpl implements ExecutionService {
 				if($p->getRoleListener()) $roleId = $p->getRoleListener()->getCalculatedRoleId($this->getCrtWigiiNamespace()->getWigiiNamespaceUrl());
 				if($roleId && $p->getUserId()!=$roleId){
 					$p = ServiceProvider :: getAuthenticationService()->changeToRole($p, $roleId);
-//	 				fput("new context ".$this->getCrtContext()." start with role ".$roleId." (".$p->getUsername().")");
 				}
-			} else {
+			} elseif(!$p->hasAdaptiveWigiiNamespace() || 
+					$p->hasAdaptiveWigiiNamespace() && !$p->bindToWigiiNamespace($this->getCrtWigiiNamespace())) {				
 				//bind principal to lastPrincipalIdContext
 				$lastPrincipalIdContext = $sessAS->getData($this, "lastPrincipalIdContext");
-	//			fput($lastPrincipalIdContext);
 				if($lastPrincipalIdContext && $lastPrincipalIdContext[$this->getCrtContext()]){
 					$roleId = $lastPrincipalIdContext[$this->getCrtContext()];
 					if($roleId && $p->getUserId()!= $roleId){
 						$p = ServiceProvider :: getAuthenticationService()->changeToRole($p, $roleId);
-//		 				fput("switch back p to role $roleId (".$p->getUsername().") for context ". $this->getCrtContext());
 					}
 				}
 			}

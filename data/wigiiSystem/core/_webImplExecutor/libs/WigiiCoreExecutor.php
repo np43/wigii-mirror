@@ -11783,6 +11783,8 @@ onUpdateErrorCounter = 0;
 				// Switches role
 				if ($roleId && $originalUserId != $roleId) {
 					$p = $authS->changeToRole($p, $roleId);
+					// CWE 24.05.2018: if role is explicitely set, then removes adaptive wigii namespace
+					$p->setAdaptiveWigiiNamespace(false);			
 				}
 
 				//if the docked view per module is active

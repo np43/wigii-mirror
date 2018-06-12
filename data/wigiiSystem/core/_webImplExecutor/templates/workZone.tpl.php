@@ -34,8 +34,9 @@ $this->executionSink()->publishStartOperation("TEMPLATE workZone.tpl.php");
 //we could select templates based on a module config.
 
 switch($exec->getCrtModule()->getModuleName()){
-	case Module::HOME_MODULE:
+	case Module::HOME_MODULE:		
 		if($exec->getIsUpdating()) $this->includeTemplateHome($p, $exec);
+		?><div id='elementDialog' class='elementDialog' style='display:none; top:0px; left:0px;'></div><?
 		break;
 	default:
 		$displayOnlyStructure = ($exec->getCrtAction() == 'display') && ($exec->getCrtParameters(0) == 'workZoneStructure');
