@@ -4025,7 +4025,7 @@ function manageWorkzoneViewDocked(action, cardSize){
 		case 'clear':
 			elementDialog.html('');
 		case 'hide':			
-			elementDialog.css('display','none');
+			elementDialog.css('display','none').css('float','none');
 			$('#dockingContainer>.collapse').css('display','none');
 			$('#moduleView').css({'float':'none'});
 			$('.firstBox, .toolbarBox','#searchBar').css('display','block');

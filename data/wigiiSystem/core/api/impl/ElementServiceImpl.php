@@ -2434,10 +2434,11 @@ group by tmp1.id_group";
 		
 				if($n == 1) {
                     $elementSqlBuilder = $this->getSqlBuilderForGetSelectedElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb);
+                    $joinField = "`".$elementSqlBuilder->getFieldPrefix().$duplicateKey->getFieldName()."`.".(is_null($duplicateKey->getSubFieldName())?'value':$duplicateKey->getSubFieldName());
                     $duplicateKey = $elementSqlBuilder->encodeFieldNameForSelect($duplicateKey->getFieldName(), (is_null($duplicateKey->getSubFieldName())?'value':$duplicateKey->getSubFieldName()));
 					$returnValue = $mysqlF->selectAll($principal,
-							$this->getSqlForFindDuplicatesOfAllElementsInGroups($eltQP->getSql(0, $elementSqlBuilder), $duplicateKey),
-							$dbCS, ValueListMapper::createInstance($elementIds, 'Eid'));
+					       $this->getSqlForFindDuplicatesOfAllElementsInGroups($eltQP->getSql(0, $elementSqlBuilder), $duplicateKey, $joinField),
+						  $dbCS, ValueListMapper::createInstance($elementIds, 'Eid'));
 				}
 				else $returnValue = 0;
 				$eltQP->freeMemory();
@@ -2514,9 +2515,10 @@ group by tmp1.id_group";
 			}
 			if($n == 1) {
 			    $elementSqlBuilder = $this->getSqlBuilderForGetAllElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups);
+			    $joinField = "`".$elementSqlBuilder->getFieldPrefix().$duplicateKey->getFieldName()."`.".(is_null($duplicateKey->getSubFieldName())?'value':$duplicateKey->getSubFieldName());
 			    $duplicateKey = $elementSqlBuilder->encodeFieldNameForSelect($duplicateKey->getFieldName(), (is_null($duplicateKey->getSubFieldName())?'value':$duplicateKey->getSubFieldName()));
 				$returnValue = $mysqlF->selectAll($principal,
-                        $this->getSqlForFindDuplicatesOfAllElementsInGroups($eltQP->getSql(0, $elementSqlBuilder), $duplicateKey),
+                        $this->getSqlForFindDuplicatesOfAllElementsInGroups($eltQP->getSql(0, $elementSqlBuilder), $duplicateKey, $joinField),
 						$dbCS, ValueListMapper::createInstance($elementIds, 'Eid'));
 			}
 			else $returnValue = 0;
@@ -2542,8 +2544,10 @@ group by tmp1.id_group";
 		$this->executionSink()->publishEndOperation("findDuplicatesFromAllElementsInGroups", $principal);
 		return $returnValue;
 	}
-	protected function getSqlForFindDuplicatesOfAllElementsInGroups($sqlForGetAllElementsInGroups, $duplicateKey) {
-	    $returnValue = "SELECT r.Eid FROM (". $sqlForGetAllElementsInGroups. ") r WHERE r.". $duplicateKey. " IN (SELECT result.". $duplicateKey. " FROM (". $sqlForGetAllElementsInGroups. ") result GROUP BY result.". $duplicateKey. " HAVING count(result.". $duplicateKey. ") > 1)";
+	protected function getSqlForFindDuplicatesOfAllElementsInGroups($sqlForGetAllElementsInGroups, $duplicateKey, $joinField) {
+	    // Medair (CWE) 05.06.2018: sql optimization: replaces WHERE IN by INNER JOIN
+	    /*$returnValue = "SELECT r.Eid FROM (". $sqlForGetAllElementsInGroups. ") r WHERE r.". $duplicateKey. " IN (SELECT result.". $duplicateKey. " FROM (". $sqlForGetAllElementsInGroups. ") result GROUP BY result.". $duplicateKey. " HAVING count(result.". $duplicateKey. ") > 1)";*/
+	    $returnValue = $sqlForGetAllElementsInGroups. " INNER JOIN (SELECT result.". $duplicateKey. " FROM (". $sqlForGetAllElementsInGroups. ") result GROUP BY result.". $duplicateKey." HAVING count(result.". $duplicateKey. ") > 1) AS duplicateElts on duplicateElts.". $duplicateKey." = ".$joinField;
 	    return $returnValue;
 	}
 	

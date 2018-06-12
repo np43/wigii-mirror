@@ -95,6 +95,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 			case 'www': return true;
 			case 'inwww': return false;
 			case 'qliksense': return true;
+			case 'help':return true;
 			default: return parent::shouldByPassFooter($action);
 		}
 	}

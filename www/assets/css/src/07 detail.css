@@ -34,8 +34,7 @@ div.field.total>div.label {
 }
 
 
-.elementDialog.docked {
-	display: none;
+.elementDialog.docked {	
 	padding: 10px;
 }
 

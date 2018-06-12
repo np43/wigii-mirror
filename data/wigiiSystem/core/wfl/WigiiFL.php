@@ -331,8 +331,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	public function fsl($args) {
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs > 0) {
-			for($i = 0; $i < $nArgs; $i++) {
-				$args[$i] = $this->evaluateArg($args[$i]);
+			for($i = 0; $i < $nArgs; $i++) {			    
+				if(!($args[$i] instanceof FieldSelector)) $args[$i] = $this->evaluateArg($args[$i]);
 			}
 		}
 		else $args = array();
@@ -2692,6 +2692,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - cc: String|Array|ValueList. Visible copy email or list of emails.
 	 * - bcc: String|Array|ValueList. Hidden copy email or list of emails.
 	 * - mailActivity: String|Activity. A specific activity from which to retrieve the email template. By default uses 'BaseEmail' activity.
+	 * If mailActivity is explicitely equal to false, then no template is loaded and original content is used as body. 
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * This function is a synonym of sysMailTo.
 	 */
@@ -2724,11 +2725,99 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - cc: String|Array|ValueList. Visible copy email or list of emails.
 	 * - bcc: String|Array|ValueList. Hidden copy email or list of emails.
 	 * - mailActivity: String|Activity. A specific activity from which to retrieve the email template. By default uses 'BaseEmail' activity.
+	 * If mailActivity is explicitely equal to false, then no template is loaded and original content is used as body. 
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * This function is a synonym of sysSendEmail.
 	 */
 	public function sysMailTo($args) {
 	    return $this->sysSendEmail($args);
+	}
+		
+	/**
+	 * Sends a notification email if a given list of fields changes.
+	 * This function always triggers a notification if a field has changed, even if standard notifications are disabled.
+	 * FuncExp signature : <code>sysSendNotif(forFields,to,subject=null,introduction=null,options=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) forFields: FieldSelector|FieldSelectorList|String|Array. The list of fields to monitor for changes.
+	 * - Arg(1) to: String|Array|ValueList. The recipient email or list of recipients emails.
+	 * - Arg(2) subject: String. The notification subject. If not defined, takes the standard notification subject.
+	 * - Arg(3) introduction: String. An introduction text to be inserted before the notification body. Supports HTML.
+	 * - Arg(4) options: WigiiBPLParameter. An optional bag of parameters to configure the notification process. (not used yet)
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 */
+	public function sysSendNotif($args) {
+	    $this->assertFxOriginIsNotPublic();
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new FuncExpEvalException('sysSendNotif takes at least two arguments, the list of fields to monitor for changes and the recipient email of the notification', FuncExpEvalException::INVALID_ARGUMENT);
+	    // forFields
+	    if($args[0] instanceof FieldSelector) $forFields = $args[0];
+	    else $forFields = $this->evaluateArg($args[0]);
+	    if(is_array($forFields)) {
+	        $fslForNotif = FieldSelectorListArrayImpl::createInstance(true,false);
+	        foreach($forFields as $fs) {
+	            if(!($fs instanceof FieldSelector)) $fs = FieldSelector::createInstance($fs);
+	            $fslForNotif->addFieldSelectorInstance($fs);
+	        }
+	        $forFields = $fslForNotif;
+	    }
+	    elseif(!($forFields instanceof FieldSelectorList)) {
+	        $fslForNotif = FieldSelectorListArrayImpl::createInstance(true,false);
+	        if(!($forFields instanceof FieldSelector)) $forFields = FieldSelector::createInstance($forFields);
+	        $fslForNotif->addFieldSelectorInstance($forFields);
+	        $forFields = $fslForNotif;
+	    }	    
+	    	    	    	   
+	    // gets element currently beeing saved
+	    $element = $this->evaluateArg(fs_e('this'));
+	    // checks that element is updated and that a field in the given field selector list is touched
+	    $sendNotif = false;
+	    if($this->evaluateFuncExp(fx('ctlCurrentFlow')) == 'element-edit' && isset($element) && $element->getWigiiBag()->hasChanges()) {
+	        $wigiiBag = $element->getWigiiBag();
+	        foreach($forFields->getListIterator() as $fs) {
+	            if($wigiiBag->isChanged($fs->getFieldName())) {
+	                $sendNotif = true;
+	                break;
+	            }
+	        }	        
+	    }
+	    
+	    // prepares notification email
+	    if($sendNotif) {
+	        $notifS = ServiceProvider::getWigiiBPL()->getNotificationService();
+	        $p = $this->getPrincipal(); 
+	        $eventName = 'update';
+	        $entityName = 'Element';
+	        $module = $element->getModule(); 
+	        $rec = $element; 
+	        $gObj = $this->evaluateFuncExp(fx('cfgCurrentGroup','group',true)); 
+	        
+	        // to
+	        $to = $this->evaluateArg($args[1]);
+	        	        
+	        // gets options bag or creates an empty one
+	        if($nArgs>4) $options = $this->evaluateArg($args[4]);
+	        else $options = wigiiBPLParam();
+	        
+	        // subject (takes standard notification subject if not provided as argument)
+	        $subject = null;
+	        if($nArgs>2) $subject = $this->evaluateArg($args[2]);
+	        if(empty($subject)) $subject = $options->getValue('subject');
+	        if(empty($subject)) $subject = $notifS->getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj);
+	        
+	        // injects any given introduction
+	        if($nArgs>3) $options->setValue('introduction', $this->evaluateArg($args[3]));
+	        
+	        // sets notification email options
+	        $options->setValue('from', false);
+	        $options->setValue('hideRecipients', true);
+	        $options->setValue('mailActivity', false);
+	        $options->setValue('fslForNotif',$forFields);
+	        
+	        // sends notification email
+	        $this->evaluateFuncExp(fx('sysSendEmail',$to,$subject,
+	            $notifS->getHtml($p, $eventName, $entityName, $module, $rec, $gObj, $options)
+	           ,$options));
+	    }
 	}
 	
 	// Box integration

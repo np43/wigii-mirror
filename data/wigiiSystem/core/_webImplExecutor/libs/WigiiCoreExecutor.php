@@ -3598,18 +3598,37 @@ invalidCompleteCache();
 			throw new ServiceException("isKey field cannot be defined multiple times in a configuration.", ServiceException::INVALID_ARGUMENT);
 		}
 		$field = $fields[0];
-		switch((string)$field->type){
+		switch((string)$field['type']){
 			case "Addresses":
 			case "TimeRanges":
 			case "Blobs":
 			case "Texts":
 			case "Varchars":
-				throw new ServiceException("isKey field cannot be ".$field->type.".", ServiceException::INVALID_ARGUMENT);
+			    throw new ServiceException("isKey field cannot be ".$field['type'].".", ServiceException::INVALID_ARGUMENT);
 				break;
 			default:
 				break;
 		}
 		return $field;
+	}
+	/**
+	 * return false if not, return the first found field if yes	 
+	 */
+	public function doesCrtModuleHasFindDuplicateField($p, $module,$allowedFieldForDuplicates) {
+	    $this->executionSink()->publishStartOperation("doesCrtModuleHasFindDuplicateField");
+	    
+	    $configS = $this->getConfigurationContext();
+	    $fields = $configS->mf($p, $module)->xpath("*[@isDefaultForFindDuplicates='1']");
+	    
+	    $this->executionSink()->publishEndOperation("doesCrtModuleHasFindDuplicateField");
+	    
+	    if (!is_array($fields) || $fields == null)
+	        return false;
+	        	        
+	        $field = $fields[0];
+	        if(!array_key_exists((string)$field['type'], $allowedFieldForDuplicates)) 
+	            throw new ServiceException("Config parameter isDefaultForFindDuplicates cannot be applied to ".$field['type'].". Only ".implode(", ",array_keys($allowedFieldForDuplicates))." are allowed.", ServiceException::CONFIGURATION_ERROR);
+	        return $field;
 	}
 	public function getSubFieldnameForIsKeyField($isKeyXml){
 		switch($isKey->type){
@@ -8438,7 +8457,7 @@ onUpdateErrorCounter = 0;
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 
-//				//define group list in which we can import
+//				//define group list in which we can filter
 //				$inGroupIdF = $updateToRec->getFieldList()->getField("finDuplicatesInGroupId");
 //				$groupPTreeArrayImpl = GroupPListTreeArrayImpl :: createInstance();
 //				$inGroupModuleXml = '<finDuplicatesInGroupId type="Attributs">';
@@ -8455,11 +8474,15 @@ onUpdateErrorCounter = 0;
 				//define the list of fields we can use as key
 				$fieldKeyF = $updateToRec->getFieldList()->getField("fieldKey");
 				$fieldKeyXml = '<fieldKey type="Attributs">';
-				$fieldXml = $configS->mf($p, $exec->getCrtModule());
+				$fieldXml = $configS->mf($p, $exec->getCrtModule());								
 				$allowedFieldForDuplicates = $lc->defineFieldsToFindDuplicates();
-				$emailField = $this->canCrtModuleEmailing($exec->getCrtModule());
-				if($emailField){
-					$emailField = (string)$emailField[0]->getName();
+				// Medair (CWE) looks for a default field for find duplicates
+				$defaultField = $this->doesCrtModuleHasFindDuplicateField($p, $exec->getCrtModule(),$allowedFieldForDuplicates);
+				if($defaultField) $defaultField = (string)$defaultField->getName();
+				// if not, takes first emailing field
+				else {
+				    $defaultField = $this->canCrtModuleEmailing($exec->getCrtModule());
+				    if($defaultField) $defaultField = (string)$defaultField[0]->getName();
 				}
 				$html2text = new Html2text();
 				foreach($fieldXml->children() as $field){
@@ -8469,7 +8492,7 @@ onUpdateErrorCounter = 0;
 						$html2text->setHtml($label);$label = $html2text->getText();//$html2text->clear();
 						$subField = $allowedFieldForDuplicates[(string)$field['type']];
 						$label .= ' ('.(string)$field->getName().($subField && $subField!="value" ? ' '.$subField : '').')';
-						$fieldKeyXml .= '<attribute'.($emailField && $emailField == (string)$field->getName() ? ' checked="1"' : '').'>'.(string)$field->getName().' '.$subField.'<label>'.$label.'</label></attribute>';
+						$fieldKeyXml .= '<attribute'.($defaultField && $defaultField == (string)$field->getName() ? ' checked="1"' : '').'>'.(string)$field->getName().' '.$subField.'<label>'.$label.'</label></attribute>';
 					}
 				}
 				$fieldKeyXml .= '</fieldKey>';

@@ -434,6 +434,9 @@ class NotificationService implements MultiplexedEvent {
 		return $p;
 	}
 	protected function getElementView($p, $rec, $trm, $fsl){
+	    $options = $this->htmlRenderingOptions;/* gets some extra options to customize the html rendering process */
+	    if(!isset($options)) $options = wigiiBPLParam();
+	    
 		$prevVal = null; //this will contains last value, if filled elementListText must have a , before
 		$isaFieldSelectorFromActivity = is_a($fsl, "FieldSelectorListForActivity");
 
@@ -501,7 +504,10 @@ class NotificationService implements MultiplexedEvent {
 
 	//rootElement is in the case of a subitem, the notification display the root element with a change request showing the subelement changes
 	protected function getInitialMessageContent($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList=null){
-		if($rec && $rec->isSubElement()){
+		$options = $this->htmlRenderingOptions;/* gets some extra options to customize the html rendering process */
+		if(!isset($options)) $options = wigiiBPLParam();
+		
+	    if($rec && $rec->isSubElement()){
 			$rootElement = $this->getRootElement($p, $rec);
 		}
 		$intro = "";
@@ -774,11 +780,13 @@ class NotificationService implements MultiplexedEvent {
 			if($entityName == "Element"){
 				$changeList .= '<p>'.$this->getTranslationService()->t($p, "theFollowingChangesHasBeenMade").':</p>';
 			}
+			$fslForNotif = $options->getValue('fslForNotif');
 			foreach($rec->getFieldList()->getListIterator() as $field){
 				if($rec->getWigiiBag()->isChanged($field->getFieldName()) && !$rec->getWigiiBag()->isHidden($field->getFieldName())){
 					$fieldXml = $field->getXml();
 
-					if($fieldXml["ignoreNotification"]=="1") continue;
+					if(isset($fslForNotif) && !$fslForNotif->containsFieldSelector($field->getFieldName())) continue;
+					if($fieldXml["ignoreNotification"]=="1" && !isset($fslForNotif)) continue;
 
 					$trm->displayLabel($field->getFieldName());
 					$label = $trm->getHtmlAndClean();
@@ -850,6 +858,7 @@ class NotificationService implements MultiplexedEvent {
 
 		//format all the pieces together
 		$result = "";
+		if(!empty($options->getValue('introduction'))) $result .= $options->getValue('introduction');
 		$result .= $displayInContent;
 		if(!($entityName =="Element" && ($eventName=="update" || $eventName=="insert") && $this->getConfigService()->getParameter($p, $module, "Notification_hideElementView")=="1")){
 			$result .= "<p></p>";
@@ -885,7 +894,7 @@ class NotificationService implements MultiplexedEvent {
 		$wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceName();
 		return ($wigiiNamespace ? $wigiiNamespace.' - ' : "").$this->getTranslationService()->t($p, $module->getModuleName()).': ';
 	}
-	protected function getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList=null){
+	public function getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList=null){
 		// fetches root element and aligns configuration
 	    if($rec && $rec->isSubElement()){
 			$rootElement = $this->getRootElement($p, $rec);
@@ -1284,7 +1293,12 @@ class NotificationService implements MultiplexedEvent {
 		$result .= '</a>';
 		return $result;
 	}
-	public function getHtml($p, $eventName, $entityName, $module, $rec, $gObj){
+	/**
+	 * Generates the HTML of the notification message
+	 * @param WigiiBPLParameter $options an optional bag of parameters to customize the HTML generation process
+	 * @return string
+	 */
+	public function getHtml($p, $eventName, $entityName, $module, $rec, $gObj, $options=null){
 		//in insert, the form is defined as empty, so everything will be changed of course
 		//we don't want
 		if($eventName == "insert") $rec->getWigiiBag()->resetChanges();
@@ -1295,15 +1309,19 @@ class NotificationService implements MultiplexedEvent {
 
 		$templatePath = $this->getConfigService()->getTemplatePath($p, $module, $this->getActivity());
 		$exec = $this->getExecutionService();
+		$this->htmlRenderingOptions = $options;
 		ob_start();
 		include($templatePath);
 		$body = ob_get_clean();
-
+        $this->htmlRenderingOptions = null;
+        
 		//check if there is any link on the element id which was not set correctly before in the case of add:
 		if(strpos($body, '/item/"')!==false) $body = str_replace('/item/"', '/item/'.$rec->getId().'"', $body);
 
 		return $body;
 	}
+	private $htmlRenderingOptions = null;
+	
 	public function getHtmlForMultiple($p, $eventName, $entityName, $module, $elementPList, $rec, $gObj, $additionalRowInfo=null){
 
 		$trm = $this->createTemplateRecordManagerInstance(null);

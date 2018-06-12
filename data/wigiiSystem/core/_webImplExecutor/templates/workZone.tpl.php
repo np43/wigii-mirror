@@ -54,7 +54,7 @@ switch($exec->getCrtModule()->getModuleName()){
 			//$exec->addJsCode($exec->getCurrentUpdateJsCode($p, 'moduleView', 'display/moduleView'));
 		?></div><?		
 		?><div class="collapse SB grayFont"><span>&laquo;</span></div><?
-		?><div id='elementDialog' class='elementDialog <?if($this->isWorkzoneViewDocked()){ echo "docked"; }?>'></div><?
+		?><div id='elementDialog' class='elementDialog <?if($this->isWorkzoneViewDocked()){ echo "docked"; }?>' style='display:none;'></div><?
 		?></div><?
 		/*
 		else {		

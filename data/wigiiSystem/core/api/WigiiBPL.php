@@ -232,6 +232,10 @@ class WigiiBPL
 	    return $this->emailService;
 	}
 	
+	public function getNotificationService() {
+    	return $this->getWigiiExecutor()->getNotificationService();
+	}
+	
 	// System principal management
 	
 	/**
@@ -2195,7 +2199,8 @@ class WigiiBPL
 	 * - mergeData: Array. Mail merge data array. See Wigii EmailService for more information on the format.
 	 * - cc: String|Array|ValueList. Visible copy email or list of emails.
 	 * - bcc: String|Array|ValueList. Hidden copy email or list of emails.
-	 * - mailActivity: String|Activity. A specific activity from which to retrieve the email template. By default uses 'BaseEmail' activity.
+	 * - mailActivity: String|Activity. A specific activity from which to retrieve the email template. By default uses 'BaseEmail' activity. 
+	 * If mailActivity is explicitely equal to false, then no template is loaded and original content is used as body. 
 	 * If a mail activity is defined, then the bag of parameters is accessible through the $parameter variable allowing to do some mail merge activity.
 	 * The $body variable is initialized with the provided email content.
 	 * Standard variables are accessible like $p, $exec, $configS and $trm.	 
@@ -2219,15 +2224,18 @@ class WigiiBPL
 	        
 	        // gets email activity and email template
 	        $mailActivity = $parameter->getValue('mailActivity');
-	        if(!isset($mailActivity)) $mailActivity = Activity::createInstance("BaseEmail");
-	        if(!($mailActivity instanceof Activity)) $mailActivity = Activity::createInstance($mailActivity);
-	        $templatePath = $configS->getTemplatePath($p, $exec->getCrtModule(), $mailActivity);
-	        
-	        // prepares email body based on email template
 	        $body = $parameter->getValue('content');
-	        ob_start();
-	        include($templatePath);
-	        $body = ob_get_clean();
+	        if($mailActivity !== false) {
+    	        if(!isset($mailActivity)) $mailActivity = Activity::createInstance("BaseEmail");
+    	        if(!($mailActivity instanceof Activity)) $mailActivity = Activity::createInstance($mailActivity);
+    	        $templatePath = $configS->getTemplatePath($p, $exec->getCrtModule(), $mailActivity);
+    	        
+    	        $options = $parameter;/* exports the bag into the $options variable to make it available into the template */
+    	        // prepares email body based on email template    	       
+    	        ob_start();
+    	        include($templatePath);
+    	        $body = ob_get_clean();
+	        }
 	        
 	        // creates email instance
 	        $emailS = $this->getEmailService();
