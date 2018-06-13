@@ -229,8 +229,9 @@ class TemplateRecordManager extends Model {
 		$evaluator = ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
 		// injects the context
 		$evaluator->setContext($p, $rec);
-		$formExec = $this->getFormRenderer();
+		$formExec = $this->getFormRenderer();		
 		if(isset($formExec)) $formExec = $formExec->getFormExecutor();
+		if(!isset($formExec)) $formExec = $this->getFormExecutor();	
 		if(isset($formExec)) $evaluator->setFormExecutor($formExec);
 		// gets vm
 		$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);
@@ -409,6 +410,7 @@ class TemplateRecordManager extends Model {
 			$this->put($this->t((string)$fieldXml, $fieldXml));
 		} else {
 			$freeText = $field->getXml()->asXML();
+			$freeText = str_replace('<?xml version="1.0"?>', "", $freeText);
 			$freeText = str_replace("<".$field->getXml()->getName(). "", "", $freeText);
 			$freeText = str_replace("</".$field->getXml()->getName(). ">", "", $freeText);
 			$pos = strpos($freeText, ">"); //remove everything from begining until the next > (including the >)

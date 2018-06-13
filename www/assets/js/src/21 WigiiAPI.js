@@ -2708,12 +2708,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.log = function(message) {			
 			wigiiApiConsole().log("INFO WigiiApi : "+message);
+			return wigiiApi;
 		};
 		/**
 		 * Clears the WigiiAPI log console
 		 */
 		wigiiApi.clearLog = function() {
 			wigiiApiConsole().clear();
+			return wigiiApi;
 		};
 		/**
 		 * Returns WigiiApi DebugLogger instance
@@ -3063,7 +3065,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.str2float = function (value){
 			return 1.0*value.replace(/'/g,'').replace(/,/g,'').replace(/ /g,'');
-		}
+		};
+		
 		/**
 		 * format a numeric value with thousand separatos
 		 * @param numeric
@@ -3079,8 +3082,10 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		            x1 = x1.replace(rgx, '$1' + "'" + '$2');
 		    }
 		    return x1 + x2;
-		}
-		/** ceil a value up to the number. IE: ceilTo(10.34, 0.05) returns 10.35
+		};
+		
+		/** 
+		 * ceil a value up to the number. IE: ceilTo(10.34, 0.05) returns 10.35
 		 * the third parameter is optional and allows to fixe the number of decimals returned 
 		 * this function is typically used for financial fields 
 		 */
@@ -3091,8 +3096,34 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			if (remain > 0) value = value - remain + number;
 			if(fixed) return value.toFixed(2);
 			return value;
-		}
+		};
 
+		/**
+		 * Generates a range of numbers, starting from one number, to another number, by a given step.
+		 * @param Number from start number, can be integer, float, positive, null or negative.
+		 * @param Number to stop number, can be integer, float, positive, null or negative.
+		 * @param Number step increment number, can be integer, float, positive or negative. Not null.
+		 * @param Function callback a callback function which receives the generated number		 
+		 */
+		wigiiApi.genRange = function(from,to,step,callback) {
+			if($.isFunction(callback)) {
+				if(!($.isNumeric(from) && $.isNumeric(to) && $.isNumeric(step))) throw wigiiApi.createServiceException('from, to and step should all be numbers',wigiiApi.errorCodes.INVALID_ARGUMENT);			
+				if(step>0) {
+					while(from<to) {
+						callback(from);
+						from += step;
+					}
+				}
+				else if(step<0) {
+					while(from>to) {
+						callback(from);
+						from -= step;
+					}
+				}
+				else throw wigiiApi.createServiceException('step cannot be 0',wigiiApi.errorCodes.INVALID_ARGUMENT);
+			}
+		};
+		
 		/**
 		 * Converts a date to a string in format YYYY-MM-DD
 		 * @param Date date the date instance to convert to string. If undefined takes current date.

@@ -2311,6 +2311,143 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $matrix;
 	}
 	
+	/**
+	 * Renders a dynamic set of fields laid out as a matrix.
+	 * The number of rows is dynamic, at least starting row (fromRow index) should be defined in configuration file.
+	 * FuncExp signature: <code>renderFormMatrix(fromRow,toRow,fillMatrixValues,col1,col2,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fromRow: int. The start index from which to render the matrix rows.
+	 * - Arg(1) toRow: int. The stop index to which to render the matrix rows.
+	 * - Arg(2) fillMatrixValues: FuncExp. A FuncExp to be called to fill the matrix values when editing an existing element.
+	 * The FuncExp receive four arguments: the fromRow index, toRow index, the columns array and the element containing the matrix.
+	 * - Arg(2...) colI: string. The name of the matrix columns to be rendered.
+	 * 
+	 * @example calling renderFormMatrix("1","4",fillMyMatrix,"articleNumber_","designation_","quantity_")
+	 * creates a matrix on the current element using the fields
+	 * articleNumber_1, designation_1, quantity_1 as a template,
+	 * and dynamically add the fields:
+	 * articleNumber_2, designation_2, quantity_2,
+	 * articleNumber_3, designation_3, quantity_3,
+	 * articleNumber_4, designation_4, quantity_4
+	 * it will follow the same lifecycle as the FormExecutor::resolveForm function:
+	 * 1. dynamically modifies Element FieldList to integrate new Fields to match the rows in matrix,
+	 * 2. calls fillMatrixValues(fromRow,toRow,columns,__element.this) (fillMyMatrix in the example) to fill the Element matrix Fields with existing values or default values on add
+	 * 3. renders the Form or Detail for the new fields
+	 */
+	public function renderFormMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<4) throw new FuncExpEvalException('renderFormMatrix takes at least four arguments which are the fromRow index, toRow index, an optional FuncExp to fetch the field values and at least one column name', FuncExpEvalException::INVALID_ARGUMENT);
+		$fromRow = $this->evaluateArg($args[0]);
+		$toRow = $this->evaluateArg($args[1]);
+		$fillMatrixValues = $args[2];
+		$columns = array();
+		for($i = 3; $i<$nArgs;$i++) {
+			$columns[] = $this->evaluateArg($args[$i]);
+		}
+		$nCols = count($columns);
+		
+		$fe = $this->getFormExecutor();
+		if(!isset($fe)) throw new FuncExpEvalException('renderFormMatrix can only be called in the scope of a Form lifecycle, make sure to call it in htmlExp attributes of a configuration file', FuncExpEvalException::INVALID_STATE);		
+		// checks form if needed
+		if($fe->getState() != "start") $formChecker = $fe->getFormChecker();
+		else $formChecker = null;
+		// extends Record FieldList with matrix fields (starting at row 2 as row 1 is already in the config file)
+		$rec = $fe->getRecord();
+		$fieldList = $rec->getFieldList();
+		for($i=$fromRow+1;$i<=$toRow;$i++) {
+			// creates row if doesn't exist
+			if(!$fieldList->doesFieldExist($columns[0].$i)) {
+				for($j=0;$j<$nCols;$j++) {
+					// clones field of first row and renames
+					$row1Field = $fieldList->getField($columns[$j].$fromRow);
+					$rowJField = clone $row1Field;
+					$rowJField->setFieldName($columns[$j].$i);
+					// adds new field to row
+					$fieldList->addField($rowJField);
+					// checks posted value
+					if(isset($formChecker)) $rowJField->acceptFieldListVisitor($formChecker);
+				}
+			}
+		}
+		// if Form is first displayed, fills form values using provided FuncExp
+		if($fe->getState() == "start" && $fillMatrixValues instanceof FuncExp) {
+			$fillMatrixValues->addArgument($columns);
+			$fillMatrixValues->addArgument($nRows);
+			$fillMatrixValues->addArgument($rec);
+			$this->evaluateFuncExp($fillMatrixValues,$this);
+		}
+		// renders form or detail
+		if($fe instanceof DetailElementFormExecutor) $fieldRenderer = $fe->getDetailRenderer();
+		else $fieldRenderer = $fe->getFormRenderer();
+		for($i=$fromRow+1;$i<=$toRow;$i++) {
+			for($j=0;$j<$nCols;$j++) {
+				$field = $fieldList->getField($columns[$j].$i);
+				$field->acceptFieldListVisitor($fieldRenderer);
+			}
+		}
+	}
+	
+	/**
+	 * Checks the posted values of a matrix form and fills the underlying Wigii bag.
+	 * The number of rows is dynamic, at least starting row (fromRow index) should be defined in configuration file.
+	 * FuncExp signature: <code>resolveFormMatrix(fromRow,toRow,col1,col2,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fromRow: int. The start index from which to check the matrix rows.
+	 * - Arg(1) toRow: int. The stop index to which to check the matrix rows.
+	 * - Arg(2...) colI: string. The name of the matrix columns to be checked.
+	 *
+	 * @example calling resolveFormMatrix("1","4","articleNumber_","designation_","quantity_")
+	 * check the posted form for the fields 
+	 * articleNumber_1, designation_1, quantity_1,
+	 * articleNumber_2, designation_2, quantity_2,
+	 * articleNumber_3, designation_3, quantity_3,
+	 * articleNumber_4, designation_4, quantity_4
+	 * it will follow the same lifecycle as the FormExecutor::resolveForm function:
+	 * 1. dynamically modifies Element FieldList to integrate new Fields to match the number of rows in matrix, 
+	 * 2. calls FormChecker on each new fields, adds any error to field or fills underlying Wigii bag with the correct posted value
+	 */
+	public function resolveFormMatrix($args) {	
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<3) throw new FuncExpEvalException('resolveFormMatrix takes at least three arguments which are the fromRow index, toRow index and at least one column name', FuncExpEvalException::INVALID_ARGUMENT);
+		$fromRow = $this->evaluateArg($args[0]);
+		$toRow = $this->evaluateArg($args[1]);
+		$columns = array();
+		for($i = 2; $i<$nArgs;$i++) {
+			$columns[] = $this->evaluateArg($args[$i]);
+		}
+		$nCols = count($columns);
+		
+		$fe = $this->getFormExecutor();
+		if(!isset($fe)) throw new FuncExpEvalException('resolveFormMatrix can only be called in the scope of a Form lifecycle, make sure to call it in htmlExp or funcExp attributes of a configuration file', FuncExpEvalException::INVALID_STATE);
+		// extends Record FieldList with matrix fields (starting at row 2 as row 1 is already in the config file)
+		$rec = $fe->getRecord();
+		$fieldList = $rec->getFieldList();
+		for($i=$fromRow+1;$i<=$toRow;$i++) {
+			// creates row if doesn't exist
+			if(!$fieldList->doesFieldExist($columns[0].$i)) {
+				for($j=0;$j<$nCols;$j++) {
+					// clones field of first row and renames
+					$row1Field = $fieldList->getField($columns[$j].$fromRow);
+					$rowJField = clone $row1Field;
+					$rowJField->setFieldName($columns[$j].$i);
+					// adds new field to row
+					$fieldList->addField($rowJField);
+				}
+			}
+		}
+		// resolves matrix form lifecycle
+		if($fe->getState() != "start") {
+			// checks form
+			$formChecker = $fe->getFormChecker();
+			for($i=$fromRow+1;$i<=$toRow;$i++) {
+				for($j=0;$j<$nCols;$j++) {
+					$field = $fieldList->getField($columns[$j].$i);
+					$field->acceptFieldListVisitor($formChecker);
+				}
+			}
+		}
+	}
+	
 	// System functions
 	
 	/**
