@@ -312,14 +312,16 @@ class ElementServiceWebImpl extends ElementServiceImpl
 	 * @param WigiiNamespace $wigiiNamespace
 	 * @param Module $module
 	 * @param Element|Int $element element object or id
+	 * @param boolean $forEdit optional flag. If true, then direct access link opens the card in edit mode.
+	 * @paramm int $targetFolder optional group Id. If defined, the direct access links opens the card in the specified folder if available.
 	 * @return String the direct link on element for display or edition
 	 */
-	public function getUrlForElement($wigiiNamespace, $module, $element,$forEdit=false){
+	public function getUrlForElement($wigiiNamespace, $module, $element,$forEdit=false,$targetFolderId=null){
 		if(is_object($element)){
 			$element = $element->getId();
 		}
-		if($forEdit) return str_replace(" ", "%20", SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'/editItem/'.$element.'');
-		else return str_replace(" ", "%20", SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'/item/'.$element.'');
+		if($forEdit) return str_replace(" ", "%20", SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'/editItem/'.$element.(isset($targetFolderId)?'/'.$targetFolderId:'').'');
+		else return str_replace(" ", "%20", SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'/item/'.$element.(isset($targetFolderId)?'/'.$targetFolderId:'').'');
 	}
 
 	/**

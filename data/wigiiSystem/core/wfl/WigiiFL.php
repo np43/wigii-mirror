@@ -2742,7 +2742,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(1) to: String|Array|ValueList. The recipient email or list of recipients emails.
 	 * - Arg(2) subject: String. The notification subject. If not defined, takes the standard notification subject.
 	 * - Arg(3) introduction: String. An introduction text to be inserted before the notification body. Supports HTML.
-	 * - Arg(4) options: WigiiBPLParameter. An optional bag of parameters to configure the notification process. (not used yet)
+	 * - Arg(4) options: WigiiBPLParameter. An optional bag of parameters to configure the notification process. Supports :
+	 *     targetFolder: group ID. The proposed target folder in which to open the card when clicking on the access button in the notification email.
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 */
 	public function sysSendNotif($args) {

@@ -1275,11 +1275,14 @@ class NotificationService implements MultiplexedEvent {
 		}
 	}
 	protected function getButtonViewElement($p, $rec, $label = null, $wigiiNamespace=null, $module=null){
-		if(!$wigiiNamespace) $wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace();
+	    $options = $this->htmlRenderingOptions;/* gets some extra options to customize the html rendering process */
+	    if(!isset($options)) $options = wigiiBPLParam();
+	    
+	    if(!$wigiiNamespace) $wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace();
 		if(!$module) $module = $this->getExecutionService()->getCrtModule(); //like this it works with subElement or not
 		if(!$label) $label = $this->getTranslationService()->t($p, "viewElement");
 		$result = "";
-		$result .= '<a href="'.$this->getElementService()->getUrlForElement($wigiiNamespace, $module, $rec).'" target="_blank" style="color:#000;text-decoration:none;">';
+		$result .= '<a href="'.$this->getElementService()->getUrlForElement($wigiiNamespace, $module, $rec, false, $options->getValue('targetFolder')).'" target="_blank" style="color:#000;text-decoration:none;">';
 		$result .= $label;
 		$result .= '</a>';
 		return $result;

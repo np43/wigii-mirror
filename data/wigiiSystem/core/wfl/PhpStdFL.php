@@ -221,7 +221,7 @@ class PhpStdFL extends FuncExpVMAbstractFL
 	 */
 	public function substr($args) {
 		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs < 2) throw new FuncExpEvalException("substr function takes at least two parameters, the string and the index from which to extract the sub sting", FuncExpEvalException::INVALID_ARGUMENT);
+		if($nArgs < 2) throw new FuncExpEvalException("substr function takes at least two parameters, the string and the index from which to extract the sub string", FuncExpEvalException::INVALID_ARGUMENT);
 		$str = $this->evaluateArg($args[0]);
 		$index = $this->evaluateArg($args[1]);
 		if($nArgs>2) $length=$this->evaluateArg($args[2]);
@@ -229,6 +229,18 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		if(isset($length)) return substr($str, $index, $length);
 		else return substr($str, $index);
 	}
+	/**
+	 * strpos. See http://www.php.net/strpos
+	 */
+	public function strpos($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new FuncExpEvalException("strpos function takes at least two parameters, the string in which to search and the token to search", FuncExpEvalException::INVALID_ARGUMENT);
+	    $haystack = $this->evaluateArg($args[0]);
+	    $needle = $this->evaluateArg($args[1]);
+	    if($nArgs>2) $offset=$this->evaluateArg($args[2]);
+	    else $offset=0;
+	    return strpos($haystack, $needle, $offset);
+	}	
 	/**
 	 * strlen. See http://www.php.net/strlen
 	 */
