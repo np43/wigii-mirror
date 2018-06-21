@@ -66,7 +66,7 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 		}
 		$this->state = $state;
 	}
-	protected function getState(){ return $this->state; }
+	public function getState(){ return $this->state; }
 	protected function goToNextState(){
 		switch($this->state){
 			case "save":
