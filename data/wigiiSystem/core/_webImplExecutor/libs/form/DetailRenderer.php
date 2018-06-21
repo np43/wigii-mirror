@@ -182,6 +182,21 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		//fieldGroup management
 		if($fieldXml["groupStart"]=="1"){
 			$this->enterFieldGroup($rm, $fieldXml, $fieldName, $idField);
+			// CWE 21.06.2018 interprets htmlExp or htmlInDetailExp
+			if((string)$fieldXml["htmlExp"]!=null) {
+				$htmlExp = str2fx((string)$fieldXml["htmlExp"]);
+				if($htmlExp) {
+					$htmlExp = $this->getFuncExpEval()->evaluateFuncExp($htmlExp,$this);
+					if(!empty($htmlExp)) $rm->put($htmlExp);
+				}
+			}
+			if((string)$fieldXml["htmlInDetailExp"]!=null) {
+				$htmlExp = str2fx((string)$fieldXml["htmlInDetailExp"]);
+				if($htmlExp) {
+					$htmlExp = $this->getFuncExpEval()->evaluateFuncExp($htmlExp,$this);
+					if(!empty($htmlExp)) $rm->put($htmlExp);
+				}
+			}
 			return;
 		} else if($fieldXml["groupEnd"]=="1"){
 			//we need to take the getCrtField as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique

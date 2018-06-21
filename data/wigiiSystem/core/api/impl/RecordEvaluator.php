@@ -1451,7 +1451,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	/**
 	 * Returns the name of the flow the element is currently in.
 	 * FuncExp signature : <code>ctlCurrentFlow()</code><br/>
-	 * @return String one of 'element-add', 'element-edit', 'element-delete', 'element-copy', 'element-dataflow', 'multiple-add','multiple-edit', 'multiple-delete', 'multiple-copy', 'unspecified'
+	 * @return String one of 'element-read','element-add', 'element-edit', 'element-delete', 'element-copy', 'element-dataflow', 'multiple-add','multiple-edit', 'multiple-delete', 'multiple-copy', 'unspecified'
 	 * Returns 'unspecified' if the RecordEvaluator cannot determine in which flow it is currently operating.
 	 */
 	public function ctlCurrentFlow($args) {
@@ -2403,6 +2403,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		$this->debugLogger()->logBeginOperation('fillMatrixFromElements');
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<6) throw new FuncExpEvalException('fillMatrixFromElements takes at least six arguments which are elementList,fromFields,fromRow,toRow,toColumns,matrixElt', FuncExpEvalException::INVALID_ARGUMENT);
+		$cacheKey = "fillMatrixFromElements_".md5(fx2str($args[0]));
 		$elementList = $this->evaluateArg($args[0]);
 		if(!isset($elementList)) return;
 		$fromFields = $this->evaluateArg($args[1]);
@@ -2412,7 +2413,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		$matrixElt = $this->evaluateArg($args[5]);
 		
 		$i=ValueObject::createInstance($fromRow);
-		sel($this->getPrincipal(),$elementList,dfasl(dfas('CallbackDFA','setProcessDataChunkCallback',function($elementP,$callbackDFA) use($i,$fromFields,$toRow,$toColumns,$matrixElt){
+		ServiceProvider::getDataFlowService()->processDataSource($this->getPrincipal(),$elementList,dfasl(dfas('CallbackDFA','setProcessDataChunkCallback',function($elementP,$callbackDFA) use($i,$fromFields,$toRow,$toColumns,$matrixElt){
 			if($i->getValue()<=$toRow) {
 				$element = $elementP->getDbEntity();
 				$fieldList = $element->getFieldList();
@@ -2436,7 +2437,7 @@ class RecordEvaluator implements FuncExpEvaluator
 				}
 				$i->setValue($i->getValue()+1);
 			}
-		})));
+		})),true,null,$cacheKey);
 		$this->debugLogger()->logEndOperation('fillMatrixFromElements');
 	}
 	

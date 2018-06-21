@@ -241,6 +241,21 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			if(!empty($error)){
 				$rm->put('<div class="fieldError" style="width: 100%; max-width:'.($this->getIsInLineWidth()).'px;">'.$error.'</div>');
 			}
+			// CWE 21.06.2018 interprets htmlExp or htmlInFormExp
+			if((string)$fieldXml["htmlExp"]!=null) {
+				$htmlExp = str2fx((string)$fieldXml["htmlExp"]);
+				if($htmlExp) {
+					$htmlExp = $this->getFuncExpEval()->evaluateFuncExp($htmlExp,$this);
+					if(!empty($htmlExp)) $rm->put($htmlExp);
+				}
+			}
+			if((string)$fieldXml["htmlInFormExp"]!=null) {
+				$htmlExp = str2fx((string)$fieldXml["htmlInFormExp"]);
+				if($htmlExp) {
+					$htmlExp = $this->getFuncExpEval()->evaluateFuncExp($htmlExp,$this);
+					if(!empty($htmlExp)) $rm->put($htmlExp);
+				}
+			}
 			return;
 		} else if($fieldXml["groupEnd"]=="1"){
 			//we need to take the getCrtField as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique
