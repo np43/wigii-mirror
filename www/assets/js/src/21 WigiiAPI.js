@@ -1189,7 +1189,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						wigiiApi.throwNotImplemented();
 						self.debugLogger.write(self.fieldName+'.'+subFieldName+' setValue '+value);
 					} else {
-						$('#'+self.fieldId()+' :input').val(value);
+						if($('#'+self.fieldId()+' :input').hasClass('htmlArea')){
+							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){ //create a function to ensure the value is set once the editor is ready
+								$(textarea).ckeditor().val(value);
+							});						
+						} else {
+							$('#'+self.fieldId()+' :input').val(value);
+						}
 					}
 				}
 				return self;
@@ -1234,7 +1240,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						wigiiApi.throwNotImplemented();
 						self.debugLogger.write(self.fieldName+'.'+subFieldName+' getValue '+value);
 					} else {
-						returnValue = $('#'+self.fieldId()+' :input').val();
+						if($('#'+self.fieldId()+' :input').hasClass('htmlArea')){
+							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){
+								returnValue = $(textarea).ckeditor().val();
+							});							
+						} else {
+							returnValue = $('#'+self.fieldId()+' :input').val();
+						}
 					}
 				}
 				return returnValue;
@@ -1989,18 +2001,22 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * @return HtmlBuilder for chaining
 			 */
 			self.putNbsp = function(multiplier) {
-				if(!multipler) multiplier=1;
-				for(var i=0;i<multipler;i++) {
+				if(!multiplier) multiplier=1;
+				for(var i=0;i<multiplier;i++) {
 					self.buffer += '&nbsp;';
 				}
 				return self;
 			};
 			/**
-			 * Puts a double quote entity in the buffer
+			 * Puts a double quote entity in the buffer or around the string parameter
 			 * @return HtmlBuilder for chaining
 			 */
-			self.putQuot = function() {
-				self.buffer += '&quot;';
+			self.putQuot = function(str) {
+				if(str){
+					self.buffer += '&quot;'+str+'&quot;';
+				} else {
+					self.buffer += '&quot;';
+				}
 				return self;
 			};
 			/**
@@ -2081,6 +2097,17 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			self.putEndTag = function(tagName) {
 				if(!tagName) throw wigiiApi.createServiceException('putEndTag takes a non null tagName', wigiiApi.errorCodes.INVALID_ARGUMENT);
 				self.buffer += '</'+tagName+'>';
+				return self;
+			};
+			/**
+			 * Repeats a br tag several times
+			 * @return HtmlBuilder for chaining
+			 */
+			self.putBrTag = function(multiplier) {
+				if(!multiplier) multiplier=1;
+				for(var i=0;i<multiplier;i++) {
+					self.buffer += '<br />';
+				}
 				return self;
 			};
 			/**
@@ -3084,6 +3111,26 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		    return x1 + x2;
 		};
 		
+		/**
+		 * add double quote around the value
+		 * @param string
+		 * @return string
+		 */
+		wigiiApi.txtQuot = function (value){
+			return '"'+value+'"';
+		};
+		
+		/**
+		 * apply && between the the two args
+		 * this is usefull in configuration files as the character & is reserved
+		 * @param val1: mixed
+		 * @param val2: mixed
+		 * @return val1 && val2
+		 */
+		wigiiApi.logAnd = function (val1, val2){
+			return val1 && val2;
+		};
+
 		/** 
 		 * ceil a value up to the number. IE: ceilTo(10.34, 0.05) returns 10.35
 		 * the third parameter is optional and allows to fixe the number of decimals returned 

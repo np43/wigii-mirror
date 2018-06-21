@@ -18,7 +18,7 @@
 .ui-dialog { padding:2px; overflow:visible; }
 .ui-dialog .ui-dialog-content { border: 0; padding: 10px 10px; background: none; overflow: visible; }
 /* background color are redefined in theme.css */
-.ui-dialog .ui-dialog-buttonpane { background:#f00; border:none; }
+.ui-dialog .ui-dialog-buttonpane { background:#f00; border:none; margin-top:0px;}
 
 .ui-dialog .ui-dialog-titlebar {
 	padding:0.1em 1em;
@@ -297,13 +297,13 @@ div.cm div.checked {
 .scrollGradient {
 	display:block; 
 	position:absolute; 
-	width:98%; 
-	height:50px;
+	width:calc(100% - 4px); 
+	height:10px;
 	/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&0+0,1+100 */
-	background: -moz-linear-gradient(top, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%); /* FF3.6-15 */
-	background: -webkit-linear-gradient(top, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%); /* Chrome10-25,Safari5.1-6 */
-	background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00ffffff', endColorstr='#ffffff',GradientType=0 ); /* IE6-9 */
+	background: -moz-linear-gradient(bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to top, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#00ffffff',GradientType=0 ); /* IE6-9 */
 }
 
 /**************************************

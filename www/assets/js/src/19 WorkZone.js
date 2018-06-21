@@ -3897,8 +3897,8 @@ function addScrollWithShadow(idScrollElement, elementPreviousTop) {
 				cssArray.height = getElementDialogScrollHeight(element, scrollElement);//window.innerHeight - scrollElement.prev().outerHeight(true) - scrollElement.next().outerHeight(true)-30;
 				changeElementCss(scrollElement, cssArray);
 				addScrollEvent(scrollElement);
-				addGradient(scrollElement, {"bottom":(scrollElement.next().outerHeight(true))+"px"});
-				scrollElement.next().css({"display":"block","width":(scrollElement.innerWidth()-18)+"px"});
+				addGradient(scrollElement, {"bottom":(scrollElement.next().outerHeight(true)-7)+"px"});
+				scrollElement.next().css({"display":"block"}); //,"width":(scrollElement.innerWidth()-18)+"px"
 			} else {
 				scrollElement.css('overflow','visible');
 			}
@@ -3911,7 +3911,7 @@ function addScrollWithShadow(idScrollElement, elementPreviousTop) {
 				changeElementCss(scrollElement, cssArray);
 				addScrollEvent(scrollElement);
 				addGradient(scrollElement, {"bottom":"0px"});
-				scrollElement.next().css({"display":"block","width":(scrollElement.innerWidth()-18)+"px"});
+				scrollElement.next().css({"display":"block"}); //,"width":(scrollElement.innerWidth()-18)+"px"
 			} else {
 				$('#scrollElement').css('overflow','visible');
 			}

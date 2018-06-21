@@ -57,6 +57,12 @@
 	font-size:16px;
 	margin:0px 8px;
 }
+@media (max-height:600px) {
+	#searchBar div.toolbarBox div.addNewElement
+	{
+		padding:5px 8px;
+	}
+}
 #searchBar div.addNewElement:hover {
     cursor: pointer;
 }
@@ -213,6 +219,12 @@ nav #searchBar .toolbarBox .groupBy button, nav #searchBar .toolbarBox .sortBy b
 	height: 24px;
 	line-height: 13px;
 	border: none;
+}
+@media (max-height:600px) {
+	nav #searchBar .toolbarBox .groupBy button, nav #searchBar .toolbarBox .sortBy button
+	{
+		height: 28px;
+	}
 }
 
 #searchBar .toolbarBox .scrollable-menu {

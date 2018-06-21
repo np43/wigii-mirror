@@ -239,6 +239,17 @@ function addJsCodeOnFileInput(inputFileId, inputNameId, inputPathId, clickToBrow
 		$('div.filePreview', v).css('background-image', 'url("'+SITE_ROOT_forFileUrl+'images/preview/prev.26.'+ext+'.png")');
 		$('div.filePreview', v).show();
 	});
+	
+	//make the whole field area dropable from files and not only the input
+	var dropContainer = document.getElementById(inputFileId.replace('#','')).parentNode.parentNode;
+	dropContainer.ondragover = dropContainer.ondragenter = function(evt) {
+		evt.preventDefault();
+	};
+	dropContainer.ondrop = function(evt) {
+		// pretty simple -- but not for IE :(
+		document.getElementById(inputFileId.replace('#','')).files = evt.dataTransfer.files;
+		evt.preventDefault();
+	};
 }
 
 //DataType on-line Files
