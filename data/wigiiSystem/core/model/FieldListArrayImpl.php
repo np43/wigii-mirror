@@ -56,6 +56,9 @@ class FieldListArrayImpl extends ObjectListArrayImpl implements FieldList
 		if($f === null) throw new ElementServiceException("Field $fieldName does not exist in the list.", ElementServiceException::NO_CORRESPONDANT_FIELD);
 		return $f;
 	}
+	public function removeField($fieldName) {
+		unset($this->objArray[$fieldName]);
+	}
 	public function doesFieldExist($fieldName){
 		return $this->objArray[$fieldName];
 	}

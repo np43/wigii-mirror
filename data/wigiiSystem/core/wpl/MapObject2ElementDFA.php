@@ -568,7 +568,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 				if($field) {
 					$dt = $field->getDataType();				
 					if(isset($dt)) {
-						$valArr = is_array($val);
+						$valArr = is_array($val) || is_object($val);
 						// if subfields then goes through sub array
 						if($valArr && $dt->hasSubfields()) {
 							$x = $dt->getXml(); 

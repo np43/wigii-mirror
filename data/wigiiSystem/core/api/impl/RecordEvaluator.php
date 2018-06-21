@@ -2371,8 +2371,9 @@ class RecordEvaluator implements FuncExpEvaluator
 		}
 		// if Form is first displayed, fills form values using provided FuncExp
 		if($fe->getState() == "start" && $fillMatrixValues instanceof FuncExp) {
+			$fillMatrixValues->addArgument($fromRow);
+			$fillMatrixValues->addArgument($toRow);
 			$fillMatrixValues->addArgument($columns);
-			$fillMatrixValues->addArgument($nRows);
 			$fillMatrixValues->addArgument($rec);
 			$this->evaluateFuncExp($fillMatrixValues,$this);
 		}
@@ -2385,6 +2386,58 @@ class RecordEvaluator implements FuncExpEvaluator
 				$field->acceptFieldListVisitor($fieldRenderer);
 			}
 		}
+	}
+	
+	/**
+	 * Fills the values of a matrix defined into an element, given a selected list of mapping elements.
+	 * FuncExp signature: <code>fillMatrixFromElements(elementList,fromFields,fromRow,toRow,toColumns,matrixElt)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) elementList: ElementPListDataFlowConnector|ElementPList selected list of elements mapping matrix rows
+	 * - Arg(1) fromFields: Array. A list of field names from which to extract the values.
+	 * - Arg(2) fromRow: int. The start index from which to fill the matrix rows.
+	 * - Arg(3) toRow: int. The stop index to which to fill the matrix rows.
+	 * - Arg(4) toColumns: Array. The names of the matrix columns to be filled.
+	 * - Arg(5) matrixElt: Element. The Element containing the matrix to be filled.
+	 */
+	public function fillMatrixFromElements($args) {
+		$this->debugLogger()->logBeginOperation('fillMatrixFromElements');
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<6) throw new FuncExpEvalException('fillMatrixFromElements takes at least six arguments which are elementList,fromFields,fromRow,toRow,toColumns,matrixElt', FuncExpEvalException::INVALID_ARGUMENT);
+		$elementList = $this->evaluateArg($args[0]);
+		if(!isset($elementList)) return;
+		$fromFields = $this->evaluateArg($args[1]);
+		$fromRow = $this->evaluateArg($args[2]);
+		$toRow = $this->evaluateArg($args[3]);
+		$toColumns = $this->evaluateArg($args[4]);
+		$matrixElt = $this->evaluateArg($args[5]);
+		
+		$i=ValueObject::createInstance($fromRow);
+		sel($this->getPrincipal(),$elementList,dfasl(dfas('CallbackDFA','setProcessDataChunkCallback',function($elementP,$callbackDFA) use($i,$fromFields,$toRow,$toColumns,$matrixElt){
+			if($i->getValue()<=$toRow) {
+				$element = $elementP->getDbEntity();
+				$fieldList = $element->getFieldList();
+				$nFields = count($fromFields);
+				$nCols = count($toColumns);
+				for($j=0;$j<$nFields;$j++) {
+					$fieldName = $fromFields[$j];
+					if($j<$nCols) {
+						$colName = $toColumns[$j].$i->getValue();
+						if($fieldName instanceof FieldSelector) {
+							if($fieldName->isElementAttributeSelector()) $matrixElt->setFieldValue($element->getAttribute($fieldName),$colName);							
+							else $matrixElt->setFieldValue($element->getFieldValue($fieldName->getFieldName(), $fieldName->getSubFieldName()),$colName);
+						}
+						else {
+							$dtXml = $fieldList->getField($fieldName)->getDataType()->getXml();
+							foreach($dtXml as $subfieldName => $dbParams) {
+								$matrixElt->setFieldValue($element->getFieldValue($fieldName, $subfieldName),$colName,$subfieldName);
+							}
+						}
+					}
+				}
+				$i->setValue($i->getValue()+1);
+			}
+		})));
+		$this->debugLogger()->logEndOperation('fillMatrixFromElements');
 	}
 	
 	/**
@@ -2446,6 +2499,250 @@ class RecordEvaluator implements FuncExpEvaluator
 				}
 			}
 		}
+	}
+	/**
+	 * Clears the Element FieldList of the dynamically added matrix fields.
+	 * FuncExp signature: <code>clearFormMatrix(fromRow,toRow,col1,col2,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fromRow: int. The start index from which to clear the matrix row fields.
+	 * - Arg(1) toRow: int. The stop index to which to clear the matrix row fields.
+	 * - Arg(2...) colI: string. The name of the matrix columns to be cleared.
+	 */
+	public function clearFormMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<3) throw new FuncExpEvalException('clearFormMatrix takes at least three arguments which are the fromRow index, toRow index and at least one column name', FuncExpEvalException::INVALID_ARGUMENT);
+		$fromRow = $this->evaluateArg($args[0]);
+		$toRow = $this->evaluateArg($args[1]);
+		$columns = array();
+		for($i = 2; $i<$nArgs;$i++) {
+			$columns[] = $this->evaluateArg($args[$i]);
+		}
+		$nCols = count($columns);
+		
+		$fe = $this->getFormExecutor();
+		if(!isset($fe)) throw new FuncExpEvalException('clearFormMatrix can only be called in the scope of a Form lifecycle, make sure to call it in htmlExp or funcExp attributes of a configuration file', FuncExpEvalException::INVALID_STATE);
+		// reduces Record FieldList from matrix fields
+		$rec = $fe->getRecord();
+		$fieldList = $rec->getFieldList();
+		if(!method_exists($fieldList, "removeField")) throw new FuncExpEvalException("FieldList ".get_class($fieldList)." does not support method removeField. Cannot clearFormMatrix.",FuncExpEvalException::UNSUPPORTED_OPERATION);
+		for($i=$fromRow;$i<=$toRow;$i++) {			
+			for($j=0;$j<$nCols;$j++) {
+				// removes field if exists
+				if($fieldList->doesFieldExist($columns[$j].$i)) $fieldList->removeField($columns[$j].$i);
+			}
+		}		
+	}
+	
+	/**
+	 * Saves a list of field values to a mapped list of fields into a specific element. 
+	 * The element can belong to another namespace and module.
+	 * If the target element doesn't exist, a new element in inserted.
+	 * All subfields values are copied.
+	 * FuncExp signature: <code>saveElementFieldsTo(fromFields,elementLogExp|elementId,groupLogExp|groupId,toFields)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fromFields: Array. A list of field names from which to extract the values
+	 * - Arg(1) elementLogExp|elementId: LogExp|int. The destination element selector.
+	 * Can be an element ID or a business key log exp. If null, then element is always inserted.
+	 * - Arg(2) groupLogExp|groupId: LogExp|int. The destination group selector. Can be an group ID or a group log exp.
+	 * - Arg(3) toFields: Array. A list of mapping field names from the target element configuration
+	 *
+	 * @return ElementP the updated or new inserted element.
+	 */
+	public function saveElementFieldsTo($args) {		
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<4) throw new FuncExpEvalException('saveElementFieldsTo takes at least four arguments which are the fromFields array of field names, element log exp or id to select target element, target group log exp or id and toFields mapping array', FuncExpEvalException::INVALID_ARGUMENT);
+		$principal=$this->getPrincipal();
+		$fe = $this->getFormExecutor();		
+		if(!isset($fe)) throw new FuncExpEvalException('saveElementFieldsTo can only be called in the scope of a Form lifecycle, make sure to call it in funcExp attributes of a configuration file', FuncExpEvalException::INVALID_STATE);
+		$configS = $fe->getWigiiExecutor()->getConfigurationContext();
+		$exec = ServiceProvider::getExecutionService();
+		
+		$fromFields = $this->evaluateArg($args[0]);
+		if(!($fromFields instanceof FieldSelectorList)) {
+			$fsl = FieldSelectorListArrayImpl::createInstance(true,false);
+			if(is_array($fromFields)) {
+				foreach($fromFields as $fieldName) {
+					$fsl->addFieldSelector($fieldName);
+				}
+			}
+			$fromFields = $fsl;
+		}
+		if($fromFields->isEmpty()) throw new FuncExpEvalException('no element fields to save',FuncExpEvalException::INVALID_ARGUMENT);
+		$elementLogExp = $this->evaluateArg($args[1]);
+		if(isset($elementLogExp) && !($elementLogExp instanceof LogExp)) $elementLogExp = lxEq(fs_e('id'),$elementLogExp);
+		$groupLogExp = $this->evaluateArg($args[2]);
+		if(!isset($groupLogExp)) throw new FuncExpEvalException('groupLogExp cannot be null');
+		if($groupLogExp instanceof LogExp) {
+			$groupId = sel($principal,groupList($groupLogExp),dfasl(dfas("NullDFA")));
+			$groupId = $groupId->getId();
+		}
+		else {
+			$groupId = $groupLogExp;
+			$groupLogExp = lxEq(fs('id'),$groupId);
+		}
+		$toFields = $this->evaluateArg($args[3]);
+		$returnValue = null;
+		$crtNamespace = null; $hasAdaptiveWigiiNamespace = null;
+		$this->debugLogger()->logBeginOperation('saveElementFieldsTo');
+		try {
+			$hasAdaptiveWigiiNamespace = $principal->hasAdaptiveWigiiNamespace();
+			if(!$hasAdaptiveWigiiNamespace) {
+				$crtNamespace = $principal->getWigiiNamespace();
+				$principal->setAdaptiveWigiiNamespace(true);
+			}
+			
+			// 1. extracts selected fields from record as stdClass
+			$rec = $this->getRecord();
+			if(!isset($rec)) throw new FuncExpEvalException('No record attached to evaluator', FuncExpEvalException::INVALID_STATE);
+			$rec = $rec->toStdClass($fromFields);
+			// 1.1 re-maps field names
+			$i=0;
+			foreach($fromFields->getListIterator() as $fs) {
+				$toFieldName = $toFields[$i];
+				// ignores any __element.id FieldSelector
+				if($toFieldName instanceof FieldSelector && $toFieldName->isElementAttributeSelector()) {
+					unset($rec->{$fs->getFieldName()});
+				}
+				elseif($toFieldName!= $fs->getFieldName()) {
+					$rec->{$toFieldName} = $rec->{$fs->getFieldName()};
+					unset($rec->{$fs->getFieldName()});
+				}
+				$i++;
+			}
+			// 2. inserts or updates element based on extracted selected fields
+			$returnValue = ServiceProvider::getDataFlowService()->processDataSource($principal, array2df($rec), dfasl(
+				/* 2.1 sets element values from record */
+				dfas('MapObject2ElementDFA','setInGroupLogExp',lxInGR($groupLogExp),
+					'setElementSelectorMethod',function($rec,$dataFlowContext) use($elementLogExp) {
+						return $elementLogExp;
+					},
+					'setObject2ElementMappingMethod',function($rec,$elementP,$mapObject2ElementDFA) {
+						$element = $elementP->getDbEntity();
+						foreach($rec as $fieldName=>$subfields) {
+							foreach($subfields as $subFieldName=>$value) {
+								$element->setFieldValue($value,$fieldName,$subFieldName);
+							}
+						}
+						$mapObject2ElementDFA->writeResultToOutput($elementP);
+					}
+				),
+				/* 2.2 fetches old record for file management and old gids */
+				dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec,$groupLogExp,$fe,$configS){
+					$dfContext = $callbackDFA->getDataFlowContext();
+					$p = $dfContext->getPrincipal();
+					$element = $elementP->getDbEntity();
+					if(!$element->isNew()) {
+						// fetches old record
+						$oldRecord = sel($p,elementPList(lxInGR($groupLogExp),lf(null,lxEq(fs_e('id'),$element->getId()))),dfasl(dfas("NullDFA")));
+						$oldRecord = $oldRecord->getElement();
+						$dfContext->setAttribute('oldRecord',$oldRecord);
+						// saves current auto-sharing group ids
+						$oldGids = ValueListArrayMapper::createInstance ( true, ValueListArrayMapper::Natural_Separators, true );
+						$oldRecord->getLinkedIdGroupInRecord ($p, $oldGids);
+						$dfContext->setAttribute('oldGids',$oldGids->getListIterator());
+					}
+					// stores an initialized FormExecutor on current element to allow update files on disk later on.
+					$dfContext->setAttribute('FormExecutor',BasicFormExecutor::createInstance($fe->getWigiiExecutor(), $element, null, null));
+					$dfContext->setAttribute('storeFileInWigiiBag',$configS->getParameter($p, null, "storeFileContentIntoDatabase") == "1");
+					$callbackDFA->writeResultToOutput($elementP);
+				}),
+				/* 2.3 element recalculation */
+				dfas('ElementRecalcDFA'),
+				/* 2.4 persist element */
+				dfas('ElementDFA','setMode',1,'setGroupId',$groupId),
+				/* 2.5 update files on disk */ 
+				dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec){
+					$dfContext = $callbackDFA->getDataFlowContext();
+					$dfContext->getAttribute('FormExecutor')->updateFilesOnDisk($dfContext->getPrincipal(), $exec, $dfContext->getAttribute('storeFileInWigiiBag'), $dfContext->getAttribute('oldRecord'), false);
+					$callbackDFA->writeResultToOutput($elementP);
+				}),
+				/* 2.6 updates autosharing */
+				dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) {
+					$dfContext = $callbackDFA->getDataFlowContext();
+					ServiceProvider::getWigiiBPL()->elementUpdateSharing($dfContext->getPrincipal(), $callbackDFA, wigiiBPLParam(
+						'element',$elementP->getDbEntity(),
+						'oldGroupIds',$dfContext->getAttribute('oldGids')						
+					));
+					$callbackDFA->writeResultToOutput($elementP);
+				})
+			),true/*,$fe->getWigiiExecutor()->throwEvent()*/);
+			
+			if(isset($crtNamespace)) {
+				$principal->bindToWigiiNamespace($crtNamespace);
+				if(!$hasAdaptiveWigiiNamespace) $principal->setAdaptiveWigiiNamespace(false);
+			}
+		}
+		catch(Exception $e) {
+			if(isset($crtNamespace)) {
+				$principal->bindToWigiiNamespace($crtNamespace);
+				if(!$hasAdaptiveWigiiNamespace) $principal->setAdaptiveWigiiNamespace(false);
+			}
+			throw $e;
+		}
+		$this->debugLogger()->logEndOperation('saveElementFieldsTo');
+	}
+	
+	/**
+	 * Saves a list of field values to a mapped list of fields into a specific element.
+	 * The element can belong to another namespace and module.
+	 * If the target element doesn't exist, a new element in inserted.
+	 * All subfields values are copied.
+	 * FuncExp signature: <code>saveElementFieldsTo(fromFields,elementLogExp|elementId,groupLogExp|groupId,toFields)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fromRow: int. The start index from which to save the matrix rows.
+	 * - Arg(1) toRow: int. The stop index to which to save the matrix rows.
+	 * - Arg(2) columns: Array. The names of the matrix columns to be saved.
+	 * - Arg(3) toFields: Array. A list of mapping field names from the target element configuration
+	 * - Arg(4) keyColumn: String. The name of the column in the matrix used as a business key to select the target element to update.
+	 * - Arg(5) groupLogExp|groupId: LogExp|int. The destination group selector. Can be an group ID or a group log exp.
+	 * @return ElementPList an ElementPList containing the updated or new inserted elements.
+	 */
+	public function saveMatrixTo($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<6) throw new FuncExpEvalException('saveMatrixTo takes at least six arguments which are the fromRow index, toRow index, columns array, toFields mapping array, keyColumn and target group log exp or id', FuncExpEvalException::INVALID_ARGUMENT);
+		$fromRow = $this->evaluateArg($args[0]);
+		$toRow = $this->evaluateArg($args[1]);
+		$columns = $this->evaluateArg($args[2]);
+		$nCols = count($columns);
+		$toFields = $this->evaluateArg($args[3]);
+		$keyColumn = $this->evaluateArg($args[4]);
+		$groupLogExp = $this->evaluateArg($args[5]);
+		// calls saveElementFieldsTo on each matrix row
+		$rec = $this->getRecord();
+		$fieldList = $rec->getFieldList();
+		$fx = fx('saveElementFieldsTo');
+		$keyColumnIndex = null;
+		$returnValue = ElementPListArrayImpl::createInstance();
+		for($i=$fromRow;$i<=$toRow;$i++) {
+			$row = array();			
+			for($j=0;$j<$nCols;$j++) {
+				// looks for key column index to build element selector
+				if(!isset($keyColumnIndex) && isset($keyColumn) && ($columns[$j]==$keyColumn)) $keyColumnIndex=$j;
+				// checks if column name is a matrix field or a standard element field
+				$fieldName = $columns[$j].$i;
+				if(!$fieldList->doesFieldExist($fieldName)) $fieldName = $columns[$j];
+				if(!$fieldList->doesFieldExist($fieldName)) throw new FuncExpEvalException("field $fieldName is not a valid field in matrix columns or element",FuncExpEvalException::INVALID_ARGUMENT);
+				$row[] = $fieldName;
+			}
+			$elementLogExp=null;
+			if(isset($keyColumnIndex)) {
+				$elementLogExp=$rec->getFieldValue($row[$keyColumnIndex]);				
+				if(!empty($elementLogExp)) {
+					$fsKey = $toFields[$keyColumnIndex];
+					if(!($fsKey instanceof FieldSelector)) $fsKey = fs($fsKey);
+					$elementLogExp = lxEq($fsKey,$elementLogExp);
+				}
+				else $elementLogExp=null;
+			}
+			$fx->setArguments(array($row,
+				$elementLogExp,
+				$groupLogExp,
+				$toFields
+			));
+			$elementP = $this->evaluateFuncExp($fx,$this);
+			if(isset($elementP)) $returnValue->addElementP($elementP);
+		}
+		return $returnValue;
 	}
 	
 	// System functions

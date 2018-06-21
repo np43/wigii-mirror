@@ -123,7 +123,9 @@ class FormFieldList extends Model implements FieldList {
 	public function doesFieldExist($fieldName){
 		return $this->fields[$fieldName];
 	}
-
+	public function removeField($fieldName) {
+		unset($this->fields[$fieldName]);
+	}
 	/**
 	 * Returns an array of field names for which 'enableDynamicAttributes' is true
 	 * @return Array or null if no field with dynamic properties

@@ -1333,6 +1333,14 @@ function lxNotInG($lx) {return TechnicalServiceProvider::getFuncExpBuilder()->lx
 function lxNotInGR($lx) {return TechnicalServiceProvider::getFuncExpBuilder()->lxNotInGR($lx);}
 
 /**
+ * Builds a LogExp InGR which selects all useful groups in given namespace and module (includes root groups and excludes trashbin)
+ * @param String|WigiiNamespace $namespace specific namespace to search in.
+ * @param String|Module $module
+ * @return LogExpInGroup
+ */
+function lxInAllGroups($namespace,$module) {return TechnicalServiceProvider::getFuncExpBuilder()->lxInAllGroups($namespace,$module);}
+
+/**
  * Constructs a logical expression to select a range of months given a length and a start date.
  * The logical expression combines a Year FieldSelector and a Month FieldSelector in order to select the range correctly.
  * @param FieldSelector $yearFs FieldSelector used to select the Year of the Element. Should point to a four digit Strings or Attributs field.
