@@ -241,15 +241,26 @@ function addJsCodeOnFileInput(inputFileId, inputNameId, inputPathId, clickToBrow
 	});
 	
 	//make the whole field area dropable from files and not only the input
-	var dropContainer = document.getElementById(inputFileId.replace('#','')).parentNode.parentNode;
-	dropContainer.ondragover = dropContainer.ondragenter = function(evt) {
-		evt.preventDefault();
-	};
-	dropContainer.ondrop = function(evt) {
-		// pretty simple -- but not for IE :(
-		document.getElementById(inputFileId.replace('#','')).files = evt.dataTransfer.files;
-		evt.preventDefault();
-	};
+	if(!!navigator.userAgent.match(/Trident/g) || !!navigator.userAgent.match(/MSIE/g)){
+		//IE do not support this code to manage file drag and drop
+	} else {
+		var dropContainer = document.getElementById(inputFileId.replace('#','')).parentNode.parentNode;
+		dropContainer.ondragover = dropContainer.ondragenter = function(evt) {
+			$(inputFileId).parent().parent().css('background-color','#ddd');
+			evt.preventDefault();
+		};
+		dropContainer.ondragleave = dropContainer.ondragout = function(evt) {
+			$(inputFileId).parent().parent().css('background-color','transparent');
+			evt.preventDefault();
+		};
+		dropContainer.ondrop = function(evt) {
+			// pretty simple -- but not for IE :(
+			document.getElementById(inputFileId.replace('#','')).files = evt.dataTransfer.files;
+			$(inputFileId).change();
+			$(inputFileId).parent().parent().css('background-color','transparent');
+			evt.preventDefault();
+		};
+	}
 }
 
 //DataType on-line Files
