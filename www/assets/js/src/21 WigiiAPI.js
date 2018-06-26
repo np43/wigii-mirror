@@ -2221,6 +2221,234 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		};
 		
 		/**
+		 * A helper on an array of rows. A row is an array of values or an object with field names
+		 * @param Array matrix the array on which to perform some actions
+		 * @param Array selectedRows an optional array with a subset of selected row indexes. If defined, then the matrix helper will act only on these selected rows.
+		 */
+		wigiiApi.MatrixHelper = function(matrix,selectedRows) {
+			var self = this;
+			self.className = 'MatrixHelper';
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;			
+			if($.type(matrix) !== 'array') throw wigiiApi.createServiceException('matrix should be an array', wigiiApi.errorCodes.INVALID_ARGUMENT);
+			self.matrix = matrix;
+			self.selectedRows = selectedRows;
+			self.currentFilter = [];
+			self.next = undefined;
+			self.previous = undefined;
+			/**
+			 * Selects rows matching a given value into a column and returns a MatrixHelper on the selection
+			 * @param String|int col col index or name on which to apply the filter
+			 * @param Scalar value value to filter on
+			 * @example To filter more that one column at a time, just append (colI,valueI) pairs to the function arguments
+			 * wigii().matrix([{project:"P1",grant:"G1",sector:"WASH"},{project:"P2",grant:"G1",sector:"NUT"},{project:"P1",grant:"G2",sector:"GEN"}])
+			 * .filter("project","P1","sector","WASH").column("grant") = ["G1"]
+			 * @return wigiiApi.MatrixHelper on filtered rows
+			 */
+			self.filter = function(col,value) {
+				var matchingRows = [];
+				if(self.selectedRows) {
+					for(var i=0;i<self.selectedRows.length;i++) {
+						if(value == self.matrix[self.selectedRows[i]][col]) matchingRows.push(self.selectedRows[i]);
+					}
+				}
+				else {
+					for(var i=0;i<self.matrix.length;i++) {
+						if(value == self.matrix[i][col]) matchingRows.push(i);
+					}
+				}
+				var returnValue = new wigiiApi.MatrixHelper(self.matrix,matchingRows);
+				// saves current filter and links filters in chain
+				returnValue.currentFilter = self.currentFilter.concat([col,value]);
+				self.next = returnValue;
+				returnValue.previous = self;
+				
+				// recursively call filter if more (col,value) pairs are defined
+				var args;
+				if(arguments.length > 2) args = Array.prototype.slice.call(arguments,2);
+				else args = [];
+				if(args.length>0) {
+					returnValue = returnValue.filter.apply(returnValue,args);
+				}
+				
+				return returnValue;
+			};
+			/**
+			 * Returns an array with the content of a column filtered with the selected rows.
+			 * @param String|int col col index or name from which to extract the values
+			 * @param boolean unique if true, then filters duplicates and returns unique values, else returns all values
+			 * @return Array
+			 */
+			self.column = function(col,unique) {
+				var returnValue = (unique?{}:[]);
+				if(self.selectedRows) {
+					for(var i=0;i<self.selectedRows.length;i++) {
+						var val = self.matrix[self.selectedRows[i]][col];
+						if(unique) returnValue[val] = val;
+						else returnValue.push(val);
+					}
+				}
+				else {
+					for(var i=0;i<self.matrix.length;i++) {
+						var val = self.matrix[i][col];
+						if(unique) returnValue[val] = val;
+						else returnValue.push(val);
+					}
+				}
+				return (unique?Object.keys(returnValue):returnValue);
+			};
+			/**
+			 * Returns an array with the selected rows
+			 * @return Array
+			 */
+			self.rows = function() {
+				var returnValue = [];
+				if(self.selectedRows) {
+					for(var i=0;i<self.selectedRows.length;i++) {
+						returnValue.push(self.matrix[self.selectedRows[i]]);
+					}
+				}
+				else {
+					for(var i=0;i<self.matrix.length;i++) {
+						returnValue.push(self.matrix[i]);
+					}
+				}
+				return returnValue;
+			};	
+			/**
+			 * Clears the current selection and returns a MatrixHelper showing previous selection or all rows if no previous one
+			 * @param String|int col optional column to define which column should be cleared. If not defined, takes current selection, which is last column.
+			 * @return wigiiApi.MatrixHelper
+			 */
+			self.clear = function(col) {
+				var returnValue = undefined;
+				if(col!==undefined && self.currentFilter.length>2 && self.currentFilter[self.currentFilter.length-3]!=col) {
+					var newSelection = [];
+					var i=0;
+					while(i<self.currentFilter.length) {
+						if(self.currentFilter[i]!=col) {
+							newSelection.push(self.currentFilter[i]);
+							newSelection.push(self.currentFilter[i+1]);
+						}						
+						i+=2;
+					}
+					returnValue = new wigiiApi.MatrixHelper(self.matrix);
+					if(newSelection.length>0) returnValue = returnValue.filter.apply(newSelection);
+				}
+				else if(self.previous) {
+					self.previous.next = undefined;
+					returnValue = self.previous;
+					self.previous = undefined;
+				}
+				else returnValue = new wigiiApi.MatrixHelper(self.matrix);
+				return returnValue;
+			};
+			/**
+			 * Clears all selections and returns a MatrixHelper showing all rows
+			 * @return wigiiApi.MatrixHelper
+			 */
+			self.clearAll = function() {
+				return new wigiiApi.MatrixHelper(self.matrix);
+			};
+		};
+		
+		/**
+		 * A constraint on a selected set of drop-downs.
+		 * The drop-downs can only show values which are compatible with the given matrix.
+		 * The matrix is a set of rows, each row is a vector giving one possible combination of values for the drop-downs.
+		 * The order of the selected drop-downs must match the order of the columns in the rows, 
+		 * or the drop-down field name must match a field name in the row.
+		 */
+		wigiiApi.DropDownConstraint = function(selector,matrix) {
+			var self = this;
+			self.className = 'DropDownConstraint';
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
+			self.matrixHelper = wigiiApi.getMatrixHelper(matrix);
+			self.lock=false;
+			if(self.matrixHelper.matrix.length>0) {
+				self.dropDowns = selector;
+				// stores associated field names
+				if($.type(self.matrixHelper.matrix[0])!=='array') {
+					self.fieldNames = [];
+					self.dropDowns.each(function(){
+						self.fieldNames.push($(this).closest('div.field').wigii('FieldHelper').fieldName());
+					});
+				}
+				// indexes current set of drop-downs values
+				self.dropDownIndex = (self.fieldNames?{}:[]);
+				self.dropDowns.each(function(){
+					var dropDown = $(this);
+					// retrieves matrix column associated to drop-down
+					var col=self.dropDowns.index(dropDown);
+					if(self.fieldNames) col = self.fieldNames[col];	
+					// loops on all options and indexes them
+					var options = {};					
+					dropDown.find('option').each(function(){
+						var option = $(this);
+						var val = option.attr('value');
+						if(val!=='' && val!==null) {
+							options[val] = {
+								'value':val,
+								'title':option.attr('title'),
+								'label':option.text()
+							};
+						}
+					});
+					self.dropDownIndex[col] = options;
+				});
+				// manages constraint on drop-down change
+				self.dropDowns.change(function(){
+					if(self.lock) return;
+					self.lock=true;
+					var dropDown = $(this);
+					// retrieves matrix column associated to drop-down
+					var col=self.dropDowns.index(dropDown);
+					if(self.fieldNames) col = self.fieldNames[col];
+					
+					
+					var newFilter = self.matrixHelper;
+					var val = dropDown.val();
+					// removes column from existing filter and adds column to new filter
+					if(val!=='' && val!==null) {
+						if(newFilter.currentFilter.length>0 && newFilter.currentFilter.indexOf(col)%2==0) newFilter = newFilter.clear(col);
+						newFilter = newFilter.filter(col,val);
+					}
+					// if val is empty then clears all
+					else newFilter = newFilter.clearAll();
+					
+					
+					// builds each drop-down options based on new filter
+					self.dropDowns.each(function(){
+						var dropDown = $(this);
+						var currentVal = dropDown.val();
+						// retrieves matrix column associated to drop-down
+						var col=self.dropDowns.index(dropDown);
+						if(self.fieldNames) col = self.fieldNames[col];	
+						// clears all current options
+						dropDown.empty();
+						// fills again the options based on new filtered column
+						var colValues = newFilter.column(col,true);						
+						var dropDownValues = self.dropDownIndex[col];
+						var html = wigiiApi.getHtmlBuilder();
+						dropDown.append(html.reset().putStartTag('option','value',"",'title',"").put("").putEndTag('option').html());
+						var newVal = '';
+						for(var i=0;i<colValues.length;i++) {
+							var option = dropDownValues[colValues[i]];
+							dropDown.append(html.reset().putStartTag('option','value',option.value,'title',option.title).put(option.label).putEndTag('option').html());
+							if(currentVal==option.value) newVal = currentVal;
+						}
+						if(colValues.length==1) newVal = dropDownValues[colValues[0]].value;
+						if(newFilter.currentFilter.length==0) newVal='';//resets everything if filter is reset
+						dropDown.val(newVal).trigger('change');
+					});
+					self.matrixHelper = newFilter;
+					self.lock=false;
+				});
+				// first load
+				$(self.dropDowns[0]).trigger('change');
+			}
+		};
+		
+		/**
 		 * JQuery collection event handlers
 		 */
 		wigiiApi.JQueryService = function() {
@@ -2354,6 +2582,19 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					returnValue.attach(selection, options);
 				}
 				else if(selection && selection.length>1) throw wigiiApi.createServiceException('Wigii FormHelper selector can only be activated on a JQuery collection containing one element and not '+selection.length, wigiiApi.errorCodes.INVALID_ARGUMENT);
+				return (!returnValue?{$:selection}:returnValue);
+			};
+			
+			self.DropDownConstraint = function(selection,matrix) {
+				//var ctxKey = self.ctxKey+"_DropDownConstraint";
+				var returnValue=undefined;
+				// filters on select objects				
+				if(selection && selection.length>0) {
+					selection = selection.filter('select');
+					if(selection && selection.length>0) {
+						returnValue = wigiiApi.createDropDownConstraint(selection,matrix);
+					}
+				}								
 				return (!returnValue?{$:selection}:returnValue);
 			};
 		};
@@ -2693,8 +2934,20 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		/**
 		 * Creates an ArrayHelper instance
 		 */
-		wigiiApi.getArrayHelper = function() {
-			return new wigiiApi.ArrayHelper();
+		wigiiApi.getArrayHelper = function(arr) {
+			return new wigiiApi.ArrayHelper(arr);
+		};
+		/**
+		 * Creates a MatrixHelper instance
+		 */
+		wigiiApi.getMatrixHelper = function(matrix) {
+			return new wigiiApi.MatrixHelper(matrix);
+		};
+		/**
+		 * Creates a DropDownConstraint and binds it to some selected drop-downs
+		 */
+		wigiiApi.createDropDownConstraint = function(selector,matrix) {
+			return new wigiiApi.DropDownConstraint(selector,matrix);
 		};
 		/**
 		 * Creates a FormEvent instance
@@ -2725,6 +2978,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.createRecordInstance = function(fieldList,wigiiBag) {
 			return new wigiiApi.Record(fieldList,wigiiBag);
+		};
+		/**
+		 * @return wigiiApi.MatrixHelper
+		 */
+		wigiiApi.matrix = function(matrix,selectedRows) {
+			return new wigiiApi.MatrixHelper(matrix,selectedRows);
 		};
 		
 		// Wigii client
