@@ -110,6 +110,10 @@
 #moduleView div.nbItemsInList .page {
 	display:none;
 }
+#moduleView div.nbItemsInList span.total {
+	font-weight:normal;
+	border-top:none;
+}
 
 /*********************************
 * Element List HeaderList
