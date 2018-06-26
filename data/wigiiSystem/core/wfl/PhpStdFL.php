@@ -311,7 +311,7 @@ class PhpStdFL extends FuncExpVMAbstractFL
 	    if($nArgs < 1) throw new FuncExpEvalException("json_encode function takes at least one parameter the value to encode", FuncExpEvalException::INVALID_ARGUMENT);
 	    $value = $this->evaluateArg($args[0]);
 	    if($nArgs>1) $options = $this->evaluateArg($args[1]);
-	    else $options=JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES;
+	    else $options=JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES;
 	    if($nArgs>2) $depth = $this->evaluateArg($args[2]);
 	    else $depth=512;
 	    $returnValue = json_encode($value,$options,$depth);

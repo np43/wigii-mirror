@@ -1123,7 +1123,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		if($this->getNumberOfArgs($args) < 1) return '';
 		$v = $this->evaluateArg($args[0]);
 		if(!(is_array($v) || is_a($v, 'stdClass'))) throw new FuncExpEvalException("first argument should evaluate to an array or PHP stdClass", FuncExpEvalException::INVALID_ARGUMENT);
-		$v = json_encode($v,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+		$v = json_encode($v,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 		if(!$v) throw new FuncExpEvalException("could not create a JSON string based on the input", FuncExpEvalException::INVALID_ARGUMENT);
 		return $v;
 	}
