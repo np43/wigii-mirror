@@ -384,7 +384,7 @@ class ExecutionServiceImpl implements ExecutionService {
 			$this->setCrtRequest(implode(ExecutionServiceImpl::paramSeparator, $crtRequest));
 
 			// CWE 24.05.2018: activates adaptive wigii namespace selection if module is not admin			
-			if(!$this->getCrtModule()->isAdminModule()) $p->setAdaptiveWigiiNamespace(true);
+			if(!$this->getCrtModule()->isAdminModule() && $p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->setAdaptiveWigiiNamespace(true);
 			else $p->setAdaptiveWigiiNamespace(false);			
 			
 			//if new context, then select appropriate calculated role

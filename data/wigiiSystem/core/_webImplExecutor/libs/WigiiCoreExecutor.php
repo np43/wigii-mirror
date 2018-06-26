@@ -4567,6 +4567,7 @@ invalidCompleteCache();
 			case "getNextElementInPreviewList" :
 			case "getCalendarEvents" :
 			case "exportAndDownload" :
+			case "wakeup":
 				return true;
 				break;
 			default :
