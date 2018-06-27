@@ -16,7 +16,7 @@
 	text-align:right;
 	padding-right:0px;
 }
-.total, div.field.total>div.value {
+div.field.total>div.value {
 	font-weight:bold;
 	border-top:4px double black;
 	padding-top:1px;
@@ -24,13 +24,13 @@
 div.field.total>div.value>* {
 	font-weight:bold;
 }
-.subTotal, div.field.subTotal>div.value {
+div.field.total>div.label {
+	font-weight:bold;
+}
+div.field.subTotal>div.value {
 	font-weight:bold;
 	border-top:1px solid black;
 	padding-top:4px;
-}
-div.field.total>div.label {
-	font-weight:bold;
 }
 
 
