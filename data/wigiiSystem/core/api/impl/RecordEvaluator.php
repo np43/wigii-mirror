@@ -2539,14 +2539,16 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * The element can belong to another namespace and module.
 	 * If the target element doesn't exist, a new element in inserted.
 	 * All subfields values are copied.
-	 * FuncExp signature: <code>saveElementFieldsTo(fromFields,elementLogExp|elementId,groupLogExp|groupId,toFields)</code><br/>
+	 * FuncExp signature: <code>saveElementFieldsTo(fromFields,elementLogExp|elementId,groupLogExp|groupId,toFields,options=null)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) fromFields: Array. A list of field names from which to extract the values
 	 * - Arg(1) elementLogExp|elementId: LogExp|int. The destination element selector.
 	 * Can be an element ID or a business key log exp. If null, then element is always inserted.
 	 * - Arg(2) groupLogExp|groupId: LogExp|int. The destination group selector. Can be an group ID or a group log exp.
 	 * - Arg(3) toFields: Array. A list of mapping field names from the target element configuration
-	 *
+	 * - Arg(4) options: WigiiBPLParameter. A optional bag of options to configure the save element process. The following options are supported:
+	 * 	persistModeExp: FuncExp. A FuncExp which is evaluated against the matching element and determines which persistence action should be done on it.
+	 * 					It should return one of the constants ElementDFA::MODE_PERSIST (1), ElementDFA::MODE_DELETE (2) or ElementDFA::MODE_FILTER (4)
 	 * @return ElementP the updated or new inserted element.
 	 */
 	public function saveElementFieldsTo($args) {		
@@ -2582,6 +2584,9 @@ class RecordEvaluator implements FuncExpEvaluator
 			$groupLogExp = lxEq(fs('id'),$groupId);
 		}
 		$toFields = $this->evaluateArg($args[3]);
+		if($nArgs>4) $options = $this->evaluateArg($args[4]);
+		else $options = wigiiBPLParam();
+		
 		$returnValue = null;
 		$crtNamespace = null; $hasAdaptiveWigiiNamespace = null;
 		$this->debugLogger()->logBeginOperation('saveElementFieldsTo');
@@ -2619,6 +2624,7 @@ class RecordEvaluator implements FuncExpEvaluator
 					},
 					'setObject2ElementMappingMethod',function($rec,$elementP,$mapObject2ElementDFA) {
 						$element = $elementP->getDbEntity();
+						$element->getWigiiBag()->resetChanges();
 						foreach($rec as $fieldName=>$subfields) {
 							foreach($subfields as $subFieldName=>$value) {
 								$element->setFieldValue($value,$fieldName,$subFieldName);
@@ -2650,7 +2656,15 @@ class RecordEvaluator implements FuncExpEvaluator
 				/* 2.3 element recalculation */
 				dfas('ElementRecalcDFA'),
 				/* 2.4 persist element */
-				dfas('ElementDFA','setMode',1,'setGroupId',$groupId),
+				dfas('ElementDFA','setMode',ElementDFA::MODE_MIXED,'setGroupId',$groupId,'setDecisionMethod',function($elementP,$dataFlowContext) use($options) {
+					// if a persistModeExp is given into the options, then evaluates it to determine what should be done with the element
+					$persistModeExp = $options->getValue('persistModeExp');
+					if(isset($persistModeExp)) {
+						return ServiceProvider::getWigiiBPL()->evaluateFuncExp($dataFlowContext->getPrincipal(), $persistModeExp, $elementP->getDbEntity());
+					}
+					// else always persists the element
+					else return ElementDFA::MODE_PERSIST;
+				}),
 				/* 2.5 update files on disk */ 
 				dfas('CallbackDFA','setProcessWholeDataCallback',function($elementP,$callbackDFA) use($exec){
 					$dfContext = $callbackDFA->getDataFlowContext();
@@ -2666,7 +2680,7 @@ class RecordEvaluator implements FuncExpEvaluator
 					));
 					$callbackDFA->writeResultToOutput($elementP);
 				})
-			),true/*,$fe->getWigiiExecutor()->throwEvent()*/);
+			),true/*,$fe->getWigiiExecutor()->throwEvent() notifications not enabled for now.*/);
 			
 			if(isset($crtNamespace)) {
 				$principal->bindToWigiiNamespace($crtNamespace);
@@ -2688,7 +2702,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * The element can belong to another namespace and module.
 	 * If the target element doesn't exist, a new element in inserted.
 	 * All subfields values are copied.
-	 * FuncExp signature: <code>saveElementFieldsTo(fromFields,elementLogExp|elementId,groupLogExp|groupId,toFields)</code><br/>
+	 * FuncExp signature: <code>saveMatrixTo(fromRow,toRow,columns,toFields,keyColumn,groupLogExp|groupId,options=null)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) fromRow: int. The start index from which to save the matrix rows.
 	 * - Arg(1) toRow: int. The stop index to which to save the matrix rows.
@@ -2696,6 +2710,9 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * - Arg(3) toFields: Array. A list of mapping field names from the target element configuration
 	 * - Arg(4) keyColumn: String. The name of the column in the matrix used as a business key to select the target element to update.
 	 * - Arg(5) groupLogExp|groupId: LogExp|int. The destination group selector. Can be an group ID or a group log exp.
+	 * - Arg(6) options: WigiiBPLParameter. A optional bag of options to configure the save element process. The following options are supported:
+	 * 	persistModeExp: FuncExp. A FuncExp which is evaluated against the matching destination element and determines which persistence action should be done on it.
+	 * 					It should return one of the constants ElementDFA::MODE_PERSIST (1), ElementDFA::MODE_DELETE (2) or ElementDFA::MODE_FILTER (4)	 
 	 * @return ElementPList an ElementPList containing the updated or new inserted elements.
 	 */
 	public function saveMatrixTo($args) {
@@ -2708,6 +2725,9 @@ class RecordEvaluator implements FuncExpEvaluator
 		$toFields = $this->evaluateArg($args[3]);
 		$keyColumn = $this->evaluateArg($args[4]);
 		$groupLogExp = $this->evaluateArg($args[5]);
+		if($nArgs>6) $options = $this->evaluateArg($args[6]);
+		else $options = null;
+		
 		// calls saveElementFieldsTo on each matrix row
 		$rec = $this->getRecord();
 		$fieldList = $rec->getFieldList();
@@ -2738,7 +2758,8 @@ class RecordEvaluator implements FuncExpEvaluator
 			$fx->setArguments(array($row,
 				$elementLogExp,
 				$groupLogExp,
-				$toFields
+				$toFields,
+				$options
 			));
 			$elementP = $this->evaluateFuncExp($fx,$this);
 			if(isset($elementP)) $returnValue->addElementP($elementP);

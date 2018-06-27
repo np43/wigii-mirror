@@ -326,7 +326,15 @@ class ElementSetterDFA extends ElementDFAWithFuncExpVM
 				$fx = $cfs->getFuncExp();
 				if(isset($fs)) {
 					if($fs->isElementAttributeSelector()) {
-					    $element->setAttribute((isset($fx)?$this->evaluateFuncExp($fx):null), $fs);
+						$val = (isset($fx)?$this->evaluateFuncExp($fx):null);
+						try { $element->setAttribute($val,$fs); }
+						catch(Exception $e) {
+							// if no dynamic attribute is defined, then creates one
+							if(is_null($element->getDynamicAttribute($fs->getSubFieldName()))) {
+								$element->setDynamicAttribute($fs->getSubFieldName(), ElementDynAttrMutableValueImpl::createInstance($val));
+							}
+							else throw $e;
+						}
 						
 						// sets FieldSelector in FieldSelectorList
 						if($this->firstElementInFlow && !$fieldSelectorList->containsFieldSelector($fs->getFieldName(), $fs->getSubFieldName())) {

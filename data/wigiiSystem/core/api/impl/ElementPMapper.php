@@ -38,6 +38,7 @@ class ElementPMapper implements RowList, FieldListVisitor
 	private $wigiiBag;
 	protected $isWigiiBagBulkLoadable;
 	protected $wigiiFixedBag;
+	private $recordStructureFactory;
 	private $fieldSelectorList;
 	private $freeTextFields;
 	private $elementPrefix;
@@ -97,6 +98,9 @@ class ElementPMapper implements RowList, FieldListVisitor
 		{
 			$this->fieldList = $recordStructureFactory->createFieldList();
 			$this->wigiiBag = $recordStructureFactory->createWigiiBag();
+			// CWE 21.06.2018 - if FieldList instance of FormFieldList and WigiiBag instance of FormBag, 
+			// then keeps recordStructureFactory active so that each element in list get their own FormBag and FormFieldList.
+			if(($this->fieldList instanceof FormFieldList) && ($this->wigiiBag instanceof FormBag)) $this->recordStructureFactory = $recordStructureFactory;
 		}
 		elseif($recordStructureFactory instanceof Element)
 		{
@@ -119,7 +123,7 @@ class ElementPMapper implements RowList, FieldListVisitor
 		}
 		else $this->isWigiiBagBulkLoadable = false;
 		$this->sqlColLang = array();
-		$this->calculatedFields = FieldListArrayImpl::createInstance();
+		$this->calculatedFields = FieldListArrayImpl::createInstance(false);
 		$this->pRightsNotSet = true;
 	}
 	public function freeMemory()
@@ -127,6 +131,7 @@ class ElementPMapper implements RowList, FieldListVisitor
 		unset($this->fieldList);
 		unset($this->wigiiBag);
 		unset($this->wigiiFixedBag);
+		unset($this->recordStructureFactory);
 		unset($this->elementPrefix);
 		unset($this->fieldSelectorList);
 		unset($this->freeTextFields);
@@ -274,10 +279,13 @@ class ElementPMapper implements RowList, FieldListVisitor
 		if(is_null($elementPList)) throw new ElementServiceException('elementPList cannot be null', ElementServiceException::INVALID_ARGUMENT);
 
 		// injects the fixed wigii bag into the wigii bag
-		if($this->isWigiiBagBulkLoadable) $this->injectFixedBagIntoWigiiBag();
+		if($this->isWigiiBagBulkLoadable) {
+			if(isset($this->recordStructureFactory)) $this->configureFixedBag();
+			else $this->injectFixedBagIntoWigiiBag();
+		}
 
-		// flushes fieldList
-		$this->flushFieldList();
+		// flushes fieldList (CWE 21.06.2018: except if FieldList is not shared and per element)
+		if(!isset($this->recordStructureFactory)) $this->flushFieldList();
 		$hasCalculatedFields = (!is_null($this->elementEvaluator) && ($this->calculatedFields->count() > 0));
 
 		// prepares elementPList eval context
@@ -291,6 +299,13 @@ class ElementPMapper implements RowList, FieldListVisitor
 
 		foreach($this->elementPBuffer as $elementP)
 		{
+			// CWE 21.06.2018 if FieldList and WigiiBag are not shared and per element, then fills FieldList and injects FixedBag if needed
+			if(isset($this->recordStructureFactory)) {
+				$element = $elementP->getElement();
+				$this->debugLogger()->write("filling non shared FieldList and WigiiBag for element ".$element->getId());
+				$this->flushFieldList($element);
+				if($this->isWigiiBagBulkLoadable) $element->getWigiiBag()->setFixedBag($this->wigiiFixedBag, $element->getId());				
+			}
 			$this->manualPaging_globalNb++;
 			// evaluates calculated fields only if we have at least read rights
 			if($hasCalculatedFields && !is_null($elementP->getRights()))
@@ -361,9 +376,10 @@ class ElementPMapper implements RowList, FieldListVisitor
 	/**
 	 * fills field list according to fieldSelector list
 	 */
-	protected function flushFieldList()
+	protected function flushFieldList($element=null)
 	{
-		$fieldList = $this->getFieldList();
+		if(isset($element)) $fieldList = $element->getFieldList();
+		else $fieldList = $this->getFieldList();
 		$fieldSelectorList = $this->getFieldSelectorListByFieldName();
 		if(!isset($fieldSelectorList)) throw new ElementServiceException('fieldSelectorListByFieldName cannot be null', ElementServiceException::UNEXPECTED_ERROR);
 		$freeTextFields = $this->getFreeTextFields();
@@ -396,15 +412,21 @@ class ElementPMapper implements RowList, FieldListVisitor
 	protected function injectFixedBagIntoWigiiBag() {
 		// only strategy JOIN is implemented
 		if($this->getTripod()->elementSqlBuilder->getQueryStrategy() == ElementQueryPlanner::QSTRATEGY_JOIN) {
-			$this->wigiiFixedBag->setSqlMapping($this->sqlColMap, $this->sqlColMapField, $this->sqlColMapMultiSelect, $this->sqlColMapLang);
-			$this->wigiiFixedBag->setSelectedFields($this->selectedFields);
+			$this->configureFixedBag();
 			$elementIds = array_keys($this->elementPBuffer);
 			if(!empty($elementIds)) $elementIds = array_combine($elementIds, $elementIds);
 			else $elementIds = null;
 			$this->getWigiiBag()->setFixedBag($this->wigiiFixedBag, $elementIds);
 		}
 	}
-
+	private function configureFixedBag() {
+		// only strategy JOIN is implemented
+		if($this->getTripod()->elementSqlBuilder->getQueryStrategy() == ElementQueryPlanner::QSTRATEGY_JOIN) {
+			$this->wigiiFixedBag->setSqlMapping($this->sqlColMap, $this->sqlColMapField, $this->sqlColMapMultiSelect, $this->sqlColMapLang);
+			$this->wigiiFixedBag->setSelectedFields($this->selectedFields);			
+		}
+	}
+	
 	// FieldList visitor implementation
 
 	/**
@@ -523,6 +545,13 @@ class ElementPMapper implements RowList, FieldListVisitor
 				}
 			}
 
+			// CWE 21.06.2018 - if recordStructureFactory is active, then creates a fresh instance of WigiiBag and FieldList per element.
+			if(isset($this->recordStructureFactory)) {
+				$this->debugLogger()->write('creating one instance of FieldList and WigiiBag per element');
+				$this->fieldList = $this->recordStructureFactory->createFieldList();
+				$this->wigiiBag = $this->recordStructureFactory->createWigiiBag();
+				if($this->fieldList instanceof FormFieldList) $this->fieldList->setFormBag($this->wigiiBag);
+			}
 			$elementP = ElementP::createInstance($this->getTripod()->elementServiceImpl->createElementInstanceFromRow($this->principal, $row,
 													$eP, $this->getFieldList(), $this->getWigiiBag()));
 			$this->elementPBuffer[$elementId] = $elementP;

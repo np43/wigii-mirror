@@ -1906,6 +1906,35 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $element->getAttribute($fse);
 	}
 	
+	/**
+	 * Sets the value of an element attribute, given its name or an element attribute field selector
+	 * FuncExp signature : <code>setElementAttr(attrValue, element, attrName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) attrValue: Any. The value to set to the element attribute.
+	 * - Arg(0) element: Element|ElementP. Evaluates to an element.
+	 * - Arg(1) attrName: String|FieldSelector. Evaluates to a String defining the attribute name for which to set the value,
+	 * or can be directly an Element attribute FieldSelector that can be used to set the attribute.
+	 * If attrName does not match any element attributes, then creates a dynamic mutable element attribute with the given name.
+	 */
+	public function setElementAttr($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 3) throw new FuncExpEvalException('The setElementAttr function takes at least three arguments which are the attribute value, the element and an attribute name or fieldSelector', FuncExpEvalException::INVALID_ARGUMENT);
+		$attrVal = $this->evaluateArg($args[0]);
+		$element = $this->evaluateArg($args[1]);
+		if($element instanceof ElementP) $element = $element->getDbEntity();
+		if(!$element instanceof Element) throw new FuncExpEvalException('The first argument did not evaluate to a non null instance of Element', FuncExpEvalException::INVALID_ARGUMENT);
+		if($args[2] instanceof FieldSelector) $fse = $args[2];
+		else $fse = fs_e($this->evaluateArg($args[2]));
+		try { $element->setAttribute($attrVal,$fse); }
+		catch(Exception $e) {
+			// if no dynamic attribute is defined, then creates one
+			if(is_null($element->getDynamicAttribute($fse->getSubFieldName()))) {
+				$element->setDynamicAttribute($fse->getSubFieldName(), ElementDynAttrMutableValueImpl::createInstance($attrVal));
+			}
+			else throw $e;
+		}
+	}
+	
 	// Selectors
 	
 	/**

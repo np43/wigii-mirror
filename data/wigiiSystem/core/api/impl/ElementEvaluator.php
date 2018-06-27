@@ -829,6 +829,39 @@ class ElementEvaluator extends RecordEvaluator
 		return array2df($this->getElement());
 	}
 	
+	/**
+	 * Updates a value in the database, given one or several field selectors
+	 * Last argument is the value to be persisted, all previous arguments should evaluate to field selectors.
+	 * Example: persistVal(f1, f2.name, f3.city, NULL)
+	 * will persist field f1, subfields f2.name, f3.city with value NULL
+	 * @return Scalar the persisted value
+	 */
+	public function persistVal($args) {
+		$n = $this->getNumberOfArgs($args);
+		if($n < 2) throw new RecordException("For persistVal, the number of arguments should be at least 2", RecordException::INVALID_ARGUMENT);
+		
+		$element = $this->getElement();
+		if(!$element->isNew()) {
+			// evaluates value
+			$val = $this->evaluateArg($args[$n-1]);
+			// prepares cfsMap
+			$cfsMap = CalculatedFieldSelectorMapArrayImpl::createInstance();
+			for($i = 0; $i < $n-1; $i++) {
+				$fs = $args[$i];
+				if(!($fs instanceof FieldSelector)) {
+					$fs = $this->evaluateArg($fs);
+					if(!($fs instanceof FieldSelector)) throw new RecordException("argument $i does not evaluate to a FieldSelector", RecordException::INVALID_ARGUMENT);
+				}
+				$cfsMap->setCalculatedFieldSelectorByFieldName($fs->getFieldName(), $val, $fs->getSubFieldName());				
+			}
+			// sets values in element and persists
+			sel($this->getPrincipal(),array2df($element),dfasl(
+				dfas("ElementSetterDFA","setCalculatedFieldSelectorMap",$cfsMap),
+				dfas("ElementDFA","setMode","1")
+			));			
+			return $val;
+		}
+	}
 	
 	// Manual ordering of elements
 	

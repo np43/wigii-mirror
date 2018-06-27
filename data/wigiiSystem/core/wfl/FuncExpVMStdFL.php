@@ -2183,6 +2183,14 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
+	 * Returns an apostrof character
+	 * @return string
+	 */
+	public function txtApos($args) {
+		return "'";
+	}
+	
+	/**
 	 * Returns a greater than character
 	 * @return string
 	 */
@@ -2201,13 +2209,20 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Returns the translation of a key using the Wigii dictionary and the current language of the user
 	 * FuncExp signature : <code>txtDico(key)</code><br/>
 	 * Where arguments are :
-	 * - Arg(0) key : a defined entry in the dictionary.
+	 * - Arg(0) key: String|Array. A defined entry in the dictionary, or an array defining a set of translations.
+	 * Array keys are language codes and array values are the translated strings.
 	 * @return String the translated key or the key itself if no entry is defined in the dictionary	 
 	 */
 	public function txtDico($args) {
 	    $nArgs = $this->getNumberOfArgs($args);
 	    if($nArgs<1) throw new FuncExpEvalException('txtDico takes one argument which is the key to lookup into the dictionary', FuncExpEvalException::INVALID_ARGUMENT);
-	    return $this->getTranslationService()->t($this->getPrincipal(), $this->evaluateArg($args[0]));
+	    $key = $this->evaluateArg($args[0]);
+	    if(is_array($key)) {
+	    	$returnValue = $key[$this->getTranslationService()->getLanguage()];
+	    	if(empty($returnValue)) $returnValue = reset($key);
+	    	return $returnValue;
+	    }
+	    else return $this->getTranslationService()->t($this->getPrincipal(),$key);
 	}
 	
 	/**

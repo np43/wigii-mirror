@@ -675,10 +675,10 @@ class NotificationService implements MultiplexedEvent {
 			$trm->reset($rec);
 		} else {
 			$fsl = FieldSelectorListForActivity :: createInstance(false, false); //no issue if double time the same
-			$fsl->setSelectedLanguages(array ($this->getTranslationService()->getLanguage() => $this->getTranslationService()->getLanguage()));
-			$this->getConfigService()->getFields($p, $this->getExecutionService()->getCrtModule(), Activity :: createInstance("listView"), $fsl);
+			$fsl->setSelectedLanguages(array ($this->getTranslationService()->getLanguage() => $this->getTranslationService()->getLanguage()));					
 			$elementListText .= '<p style="font-weight:bold;">';
 			if($rec->isSubElement()){
+				$this->getConfigService()->getFields($p, $this->getExecutionService()->getCrtModule(), Activity :: createInstance("listView"), $fsl);
 				$elementListText .= $this->getElementView($p, $this->getRootElement($p, $rec), $trm, $fsl);
 				$fsl->reset();
 				$fsl->setSelectedLanguages(array ($this->getTranslationService()->getLanguage() => $this->getTranslationService()->getLanguage()));
@@ -690,6 +690,7 @@ class NotificationService implements MultiplexedEvent {
 				if($eventName=="delete") $elementListText .= $this->getButtonViewElement($p, $rec, '<u style="font-weight:normal;">'.$rec->getId()."</u><br/>")."  ";
 				$elementListText .= $this->getElementView($p, $rec, $trm, $fsl);
 			} else {
+				$this->getConfigService()->getFields($p, $module, Activity :: createInstance("listView"), $fsl);
 				if($eventName=="delete") $elementListText .= $this->getButtonViewElement($p, $rec, '<u style="font-weight:normal;">'.$rec->getId()."</u><br/>")."  ";
 				$elementListText .= $this->getElementView($p, $rec, $trm, $fsl);
 			}
@@ -704,7 +705,6 @@ class NotificationService implements MultiplexedEvent {
 			$accessButton = $this->getButtonViewElement($p, $rootElement);
 			$this->getTranslationService()->setSubExecutionModule($subModule);
 		} else {
-//			$accessButton = $this->getButtonAccess($p, $this->getExecutionService()->getCrtWigiiNamespace(), $this->getExecutionService()->getCrtModule());
 			if($gObj && is_a($gObj, "ObjectList")){
 				$accessButton = "";
 				$first = true;

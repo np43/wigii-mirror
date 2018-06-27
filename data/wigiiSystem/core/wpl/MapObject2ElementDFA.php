@@ -718,10 +718,10 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 			break;
 		}
 		// creates element FieldList and fills it with configuration given by grouplist
-		$fieldList = FieldListArrayImpl::createInstance(true,true);
+		$fieldList = $this->createFieldList();
 		$this->getConfigService()->getGroupsFields($principal, $groupList, null, $fieldList);
 		// creates element instance
-		return Element::createInstance($module, $fieldList, WigiiBagBaseImpl::createInstance());				
+		return Element::createInstance($module, $fieldList, $this->createWigiiBag());				
 	}
 	
 	/**
@@ -733,10 +733,10 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	protected function createNewSubElement($principal, $subElementConfigService) {
 		$module = $subElementConfigService->getCurrentModule();
 		// creates element FieldList and fills it with the configuration of the sub element
-		$fieldList = FieldListArrayImpl::createInstance(true,true);
+		$fieldList = $this->createFieldList();
 		$subElementConfigService->getFields($principal, $module, null, $fieldList);
 		// creates element instance
-		return Element::createInstance($module, $fieldList, WigiiBagBaseImpl::createInstance());				
+		return Element::createInstance($module, $fieldList, $this->createWigiiBag());				
 	}	
 	
 	// ElementPList implementation		
@@ -753,9 +753,15 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 		else $this->mapObject2Element($this->data, $elementP, $this->dataFlowContext);		
 	}
 	
-	public function createFieldList() {return FieldListArrayImpl::createInstance();}
+	public function createFieldList() {
+		if($this->dataFlowContext->areWigiiEventsEnabled()) return FormFieldList::createInstance(null);
+		else return FieldListArrayImpl::createInstance(true,true);
+	}
 	
-	public function createWigiiBag() {return WigiiBagBaseImpl::createInstance();}
+	public function createWigiiBag() {
+		if($this->dataFlowContext->areWigiiEventsEnabled()) return FormBag::createInstance();
+		else return WigiiBagBaseImpl::createInstance();
+	}
 		
 	public function getListIterator() {throw new ElementServiceException("The ElementPListDataFlowConnector cannot be iterated. It is a forward only push of elements into the data flow.", ElementServiceException::UNSUPPORTED_OPERATION);}
 	
