@@ -2060,6 +2060,22 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				return self;
 			};
 			/**
+			 * Repeats a br tag several times
+			 * @return HtmlBuilder for chaining
+			 */
+			self.putBrTag = function(multiplier) {
+				if(!multiplier) multiplier=1;
+				for(var i=0;i<multiplier;i++) {
+					self.buffer += '<br />';
+				}
+				return self;
+			};/**
+			 * Repeats a br tag several times
+			 * @return HtmlBuilder for chaining
+			 */
+			self.putBr = self.putBrTag;
+			
+			/**
 			 * Creates an html open tag
 			 * @param String tagName the name of the html tag, for example "div" or "p"
 			 * @param String key an html attribute name, for example "class"
@@ -2098,18 +2114,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(!tagName) throw wigiiApi.createServiceException('putEndTag takes a non null tagName', wigiiApi.errorCodes.INVALID_ARGUMENT);
 				self.buffer += '</'+tagName+'>';
 				return self;
-			};
-			/**
-			 * Repeats a br tag several times
-			 * @return HtmlBuilder for chaining
-			 */
-			self.putBrTag = function(multiplier) {
-				if(!multiplier) multiplier=1;
-				for(var i=0;i<multiplier;i++) {
-					self.buffer += '<br />';
-				}
-				return self;
-			};
+			};			
 			/**
 			 * Creates an html document header 
 			 * @return HtmlBuilder for chaining
