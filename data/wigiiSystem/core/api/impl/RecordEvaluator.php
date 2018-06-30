@@ -2415,6 +2415,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		$i=ValueObject::createInstance($fromRow);
 		ServiceProvider::getDataFlowService()->processDataSource($this->getPrincipal(),$elementList,dfasl(dfas('CallbackDFA','setProcessDataChunkCallback',function($elementP,$callbackDFA) use($i,$fromFields,$toRow,$toColumns,$matrixElt){
 			if($i->getValue()<=$toRow) {
+				$dataFlowContext = $callbackDFA->getDataFlowContext();			
 				$element = $elementP->getDbEntity();
 				$fieldList = $element->getFieldList();
 				$nFields = count($fromFields);
@@ -2426,6 +2427,9 @@ class RecordEvaluator implements FuncExpEvaluator
 						if($fieldName instanceof FieldSelector) {
 							if($fieldName->isElementAttributeSelector()) $matrixElt->setFieldValue($element->getAttribute($fieldName),$colName);							
 							else $matrixElt->setFieldValue($element->getFieldValue($fieldName->getFieldName(), $fieldName->getSubFieldName()),$colName);
+						}
+						elseif($fieldName instanceof FuncExp) {
+							$matrixElt->setFieldValue(ServiceProvider::getWigiiBPL()->evaluateFuncExp($dataFlowContext->getPrincipal(), $fieldName, $element),$colName);
 						}
 						else {
 							$dtXml = $fieldList->getField($fieldName)->getDataType()->getXml();

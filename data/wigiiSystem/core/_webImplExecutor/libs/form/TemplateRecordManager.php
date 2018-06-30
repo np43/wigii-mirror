@@ -1111,21 +1111,27 @@ class TemplateRecordManager extends Model {
 		 * is done when the form is already shown
 		 */
 		if($isDialog){
-			//ServiceProvider::getExecutionService()->getBrowserName()=="msie" && $isDialog){
-			//msie will not do the submit on enter when the submit button is not visible
-			//this is done only in dialog configuration, so we can define the elementDialog id. this is
-			//usefull because in some case the form has several parents before the elementDialog
-			//the ok button is always the second one (index 1, startin on 0). because the buttons are stored
-			//in reverse order
-			//I'm not able to make the ESC event working for Forms: $('#$formId').keydown(function(e){ if(e.keyCode == 27){ e.stopPropagation(); e.preventDefault(); $('#$formId').closest('.ui-dialog').find('.ui-dialog-titlebar-close').click(); }});
-			$this->getExecutionService()->addJsCode(" $('#$formId :not(textarea):input').keydown(function(e){ if(e.keyCode == 13){ $('#$formId').closest('.ui-dialog').find('.ui-dialog-buttonpane .ok:not(:disabled)').click(); e.stopPropagation(); e.preventDefault(); }});");
+			// press on enter key, clicks on OK button
+			// except if noSubmitOnEnter=1
+			if((string)$this->getConfigService()->getParameter($this->getP(), $this->getRecord()->getModule(), "noSubmitOnEnter")=="1") {
+				$this->getExecutionService()->addJsCode(" $('#$formId :not(textarea):input').keydown(function(e){ if(e.keyCode == 13){ e.stopPropagation(); e.preventDefault(); $(this).change();}});");
+			}
+			else $this->getExecutionService()->addJsCode(" $('#$formId :not(textarea):input').keydown(function(e){ if(e.keyCode == 13){ $('#$formId').closest('.ui-dialog').find('.ui-dialog-buttonpane .ok:not(:disabled)').click(); e.stopPropagation(); e.preventDefault(); }});");
+			
+			
 		} else {
 			//to prevent compatibility problems on clickin on the normal submit button
 			//we create buttons reflecting the forms buttons:
 
+			// press on enter key, clicks on OK button
+			// except if noSubmitOnEnter=1
+			if((string)$this->getConfigService()->getParameter($this->getP(), $this->getRecord()->getModule(), "noSubmitOnEnter")=="1") {
+				$this->getExecutionService()->addJsCode("$('#$formId :not(textarea):input').keydown(function(e){if(e.keyCode == 13){ e.stopPropagation(); e.preventDefault(); $(this).change();}});");
+			}
+			else $this->getExecutionService()->addJsCode("$('#$formId :not(textarea):input').keydown(function(e){if(e.keyCode == 13){ ".(!$this->isForExternalAccess() ? "$('#$formId .ok').click();" : "")."e.stopPropagation(); e.preventDefault(); }});");
+			
 			//add control to limit double subscription click
 			$this->getExecutionService()->addJsCode("" .
-				"$('#$formId :not(textarea):input').keydown(function(e){if(e.keyCode == 13){ ".(!$this->isForExternalAccess() ? "$('#$formId .ok').click();" : "")."e.stopPropagation(); e.preventDefault(); }});" .
 				"".($this->isForExternalAccess() ? "clearTimeout(externalAccessTimeoutTimer); $.unblockUI();" : "")."" .
 				"$('#$formId .ok').click(function(e){ $('#$formId').submit(); ".($this->isForExternalAccess() ? "$.blockUI({ css: { border:'none' }, message: $('#loadingBar'), overlayCSS: { backgroundColor: '#f1f3f7' } }); externalAccessTimeoutTimer = setTimeout(function(){ $.unblockUI({ onUnblock:function(){ alert('".$this->h("unusualServerTiming")."'); } }); }, 60*10*1000); " : "")." e.stopPropagation(); e.preventDefault(); });" .
 				"".($cancelName != null ? "$('#$formId .cancel').click(function(){ $('#$formId .InputCancel').click(); });" : '')."" .

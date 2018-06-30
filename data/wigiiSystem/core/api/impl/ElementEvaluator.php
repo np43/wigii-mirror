@@ -189,6 +189,22 @@ class ElementEvaluator extends RecordEvaluator
 	
 	// root FuncExp language (can be extended in subclasses)
 	
+	/**
+	 * Returns the value of an attribute of current element. Returns null if attribute is not a valid element attribute.
+	 * Supports dynamic element attributes.
+	 * funcExp signature: eltAttr(attrName)
+	 * where arguments are:
+	 * - Arg(0) attrName: String|FieldSelector. The element attribute name for which to retrieve the value
+	 * @return Any the element attribute value or null if not defined
+	 */
+	public function eltAttr($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new RecordException("eltAttr takes at least one argument which is the element attribute name for which to get a value", RecordException::INVALID_ARGUMENT);
+		$fse = $args[0];
+		if(!($fse instanceof FieldSelector)) $fse = fs_e($this->evaluateArg($fse));
+		try{return $this->getElement()->getAttribute($fse);}
+		catch(Exception $e){return null;}
+	}
 	
 	/**
 	 * Serializes and deserializes an element inner fields from xml. 
@@ -793,8 +809,11 @@ class ElementEvaluator extends RecordEvaluator
 	 * Where arguments are :
 	 * - Arg(0) groupId: int. The ID of the group in which to insert the element. If the group ID is null, then takes the current folder.
 	 * If the group has another Module than the Element, then a matching on FieldName and DataType is done.
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 */
 	public function copyElementTo($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) $groupId = $this->evaluateFuncExp(fx('group', '.'), $this);
 		else $groupId = $this->evaluateArg($args[0]);
@@ -834,9 +853,12 @@ class ElementEvaluator extends RecordEvaluator
 	 * Last argument is the value to be persisted, all previous arguments should evaluate to field selectors.
 	 * Example: persistVal(f1, f2.name, f3.city, NULL)
 	 * will persist field f1, subfields f2.name, f3.city with value NULL
+	 *
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return Scalar the persisted value
 	 */
 	public function persistVal($args) {
+		$this->assertFxOriginIsNotPublic();
 		$n = $this->getNumberOfArgs($args);
 		if($n < 2) throw new RecordException("For persistVal, the number of arguments should be at least 2", RecordException::INVALID_ARGUMENT);
 		
@@ -860,6 +882,46 @@ class ElementEvaluator extends RecordEvaluator
 				dfas("ElementDFA","setMode","1")
 			));			
 			return $val;
+		}
+	}
+	
+	/**
+	 * Fills current element with a list of pairs (key,value) given on current url.
+	 * If key maps to a field name, then field value is updated with given value on url,
+	 * Else an element dynamic attribute is created (or updated) with the value given on the url.
+	 * FuncExp signature: <code>fillElementFromUrl(startIndex,length)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) startIndex: int. Starts parsing the url arguments from this index. Default to 0.
+	 * - Arg(1) length: int. Specifies how many arguments should be parsed. If ommitted, then goes until the end.
+	 */
+	public function fillElementFromUrl($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) $startIndex = $this->evaluateArg($args[0]);
+		else $startIndex = 0;
+		if($nArgs>1) $length = $this->evaluateArg($args[1]);
+		else $length=null;
+		
+		$element = $this->getElement();
+		$fieldList = $element->getFieldList();
+		$params = ServiceProvider::getExecutionService()->getCrtParameters();
+		$params = array_slice($params, $startIndex,$length);
+		foreach($params as $fieldDefault){
+			list($fieldname, $value) = explode("=", $fieldDefault);
+			list($fieldname, $subfieldname) = explode(".", $fieldname);
+			if($fieldList->doesFieldExist($fieldname)) $element->setFieldValue($value, $fieldname, $subfieldname);
+			else {
+				if($fieldname=='__element') $fse = fs_e($subfieldname);
+				else $fse = fs_e($fieldname);
+				
+				try { $element->setAttribute($value,$fse); }
+				catch(Exception $e) {
+					// if no dynamic attribute is defined, then creates one
+					if(is_null($element->getDynamicAttribute($fse->getSubFieldName()))) {
+						$element->setDynamicAttribute($fse->getSubFieldName(), ElementDynAttrMutableValueImpl::createInstance($value));
+					}
+					else throw $e;
+				}
+			}
 		}
 	}
 	

@@ -10595,11 +10595,16 @@ onUpdateErrorCounter = 0;
 							$element = Element :: createInstance($exec->getCrtModule());
 							$element->setSys_creationDate(time());
 							$element->setSys_date(time());
-							$form = $this->createAddElementFormExecutor($element, "addElement_form", $action, $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList"));
-						} else {
-							//copy
+							$form = $this->createAddElementFormExecutor($element, "addElement_form", $action, $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList"));						
+						} 
+						//copy
+						else {							
+							//recopy the fixed bag as normal bag without elementId
 							$element->setId(0);
-							$element->getWigiiBag()->loadFromFixedBag(); //recopy the fixed bag as normal bag without elementId
+							$element->getWigiiBag()->loadFromFixedBag();
+							// CWE 30.06.2018 executes any Element_beforeCopyExp if defined
+							$beforeCopyExp = (string)$configS->getParameter($p,$element->getModule(),"Element_beforeCopyExp");
+							if($beforeCopyExp!=null) $this->evaluateFuncExp($p, $exec, str2fx($beforeCopyExp),$element);
 							// empties any hidden fields which have clearOnCopy active
 							$hiddenClearOnCopyFields = $configS->mf($p, $element->getModule())->xpath("*[@hidden='1' and @clearOnCopy='1']");
 							if($hiddenClearOnCopyFields) {

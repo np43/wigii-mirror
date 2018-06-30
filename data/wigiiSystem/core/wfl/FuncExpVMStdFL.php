@@ -1259,6 +1259,10 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Always returns false
 	 */
 	public function logFalse($args) {return false;}
+	/**
+	 * Always returns NULL
+	 */
+	public function logNull($args) {return null;}
 
 	/**
 	 * Returns true if all arguments are equal

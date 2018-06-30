@@ -1643,6 +1643,101 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(i>0) return self.fields(toFields);
 			};
 			
+			/**
+			 * Returns a wigiiApi.ButtonHelper on the selected button in form.
+			 * @param String name button name. If selector is not given, then looks for button.name or div.name or span.name.
+			 * @param String selector any valid JQuery selector used to select the button
+			 * @return wigiiApi.ButtonHelper
+			 */
+			self.button = function(name,selector) {
+				if(!self.context.buttons) self.context.buttons = {};
+				if(!self.context.buttons[name]) {
+					var btn = undefined;
+					if(selector) btn = self.$.find(selector);
+					else {
+						btn = self.$.find('button.'+name);
+						if(btn.length==0) btn = self.$.find('div.'+name);
+						if(btn.length==0) btn = self.$.find('span.'+name);
+					}
+					self.context.buttons[name] = btn.wigii('ButtonHelper');
+				}
+				return self.context.buttons[name];
+			};
+			
+			/**
+			 * Returns a ButtonHelper centered on the form OK button
+			 * @return wigiiApi.ButtonHelper
+			 */
+			self.ok = function() {
+				if(!self.context.buttons) self.context.buttons = {};
+				if(!self.context.buttons['ok']) {					
+					var btn = undefined;
+					if(isWorkzoneViewDocked()) btn = $('#elementDialog button.ok');
+					else btn = $('#elementDialog').parent().find('button.ok');					
+					self.context.buttons['ok'] = btn.wigii('ButtonHelper');
+				}
+				return self.context.buttons['ok'];
+			};
+			
+			/**
+			 * Returns a ButtonHelper centered on the form OK button
+			 * @return wigiiApi.ButtonHelper
+			 */
+			self.cancel = function() {
+				if(!self.context.buttons) self.context.buttons = {};
+				if(!self.context.buttons['cancel']) {					
+					var btn = undefined;
+					if(self.formId()=='detailElement_form') {
+						if(isWorkzoneViewDocked()) btn = $('#elementDialog div.T .el_closeDetails');
+						else btn = $('#elementDialog').parent().find('button.ui-dialog-titlebar-close');
+					}
+					else {
+						if(isWorkzoneViewDocked()) btn = $('#elementDialog button.cancel');
+						else btn = $('#elementDialog').parent().find('button.cancel');
+					}
+					self.context.buttons['cancel'] = btn.wigii('ButtonHelper');
+				}
+				return self.context.buttons['cancel'];
+			};
+			
+			/**
+			 * Gets or sets element dialog title
+			 */
+			self.title = function(title) {
+				if(title===undefined) {
+					if(!isWorkzoneViewDocked()) return $('#elementDialog').parent().find('.ui-dialog-title').html();
+				}
+				else {
+					if(!isWorkzoneViewDocked()) {
+						$('#elementDialog').parent().find('.ui-dialog-title').html(title);
+					}
+					return self;
+				}
+			};
+			
+			/**
+			 * Returns a ButtHelper on a standard Wigii toolbar
+			 * @param String name the name of the standard Wigii tool like 'edit','copy','status','organize','delete','feedback','link' or 'sendLink','print' or 'printDetails'
+			 * @return wigiiApi.ButtonHelper only if current form is an element detail.
+			 */
+			self.tool = function(name) {
+				if(self.formId()!='detailElement_form') throw wigiiApi.createServiceException("Standard Wigii toolbar is available only on element detail", wigiiApi.errorCodes.UNSUPPORTED_OPERATION);
+				if(!self.context.buttons) self.context.buttons = {};
+				if(!self.context.buttons[name]) {					
+					var btn = undefined;
+					var mappedName = name;
+					if(name=='link') mappedName = 'sendLink';
+					if(name=='print') mappedName = 'printDetails';
+					if(isWorkzoneViewDocked()) btn = $('#elementDialog div.T .el_'+mappedName);
+					else {
+						btn = $('#elementDialog div.T .el_'+mappedName);
+						if(btn.length==0) btn = $('#elementDialog').parent().find('div.ui-dialog-titlebar .el_'+mappedName);
+					}
+					self.context.buttons[name] = btn.wigii('ButtonHelper');
+				}
+				return self.context.buttons[name];
+			};
+			
 			// Event handling
 			
 			/**
@@ -1711,6 +1806,39 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(self.context.helpPopup===popup) 
 					self.context.helpPopup=undefined;
 			};
+		};
+		
+		/**
+		 * Wigii Button helper.
+		 * A class which helps manage button lifecycle.
+		 * This helper works with any elements acting logically as a button.
+		 */
+		wigiiApi.ButtonHelper = function(btn,options) {
+			var self = this;
+			self.className = 'ButtonHelper';
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
+			//self.debugLogger = wigiiApi.getDebugLogger(self.className);
+			
+			self.$ = btn;
+			self.label = function(l) {
+				if(l===undefined) return self.$.html();
+				else {
+					self.$.html(l);
+					return self;
+				}
+			};
+			self.click = function(eventHandler) {
+				if($.isFunction(eventHandler)) self.$.click(eventHandler);
+				else self.$.click();
+				return self;
+			};
+			self.disabled = function(bool) {
+				if(bool===undefined) return self.$.prop('disabled');
+				else {
+					self.$.prop('disabled',(bool==true));
+					return self;
+				}
+			}
 		};
 		
 		/**
@@ -2602,6 +2730,15 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}								
 				return (!returnValue?{$:selection}:returnValue);
 			};
+			
+			self.ButtonHelper = function(selection,options) {
+				var returnValue=undefined;
+				// checks we have at least one selected button like element	
+				if(selection && selection.length>0) {
+					returnValue = wigiiApi.createButtonHelper(selection,options);
+				}
+				return (!returnValue?{$:selection}:returnValue);
+			};
 		};
 		
 		
@@ -2937,6 +3074,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			return new wigiiApi.FormHelper();
 		};
 		/**
+		 * Creates a ButtonHelper instance on a given button selector
+		 */
+		wigiiApi.createButtonHelper = function(btn,options) {
+			return new wigiiApi.ButtonHelper(btn,options);
+		};
+		/**
 		 * Creates an ArrayHelper instance
 		 */
 		wigiiApi.getArrayHelper = function(arr) {
@@ -3032,6 +3175,29 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.buildUpdateCallback = function(context) {
 			return function(data,textStatus){wigiiApi.parseUpdateResult(data,textStatus,context);};
+		};
+		/**
+		 * Builds a Wigii url fragment by joining the keys and values given into the urlArgs object
+		 * @param Object|Array|String urlArgs or an object with some (key,value) pairs, or an array of values, or a single string.
+		 * @return String the built url fragment of the form key1=value1/key2=value2/... or value1/value2/value3
+		 */
+		wigiiApi.buildUrlFragment = function(urlArgs) {
+			var returnValue = '';
+			if($.isArray(urlArgs)) {
+				for(var i=0;i<urlArgs.length;i++) {
+					if(i>0) returnValue += '/';
+					returnValue += urlArgs[i];
+				}				
+			}
+			else if($.isPlainObject(urlArgs)) {				
+				for(var key in urlArgs) {
+					if(returnValue!='') returnValue += '/';
+					returnValue += key+'='+urlArgs[key];
+				}
+			}
+			else returnValue = urlArgs;
+			if(returnValue != '') returnValue = encodeURI(returnValue);
+			return returnValue;
 		};
 		/**
 		 * Wigii Update protocol query answer parser
@@ -3196,22 +3362,43 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		/**
 		 * Shows the details of the element
 		 */
-		wigiiApi.showElement = function(wigiiNamespaceUrl,moduleName,elementId) {			
-			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/detail/'+elementId);
+		wigiiApi.showElement = function(wigiiNamespaceUrl,moduleName,elementId,urlArgs) {
+			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
+			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/detail/'+elementId+urlArgs);
 		};
 		
 		/**
 		 * Opens a Wigii Form to edit the element
 		 */
-		wigiiApi.editElement = function(wigiiNamespaceUrl,moduleName,elementId) {
-			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/edit/'+elementId);
+		wigiiApi.editElement = function(wigiiNamespaceUrl,moduleName,elementId,urlArgs) {
+			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
+			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/edit/'+elementId+urlArgs);
 		};
 		
 		/**
 		 * Opens a Wigii Form to add a new element
 		 */
-		wigiiApi.addElement = function(wigiiNamespaceUrl,moduleName,groupId) {
-			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/add/'+groupId);
+		wigiiApi.addElement = function(wigiiNamespaceUrl,moduleName,groupId,urlArgs) {
+			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
+			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/add/'+groupId+urlArgs);
+		};
+		
+		/**
+		 * Opens a Wigii Form to copy a new element
+		 */
+		wigiiApi.copyElement = function(wigiiNamespaceUrl,moduleName,elementId,groupId,urlArgs) {
+			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
+			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/copy/'+elementId+'/'+groupId+urlArgs);
+		};
+		
+		/**
+		 * Returns a FormHelper instance centered on current opened Wigii element form
+		 * @return wigiiApi.FormHelper
+		 */
+		wigiiApi.form = function() {
+			var form = $('#elementDialog form');
+			if(form.length == 0) form = $('#detailElement_form');
+			return form.wigii('FormHelper');
 		};
 		
 		/**
