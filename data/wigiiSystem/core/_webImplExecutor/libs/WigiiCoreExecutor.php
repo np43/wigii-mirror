@@ -4746,11 +4746,15 @@ invalidCompleteCache();
 				$this->executionSink()->log("set browser to:" . $exec->getBrowserName() . " " . $exec->getBrowserVersion());
 				break;
 			case "changeLanguage" :
-				ServiceProvider :: getTranslationService()->setLanguage($exec->getCrtParameters(0));
+				$transS = ServiceProvider :: getTranslationService();
+				$transS->setLanguage($exec->getCrtParameters(0));
 				$p->setValueInGeneralContext("language", $exec->getCrtParameters(0));
 				$this->throwEvent()->switchLanguage(PWithUserWithLanguage :: createInstance($p, $p->getAttachedUser(), ServiceProvider :: getTranslationService()->getLanguage()));
 				//cancel all the caching
-				$exec->addJsCode("invalidCompleteCache();");
+				$exec->addJsCode("invalidCompleteCache();
+crtLanguage = '" . $transS->getLanguage(true) . "';
+crtLang = '" . $transS->getLanguage() . "';
+");
 				if($exec->getCrtModule()->getModuleName() == "" ||
 					$exec->getCrtModule()->getModuleName() == "null" ||
 					$exec->getCrtModule()->getModuleName() == Module :: EMPTY_MODULE_URL ||
@@ -11956,6 +11960,7 @@ onUpdateErrorCounter = 0;
                 $exec->addJsCode("
 closeStandardsDialogs();
 crtLanguage = '" . $transS->getLanguage(true) . "';
+crtLang = '" . $transS->getLanguage() . "';
 crtModuleLabel = '" . $currentModuleLabel . "';
 defaultWigiiNamespaceUrl = '" . $defaultWigiiNamespaceUrl . "';
 crtRoleId = '" . $roleId . "';

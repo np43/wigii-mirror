@@ -3534,6 +3534,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			if(exception) wigiiApi.getHelpService().showFloatingHelp(undefined, undefined, wigiiApi.exception2html(exception,context), {localContent:true,position:"center",removeOnClose:true});
 		};
 		
+		/**
+		 * Returns current selected language code
+		 */
+		wigiiApi.lang = function() {
+			return crtLang;
+		};
+		
 		// Functions
 		
 		/**
@@ -3569,6 +3576,36 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.txtQuot = function (value){
 			return '"'+value+'"';
+		};
+		
+		/**
+		 * Returns a label in the current language
+		 * @example Two syntaxes are possible:
+		 * wigii().txtDico("l01","Label in english","l02","Label en français");
+		 * wigii().txtDico({l01:"Label in english",l02:"Label en français"})
+		 * @example Natural Code Develoment :
+		 * var t = wigii().txtDico;
+		 * wigii().form().tool('copy').label(t("l01","Create an invoice","l02","Créer une facture"));
+		 */
+		wigiiApi.txtDico = function(lang,label) {
+			var dico = undefined;
+			if($.isPlainObject(lang)) dico = lang;
+			else {
+				dico = {};
+				dico[lang] = label;
+				if(arguments.length>2) {
+					var i=2;
+					while(i<arguments.length) {
+						lang = arguments[i];
+						i++;
+						if(i<arguments.length) label = arguments[i];
+						else label = '';
+						i++;
+						dico[lang] = label;
+					}
+				}
+			}
+			return dico[wigiiApi.lang()];
 		};
 		
 		/**
