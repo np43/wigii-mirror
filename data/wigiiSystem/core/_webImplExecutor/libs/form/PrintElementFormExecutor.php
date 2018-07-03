@@ -45,6 +45,14 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 		$transS = ServiceProvider::getTranslationService();
 		$config = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
 		$elS = ServiceProvider::getElementService();
+		
+		/*lookup if a Print template is available else do normal print with detail renderer*/
+		$printTemplate= $config->m($p, $exec->getCrtModule())->Print->template;
+		if($printTemplate){
+			$printTemplatePath = ServiceProvider::getConfigService()->extractTemplatePathFromTemplate($printTemplate);
+			include($printTemplatePath);
+			return;	
+		}
 
 		$this->getDetailRenderer()->resetJsCodeAfterShow();
 		$idAnswer = $exec->getIdAnswer();
