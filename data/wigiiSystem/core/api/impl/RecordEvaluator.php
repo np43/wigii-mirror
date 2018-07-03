@@ -2539,6 +2539,45 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 	
 	/**
+	 * Extends the Element FieldList with some dynamically created matrix fields.
+	 * FuncExp signature: <code>createFormMatrix(fromRow,toRow,col1,col2,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fromRow: int. The start index from which to create the matrix row fields.
+	 * - Arg(1) toRow: int. The stop index to which to create the matrix row fields.
+	 * - Arg(2...) colI: string. The name of the matrix columns to be created.
+	 */
+	public function createFormMatrix($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<3) throw new FuncExpEvalException('createFormMatrix takes at least three arguments which are the fromRow index, toRow index and at least one column name', FuncExpEvalException::INVALID_ARGUMENT);
+		$fromRow = $this->evaluateArg($args[0]);
+		$toRow = $this->evaluateArg($args[1]);
+		$columns = array();
+		for($i = 2; $i<$nArgs;$i++) {
+			$columns[] = $this->evaluateArg($args[$i]);
+		}
+		$nCols = count($columns);
+		
+		$fe = $this->getFormExecutor();
+		if(!isset($fe)) throw new FuncExpEvalException('createFormMatrix can only be called in the scope of a Form lifecycle, make sure to call it in htmlExp or funcExp attributes of a configuration file', FuncExpEvalException::INVALID_STATE);
+		// extends Record FieldList with matrix fields (starting at row 2 as row 1 is already in the config file)
+		$rec = $fe->getRecord();
+		$fieldList = $rec->getFieldList();
+		for($i=$fromRow+1;$i<=$toRow;$i++) {
+			// creates row if doesn't exist
+			if(!$fieldList->doesFieldExist($columns[0].$i)) {
+				for($j=0;$j<$nCols;$j++) {
+					// clones field of first row and renames
+					$row1Field = $fieldList->getField($columns[$j].$fromRow);
+					$rowJField = clone $row1Field;
+					$rowJField->setFieldName($columns[$j].$i);
+					// adds new field to row
+					$fieldList->addField($rowJField);
+				}
+			}
+		}		
+	}
+	
+	/**
 	 * Saves a list of field values to a mapped list of fields into a specific element. 
 	 * The element can belong to another namespace and module.
 	 * If the target element doesn't exist, a new element in inserted.
