@@ -4536,6 +4536,7 @@ invalidCompleteCache();
 	 * Defines each action on which we need to not send other information before and after the specific action
 	 */
 	protected function shouldByPassHeader($action) {
+		$exec = ServiceProvider :: getExecutionService();
 		switch ($action) {
 			case "download" :
 			case "CKEditor" :
@@ -4555,11 +4556,15 @@ invalidCompleteCache();
 				//			case "CSVPretty":
 				return true;
 				break;
+            case "element":
+            	if($exec->getCrtParameters(0) == "template") return true;
+            	break;
 			default :
 				return false;
 		}
 	}
 	protected function shouldByPassFooter($action) {
+		$exec = ServiceProvider :: getExecutionService();
 		switch ($action) {
 			case "CKEditor" :
 			case "getNextElementInList" :
@@ -4569,6 +4574,9 @@ invalidCompleteCache();
 			case "exportAndDownload" :
 			case "wakeup":
 				return true;
+				break;
+			case "element":
+				if($exec->getCrtParameters(0) == "template") return true;
 				break;
 			default :
 				return false;
@@ -4588,7 +4596,7 @@ invalidCompleteCache();
                 return true;
                 break;
             case "element":
-                if($exec->getCrtParameters(0) == "print") return true;
+            	if($exec->getCrtParameters(0) == "print" || $exec->getCrtParameters(0) == "template") return true;
                 break;
             default :
                 return false;
@@ -10385,6 +10393,7 @@ onUpdateErrorCounter = 0;
 				if ($elementId != "multiple" && 
 				        ($exec->getCrtParameters(0) == "detail" || 
 						$exec->getCrtParameters(0) == "print" || 
+						$exec->getCrtParameters(0) == "template" || 
 						$exec->getCrtParameters(0) == "manageEmail" || 
 						$exec->getCrtParameters(0) == "addJournalItem" || 
 						$exec->getCrtParameters(0) == "edit" || 
@@ -10437,6 +10446,7 @@ onUpdateErrorCounter = 0;
 							$exec->getCrtParameters(0) != "addJournalItem" &&
 							$exec->getCrtParameters(0) != "copy" &&
 							$exec->getCrtParameters(0) != "print" &&
+							$exec->getCrtParameters(0) != "template" &&
 							$exec->getCrtParameters(0) == "setGroupsContainingElement" && !($this->evaluateConfigParameter($p, $exec, $configS->getParameter($p, $exec->getCrtModule(), "Element_Blocked_enableSharing"))=="1") )
 							){
 						$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
@@ -10632,6 +10642,7 @@ onUpdateErrorCounter = 0;
 							$state = addslashes($_POST["action"]);
 						$form->ResolveForm($p, $exec, $state);
 						break;
+					case "template" :
 					case "print" :
 					case "detail" :
 						if ($elementId == "multiple") {

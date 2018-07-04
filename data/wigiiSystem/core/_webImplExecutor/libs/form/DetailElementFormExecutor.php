@@ -335,7 +335,10 @@ class DetailElementFormExecutor extends FormExecutor {
 
 		//print
 		//use the same context for print, to use the same configuration
-		$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_printDetails\" href=\"".str_replace("//", '\/\/', SITE_ROOT."usecontext/".$exec->getCrtContext()."/__/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/print/".$element->getId())."\" target=\"_blank\" ><span class=\"glyphicon glyphicon-print\" aria-hidden=\"true\"></span> ".$transS->t($p, "printDetails")."</a>');");
+		$printTemplate= $config->m($p, $exec->getCrtModule())->Print->template;
+		$printActivityName = "print";
+		if($printTemplate) $printActivityName = "template"; //with printTemplate the header and footer is bypassed
+		$exec->addJsCode("$('#".$idAnswer."')$findSelector('<a class=\"H el_printDetails\" href=\"".str_replace("//", '\/\/', SITE_ROOT."usecontext/".$exec->getCrtContext()."/__/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/".$printActivityName."/".$element->getId())."\" target=\"_blank\" ><span class=\"glyphicon glyphicon-print\" aria-hidden=\"true\"></span> ".$transS->t($p, "printDetails")."</a>');");
 
 		//$exec->addJsCode("$('#elementDialogContent .tags').corner();");
 		//if(!$element->isSubElement()) $exec->addJsCode("$('#".$idAnswer."').parent().css('overflow','visible');");
