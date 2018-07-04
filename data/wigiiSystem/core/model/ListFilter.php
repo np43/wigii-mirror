@@ -157,9 +157,9 @@ class ListFilter extends Model
 		$fxb = TechnicalServiceProvider::getFuncExpBuilder();
 		$lxFxBuilder = TechnicalServiceProvider::getFieldSelectorLogExpFuncExpBuilder();
 		$args = array();
-		if(isset($this->fieldSelectorList)) $args[] = $fxb->fsl2fx($this->fieldSelectorList);
-		if(isset($this->fieldSelectorLogExp)) $args[] = $lxFxBuilder->logExp2funcExp($this->fieldSelectorLogExp); 
-		if(isset($this->fieldSortingKeyList)) $args[] = $fxb->fskl2fx($this->fieldSortingKeyList);
+		if(isset($this->fieldSelectorList)) $args[] = $fxb->fsl2fx($this->fieldSelectorList); else $args[] = null;
+		if(isset($this->fieldSelectorLogExp)) $args[] = $lxFxBuilder->logExp2funcExp($this->fieldSelectorLogExp); else $args[] = null;
+		if(isset($this->fieldSortingKeyList)) $args[] = $fxb->fskl2fx($this->fieldSortingKeyList); else $args[] = null;
 		if($this->isPaged()) {
 			$args[] = $this->getDesiredPageNumber();
 			$args[] = $this->getPageSize();

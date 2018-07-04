@@ -264,7 +264,12 @@ class WplToolbox
 				}
 			}
 			elseif(is_string($cfgAttribut->label)){
-				$returnValue->{'label'} = $cfgAttribut->label;
+				$loc_label = tryStr2Xml($cfgAttribut->label);
+				if($loc_label instanceof SimpleXMLElement) {
+					$returnValue->{'label'} = '';
+					simplexml_appendChild($returnValue->{'label'}, $loc_label);
+				}
+				else $returnValue->{'label'}= $loc_label;
 			}		
 			if(is_array($cfgAttribut->attributes)) {
 				foreach($cfgAttribut->attributes as $k => $v) {

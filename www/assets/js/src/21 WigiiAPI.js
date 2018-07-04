@@ -1244,7 +1244,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){
 								returnValue = $(textarea).ckeditor().val();
 							});							
-						} else {
+						} 
+						else if(self.formId()=='detailElement_form'){
+							returnValue = $('#'+self.fieldId()+' div.value').html();
+						}
+						else {
 							returnValue = $('#'+self.fieldId()+' :input').val();
 						}
 					}

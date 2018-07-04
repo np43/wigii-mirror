@@ -1676,6 +1676,69 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			$p->setAdaptiveWigiiNamespace(false);
 		}
 		return $returnValue;
+	}
+	
+	/**
+	 * Manages a drop-down as a list of tags defined by the user. The drop-down should have allowNewValues=1<br/>
+	 * FuncExp signature : <code>cfgAttrTags(field, groupLogExp, logExp)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) field: String|FieldSelector. The field of type Attributs or MultipleAttributs on which to manage values as tags.
+	 * - Arg(1) inGroupLogExp: LogExp. Group log exp in which to search for element values
+	 * - Arg(2) logExp: LogExp. Optional logExp used to filter the matching elements
+	 * @example 
+	 * <tags type="MultipleAttributs" require="0" expand="1" chosen="1" allowNewValues="1" displayAsTag="1" isInLine="1">
+	 * 		<label_l01>Tags</label_l01><label_l02>Etiquettes</label_l02>
+	 *		<attribute>none</attribute>
+	 *		<attributeExp funcExp='cfgAttrTags(tags,lxInAllGroups("MyNamespace","MyModule"))'/>						
+	 * </tags>
+	 * To automatically clear the cache on element save, add an onSaveFuncExp hidden field :
+	 * <onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='ctlSeq(								
+	 *		ctlClearCache("cfgAttributeExp",cfgAttrTags(tags,lxInAllGroups("MyNamespace","MyModule"))), 
+	 *		logTrue())' />	 
+	 */
+	public function cfgAttrTags($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException('The cfgAttrTags function takes at least two arguments which are the field and a group log exp', FuncExpEvalException::INVALID_ARGUMENT);
+		$cacheKey='cfgAttrTags('.md5(fx2str($args[0]).','.fx2str($args[1]).','.($nArgs>2?fx2str($args[2]):'NULL')).')';
+		
+		$fs = $args[0];
+		if(!($fs instanceof FieldSelector)) $fs = fs($this->evaluateArg($args[0]));		
+		$inGroupLogExp = $this->evaluateArg($args[1]);		
+		if($nArgs>2) $logExp = $this->evaluateArg($args[2]);
+		else $logExp = null;
+		
+		// enables adaptive wigii namespace on principal and records original namespace
+		$p = $this->getPrincipal();
+		$adaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
+		if(!$adaptiveWigiiNamespace) {
+			$origNS = $p->getWigiiNamespace();
+			$p->setAdaptiveWigiiNamespace(true);
+		}
+		
+		// executes dataflow
+		$returnValue = $this->getDataFlowService()->processDataSource($p, elementPList($inGroupLogExp,lf(fsl($fs),$logExp)),
+				dfasl(
+					dfas("CallbackDFA", "setProcessDataChunkCallback", function($elementP,$callbackDFA) use($fs) {
+						$val = $elementP->getDbEntity()->getFieldValue($fs->getFieldName());
+						if(is_array($val)) {
+							foreach($val as $v) {								
+								if(!empty($v)) $callbackDFA->writeResultToOutput($this->getFuncExpBuilder()->cfgAttribut($v));
+							}
+						}
+						elseif(!empty($val)) $callbackDFA->writeResultToOutput($this->getFuncExpBuilder()->cfgAttribut($val));
+					}),
+					dfas("FilterDuplicatesAndSortDFA",
+							"setObjectClass", 'cfgAttribut',
+							"setSortOrder", 1
+							),
+					dfas("CfgAttribut2XmlDFA")
+				), true, null, $cacheKey);
+		// binds back to original wigii namespace if needed
+		if(!$adaptiveWigiiNamespace) {
+			$p->bindToWigiiNamespace($origNS);
+			$p->setAdaptiveWigiiNamespace(false);
+		}
+		return $returnValue;
 	}	
 
 	/**
