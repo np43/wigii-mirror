@@ -1038,6 +1038,22 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	}
 
 	/**
+	 * Returns the value of an attribute into the current data flow context.
+	 * FuncExp signature is: <code>dfAttr(key)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) key: The key of the attribute in the data flow context for which to get the value.
+	 * @return Any the attribute value or null if not defined
+	 * @throws FuncExpEvalException::INVALID_STATE if data flow context is not accessible
+	 */
+	public function dfAttr($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$dataFlowContext = $this->getFuncExpVMServiceProvider()->getDataFlowContext();
+		if(!isset($dataFlowContext)) throw new FuncExpEvalException('DataFlowContext is not accessible',FuncExpEvalException::INVALID_STATE);
+		if($nArgs < 1) throw new FuncExpEvalException('dfAttr takes at least one argument which is the data flow context attribute key');
+		return $dataFlowContext->getAttribute($this->evaluateArg($args[0]));
+	}
+	
+	/**
 	 * Connects an array as a dataflow source.
 	 * FuncExp signature is: <code>array2df(arr)</code><br/>
 	 * Where arguments are :

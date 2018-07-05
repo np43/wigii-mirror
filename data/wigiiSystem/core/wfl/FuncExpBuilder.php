@@ -1204,7 +1204,7 @@ class FuncExpBuilder {
 	
 	/**
 	 * Fetches an existing element or sub element in the database and dumps it into a Data flow
-	 * @param int $elementId the element id used to fetch the element
+	 * @param int|LogExp $elementId the element id used to fetch the element or a LogExp to search the element based on a business key
 	 * @param FieldSelectorList $fieldSelectorList an optional FieldSelectorList to filter the fields that are fetched.
 	 * @param ConfigSelector|LogExp|String $configSelector optional parameter. If set, then defines the configuration of the element or the root element in case of subitems.
 	 * If LogExp then should be the group selection log exp used to define the configuration,
@@ -1214,14 +1214,27 @@ class FuncExpBuilder {
 	public function elementP($elementId, $fieldSelectorList=null, $configSelector=null) {
 		if($configSelector instanceof LogExp) $configSelector = ConfigSelector::createInstanceForGroupConfig($configSelector);
 		elseif(is_string($configSelector)) $configSelector = ConfigSelector::createInstanceForWigiiNamespaceConfig($configSelector);
-
-		$returnValue = ServiceProvider::getExclusiveAccessObject('ElementPDataFlowConnector');
-		$returnValue->setElementId($elementId);
-		$returnValue->setFieldSelectorList($fieldSelectorList);
-		$returnValue->setConfigSelector($configSelector);
-		if($elementId instanceof FuncExpParameter) $elementId->registerSetterMethod('setElementId', $returnValue);
-		if($fieldSelectorList instanceof FuncExpParameter) $fieldSelectorList->registerSetterMethod('setFieldSelectorList', $returnValue);
-		if($configSelector instanceof FuncExpParameter) $configSelector->registerSetterMethod('setConfigSelector', $returnValue);		
+		
+		// CWE 05.07.2018 supports fetching an element based on a business key
+		if($elementId instanceof LogExp) {
+			// if no ConfigSelector, creates one on current WigiiNamespace and Module
+			if(!isset($configSelector)) $configSelector = ConfigSelector::createInstanceForCurrentWigiiNamespace();
+			//fetches element based on LogExp in ConfigSelector space
+			$returnValue = $this->elementPList((is_null($configSelector->getGroupLogExp())?
+					$this->lxInAllGroups($configSelector->getWigiiNamespaceName(), $configSelector->getModuleName()):
+					$this->lxInGR($configSelector->getGroupLogExp())
+				),$this->lf($fieldSelectorList,$elementId,null,1,1));
+		}
+		// fetches element based on ID
+		else {	
+			$returnValue = ServiceProvider::getExclusiveAccessObject('ElementPDataFlowConnector');
+			$returnValue->setElementId($elementId);
+			$returnValue->setFieldSelectorList($fieldSelectorList);
+			$returnValue->setConfigSelector($configSelector);
+			if($elementId instanceof FuncExpParameter) $elementId->registerSetterMethod('setElementId', $returnValue);
+			if($fieldSelectorList instanceof FuncExpParameter) $fieldSelectorList->registerSetterMethod('setFieldSelectorList', $returnValue);
+			if($configSelector instanceof FuncExpParameter) $configSelector->registerSetterMethod('setConfigSelector', $returnValue);
+		}
 		return $returnValue;
 	}
 	

@@ -891,7 +891,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * See method 'elementP' in FuncExpBuilder class<br/>
 	 * FuncExp signature : <code>elementP(elementId, fieldSelectorList=null, configSelector=null)</code><br/>
 	 * Where arguments are :
-	 * - Arg(0) elementId: int. The element id used to fetch the element
+	 * - Arg(0) elementId: int|LogExp. The element id used to fetch the element or a LogExp to search the element based on a business key
 	 * - Arg(1) fieldSelectorList: FieldSelectorList. An optional FieldSelectorList to filter the fields that are fetched.
 	 * - Arg(2) configSelector: ConfigSelector|LogExp|String. Optional parameter. If set, then defines the configuration of the element or the root element in case of subitems.
 	 * If LogExp then should be the group selection log exp used to define the configuration,

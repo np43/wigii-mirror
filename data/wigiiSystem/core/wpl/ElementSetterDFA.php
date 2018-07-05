@@ -358,8 +358,17 @@ class ElementSetterDFA extends ElementDFAWithFuncExpVM
 						else {
 							// evaluates func exp
 						    $val = (isset($fx)?$this->evaluateFuncExp($fx):null);
+						    // manages MultipleAttributs array
+						    if($dt instanceof MultipleAttributs) {
+						    	if(is_null($val) || is_array($val)) {
+						    		$element->setFieldValue($val, $fieldName);
+						    	}
+						    	else {
+						    		$element->addValueToField($val, $fieldName);
+						    	}
+						    }
 							// sets value in element					
-							if(is_array($val) && is_null($subFieldName)) {
+							elseif(is_array($val) && is_null($subFieldName)) {
 								// if array, then checks for the presence of subfields
 								// if field has subfields, then assumes that the keys of the array are the subfields
 								// else stores the array directly as the field value.						

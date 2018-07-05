@@ -134,7 +134,8 @@ class ObjectDFAWithFuncExpVM implements DataFlowActivity
 			$this->vm = $this->getFuncExpVM($p, $this->getFuncExpVMClassName(), $eltEval);
 			// configures the vm
 			if(isset($this->vmModules)) $this->vm->useModules($this->vmModules);
-			
+			// injects current DataFlowContxt
+			$this->vm->getFuncExpVMServiceProvider()->setDataFlowContext($dataFlowContext);
 			
 			// if stdClass
 			if($data instanceof stdClass) {

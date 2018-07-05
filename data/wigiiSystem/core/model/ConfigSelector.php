@@ -45,7 +45,11 @@ class ConfigSelector extends Model
 		$returnValue->setModuleName(null);	
 		return $returnValue;
 	}
-	
+	public static function createInstanceForCurrentWigiiNamespace() {
+		$exec = ServiceProvider::getExecutionService();
+		$returnValue = ConfigSelector::createInstanceForWigiiNamespaceConfig($exec->getCrtWigiiNamespace()->getWigiiNamespaceName(), $exec->getCrtModule()->getModuleName());
+		return $returnValue;
+	}
 	public function getWigiiNamespaceName() {
 		return $this->wigiiNamespaceName;
 	}

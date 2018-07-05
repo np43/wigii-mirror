@@ -1598,7 +1598,7 @@ function elementPList($inGroupLogExp, $listFilter=null) {
 
 /**
  * Fetches an existing element or sub element in the database and dumps it into a Data flow
- * @param int $elementId the element id used to fetch the element
+ * @param int|LogExp $elementId the element id used to fetch the element or a LogExp to search the element based on a business key
  * @param FieldSelectorList $fieldSelectorList an optional FieldSelectorList to filter the fields that are fetched.
  * @param ConfigSelector|LogExp|String $configSelector optional parameter. If set, then defines the configuration of the element or the root element in case of subitems.
  * If LogExp then should be the group selection log exp used to define the configuration,

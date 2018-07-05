@@ -139,6 +139,9 @@ class ElementDFAWithFuncExpVM implements DataFlowActivity
 			$this->vm = $this->getFuncExpVM($p, $eltEval, $this->getFuncExpVMClassName());
 			// configures the vm
 			if(isset($this->vmModules)) $this->vm->useModules($this->vmModules);
+			// injects current DataFlowContxt
+			$this->vm->getFuncExpVMServiceProvider()->setDataFlowContext($dataFlowContext);
+			// injects any pre-defined variables
 			if(!empty($this->variables) && is_array($this->variables)) {
 				$vmCtx = $this->vm->getFuncExpVMServiceProvider()->getFuncExpVMContext();
 				foreach($this->variables as $k => $v) {

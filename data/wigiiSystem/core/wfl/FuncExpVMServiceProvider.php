@@ -181,6 +181,21 @@ class FuncExpVMServiceProvider
 		$this->getFuncExpVM()->setSingletonInScope('ExecutionSink', $executionSink);
 	}
 	
+	/**
+	 * Returns the current DataFlowContext instance that can be used get stateful data related to the current executing DataFlow
+	 * @return DataFlowContext the data flow context instance or null if none is accessible in this scope
+	 */
+	public function getDataFlowContext() {
+		return $this->getFuncExpVM()->getSingletonInScope('DataFlowContext');
+	}
+	/**
+	 * Sets a DataFlowContext instance to be used in current scope.
+	 * @param DataFlowContext $dataFlowContext
+	 */
+	public function setDataFlowContext($dataFlowContext) {
+		$this->getFuncExpVM()->setSingletonInScope('DataFlowContext', $dataFlowContext);
+	}
+	
 	// service creation
 	
 	/**
