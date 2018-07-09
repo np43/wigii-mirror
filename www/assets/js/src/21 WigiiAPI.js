@@ -1274,7 +1274,29 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				return returnValue;
 			};
-			
+			/**
+			 * Gets the DB value of the field if known, else returns the translated value
+			 * @returns String|Array the field db value or an array of field db value if FieldHelper is attached to a list
+			 */
+			self.getDbValue = function() {
+				var returnValue = undefined;
+				// list iteration
+				if(self.list) {
+					returnValue=[];
+					var iterator = self.getIterator();
+					var actions = function(){returnValue.push(iterator.getDbValue());};
+					self.iterate(iterator,actions);
+				}
+				// single element implementation
+				else {
+					returnValue = self.$.find('div.value').attr('data-wigii-dbvalue');
+					if(self.dataType()=='MultipleAttributs' && returnValue!='' && returnValue!=null) {
+						returnValue = returnValue.split(',');
+					}
+					else if(returnValue == '' || returnValue==null) returnValue = self.getValue();					
+				}
+				return returnValue;
+			};
 			/**
 			 * sum the numeric value of the fields
 			 * @returns Float the numeric field value or an array of numeric field value if FieldHelper is attached to a list
@@ -1607,6 +1629,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				return self.field(fieldName).getNumValue();
 			};
+			/**
+			 * Get wigii field db value
+			 * @param String fieldName the field selector
+			 * @return String db value of the field
+			 */
+			self.dbVal = function (fieldName){
+				return self.field(fieldName).getDbValue();
+			};
 			
 			/**
 			 * update the value of a wigii numeric field to a ceiled value
@@ -1720,8 +1750,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			
 			/**
-			 * Returns a ButtHelper on a standard Wigii toolbar
+			 * Returns a ButtonHelper on a standard Wigii toolbar or creates a new custom button
 			 * @param String name the name of the standard Wigii tool like 'edit','copy','status','organize','delete','feedback','link' or 'sendLink','print' or 'printDetails'
+			 * or a new custom tool name (without any space)
+			 * @example wigii().form().tool('createInvoice').label("Créer facture").click(function(){...}).$.css("background-color","green")
+			 * will create a new custom tool "el_createInvoice" with label "Créer facture" and custom on click function and css
 			 * @return wigiiApi.ButtonHelper only if current form is an element detail.
 			 */
 			self.tool = function(name) {
@@ -1736,6 +1769,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					else {
 						btn = $('#elementDialog div.T .el_'+mappedName);
 						if(btn.length==0) btn = $('#elementDialog').parent().find('div.ui-dialog-titlebar .el_'+mappedName);
+					}
+					// creates button if it does not exist
+					if(btn.length==0) {
+						$('#elementDialog div.T > div').last().after('<div class="H el_'+mappedName+'"></div>');
+						btn = $('#elementDialog div.T .el_'+mappedName);
 					}
 					self.context.buttons[name] = btn.wigii('ButtonHelper');
 				}

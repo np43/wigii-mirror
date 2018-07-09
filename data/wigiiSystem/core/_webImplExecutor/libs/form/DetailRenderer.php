@@ -357,7 +357,16 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			$style = preg_replace('/width: 100%; max-width:(.*)px/', "", $style);
 			$valueWidth =null;
 		}
-		$rm->put('<div class="'.$class.'" style="'.$style.'" >');
+		$dataAttributes='';
+		if($dataTypeName=='Attributs') {
+			$dataAttributes='data-wigii-dbvalue="'.$rm->formatValueToPreventInjection($rm->getRecord()->getFieldValue($field->getFieldName())).'"';
+		}	
+		elseif($dataTypeName=='MultipleAttributs') {
+			$dbValue = $rm->getRecord()->getFieldValue($field->getFieldName());
+			if(is_array($dbValue)) $dbValue = implode(',',$dbValue);
+			$dataAttributes='data-wigii-dbvalue="'.$rm->formatValueToPreventInjection($dbValue).'"';
+		}	
+		$rm->put('<div class="'.$class.'" style="'.$style.'" '.$dataAttributes.'>');
 		if($dataType!= null && $dataTypeName!="Links" &&
 			!$rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName()) &&
 			!($dataTypeName=="Emails" && $rm->getRecord()->getFieldValue($field->getFieldName(), "proofStatus")==Emails::PROOF_STATUS_DELETED)
