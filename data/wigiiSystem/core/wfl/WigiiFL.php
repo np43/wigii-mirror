@@ -319,7 +319,18 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		if($nArgs < 1) throw new FuncExpEvalException('The fs_e function takes one argument', FuncExpEvalException::INVALID_ARGUMENT);
 		return $this->getFuncExpBuilder()->fs_e($this->evaluateArg($args[0]));
 	}
-
+	
+	/**
+	 * return the value after evaluation of a field selector
+	 * FuncExp signature : <code>fsVal(fieldSelector)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldSelector: The field existing in the Element
+	 * @return mixed, the value of the field
+	 */
+	public function fsVal($args) {
+		return $this->evaluateArg($args[0]);
+	}
+	
 	/**
 	 * Creates a FieldSelectorList based on an array of FieldSelectors
 	 * See method 'fsl' in FuncExpBuilder class.

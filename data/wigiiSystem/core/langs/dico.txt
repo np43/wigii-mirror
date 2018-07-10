@@ -784,6 +784,11 @@ noDataToImport:No data to import.:Aucune données à importer.:::::
 elementsImported:#-elements# imported.:#-elements# importés.:
 csvFile:CSV file:Fichier CSV:
 
+trackHistoryChanged:changed:a modifié:::::::::
+trackHistoryto:to:à:::::::::
+trackHistoryValue:value:la valeur:::::::::
+trackHistoryBatchChanged:batch changed:a modifié en batch:::::::::
+
 importInInvalidHeaders:Invalid headers:En-tête invalides:::::::
 importErrorOnLines:Error on lines:Erreurs aux lignes:::::::
 invalidData:Invalid datas:Données invalides:::::::

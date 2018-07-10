@@ -2979,7 +2979,7 @@ class RecordEvaluator implements FuncExpEvaluator
 					$fieldLabel = $this->getTrm()->t($fs->getFieldName(), $this->getRecord()->getFieldList()->getField($fs->getFieldName())->getXml());
 				}
 				else {
-					$fieldLabel = 'value';
+					$fieldLabel = $this->getTrm()->t("trackHistoryValue");
 				}
 	
 				// removes html from value and field label if not an html area
@@ -2995,10 +2995,10 @@ class RecordEvaluator implements FuncExpEvaluator
 				}
 	
 				if($isMultipleEdit) {
-					$value = "batch changed $fieldLabel to: ".$value;
+					$value = $this->getTrm()->t("trackHistoryBatchChanged")." $fieldLabel ".$this->getTrm()->t("trackHistoryto").": ".$value;
 				}
 				else {
-					$value = "changed $fieldLabel to: ".$value;
+					$value = $this->getTrm()->t("trackHistoryChanged")." $fieldLabel ".$this->getTrm()->t("trackHistoryto").": ".$value;
 				}
 	
 				if($isJournal) {
