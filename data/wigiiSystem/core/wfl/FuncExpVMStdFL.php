@@ -2981,4 +2981,25 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    if($returnValue===false) return false;
 	    else return ($returnValue==(strlen($str)-strlen($token)));
 	}
+	/**
+	 * Checks if a given string contains a given token appears in a given string starts with a given token. By default is case insensitive.
+	 * FuncExp signature: <code>strContains(str, token, caseSensitive=false)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str: String. The string in which to search the token.
+	 * - Arg(1) token: String. The token to be searched for.
+	 * - Arg(2) caseSensitive: Boolean. Optional flag. If true, string comparison is case sensitive. Defaults to false.
+	 * @return Boolean true if string contains given token else false.
+	 */
+	public function strContains($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException('strContains function takes at least two arguments which are the string and the token', FuncExpEvalException::INVALID_ARGUMENT);
+		$str = $this->evaluateArg($args[0]);
+		$token = $this->evaluateArg($args[1]);
+		if($nArgs>2) $caseSensitive = $this->evaluateArg($args[2]);
+		else $caseSensitive = false;
+		if($caseSensitive) $returnValue = strpos($str,$token);
+		else $returnValue = stripos($str,$token);
+		if($returnValue===false) return false;
+		else return true;
+	}
 }

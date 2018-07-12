@@ -2538,6 +2538,24 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}
 	
 	/**
+	 * Queues some js code to be executed on client side when sent back.
+	 * FuncExp signature : <code>sysAddJsCode(jsCode)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) jsCode: String. Some valid js code to be executed on client side
+	 *
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 * @return String the ExecutionService ID Answer
+	 */
+	public function sysAddJsCode($args) {
+		$this->assertFxOriginIsNotPublic();
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs > 0) {
+			$exec = ServiceProvider::getExecutionService();
+			$exec->addJsCode($this->evaluateArg($args[0]));
+		}
+	}
+	
+	/**
 	 * Returns an array containing the IDs of the elements currently beeing selected
 	 * FuncExp signature : <code>sysMultipleSelection()</code><br/>
 	 * 

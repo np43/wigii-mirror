@@ -68,6 +68,14 @@ class EditElementFormExecutor extends FormExecutor {
 		$this->additionalText = null;
 		return $temp;
 	}
+	
+	private $ignoreListRefresh;
+	public function setIgnoreListRefresh($bool) {
+		$this->ignoreListRefresh = $bool;
+	}
+	protected function getIgnoreListRefresh() {
+		return $this->ignoreListRefresh;
+	}
 
 	private $rootPincipal; //this is needed for the auto sharing to some groups defined in configuration
 	public function setRootPrincipal($rootP){ $this->rootPrincipal = $rootP; }
@@ -256,7 +264,7 @@ class EditElementFormExecutor extends FormExecutor {
 		$exec->addJsCode("if(checkOpenItemTemp_url!=null){update(checkOpenItemTemp_url, true); checkOpenItemTemp_url=null;}");
 	}
 	protected function reloadAfterCheckedRecord($p, $exec){
-		if($exec->getIdAnswer()!="mainDiv"){
+		if($exec->getIdAnswer()!="mainDiv" && !$this->getIgnoreListRefresh()){
 			if($this->getRecord()->isSubElement()){
 				$rootElementId = $this->getWigiiExecutor()->getConfigurationContext()->getCurrentSubElementPathFromRoot()->getFirstLinkSelector()->getOwnerElementId();
 				$exec->addJsCode("updateElementInList('" . $rootElementId . "');");

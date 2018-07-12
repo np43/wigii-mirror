@@ -1140,6 +1140,18 @@ class RecordEvaluator implements FuncExpEvaluator
 		}
 		$this->setIgnoreReturnValue(true);
 	}
+	
+	/**
+	 * Instructs the attached FormExecutor to ignore refreshing the list view with the updated or inserted element. 
+	 * This is useful if manually inserting or updating elements into a module which is not currently displayed.
+	 * FuncExp signature : <code>ctlIgnoreListRefresh()</code><br/>
+	 * @throws RecordException::INVALID_STATE if no FormExecutor is attached to current element
+	 */
+	public function ctlIgnoreListRefresh($args) {
+		$formExec = $this->getFormExecutor();
+		if($formExec instanceof EditElementFormExecutor) $formExec->setIgnoreListRefresh(true);
+		else throw new RecordException('no FormExecutor attached to current RecordEvaluator',RecordException::INVALID_STATE);
+	}
 
 	/**
 	 * Evaluates first argument, if true, then evaluates second argument and returns the result,

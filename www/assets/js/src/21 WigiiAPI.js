@@ -1579,6 +1579,21 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			
 			/**
+			 * Returns the ID of the current element
+			 * @return String the element ID
+			 */
+			self.elementId = function() {
+				var sel = $('#elementDialog div.T');
+				var elementId = '';
+				if(sel.length>0) elementId=sel.attr('href').replace('#','');
+				if(elementId=='') {
+					sel = self.$.find('input[name=elementId]');
+					if(sel.length>0) elementId = sel.val();
+				}
+				return elementId;
+			};
+			
+			/**
 			 * Selects a field in the Wigii Form and returns a FieldHelper on it (or undefined if not found)
 			 * @param String fieldName the field selector
 			 * @return FieldHelper the FieldHelper instance attached to the selected field or undefined if not found

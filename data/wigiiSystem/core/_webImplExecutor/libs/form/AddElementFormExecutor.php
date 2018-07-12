@@ -54,7 +54,7 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 	 */
 	protected function getCurrentSelectedGroup($p,$exec) {
 		$elementListContext = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
-		if ($elementListContext->getGroupPList()->count() == 1) {
+		if (!is_null($elementListContext->getGroupPList()) && $elementListContext->getGroupPList()->count() == 1) {
 			$ids = $elementListContext->getGroupPList()->getIds();
 			return reset($ids);
 		}
@@ -223,7 +223,7 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 	}
 
 	protected function reloadAfterCheckedRecord($p, $exec){
-		$exec->addJsCode("addElementInList('" . $this->getRecord()->getId() . "');");
+		if(!$this->getIgnoreListRefresh()) $exec->addJsCode("addElementInList('" . $this->getRecord()->getId() . "');");
 		//invalid the cache of the list
 		$ids = $this->getCurrentSelectedGroup($p,$exec);
 		if($ids) $exec->invalidCache($p, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $ids);		
