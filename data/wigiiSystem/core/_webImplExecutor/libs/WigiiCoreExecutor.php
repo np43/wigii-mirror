@@ -4558,6 +4558,7 @@ invalidCompleteCache();
 				break;
             case "element":
             	if($exec->getCrtParameters(0) == "template") return true;
+            	else return false;
             	break;
 			default :
 				return false;
@@ -4577,6 +4578,7 @@ invalidCompleteCache();
 				break;
 			case "element":
 				if($exec->getCrtParameters(0) == "template") return true;
+				else return false;
 				break;
 			default :
 				return false;
@@ -4597,6 +4599,7 @@ invalidCompleteCache();
                 break;
             case "element":
             	if($exec->getCrtParameters(0) == "print" || $exec->getCrtParameters(0) == "template") return true;
+            	else return false;
                 break;
             default :
                 return false;
