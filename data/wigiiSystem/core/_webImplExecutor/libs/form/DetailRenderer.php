@@ -197,6 +197,22 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 					if(!empty($htmlExp)) $rm->put($htmlExp);
 				}
 			}
+			//add any JsCode if defined:
+			if((string)$fieldXml["jsCode"]!=null){
+			    $this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCode"]));
+			}
+			if((string)$fieldXml["jsCodeInDetail"]!=null){
+			    $jsCode = str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCodeInDetail"]);
+			    $this->addJsCodeAfterShow($jsCode);
+			}
+			//add any dynamically generated JsCode if defined:
+			if((string)$fieldXml["jsCodeExp"]!=null){
+			    $this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCodeExp"]));
+			}
+			if((string)$fieldXml["jsCodeInDetailExp"]!=null){
+			    $jsCode = str_replace('$$idForm$$', $this->getDetailId(), (string)$fieldXml["jsCodeInDetailExp"]);
+			    $this->addJsCodeAfterShow($jsCode);
+			}
 			return;
 		} else if($fieldXml["groupEnd"]=="1"){
 			//we need to take the getCrtField as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique

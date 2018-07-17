@@ -1480,6 +1480,42 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 	
 	/**
+	 * Returns the current selected group name, ID or object
+	 * FuncExp signature : <code>cfgCurrentGroup(returnAttribute=groupname|id|group, silent=false)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) returnAttribute: String. The name of the group attribute to return. Defaults to groupname. If 'group' then returns Group object.
+	 * - Arg(1) silent: Boolean. If true, then if current group cannot be retrieved, then no Exception is thrown, but null is returned instead, else Exception is thrown as usual. Defaults to no silent (false).
+	 * @return String|Int|Group
+	 * @throws ServiceException INVALID_STATE if Wigii is not capable to return a current selected group name in the calling context.
+	 */
+	public function cfgCurrentGroup($args) {
+	    $this->debugLogger()->logBeginOperation('cfgCurrentGroup');
+	    $nArgs = $this->getNumberOfArgs($args);
+	    $returnAttribute = 'groupname';
+	    if($nArgs > 0) $returnAttribute = $this->evaluateArg($args[0]);
+	    $silent = false;
+	    if($nArgs > 1) $silent = ($this->evaluateArg($args[1]) == true);
+	    
+	    // checks if current FormExecutor is a DetailGroupFormExecutor
+	    if($this->getFormExecutor() instanceof DetailGroupFormExecutor) {
+	        $returnValue = $this->getFormExecutor()->getGroupP();
+	        if(isset($returnValue)) $returnValue = $returnValue->getDbEntity();
+	    }	    
+	    
+	    $this->debugLogger()->logEndOperation('cfgCurrentGroup');
+	    if(is_null($returnValue)) {
+	        if($silent) return null;
+	        else {
+	            throw new ServiceException("Not able to evaluate current group", ServiceException::INVALID_STATE);
+	        }
+	    }
+	    else {
+	        if($returnAttribute == 'group') return $returnValue;
+	        else return $returnValue->getAttribute($returnAttribute);
+	    }
+	}
+	
+	/**
 	 * Returns the XML configuration of a Field in the Record
 	 * FuncExp signature : <code>cfgFieldXml(fieldName, attribute=null)</code><br/>
 	 * Where arguments are :

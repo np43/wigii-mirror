@@ -256,6 +256,21 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 					if(!empty($htmlExp)) $rm->put($htmlExp);
 				}
 			}
+			
+			//add any JsCode if defined:
+			if((string)$fieldXml["jsCode"]!=null){
+			    $this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getFormId(), (string)$fieldXml["jsCode"]));
+			}
+			if((string)$fieldXml["jsCodeInForm"]!=null){
+			    $this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getFormId(), (string)$fieldXml["jsCodeInForm"]));
+			}
+			//add any dynamically generated JsCode if defined:
+			if((string)$fieldXml["jsCodeExp"]!=null){
+			    $this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getFormId(), (string)$fieldXml["jsCodeExp"]));
+			}
+			if((string)$fieldXml["jsCodeInFormExp"]!=null){
+			    $this->addJsCodeAfterShow(str_replace('$$idForm$$', $this->getFormId(), (string)$fieldXml["jsCodeInFormExp"]));
+			}
 			return;
 		} else if($fieldXml["groupEnd"]=="1"){
 			//we need to take the getCrtField as it might be different to the current fieldName. Current fieldName is numeroted as fields must be unique

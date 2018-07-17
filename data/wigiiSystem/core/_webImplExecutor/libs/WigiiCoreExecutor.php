@@ -5230,15 +5230,8 @@ crtLang = '" . $transS->getLanguage() . "';
 				$totalWidth = 850;
 				$labelWidth = 200;
 				
-				/*
-				if($isFromGroupPanel){
-					$this->setWorkzoneViewDocked($this->isWorkzoneViewDocked($workingModuleName));
-				}
-                */
-				
-				$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupDetail"), $exec->getCrtModule());
+				$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupDetail"), $groupP->getDbEntity()->getModule());
 
-				//$this->throwEvent()->readElement(PWithElement::createInstance($p, $element));
 				$form = $this->createDetailGroupFormExecutor($groupP, $groupEditRec, "detailGroup_form", null);
 				$form->setCorrectionWidth(43);
 

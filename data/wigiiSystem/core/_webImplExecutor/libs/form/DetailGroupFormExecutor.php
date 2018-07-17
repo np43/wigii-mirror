@@ -29,7 +29,7 @@ class DetailGroupFormExecutor extends FormExecutor {
 
 	private $groupP;
 	protected function setGroupP($groupP){ $this->groupP = $groupP; }
-	protected function getGroupP(){ return $this->groupP; }
+	public function getGroupP(){ return $this->groupP; }
 
 	public static function createInstance($wigiiExecutor, $groupP, $record, $formId, $submitUrl){
 		$fe = new self();
@@ -182,6 +182,8 @@ class DetailGroupFormExecutor extends FormExecutor {
 		$this->getTrm()->displayRemainingDetails("historicOfObject");
 		$this->getTrm()->enableHTMLPurifier();
 		$this->getTrm()->displayRemainingDetails();
+		
+		$exec->addJsCode($this->getDetailRenderer()->getJsCodeAfterShow());
 	}
 }
 

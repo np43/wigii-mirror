@@ -222,16 +222,19 @@ class TemplateRecordManager extends Model {
 	 */
 	public function getFuncExpEvaluator($p, $rec) {
 		if(!isset($rec)) throw new ServiceProviderException('record cannot be null', ServiceProviderException::INVALID_ARGUMENT);
+		// extracts attached FormExecutor
+		$formExec = $this->getFormRenderer();
+		if(isset($formExec)) $formExec = $formExec->getFormExecutor();
+		if(!isset($formExec)) $formExec = $this->getFormExecutor();	
+		
 		// gets RecordEvaluator
 		if($rec instanceof Element) $evaluatorClassName = (string)$this->getConfigService()->getParameter($p, $rec->getModule(), "Element_evaluator");
+		elseif($formExec instanceof DetailGroupFormExecutor && !is_null($formExec->getGroupP())) $evaluatorClassName = (string)$formExec->getWigiiExecutor()->getConfigurationContext()->getParameter($p, $formExec->getGroupP()->getDbEntity()->getModule(), "Element_evaluator");
 		else $evaluatorClassName = null;
 		if(empty($evaluatorClassName)) $evaluatorClassName = (string)$this->getConfigService()->getParameter($p, $this->getExecutionService()->getCrtModule(), "Element_evaluator");
 		$evaluator = ServiceProvider::getRecordEvaluator($p, $evaluatorClassName);
 		// injects the context
-		$evaluator->setContext($p, $rec);
-		$formExec = $this->getFormRenderer();		
-		if(isset($formExec)) $formExec = $formExec->getFormExecutor();
-		if(!isset($formExec)) $formExec = $this->getFormExecutor();	
+		$evaluator->setContext($p, $rec);		
 		if(isset($formExec)) $evaluator->setFormExecutor($formExec);
 		// gets vm
 		$returnValue = ServiceProvider::getFuncExpVM($p, $evaluator);

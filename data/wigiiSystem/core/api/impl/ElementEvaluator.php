@@ -550,6 +550,7 @@ class ElementEvaluator extends RecordEvaluator
 	 * @throws ServiceException INVALID_STATE if Wigii is not capable to return a current selected group name in the calling context.
 	 */
 	public function cfgCurrentGroup($args) {
+	    if(!($this->getElement() instanceof Element)) return parent::cfgCurrentGroup($args);
 		$this->debugLogger()->logBeginOperation('cfgCurrentGroup');
 		$nArgs = $this->getNumberOfArgs($args);
 		$returnAttribute = 'groupname';
@@ -557,7 +558,7 @@ class ElementEvaluator extends RecordEvaluator
 		$silent = false;
 		if($nArgs > 1) $silent = ($this->evaluateArg($args[1]) == true);
 		
-		// checks element dynamic attribute 'cfgCurrentGroup' and returns its value if exists
+		// checks element dynamic attribute 'cfgCurrentGroup' and returns its value if exists		
 		$cfgCurrentGroup = $this->getElement()->getDynamicAttribute('cfgCurrentGroup');
 		if(isset($cfgCurrentGroup)) {
 			$returnValue = $cfgCurrentGroup->getValue();
