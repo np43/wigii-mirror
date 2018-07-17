@@ -383,8 +383,8 @@ class ExecutionServiceImpl implements ExecutionService {
 			$this->setCrtParameters(array_slice($crtRequest, $i++));
 			$this->setCrtRequest(implode(ExecutionServiceImpl::paramSeparator, $crtRequest));
 
-			// CWE 24.05.2018: activates adaptive wigii namespace selection if module is not admin			
-			if(!$this->getCrtModule()->isAdminModule() && $p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->setAdaptiveWigiiNamespace(true);
+			// CWE 17.07.2018: activates adaptive wigii namespace selection on calculated roles			
+			if($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->setAdaptiveWigiiNamespace(true);
 			else $p->setAdaptiveWigiiNamespace(false);			
 			
 			//if new context, then select appropriate calculated role
@@ -407,7 +407,7 @@ class ExecutionServiceImpl implements ExecutionService {
 					}
 				}
 			}
-
+			
 			if($this->executionSink()->isEnabled()) $this->executionSink()->log("\n".str_repeat("-",100)."\n".str_repeat("-",100)."\n"."Request: ".$this->getCrtRequest()." loaded."."\n".str_repeat("-",100)."\n".str_repeat("-",100));
 
 			return true;
