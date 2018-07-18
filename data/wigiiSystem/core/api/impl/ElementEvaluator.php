@@ -890,26 +890,41 @@ class ElementEvaluator extends RecordEvaluator
 	 * Fills current element with a list of pairs (key,value) given on current url.
 	 * If key maps to a field name, then field value is updated with given value on url,
 	 * Else an element dynamic attribute is created (or updated) with the value given on the url.
-	 * FuncExp signature: <code>fillElementFromUrl(startIndex,length)</code><br/>
+	 * FuncExp signature: <code>fillElementFromUrl(startIndex,length) or fillElementFromUrl(fsl)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) startIndex: int. Starts parsing the url arguments from this index. Default to 0.
 	 * - Arg(1) length: int. Specifies how many arguments should be parsed. If ommitted, then goes until the end.
+	 * Or 
+	 * - Arg(0) fsl: FieldSelectorList. If given, then filters the incoming URL arguments to take only the (key,value) pairs matching the given field selectors.
+	 * This allows to control which fields we allow to update from the URL. 
 	 */
 	public function fillElementFromUrl($args) {
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs>0) $startIndex = $this->evaluateArg($args[0]);
 		else $startIndex = 0;
-		if($nArgs>1) $length = $this->evaluateArg($args[1]);
-		else $length=null;
+		// checks if we have a FieldSelectorList
+		if($startIndex instanceof FieldSelectorList) {
+			$fsl = $startIndex;
+			$startIndex=0;
+		}
+		else {
+			$fsl = null;
+			if($nArgs>1) $length = $this->evaluateArg($args[1]);
+			else $length=null;
+		}		
 		
 		$element = $this->getElement();
 		$fieldList = $element->getFieldList();
 		$params = ServiceProvider::getExecutionService()->getCrtParameters();
-		$params = array_slice($params, $startIndex,$length);
+		$params = array_slice($params, $startIndex,$length);		
 		foreach($params as $fieldDefault){
 			list($fieldname, $value) = explode("=", $fieldDefault);
 			list($fieldname, $subfieldname) = explode(".", $fieldname);
+			// if FieldSelectorList is defined, then takes from URL only declared fields
+			if(isset($fsl) && !$fsl->containsFieldSelector($fieldname,$subfieldname)) continue;			
+			// updates element field	
 			if($fieldList->doesFieldExist($fieldname)) $element->setFieldValue($value, $fieldname, $subfieldname);
+			// or creates/updates element attribute
 			else {
 				if($fieldname=='__element') $fse = fs_e($subfieldname);
 				else $fse = fs_e($fieldname);
