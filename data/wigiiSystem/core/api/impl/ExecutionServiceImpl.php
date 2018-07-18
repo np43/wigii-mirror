@@ -382,11 +382,7 @@ class ExecutionServiceImpl implements ExecutionService {
 			$this->setCrtAction($crtRequest[$i++]);
 			$this->setCrtParameters(array_slice($crtRequest, $i++));
 			$this->setCrtRequest(implode(ExecutionServiceImpl::paramSeparator, $crtRequest));
-
-			// CWE 17.07.2018: activates adaptive wigii namespace selection on calculated roles			
-			if($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->setAdaptiveWigiiNamespace(true);
-			else $p->setAdaptiveWigiiNamespace(false);			
-			
+					
 			//if new context, then select appropriate calculated role
 			//else bind last role id used in context
 			if(!$this->getCrtContext()){
@@ -396,8 +392,7 @@ class ExecutionServiceImpl implements ExecutionService {
 				if($roleId && $p->getUserId()!=$roleId){
 					$p = ServiceProvider :: getAuthenticationService()->changeToRole($p, $roleId);
 				}
-			} elseif(!$p->hasAdaptiveWigiiNamespace() || 
-					$p->hasAdaptiveWigiiNamespace() && !$p->bindToWigiiNamespace($this->getCrtWigiiNamespace())) {				
+			} else {				
 				//bind principal to lastPrincipalIdContext
 				$lastPrincipalIdContext = $sessAS->getData($this, "lastPrincipalIdContext");
 				if($lastPrincipalIdContext && $lastPrincipalIdContext[$this->getCrtContext()]){
@@ -407,6 +402,9 @@ class ExecutionServiceImpl implements ExecutionService {
 					}
 				}
 			}
+			// CWE 17.07.2018: activates adaptive wigii namespace selection on calculated roles
+			if($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->setAdaptiveWigiiNamespace(true);
+			else $p->setAdaptiveWigiiNamespace(false);			
 			
 			if($this->executionSink()->isEnabled()) $this->executionSink()->log("\n".str_repeat("-",100)."\n".str_repeat("-",100)."\n"."Request: ".$this->getCrtRequest()." loaded."."\n".str_repeat("-",100)."\n".str_repeat("-",100));
 

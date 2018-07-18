@@ -5229,9 +5229,14 @@ crtLang = '" . $transS->getLanguage() . "';
 
 				$totalWidth = 850;
 				$labelWidth = 200;
+								
+				//$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupDetail"), $groupP->getDbEntity()->getModule());
+				// CWE 18.07.2018: loads custom groupDetail activity if found, else cascades to standard Admin config				
+				$roleId = $p->getUserId();
+				$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupDetail"), $exec->getCrtModule());
+				// ensures to switch back principal to admin role. 
+				if(isset($roleId)) $p->bindToRole($roleId);
 				
-				$groupEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupDetail"), $groupP->getDbEntity()->getModule());
-
 				$form = $this->createDetailGroupFormExecutor($groupP, $groupEditRec, "detailGroup_form", null);
 				$form->setCorrectionWidth(43);
 
