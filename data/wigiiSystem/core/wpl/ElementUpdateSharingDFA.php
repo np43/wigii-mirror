@@ -100,7 +100,7 @@ class ElementUpdateSharingDFA implements DataFlowActivity
 			}
 		}
 		// recalculates the values
-		ServiceProvider::getWigiiBPL()->elementEvalCalcFields($dataFlowContext->getPrincipal(), $this, wigiiBPLParam(
+		ServiceProvider::getWigiiBPL()->elementUpdateSharing($dataFlowContext->getPrincipal(), $this, wigiiBPLParam(
 		    	"element",$element,
 				"newGroupIds",$this->newGroupIds,
 				"oldGroupIds",$oldGids,
