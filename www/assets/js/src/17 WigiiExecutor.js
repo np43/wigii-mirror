@@ -45,6 +45,8 @@ crtWigiiNamespaceUrl = null;
 crtModuleName = null;
 crtWorkingModuleName = null;
 crtLanguage = null;
+wigii_operationSuccessfullTimeout = null;
+wigii_preventOperationSuccessfullTimeout = null;
 
 function object2Array(obj){
 	r = new Array;

@@ -1637,7 +1637,7 @@ class WigiiCoreExecutor {
 				'closeOnEscape: false, resizable:false' .
 				'}).dialog("moveToTop");' .
 				'$("#' . $domId . '").css("min-height", "0").prev().css("display","none");' .
-				'if(checkOpenItemTemp_url==null) {setTimeout(function(){ $("#' . $domId . '").dialog("destroy"); }, 1000); }' .
+				'if(checkOpenItemTemp_url==null) { if(!wigii_preventOperationSuccessfullTimeout){ wigii_operationSuccessfullTimeout = setTimeout(function(){ $("#' . $domId . '").dialog("destroy"); }, 1000); } else { wigii_preventOperationSuccessfullTimeout = false; } }' .
 				'else {$("#' . $domId . '").html($("#' . $domId . '").html()+"<br />'.$transS->t($p, "operationDoneWaitNextAction").'");}; ';
 		$jsCode .= 'if(isWorkzoneViewDocked() && $(".elementDialog.docked").children().length==0){manageWorkzoneViewDocked(\'hide\')};';		
 		$exec->addJsCode($jsCode);
