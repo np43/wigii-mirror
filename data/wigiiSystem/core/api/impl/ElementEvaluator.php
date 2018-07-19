@@ -495,6 +495,15 @@ class ElementEvaluator extends RecordEvaluator
 	}
 	
 	/**
+	 * Returns the group IDs in which the element should be shared according to the current Attributs and MultipleAttributs values
+	 * FuncExp signature : <code>getLinkedGroupIds()</code><br/>
+	 * @return Array an array containing the linked group IDs in which to share the element
+	 */
+	public function getLinkedGroupIds($args) {
+		return $this->getElement()->getLinkedIdGroupInRecord($this->getPrincipal(), null)->getListIterator();
+	}
+	
+	/**
 	 * Sets the matrix as an Element dynamic attribute for later use (for instance in other func exp calls).
 	 * FuncExp signature: <code>setMatrix(elementAttributeName, matrix)</code><br/>
 	 * Where arguments are :

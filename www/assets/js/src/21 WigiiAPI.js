@@ -1795,6 +1795,62 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				return self.context.buttons[name];
 			};
 			
+			/**
+			 * Launches a custom copy process
+			 * @param String dialogTitle custom organize dialog title (defaults to "Copy into folder")
+			 * @param String dialogIntro custom instruction displayed before the group panel
+			 * @param Object|Array|String urlArgs or an object with some (key,value) pairs, or an array of values, or a single string.
+			 * @param int defaultGroupId a group ID to select by default in the organize dialog before launching the copy process 
+			 */
+			self.launchCopy = function(dialogTitle,dialogIntro,urlArgs,defaultGroupId) {
+				var startUrl = 'elementDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName;
+				var targetFolder = defaultGroupId;
+				if(targetFolder===undefined) {
+					targetFolder = $('#groupPanel li.selected.write');
+					if(targetFolder.length>0) targetFolder = targetFolder.attr('id').split('_')[1];
+					else targetFolder = undefined;
+				}				
+				var initialFolder = targetFolder;
+				var itemID = self.elementId();
+				if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
+				prepareOrganizeDialog(
+					//on click
+					function(e){
+						if(!$(this).hasClass('disabled')){
+							$('#organizeDialog .selected').removeClass('selected');
+							$(this).toggleClass('selected');
+							targetFolder = $(this).parent().attr('id').split('_')[1];
+						}
+						return false;
+					}, 
+					//on Ok
+					function(){
+						if(!targetFolder) {
+							jAlert(DIALOG_selectAtLeastOneGroup);
+							return false;
+						}
+						if( $('#organizeDialog').is(':ui-dialog')) { $('#organizeDialog').dialog("destroy"); }			
+						// opens copy dialog
+						// if folder changed, then navigates to new folder
+						invalidCache("moduleView");
+						if(targetFolder != initialFolder) startUrl = 'NoAnswer/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/groupSelectorPanel/selectGroup/'+targetFolder+EXEC_requestSeparator+startUrl;
+						update(startUrl+'/element/copy/'+itemID+'/'+targetFolder+urlArgs);
+					});
+				$('#organizeDialog').prev().find('.ui-dialog-title').text(dialogTitle||DIALOG_copyToFolder);
+				$('#organizeDialog').prepend('<div class="introduction">'+(dialogIntro||DIALOG_copyToFolder_help)+'</div>');
+				
+				//disables read only groups
+				$('#organizeDialog>.groupPanel li:not(.write)').addClass("disabled noRights");
+				$('#organizeDialog>.groupPanel li:not(.write)>div').addClass("disabled noRights");
+				if(targetFolder) $('#organizeDialog>.groupPanel #group_'+targetFolder+', #organizeDialog>.groupPanel #group_'+targetFolder+'>div').addClass('selected');
+				unfoldToSelectedGroupButNotChildren('#organizeDialog>.groupPanel');
+				positionSelectedGroup('#organizeDialog>.groupPanel');	
+				if(targetFolder) {		
+					// sets focus on OK button to manage pressing enter to copy directly in current folder
+					$('#organizeDialog').next().find('button.ok').focus();
+				}	
+			};
+			
 			// Event handling
 			
 			/**
@@ -4006,7 +4062,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			wigiiApi.crtContextId = window.crtContextId;
 			wigiiApi.EXEC_answerRequestSeparator = window.EXEC_answerRequestSeparator;
 			wigiiApi.EXEC_answerParamSeparator = window.EXEC_answerParamSeparator;
-			wigiiApi.EXEC_requestSeparator = window.EXEC_requestSeparator;
+			wigiiApi.EXEC_requestSeparator = window.EXEC_requestSeparator;			
 		};
 		wigiiApi.initContext();		
 		wigiiApi.encHTML = window.encHTML;

@@ -22,13 +22,11 @@
  */
 
 /**
- * A data flow activity which evaluates the Element calculated fields
+ * A data flow activity which updates the element sharing
  * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance)
- * Created by CWE on 28.06.2016
- * Modified by Medair (CWE) on 15.12.2016 to protect against Cross Site Scripting
- * Modified by Medair (CWE) on 05.07.2017 to automatically update FieldSelectorList present in DataFlowContext to make sure calculated fields are persisted afterwards.
+ * Created by CWE on 19.07.2018
  */
-class ElementRecalcDFA implements DataFlowActivity
+class ElementUpdateSharingDFA implements DataFlowActivity
 {			
 	// Object lifecycle
 		
@@ -37,6 +35,8 @@ class ElementRecalcDFA implements DataFlowActivity
 	}	
 	public function freeMemory() {
 		unset($this->fieldName);
+		unset($this->newGroupIds);
+		unset($this->oldGroupIds);
 	}
 	
 	// dependency injection
@@ -44,21 +44,44 @@ class ElementRecalcDFA implements DataFlowActivity
 	private $_debugLogger;
 	private function debugLogger() {
 		if (!isset ($this->_debugLogger)) {
-			$this->_debugLogger = DebugLogger :: getInstance("ElementRecalcDFA");
+			$this->_debugLogger = DebugLogger :: getInstance("ElementUpdateSharingDFA");
 		}
 		return $this->_debugLogger;
 	}	
 	
 	// configuration
 	
-	private $fieldName;
+	private $newGroupIds;
 	/**
-	 * Sets the field name for which to recalculate the value
-	 * @param String $fieldName
+	 * Gives a list of new group ids in which to share the element
+	 * @param Array $newGroupIds Array of group IDs in which to share the element. 
+	 * If not given, calls the method getLinkedIdGroupInRecord on the element to determine in which group to share the element.
+	 * If sharing groups are determined based on element values, then movePriority is also considered and 
+	 * if appropriate, the element will be moved in corresponding folder instead of shared.
 	 */
-	public function setFieldName($fieldName) {
-		$this->fieldName = $fieldName;
-	}	
+	public function setNewGroupIds($newGroupIds) {
+		$this->newGroupIds= $newGroupIds;
+	}
+	
+	private $oldGroupIds;
+	/**
+	 * Gives a list of old deprecated group ids from which to remove the sharing
+	 * @param Array|FieldSelector $oldGroupIds An array with the existing/deprecated groups from which to remove the sharing.
+	 * Can also be an element attribute field selector in which an array has been stored using the getLinkedGroupIds() FuncExp 
+	 * If a group ID is present in newGroupIds and oldGroupIds then sharing will remain active.
+	 */
+	public function setOldGroupIds($oldGroupIds) {
+		$this->oldGroupIds= $oldGroupIds;
+	}
+	
+	private $addSharingOnly;
+	/**
+	 * If true, then sharing is only added not removed.
+	 * Defaults to update (remove and add)
+	 */
+	public function setAddSharingOnly($bool) {
+		$this->addSharingOnly = $bool;		
+	}
 	
 	// stream data event handling
 	
@@ -68,12 +91,23 @@ class ElementRecalcDFA implements DataFlowActivity
 	public function processDataChunk($data, $dataFlowContext) {
 		// extracts element
 		$element = $data->getDbEntity();
+		// calculates old group ids
+		if($this->addSharingOnly) $oldGids = null;
+		else {
+			$oldGids = $this->oldGroupIds;
+			if($oldGids instanceof FieldSelector && $oldGids->isElementAttributeSelector()) {
+				$oldGids = $element->getAttribute($oldGids);
+			}
+		}
 		// recalculates the values
 		ServiceProvider::getWigiiBPL()->elementEvalCalcFields($dataFlowContext->getPrincipal(), $this, wigiiBPLParam(
-		    "element",$element,
-		    "fieldName",$this->fieldName,
-		    "fslForUpdate", $dataFlowContext->getAttribute('FieldSelectorList')
-		));
+		    	"element",$element,
+				"newGroupIds",$this->newGroupIds,
+				"oldGroupIds",$oldGids,
+				"refreshGUI", $this->refreshGUI
+			),
+			($dataFlowContext->areWigiiEventsEnabled()?$dataFlowContext->getWigiiEventsDispatcher():false)
+		);
 		// pushes data further down in the flow
 		$dataFlowContext->writeResultToOutput($data,$this);
 	}

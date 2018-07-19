@@ -2427,14 +2427,33 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * Returns current request parameter
 	 * FuncExp signature : <code>sysExecParameter(index)</code><br/>
 	 * Where arguments are :
-	 * - Arg(0) index: Int. The parameter index 0..n. 
-	 * 
+	 * - Arg(0) index: Int|FieldSelector|String. The parameter index 0..n, 
+	 * or a key name passed on the url in the form of /key=value/. Returns the first found key value on the url, or null if not found.
+	 * Key can be either a string or a FieldSelector
 	 * @return String|Array if index is specified, returns the parameter value, else returns an array with all parameters.
 	 */
 	public function sysExecParameter($args) {
-		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs>0) $index = $this->evaluateArg($args[0]);
-		return ServiceProvider::getExecutionService()->getCrtParameters($index);
+		$nArgs = $this->getNumberOfArgs($args);		
+		if($nArgs>0) {
+			$index = $args[0];
+			if(!($index instanceof FieldSelector)) $index = $this->evaluateArg($args[0]);
+			if(is_numeric($index)) return ServiceProvider::getExecutionService()->getCrtParameters($index);
+			else {
+				if(!($index instanceof FieldSelector)) $index = fs($index);
+				if(is_null($index->getSubFieldName())) $index->setSubFieldName('value');				
+				// Searches for url parameter given the field name
+				$params = ServiceProvider::getExecutionService()->getCrtParameters();
+				foreach($params as $fieldDefault){
+					list($fieldname, $value) = explode("=", $fieldDefault);
+					list($fieldname, $subfieldname) = explode(".", $fieldname);
+					if(is_null($subfieldname)) $subfieldname='value';
+					// returns value if matching parameter
+					if($fieldname==$index->getFieldName() && $subfieldname==$index->getSubFieldName()) return $value;
+				}
+				return null;
+			}
+		}
+		else return ServiceProvider::getExecutionService()->getCrtParameters();
 	}
 	
 	/**

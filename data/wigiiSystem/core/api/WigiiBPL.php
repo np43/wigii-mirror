@@ -1301,8 +1301,8 @@ class WigiiBPL
 				$this->getGroupAdminService()->getGroupsWithoutDetail ( $principal, $newGids, $gpl );
 				foreach ( $gpl->getListIterator () as $group ) {
 					// notification here do not follow the skipNotification as it is a sharing notification and not an update notification
-					$this->getWigiiExecutor ()->throwEvent ()->shareElement ( PWithElementWithGroup::createInstance ( $principal, $element, $group ) );
-					$exec->invalidCache ( $principal, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $group->getId () );
+					if($wigiiEventsSubscriber) $this->getWigiiExecutor ()->throwEvent ()->shareElement ( PWithElementWithGroup::createInstance ( $principal, $element, $group ) );
+					if($refreshGUI) $exec->invalidCache ( $principal, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $group->getId () );
 				}
 			}
 			if ($oldGids) {

@@ -176,11 +176,13 @@ abstract class Record extends DbEntityInstance
 	 * The redirection for Attributes, MultipleAttributes, Booleans is solved if defined.
 	 * This works only for Attributes, MultipleAttributes, Booleans.
 	 * No redirection can be defined in this process.
-	 * @param $p Principal
-	 * @param $valueList : ValueList
-	 * @param $isMultiple: Boolean, if true the check will be done accordingly to wigiiBag->isMultipleChecked
+	 * @param Principal $p
+	 * @param ValueList $valueList a ValueList instance to be filled with the group ids. If not given, then creates a ValueListArrayImpl instance
+	 * @param Boolean $isMultiple if true the check will be done accordingly to wigiiBag->isMultipleChecked
+	 * @return ValueList returns the filled value list.
 	 */
 	public function getLinkedIdGroupInRecord($p, $valueList, $isMultiple=false){
+		if($valueList==null) $valueList = ValueListArrayImpl::createInstance();
 		$wg = $this->getWigiiBag();
 		foreach($this->getFieldList()->getListIterator() as $fieldName=>$f){
 			//check only dataTypes
@@ -210,8 +212,8 @@ abstract class Record extends DbEntityInstance
 				}
 			}
 		}
-	}
-	
+		return $valueList;
+	}	
 	
 	public function getMoveGroupInRecord(){
 		$priorityMax = null;
