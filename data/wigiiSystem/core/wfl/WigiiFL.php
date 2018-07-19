@@ -1731,12 +1731,25 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 				dfasl(
 					dfas("CallbackDFA", "setProcessDataChunkCallback", function($elementP,$callbackDFA) use($fs) {
 						$val = $elementP->getDbEntity()->getFieldValue($fs->getFieldName());
+						//lookup current xml of the field to see if there are any predefined tags.
+						//in this case, those tags are removed from the search bellow to prevent duplicate options
+						$attributesToFilter = array();
+						if(!$callbackDFA->getValueInContext("parsingFieldXmlAttributes")){
+							$fxml = $elementP->getDbEntity()->getFieldList()->getField($fs->getFieldName())->getXml();
+							foreach($fxml->attribute as $key => $value){
+								$attributesToFilter[(string)$value] = (string)$value;
+							}
+							$callbackDFA->setValueInContext("parsingFieldXmlAttributesToFilter", $attributesToFilter);
+							$callbackDFA->setValueInContext("parsingFieldXmlAttributes", true);
+						} else {
+							$attributesToFilter = $callbackDFA->getValueInContext("parsingFieldXmlAttributesToFilter");
+						}
 						if(is_array($val)) {
-							foreach($val as $v) {								
-								if(!empty($v)) $callbackDFA->writeResultToOutput($this->getFuncExpBuilder()->cfgAttribut($v));
+							foreach($val as $v) {
+								if(empty($attributesToFilter[$v]) && !empty($v)) $callbackDFA->writeResultToOutput($this->getFuncExpBuilder()->cfgAttribut($v));
 							}
 						}
-						elseif(!empty($val)) $callbackDFA->writeResultToOutput($this->getFuncExpBuilder()->cfgAttribut($val));
+						elseif(empty($attributesToFilter[$val]) && !empty($val)) $callbackDFA->writeResultToOutput($this->getFuncExpBuilder()->cfgAttribut($val));
 					}),
 					dfas("FilterDuplicatesAndSortDFA",
 							"setObjectClass", 'cfgAttribut',
