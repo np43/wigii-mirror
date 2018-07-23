@@ -1557,6 +1557,8 @@ class TemplateRecordManager extends Model {
 	public function doFormatForNumeric($value, $xml = array(), $doRegroupSimilarValue = false){
 		//we do a groupement on the size
 		if(!$doRegroupSimilarValue){
+			//check if there is any E in the $value. In that case round the value (prevent rounding errors with values almost around 0
+			if(strpos($value,'E')) $value = round($value,2);
 		    $decimalPosition = strpos($value,".");
 			if($decimalPosition===false && $value!==null && $value!==""){
 				$value .= ".00";
