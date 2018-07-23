@@ -170,8 +170,8 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 				$rm->put('<br />'.$transS->t($p, "formHasErrors").' <img style="float:none;" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/emblems/emblem-unreadable.png" class="icon" />');
 			}
 			$rm->put('</div><div class="clear"></div>');
-			$this->first = false;
 		}
+		$this->first = false;
 
 		// skips links attributes when external access or multiple.
 		if($dataType instanceof Links) {
