@@ -157,7 +157,7 @@ if($p->isRealUserPublic()) {
             <?php if($companyLogo){
                 if(!$companyLogoMargins) $companyLogoMargins = "0 5px 0 0";
                 $homeClick = $exec->getUpdateJsCode($p->getRealUserId(), $p->getUserId(), WigiiNamespace::EMPTY_NAMESPACE_URL, Module::HOME_MODULE, "workZone", Module::HOME_MODULE, "start'+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true);
-                echo '<div class="" style="padding:'.($companyLogoMargins).';px;float:left;border-left:none;border-right:none;border-top:none;cursor: pointer;margin-right:10px;" onclick="'.$homeClick.'"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
+                echo '<div class="" style="margin:'.($companyLogoMargins).';px;float:left;border-left:none;border-right:none;border-top:none;cursor: pointer;margin-right:10px;" onclick="'.$homeClick.'"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
             } ?>
         </div>
             <ul id="navigateMenuBsp" class="nav navbar-nav">
@@ -333,7 +333,7 @@ if($p->isRealUserPublic()) {
                     endif;
                 //if no back user in this wigiiNamespace (happen normaly only if user is superadmin and no other role in the wigiiNamespace of
                 //the superadmin)
-                    ?><li class="admin closeAdmin notHome" style="display: none; white-space:nowrap;height:22px;color:#000;margin-top:5px; padding-left: 20px;"><?
+                    ?><li class="admin closeAdmin notHome" style="display: none; white-space:nowrap;height:22px;color:#000;margin-top:7px; padding-left: 20px;"><?
                     $tempWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceName();
                     ?><font id="adminWigiiNamespace" class="ui-corner-all SBIB F" style="font-weight:bold;vertical-align:middle;padding:1px 8px;"><?=$transS->t($p, "adminConsole")." : ".$tempWigiiNamespace;?></font>&nbsp;&nbsp;<?
                     ?><a href="#" class="ui-corner-all" style="background-color:#fff;display:inline;vertical-align:middle;"

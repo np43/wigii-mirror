@@ -29,6 +29,11 @@
 $this->executionSink()->publishStartOperation("TEMPLATE all.tpl.php");
 
 if(!isset($authS)) $authS = ServiceProvider::getAuthenticationService();
+if(!isset($configS)) $configS = $this->getConfigurationContext();
+$companyColor = $configS->getParameter($p, null, "companyColor");
+$rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
+if(!$companyColor) $companyColor = "#3E4552";
+if(!$rCompanyColor) $rCompanyColor = "#fff";
 
 /**
  * company banner
@@ -44,11 +49,6 @@ if(!$authS->isMainPrincipalMinimal()){
 	/**
 	 * Navigation bar
 	 */
-	if(!isset($configS)) $configS = $this->getConfigurationContext();
-	$companyColor = $configS->getParameter($p, null, "companyColor");
-	$rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
-	if(!$companyColor) $companyColor = "#3E4552";
-	if(!$rCompanyColor) $rCompanyColor = "#fff";
     ?><?php
         $this->includeTemplateNavigation($p, $exec);
     ?><?php
@@ -71,7 +71,7 @@ if(!$authS->isMainPrincipalMinimal()){
 	?></div><?
 
 } else {
-	?><div id="loginPage" ><?
+	?><div id="loginPage" style="<?="background-color:".$companyColor.";color:".$rCompanyColor.";";?>"><?
 		$this->includeTemplateLogin($p, $exec);
 	?></div><?
 }

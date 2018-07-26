@@ -125,12 +125,19 @@ div.label, span.label {
 	font-weight: bold;
 }
 
-a.username {
+.nav>li>a.username {
 	background-color: #fff;
 	border-radius: 10px;
-	line-height: 10px !important;
+	line-height: 16px !important;
 	margin-top: 3px;
-	padding: 6px !important;
+	margin-bottom: 3px;
+	padding: 5px 10px !important;
+}
+
+.nav > li.home > a {
+    padding-top: 7px;
+    padding-bottom: 10px;
+    padding-left: 10px !important;
 }
 
 a.username:hover {

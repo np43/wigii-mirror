@@ -46,7 +46,8 @@
 			class,
 			totalWidth,
 			labelWidth,
-			noLabel"
+			noLabel,
+			idGroup"
 		Field_enableDynamicAttributes="1"
 	/>
 	

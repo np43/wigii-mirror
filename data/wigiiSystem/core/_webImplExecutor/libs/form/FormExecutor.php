@@ -1054,6 +1054,39 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		}
 	}
 	
+	//factorisation of the piece of code doing the calculation in order to reuse it in children nodes
+	protected function calculateValue(&$allowedDynamicAttributes,&$fxEval, &$resolvedValues, $name, $value){
+		$value = (string)$value;
+		// checks that attribute is allowed to be dynamic
+		if(isset($allowedDynamicAttributes[$name])) {
+			// checks that value is not already resolved
+			if(empty($value) || is_numeric($value)) return;
+			// parses the value into a funcExp
+			try {
+				$value = str2fx($value);
+			}
+			catch(StringTokenizerException $ste) {
+				// if syntax error, then keeps the value as is
+				// or we have a real syntax error, that then will be corrected by the user
+				// or it is not a funcExp but a constant, in that case keeps the value.
+				if($ste->getCode() != StringTokenizerException::SYNTAX_ERROR) throw $ste;
+			}
+			// executes the func exp
+			$value = $fxEval->evaluateFuncExp($value, $this);
+			// if value is a log exp, then solves it against the record
+			if($value instanceof LogExp) {
+				$value = TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($rec, $value);
+			}
+			// stores the resolved value
+			if(is_numeric($value)) $resolvedValues[$name] = $value;
+			elseif(is_string($value) && !empty($value)) $resolvedValues[$name] = $value;
+			else {
+				if($value) $resolvedValues[$name] = "1";
+				else $resolvedValues[$name] = "0";
+			}
+		}
+	}
+	
 	/**
 	 * Resolves any func exp or log exp attached to an xml attribute in the field config.
 	 * The result of the func exp or log exp is then stored as the value of the xml attribute.
@@ -1103,35 +1136,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 				// goes through the list of attributes
 				$resolvedValues = array();
 				foreach($fxml->attributes() as $name => $value) {
-					$value = (string)$value;
-					// checks that attribute is allowed to be dynamic
-					if(isset($allowedDynamicAttributes[$name])) {
-						// checks that value is not already resolved
-						if(empty($value) || is_numeric($value)) continue;
-						// parses the value into a funcExp
-						try {
-							$value = str2fx($value);
-						}
-						catch(StringTokenizerException $ste) {
-							// if syntax error, then keeps the value as is
-							// or we have a real syntax error, that then will be corrected by the user
-							// or it is not a funcExp but a constant, in that case keeps the value.
-							if($ste->getCode() != StringTokenizerException::SYNTAX_ERROR) throw $ste;
-						}
-						// executes the func exp
-						$value = $fxEval->evaluateFuncExp($value, $this);
-						// if value is a log exp, then solves it against the record
-						if($value instanceof LogExp) {
-							$value = TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($rec, $value);
-						}
-						// stores the resolved value
-						if(is_numeric($value)) $resolvedValues[$name] = $value;
-						elseif(is_string($value) && !empty($value)) $resolvedValues[$name] = $value;
-						else {
-							if($value) $resolvedValues[$name] = "1";
-							else $resolvedValues[$name] = "0";
-						}
-					}
+					$this->calculateValue($allowedDynamicAttributes,$fxEval, $resolvedValues, $name, $value);
 				}
 				// stores resolved values into the xml node
 				if(!empty($resolvedValues)) {
@@ -1147,6 +1152,25 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 							if($name == 'hidden') $formBag->setHidden($value=="1", $fieldName);
 						}
 					}
+				}
+				//lookup if there is any attribute children in the node to solve specificaly Attributes or MultipleAttributes options
+				$keyIndex = 0;
+				foreach($fxml->attribute as $key => $node) {
+					if($node["enableDynamicAttributes"] == "1"){
+						$resolvedValues = array();
+						foreach($node->attributes() as $name => $value){
+							$this->calculateValue($allowedDynamicAttributes,$fxEval, $resolvedValues, $name, $value);
+						}
+						// stores resolved values into the xml node
+						if(!empty($resolvedValues)) {
+							fput($resolvedValues);
+							fput($keyIndex);
+							foreach($resolvedValues as $name => $value) {
+								$fxml->attribute[$keyIndex][$name] = $value;
+							}
+						}
+					}
+					$keyIndex ++;
 				}
 			}
 			if(method_exists($fxEval, 'freeMemory')) $fxEval->freeMemory();

@@ -8,14 +8,24 @@ $rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
 <div class="toolbarBox" style="width: 100%; color:<?= $rCompanyColor ?>">
 
     <?php
-    //when the searchBar is reloaded, then clear the last
-    //$sessAS->clearData($this, "elementListLastConfigKey");
-    // module help button
-    $this->includeModuleHelpAnchor($p,$exec);
 
-    // list refresh button
-    ?><div class="refresh H"><?=$transS->t($p, "refresh");?></div><?
+    //the refresh button is nevers used, therefore to gain clarity and space Lionel Weber removed it on the 26.07.2018
+    if(false){
+	    // list refresh button
+	    ?><div class="refresh H"><?=$transS->t($p, "refresh");?></div><?
+    }
+    //add element
+    ?><div class="addNewElement ui-corner-all disabledBg">+ <font><?=$transS->h($p, "addElementButton");?></font></div><?
     //in some views, the sortBy and groupBy are not relevant. In this case there are hidden
+    //sortBy
+    ?><!-- Sort By -->
+    <div class="btn-group sortBy">
+        <button type="button" class="btn btn-default dropdown-toggle dropdown-menu-right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <?=$transS->t($p, "sortBy");?> <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu value scrollable-menu" style="left: 8px;">
+        </ul>
+    </div><?
     //groupBy
     ?>
         <!-- Group By -->
@@ -23,26 +33,20 @@ $rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
             <button type="button" class="btn btn-default dropdown-toggle dropdown-menu-right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <?=$transS->t($p, "groupBy");?> <span class="caret"></span>
             </button>
-            <ul class="dropdown-menu value scrollable-menu" style="left: -60px;">
+            <ul class="dropdown-menu value scrollable-menu" style="left: -80px;">
             </ul>
         </div>
     <?
-    //sortBy
-    ?><!-- Sort By -->
-    <div class="btn-group sortBy">
-        <button type="button" class="btn btn-default dropdown-toggle dropdown-menu-right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <?=$transS->t($p, "sortBy");?> <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu value scrollable-menu" style="left: -60px;">
-        </ul>
-    </div><?
 
-    //add element
-    ?><div class="addNewElement ui-corner-all disabledBg">+ <font><?=$transS->h($p, "addElementButton");?></font></div><?
 
     //switch view
     ?><div class="switchView H L disabledR" style="color:<?= $rCompanyColor ?>"><?=$transS->t($p, $moduleView."View");?></div><?
 
+    //when the searchBar is reloaded, then clear the last
+    //$sessAS->clearData($this, "elementListLastConfigKey");
+    // module help button
+    $this->includeModuleHelpAnchor($p,$exec);
+    
     ?></div><?
 
 // adds refresh js code

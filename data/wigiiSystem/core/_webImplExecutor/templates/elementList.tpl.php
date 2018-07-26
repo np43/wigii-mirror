@@ -100,14 +100,15 @@ if(!$url){ //displays list only if no url
 	$sortByOptions = $this->prepareSortByOptions($lc, $currentConfigKey, $p, $exec, $transS, $configS, $sessAS);
 	$groupByOptions = $this->prepareGroupyByOptions($lc, $currentConfigKey, $p, $exec, $transS, $configS, $sessAS);
 	
+    // Run menu
+    $this->includeRunMenu($p, $exec, $transS, $configS);
+    
 	//add element
 	$this->includeAddElementButton($crtGroupP, $p, $exec, $transS, $configS);
 
 	//switchView
 	$this->includeSwitchViewButton($lc, $p, $exec, $transS, $configS);
 
-    // Run menu
-    $this->includeRunMenu($p, $exec, $transS, $configS);
 
 	//duplicates filter is on
 	if($lc->isGroupByOnlyDuplicates()){

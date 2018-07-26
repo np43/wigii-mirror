@@ -48,28 +48,22 @@
 
 /* toolBar box */
 #searchBar div.toolbarBox div{
-	float:right;
+	float:left;
 }
 #searchBar div.toolbarBox div.addNewElement
 {
-	padding:3px 8px;
+	padding:5px 8px;
 	font-weight:bold;
 	font-size:16px;
 	margin:0px 8px;
-}
-@media (max-height:600px) {
-	#searchBar div.toolbarBox div.addNewElement
-	{
-		padding:5px 8px;
-	}
 }
 #searchBar div.addNewElement:hover {
     cursor: pointer;
 }
 #searchBar div.toolbarBox>div
 {
-	padding:0px 8px;
-	padding-top:5px;
+	padding:6px;
+	margin-top:1px;
 }
 #searchBar div.toolbarBox div.sortBy div.value,
 #searchBar div.toolbarBox div.groupBy div.value
@@ -143,7 +137,7 @@
 	cursor:pointer;
 }
 
-#searchBar div.toolbarBox div.refresh {
+#searchBar div.toolbarBox div.refresh { /*deprecated since 26.07.2018, the refresh button is actually not usefull */
 	background:url('../../images/icones/tango/16x16/actions/view-refresh.png') 0px 5px no-repeat;
 	padding: 6px 0px 0px 18px;
 	text-align: center;
@@ -158,7 +152,7 @@
 
 nav div.firstBox{
 	float:left;
-	margin-top: 2px;
+	margin-top: 4px;
 }
 
 nav input{
@@ -206,7 +200,8 @@ nav .G {
 /* ToolBarBox */
 
 #searchBar .toolbarBox .groupBy, #searchBar .toolbarBox .sortBy{
-	margin-top: -5px;
+	padding:0px 8px;
+	margin-top:0px;
 }
 
 #searchBar .toolbarBox .groupBy button, #searchBar .toolbarBox .sortBy button{
@@ -216,15 +211,9 @@ nav .G {
 }
 
 nav #searchBar .toolbarBox .groupBy button, nav #searchBar .toolbarBox .sortBy button{
-	height: 24px;
+	height: 28px;
 	line-height: 13px;
 	border: none;
-}
-@media (max-height:600px) {
-	nav #searchBar .toolbarBox .groupBy button, nav #searchBar .toolbarBox .sortBy button
-	{
-		height: 28px;
-	}
 }
 
 #searchBar .toolbarBox .scrollable-menu {

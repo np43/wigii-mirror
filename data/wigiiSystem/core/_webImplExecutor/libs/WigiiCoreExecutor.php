@@ -1050,9 +1050,9 @@ class WigiiCoreExecutor {
 			$JsCode = "" .
 					"$(document).ready(function(){
 					if($('#searchBar .toolbarBox .exportMenuButton').length==0){ " .
-						"$('#searchBar .toolbarBox').append('<div id=\"exportMenuButton\" class=\"exportMenuButton L H \" style=\"color:". $rCompanyColor. "\">".$transS->h($p, "exportElementButton")."</div>');" .
+						"$('#searchBar .toolbarBox').prepend('<div id=\"exportMenuButton\" class=\"exportMenuButton L H \" style=\"color:". $rCompanyColor. "\">".$transS->h($p, "exportElementButton")."</div>');" .
                 "$('#searchBar .toolbarBox .exportMenuButton').append('" .
-							"<div class=\"cm SBB\" id=\"exportMenu\" style=\"display:none;\" >" .
+							"<div class=\"cm SBB\" id=\"exportMenu\" style=\"display:none;margin-top:-16px;\" >" .
 							"<div class=\"exit SBB\">x</div>" .
 							"$options" .
 							"</div>" .

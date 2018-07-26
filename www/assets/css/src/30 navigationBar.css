@@ -450,12 +450,18 @@ adds for making work the navBar
 }
 
 #navigateMenuBsp {
-	margin-right: 20px;
+	margin-right: 10px;
+}
+
+#NMContainerBsp>div.navbar-header {
+	margin-top:3px;
 }
 
 .nav > li > a {
-	padding-right: 5px !important;
-	padding-left: 10px !important;
+	padding-top: 6px;
+	padding-bottom: 5px;
+	padding-right: 7px !important;
+	padding-left: 7px !important;
 }
 
 #navigationBarBspMobile li.dropdown{

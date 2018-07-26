@@ -39,11 +39,11 @@ $companyLogo = $configS->getParameter($p, null, "companyLogo");
 $companyLogoMargins = $configS->getParameter($p, null, "companyLogoMargin");
 if($companyLogo){
 	if(!$companyLogoMargins) $companyLogoMargins = "2px 5px 2px 15px";
-	echo '<div class="" style="padding:'.($companyLogoMargins).';background-color:'.$companyColor.';border-left:none;border-right:none;border-top:none;"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
+	echo '<div class="" style="display:inline-block;margin:'.($companyLogoMargins).';background-color:'.$companyColor.';border-left:none;border-right:none;border-top:none;"><img src="'.SITE_ROOT_forFileUrl.$companyLogo.'"/></div>';
 }
 
 
-?><div id="loginForm" class="" style="<?="background-color:".$companyColor.";color:".$rCompanyColor.";";?>"><?
+?><div id="loginForm" class="" style=""><?
 //if we are currently updating, then we just add a request for this div
 //else we need to execute the action manually because in that case we just
 //want the html of this action directly here.

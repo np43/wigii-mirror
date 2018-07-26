@@ -99,7 +99,7 @@ if(!$url){ //displays list only if no url
 	</div><?
 	//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar"] = microtime(true);
 	$this->executionSink()->log("start searchBar toolbar");
-
+		
 	//no sortBy or groupBy for this view
 	$exec->addJsCode("$('#searchBar .toolbarBox .sortBy, #searchBar .toolbarBox .groupBy').remove();");
 
@@ -113,7 +113,7 @@ if(!$url){ //displays list only if no url
 	if($this->canCrtModuleEmailing($exec->getCrtModule())){
 		$exec->addJsCode("$(document).ready(function(){
                             if($('#searchBar .toolbarBox .emailing').length==0){ 
-                                $('#searchBar .toolbarBox').append('<div class=\"emailing L H\" style=\"color:$rCompanyColor \">".$transS->h($p, "emailingButton")."</div>').find('.emailing').click(function(){ update('emailingDialog/$crtWigiiNamespace/$crtModule/Emailing'); });
+                                $('#searchBar .toolbarBox').prepend('<div class=\"emailing L H\" style=\"color:$rCompanyColor \">".$transS->h($p, "emailingButton")."</div>').find('.emailing').click(function(){ update('emailingDialog/$crtWigiiNamespace/$crtModule/Emailing'); });
                             }
                         });
                         ");
@@ -138,13 +138,13 @@ if(!$url){ //displays list only if no url
 		}
 		$exec->addJsCode("" .
 				"if($('#searchBar .toolbarBox .outlook').length!=0){ $('#searchBar .toolbarBox .outlook').remove(); }" .
-				"$('#searchBar .toolbarBox').append('<div class=\"outlook L H ui-corner-all".($outlookButtonEnabled ? "" : " disabledR ")."\" title=\"$outlookHelp\" style=\"font-weight:bold;background-color:#fff;padding-bottom:5px;\"><span class=\"showInOutlookText\">".$transS->h($p, "showInOutlookButton")."<span></div>')" .
+				"$('#searchBar .toolbarBox').prepend('<div class=\"outlook L H ui-corner-all".($outlookButtonEnabled ? "" : " disabledR ")."\" title=\"$outlookHelp\" style=\"font-weight:bold;background-color:#fff;padding-bottom:5px;\"><span class=\"showInOutlookText\">".$transS->h($p, "showInOutlookButton")."<span></div>')" .
 				";");
 		if($outlookButtonEnabled){
 			$exec->addJsCode("" .
 				"if($('#searchBar .toolbarBox .outlook').length!=0){ $('#searchBar .toolbarBox .outlook').unbind('click mouseenter'); } " .
 				"$('#searchBar .toolbarBox .outlook').append('" .
-					"<div class=\"cm SBB\" id=\"outlookMenu\" style=\"display:none;font-weight:normal;\" >" .
+					"<div class=\"cm SBB\" id=\"outlookMenu\" style=\"display:none;font-weight:normal;margin-top:6px;margin-left:-25px;\" >" .
 						"<div class=\"exit SBB\">x</div>" .
 						"<p style=\"margin-top:10px;\">$intro</p>" .
 						"<p><input type=\"text\" style=\"float:none;margin:0px;padding:2px;width: 100%; max-width:400px;\" value=\"$outlookUrl\" /></p>" .
@@ -170,7 +170,7 @@ if(!$url){ //displays list only if no url
 
 
 	}
-
+	
 	//add element
 	$this->includeAddElementButton($crtGroupP, $p, $exec, $transS, $configS);
 	
