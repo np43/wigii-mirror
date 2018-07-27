@@ -1163,8 +1163,8 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 						}
 						// stores resolved values into the xml node
 						if(!empty($resolvedValues)) {
-							fput($resolvedValues);
-							fput($keyIndex);
+// 							fput($resolvedValues);
+// 							fput($keyIndex);
 							foreach($resolvedValues as $name => $value) {
 								$fxml->attribute[$keyIndex][$name] = $value;
 							}
