@@ -1055,7 +1055,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 	}
 	
 	//factorisation of the piece of code doing the calculation in order to reuse it in children nodes
-	protected function calculateValue(&$allowedDynamicAttributes,&$fxEval, &$resolvedValues, $name, $value){
+	protected function calculateValue(&$allowedDynamicAttributes,$fxEval,$rec, &$resolvedValues, $name, $value){
 		$value = (string)$value;
 		// checks that attribute is allowed to be dynamic
 		if(isset($allowedDynamicAttributes[$name])) {
@@ -1136,7 +1136,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 				// goes through the list of attributes
 				$resolvedValues = array();
 				foreach($fxml->attributes() as $name => $value) {
-					$this->calculateValue($allowedDynamicAttributes,$fxEval, $resolvedValues, $name, $value);
+					$this->calculateValue($allowedDynamicAttributes,$fxEval, $rec, $resolvedValues, $name, $value);
 				}
 				// stores resolved values into the xml node
 				if(!empty($resolvedValues)) {
@@ -1159,7 +1159,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 					if($node["enableDynamicAttributes"] == "1"){
 						$resolvedValues = array();
 						foreach($node->attributes() as $name => $value){
-							$this->calculateValue($allowedDynamicAttributes,$fxEval, $resolvedValues, $name, $value);
+							$this->calculateValue($allowedDynamicAttributes,$fxEval, $rec, $resolvedValues, $name, $value);
 						}
 						// stores resolved values into the xml node
 						if(!empty($resolvedValues)) {

@@ -2273,6 +2273,94 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    return array_diff($usernames, $selectedUsernames->getListIterator());
 	}	
 	
+	/**
+	 * Given a group ID, returns all the users who have access to a given folder with their respective rights.
+	 * FuncExp signature : <code>adminAccessToFolder(groupId, asStdClass=false)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) groupId: Int. The group ID on which to retrieve user access rights
+	 * - Arg(1) asStdClass: Boolean. If true, then fills a ValueList with StdClass instances of the form {username:User name, accessRight: access right letter}, else formats the result as a string.
+	 * @return String|ValueList a multiple-line list with the format Username: AccessRightLetter\n or a ValueList with StdClass instances of the form {username:User name, accessRight: access right letter}
+	 */
+	public function adminAccessToFolder($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    
+	    if($nArgs<1) throw new FuncExpEvalException('adminAccessToFolder takes at least one argument which is the groupId');
+	    $groupId = $this->evaluateArg($args[0]);
+	    if($nArgs>1) $asStdClass = ($this->evaluateArg($args[1])==true);
+	    else $asStdClass = false;
+	    
+	    // switches principal to SuperAdmin role
+	    $p = $this->getPrincipal();
+	    $currentRoleId = $p->getUserId();
+	    $userRPList = UserRPListArrayImpl::createInstance();
+	    try {
+	        foreach($p->getRoleListener()->getAdminRoleIds() as $adminId) {
+	            $adminRole = $p->getRoleListener()->getUser($adminId);
+	            // finds first super admin role
+	            if($adminRole->getDetail()->isWigiiNamespaceCreator()) {
+	                $p->bindToRole($adminId);
+	                break;
+	            }
+	        }
+	        // Fetches users
+	        $lf = lf(null,null,fskl(fsk('username')));
+	        ServiceProvider::getGroupAdminService()->getAllUsers($p, $groupId, $userRPList, $lf, true);
+	        
+	        // Cache of real users
+	        $realUsers = array();
+	        $userAS = ServiceProvider::getUserAdminService();
+	        $userAllocation = UserListArrayImpl::createInstance();
+	        // Dumps user list with access rights
+	        $returnValue = '';
+	        foreach($userRPList->getListIterator() as $userRP) {
+	            $user = $userRP->getUserR()->getUser();
+	            $userRight = $userRP->getUserR()->getRights()->getLetter();
+	            // records role or direct user rights, but skips expired users
+	            // 1. records highest access rights of non-calculated roles
+	            // 2. user is a real user => he is not expired.
+	            if($userRight > $realUsers[$user->getUsername()] && !$user->isCalculatedRole() &&
+	                ($user->isRole() || !($user->getDetail() && $user->getDetail()->passwordExpired()))) {
+	                    $realUsers[$user->getUsername()] = $userRight;
+	                }
+	                // if is role then checks for role allocation
+	                if($user->isRole()) {
+	                    $userAllocation->reset();
+	                    if($userAS->getAllRoleUsers($p, $user->getId(),$userAllocation,$lf) > 0) {
+	                        foreach($userAllocation->getListIterator() as $realUser) {
+	                            // keeps only non-expired users and records highest access rights
+	                            if(!($realUser->getDetail() && $realUser->getDetail()->passwordExpired()) &&
+	                                ($userRight > $realUsers[$realUser->getUsername()])) {
+	                                    $realUsers[$realUser->getUsername()] = $userRight;
+	                                }
+	                        }
+	                    }
+	                }
+	        }
+	        if(!empty($realUsers)) {
+	            ksort($realUsers);
+	            if($asStdClass) $returnValue = ValueListArrayImpl::createInstance();
+	            foreach($realUsers as $realUsername => $userRight) {
+	                if($asStdClass) {
+	                    $returnValue->addValue((object)array('username'=>$realUsername,'accessRight'=>$userRight));
+	                }
+	                else {
+    	                $returnValue .= $realUsername;
+    	                $returnValue .= ': ';
+    	                $returnValue .= $userRight;
+    	                $returnValue .= "\n";
+	                }
+	            }
+	        }
+	        
+	        $p->bindToRole($currentRoleId);
+	    }
+	    catch(Exception $e) {
+	        $p->bindToRole($currentRoleId);
+	        throw $e;
+	    }
+	    return $returnValue;
+	}
+	
 	// Control Flow
 	
 	/**

@@ -61,7 +61,7 @@ class MapObject2ObjectDFA extends ObjectDFAWithFuncExpVM
 	 * 				  'age' => fs('age'))	 
 	 */
 	public function setObject2ObjectMap($map) {
-		if(!isset($map)) unset($this->ob2ObjMap);
+		if(!isset($map)) unset($this->obj2ObjMap);
 		if(!is_array($map)) throw new DataFlowServiceException("object2objectMap should be an array", DataFlowServiceException::INVALID_ARGUMENT);
 		$this->obj2ObjMap = $map;
 	}		
