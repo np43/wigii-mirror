@@ -225,9 +225,13 @@ div.cm div.checked {
 
 #quickStart {
 /*	float:left;
-	margin-left:40px;
-	*/
+	margin-left:40px;	
 	margin:10px;
+	*/
+	margin:0;	
+}
+#quickStartTabs {
+	padding:10px;
 }
 #quickStartTabs.introduction {
 	margin-right:auto;
