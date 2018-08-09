@@ -859,7 +859,19 @@ class FuncExpBuilder {
 	public function lxInAllGroups($namespace,$module) {
 		if($module instanceof Module) $module = $module->getModuleName();
 		if($namespace instanceof WigiiNamespace) $namespace = $namespace->getWigiiNamespaceName();
-		return lxInGR(lxAnd(lxEq(fs('module'), $module), lxEq(fs('wigiiNamespace'), $namespace), lxOr(lxEq(fs('id_group_parent'),0),lxIsNull(fs('id_group_parent'))), lxAnd(lxNotLike(fs('groupname'), '%trashbin%'), lxNotLike(fs('groupname'), '%corbeille%'))));
+		return lxInGR($this->lxAllGroups($namespace, $module));
+	}
+	
+	/**
+	 * Builds a LogExp which selects all useful groups in given namespace and module (includes root groups and excludes trashbin)
+	 * @param String|WigiiNamespace $namespace specific namespace to search in.
+	 * @param String|Module $module
+	 * @return LogExp
+	 */
+	public function lxAllGroups($namespace,$module) {
+		if($module instanceof Module) $module = $module->getModuleName();
+		if($namespace instanceof WigiiNamespace) $namespace = $namespace->getWigiiNamespaceName();
+		return lxAnd(lxEq(fs('module'), $module), lxEq(fs('wigiiNamespace'), $namespace), lxOr(lxEq(fs('id_group_parent'),0),lxIsNull(fs('id_group_parent'))), lxAnd(lxNotLike(fs('groupname'), '%trashbin%'), lxNotLike(fs('groupname'), '%corbeille%')));
 	}
 	
 	/**

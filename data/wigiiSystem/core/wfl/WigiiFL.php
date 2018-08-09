@@ -781,6 +781,21 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		if($nArgs < 2) throw new FuncExpEvalException('The lxInAllGroups function takes two arguments: the namespace and module in which to search', FuncExpEvalException::INVALID_ARGUMENT);
 		return $this->getFuncExpBuilder()->lxInAllGroups($this->evaluateArg($args[0]),$this->evaluateArg($args[1]));
 	}
+	
+	/**
+	 * Builds a LogExp which selects all useful groups in given namespace and module (includes root groups and excludes trashbin)
+	 * See method 'lxAllGroups' in FuncExpBuilder class.
+	 * FuncExp signature : <code>lxAllGroups(namespace,module)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) namespace: String|WigiiNamespace. specific namespace to search in.
+	 * - Arg(1) module: String|Module
+	 * @return LogExp
+	 */
+	public function lxAllGroups($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException('The lxAllGroups function takes two arguments: the namespace and module in which to search', FuncExpEvalException::INVALID_ARGUMENT);
+		return $this->getFuncExpBuilder()->lxAllGroups($this->evaluateArg($args[0]),$this->evaluateArg($args[1]));
+	}
 
 	/**
 	 * Constructs a logical expression to select a range of months given a length and a start date.
