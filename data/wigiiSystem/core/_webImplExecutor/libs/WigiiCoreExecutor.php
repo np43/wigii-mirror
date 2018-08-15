@@ -11680,9 +11680,9 @@ onUpdateErrorCounter = 0;
 				$this->throwEvent()->navigate(PWithUserIdWithWigiiNamespaceNameWithModuleName :: createInstance($p, $p->getRealUserId(), $exec->getCrtWigiiNamespace()->getWigiiNamespaceName(), $exec->getCrtModule()->getModuleName()));
 
 				//if request is found in cache, does nothing,
-				// except if coming from Setup namespace or Dimensions module, in that case, clears config
+				// except if coming from Setup namespace and Dimensions module, in that case, clears config
 				if ($exec->wasFoundInJSCache()){
-					if($nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() == $exec->getCrtParameters(0) ||
+					if($nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() == $exec->getCrtParameters(0) &&
 						Module::DIMENSIONS_MODULE == $exec->getCrtParameters(1)) {
 						$this->clearConfig(true);
 					}
@@ -11779,12 +11779,10 @@ onUpdateErrorCounter = 0;
 					break;
 				}
 
-				// If navigating out of the Setup namespace or
-				// navigating out of Dimensions module in a namespace different from Setup, 
+				// If navigating out of the Setup/Dimensions module, 
 				// then clears the configuration from the session and shared data
-				if($nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() == $fromWigiiNamespace &&
-					$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() != $fromWigiiNamespace ||
-					$fromModule == Module::DIMENSIONS_MODULE && $nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() != $fromWigiiNamespace) {
+				if($fromWigiiNamespace == $nAS->getSetupWigiiNamespace($p)->getWigiiNamespaceUrl() &&
+					$fromModule == Module::DIMENSIONS_MODULE) {
 					$this->clearConfig(true);
 				}
 				// If navigating out of the Admin module, then clears the configuration from the session

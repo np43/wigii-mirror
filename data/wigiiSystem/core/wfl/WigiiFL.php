@@ -1449,6 +1449,142 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		$p->bindToWigiiNamespace($origNS);
 		return $returnValue;
 	}
+	
+	/**
+	 * Selects the attributes of a dimension located in the current Wigii namespace and returns a SimpleXmlElement compatible with attribute expressions.<br/>
+	 * FuncExp signature : <code>cfgAttrDimensionCrtNamespace(selector, attrLogExp = null, sortOrder = 3, filterWithUserRights=false)</code><br/>
+	 *  Where arguments are :
+	 * - Arg(0) selector: String|Int|LogExp. The dimension selector. Can be a group id, a group name or a group log exp.
+	 * - Arg(1) attrLogExp: LogExp. An optional LogExp used to filter the list of attributes (for instance filtering some specific values, see module Dimensions for details about the available fields)
+	 * - Arg(2) sortOrder: Int. One of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label. (by default is ascending by label)
+	 * - Arg(3) filterWithUserRights: Boolean. If true, then uses current principal to fetch the dimension else uses the root principal. (By default uses the root principal).
+	 *
+	 * Examples: in a configuration file create an attribut:
+	 * <country type="Attributs"><label>Country</label>
+	 *     <attributeExp funcExp='cfgAttrDimensionCrtNamespace("Country")'/>
+	 * </country>
+	 *
+	 * Append two dimensions in one drop down :
+	 * <fundCodes type="Attributs"><label>Fund codes</label>
+	 * 		<attribute optGroupStart="1"><label>Codes 1</label></attribute>
+	 * 		<attributeExp funcExp='cfgAttrDimensionCrtNamespace("12342")'/>
+	 * 		<attribute optGroupEnd="1"/>
+	 * 		<attribute optGroupStart="1"><label>Codes 2</label></attribute>
+	 * 		<attributeExp funcExp='cfgAttrDimensionCrtNamespace("12343")'/>
+	 * 		<attribute optGroupEnd="1"/>
+	 * 	</fundCodes>
+	 *
+	 * 	Merge two dimensions in one drop down :
+	 * 	<articles type="Attributs"><label>Articles</label>
+	 * 		<attributeExp funcExp='cfgAttrDimensionCrtNamespace(lxIn(fs("id"), newList("1243", "4564")))'/>
+	 *  </articles>
+	 *  @return SimpleXMLElement
+	 */
+	public function cfgAttrDimensionCrtNamespace($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1 || empty($args[0])) throw new FuncExpEvalException('The cfgAttrDimensionCrtNamespace function takes at least one argument which is the dimension selector. Can be a group id, a group name or a group log exp.', FuncExpEvalException::INVALID_ARGUMENT);
+		$fxParser = TechnicalServiceProvider::getFieldSelectorFuncExpParser();
+		$cacheKey = $fxParser->funcExpToString($args[0]);
+		$selector = $this->evaluateArg($args[0]);
+		if(empty($selector)) throw new FuncExpEvalException('The cfgAttrDimensionCrtNamespace function takes at least one argument which is the dimension selector. Can be a group id, a group name or a group log exp.', FuncExpEvalException::INVALID_ARGUMENT);
+		
+		if($nArgs > 1 && !empty($args[1])) {
+			$cacheKey .= ','.$fxParser->funcExpToString($args[1]);
+			$attrLogExp = $this->evaluateArg($args[1]);
+		}
+		else {
+			$cacheKey .= ',NULL';
+			$attrLogExp = null;
+		}
+		if($nArgs > 2) {
+			$sortOrder = $this->evaluateArg($args[2]);
+			if($sortOrder == 0) $sortOrder = 0;
+			elseif($sortOrder == 1) $sortOrder = 1;
+			elseif($sortOrder == 2) $sortOrder = 2;
+			elseif($sortOrder == 3) $sortOrder = 3;
+			elseif($sortOrder == 4) $sortOrder = 4;
+			else throw new FuncExpEvalException("sortOrder should be one of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label.", FuncExpEvalException::INVALID_ARGUMENT);
+		}
+		else $sortOrder = 3;
+		
+		if($nArgs > 3) $filterWithUserRights = $this->evaluateArg($args[3]);
+		else $filterWithUserRights = false;
+		
+		// gets principal
+		if($filterWithUserRights) $p = $this->getPrincipal();
+		else $p = $this->getRootPrincipal();
+		
+		// gets current wigii namespace and binds to it
+		$setupNS =  ServiceProvider::getExecutionService()->getCrtWigiiNamespace();
+		$origNS = $p->getWigiiNamespace();
+		$p->bindToWigiiNamespace($setupNS);
+		$cacheKey .= ','.$p->getUsername();
+		
+		// builds dimension selector
+		if(!($selector instanceof LogExp)) {
+			if(is_numeric($selector)) $selector = lxEq(fs('id'), $selector);
+			else $selector = lxEq(fs('groupname'), $selector);
+		}
+		$selector = lxAnd(lxEq(fs('module'), Module::DIMENSIONS_MODULE), lxEq(fs('wigiiNamespace'), $setupNS->getWigiiNamespaceName()), $selector);
+		
+		// builds fskl
+		switch($sortOrder) {
+			case 0:
+				$fskl = fskl(fsk('__element', 'id', true));
+				$sortOrder = 0;
+				break;
+			case 1:
+				$fskl = fskl(fsk('value', null, true));
+				$sortOrder = 0;
+				break;
+			case 2:
+				$fskl = fskl(fsk('value', null, false));
+				$sortOrder = 0;
+				break;
+			case 3:
+				$fskl = null;
+				$sortOrder = 1;
+				break;
+			case 4:
+				$fskl = null;
+				$sortOrder = 2;
+				break;
+		}
+		
+		// builds list filter
+		$fsl = fsl(fs('value', 'value'), fs('idGroup', 'value'), fs('color', 'value'), fs('email', 'value'), fs('checked', 'value'), fs('label', 'value'));
+		if(isset($attrLogExp) || isset($fskl)) $lf = lf($fsl, $attrLogExp, $fskl);
+		else $lf = lf($fsl);
+		
+		$this->debugLogger()->write("cfgAttrDimensionCrtNamespace cache key = $cacheKey");
+		try {
+			$returnValue = $this->getDataFlowService()->processDataSource($p,
+					elementPList(lxInGR($selector), $lf),
+					dfasl(
+							dfas("MapElement2ValueDFA", "setElement2ValueFuncExp", fx('cfgAttribut',
+									fs('value'),
+									fx('newMap',
+											'idGroup', fs('idGroup'),
+											'color', fs('color'),
+											'email', fs('email'),
+											'checked', fx('ctlIf', fs('checked'), '1', '0'),
+											'disabled', fx('ctlIf', fs_e('state_deprecated'), '1', '0')
+											),
+									fs('label'))),
+							dfas("FilterDuplicatesAndSortDFA",
+									"setObjectClass", 'cfgAttribut',
+									"setSortOrder", $sortOrder
+									),
+							dfas("CfgAttribut2XmlDFA")
+							), true, null, 'cfgAttrDimension('.md5($cacheKey).')');
+		}
+		catch(Exception $e) {
+			$message="Problem when retrieving dimension ".$fxParser->funcExpToString($args[0]).".\nCheck that dimension exist in ". $setupNS->getWigiiNamespaceName()." namespace.\n[technical error is: ".$e->getCode().' '.$e->getMessage()."]";
+			throw new FuncExpEvalException($message,FuncExpEvalException::CONFIGURATION_ERROR);
+		}
+		$p->bindToWigiiNamespace($origNS);
+		return $returnValue;
+	}
 
 	/**
 	 * Selects the attributes of a dimension, returns a SimpleXmlElement compatible with attribute expressions,
@@ -2387,6 +2523,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 *   'sharedData': clears the DB shared data cache (e.g. calculated drop-downs or calculated config)
 	 *   'role': clears user calculated roles. Postcondition: principal is bound back to real user.
 	 *   'cfgAttributeExp': clears one specific calculated drop-down
+	 *   'cfgAttrDimension': clears one specific dimension in Setup namespace. Key is mandatory and should be the dimension folder name.
+	 *   'cfgAttrDimensionCrtNamespace': clears one specific dimension in current namespace. Key is mandatory and should be the dimension folder name.
 	 * - Arg(1) key: String|FuncExp. Optional cache key name if supported by the cache type.
 	 * - Arg(2) cacheTokens: String|Array Optional cacheTokens to add to the cache key if supported by the cache type, this argument is always evaluated
 	 * If cache type is 'cfgAttributeExp', then the key is mandatory and has to be the AttributeExp FuncExp used to populate the drop-down.
@@ -2421,9 +2559,14 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 				$p->refetchAllRoles($userAS->getListFilterForNavigationBar(), UserListForNavigationBarImpl::createInstance($defaultWigiiNamespace));
 				break;
 			case 'cfgAttributeExp':
+			case 'cfgAttrDimension':
+			case 'cfgAttrDimensionCrtNamespace':
 				if($nArgs<2) throw new FuncExpEvalException("If cache type is 'cfgAttributeExp' then cache is mandatory and should be the AttributeExp FuncExp used to populate the drop-down.", FuncExpEvalException::INVALID_ARGUMENT);
-				if($args[1] instanceof FuncExp) $key=fx2str($args[1]);
-				else $key=$this->evaluateArg($args[1]);
+				if($type=='cfgAttributeExp') {
+					if($args[1] instanceof FuncExp) $key=fx2str($args[1]);
+					else $key=$this->evaluateArg($args[1]);
+				}
+				else $key = fx2str(fx($type,$this->evaluateArg($args[1])));
 				$cacheTokens = "";
 				if($args[2]){
 					$cacheTokens=$this->evaluateArg($args[2]);

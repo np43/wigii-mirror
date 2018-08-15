@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<!-- Config version G102 -->
+<!-- Config version G248 -->
 <dimensions>
 
 	<parameters
@@ -47,6 +47,11 @@
 		reloadDetailAfterModify="0"
 		useGoogleServiceToPreviewOfficeDocuments="0"
 
+		Element_beforeDeleteExp='ctlSeq(
+			ctlClearCache("cfgAttrDimensionCrtNamespace",cfgCurrentGroup(),sysCrtWigiiNamespace()), 
+			logTrue()
+		)'
+		
 		trashBinGroup=""
 		/>
 
@@ -92,6 +97,10 @@
 			<email excelExport="auto" type="Emails" require="0" expand="1" isMultiple="1" noEmailContextualMenu="1"><label_l01>Email(s)</label_l01><label_l02>Email(s)</label_l02></email>
 			<color excelExport="auto" type="Strings" colorPicker="1" require="0" expand="1"><label_l01>Color</label_l01><label_l02>Couleur</label_l02></color>
 		<moreOptions groupEnd="1"/>
+		<onSaveFuncExp excelExport="none" type="Booleans" hidden="1" doNotPersist="1" funcExp='ctlSeq(
+			ctlClearCache("cfgAttrDimensionCrtNamespace",cfgCurrentGroup(),sysCrtWigiiNamespace()), 
+			logTrue()
+		)'/>
 	</fields>
 
 	<listView>
