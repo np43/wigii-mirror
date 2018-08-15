@@ -50,13 +50,28 @@ class ValueListLinkedIdGroupImpl extends ValueListArrayMapper implements FieldLi
 		if($field->getDataType() != null){
 			$fxml = $field->getXml();
 			$dt = $field->getDataType()->getDataTypeName();
+			$wpl = ServiceProvider::getWigiiBPL();
+			$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
 			$gids = array();
 			if($dt == "Attributs" || $dt == "MultipleAttributs"){
-				$gids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\" and not(@movePriority)]/attribute::idGroup");
+				// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+				$dynGids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\" and @enableDynamicAttributes=\"1\" and not(@movePriority)]/attribute::idGroup");
+				if($dynGids) {					
+					foreach($dynGids as $dynGid) {
+						$gids[] = $wpl->evaluateConfigParameter($p, $dynGid);
+					}
+					$dynGids = implode(";",$gids);
+				}
+				// Static id groups
+				$gids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\" and not(@enableDynamicAttributes) and not(@movePriority)]/attribute::idGroup");
 				if($gids)  $gids = implode(";",$gids);
+				else $gids = '';
+				if($dynGids) $gids = $dynGids.';'.$gids;
 			} else if($dt == "Booleans"){
 				if($fxml["idGroup"] != null && !$fxml["movePriority"]){
 					$gids = (string)$fxml["idGroup"];
+					// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+					if($fxml["enableDynamicAttributes"]=="1") $gids = $wpl->evaluateConfigParameter($p, $gids);
 				}
 			}
 			if($gids) $this->addValue($gids);

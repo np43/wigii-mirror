@@ -153,6 +153,7 @@ abstract class Record extends DbEntityInstance
 	 */
 	public function getAllLinkedIdGroupInRecord($p, $valueList){
 		$wg = $this->getWigiiBag();
+		$wpl = ServiceProvider::getWigiiBPL();
 		foreach($this->getFieldList()->getListIterator() as $fieldName=>$f){
 			//check only dataTypes
 			if($f->getDataType() != null){
@@ -160,11 +161,24 @@ abstract class Record extends DbEntityInstance
 				$dt = $f->getDataType()->getDataTypeName();
 				$gids = array();
 				if($dt == "Attributs" || $dt == "MultipleAttributs"){
-					$gids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\"]/attribute::idGroup");
+					// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+					$dynGids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\" and @enableDynamicAttributes=\"1\"]/attribute::idGroup");
+					if($dynGids) {
+						foreach($dynGids as $dynGid) {
+							$gids[] = $wpl->evaluateConfigParameter($p, $dynGid,$this);
+						}
+						$dynGids = implode(";",$gids);
+					}
+					// Static id groups
+					$gids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\" and not(@enableDynamicAttributes)]/attribute::idGroup");
 					if($gids)  $gids = implode(";",$gids);
+					else $gids = '';
+					if($dynGids) $gids = $dynGids.';'.$gids;
 				} else if($dt == "Booleans"){
 					if($fxml["idGroup"] != null){
 						$gids = (string)$fxml["idGroup"];
+						// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+						if($fxml["enableDynamicAttributes"]=="1") $gids = $wpl->evaluateConfigParameter($p, $gids,$this);
 					}
 				}
 				if($gids) $valueList->addValue($gids);
@@ -184,6 +198,7 @@ abstract class Record extends DbEntityInstance
 	public function getLinkedIdGroupInRecord($p, $valueList, $isMultiple=false){
 		if($valueList==null) $valueList = ValueListArrayImpl::createInstance();
 		$wg = $this->getWigiiBag();
+		$wpl = ServiceProvider::getWigiiBPL();
 		foreach($this->getFieldList()->getListIterator() as $fieldName=>$f){
 			//check only dataTypes
 			if($f->getDataType() != null){
@@ -198,13 +213,26 @@ abstract class Record extends DbEntityInstance
 						if(is_array($forValue)){
 							$forValue = implode("\" or text()=\"", $forValue); //$tempRes;
 						}
-						$gids= $fxml->xpath("attribute[@idGroup and (text()=\"$forValue\") and @idGroup!=\"\" and not(@movePriority)]/attribute::idGroup");
+						// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+						$dynGids= $fxml->xpath("attribute[@idGroup and (text()=\"$forValue\") and @idGroup!=\"\" and @enableDynamicAttributes=\"1\" and not(@movePriority)]/attribute::idGroup");
+						if($dynGids) {
+							foreach($dynGids as $dynGid) {
+								$gids[] = $wpl->evaluateConfigParameter($p, $dynGid,$this);
+							}
+							$dynGids = implode(";",$gids);
+						}
+						// Static id groups
+						$gids= $fxml->xpath("attribute[@idGroup and (text()=\"$forValue\") and @idGroup!=\"\" and not(@enableDynamicAttributes) and not(@movePriority)]/attribute::idGroup");
 						if($gids)  $gids = implode(";",$gids);
+						else $gids = '';
+						if($dynGids) $gids = $dynGids.';'.$gids;
 					} else if($dt == "Booleans"){
 						$forValue = $this->getFieldValue($fieldName);
 						if($forValue){
 							if($fxml["idGroup"] != null && !$fxml["movePriority"]){
 								$gids = (string)$fxml["idGroup"];
+								// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+								if($fxml["enableDynamicAttributes"]=="1") $gids = $wpl->evaluateConfigParameter($p, $gids,$this);
 							}
 						}
 					}
@@ -278,6 +306,7 @@ abstract class Record extends DbEntityInstance
 	 */
 	public function getNoneLinkedIdGroupInRecord($p, $valueList, $isMultiple=false){
 		$wg = $this->getWigiiBag();
+		$wpl = ServiceProvider::getWigiiBPL();
 		foreach($this->getFieldList()->getListIterator() as $fieldName=>$f){
 			if($f->getDataType() != null){
 				if(!$isMultiple || $isMultiple && $wg->isMultipleChecked($fieldName) && !$wg->isMultipleAddOnlyChecked($fieldName)){
@@ -290,17 +319,40 @@ abstract class Record extends DbEntityInstance
 							if(is_array($forValue)){
 								$forValue = implode("\" or text()!=\"", $forValue); //$tempRes;
 							}
-							$gids= $fxml->xpath("attribute[@idGroup and (text()!=\"$forValue\") and @idGroup!=\"\"]/attribute::idGroup");
+							// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+							$dynGids= $fxml->xpath("attribute[@idGroup and (text()=\"$forValue\") and @idGroup!=\"\" and @enableDynamicAttributes=\"1\"]/attribute::idGroup");
+							if($dynGids) {
+								foreach($dynGids as $dynGid) {
+									$gids[] = $wpl->evaluateConfigParameter($p, $dynGid,$this);
+								}
+								$dynGids = implode(";",$gids);
+							}
+							// Static id groups
+							$gids= $fxml->xpath("attribute[@idGroup and (text()!=\"$forValue\") and @idGroup!=\"\" and not(@enableDynamicAttributes)]/attribute::idGroup");
 						} else {
 							//empty value cause a simpleXml path warning
-							$gids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\"]/attribute::idGroup");
+							
+							// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+							$dynGids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\" and @enableDynamicAttributes=\"1\"]/attribute::idGroup");
+							if($dynGids) {
+								foreach($dynGids as $dynGid) {
+									$gids[] = $wpl->evaluateConfigParameter($p, $dynGid,$this);
+								}
+								$dynGids = implode(";",$gids);
+							}
+							// Static id groups
+							$gids= $fxml->xpath("attribute[@idGroup and @idGroup!=\"\" and not(@enableDynamicAttributes)]/attribute::idGroup");
 						}
 						if($gids)  $gids = implode(";",$gids);
+						else $gids = '';
+						if($dynGids) $gids = $dynGids.';'.$gids;
 					} else if($dt == "Booleans"){
 						$forValue = $this->getFieldValue($fieldName);
 						if(!$forValue){
 							if($fxml["idGroup"] != null){
 								$gids = (string)$fxml["idGroup"];
+								// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
+								if($fxml["enableDynamicAttributes"]=="1") $gids = $wpl->evaluateConfigParameter($p, $gids,$this);
 							}
 						}
 					}

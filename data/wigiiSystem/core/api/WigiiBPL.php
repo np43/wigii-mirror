@@ -2348,7 +2348,7 @@ class WigiiBPL
 	 * @return Any FuncExp result
 	 */
 	public function evaluateConfigParameter($p,$parameter,$rec=null) {
-	    return $this->getWigiiExecutor()->evaluateConfigParameter($principal, ServiceProvider::getExecutionService(), $parameter, $rec);
+	    return $this->getWigiiExecutor()->evaluateConfigParameter($p, ServiceProvider::getExecutionService(), $parameter, $rec);
 	}
 	
 	// Object builders
