@@ -320,7 +320,7 @@ abstract class Record extends DbEntityInstance
 								$forValue = implode("\" or text()!=\"", $forValue); //$tempRes;
 							}
 							// CWE 15.08.2018: evaluates dynamic attribute idGroup if defined
-							$dynGids= $fxml->xpath("attribute[@idGroup and (text()=\"$forValue\") and @idGroup!=\"\" and @enableDynamicAttributes=\"1\"]/attribute::idGroup");
+							$dynGids= $fxml->xpath("attribute[@idGroup and (text()!=\"$forValue\") and @idGroup!=\"\" and @enableDynamicAttributes=\"1\"]/attribute::idGroup");
 							if($dynGids) {
 								foreach($dynGids as $dynGid) {
 									$gids[] = $wpl->evaluateConfigParameter($p, $dynGid,$this);
