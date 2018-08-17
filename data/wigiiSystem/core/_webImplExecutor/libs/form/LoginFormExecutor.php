@@ -225,7 +225,7 @@ class LoginFormExecutor extends FormExecutor {
  					"$('#loginForm #login_form__username').appendTo($('#login_form__groupLeft'));" .
  					"$('#loginForm #login_form__password').appendTo($('#login_form__groupLeft'));" .
 					//move the stay connected field + the button in one div and make it floating beside the username and password
-					"$('#loginForm #login_form__groupLeft').after($('<div id=\"login_form__groupRight\" style=\"float:left;width:100%;max-width:150px;\"></div>'));" .
+					"$('#loginForm #login_form__groupLeft').after($('<div id=\"login_form__groupRight\" style=\"float:left;width:100%;max-width:200px;\"></div>'));" .
  					"$('#loginForm #login_form__stayConnected').appendTo($('#login_form__groupRight'));" .
  					"$('#loginForm button').css('float','left').css('margin-left','0px').appendTo($('#login_form__groupRight'));" .
 					"$('#loginForm div.publicFormBorder').remove();" .
