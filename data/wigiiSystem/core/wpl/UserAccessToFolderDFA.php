@@ -90,13 +90,22 @@ class UserAccessToFolderDFA implements DataFlowActivity
 	    
 	    // gets user access rights
 	    $ugrList = evalfx($p, fx('adminAccessToFolder',$data->id,true));
+	    //$ugrList=null;
 	    // pushes to data flow group associated with user and access rights
-	    foreach($ugrList->getListIterator() as $ugr) {
+	    if($ugrList && !$ugrList->isEmpty()) {
+    	    foreach($ugrList->getListIterator() as $ugr) {
+    	        $returnValue = clone $data;
+    	        $returnValue->username = $ugr->username;
+    	        $returnValue->accessRight = $ugr->accessRight;
+    	        $dataFlowContext->writeResultToOutput($returnValue, $this);
+    	    }
+	    }
+	    else {
 	        $returnValue = clone $data;
-	        $returnValue->username = $ugr->username;
-	        $returnValue->accessRight = $ugr->accessRight;
+	        $returnValue->username = '';
+	        $returnValue->accessRight = '';
 	        $dataFlowContext->writeResultToOutput($returnValue, $this);
-	    }	    
+	    }
 	}
 	public function endOfStream($dataFlowContext) {
 		/* nothing to do */

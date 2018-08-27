@@ -339,8 +339,8 @@
 			<groupSubscriptionLink type="Urls" require="0" />
 			<groupSubscriptionExternalAccessRequestLink type="Urls" require="0" />
 			<groupSubscriptionPreview type="Blobs" htmlArea="1" allowScripting="1" isInLine="1" require="0" />
-			<!-- groupFolderAccess groupStart="1" expand="1" displayEvenIfEmpty="1" noFieldset="1"><label_l01>User access on folder</label_l01><label_l02>Droits d'accès par utilisateur</label_l02></groupFolderAccess>
-			<groupFolderAccess groupEnd="1" expand="1" displayEvenIfEmpty="1" noFieldset="1" htmlExp='sel(adminAccessToFolder(cfgCurrentGroup("id"),logTrue()),dfasl(
+			<!-- groupFolderAccess enableDynamicAttributes="1" hidden='logNot(logAnd(sysUserHasRole("SuperAdmin"),eq(sysExecParameter("2"),"groupPanel")))' groupStart="1" expand="1" displayEvenIfEmpty="1" noFieldset="1"><label_l01>User access on folder</label_l01><label_l02>Droits d'accès par utilisateur</label_l02></groupFolderAccess>
+			<groupFolderAccess enableDynamicAttributes="1" hidden='logNot(logAnd(sysUserHasRole("SuperAdmin"),eq(sysExecParameter("2"),"groupPanel")))' groupEnd="1" expand="1" displayEvenIfEmpty="1" noFieldset="1" htmlExp='sel(adminAccessToFolder(cfgCurrentGroup("id"),logTrue()),dfasl(
 				dfas("MapObject2HtmlTableDFA","setObject2HtmlTableMap", newMap("username",fs("username"),"accessRight",fs("accessRight")), "setHtmlTableHeader", newMap("username",txtDico(newMap("l01","User","l02","Utilisateur")),"accessRight",txtDico(newMap("l01","Access rights","l02",concat("Droits d",txtApos(),"accès"))))),
 				dfas("StringBufferDFA")
 			))' /-->

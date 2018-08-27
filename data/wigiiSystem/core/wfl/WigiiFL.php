@@ -2452,6 +2452,11 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	                $p->bindToRole($adminId);
 	                break;
 	            }
+	            // or first admin role accessing all users rights
+	            if($adminRole->getDetail()->isReadAllUsersInWigiiNamespace()) {
+	                $p->bindToRole($adminId);
+	                break;
+	            }
 	        }
 	        // Fetches users
 	        $lf = lf(null,null,fskl(fsk('username')));
