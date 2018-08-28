@@ -124,7 +124,7 @@ class MapObject2HtmlTableDFA extends ObjectDFAWithFuncExpVM
 	   }
 	   if(!empty($header)) {
 	       foreach($header as $k => $v) {
-	           $headerHtml .= '<th class="lH">';
+	           $headerHtml .= '<th class="lH" style="padding:3px;">';
 	           $headerHtml .= $v;
 	           $headerHtml .= '</th>';
 	       }
@@ -158,7 +158,7 @@ class MapObject2HtmlTableDFA extends ObjectDFAWithFuncExpVM
 			        $colClass = 'class="col_'.$attr.'"';
 			        $rowHtml .= ' '.$colClass;
 			    }
-			    $rowHtml .= '><div>';
+			    $rowHtml .= '><div style="padding:3px;">';
 				$rowHtml .= $this->evaluateFuncExp($funcExp);
 				$rowHtml .= '</div></td>';
 			}

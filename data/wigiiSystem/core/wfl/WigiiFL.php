@@ -2440,8 +2440,11 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    if($nArgs>1) $asStdClass = ($this->evaluateArg($args[1])==true);
 	    else $asStdClass = false;
 	    
-	    // switches principal to SuperAdmin role
 	    $p = $this->getPrincipal();
+	    $groupAS = ServiceProvider::getGroupAdminService();
+	    $group = $groupAS->getGroupWithoutDetail($p, $groupId);
+	    
+	    // switches principal to Admin role
 	    $currentRoleId = $p->getUserId();
 	    $userRPList = UserRPListArrayImpl::createInstance();
 	    try {
@@ -2453,14 +2456,16 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	                break;
 	            }
 	            // or first admin role accessing all users rights
-	            if($adminRole->getDetail()->isReadAllUsersInWigiiNamespace()) {
+	            if($adminRole->getDetail()->isReadAllUsersInWigiiNamespace() && 
+	                $p->getWigiiNamespace() === $adminRole->getWigiiNamespace() && 
+	                $adminRole->getDetail()->getModuleAccess($group->getModule())) {
 	                $p->bindToRole($adminId);
 	                break;
 	            }
 	        }
 	        // Fetches users
 	        $lf = lf(null,null,fskl(fsk('username')));
-	        ServiceProvider::getGroupAdminService()->getAllUsers($p, $groupId, $userRPList, $lf, true);
+	        $groupAS->getAllUsers($p, $groupId, $userRPList, $lf, true);
 	        
 	        // Cache of real users
 	        $realUsers = array();
