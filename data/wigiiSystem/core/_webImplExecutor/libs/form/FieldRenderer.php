@@ -278,7 +278,7 @@ class FieldRenderer extends Model {
 	}
 	public function getIsInLineWidth(){
 		if(!$this->fieldIsInLineWidth) return null;
-		return $this->fieldIsInLineWidth[$this->getCrtField()];
+		return $this->fieldIsInLineWidth[$this->getCrtField()]+$this->fieldCorrectionDueToExternalFactors;
 	}
 	protected function getFieldOffset(){
 		return $this->fieldOffset;

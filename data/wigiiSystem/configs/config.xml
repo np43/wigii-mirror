@@ -514,7 +514,10 @@
 
 	<moduleEditorNewNamespace>
 		<fields>
+			<freeText needTranslation="1">moduleEditorNewNamespaceIntroduction</freeText>
 			<moduleEditorNewNamespaceName type="Strings" require="1" />
+			<freeText needTranslation="1">moduleEditorNewNamespaceConfigPrefixExplanation</freeText>
+			<moduleEditorNewNamespaceConfigPrefixToUse type="Strings" expand="1" require="0" />
 			<moduleEditorNewNamespaceTabs type="MultipleAttributs" useCheckboxes="1" isInLine="1" useMultipleColumn="2" require="1" />
 			<freeText><HR /></freeText>
 			<freeText needTranslation="1">moduleEditorNewNamespaceSupportExplanation</freeText>

@@ -703,7 +703,7 @@ getReadAllGroupsInWigiiNamespace:Access all #groups#:Accès à tous #groups#::::
 getReadAllGroupsInWigiiNamespace_help:Can access all #groups# in namespace.:Peut accèder tous #groups# de l'espace de nom.:::::::::
 getRootGroupCreator:Root #group# creator:Créateur de #-group# racine:::::::::
 getRootGroupCreator_help:Can create root #group# (with no parent).:Peut créer des #-groups# racines (sans parents).:::::::::
-giveGeneralFeedback:Send us your feedback:Envoyer nous votre Feedback:::::::::
+giveGeneralFeedback:Send us your feedback:Envoyez-nous votre feedback:::::::::
 giveFeedback:Send feedback:Donner un feedback:::::::::
 
 time_complete:Time complete#:Temps complété:::::::
@@ -867,7 +867,10 @@ moduleEditorZip_help:Download all the current files into a ZIP folder.:Télécha
 moduleEditorNewNamespace:Create a namespace:Créer un espace de nom:
 moduleEditorNewNamespace_help:Open a wizard to help you creating a new namespace.:Ouvre un wizard pour créer un nouvel espace de nom.::::
 moduleEditorNewNamespaceName:New namespace name:Nom du nouvel espace de nom:
+moduleEditorNewNamespaceConfigPrefixExplanation:Please indicate bellow if you want to specify the origin of the configuration files you want to use. If defined all the configurations starting with the name you've entered will be considered. If not found, then the general configuration files will be used.:Veuillez indiquer ci-dessous si vous souhaitez définir les fichiers de configuration à utiliser. Si défini les fichier de configurations commençant par ce nom seront utilisés. Si ce nom n'est pas trouvé alors les fichier de configurations généraux seront utilisés.:::::::::
+moduleEditorNewNamespaceConfigPrefixToUse:Use configuration starting with:Utiliser les configurations commençant par:::::::::
 moduleEditorNewNamespaceTabs:Select the tabs to enable:Sélectionné les onglets à activer:
+moduleEditorNewNamespaceIntroduction:If the namespace already exist, then the selected modules bellow will be added to the existings modules.:Si l'espace de nom existe déjà, alors les modules sélectionné ci-dessous seront ajoutés aux modules existants.:::::::::
 moduleEditorNewNamespaceSupportExplanation:Define a support name and email to add it in the feedback options.:Définisser un nom et un email pour le support afin de l'ajouter dans les options de feedback.:
 moduleEditorNewNamespaceSupportName:Name:Nom:
 moduleEditorNewNamespaceSupportEmail:Email:Email:
