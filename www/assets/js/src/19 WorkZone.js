@@ -2650,7 +2650,7 @@ function setNavigationBarNotInHomeStateBsp(displayFeedbackOnSystem){
 	var wigiiModuleLabel = crtModuleLabel;
 	var parentNamespace = null;
 	parentNamespace = crtWigiiNamespaceUrl;
-	var parentEncode = parentNamespace.replace(' ', '-');
+	var parentEncode = parentNamespace.replace(/ /g, '-');
 
 	$('#navigationBarBsp .admin').hide(); //Hide admin toolsbar
     $("#navigationBarBsp .carret-submenu").hide(); //Hide the submenu carret
