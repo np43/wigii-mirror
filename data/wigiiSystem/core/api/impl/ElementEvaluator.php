@@ -850,21 +850,6 @@ class ElementEvaluator extends RecordEvaluator
 	}
 	
 	/**
-	 * Saves the current Element in the database, this works only if current Element already exist
-	 * FuncExp signature : <code>saveElement(fsl=null)</code><br/>
-	 * Where arguments are :
-	 * - Arg(0) fsl: FieldSelectorList. An optional FieldSelectorList to persist only selected fields.
-	 * @return 1 if persisted, else 0
-	 */
-	public function saveElement($args) {
-		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs > 0) $fsl = $this->evaluateArg($args[0]);
-		else $fsl = null;
-		//if($this->getElement()->isNew()) throw new RecordException('saveElement can only update an existing element. The current element is new.', RecordException::INVALID_ARGUMENT);
-		return ServiceProvider::getElementService()->updateElement($this->getPrincipal(),$this->getElement(), $fsl);
-	}
-	
-	/**
 	 * Builds a DataFlowDumpable object which dumps the current element instance into a DataFlow.
 	 * FuncExp signature : <code>thisElement()</code><br/>
 	 * @return DataFlowDumpable

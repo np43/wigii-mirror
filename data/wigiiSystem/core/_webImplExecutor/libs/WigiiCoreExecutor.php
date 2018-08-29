@@ -10531,7 +10531,7 @@ onUpdateErrorCounter = 0;
 							$fieldName = $field->getFieldName();
 							
 							if (/* if multiple edit always takes all the fields to ensure correct recalculation of the element (and not only the modified ones) */
-								($exec->getCrtParameters(0) == "edit" /*&& $_POST[$fieldName . "_check"] === "on"*/) || 
+									($exec->getCrtParameters(0) == "edit" || $exec->getCrtParameters(0) == "delete" /*&& $_POST[$fieldName . "_check"] === "on"*/) || 
 							 	/* for email notification purpose, takes fields having an email set */
 								$dataTypeName == "Booleans" && isset ($fieldXml["email"]) ||
 								($dataTypeName == "Attributs" && $fieldXml->xpath("child::attribute[@email]")) ||

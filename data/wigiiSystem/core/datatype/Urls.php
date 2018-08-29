@@ -33,8 +33,9 @@ class Urls extends DataTypeInstance {
 	* automatiquement, si le type de donnée évolue, il faut aussi modifier cette méthode
 	*/
 	public function checkValues($p, $elementId, $wigiiBag, $field){
-		
-		$regex_web = '#^(((ht|f)tp(s?))\://)?(www.|[_a-zA-Z0-9\.|-]+.)[_a-zA-Z0-9\.|-]+\.([a-zA-Z0-9]{1,})(\:[0-9]+)*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$\#\=~_\-]+))*$#';
+		//$regex_web = '#^(((ht|f)tp(s?))\://)?(www.|[_a-zA-Z0-9\.|-]+.)[_a-zA-Z0-9\.|-]+\.([a-zA-Z0-9]{1,})(\:[0-9]+)*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$\#\=~_\-]+))*$#';
+		//removed \.([a-zA-Z0-9]{1,}) to allow localhost url type
+		$regex_web = '#^(((ht|f)tp(s?))\://)?(www.|[_a-zA-Z0-9\.|-]+.)[_a-zA-Z0-9\.|-]+(\:[0-9]+)*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$\#\=~_\-]+))*$#';
 		$matches = array();
 		$value = $field->getValue($elementId, $wigiiBag,"url");
 		$params = $field->getXml();
