@@ -875,7 +875,7 @@ class ElementEvaluator extends RecordEvaluator
 		$currentUrl = $this->getFieldValue(fs($urlField->getFieldName(),"url"));
 		$elementId = explode("/",$currentUrl);
 		if(is_array($elementId)){
-			$elementId = $elementId[7];
+			$elementId = end($elementId);
 		} else {
 			$elementId = null;
 		}
