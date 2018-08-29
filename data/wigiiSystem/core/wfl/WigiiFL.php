@@ -950,7 +950,98 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $this->getFuncExpBuilder()->newElement($this->evaluateArg($args[0]),
 			($nArgs > 1 ? $this->evaluateArg($args[1]) : null));
 	}
-
+	
+	/**
+	 * Deletes an Element
+	 * FuncExp signature : <code>deleteElement(elementId)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) elementId: int. The element id to be deleted
+	 * @return elementId
+	 */
+	public function deleteElement($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The deleteElement function takes at least one argument which is the elementId', FuncExpEvalException::INVALID_ARGUMENT);
+		$elementId = $this->evaluateArg($args[0]);
+		sel(
+			$this->getPrincipal(),
+			elementP($elementId),
+			dfasl(
+					dfas("ElementDFA","setMode","2")
+					)
+			);
+		return $elementId;
+	}
+	
+	/**
+	 * Update fields of an existing Element
+	 * FuncExp signature : <code>updateElementFields(elementId, fieldValuesMap, cs)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) elementId: int. The element id to be updated
+	 * - Arg(1) fieldValuesMap: Array. The field values as a Map. Key = fieldname, value = field value (if value is a map then subfields are updated).
+	 * - Arg(2) cs: ConfigSelector. Optional configSelector.
+	 * @return elementId
+	 */
+	public function updateElementFields($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException('The updateElementFields function takes at least two argument which is the elementId and the fieldValueMap', FuncExpEvalException::INVALID_ARGUMENT);
+		$elementId = $this->evaluateArg($args[0]);
+		$fieldMap = $this->evaluateArg($args[1]); //here the values are evaluated for each fields
+		if($nArgs > 2) $cs = $this->evaluateArg($args[2]);
+		else $cs = null;
+		$cfsMap = CalculatedFieldSelectorMapArrayImpl::createInstance();
+		foreach($fieldMap as $fieldName=>$value){
+			$cfsMap->setCalculatedFieldSelectorByFieldName($fieldName, $value);
+		}
+		sel(
+			$this->getPrincipal(),
+			elementP($elementId,NULL,$cs),
+			dfasl(
+				dfas("ElementSetterDFA","setCalculatedFieldSelectorMap",$cfsMap),
+				dfas("ElementRecalcDFA"),
+				dfas("ElementDFA","setMode","1")
+			)
+			);
+		return $elementId;
+	}
+	
+	/**
+	 * Create/Update an Element
+	 * FuncExp signature : <code>createUpdateElement(groupId, elementId, fieldValuesMap)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) groupId: int. The group in which to insert the element
+	 * - Arg(1) elementId: int. The element id to be updated (if null then element is created)
+	 * - Arg(2) fieldValuesMap: Array. The field values as a Map. Key = fieldname, value = field value (if value is a map then subfields are updated).
+	 * @return Element
+	 */
+	public function createUpdateElement($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 3) throw new FuncExpEvalException('The createUpdateElement function takes at least three argument which is the groupId, the elementId and the fieldValueMap', FuncExpEvalException::INVALID_ARGUMENT);
+		$groupId = $this->evaluateArg($args[0]);
+		$elementId = $this->evaluateArg($args[1]);
+		$fieldMap = $this->evaluateArg($args[2]); //here the values are evaluated for each fields
+		
+		$cfsMap = CalculatedFieldSelectorMapArrayImpl::createInstance();
+		foreach($fieldMap as $fieldName=>$value){
+			$cfsMap->setCalculatedFieldSelectorByFieldName($fieldName, $value);
+		}
+		$dataSource = null;
+		if($elementId==null){
+			$dataSource = newElement($groupId);
+		} else {
+			$dataSource = elementP($elementId,NULL,$this->evaluateFuncExp(fx("cs_g",$groupId)));
+		}
+		return sel(
+			$this->getPrincipal(),
+			$dataSource,
+			dfasl(
+				dfas("ElementSetterDFA","setCalculatedFieldSelectorMap",$cfsMap),
+				dfas("ElementRecalcDFA"),
+				dfas("ElementDFA","setMode","1"), //when persisting and more stages after, the element is reloaded and pushed further.
+				dfas("NullDFA") //with this additional stage the retun value is the element
+			)
+		);
+	}
+	
 	/**
 	 * Creates a new sub Element which can be dumped into a DataFlow
 	 * See method 'newSubElement' in FuncExpBuilder class<br/>

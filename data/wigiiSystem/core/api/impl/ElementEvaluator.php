@@ -850,6 +850,47 @@ class ElementEvaluator extends RecordEvaluator
 	}
 	
 	/**
+	 * Builds an Element and links it to current Element in a field of type Urls.
+	 * FuncExp signature : <code>linkElement(groupId, urlFieldname, urlLabel, fieldValuesMap)</code><br/>
+	 * Where arguments are :
+ 	 * - Arg(0) groupId: int. The group in which to insert the linked element
+	 * - Arg(1) urlFieldname: string|FieldSelector. The field of type Urls which will contain the link to the new element.
+	 * - Arg(2) urlLabel: String. The value of the label for the url field.
+	 * - Arg(3) fieldValuesMap: Array. The linked element field values as a Map. Key = fieldname, value = field value (if value is a map then subfields are updated).
+	 * @return Element
+	 */
+	public function linkElement($args) {
+		$exec = ServiceProvider::getExecutionService();
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 4) throw new FuncExpEvalException('The linkElement function takes at least four argument which are groupId, urlFieldname, urlLabel, fieldValuesMap', FuncExpEvalException::INVALID_ARGUMENT);
+		$groupId = $this->evaluateArg($args[0]);
+		if($args[1] instanceof FieldSelector){
+			$urlField = $args[1];
+		} else {
+			$urlField = fs($this->evaluateArg($args[1]));
+		}
+		$urlLabel = $this->evaluateArg($args[2]);
+		$fieldMap = $this->evaluateArg($args[3]); //here the values are evaluated for each fields
+		
+		$currentUrl = $this->getFieldValue(fs($urlField->getFieldName(),"url"));
+		$elementId = explode("/",$currentUrl);
+		if(is_array($elementId)){
+			$elementId = $elementId[7];
+		} else {
+			$elementId = null;
+		}
+		
+		$elementP = $this->evaluateFuncExp(fx("createUpdateElement",$groupId,$elementId,$fieldMap));
+		$element = $elementP->getDbEntity();
+		
+		$this->setFieldValue(fs($urlField->getFieldName(),"target"), "_blank");
+		$this->setFieldValue(fs($urlField->getFieldName(),"name"), $urlLabel);
+		$this->setFieldValue(fs($urlField->getFieldName(),"url"), SITE_ROOT."#".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$element->getModule()->getModuleUrl()."/item/".$element->getId());
+		
+		return $element;
+	}
+	
+	/**
 	 * Builds a DataFlowDumpable object which dumps the current element instance into a DataFlow.
 	 * FuncExp signature : <code>thisElement()</code><br/>
 	 * @return DataFlowDumpable
