@@ -163,8 +163,8 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		$authS = $this->getAuthorizationService();
 		$key = $this->getContextKey($principal, $module);
 		//if principal has no access to module, then no fetch to all groups.
-		//if principal is public then fetch to all group, because this is allowed
-		if(!$module || (is_null($principal->getModuleAccess($module)) && !$authS->isPublicPrincipal($principal))){
+		//if principal is public or root then fetch to all group, because this is allowed
+		if(!$module || (is_null($principal->getModuleAccess($module)) && !$authS->isPublicPrincipal($principal) && !$authS->isRootPrincipal($principal))){
 			$this->groupPListPerModule[$key] = null;
 			$this->includeChildrenGroupsPerModule[$key] = null;
 			return null;
