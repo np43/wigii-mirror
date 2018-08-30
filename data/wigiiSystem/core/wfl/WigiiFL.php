@@ -956,9 +956,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>deleteElement(elementId)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) elementId: int. The element id to be deleted
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return elementId
 	 */
 	public function deleteElement($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('The deleteElement function takes at least one argument which is the elementId', FuncExpEvalException::INVALID_ARGUMENT);
 		$elementId = $this->evaluateArg($args[0]);
@@ -979,11 +982,14 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(0) elementId: int. The element id to be updated
 	 * - Arg(1) fieldValuesMap: Array. The field values as a Map. Key = fieldname, value = field value (if value is a map then subfields are updated).
 	 * - Arg(2) cs: ConfigSelector. Optional configSelector.
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return elementId
 	 */
 	public function updateElementFields($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs < 2) throw new FuncExpEvalException('The updateElementFields function takes at least two argument which is the elementId and the fieldValueMap', FuncExpEvalException::INVALID_ARGUMENT);
+		if($nArgs < 2) throw new FuncExpEvalException('The updateElementFields function takes at least two argument which are the elementId and the fieldValueMap', FuncExpEvalException::INVALID_ARGUMENT);
 		$elementId = $this->evaluateArg($args[0]);
 		$fieldMap = $this->evaluateArg($args[1]); //here the values are evaluated for each fields
 		if($nArgs > 2) $cs = $this->evaluateArg($args[2]);
@@ -1011,11 +1017,14 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(0) groupId: int. The group in which to insert the element
 	 * - Arg(1) elementId: int. The element id to be updated (if null then element is created)
 	 * - Arg(2) fieldValuesMap: Array. The field values as a Map. Key = fieldname, value = field value (if value is a map then subfields are updated).
+	 * 
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return Element
 	 */
 	public function createUpdateElement($args) {
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
-		if($nArgs < 3) throw new FuncExpEvalException('The createUpdateElement function takes at least three argument which is the groupId, the elementId and the fieldValueMap', FuncExpEvalException::INVALID_ARGUMENT);
+		if($nArgs < 3) throw new FuncExpEvalException('The createUpdateElement function takes at least three argument which are the groupId, the elementId and the fieldValueMap', FuncExpEvalException::INVALID_ARGUMENT);
 		$groupId = $this->evaluateArg($args[0]);
 		$elementId = $this->evaluateArg($args[1]);
 		$fieldMap = $this->evaluateArg($args[2]); //here the values are evaluated for each fields

@@ -857,22 +857,25 @@ class ElementEvaluator extends RecordEvaluator
 	 * - Arg(1) urlFieldname: string|FieldSelector. The field of type Urls which will contain the link to the new element.
 	 * - Arg(2) urlLabel: String. The value of the label for the url field.
 	 * - Arg(3) fieldValuesMap: Array. The linked element field values as a Map. Key = fieldname, value = field value (if value is a map then subfields are updated).
+	 *
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return Element
 	 */
 	public function linkElement($args) {
-		$exec = ServiceProvider::getExecutionService();
+		$this->assertFxOriginIsNotPublic();
+		$p = $this->getPrincipal();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 4) throw new FuncExpEvalException('The linkElement function takes at least four argument which are groupId, urlFieldname, urlLabel, fieldValuesMap', FuncExpEvalException::INVALID_ARGUMENT);
-		$groupId = $this->evaluateArg($args[0]);
+		$groupId = $this->evaluateArg($args[0]);		
 		if($args[1] instanceof FieldSelector){
-			$urlField = $args[1];
+			$urlField = $args[1]->getFieldName();
 		} else {
-			$urlField = fs($this->evaluateArg($args[1]));
+			$urlField = $this->evaluateArg($args[1]);
 		}
 		$urlLabel = $this->evaluateArg($args[2]);
 		$fieldMap = $this->evaluateArg($args[3]); //here the values are evaluated for each fields
 		
-		$currentUrl = $this->getFieldValue(fs($urlField->getFieldName(),"url"));
+		$currentUrl = $this->getFieldValue(fs($urlField,"url"));
 		$elementId = explode("/",$currentUrl);
 		if(is_array($elementId)){
 			$elementId = end($elementId);
@@ -882,10 +885,11 @@ class ElementEvaluator extends RecordEvaluator
 		
 		$elementP = $this->evaluateFuncExp(fx("createUpdateElement",$groupId,$elementId,$fieldMap));
 		$element = $elementP->getDbEntity();
+		$wigiiNamespace = ServiceProvider::getGroupAdminService()->getGroupWithoutDetail($p, $groupId)->getWigiiNamespace();
 		
-		$this->setFieldValue(fs($urlField->getFieldName(),"target"), "_blank");
-		$this->setFieldValue(fs($urlField->getFieldName(),"name"), $urlLabel);
-		$this->setFieldValue(fs($urlField->getFieldName(),"url"), SITE_ROOT."#".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$element->getModule()->getModuleUrl()."/item/".$element->getId());
+		$this->setFieldValue(fs($urlField,"target"), "_blank");
+		$this->setFieldValue(fs($urlField,"name"), $urlLabel);
+		$this->setFieldValue(fs($urlField,"url"), SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$element->getModule()->getModuleUrl()."/item/".$element->getId());
 		
 		return $element;
 	}
