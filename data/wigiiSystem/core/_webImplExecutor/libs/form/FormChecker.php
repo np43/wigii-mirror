@@ -148,6 +148,7 @@ class FormChecker implements FieldListVisitor {
 		if($ff->getRecord()->getWigiiBag()->isHidden($fieldName)) return;
 		if($ff->getRecord()->getWigiiBag()->isDisabled($fieldName)) return;
 		if($fieldParams["onlyInDetail"]=="1") return;
+		if($fieldParams["displayViewOnly"]=="1") return;
 		if(($isPublicPrincipal && $fieldParams["notInPublic"]=="1")) return;
 		if((!$isPublicPrincipal && $fieldParams["onlyInPublic"]=="1")) return;
 
