@@ -2278,7 +2278,11 @@ function setListenersToElementDetail(elementDialogId, useWigiiNamespaceUrl, useM
 
 function hrefWithSiteroot2js(domIdToCheck, targetDomId){
 	$('#'+domIdToCheck+' a[href^="'+SITE_ROOT+'"]').each(function(){
-		$(this).click(function(){
+		$(this).click(function(e){
+			//check if CTRL key is hold, in wich case do nothing to prevent double action (open in new tab + click)
+			if(e.ctrlKey){
+				return;
+			}
 			if($(this).attr('target') != '_blank'){
 				//detect if changing namespace or not
 				var ref = $(this).attr('href');

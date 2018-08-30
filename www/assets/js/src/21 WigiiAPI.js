@@ -1186,8 +1186,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				// single element implementation
 				else {
 					if(subFieldName!=undefined){
-						wigiiApi.throwNotImplemented();
-						self.debugLogger.write(self.fieldName+'.'+subFieldName+' setValue '+value);
+						$('#'+self.fieldId()+' :input[name='+self.fieldName()+'_'+subFieldName+']').val(value);
 					} else {
 						if($('#'+self.fieldId()+' :input').hasClass('htmlArea')){
 							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){ //create a function to ensure the value is set once the editor is ready
@@ -1237,8 +1236,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				// single element implementation
 				else {
 					if(subFieldName!=undefined){
-						wigiiApi.throwNotImplemented();
-						self.debugLogger.write(self.fieldName+'.'+subFieldName+' getValue '+value);
+						if(self.formId()=='detailElement_form'){
+							returnValue = $('#'+self.fieldId()+' div.value').html();
+						}
+						else {
+							returnValue = $('#'+self.fieldId()+' :input[name='+self.fieldName()+'_'+subFieldName+']').val();
+						}
 					} else {
 						if($('#'+self.fieldId()+' :input').hasClass('htmlArea')){
 							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){
@@ -1624,13 +1627,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * Get/Set wigii field value
 			 * @param String fieldName the field selector
 			 * @param Mixed value for the field : optional, use '' to empty the field value
+			 * @param String subFieldName optional the subFieldName
 			 * @return Mixed value of the field
 			 */
-			self.val = function (fieldName, value){
+			self.val = function (fieldName, value, subFieldName){
 				if(value!=undefined){
-					self.field(fieldName).setValue(value);
+					self.field(fieldName).setValue(value, subFieldName);
 				}
-				return self.field(fieldName).getValue();
+				return self.field(fieldName).getValue(subFieldName);
 			};
 			/**
 			 * Get/Set wigii numeric field value
