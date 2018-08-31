@@ -134,7 +134,9 @@ class AddSubscriptionFormExecutor extends AddElementFormExecutor {
 		}
 
 		parent::actOnCheckedRecord($p, $exec);
-
+		// stops execution in case of errors
+		if($this->hasError()) return;
+		
 		//send a confirmation email to the subscription
 		if($emailValue && $emailCustomBody){
 			$emailS = $this->getWigiiExecutor()->getEmailService();

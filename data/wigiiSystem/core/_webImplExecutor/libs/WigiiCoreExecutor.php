@@ -3580,14 +3580,15 @@ invalidCompleteCache();
 		return $fileFields;
 	}
 	/**
-	 * return false if not, return the first found field if yes
-	 * warning a module should not have several isKey field
+	 * Checks if a module has a field tagged with isKey or isUnique
+	 * Warning a module should not have several isKey or isUnique fields
+	 * @return SimpleXMLElement|Boolean returns false if not, returns the first found field if yes
 	 */
 	public function doesCrtModuleHasIsKeyField($p, $module) {
 		$this->executionSink()->publishStartOperation("doesCrtModuleHasIsKeyField");
 
 		$configS = $this->getConfigurationContext();
-		$fields = $configS->mf($p, $module)->xpath("*[@isKey='1']");
+		$fields = $configS->mf($p, $module)->xpath("*[@isKey='1' or @isUnique='1']");
 
 		$this->executionSink()->publishEndOperation("doesCrtModuleHasIsKeyField");
 
@@ -3595,7 +3596,7 @@ invalidCompleteCache();
 			return false;
 
 		if(count($fields)>1){
-			throw new ServiceException("isKey field cannot be defined multiple times in a configuration.", ServiceException::INVALID_ARGUMENT);
+			throw new ServiceException("isKey or isUnique fields cannot be defined multiple times in a configuration.", ServiceException::INVALID_ARGUMENT);
 		}
 		$field = $fields[0];
 		switch((string)$field['type']){
@@ -3604,7 +3605,7 @@ invalidCompleteCache();
 			case "Blobs":
 			case "Texts":
 			case "Varchars":
-			    throw new ServiceException("isKey field cannot be ".$field['type'].".", ServiceException::INVALID_ARGUMENT);
+			    throw new ServiceException("isKey or isUnique field cannot be ".$field['type'].".", ServiceException::INVALID_ARGUMENT);
 				break;
 			default:
 				break;
@@ -3631,7 +3632,7 @@ invalidCompleteCache();
 	        return $field;
 	}
 	public function getSubFieldnameForIsKeyField($isKeyXml){
-		switch($isKey->type){
+		switch($isKeyXml->type){
 			case "Files":
 				$subFieldName = "name";
 				break;

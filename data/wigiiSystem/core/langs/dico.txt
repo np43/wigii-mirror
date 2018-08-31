@@ -814,7 +814,7 @@ finDuplicatesInGroupId:Find duplicates in #group#:Trouver les duplicatas dans #g
 findDuplicatesIn:Find duplicates:Trouver les doublons:
 findDuplicatesInExplanation:This feature will provide you with a list #ofElements# having duplicates in the current #group#.:Cette fonctionnalité vous affichera une liste #ofElements# ayant des duplicatas dans #group# courant.::::
 removeDuplicatesFilter:Duplicates filter is ON:Filtre sur les doublons:
-
+isUniqueError:There already exists #anElement# with this value. A duplicate cannot be inserted.:Il existe déjà #anElement# avec cette valeur. Un duplicat ne peut être inséré.:::::::::
 
 inGroupName:In #-group#:Dans #group#:::::::::
 inGroupId:Import in #group#:Importer dans #group#:::::::::

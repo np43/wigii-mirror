@@ -80,7 +80,7 @@ class FormFieldList extends Model implements FieldList {
 			} else if(isset($fxml->help)){
 				$this->getFormBag()->setHelp($fxml->help->asXml(), $field->getFieldName());
 			}
-			if($fxml["disabled"] == "1" || $fxml["isKey"]){
+			if($fxml["disabled"] == "1" || $fxml["isKey"] || $fxml["isUnique"]){
 				$this->getFormBag()->setDisabled(true, $field->getFieldName());
 			}
 			if($fxml["readonly"] == "1"){
