@@ -783,6 +783,7 @@ class ElementEvaluator extends RecordEvaluator
 	 * FuncExp signature : <code>ctlRefreshGroupPanel(group=null)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) group: Group|int. The Group or group ID around which to refresh the group panel.
+	 * @return int group ID around which group panel has been refreshed.
 	 */
 	public function ctlRefreshGroupPanel($args) {
 		$this->debugLogger()->logBeginOperation('ctlRefreshGroupPanel');
@@ -801,6 +802,7 @@ class ElementEvaluator extends RecordEvaluator
 		$exec->addJsCode("invalidCache('moduleView');");
 		$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
 		$this->debugLogger()->logEndOperation('ctlRefreshGroupPanel');
+		if($group) return $group->getId();
 	}
 	
 	/**
