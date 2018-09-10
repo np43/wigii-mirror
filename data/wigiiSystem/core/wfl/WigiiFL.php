@@ -3268,6 +3268,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(3) introduction: String. An introduction text to be inserted before the notification body. Supports HTML.
 	 * - Arg(4) options: WigiiBPLParameter. An optional bag of parameters to configure the notification process. Supports :
 	 *     targetFolder: group ID. The proposed target folder in which to open the card when clicking on the access button in the notification email.
+	 * @return Boolean returns true if a notif has been triggered on field modification else false
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 */
 	public function sysSendNotif($args) {
@@ -3340,6 +3341,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	            $notifS->getHtml($p, $eventName, $entityName, $module, $rec, $gObj, $options)
 	           ,$options));
 	    }
+	    return $sendNotif;
 	}
 	
 	// Box integration
