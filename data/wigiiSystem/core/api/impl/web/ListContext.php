@@ -1018,24 +1018,38 @@ class ListContext extends ListFilter {
 		/**
 		 * pre traitement to help finding telephone numbers
 		 */
-		$search = array (" ", "\t", "-", ".", "/", "\n", "\r", "\0", "\x0B");
-		/*
-		preg_match_all('/([\d|\s|\.|\/\-]{7,})/', $tempTextSearch, $matches);
+		//split any number with more than 7 digit in a row
+		preg_match_all('/([\d]{7,})/', $tempTextSearch, $matches);
 		foreach ($matches[0] as $key => $value) {
-			  $tempTab = str_replace($search, "", $value);
-			  $tempTab = str_split($tempTab);
-			  $tempTab = implode("%", $tempTab);
-			  $tempTextSearch = str_replace($value, $tempTab, $tempTextSearch);
+				// removes leading zeros
+				$tempTab= ltrim($value,'0');
+				//split the number
+				$tempTab = str_split($tempTab);
+				//add % for each group of two number starting from the end
+				//after three groups, add % between each number
+				$buffer = "";
+				$len = count($tempTab);
+				for($i=0; $i<$len; $i++){
+					$buffer = $tempTab[$len-1-$i].$buffer;
+					if($i!=$len-1 && ($i%2=="1" || $i > 4)){
+						$buffer ="%".$buffer;
+					}
+				}
+				$tempTab = $buffer;
+				$tempTextSearch = str_replace($value, $tempTab, $tempTextSearch);
 		}
-		*/
+		//eput($tempTextSearch);
+		//detect any phone number pattern with separator and add % instead of separators
+		$search = array (" ", "\t", "-", ".", "/", "\n", "\r", "\0", "\x0B");
 		preg_match_all('/(\d+([\.|\s|\/|\-]\d+){3,})/', $tempTextSearch, $matches);
 		foreach ($matches[0] as $key => $value) {
 			// replaces separators by '%'	
 			$tempTab = str_replace($search, "%", $value);
 			// removes leading zeros
 			$tempTab = preg_replace('/0+([1,2,3,4,5,6,7,8,9]\d+)/', '${1}', $tempTab);
-			$tempTextSearch = str_replace($value, $tempTab, $tempTextSearch);			
+			$tempTextSearch = str_replace($value, $tempTab, $tempTextSearch);
 		}
+		//eput($tempTextSearch);
 		$expId = TechnicalServiceProvider::getSearchBarOrLogExpParser()->createLogExpOnCriteria($fslId, implode(" ", $filterOnId));
 		$exp = null;
 		//sql full text search
@@ -1067,7 +1081,6 @@ class ListContext extends ListFilter {
 //		}
 		//sql like filter (no use of sql fullText index)
 		$exp = TechnicalServiceProvider::getSearchBarLogExpParser()->createLogExpOnCriteria($fsl, $tempTextSearch);
-
 		if($exp!=null && $expId != null){
 			$tempExp = LogExp::createAndExp();
 			$tempExp->addOperand($exp);
@@ -1075,6 +1088,24 @@ class ListContext extends ListFilter {
 			$exp = $tempExp;
 		} else if($expId != null){
 			$exp = $expId;
+		}
+		
+		
+		/**
+		 * post traitement to help finding telephone numbers
+		 */
+		$search = array (" ", "\t", "-", ".", "/", "\n", "\r", "\0", "\x0B");
+		preg_match_all('/([\d|\s|\.|\/\-]{7,})/', $tempTextSearch, $matches);
+		foreach ($matches[0] as $key => $value) {
+			// removes leading zeros
+			$tempTab= ltrim($value,'0');
+			//add a % between each number
+			$tempTab = str_replace($search, "", $tempTab);
+			$varNbOfDigit = mb_strlen($tempTab);
+			$tempTab = str_split($tempTab);
+			$tempTab = implode("%", $tempTab);
+			$tempTab .= " AND (".$varNbOfDigit." >= LEN('".$tempTab."') AND ".($varNbOfDigit*2)." <= LEN('".$tempTab."') )";
+			$tempTextSearch = str_replace($value, $tempTab, $tempTextSearch);
 		}
 
 		if($exp != null){

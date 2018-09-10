@@ -272,7 +272,9 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 				if(($h || $i || $s) && !($h==0 && $i==0 && $s==0)) $time = "$h:$i:$s";
 				else $time = "";
 				$endDateInt = strtotime("$y/$m/$d $time");
-				if(!$time) $endDateInt += 24*3600; //if no end time, move it to midnight (for correct display in fullCalendar)
+				if(!$time) {
+					$endDateInt += 24*3600; //if no end time, move it to midnight (for correct display in fullCalendar)
+				}
 			}
 
 			$allDay = $element->getFieldValue($fMap["period"], "isAllDay");
@@ -305,7 +307,9 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 			if(($h || $i || $s) && !($h==0 && $i==0 && $s==0)) $time = "$h:$i:$s";
 			else $time = "";
 			$endDateInt = strtotime("$y/$m/$d $time");
-			if(!$time) $endDateInt += 24*3600; //if no end time, move it to midnight (for correct display in fullCalendar)
+			if(!$time) {
+				$endDateInt += 24*3600; //if no end time, move it to midnight (for correct display in fullCalendar)
+			}
 		}
 
 		//rendering the JSCode
@@ -333,7 +337,19 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 		//ajust time zone offset settings / handle correctly if only one date is set
 		if($startDateInt) $startDateInt = $startDateInt + $this->getTimeZoneOffset();
 		if($endDateInt) $endDateInt = $endDateInt + $this->getTimeZoneOffset();
-
+		
+		//correct issues when allDay events are starting or ending the day of savingTime change
+		if($allDay){
+			//if allDay the endDate should always be midnight. If not, correct it.
+			if(date("H:i", $endDateInt)=="01:00"){
+				//remove one hour				
+				$endDateInt -= 3600;
+			} elseif (date("H:i", $endDateInt)=="23:00"){
+				//add on hour
+				$endDateInt += 3600;
+			}
+		}
+		
 		$startDateISO = date("Y-m-d H:i", $startDateInt);
 		$endDateISO = date("Y-m-d H:i", $endDateInt);
 		
