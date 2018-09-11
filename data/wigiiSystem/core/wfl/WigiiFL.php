@@ -3053,19 +3053,21 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}
 	
 	/**
-	 * Checks if current user has one of the specified roles, given by name.
+	 * Checks if current user has one of the specified roles, given by name. 
+	 * Wildcard are accepted on role name or Wigii namespace name. Use * for 0 or more characters, use ? for 0 or 1 character.
 	 * FuncExp signature : <code>sysUserHasRole(roleName1,roleName2, ...) || sysUserHasRole(roleNames,wigiiNamespaces)</code>
 	 * Where arguments are :
 	 * For first syntax :
 	 * - Arg(0..n) roleNameI: String. The complete role name (name@wigiiNamespaceName) to be checked.
 	 * Or in second syntax:
-	 * - Arg(0) roleNames: Array|String. One role name or an array of role names, withou WigiiNamespace suffix
+	 * - Arg(0) roleNames: Array|String. One role name or an array of role names, without WigiiNamespace suffix
 	 * - Arg(1) wigiiNamespaces: Array. An array of WigiiNamespaces (Names or Objects) to combine with the given role names.
 	 * @example 
 	 *  sysUserHasRole('PM@Projects','PM@Logistics') returns true if User is PM at Projects OR PM at Logistics
 	 *  To build some conjunction, use the logAnd FuncExp:
 	 *  logAnd(sysUserHasRole('PM@Projects'), sysUserHasRole('PM@Logistics')) returns true if User is PM at Projects AND PM at Logistics
 	 *  sysUserHasRole('PM',array('Projects','Logistics'))  returns true if User is PM at Projects OR PM at Logistics
+	 *  sysUserHasRole('PM-*@*') returns true if User is a specific PM (per country) in any namespace.
 	 * @return Boolean returns true if User has specified role.
 	 */
 	public function sysUserHasRole($args) {
@@ -3118,8 +3120,17 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	        $pRoles[$role->getUsername()] = $role;
 	    }
 	    // tries to find matching roles
-	    foreach($rolesToCheck as $role) {
-	        if($pRoles[$role]) return true;
+	    $strPRoles=null;
+	    foreach($rolesToCheck as $role) {	        
+	        $wildcards=0;
+	        $wildcardRole = str_replace(array('*','?'), array('[ \-\w]*','[ \-\w]?'), $role, $wildcards);
+	        // tries pattern matching
+	        if($wildcards>0) {
+	            if(!$strPRoles) $strPRoles = implode(',',array_keys($pRoles));
+	            if(preg_match('/'.$wildcardRole.'/', $strPRoles)) return true;
+	        }
+	        // else checks exact role name
+	        elseif($pRoles[$role]) return true;
 	    }
 	    return false;
 	}
