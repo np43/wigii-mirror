@@ -84,7 +84,25 @@ class ElementEvaluator extends RecordEvaluator
 	}
 	
 	// implementation
-
+	
+	/**
+	 * Authorize specific method and args to be called from public.
+	 * WARNING Public principal will be used to execute the method.
+	 * @param FuncExp $fx FuncExp to call
+	 */
+	public function isCallAuthorizedFromPublic($fx){
+		$fxName = $fx->getName();
+		$args = $fx->getArguments();
+// 		switch($fxName){
+// 			case "...":
+// 				if($args[...]==="..."){
+// 					return true;
+// 				}
+// 				break;
+// 		}
+		return false;
+	}
+	
 	/**
 	 * Evaluates all calculated fields in element in principal security context
 	 * @param Field $field If field is not null, then evaluates only this field.

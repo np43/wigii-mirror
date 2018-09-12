@@ -3746,6 +3746,41 @@ where $select_Groups_whereClause ";
 		$this->getDbAdminService()->unLock($principal, $this->getSqlTableNameForDeleteGroup(), $object);
 	}
 
+	public function getOrCreateRootGroupByName($principal, $module, $wigiiNamespace, $groupName) {
+		if(!isset($module)) throw new GroupAdminServiceException('module cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
+		if(!isset($wigiiNamespace)) throw new GroupAdminServiceException('wigiiNamespace cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
+		if(empty($groupName)) throw new GroupAdminServiceException('groupName cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
+		$nsAS = $this->getWigiiNamespaceAdminService();
+		$mAS = $this->getModuleAdminService();
+		if(is_string($module)) $module = $mas->getModule($p, $module);
+		if(is_string($wigiiNamespace)) $wigiiNamespace = $nsAS->getWigiiNamespace($p, $wigiiNamespace);
+		
+		// 1. fetch group in db
+		$groupPList = GroupPListArrayImpl::createInstance();
+		$listFilter = lf($this->getFieldSelectorListForGroupWithoutDetail(), 
+				lxAnd(lxEq(fs('groupname'), $groupName), lxIsNull(fs('id_group_parent')), lxEq(fs('module'),$module->getModuleName()),lxEq(fs('wigiiNamespace'),$wigiiNamespace->getWigiiNamespaceName())), 
+				null, 1, 1);
+		$this->getSelectedGroups($principal, $listFilter, $groupPList);
+		switch($listFilter->getTotalNumberOfObjects()) {
+			case 0:
+				// 2. creates new group
+				$groupP = GroupP::createInstance(Group::createInstance(array(
+						'groupname' => $groupName,
+						'wigiiNamespace' => $wigiiNamespace,
+						'module' => $module,
+						'id_group_parent' => "0"
+				)));
+				$groupD = $groupP->getGroup()->getDetail();
+				$realUser = ($principal->isPlayingRole() ? $principal->getRealUser() : $principal->getAttachedUser());
+				$groupD->setDescription("created the ".date("d.m.Y")." by ".$realUser->getWigiiNamespace()->getWigiiNamespaceName().":".$realUser->getUsername());
+				$this->persistGroup($principal, $groupP->getGroup());
+				$groupP->setRights(PrincipalRights::createInstance(array("canModify"=>true, "canWriteElement"=>true, "canShareElement"=>true)));
+				break;
+			case 1: $groupP = reset($groupPList->getListIterator()); break;
+			default: throw new GroupAdminServiceException("group $groupName is not a unique root group in ".$wigiiNamespace->getWigiiNamespaceName()."/".$module->getModuleName(), GroupAdminServiceException::INVALID_ARGUMENT);
+		}
+		return $groupP;
+	}
 	public function getOrCreateSubGroupByName($principal, $parentGroupId, $groupName) {
 		if(!isset($parentGroupId)) throw new GroupAdminServiceException('parentGroupId cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
 		if(empty($groupName)) throw new GroupAdminServiceException('groupName cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);		

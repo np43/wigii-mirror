@@ -78,6 +78,8 @@ class WigiiExecutor extends WigiiCoreExecutor {
 	
 	protected function shouldByPassHeader($action) {
 		switch ($action) {
+			case 'public': return true;
+			case 'inpublic': return false;
 			case 'fx': return true;
 			case 'infx': return false;
 			case 'box': return true;
@@ -89,6 +91,8 @@ class WigiiExecutor extends WigiiCoreExecutor {
 	}
 	protected function shouldByPassFooter($action) {
 		switch ($action) {
+			case 'public': return true;
+			case 'inpublic': return false;
 			case 'fx': return true;
 			case 'infx': return false;
 			case 'box': return true;
@@ -110,6 +114,8 @@ class WigiiExecutor extends WigiiCoreExecutor {
 			switch($action) {
 				case "c": $returnValue = 'LightClientFormExecutor'; break;
 				case "help": $returnValue = 'HelpServiceFormExecutor'; break;
+				case "public": $returnValue = 'PublicWebServiceFormExecutor'; break;
+				case "inpublic": $returnValue = (object)array('className'=>'PublicWebServiceFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true))); break;
 				case "fx": $returnValue = 'FxWebServiceFormExecutor'; break;
 				case "infx": $returnValue = (object)array('className'=>'FxWebServiceFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true))); break;
 				case "box" : $returnValue = 'BoxServiceFormExecutor'; break;

@@ -139,8 +139,10 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 		} else {
 			$nAdminP = $userAS->getUser($p, $NAdminId);
 			$nAdmin = $nAdminP->getDbEntity();
-			//only keep the modules not existing already in the nadmin (for the group creation) 
-			$moduleAccess = array_diff_key($moduleAccess,$nAdmin->getDetail()->getModuleAccess());			
+			if(!$rec->getFieldValue("moduleEditorNewNamespaceOverwriteExistingConfig")){
+				//only keep the modules not existing already in the nadmin (for the group creation) 
+				$moduleAccess = array_diff_key($moduleAccess,$nAdmin->getDetail()->getModuleAccess());
+			}
 		}
 		//merge modules for the nadmin
 		$NAdminModuleAccess = array_merge($nAdmin->getDetail()->getModuleAccess(),$moduleAccess);
@@ -160,10 +162,16 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 		$supportEmail = $rec->getFieldValue("moduleEditorNewNamespaceSupportEmail");
 		$configFileSummary = Array();
 		foreach($moduleAccess as $module){
+			//create or get id of root Groups
+			$group = $groupAS->getOrCreateRootGroupByName($p, $module, $wigiiNamespace, $transS->t($p, $module->getModuleName()));
+			$trash = $groupAS->getOrCreateRootGroupByName($p, $module, $wigiiNamespace, $transS->t($p, "trashbinGroupName"));
+			/* before 12.09.2018 the root groups where always created
 			$group = $this->createGroup($p, $transS->t($p, $module->getModuleName()), $module, $wigiiNamespace);
 			$trash = $this->createGroup($p, $transS->t($p, "trashbinGroupName"), $module, $wigiiNamespace);
 			$groupAS->persistGroup($p, $group);
 			$groupAS->persistGroup($p, $trash);
+			*/
+			
 			//link each folder to NAdmin
 			$groupAS->setUserRight($p, UGR::createInstance($group->getId(), $nAdmin->getId(), array("canModify"=>true, "canWriteElement"=>true, "canShareElement"=>true)));
 			$groupAS->setUserRight($p, UGR::createInstance($trash->getId(), $nAdmin->getId(), array("canModify"=>true, "canWriteElement"=>true, "canShareElement"=>true)));
