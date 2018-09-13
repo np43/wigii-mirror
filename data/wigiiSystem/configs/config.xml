@@ -417,6 +417,7 @@
 			<subscriptionAdditionalOption groupEnd="1" require="0"></subscriptionAdditionalOption>
 
 			<enableGroupSubscription checked="1" type="Booleans" require="0" />
+			<closeGroupSubscription type="Booleans" require="0" />
 
 		</fields>
 	</groupSubscription>

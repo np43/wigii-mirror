@@ -3440,7 +3440,18 @@ invalidCompleteCache();
 			$p->setValueInGeneralContext("language", $lang);
 		}
 	}
-
+	
+	/**
+	 * checks if subscriptions are closed
+	 */
+	protected function checkClosedOnGroupSubscription($p, $exec, $transS, $groupSubscriptionRecord, $form, &$state){
+		if($groupSubscriptionRecord){
+			if($groupSubscriptionRecord->getFieldValue("closeGroupSubscription")){
+				$state = "closed";
+			}
+		}
+	}
+	
 	/**
 	 * checks subscription period
 	 */
@@ -7050,11 +7061,15 @@ onUpdateErrorCounter = 0;
 				if ($_POST["action"] != null)
 					$state = addslashes($_POST["action"]);
 
-				//check period
-				$this->checkPeriodOnGroupSubscription($p, $exec, $transS, $record, $form, $state);
-				//check max subscription
-				$this->checkMaxSubscriptionOnGroupSubscription($p, $exec, $transS, $record, $form, $elS, $groupP, $state);
-
+				//check form is closed
+				$this->checkClosedOnGroupSubscription($p, $exec, $transS, $record, $form, $state);
+				if($state!="closed"){
+					//check period
+					$this->checkPeriodOnGroupSubscription($p, $exec, $transS, $record, $form, $state);
+					//check max subscription
+					$this->checkMaxSubscriptionOnGroupSubscription($p, $exec, $transS, $record, $form, $elS, $groupP, $state);
+				}
+				
 				//display the formulary
 				$form->ResolveForm($p, $exec, $state);
 

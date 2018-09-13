@@ -1359,7 +1359,8 @@ compulsoryFieldOtherwiseEmptyOtherEmailFields:You must fill this field if one of
 groupSubscription:Subscription form parameters:Paramètres du formulaire d'inscription:::::::::
 groupSubscriptionPreview:Subscription form details:Détails du formulaire d'inscription:::::::::
 groupSubscription_help:Subscription form parameters:Paramètres du formulaire d'inscription:::::::::
-enableGroupSubscription:Publish the form:Publier le formulaire:::::::::
+enableGroupSubscription:Publish form:Publier le formulaire:::::::::
+closeGroupSubscription:Close form:Fermer le formulaire:::::::::
 maxSubscriptionNb:Maximum number of subscriptions:Nombre maximum d'inscription:::::::::
 subscriptionBackgroundColorCode:Background color:Couleur du fond:::::::::
 subscriptionEndMessageAddin:Customize confirmation message:Personnalisez le message de confirmation:
