@@ -65,6 +65,18 @@ class EventSubscriberServiceWebImpl extends EventSubscriberService {
 		}
 		return $this->notificationService;
 	}
+	
+	private $eventExpSubscriber;
+	public function setEventExpSubscriber($eventExpSubscriber){
+		$this->eventExpSubscriber= $eventExpSubscriber;
+	}
+	protected function getEventExpSubscriber(){
+		//autowired
+		if(!isset($this->eventExpSubscriber)){
+			$this->eventExpSubscriber= ServiceProviderWebImpl::getEventExpSubscriber();
+		}
+		return $this->eventExpSubscriber;
+	}
 
 	/**
 	 * getAllSubscribersForEvent
@@ -104,6 +116,7 @@ class EventSubscriberServiceWebImpl extends EventSubscriberService {
 					}
 					break;
 			}
+			$eventSubscriberList->addEventSubscriber($this->getEventExpSubscriber(), true);
 		} catch (Exception $e){
 			$this->executionSink()->publishEndOperationOnError("getAllSubscribersForEvent", $e);
 			throw new ServiceException('',ServiceException::WRAPPING, $e);

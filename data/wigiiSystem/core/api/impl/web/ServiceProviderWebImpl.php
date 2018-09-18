@@ -240,6 +240,35 @@ class ServiceProviderWebImpl extends ServiceProvider
 		$returnValue->setWigiiExecutor($this->getWigiiExecutor());
 		return $returnValue;
 	}
+	
+	private $eventExpSubscriber;
+	
+	public static function getEventExpSubscriber()
+	{
+		return self::getInstance()->getEventExpSubscriberInstance();
+	}
+	
+	/**
+	 * default singleton
+	 */
+	protected function getEventExpSubscriberInstance()
+	{
+		if(!isset($this->eventExpSubscriber))
+		{
+			$this->eventExpSubscriber = $this->createEventExpSubscriberInstance();
+		}
+		return $this->eventExpSubscriber;
+	}
+	
+	/**
+	 * default as EventExpSubscriber
+	 */
+	protected function createEventExpSubscriberInstance()
+	{
+		$eventExpSubscriber = new EventExpSubscriber();
+		$eventExpSubscriber->setWigiiExecutor($this->getWigiiExecutor());
+		return $eventExpSubscriber;
+	}
 }
 
 

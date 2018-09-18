@@ -39,6 +39,8 @@ class ElementEvaluator extends RecordEvaluator
 	const ELEMENT_FLOW_MULTIPLE_EDIT = 'multiple-edit';
 	const ELEMENT_FLOW_MULTIPLE_DELETE = 'multiple-delete';
 	const ELEMENT_FLOW_MULTIPLE_COPY = 'multiple-copy';
+	const ELEMENT_FLOW_MULTIPLE_EMAILING = 'multiple-emailing';
+	const ELEMENT_FLOW_FEEDBACK = 'element-feedback';
 	const ELEMENT_FLOW_UNSPECIFIED = 'unspecified';
 	
 	private $_debugLogger;
@@ -194,13 +196,29 @@ class ElementEvaluator extends RecordEvaluator
 					else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
 				}
 				elseif(!is_null($this->getDataFlowContext())) $returnValue = ElementEvaluator::ELEMENT_FLOW_DATAFLOW;
-				else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+				else {
+					try{
+						$wigiiEventName = $this->evaluateArg(fs('wigiiEventName'));
+						$wigiiEventEntity = $this->evaluateArg(fs('wigiiEventEntity'));
+						if($wigiiEventName=="update" && $wigiiEventEntity=="MultipleElement") $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EDIT;
+						elseif($wigiiEventName=="delete" && $wigiiEventEntity=="MultipleElement") $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_DELETE;
+						elseif($wigiiEventName=="delete" && $wigiiEventEntity=="Element") $returnValue = ElementEvaluator::ELEMENT_FLOW_DELETE;
+						elseif($wigiiEventName=="insert" && $wigiiEventEntity=="Element") $returnValue = ElementEvaluator::ELEMENT_FLOW_ADD;
+						elseif($wigiiEventName=="read" && $wigiiEventEntity=="Element") $returnValue = ElementEvaluator::ELEMENT_FLOW_READ;
+						elseif($wigiiEventName=="update" && $wigiiEventEntity=="Element") $returnValue = ElementEvaluator::ELEMENT_FLOW_EDIT;
+						else $returnValue = str_replace("multipleelement","multiple",strtolower($wigiiEventEntity))."-".strtolower($wigiiEventName);
+					} catch (FuncExpEvalException $e) {
+						if($e->getCode() != FuncExpEvalException::VARIABLE_NOT_DECLARED) throw $e;
+						//else silent
+						$returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+					}
+				}
 	
 				$ctlCurrentFlow = ElementDynAttrFixedValueImpl::createInstance($returnValue);
 				$element->setDynamicAttribute('ctlCurrentFlow', $ctlCurrentFlow, false);
 			}
 		}
-		else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+		else $returnValue = parent::getCurrentFlowName();
 		return $returnValue;
 	}
 	

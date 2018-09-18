@@ -382,7 +382,7 @@ class TechnicalServiceProvider
 		}
 		return $this->globalStatisticService;
 	}
-
+	
 	/**
 	 * default as GlobalStatisticService
 	 */
@@ -390,7 +390,7 @@ class TechnicalServiceProvider
 	{
 		return new GlobalStatisticService();
 	}
-
+	
 	private $emailService;
 
 	public static function getEmailService()

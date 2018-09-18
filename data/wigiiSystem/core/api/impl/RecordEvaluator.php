@@ -1476,7 +1476,24 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * @return String 'unspecified'. Subclass ElementEvaluator implements the whole logic.
 	 */
 	protected function getCurrentFlowName() {
-		return ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+		$formExec = $this->getFormExecutor();
+		if(isset($formExec)) {
+			if(is_a($formExec, 'FeedbackFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_FEEDBACK;
+			elseif(is_a($formExec, 'EmailingFormExecutor')) $returnValue = ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EMAILING;
+			else $returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+		}
+		else {
+			try{
+				$wigiiEventName = $this->evaluateArg(fs('wigiiEventName'));
+				$wigiiEventEntity = $this->evaluateArg(fs('wigiiEventEntity'));
+				$returnValue = str_replace("multipleelement","multiple",strtolower($wigiiEventEntity))."-".strtolower($wigiiEventName);
+			} catch (FuncExpEvalException $e) {
+				if($e->getCode() != FuncExpEvalException::VARIABLE_NOT_DECLARED) throw $e;
+				//else silent
+				$returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+			}
+		}
+		return $returnValue;
 	}
 	
 	/**
