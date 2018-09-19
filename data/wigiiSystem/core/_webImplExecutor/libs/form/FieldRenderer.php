@@ -97,7 +97,14 @@ class FieldRenderer extends Model {
         if($fieldXml["displayHidden"]=="1"){
             $style .= "display:none;";
         }
-		$rm->put('<div id="'.$idField.'" class="field '.($fieldXml["noFieldset"] =="1" ? ' noFieldset ' : '').$fieldClass.'" style="'.$style.'" >');
+        
+        // CWE 13.09.2018 resolves htmlAttrExp
+        $htmlAttributes = '';
+        if((string)$fieldXml["htmlAttrExp"]!=null) $htmlAttributes .= $this->resolveHtmlAttrExp((string)$fieldXml["htmlAttrExp"],$fieldClass,$style);
+        if(($this instanceof FormRenderer) && (string)$fieldXml["htmlAttrInFormExp"]!=null) $htmlAttributes .= $this->resolveHtmlAttrExp((string)$fieldXml["htmlAttrInFormExp"],$fieldClass,$style);
+        if(($this instanceof DetailRenderer) && (string)$fieldXml["htmlAttrInDetailExp"]!=null) $htmlAttributes .= $this->resolveHtmlAttrExp((string)$fieldXml["htmlAttrInDetailExp"],$fieldClass,$style);
+        
+        $rm->put('<div id="'.$idField.'" class="field '.($fieldXml["noFieldset"] =="1" ? ' noFieldset ' : '').$fieldClass.'" style="'.$style.'" '.$htmlAttributes.'>');
 
 		//display label if necessary
 		if($fieldXml["noLabel"]!="1"){
@@ -140,7 +147,13 @@ class FieldRenderer extends Model {
 		$rm->put('</div></div>'); //close div.value, div.field
 	}
 
-
+	/**
+	 * Implemented in sub classes DetailRenderer and FormRenderer
+	 */
+	protected function resolveHtmlAttrExp($htmlAttrExp, &$fieldClass, &$style) {
+		throw new FieldRendererException('Not supported by parent class, call from subclass instead',FieldRendererException::UNSUPPORTED_OPERATION);
+	}
+	
 	protected function isCrtFieldFilled(){
 		return $this->fieldIsFilled[$this->getCrtField()];
 	}

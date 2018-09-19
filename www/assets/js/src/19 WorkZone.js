@@ -2306,10 +2306,62 @@ function hrefWithSiteroot2js(domIdToCheck, targetDomId){
 							ref = ref.replace('/folder/', '/groupSelectorPanel/selectGroup/');
 							update('NoAnswer/'+ref);
 						}
+						if($(this).attr('href').match('find/')){
+							update('mainDiv/'+ref);
+						}
 					}
 				}
 			}
 		});
+	});
+	// CWE 13.09.2018 transforms data-wigii-href in new window hyperlinks
+	$('#'+domIdToCheck+' div.field[data-wigii-href] div.value').each(function(){
+		$(this).addClass('H').click(function(){window.open($(this).parent().attr('data-wigii-href'));});		
+	});
+	// CWE 13.09.2018 transforms data-wigii-href-self in navigation hyperlinks
+	$('#'+domIdToCheck+' div.field[data-wigii-href-self] div.value').each(function(){
+		$(this).addClass('H');
+		var href = $(this).parent().attr('data-wigii-href-self');
+		if(href.indexOf(SITE_ROOT)===0) {
+			$(this).click(function(e){
+				if(e.ctrlKey) window.open(href);
+				else {
+					var ref = href;
+					//detect if changing namespace or not					
+					//detect if a # is in the link
+					if(ref.indexOf('#')!=-1){
+						ref = ref.replace(SITE_ROOT+'#','')
+						if(!href.match(crtWigiiNamespaceUrl) || !href.match(crtModuleName)){
+							if(href.match('item/')){
+								ref = ref.replace('/item/', '/navigate/item/');
+							}
+							if(href.match('folder/')){
+								ref = ref.replace('/folder/', '/navigate/folder/');
+							}
+							update('mainDiv/'+ref);
+						} else {
+							if(href.match('item/')){
+								ref = ref.replace('/item/', '/element/detail/');
+								update(''+targetDomId+'/'+ref);
+							}
+							if(href.match('folder/')){
+								ref = ref.replace('/folder/', '/groupSelectorPanel/selectGroup/');
+								update('NoAnswer/'+ref);
+							}
+							if(href.match('find/')){
+								update('mainDiv/'+ref);
+							}
+						}
+					}
+				}
+			});
+		}
+		else {
+			$(this).click(function(e){		
+				if(e.ctrlKey) window.open(href);
+				else window.location.href=href;
+			});		
+		}		
 	});
 }
 

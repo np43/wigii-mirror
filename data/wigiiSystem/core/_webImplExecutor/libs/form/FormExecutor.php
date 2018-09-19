@@ -952,7 +952,9 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 		$rec = $this->getRecord();
 		$fxEval = $this->getFuncExpEval($p, $exec);
 		foreach($rec->getFieldList()->getListIterator() as $field) {
-
+			// CWE 13.09.2018 injects current field in ElementEvaluator
+			$fxEval->getParentFuncExpEvaluator()->setCurrentField($field);
+			
 			//added by LWR on 10/11/2014 in order to prefill Attributs and MultipleAttributs with prechecked options
 			//this code was before in the FormRenderer. It has been moved here in order to be executed on autoSave="1"
 			$dataType = $field->getDataType();
@@ -1132,6 +1134,9 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 				if(!isset($f)) continue;
 				$fxml = $f->getXml();
 				if(!isset($fxml)) continue;
+				
+				// CWE 13.09.2018 injects current field in ElementEvaluator
+				$fxEval->getParentFuncExpEvaluator()->setCurrentField($f);
 				
 				// goes through the list of attributes
 				$resolvedValues = array();

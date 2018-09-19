@@ -195,6 +195,14 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $this->formExecutor;
 	}
 	
+	/**
+	 * Sets the current field beeing evaluated
+	 */
+	public function setCurrentField($field)
+	{
+		return $this->currentField = $field;
+	}
+	
 	private $matrixLogExpEvaluator;
 	/**
 	 * @return RecordMatrixLogExpEvaluator
@@ -404,8 +412,23 @@ class RecordEvaluator implements FuncExpEvaluator
 	protected function getCurrentField()
 	{
 		return $this->currentField;
-	}
+	}	
 
+	/**
+	 * Returns a FieldSelector pointing on the field currently beeing evaluated.
+	 * FuncExp signature : <code>ctlCurrentFS(subFieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) subFieldName: String. Optional subfield name to put into the FieldSelector
+	 * @return FieldSelector
+	 */
+	public function ctlCurrentFS($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) $subFieldName = $this->evaluateArg($args[0]);
+		else $subFieldName = null;
+		if(is_null($this->currentField)) throw new RecordException("no Field is currently beeing evaluated", RecordException::INVALID_STATE);
+		return fs($this->currentField->getFieldName(),$subFieldName);
+	}
+	
 	/**
 	 * Returns the current value of the field currently beeing evaluated.
 	 * subFieldName: the dataType subfield name from which to retrieve the value. If null takes the predefined "value" subfield.
@@ -413,9 +436,25 @@ class RecordEvaluator implements FuncExpEvaluator
 	protected function getCurrentFieldValue($subFieldName = null)
 	{
 		if(is_null($this->record)) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
+		if(is_null($this->currentField)) throw new RecordException("no Field is currently beeing evaluated", RecordException::INVALID_STATE);
 		return $this->record->getFieldValue($this->currentField->getFieldName(), $subFieldName);
 	}
 
+	/**
+	 * Returns the value of the field currently beeing evaluated.
+	 * FuncExp signature : <code>ctlCurrentField(subFieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) subFieldName: String. The dataType subfield name from which to retrieve the value. If null takes the predefined "value" subfield.
+	 * @return Any the field or subfield value
+	 */
+	public function ctlCurrentField($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs>0) $subFieldName = $this->evaluateArg($args[0]);
+		else $subFieldName = null;
+		$returnValue = $this->getCurrentFieldValue($subFieldName);		
+		return $returnValue;
+	}
+	
 	/**
 	 * Updates current field subfield value in wigii bag with new value
 	 */

@@ -2424,6 +2424,35 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    ));
 	}
 	
+	/**
+	 * Builds a URL which is compatible with the Wigii find functionality.<br/>
+	 * FuncExp signature : <code>findUrl(searchSpace,searchQueryLogExp)</code><br/>
+	 *  Where arguments are :
+	 * - Arg(0) searchSpace: LogExp|ElementPListDataFlowConnector. The search space. Can be a group selector LogExp (like for instance lxAllGroups("namespace","module")) or an ElementPListDataFlowConnector instance (created with elementPList function)
+	 * - Arg(1) searchQueryLogExp: LogExp. The where clause to apply on the search space to filter the elements (combined with any ListFilter already given in the search space)
+	 *  @return String a Wigii find url of the form crtWigiiNamespace/crtModule/find/base64searchspace/base64searchquery/filter
+	 */
+	public function findUrl($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException('The findUrl function takes at least two arguments which are the searchSpace and the searchQueryLogExp', FuncExpEvalException::INVALID_ARGUMENT);
+		$searchSpace = $this->evaluateArg($args[0]);
+		// wraps group selector LogExp into ElementPListDataFlowConnector
+		if($searchSpace instanceof LogExp) {
+			$searchSpace = elementPList(lxInGR($searchSpace));
+			$searchSpace = $searchSpace->toFx();
+		}
+		// else keeps given Fx
+		else $searchSpace = $args[0];
+		$searchSpace = base64url_encode(fx2str($searchSpace));
+		// prepares search query log exp
+		$searchQueryLogExp = $this->evaluateFuncExp(fx('obj2base64url',$args[1]));
+		// return find url
+		$exec = ServiceProvider::getExecutionService();
+		return $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl().'/'.
+				$exec->getCrtModule()->getModuleUrl().'/find/'.
+				$searchSpace.'/'.
+				$searchQueryLogExp.'/filter';
+	}
 	
 	// Wigii Administration
 	

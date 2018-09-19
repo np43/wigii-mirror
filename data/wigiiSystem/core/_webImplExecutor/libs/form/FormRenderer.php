@@ -78,6 +78,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 	}
 	public function setP($p){ $this->p = $p; return $this; }
 
+	private $currentField;
 	private $funcExpEvaluator;
 	/**
 	 * Returns a configured FuncExpEvaluator that can be used to evaluate FuncExps during Field rendering.
@@ -88,8 +89,10 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if(!isset($this->funcExpEvaluator)) {
 			$trm = $this->getTemplateRecordManager();
 			if(!isset($trm)) throw new FieldRendererException('TemplateRecordManager has not be injected properly into the FormRenderer',FieldRendererException::CONFIGURATION_ERROR);
-			$this->funcExpEvaluator = $trm->getFuncExpEvaluator($this->getP(),$trm->getRecord());
+			$this->funcExpEvaluator = $trm->getFuncExpEvaluator($this->getP(),$trm->getRecord());			
 		}
+		// CWE 13.09.2018 injects current field in ElementEvaluator
+		$this->funcExpEvaluator->getParentFuncExpEvaluator()->setCurrentField($this->currentField);
 		return $this->funcExpEvaluator;
 	}
 	protected function freeFuncExpEval() {
@@ -137,6 +140,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 	
 	
 	public function actOnField($field, $dataType){
+		$this->currentField = $field;
 		$transS = ServiceProvider::getTranslationService();
 		$exec = ServiceProvider::getExecutionService();
 		$p = $this->getP();
@@ -368,7 +372,13 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 		if($fieldXml["displayHidden"]=="1"){
 		    $style .= "display:none;";
         }
-		$rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.$help.($dataType!=null?' data-wigii-datatype="'.$dataTypeName.'"':'').' >');
+		
+        // CWE 13.09.2018 resolves htmlAttrExp
+        $htmlAttributes = '';
+        if((string)$fieldXml["htmlAttrExp"]!=null) $htmlAttributes .= $this->resolveHtmlAttrExp((string)$fieldXml["htmlAttrExp"],$fieldClass,$style);
+        if((string)$fieldXml["htmlAttrInFormExp"]!=null) $htmlAttributes .= $this->resolveHtmlAttrExp((string)$fieldXml["htmlAttrInFormExp"],$fieldClass,$style);
+        
+        $rm->put('<div id="'.$idField.'" class="field '.$fieldClass.'" style="'.$style.'" '.$help.($dataType!=null?' data-wigii-datatype="'.$dataTypeName.'"':'').' '.$htmlAttributes.'>');
 		if($dataType!=null){
 			$additionalInformations = $rm->getAdditionalInformation($fieldName);
 			if($additionalInformations) $rm->put('<div class="addinfo ui-corner-all SBIB">'.$additionalInformations.'</div>');
@@ -605,6 +615,37 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			}
 		}
 		//$this->debugLogger()->logEndOperation('resolveDivExp');
+	}
+	
+	/**
+	 * Resolves htmlAttrExp
+	 * @param String $htmlAttrExp htmlAttrExp or htmlAttrInDetailExp FuncExp String
+	 * @param String $fieldClass by ref fieldClass string which will be expanded with any classes resolved into the htmlAttrExp
+	 * @param String $style by ref style string which will be expanded by the style attribute resolved into the htmlAttrExp
+	 * @return String other html attributes into a string of the form htmlAttrName1="value1" htmlAttrName2="value2"
+	 */
+	protected function resolveHtmlAttrExp($htmlAttrExp, &$fieldClass, &$style) {
+		//$this->debugLogger()->logBeginOperation('resolveHtmlAttrExp');
+		$returnValue = '';
+		if(!empty($htmlAttrExp)) {
+			$htmlAttrExp = str2fx($htmlAttrExp);
+			if($htmlAttrExp) {
+				$evalFx = $this->getFuncExpEval();
+				$htmlAttrArray = $evalFx->evaluateFuncExp($htmlAttrExp,$this);
+				if(is_array($htmlAttrArray)) {
+					$rm = $this->getTemplateRecordManager();
+					// extracts html attributes
+					foreach($htmlAttrArray as $attrName=>$attrVal) {
+						if($attrName =='style') $style .= ' '.$attrVal;
+						elseif($attrName == 'class') $fieldClass .= ' '.$attrVal;
+						else $returnValue .= ' '.$attrName.'="'.$attrVal.'"';
+					}
+				}
+			}
+			
+		}
+		//$this->debugLogger()->logEndOperation('resolveHtmlAttrExp');
+		return $returnValue;
 	}
 
     /**
