@@ -272,9 +272,7 @@ if((string)$xml["isTimeline"]=="1"){
     */
 }
 elseif($xml["displayAsTag"]=="1"){
-	if($value != null && $value!="none"){
-		$this->put('<span class="tag ui-corner-all" style="padding:0px 10px 2px 10px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'">'.$value.'</span>');
-	}
+	$this->put($value);
 } else {
 	if($color && $value != null && $value!="none"){
 		$this->put('<span style="padding:2px 10px 2px 10px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$value.'</span>');

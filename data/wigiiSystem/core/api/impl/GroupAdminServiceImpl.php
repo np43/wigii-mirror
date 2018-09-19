@@ -3205,11 +3205,13 @@ order by isParent DESC
 		$autoS = $this->getAuthorizationService();
 		// checks general authorization
 		$autoS->assertPrincipalAuthorized($principal, "GroupAdminService", "setSubscription");
-		// checks canModify right on group
-		$pRights = $groupP->getRights();
-		$group = $groupP->getGroup();
-		if(is_null($pRights)) $autoS->fail($principal, "cannot read group ".$group->getId()." ".$group->getGroupName());
-		if(!$pRights->canModify()) $autoS->fail($principal, "cannot modify group ".$group->getId()." ".$group->getGroupName());
+		// checks canModify right on group if not root principal or public principal
+		if(!$autoS->isRootPrincipal($principal) && !$autoS->isPublicPrincipal($principal)){
+			$pRights = $groupP->getRights();
+			$group = $groupP->getGroup();
+			if(is_null($pRights)) $autoS->fail($principal, "cannot read group ".$group->getId()." ".$group->getGroupName());
+			if(!$pRights->canModify()) $autoS->fail($principal, "cannot modify group ".$group->getId()." ".$group->getGroupName());
+		}
 	}
 
 	/**

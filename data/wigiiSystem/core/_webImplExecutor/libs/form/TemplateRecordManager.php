@@ -370,6 +370,8 @@ class TemplateRecordManager extends Model {
 		}
 		if($field->getDataType()!=null && ($field->getDataType()->getDataTypeName()=="Numerics" || $field->getDataType()->getDataTypeName()=="Floats")){
 			$this->emptyNumber();
+		} else if($field->getDataType()!=null && $field->getDataType()->getDataTypeName()=="Booleans"){
+			$this->doFormatForBoolean(null,false,null,$fieldXml);
 		} else {
 			$this->emptyContent();
 		}
@@ -1594,8 +1596,21 @@ class TemplateRecordManager extends Model {
 		return $value;
 	}
 	//additionalValue could be added in order to add after the check mark the value (usefull in listView for mouseover)
-	public function doFormatForBoolean($value, $doRegroupSimilarValue = false, $additionalValue=null){
-		if($value){
+	//if xml is defined, the lookup if the attribut icon is defined. if yes display the icon
+	public function doFormatForBoolean($value, $doRegroupSimilarValue = false, $additionalValue=null, $xml=null){
+		if($value && $xml && $xml["iconIfTrue"]){
+			if((string)$xml["iconIfTrue"]!=="0"){
+				$value = '<img align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/'.$xml["iconIfTrue"].'"/>';
+			} else {
+				$value = "";
+			}
+		}else if(!$value && $xml && $xml["iconIfFalse"]){
+			if((string)$xml["iconIfFalse"]!=="0"){
+				$value = '<img align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/'.$xml["iconIfFalse"].'"/>';
+			} else {
+				$value = "";
+			}
+		} else if($value){
 			$value = '<img align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/icones/18px/accept.png"/>';
 		} else {
 			$value = '<img align="absmiddle" src="'.SITE_ROOT_forFileUrl.'images/icones/18px/cancel.png"/>';
@@ -1883,7 +1898,26 @@ class TemplateRecordManager extends Model {
 				break;
 			case "Attributs":
 				//Attributes value need translation
-				return Attributs::formatDisplay($value, $field);
+				if($xml["displayAsTag"]=="1"){
+					$dbValue = $value;
+					$value = Attributs::formatDisplay($value, $field);
+					return $this->doFormatForTag($value, $xml, $dbValue);
+				} else {
+					return Attributs::formatDisplay($value, $field);
+				}
+				break;
+			case "MultipleAttributs":
+				if($field == null) throw new ListException("try to create a goupBy title with empty field for MultipleAttribut", ListException::INVALID_ARGUMENT);
+				// 				if($this->getRecord()!=null){
+				// 					$xml = $this->getRecord()->getFieldList()->getField($fieldName)->getXml();
+				// 				}
+				if($xml["displayAsTag"]=="1"){
+					$dbValue = $value;
+					$values = MultipleAttributs::formatDisplay($value, $field, true);
+					return $this->doFormatForTag($values, $xml, $dbValue);
+				} else {
+					return MultipleAttributs::formatDisplay($value, $field);
+				}
 				break;
 			case "Blobs":
 			case "Texts":
@@ -1907,7 +1941,7 @@ class TemplateRecordManager extends Model {
 				}
 				break;
 			case "Booleans":
-				return $this->doFormatForBoolean($value, $doRegroupSimilarValue);
+				return $this->doFormatForBoolean($value, $doRegroupSimilarValue, null, $xml);
 				break;
 			case "Dates":
 // 				if($this->getRecord()!=null){
@@ -2163,19 +2197,6 @@ class TemplateRecordManager extends Model {
 							else return '<img class="prev" style="vertical-align: bottom;" src="'.$prevPath.'" /> <a class="H fileDownload" href="#" target="_self"> '.$name.$type." (".$size.")</a>".$preview.$textContent;
 						}
 						break;
-				}
-				break;
-			case "MultipleAttributs":
-				if($field == null) throw new ListException("try to create a goupBy title with empty field for MultipleAttribut", ListException::INVALID_ARGUMENT);
-// 				if($this->getRecord()!=null){
-// 					$xml = $this->getRecord()->getFieldList()->getField($fieldName)->getXml();
-// 				}
-				if($xml["displayAsTag"]=="1"){
-					$dbValue = $value;
-					$values = MultipleAttributs::formatDisplay($value, $field, true);
-					return $this->doFormatForTag($values, $xml, $dbValue);
-				} else {
-					return MultipleAttributs::formatDisplay($value, $field);
 				}
 				break;
 			case "Varchars":

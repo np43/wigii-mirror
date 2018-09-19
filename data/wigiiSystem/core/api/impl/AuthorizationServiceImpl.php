@@ -315,11 +315,16 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "removeUser":
 					case "getAllUsers":
 					case "setGroupDescription":
-					case "setEmailNotification":
 					case "setXmlPublish":
-					case "setSubscription":
+					case "setEmailNotification":
 						$this->assertPrincipalHasAttachedUser($principal);
 						$this->assertPrincipalHasAdminAccess($principal);
+						return null; /* principal gets no special rights */
+					case "setSubscription":
+					    if(!$this->isPublicPrincipal($principal) && !$this->isRootPrincipal($principal)) {
+							$this->assertPrincipalHasAttachedUser($principal);
+							$this->assertPrincipalHasAdminAccess($principal);
+					    }
 						return null; /* principal gets no special rights */
 					case "deleteGroupContent":
 						$this->assertPrincipalHasAttachedUser($principal);

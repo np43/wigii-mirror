@@ -5575,7 +5575,7 @@ order by isParent DESC
 			{
 				case ElementQueryPlanner::QSTRATEGY_FIELD:
 					$sqlB = ElementSqlBuilderForMultipleElement::createInstance($principal, $element, $idsAreNew);
-					$this->sqlBuilderForUpdateElement[ElementQueryPlanner::QSTRATEGY_FIELD] = $sqlB;
+					$this->sqlBuilderForUpdateMultipleElement[ElementQueryPlanner::QSTRATEGY_FIELD] = $sqlB;
 					break;
 				default: throw new ElementServiceException('unsupported query strategy', ElementServiceException::INVALID_ARGUMENT);
 			}
