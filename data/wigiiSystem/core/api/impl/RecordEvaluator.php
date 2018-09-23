@@ -1526,10 +1526,11 @@ class RecordEvaluator implements FuncExpEvaluator
 				$wigiiEventName = $this->evaluateArg(fs('wigiiEventName'));
 				$wigiiEventEntity = $this->evaluateArg(fs('wigiiEventEntity'));
 				$returnValue = str_replace("multipleelement","multiple",strtolower($wigiiEventEntity))."-".strtolower($wigiiEventName);
-			} catch (FuncExpEvalException $e) {
-				if($e->getCode() != FuncExpEvalException::VARIABLE_NOT_DECLARED) throw $e;
-				//else silent
-				$returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
+			} catch (ServiceException $e) {
+				if($e->getCode() != FuncExpEvalException::VARIABLE_NOT_DECLARED &&
+					$e->getCode() != ElementServiceException::NO_CORRESPONDANT_FIELD) throw $e;
+					//else silent
+					$returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
 			}
 		}
 		return $returnValue;
@@ -1826,7 +1827,7 @@ class RecordEvaluator implements FuncExpEvaluator
 			$content = ServiceProvider::getDataFlowService()->processDataFlowSelector($p, $content);
 		}
 		// if content is not empty, then serializes it
-		if(isset($content)) {
+		if(isset($content)) {			
 			if(is_scalar($content)) {
 				$type='.txt';
 				if($content===true) $content = '1';
@@ -1835,6 +1836,10 @@ class RecordEvaluator implements FuncExpEvaluator
 			elseif(is_array($content)||$content instanceof stdClass) {
 				$type='.xml';
 				$content = TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, $fieldName, $content);
+			}
+			elseif($content instanceof SimpleXMLElement) {
+				$type = '.xml';
+				$content = $content->asXML();
 			}
 			elseif($content instanceof Element || $content instanceof ElementP || $content instanceof Record) {
 				$content = $content->getDbEntity();

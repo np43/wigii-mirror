@@ -207,8 +207,9 @@ class ElementEvaluator extends RecordEvaluator
 						elseif($wigiiEventName=="read" && $wigiiEventEntity=="Element") $returnValue = ElementEvaluator::ELEMENT_FLOW_READ;
 						elseif($wigiiEventName=="update" && $wigiiEventEntity=="Element") $returnValue = ElementEvaluator::ELEMENT_FLOW_EDIT;
 						else $returnValue = str_replace("multipleelement","multiple",strtolower($wigiiEventEntity))."-".strtolower($wigiiEventName);
-					} catch (FuncExpEvalException $e) {
-						if($e->getCode() != FuncExpEvalException::VARIABLE_NOT_DECLARED) throw $e;
+					} catch (ServiceException $e) {
+						if($e->getCode() != FuncExpEvalException::VARIABLE_NOT_DECLARED && 
+							$e->getCode() != ElementServiceException::NO_CORRESPONDANT_FIELD) throw $e;
 						//else silent
 						$returnValue = ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED;
 					}
