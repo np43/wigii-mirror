@@ -121,6 +121,23 @@
 		// Projet ATELIER ENCODE / MOVE Forward
 		
 		/**
+		 * display svg code in a given svg tag
+		 * @param String svg code to insert
+		 * @param String jquery selector on a svg tag
+		 */
+		riseNcd.putSVG = function(svg, selector) {
+			var div= document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+			var svgTag = ["svg"];
+			div.innerHTML= wncd.getHtmlBuilder().tag.apply(undefined,svgTag).out(svg).$tag('svg').html();
+			var frag= document.createDocumentFragment();
+			while (div.firstChild.firstChild){
+				frag.appendChild(div.firstChild.firstChild);
+			}
+			$(selector).append(frag);
+			return true;
+		};
+		
+		/**
 		 * Fetches asynchronously an object into Rise.wigii.org Move Forward catalog and executes some action on the fetched code
 		 *@param String codeId ID of the object stored into the catalog
 		 *@param Function callback action to do on the fetched code. Callback is a function which takes one parameter of type object of the form
