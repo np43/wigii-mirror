@@ -110,11 +110,22 @@ class ElementPListRowsForElementListImpl extends ElementPGroupableSelectablePage
 
     protected function beginElement($elementP){
         $element = $elementP->getElement();
-        if(!$this->getDoOnlyRowsContent()){
+    	if(!$this->getDoOnlyRowsContent()){
             echo "\n";
             if($this->isGroupedBy() && $this->hasGroupByValueChanged()){
                 ?><tr class="groupByTitle"><?
-                ?><td COLSPAN=<?=$this->nbOfHeaders;?> ><div class="grayFont"><?=$this->getCrtGroupByValue()?></div></td></tr><?
+                ?><td COLSPAN=<?=$this->nbOfHeaders;?> ><div class="grayFont"><?
+                $groupByFS = $this->getListContext()->getGroupByItemFieldSelector();
+                $groupByKey = $this->getListContext()->getGroupBy();
+                $groupByLabel = null;
+                if(!$groupByFS->isElementAttributeSelector()){
+                	$fieldXml = $element->getFieldList()->getField($groupByFS->getFieldName())->getXml();
+                	$xmlHeader = $this->getListContext()->getFieldSelectorList()->getXml($this->getListContext()->getGroupBy());
+                	$this->getTRM()->displayHeaderLabel($groupByFS, $fieldXml, $xmlHeader);
+                } else {
+                	$this->getTRM()->displayHeaderLabel($groupByFS);
+                }
+                echo " : ".$this->getCrtGroupByValue()?></div></td></tr><?
                 echo "\n";
             }
 

@@ -47,7 +47,12 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 		$elS = ServiceProvider::getElementService();
 		
 		/*lookup if a Print template is available else do normal print with detail renderer*/
-		$printTemplate= $config->m($p, $exec->getCrtModule())->Print->template;
+		//first check paramaters:
+		if($exec->getCrtParameters(2)){
+			$printTemplate= $config->m($p, $exec->getCrtModule())->Print->{$exec->getCrtParameters(2)};
+		} else {
+			$printTemplate= $config->m($p, $exec->getCrtModule())->Print->template;
+		}
 		if($printTemplate){
 			$printTemplatePath = ServiceProvider::getConfigService()->extractTemplatePathFromTemplate($printTemplate);
 			include($printTemplatePath);

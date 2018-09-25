@@ -71,7 +71,19 @@ class ElementPListRowsForElementBlogImpl extends ElementPGroupableSelectablePage
         if(!$this->getDoOnlyRowsContent()){
             echo "\n";
             if($this->isGroupedBy() && $this->hasGroupByValueChanged()){
-                ?><div class="groupByTitle grayFont"><?=$this->getCrtGroupByValue();?></div><?
+            	?><div class="groupByTitle grayFont"><?
+            	$groupByFS = $this->getListContext()->getGroupByItemFieldSelector();
+            	$groupByKey = $this->getListContext()->getGroupBy();
+            	$groupByLabel = null;
+            	if(!$groupByFS->isElementAttributeSelector()){
+            		$fieldXml = $element->getFieldList()->getField($groupByFS->getFieldName())->getXml();
+            		$xmlHeader = $this->getListContext()->getFieldSelectorList()->getXml($this->getListContext()->getGroupBy());
+            		$this->getTRM()->displayHeaderLabel($groupByFS, $fieldXml, $xmlHeader);
+            	} else {
+            		$this->getTRM()->displayHeaderLabel($groupByFS);
+            	}
+            	echo " : ";
+            	echo $this->getCrtGroupByValue();?></div><?
                 echo "\n";
             }
 

@@ -3483,6 +3483,19 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
 			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/detail/'+elementId+urlArgs);
 		};
+		/**
+		 * Print the details of the element
+		 */
+		wigiiApi.printElement = function(wigiiNamespaceUrl,moduleName,elementId) {
+			window.open(SITE_ROOT +"usecontext/"+crtContextId+"/__/"+wigiiNamespaceUrl+'/'+moduleName+'/element/print/'+elementId);
+		};
+		/**
+		 * Print the details of the element from a template
+		 */
+		wigiiApi.printElementWithTemplate = function(wigiiNamespaceUrl,moduleName,elementId,template) {
+			if(template) template = "/"+template;
+			window.open(SITE_ROOT +"usecontext/"+crtContextId+"/__/"+wigiiNamespaceUrl+'/'+moduleName+'/element/template/'+elementId+template);
+		};
 		
 		/**
 		 * Opens a Wigii Form to edit the element

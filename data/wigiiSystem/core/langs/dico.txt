@@ -1133,12 +1133,12 @@ afterMoreThan60days:In more than 60 days:Dans plus de 60 jours:::::::::
 afterMoreThan30days:In more than 30 days:Dans plus de 30 jours:::::::::
 afterMoreThan7days:In more than 7 days:Dans plus de 7 jours:::::::::
 after24H:In more than 24h:Dans plus de 24h:::::::::
-inThose24H:Most recent:Les plus récents:::::::::
-inTheLast7days:Last 7 days:7 derniers jours:::::::::
-inTheLast30days:Last 30 days:30 derniers jours:::::::::
-inTheLast60days:Last 60 days:60 derniers jours:::::::::
-inTheLast90days:Last 90 days:90 derniers jours:::::::::
-inTheLast365days:Last 365 days:365 derniers jours:::::::::
+inThose24H:In those 24h:Dans ces 24h:::::::::
+inTheLast7days:In the last 7 days:Dans ces 7 derniers jours:::::::::
+inTheLast30days:In the last 30 days:Dans ces 30 derniers jours:::::::::
+inTheLast60days:In the last 60 days:Dans ces 60 derniers jours:::::::::
+inTheLast90days:In the last 90 days:Dans ces 90 derniers jours:::::::::
+inTheLast365days:In the last 365 days:Dans ces 365 derniers jours:::::::::
 before365days:Older than 365 days:Plus ancien que 365 jours:::::::::
 
 openIconsView:Open:Ouvrir:::::::::
