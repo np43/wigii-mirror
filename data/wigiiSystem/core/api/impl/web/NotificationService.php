@@ -364,6 +364,11 @@ class NotificationService implements MultiplexedEvent {
 			switch($entityName){
 				case "Element":
 					if($rec->isSubElement()) $this->getRootElement($p, $rec); //fill rootElement and center the configuration on rootElement
+					else {
+						//change execution service module of translation service in order to
+						//translate correctly any #element
+						$this->getTranslationService()->setExecutionModule($module);
+					}
 					$this->isNotificationNeededForElement($p, $rec, $eventName);
 
 					//send the notification
@@ -417,12 +422,18 @@ class NotificationService implements MultiplexedEvent {
 				$this->executionSink()->log("No notification needed: ".$e->getMessage());
 			} else{
 				$this->executionSink()->publishEndOperationOnError("event", $e, $p);
+				//reset translation module to current execution module
+				$this->getTranslationService()->setExecutionModule($this->getExecutionService()->getCrtModule());
 				throw $e;
 			}
 		} catch (Exception $e){
 			$this->executionSink()->publishEndOperationOnError("event", $e, $p);
+			//reset translation module to current execution module
+			$this->getTranslationService()->setExecutionModule($this->getExecutionService()->getCrtModule());
 			throw new NotificationServiceException('Fail to notify '.$eventName.' '.$entityName.' '.$module->getModuleUrl(),NotificationServiceException::WRAPPING, $e);
 		}
+		//reset translation module to current execution module
+		$this->getTranslationService()->setExecutionModule($this->getExecutionService()->getCrtModule());
 		$this->executionSink()->publishEndOperation("event", $p);
 	}
 
@@ -1279,7 +1290,13 @@ class NotificationService implements MultiplexedEvent {
 	    if(!isset($options)) $options = wigiiBPLParam();
 	    
 	    if(!$wigiiNamespace) $wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace();
-		if(!$module) $module = $this->getExecutionService()->getCrtModule(); //like this it works with subElement or not
+		if(!$module){
+			if($rec->isSubElement()){
+				$module = $this->getExecutionService()->getCrtModule(); //like this it works with subElement or not
+			} else {
+				$module = $rec->getModule();
+			}
+		}
 		if(!$label) $label = $this->getTranslationService()->t($p, "viewElement");
 		$result = "";
 		$result .= '<a href="'.$this->getElementService()->getUrlForElement($wigiiNamespace, $module, $rec, false, $options->getValue('targetFolder')).'" target="_blank" style="color:#000;text-decoration:none;">';
@@ -1289,7 +1306,13 @@ class NotificationService implements MultiplexedEvent {
 	}
 	protected function getButtonAccess($p, $wigiiNamespace=null, $module=null){
 		if(!$wigiiNamespace) $wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace();
-		if(!$module) $module = $this->getExecutionService()->getCrtModule();
+		if(!$module){
+			if($rec->isSubElement()){
+				$module = $this->getExecutionService()->getCrtModule(); //like this it works with subElement or not
+			} else {
+				$module = $rec->getModule();
+			}
+		}
 		$result = "";
 		$result .= '<a href="'.SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'" target="_blank" style="color:#000;text-decoration:none;">';
 		$result .= $this->getTranslationService()->t($p, "accessSystem")." ".($wigiiNamespace && $wigiiNamespace->getWigiiNamespaceName() ? $wigiiNamespace->getWigiiNamespaceName().' - ' : "").$this->getTranslationService()->t($p, $module->getModuleName());

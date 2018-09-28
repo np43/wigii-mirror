@@ -41,24 +41,31 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 
 	protected function actOnCheckedRecord($p, $exec){}
 
-	protected function doRenderForm($p, $exec){
+	public function printWithTemplate($p, $exec, $template, $options=null){
 		$transS = ServiceProvider::getTranslationService();
 		$config = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
 		$elS = ServiceProvider::getElementService();
-		
-		/*lookup if a Print template is available else do normal print with detail renderer*/
-		//first check paramaters:
-		if($exec->getCrtParameters(2)){
-			$printTemplate= $config->m($p, $exec->getCrtModule())->Print->{$exec->getCrtParameters(2)};
+		if(!$options) $options = wigiiBPLParam();
+		if($template){
+			$printTemplate= $config->m($p, $exec->getCrtModule())->Print->{$template};
 		} else {
 			$printTemplate= $config->m($p, $exec->getCrtModule())->Print->template;
 		}
 		if($printTemplate){
 			$printTemplatePath = ServiceProvider::getConfigService()->extractTemplatePathFromTemplate($printTemplate);
 			include($printTemplatePath);
-			return;	
+			return true;
 		}
-
+		return false;
+	}
+	protected function doRenderForm($p, $exec){
+		$transS = ServiceProvider::getTranslationService();
+		$config = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
+		$elS = ServiceProvider::getElementService();
+		
+		/*lookup if a Print template is available else do normal print with detail renderer*/
+		if($this->printWithTemplate($p, $exec, $exec->getCrtParameters(2))) return;
+		
 		$this->getDetailRenderer()->resetJsCodeAfterShow();
 		$idAnswer = $exec->getIdAnswer();
 		if(!$idAnswer) $idAnswer = "mainDiv";

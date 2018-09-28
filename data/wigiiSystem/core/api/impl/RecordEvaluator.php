@@ -1649,6 +1649,28 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $val;
 	}
 	
+	
+	/**
+	 * setFieldValue sets values to fields in existing record
+	 * FuncExp signature : <code>setMultipleVal(field1, value1, field2, value2, etc.)</code><br/>
+	 * Where arguments are :
+	 * - field : FieldSelector or String : a valid field in the current record
+	 * - value : mixed : a valid value for the defined field for the current record
+	 * return integer (nb of field)
+	 */
+	public function setMultipleVal($args){
+		//checks arguments
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs%2!=0) throw new FuncExpEvalException('setMultipleVal takes a pair number of arguments, a list of fieldName, value', FuncExpEvalException::INVALID_ARGUMENT);
+		$i = 0;
+		for($i=0; $i<$nArgs; $i=$i+2){
+			$fs= $args[$i];
+			$value = $this->evaluateArg($args[$i+1]);
+			$this->getRecord()->setFieldValue($value, $fs->getFieldName(), $fs->getSubFieldName());
+		}
+		return $i/2;
+	}
+	
 	/**
 	 * Adds a value to a MultipleAttributs field in the wigii bag, given one or several field selectors
 	 * Last argument is the value to be added, all previous arguments should evaluate to field selectors.

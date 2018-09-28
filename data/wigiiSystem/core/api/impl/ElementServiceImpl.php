@@ -5504,7 +5504,9 @@ order by isParent DESC
 					case 'linkName':
 					case 'peerId':
 						break;
-					default: throw new ElementServiceException("element attribute $fName can not be updated or is invalid", ElementServiceException::INVALID_ARGUMENT);
+					default: 
+						//from 26.09.2018, ignore any extra element attribut, this case happen when using dynamic element attribut
+						//throw new ElementServiceException("element attribute $fName can not be updated or is invalid", ElementServiceException::INVALID_ARGUMENT);
 				}
 			}
 		}

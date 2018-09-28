@@ -1011,13 +1011,98 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}
 	
 	/**
+	 * Print an element with a template and return the html
+	 * if template is not defined then takes Print->template path
+	 * FuncExp signature : <code>printElementWithTemplate(element, template=null, options=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) element: Element
+	 * - Arg(1) template: string. The name of the template to use in Print activity
+	 * - Arg(2) options: WigiiBPLParam. Optional bag of option available in the template
+	 * @return String html
+	 */
+	public function printElementWithTemplate($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The printElementWithTemplate function takes at least one argument which is the element', FuncExpEvalException::INVALID_ARGUMENT);
+		$element = $this->evaluateArg($args[0]);
+		if($nArgs > 1) $template = $this->evaluateArg($args[1]);
+		else $template = null;
+		if($nArgs > 2){
+			$options = $this->evaluateArg($args[2]);
+			if(!($options instanceof WigiiBPLParameter)) throw new FuncExpEvalException('Options should be a none null instance of WigiiBPLParameter', FuncExpEvalException::INVALID_ARGUMENT);
+		} else {
+			$options = wigiiBPLParam();
+		}
+		$options->setValue("element",$element);
+		$options->setValue("template",$template);
+		return $this->getWigiiBPL()->elementPrintWithTemplate($this->getPrincipal(),$this,$options,$this->getFuncExpVMServiceProvider()->getExecutionSink());
+	}
+	
+	/**
+	 * Build a map with subfield values for an Html File
+	 * FuncExp signature : <code>buildHtmlFileSubFieldsMap(filename, htmlcontent, date=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) filename: string. The name of the file
+	 * - Arg(1) htmlcontent: string. The html content of the file
+	 * - Arg(2) date: string in format "Y-m-d H:i:s" : Optional the date for the file creation, if not defined takes now.
+	 *
+	 * @return array["textContent","name","type","mime","date","user","username"]
+	 */
+	public function buildHtmlFileSubFieldsMap($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException('The buildHtmlFileSubFieldsMap function takes at least two argument which are the file name and the html content', FuncExpEvalException::INVALID_ARGUMENT);
+		$filename = $this->evaluateArg($args[0]);
+		if($filename==null) return null;
+		$htmlContent = $this->evaluateArg($args[1]);
+		if($nArgs > 2){
+			$date = $this->evaluateArg($args[2]);
+		} else {
+			$date = date("Y-m-d H:i:s");
+		}
+		$p = $this->getPrincipal();
+		return array(
+				"textContent"=>$htmlContent,
+				"size"=>strlen($htmlContent),
+				"name"=>$filename,
+				"type"=>".html",
+				"mime"=>"text/html",
+				"date"=>$date,
+				"user"=>$p->getRealUserId(),
+				"username"=>$p->getRealUsername()
+			);
+	}
+	
+	/**
+	 * Build a map with subfield values for an email
+	 * FuncExp signature : <code>buildEmailSubFieldsMap(email)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) email: string. The email
+	 * @return array["value","proofKey","proofValue","externalCode","externalAccessLevel"]
+	 */
+	public function buildEmailSubFieldsMap($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs != 1) throw new FuncExpEvalException('The buildEmailSubFieldsMap function takes two argument which is the email value', FuncExpEvalException::INVALID_ARGUMENT);
+		$email = $this->evaluateArg($args[0]);
+		if($email==null) return null;
+		$p = $this->getPrincipal();
+		$elS = ServiceProvider::getElementService();
+		$now = date("Y-m-d H:i:s");
+		return array(
+				"value"=>$email,
+				"proofKey" => $elS->getEmailValidationCode($p, $email),
+				"proofValue" => 0,
+				"externalCode" => $elS->getEmailExternalCode($p, null, null, $now, $value), //getEmailExternalCode use the id and the fieldname to complexify the md5, but there is no real value in it, so add random name
+				"externalAccessLevel" => 0
+			);
+	}
+	
+	/**
 	 * Create/Update an Element
-	 * FuncExp signature : <code>createUpdateElement(groupId, elementId, fieldValuesMap)</code><br/>
+	 * FuncExp signature : <code>createUpdateElement(groupId, elementId, fieldValuesMap, triggerNotification = true)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) groupId: int. The group in which to insert the element
 	 * - Arg(1) elementId: int. The element id to be updated (if null then element is created)
 	 * - Arg(2) fieldValuesMap: Array. The field values as a Map. Key = fieldname, value = field value (if value is a map then subfields are updated).
-	 * 
+	 * - Arg(3) triggerNotification: Boolean. If true then notfications are dispatched
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return Element
 	 */
@@ -1028,8 +1113,16 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		$groupId = $this->evaluateArg($args[0]);
 		$elementId = $this->evaluateArg($args[1]);
 		$fieldMap = $this->evaluateArg($args[2]); //here the values are evaluated for each fields
+		if($nArgs > 3){
+			$triggerNotification = $this->evaluateArg($args[3]);
+		} else {
+			$triggerNotification = true;
+		}
 		
 		$cfsMap = CalculatedFieldSelectorMapArrayImpl::createInstance();
+		//create a new dynamic attribut with current gids
+		//this value will be used then in the ElementUpdateSharingDFA to remove existing sharing
+		$cfsMap->setCalculatedFieldSelector(cfs(fs_e("oldGids"),fx("getLinkedGroupIds")));
 		foreach($fieldMap as $fieldName=>$value){
 			$cfsMap->setCalculatedFieldSelectorByFieldName($fieldName, $value);
 		}
@@ -1039,15 +1132,18 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		} else {
 			$dataSource = elementP($elementId,NULL,$this->evaluateFuncExp(fx("cs_g",$groupId)));
 		}
-		return sel(
+		return ServiceProvider::getDataFlowService()->processDataSource(
 			$this->getPrincipal(),
 			$dataSource,
 			dfasl(
 				dfas("ElementSetterDFA","setCalculatedFieldSelectorMap",$cfsMap),
 				dfas("ElementRecalcDFA"),
 				dfas("ElementDFA","setMode","1"), //when persisting and more stages after, the element is reloaded and pushed further.
-				dfas("NullDFA") //with this additional stage the retun value is the element
-			)
+				//dfas("NullDFA") //with this additional stage the retun value is the element
+				dfas("ElementUpdateSharingDFA","setOldGroupIds",fs_e("oldGids")) //update the autosharings
+			),
+			true,
+			($triggerNotification?TechnicalServiceProvider::getWigiiEventsDispatcher():false) //activate the notifications if $triggerNotification
 		);
 	}
 	
@@ -2280,7 +2376,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>countElements(logExp=null,groupId=null)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) logExp: LogExp. Evaluates to FieldSelector LogExp used to filter the Elements to count.
-	 * - Arg(1) groupId: Int. The ID of the Group from which to search for Elements (includes group and subgroups). If not defined, takes current group.	 
+	 * - Arg(1) groupId: Int|LogExp. The ID of the Group from which to search for Elements (includes group and subgroups) or a group selection LogExp. If not defined, takes current group.	 
 	 * @return Int the number of matching elements or 0 if none.
 	 */
 	public function countElements($args) {
@@ -2289,8 +2385,10 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		if($nArgs>0) $logExp=$this->evaluateArg($args[0]);
 		if($nArgs>1) $groupId=$this->evaluateArg($args[1]);
 		else $groupId = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'id'));
-		
-		$returnValue = $this->getElementService()->countSelectedElementsInGroups($this->getPrincipal(), lxInGR(lxEq(fs('id'),$groupId)), (isset($logExp)?lf(null,$logExp):null));
+		if(!($groupId instanceof LogExp)){
+			$groupId = lxEq(fs('id'),$groupId);
+		}
+		$returnValue = $this->getElementService()->countSelectedElementsInGroups($this->getPrincipal(), lxInGR($groupId), (isset($logExp)?lf(null,$logExp):null));
 		if($returnValue>0) return $returnValue;
 		else return 0;
 	}
@@ -2300,7 +2398,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>elementExists(logExp=null,groupId=null)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) logExp: LogExp. Evaluates to FieldSelector LogExp used to filter the Elements to check for existance.
-	 * - Arg(1) groupId: Int. The ID of the Group from which to search for Elements (includes group and subgroups). If not defined, takes current group.
+	 * - Arg(1) groupId: Int|LogExp. The ID of the Group from which to search for Elements (includes group and subgroups) or a group selection LogExp. If not defined, takes current group.
 	 * @return Boolean true if at least one element matches the criterias, else false.
 	 */
 	public function elementExists($args) {
@@ -3059,6 +3157,15 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 */
 	public function sysUsername($args) {
 		return $this->getPrincipal()->getRealUsername();
+	}
+
+	/**
+	 * Returns current principal email (real user)
+	 * FuncExp signature : <code>sysPrincipalEmail()</code>
+	 * @return String the principal email of the real user connected
+	 */
+	public function sysPrincipalEmail($args) {
+		return $this->getPrincipal()->getValueInGeneralContext("email");
 	}
 		
 	/**

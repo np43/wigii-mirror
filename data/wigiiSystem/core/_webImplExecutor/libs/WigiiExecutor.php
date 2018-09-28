@@ -89,7 +89,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 			default: return parent::shouldByPassHeader($action);
 		}
 	}
-	protected function shouldByPassFooter($action) {
+	protected function shouldByPassFooter($action, $parameters) {
 		switch ($action) {
 			case 'public': return true;
 			case 'inpublic': return false;
@@ -100,7 +100,7 @@ class WigiiExecutor extends WigiiCoreExecutor {
 			case 'inwww': return false;
 			case 'qliksense': return true;
 			case 'help':return true;
-			default: return parent::shouldByPassFooter($action);
+			default: return parent::shouldByPassFooter($action, $parameters);
 		}
 	}
 	

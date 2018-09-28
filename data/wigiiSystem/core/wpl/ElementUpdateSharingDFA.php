@@ -104,9 +104,9 @@ class ElementUpdateSharingDFA implements DataFlowActivity
 		    	"element",$element,
 				"newGroupIds",$this->newGroupIds,
 				"oldGroupIds",$oldGids,
-				"refreshGUI", $this->refreshGUI
-			),
-			($dataFlowContext->areWigiiEventsEnabled()?$dataFlowContext->getWigiiEventsDispatcher():false)
+				"refreshGUI", $this->refreshGUI,
+				"wigiiEventsSubscriber",($dataFlowContext->areWigiiEventsEnabled() && $dataFlowContext->getWigiiEventsDispatcher()?$dataFlowContext->getWigiiEventsDispatcher():false)
+			)
 		);
 		// pushes data further down in the flow
 		$dataFlowContext->writeResultToOutput($data,$this);

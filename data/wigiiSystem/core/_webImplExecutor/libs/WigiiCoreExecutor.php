@@ -4351,6 +4351,7 @@ invalidCompleteCache();
 	
 			//we keep in memory the lastAction, just to be able to manage the sending of footer for downloads or JSON
 			$lastAction = null;
+			$lastParameters = null;
 			$configurationContextSupportsSubElements = ($this->getConfigurationContext() instanceof ConfigurationContextSubElementImpl);
 			$byPassedHeader=false;
 			while ($exec->loadNextRequest($this)) {
@@ -4365,7 +4366,7 @@ invalidCompleteCache();
 				//reload the p, because it could change during the request (on changing role or login/logout)
 				$p = $exec->getExecPrincipal();
 				$lastAction = $exec->getCrtAction();
-	
+				$lastParameters = $exec->getCrtParameters();
 				if (!$started) {
 					//***********
 					//HEADER LOADING
@@ -4412,7 +4413,7 @@ invalidCompleteCache();
 			}
 	
 			//load the footer
-			if (!$this->shouldByPassFooter($lastAction) && !$exec->getIsUpdating())
+			if (!$this->shouldByPassFooter($lastAction, $lastParameters) && !$exec->getIsUpdating())
 				include_once (IMPL_PATH . "templates/footer.php");
 	
 		} catch (AuthenticationServiceException $ase) {
@@ -4473,7 +4474,7 @@ invalidCompleteCache();
 			if ($exec->getIsUpdating() && $openAnswer)
 				echo ExecutionServiceImpl :: answerRequestSeparator;
 			ExceptionSink :: publish($ase);
-			if ($this->shouldByPassFooter($lastAction)) {
+			if ($this->shouldByPassFooter($lastAction,$lastParameters)) {
 				$this->executionSink()->publishEndOperationOnError("processAndEnds", $ase, $p);
 				throw $ase;
 			}
@@ -4483,7 +4484,7 @@ invalidCompleteCache();
 			ExceptionSink :: publish($e);
 			//if there is an exception and we shouldByPassHeaderAndFooter then we need
 			//to display it, other wise, we will never see it!
-			if ($this->shouldByPassFooter($lastAction)) {
+			if ($this->shouldByPassFooter($lastAction,$lastParameters)) {
 				//				echo "Message:\n";
 				//				eput($e->getMessage());
 				//				echo "\nCode:\n";
@@ -4535,7 +4536,7 @@ invalidCompleteCache();
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++."end processAndEnds"] = microtime(true);
 	
 		//ends the execution and display errors
-		if (!$this->shouldByPassFooter($lastAction)) {
+		if (!$this->shouldByPassFooter($lastAction,$lastParameters)) {
 			$exec->end();
 		} else {
 			//it is important that for the download or the JSON there is nothing else
@@ -4576,7 +4577,7 @@ invalidCompleteCache();
 				return false;
 		}
 	}
-	protected function shouldByPassFooter($action) {
+	protected function shouldByPassFooter($action, $parameters) {
 		$exec = ServiceProvider :: getExecutionService();
 		switch ($action) {
 			case "CKEditor" :
@@ -4589,7 +4590,7 @@ invalidCompleteCache();
 				return true;
 				break;
 			case "element":
-				if($exec->getCrtParameters(0) == "template") return true;
+				if($parameters[0] == "template") return true;
 				else return false;
 				break;
 			default :

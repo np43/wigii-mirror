@@ -357,8 +357,8 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 							$element->setFieldList($fieldList);
 						}		
 						if($wigiiBag instanceof FormBag && $fieldList instanceof FormFieldList) $wigiiBag->setFormFieldList($fieldList);
-						// fills the element
-						$elementP = $this->getElementService()->fillElement($principal, $element, $fieldSelectorList);
+						// fills the element taking complete fieldList
+						$elementP = $this->getElementService()->fillElement($principal, $element);
 						$dataFlowContext->writeResultToOutput($elementP, $this);
 					}
 					else $dataFlowContext->writeResultToOutput($data, $this);

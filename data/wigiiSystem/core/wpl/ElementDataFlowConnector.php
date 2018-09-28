@@ -174,7 +174,7 @@ class ElementDataFlowConnector implements DataFlowDumpable
 			$apiClient->getConfigService()->selectSubElementsConfig($principal, $this->linkSelector->getOwnerElementId(), $this->linkSelector->getFieldName());
 			
 			// creates sub element
-			$element = $this->createNewSubElement($principal, $apiClient->getConfigService());			
+			$element = $this->createNewSubElement($principal, $apiClient->getConfigService(), $dataFlowContext);
 			// sets dataflow context
 			$dataFlowContext->setAttribute('GroupBasedWigiiApiClient', $apiClient, true);
 			$dataFlowContext->setAttribute('linkSelector', $this->linkSelector);			
@@ -205,7 +205,7 @@ class ElementDataFlowConnector implements DataFlowDumpable
 				$principal->bindToWigiiNamespace($firstWigiiNamespace);
 			}	
 			// creates element
-			$element = $this->createNewElement($principal, $groupList);	
+			$element = $this->createNewElement($principal, $groupList, $dataFlowContext);	
 			// sets dataflow context
 			$dataFlowContext->setAttribute('GroupBasedWigiiApiClient', $apiClient, true);
 			$dataFlowContext->setAttribute('groupId', $this->groupId);
@@ -223,7 +223,7 @@ class ElementDataFlowConnector implements DataFlowDumpable
 	 * the configuration given by the provided groupList.
 	 * @return Element
 	 */
-	protected function createNewElement($principal, $groupList) {
+	protected function createNewElement($principal, $groupList, $dataFlowContext) {
 		if(!isset($groupList) || $groupList->isEmpty()) throw new DataFlowServiceException("groupList cannot be empty", DataFlowServiceException::INVALID_ARGUMENT);
 		// retrieves Module using first group in the list
 		$module = null;
@@ -231,11 +231,18 @@ class ElementDataFlowConnector implements DataFlowDumpable
 			$module = $group->getModule();
 			break;
 		}
+		// if Wigii events are active, then creates a FormBag and a FormFieldList
+		if($dataFlowContext->areWigiiEventsEnabled()) {
+			$wigiiBag= FormBag::createInstance();
+			$fieldList = FormFieldList::createInstance($wigiiBag);
+			$wigiiBag->setFormFieldList($fieldList);
+		} else {
+			$fieldList = FieldListArrayImpl::createInstance();
+			$wigiiBag = WigiiBagBaseImpl::createInstance();
+		}
 		// creates element FieldList and fills it with configuration given by grouplist
-		$fieldList = FieldListArrayImpl::createInstance();
 		$this->getConfigService()->getGroupsFields($principal, $groupList, null, $fieldList);
-		// creates element instance
-		return Element::createInstance($module, $fieldList, WigiiBagBaseImpl::createInstance());				
+		return Element::createInstance($module, $fieldList, $wigiiBag);				
 	}	
 	
 	/**
@@ -244,12 +251,20 @@ class ElementDataFlowConnector implements DataFlowDumpable
 	 * @param ConfigServiceSubElementImpl $subElementConfigService
 	 * @return Element
 	 */
-	protected function createNewSubElement($principal, $subElementConfigService) {
+	protected function createNewSubElement($principal, $subElementConfigService, $dataFlowContext) {
 		$module = $subElementConfigService->getCurrentModule();
+		
+		// if Wigii events are active, then creates a FormBag and a FormFieldList
+		if($dataFlowContext->areWigiiEventsEnabled()) {
+			$wigiiBag= FormBag::createInstance();
+			$fieldList = FormFieldList::createInstance($wigiiBag);
+			$wigiiBag->setFormFieldList($fieldList);
+		} else {
+			$fieldList = FieldListArrayImpl::createInstance();
+			$wigiiBag = WigiiBagBaseImpl::createInstance();
+		}
 		// creates element FieldList and fills it with the configuration of the sub element
-		$fieldList = FieldListArrayImpl::createInstance();
 		$subElementConfigService->getFields($principal, $module, null, $fieldList);
-		// creates element instance
-		return Element::createInstance($module, $fieldList, WigiiBagBaseImpl::createInstance());				
+		return Element::createInstance($module, $fieldList, $wigiiBag);				
 	}	
 }

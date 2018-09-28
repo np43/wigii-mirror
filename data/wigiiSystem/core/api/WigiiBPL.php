@@ -1174,6 +1174,54 @@ class WigiiBPL
 	}
 	
 	/**
+	 * print an element using a template and return the html
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementPrintWithTemplate business process needs the following parameters to run :
+	 * - element: Element. The filled element to be printed.
+	 * - template: String. Optional, the name of the template in the Print activity. If not defined then takes Print->template
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return String : html
+	 */
+	public function elementPrintWithTemplate($principal, $caller, $parameter, $executionSink=null) {
+		$this->executionSink()->publishStartOperation("elementPrint", $principal);
+		$configS = $this->getConfigService();
+		$returnValue = null;
+		try {
+			if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+			
+			$element = $parameter->getValue('element');
+			if(is_null($element)) throw new WigiiBPLException('element cannot be null', WigiiBPLException::INVALID_PARAMETER);
+			$template = $parameter->getValue('template');
+			
+			//wraps the element as read only
+			$elementP = ElementP::createInstance($element);
+			$elementP->setRights(PrincipalRights::createInstance());
+			
+			$form = PrintElementFormExecutor :: createInstance($this->getWigiiExecutor(), $element, $elementP, "detailElement_form", null);
+			$form->setIsForPrint(true);
+			if($this->getWigiiExecutor()->isWorkzoneViewDocked()) $form->setCorrectionWidth(0);
+			else $form->setCorrectionWidth(43);
+			$form->setLabelWidth(0 + $configS->getParameter($principal, $element->getModule(), "elementLabelWidth"));
+			$form->setTotalWidth(0 + $configS->getParameter($principal, $element->getModule(), "elementTotalWidth"));
+			
+			//buffer template and return the code
+			ob_start();
+			$form->printWithTemplate($principal, ServiceProvider::getExecutionService(), $template, $parameter);
+			$returnValue = ob_get_clean();
+			
+		}
+		catch(Exception $e) {
+			$this->executionSink()->publishEndOperationOnError("elementPrint", $e, $principal);
+			throw $e;
+		}
+		$this->executionSink()->publishEndOperation("elementPrint", $principal);
+		return $returnValue;
+	}
+	
+	/**
 	 * Copies a given element to a specified folder (real copy, not sharing).
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @param Object $caller the object calling the Wigii business process.

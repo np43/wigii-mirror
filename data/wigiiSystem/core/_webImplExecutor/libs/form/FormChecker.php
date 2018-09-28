@@ -213,7 +213,7 @@ class FormChecker implements FieldListVisitor {
 			} else
 				//manage if audio recording content is available
 				if($fieldParams["allowAudioRecording"]=="1" && $get[$fieldName."_audioContent"]!=null) {
-					fput("audio recording found");
+					//fput("audio recording found");
 					$filename = date("d.m.Y H:i");
 					$fileext = ".ogg";
 					$uploadfile = $p->getWigiiNamespace()->getWigiiNamespaceName()."_".time().ipToStr($_SERVER["REMOTE_ADDR"]).$p->getUsername().$fieldName.substr(basename($filename), 0, 5);
@@ -229,7 +229,7 @@ class FormChecker implements FieldListVisitor {
 						$get[$fieldName."_name"] = $filename.$fileext;
 						
 					} else {
-						fput("problem!!");
+						//fput("problem!!");
 						$this->executionSink()->log("!!!! problem in creating audio file ".$filename." in ".$uploadfile." !!!!\n");
 					}
 				}

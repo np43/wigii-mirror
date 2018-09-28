@@ -609,7 +609,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	// Object constructors
 
 	/**
-	 * Constructs a func exp given its name and some arguments
+	 * Constructs a func exp given its name and some arguments (arguments are not evaluated (evaluated on fx execution))
 	 * If args is already a FuncExp then returns it.
 	 * FuncExp signature is: <code>fx(name, arg1, arg2, ...)</code><br/>
 	 * or <code>fx(funcExp)</code>
@@ -634,6 +634,32 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		return $returnValue;
 	}
 
+	/**
+	 * Constructs a func exp given its name and some arguments (arguments are evaluated (evaluated on fx creation))
+	 * If args is already a FuncExp then returns it.
+	 * FuncExp signature is: <code>fxEvalArgs(name, arg1, arg2, ...)</code><br/>
+	 * or <code>fx(funcExp)</code>
+	 */
+	public function fxEvalArgs($args) {
+		$isOriginPublic = $this->isFxOriginPublic();
+		$nArgs = $this->getNumberOfArgs($args);
+		$returnValue = null;
+		// if we have only one funcexp returns it
+		if($nArgs == 1) {
+			if($args[0] instanceof FuncExp) $returnValue = $args[0];
+			else $returnValue = FuncExp::createInstance($this->evaluateArg($args[0]));
+		}
+		// if we have a name and some arguments, then creates a func exp with them.
+		elseif($nArgs > 1) {
+			$returnValue = FuncExp::createInstance($this->evaluateArg($args[0]));
+			for($i = 1; $i < $nArgs; $i++) {
+				$returnValue->addArgument($this->evaluateArg($args[$i]));
+			}
+		}
+		if(isset($returnValue) && $isOriginPublic) $returnValue->setOriginIsPublic();
+		return $returnValue;
+	}
+	
 	/**
 	 * Evaluates a FuncExp and returns its result<br/>
 	 * FuncExp signature : <code>evalfx(f,modules)</code><br/>
