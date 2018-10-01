@@ -1999,7 +1999,7 @@ wncd.AgileStoryBoard = function(container, options) {
 		var firstStory = $("#story_"+story.id).parent().children("div:first-child");
 		if(firstStory.attr('id') != "story_"+story.id) {
 			// updates position of story to firstStory.position - 100
-			story.position = firstStory.attr('data-storypos') - 100;
+			story.position = Number(firstStory.attr('data-storypos')) - (10+90*Math.random()); //random is to minimize the risk of collision
 			// if deployed into a Wigii Wncd container, then updates the position on server
 			if(container && container.className == 'WncdContainer') {
 				container.saveFieldValue(story.id,self.options.elementPositionField,story.position,{							
@@ -2016,7 +2016,7 @@ wncd.AgileStoryBoard = function(container, options) {
 		var lastStory = $("#story_"+story.id).parent().children("div:last-child");
 		if(lastStory.attr('id') != "story_"+story.id) {
 			// updates position of story to lastStory.position + 100
-			story.position = lastStory.attr('data-storypos') + 100;
+			story.position = Number(lastStory.attr('data-storypos')) + (10+90*Math.random());  //random is to minimize the risk of collision
 			// if deployed into a Wigii Wncd container, then updates the position on server
 			if(container && container.className == 'WncdContainer') {
 				container.saveFieldValue(story.id,self.options.elementPositionField,story.position,{							
