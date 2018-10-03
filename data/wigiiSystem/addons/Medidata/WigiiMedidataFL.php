@@ -177,10 +177,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$xml->setAttribute('version', '450');
 		// remark
 		$remark = substr(trim($this->evaluateFuncExp(fx('html2text',$customerOrder->getFieldValue('annexInfo')))),0,350);
-		if(!empty($remark)) {
-			$xml = $this->createXmlElement($returnValue, 'remark', $options);
-			$xml->nodeValue = $remark;
-		}
+		if(!empty($remark)) $xml = $this->createXmlElement($returnValue, 'remark', $options, $remark);
 		// tiers payant
 		$this->createInvoice45TiersPayant($returnValue, $customerOrder, $options);
 		// esr QR
@@ -204,6 +201,102 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	protected function createInvoice45TiersPayant($invoiceBody,$customerOrder,$options) {
 		$returnValue = $this->createXmlElement($invoiceBody, 'tiers_payant', $options);
 		$returnValue->setAttribute('payment_period', 'P60D');
+		// biller
+		$xml = $this->createXmlElement($returnValue, 'biller', $options);
+		$xml->setAttribute('ean_party', 'customerOrder.GLN_LegalEntity');
+		$xml->setAttribute('zsr', 'customerOrder.RCC_LegalEntity');
+		$xml->setAttribute('specialty', 'Orthopédie');
+		$xml->setAttribute('uid_number', 'customerOrder.IDE_LegalEntity');
+		$xml = $this->createXmlElement($xml, 'company', $options);
+		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.name_LegalEntity');
+		$xml = $this->createXmlElement($xml, 'postal', $options);
+		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_LegalEntity');
+		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_LegalEntity');
+		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_LegalEntity');
+		// debitor
+		$xml = $this->createXmlElement($returnValue, 'debitor', $options);
+		$xml->setAttribute('ean_party', 'customerOrder.GLN_Insurance');
+		$xml = $this->createXmlElement($xml, 'company', $options);
+		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.name_Insurance');
+		$xml = $this->createXmlElement($xml, 'postal', $options);
+		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_Insurance');
+		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_Insurance');
+		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_Insurance');
+		// provider
+		$xml = $this->createXmlElement($returnValue, 'provider', $options);
+		$xml->setAttribute('ean_party', 'customerOrder.GLN_LegalEntity');
+		$xml->setAttribute('zsr', 'customerOrder.RCC_LegalEntity');
+		$xml->setAttribute('specialty', 'Orthopédie');
+		$xml = $this->createXmlElement($xml, 'company', $options);
+		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.name_LegalEntity');
+		$xml = $this->createXmlElement($xml, 'postal', $options);
+		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_LegalEntity');
+		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_LegalEntity');
+		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_LegalEntity');
+		// insurance
+		$xml = $this->createXmlElement($returnValue, 'insurance', $options);
+		$xml->setAttribute('ean_party', 'customerOrder.GLN_Insurance');
+		$xml = $this->createXmlElement($xml, 'company', $options);
+		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.name_Insurance');
+		$xml = $this->createXmlElement($xml, 'postal', $options);
+		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_Insurance');
+		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_Insurance');
+		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_Insurance');
+		// patient
+		$xml = $this->createXmlElement($returnValue, 'patient', $options);
+		$xml->setAttribute('gender', 'customerOrder.gender_Patient');
+		$xml->setAttribute('birthdate', 'customerOrder.dateOfBirth_Patient');
+		$xml->setAttribute('ssn', 'customerOrder.ssn');
+		$xml = $this->createXmlElement($xml, 'person', $options);
+		$xml->setAttribute('salutation', 'customerOrder.title_Patient');
+		$this->createXmlElement($xml, 'familyname', $options, 'customerOrder.last_name_Patient');
+		$this->createXmlElement($xml, 'givenname', $options, 'customerOrder.first_name_Patient');
+		$xml = $this->createXmlElement($xml, 'postal', $options);
+		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_Patient');
+		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_Patient');
+		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_Patient');
+		// guarantor
+		$xml = $this->createXmlElement($returnValue, 'guarantor', $options);
+		$xml = $this->createXmlElement($xml, 'person', $options);
+		$xml->setAttribute('salutation', 'customerOrder.title_Patient');
+		$this->createXmlElement($xml, 'familyname', $options, 'customerOrder.last_name_Patient');
+		$this->createXmlElement($xml, 'givenname', $options, 'customerOrder.first_name_Patient');
+		$xml = $this->createXmlElement($xml, 'postal', $options);
+		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_Patient');
+		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_Patient');
+		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_Patient');
+		// balance
+		$this->createInvoice45Balance($returnValue, $customerOrder, $options);
+		return $returnValue;
+	}
+	
+	/**
+	 * Creates an invoice request Balance node
+	 * @param DOMElement $invoiceTiersType current invoice Tiers payant or Tiers garant node
+	 * @param Element $customerOrder element of type CustomerOrders sourcing the invoice creation
+	 * @param WigiiBPLParameter $options optional bag of options to configure the generation process
+	 * @return DOMElement the created invoice balance node
+	 */
+	protected function createInvoice45Balance($invoiceTiersType,$customerOrder,$options) {
+		$returnValue = $this->createXmlElement($invoiceTiersType, 'balance', $options);
+		$returnValue->setAttribute('currency', 'CHF');
+		$returnValue->setAttribute('amount', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
+		$returnValue->setAttribute('amount_due', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
+		$returnValue->setAttribute('amount_obligations', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
+		// vat
+		$vat = $this->createXmlElement($returnValue, 'vat', $options);
+		$vat->setAttribute('vat_number', 'customerOrder.IDE_LegalEntity');
+		$vat->setAttribute('vat', $this->assertNumericNotNull($customerOrder, 'vatAmount'));
+		// vat 7.7
+		$xml = $this->appendXmlElement($vat, 'vat_rate', $options);
+		$xml->setAttribute('vat_rate', 'customerOrder.VATValue_LegalEntity');
+		$xml->setAttribute('amount', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
+		$xml->setAttribute('vat', $this->assertNumericNotNull($customerOrder, 'vatAmount'));
+		// vat 0
+		$xml = $this->appendXmlElement($vat, 'vat_rate', $options);
+		$xml->setAttribute('vat_rate', 0);
+		$xml->setAttribute('amount', 'customerOrder.vatAmount0');
+		$xml->setAttribute('vat', 0);		
 		return $returnValue;
 	}
 	
@@ -217,6 +310,22 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	protected function createInvoice45esrQR($invoiceBody,$customerOrder,$options) {
 		$returnValue = $this->createXmlElement($invoiceBody, 'esrQR', $options);
 		$returnValue->setAttribute('type', 'esrQR');
+		$returnValue->setAttribute('iban', 'customerOrder.iban_LegalEntity');
+		$returnValue->setAttribute('reference_number', $this->assertNotNull($customerOrder,'customerOrderNumber'));
+		// bank
+		$xml = $this->createXmlElement($returnValue, 'bank', $options);
+		$xml = $this->createXmlElement($xml, 'company', $options);
+		$this->createXmlElement($xml, 'companyname', $options, 'Postfinance SA');
+		$xml = $this->createXmlElement($xml, 'postal', $options);
+		$this->createXmlElement($xml, 'zip', $options, '3030');
+		$this->createXmlElement($xml, 'city', $options, 'Bern');
+		// creditor
+		$xml = $this->createXmlElement($returnValue, 'creditor', $options);
+		$xml = $this->createXmlElement($xml, 'company', $options);
+		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.legalEntity');
+		$xml = $this->createXmlElement($xml, 'postal', $options);
+		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_LegalEntity');
+		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_LegalEntity');
 		return $returnValue;
 	}
 	
@@ -260,8 +369,35 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice services node
 	 */
 	protected function createInvoice45Services($invoiceBody,$customerOrder,$options) {
-		$returnValue = $this->createXmlElement($invoiceBody, 'services', $options);
-		return $returnValue;
+		$services = $this->createXmlElement($invoiceBody, 'services', $options);
+		// iterates through the CatalogOrders linked to this CustomerOrder and create service nodes.
+		sel($this->getPrincipal(),$this->evaluateFuncExp(fx('getCustomerOrderDetail',$customerOrder->getFieldValue('customerOrderNumber'))),dfasl(
+			dfas('CallbackDFA','setProcessDataChunkCallback',function($data,$callbackDFA) use($services,$customerOrder, $options){
+				$servicesCount = $callbackDFA->getValueInContext('servicesCount');
+				$servicesCount++;
+				$callbackDFA->setValueInContext('servicesCount',$servicesCount);
+				
+				$catalogOrder = $data->getDbEntity();				
+				$service = $this->appendXmlElement($services, 'service', $options);
+				$service->setAttribute('record_id',$servicesCount);
+				$service->setAttribute('tariff_type','catalogOrder.tariff_type');
+				$service->setAttribute('code',$this->assertNotNull($catalogOrder, 'articleNumber'));
+				$service->setAttribute('name',$this->assertNotNull($catalogOrder, 'designation'));
+				$service->setAttribute('session','1');
+				$service->setAttribute('quantity',$this->assertNumericNotNull($catalogOrder, 'quantity'));
+				$service->setAttribute('date_begin',$this->assertDateNotNull($catalogOrder, 'orderDate'));
+				$service->setAttribute('provider_id','customerOrder.GLN_LegalEntity');
+				$service->setAttribute('responsible_id','customerOrder.GLN_ServiceResponsible');
+				$service->setAttribute('unit',$this->assertNumericNotNull($catalogOrder, 'price'));
+				$service->setAttribute('unit_factor','1');
+				$service->setAttribute('amount',$this->assertNumericNotNull($catalogOrder, 'orderTotal'));
+				$service->setAttribute('vat_rate','7.7');
+				$service->setAttribute('obligation','1');				
+				$service->setAttribute('remark','');
+				$service->setAttribute('services_attributes','0');
+			})
+		));
+		return $services;
 	}
 	
 	// Tools
@@ -316,11 +452,26 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @param DOMNode $parentNode existing XML node in which to create or find given element
 	 * @param String $name element tag name
 	 * @param WigiiBPLParameter $options a bag of options containing at least the namespaceURI and namespacePrefix
+	 * @param String $nodeValue optional node value to set upon creation
 	 * @return DOMElement created or found xml element
 	 */
-	protected function createXmlElement($parentNode,$name,$options) {
+	protected function createXmlElement($parentNode,$name,$options,$nodeValue=null) {
 		if(!isset($options)) $options = wigiiBPLParam();
-		return $this->createXmlElementByName($parentNode, $options->getValue('namespaceURI'), $options->getValue('namespacePrefix'), $name);
+		$returnValue = $this->createXmlElementByName($parentNode, $options->getValue('namespaceURI'), $options->getValue('namespacePrefix'), $name);
+		if(isset($nodeValue)) $returnValue->nodeValue = $nodeValue;
+		return $returnValue;
+	}
+	
+	/**
+	 * Creates and appends an XML Element givent its parent node, and name.
+	 * @param DOMNode $parentNode existing XML node in which to create the element
+	 * @param String $name element tag name
+	 * @param WigiiBPLParameter $options a bag of options containing at least the namespaceURI and namespacePrefix
+	 * @return DOMElement created xml child element
+	 */
+	protected function appendXmlElement($parentNode,$name,$options) {
+		if(!isset($options)) $options = wigiiBPLParam();
+		return $this->appendXmlElementByName($parentNode, $options->getValue('namespaceURI'), $options->getValue('namespacePrefix'), $name);
 	}
 	
 	/**
@@ -343,6 +494,25 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 			// attaches child node to parent
 			$parentNode->appendChild($returnValue);
 		}
+		if($returnValue===false) throw new WigiiMedidataException("error creating xml element '$localName' attached to parent node ".$parentNode->getNodePath(), WigiiMedidataException::XML_VALIDATION_ERROR);
+		return $returnValue;
+	}
+	
+	/**
+	 * Creates and appends an XML Element givent its parent node, local name and namespace.
+	 * @param DOMDocument|DOMElement $parentNode existing XML node in which to create the element
+	 * @param String $namespaceURI xml namespace of the element
+	 * @param String $namespacePrefix actual namespace used prefi
+	 * @param String $localName element tag name
+	 * @return DOMElement created xml element
+	 */
+	protected function appendXmlElementByName($parentNode,$namespaceURI,$namespacePrefix,$localName) {
+		if(!isset($parentNode)) throw new FuncExpEvalException('parentNode cannot be null',FuncExpEvalException::INVALID_ARGUMENT);
+		// creates a new child node
+		if($namespaceURI) $returnValue = $this->getXmlDoc($parentNode)->createElementNS($namespaceURI,($namespacePrefix?$namespacePrefix.':':'').$localName);
+		else $returnValue = $this->getXmlDoc($parentNode)->createElement($localName);
+		// attaches child node to parent
+		$parentNode->appendChild($returnValue);
 		if($returnValue===false) throw new WigiiMedidataException("error creating xml element '$localName' attached to parent node ".$parentNode->getNodePath(), WigiiMedidataException::XML_VALIDATION_ERROR);
 		return $returnValue;
 	}
@@ -419,4 +589,27 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertDateNotNull($element,$fieldName) {return $this->assertDate($element, $fieldName,false);}
+	/**
+	 * Asserts that a field value is a number and returns it
+	 * @param Element $element element from which to get the field value
+	 * @param String $fieldName the field name
+	 * @param Boolean $allowNull optional flag allowing null numbers or not. Default to true.
+	 * @return Scalar element field value
+	 * @throws WigiiMedidataException if assertion fails
+	 */
+	protected function assertNumeric($element,$fieldName,$allowNull=true) {
+		$returnValue = $element->getFieldValue($fieldName);
+		if(!is_numeric($returnValue)) {
+			if(!(empty($returnValue) && $allowNull)) throw new WigiiMedidataException("Field '$fieldName' is not a valid number",WigiiMedidataException::XML_VALIDATION_ERROR);
+		}		
+		return $returnValue;
+	}
+	/**
+	 * Asserts that a field value is a non null number and returns it
+	 * @param Element $element element from which to get the field value
+	 * @param String $fieldName the field name
+	 * @return Scalar element field value
+	 * @throws WigiiMedidataException if assertion fails
+	 */
+	protected function assertNumericNotNull($element,$fieldName) {return $this->assertNumeric($element, $fieldName,false);}
 }
