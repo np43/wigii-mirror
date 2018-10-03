@@ -239,8 +239,11 @@ class ElementEvaluator extends RecordEvaluator
 		if($nArgs < 1) throw new RecordException("eltAttr takes at least one argument which is the element attribute name for which to get a value", RecordException::INVALID_ARGUMENT);
 		$fse = $args[0];
 		if(!($fse instanceof FieldSelector)) $fse = fs_e($this->evaluateArg($fse));
-		try{return $this->getElement()->getAttribute($fse);}
-		catch(Exception $e){return null;}
+		try{
+			return $this->getElement()->getAttribute($fse);
+		} catch(Exception $e){
+			return null;
+		}
 	}
 	
 	/**

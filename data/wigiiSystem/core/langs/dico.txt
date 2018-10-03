@@ -1506,7 +1506,7 @@ externalAccessMenuEditLink:Send an email and activate external access (<b>write<
 externalAccessMenuStopEdit:<b>Disable</b> external access on #thisElement#:<b>Désactiver</b> l'accès externe de #thisElement#:
 externalAccessMenuStopRead:<b>Disable</b> external access on #thisElement#:<b>Désactiver</b> l'accès externe de #thisElement#:
 multipleExternalAccess:External access:Accès externe:::::
-multipleExternalAccess_help:This operation allow you to define if #thoseElements# can be accessed from a protected unique public url. By sending this link to the emails people would be able to view or change their own #element#.:Cette opération permet de définir si #thoseElements# peuvent être accéder par une url publique protégée. En envoyant cette url aux emails cela leur permettera d'accéder leur propre #-element#:::::
+multipleExternalAccess_help:This operation allow you to define if #thoseElements# can be accessed from a protected unique public url. By sending this link to the emails people would be able to view or change their own #element#.:Cette opération permet de définir si #thoseElements# peuvent être accédés par une url publique protégée. En envoyant cette url aux emails cela leur permettera d'accéder leur propre #-element#:::::
 multipleExternalAccessMenuView:Enable external access (<b>read only</b>):Activer l'accès externe (<b>lecture seule</b>):
 multipleExternalAccessMenuEdit:Enable external access (<b>write</b>):Activer l'accès externe (<b>écriture</b>):
 multipleExternalAccessMenuStop:<b>Disable</b> external access:<b>Désactiver</b> l'accès externe:

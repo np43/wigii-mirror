@@ -46,10 +46,15 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 		$config = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
 		$elS = ServiceProvider::getElementService();
 		if(!$options) $options = wigiiBPLParam();
-		if($template){
-			$printTemplate= $config->m($p, $exec->getCrtModule())->Print->{$template};
+		if($this->getRecord()){
+			$module = $this->getRecord()->getModule();
 		} else {
-			$printTemplate= $config->m($p, $exec->getCrtModule())->Print->template;
+			$module = $exec->getCrtModule();
+		}
+		if($template){
+			$printTemplate= $config->m($p, $module)->Print->{$template};
+		} else {
+			$printTemplate= $config->m($p, $module)->Print->template;
 		}
 		if($printTemplate){
 			$printTemplatePath = ServiceProvider::getConfigService()->extractTemplatePathFromTemplate($printTemplate);

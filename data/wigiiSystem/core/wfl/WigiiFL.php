@@ -996,7 +996,11 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		else $cs = null;
 		$cfsMap = CalculatedFieldSelectorMapArrayImpl::createInstance();
 		foreach($fieldMap as $fieldName=>$value){
-			$cfsMap->setCalculatedFieldSelectorByFieldName($fieldName, $value);
+			if(strpos($fieldName, "__element.")===0){
+				$cfsMap->setCalculatedFieldSelector(cfs(fs_e(str_replace("__element.","",$fieldName)),$value));
+			} else {
+				$cfsMap->setCalculatedFieldSelectorByFieldName($fieldName, $value);
+			}
 		}
 		sel(
 			$this->getPrincipal(),
@@ -1100,7 +1104,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>createUpdateElement(groupId, elementId, fieldValuesMap, triggerNotification = true)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) groupId: int. The group in which to insert the element
-	 * - Arg(1) elementId: int. The element id to be updated (if null then element is created)
+	 * - Arg(1) elementId: int. or LogExp returning 1 element. The element id to be updated (if null then element is created)
 	 * - Arg(2) fieldValuesMap: Array. The field values as a Map. Key = fieldname, value = field value (if value is a map then subfields are updated).
 	 * - Arg(3) triggerNotification: Boolean. If true then notfications are dispatched
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
@@ -1124,7 +1128,11 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		//this value will be used then in the ElementUpdateSharingDFA to remove existing sharing
 		$cfsMap->setCalculatedFieldSelector(cfs(fs_e("oldGids"),fx("getLinkedGroupIds")));
 		foreach($fieldMap as $fieldName=>$value){
-			$cfsMap->setCalculatedFieldSelectorByFieldName($fieldName, $value);
+			if(strpos($fieldName, "__element.")===0){
+				$cfsMap->setCalculatedFieldSelector(cfs(fs_e(str_replace("__element.","",$fieldName)),$value));
+			} else {
+				$cfsMap->setCalculatedFieldSelectorByFieldName($fieldName, $value);
+			}
 		}
 		$dataSource = null;
 		if($elementId==null){
@@ -2041,13 +2049,13 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>cfgAttrTags(field, groupLogExp, logExp)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) field: String|FieldSelector. The field of type Attributs or MultipleAttributs on which to manage values as tags.
-	 * - Arg(1) inGroupLogExp: LogExp. Group log exp in which to search for element values
+	 * - Arg(1) inGroupLogExp|Strings: LogExp|Atrings. Group log exp in which to search for element values or modulename (in this case takes lxInAllGroups of current namespace and module)
 	 * - Arg(2) logExp: LogExp. Optional logExp used to filter the matching elements
 	 * @example 
 	 * <tags type="MultipleAttributs" require="0" expand="1" chosen="1" allowNewValues="1" displayAsTag="1" isInLine="1">
 	 * 		<label_l01>Tags</label_l01><label_l02>Etiquettes</label_l02>
 	 *		<attribute>none</attribute>
-	 *		<attributeExp funcExp='cfgAttrTags(tags,lxInAllGroups("MyNamespace","MyModule"))'/>						
+	 *		<attributeExp funcExp='cfgAttrTags(tags,lxInAllGroups("MyNamespace","MyModule")|"ModuleName")'/>						
 	 * </tags>
 	 * To automatically clear the cache on element save, add an onSaveFuncExp hidden field :
 	 * <onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='ctlSeq(								
@@ -2061,12 +2069,19 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		
 		$fs = $args[0];
 		if(!($fs instanceof FieldSelector)) $fs = fs($this->evaluateArg($args[0]));		
-		$inGroupLogExp = $this->evaluateArg($args[1]);		
+		
+		$p = $this->getPrincipal();
+		
+		$inGroupLogExp = $this->evaluateArg($args[1]);
+		//if second args is a string, it is considered as a modulename. In this case we use the root principal
+		if(is_string($inGroupLogExp)){
+			$inGroupLogExp = lxInAllGroups(ServiceProvider::getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceName(), $inGroupLogExp);
+			$p = $this->getRootPrincipal();
+		}
 		if($nArgs>2) $logExp = $this->evaluateArg($args[2]);
 		else $logExp = null;
 		
 		// enables adaptive wigii namespace on principal and records original namespace
-		$p = $this->getPrincipal();
 		$adaptiveWigiiNamespace = $p->hasAdaptiveWigiiNamespace();
 		if(!$adaptiveWigiiNamespace) {
 			$origNS = $p->getWigiiNamespace();

@@ -146,7 +146,17 @@ class FormChecker implements FieldListVisitor {
 		if($dataType == null) return;
 		//if field is hidden, or disabled, or onlyInDetail, or not in Public and principal is public -> skip it
 		if($ff->getRecord()->getWigiiBag()->isHidden($fieldName)) return;
-		if($ff->getRecord()->getWigiiBag()->isDisabled($fieldName)) return;
+		if($ff->getRecord()->getWigiiBag()->isDisabled($fieldName)){
+			$subFieldName = "value";
+			switch($dataType->getDataTypeName()){
+				case "Addresses" : $subFieldName = "city"; break;
+				case "Files" : $subFieldName = "size"; break;
+				case "TimeRanges" : $subFieldName = "begDate"; break;
+				case "Urls" : $subFieldName = "url"; break;
+			}
+			if($ff->getRecord()->getFieldValue($fieldName,$subFieldName)!=null) $this->incrementNbFilledCrtFieldGroup($fieldName);
+			return;
+		}
 		if($fieldParams["onlyInDetail"]=="1") return;
 		if($fieldParams["displayViewOnly"]=="1") return;
 		if(($isPublicPrincipal && $fieldParams["notInPublic"]=="1")) return;

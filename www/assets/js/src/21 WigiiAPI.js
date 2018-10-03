@@ -3756,8 +3756,19 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.ceilTo = function (value, number, fixed) {
 			if (arguments.length<3) fixed = null;
-			var ceil = Math.ceil(value);
-			var remain = value % number;
+			//due to rounding errors in float calculation in javascript
+			//we force the usage with ints if fixed is defined
+			//for example if you do: 701.05/0.05 you get 14020.999999999998 instead of 14021
+			//this explain as well why 701.05%0.05 gives 0.049 which is far different than the 0 that it should return...
+			var op = 1;
+			//detect how many decimals the number have
+			var floatDec = (number+"").indexOf(".");
+			if(floatDec){
+				floatDec = (number+"").length-floatDec-1; //-1 because of the .
+				op = Math.pow(10,floatDec);
+			}
+			remain = Math.round(value*op) % Math.round(number*op);
+			remain = remain / op;
 			if (remain > 0) value = value - remain + number;
 			if(fixed) return value.toFixed(2);
 			return value;

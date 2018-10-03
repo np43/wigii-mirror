@@ -30,6 +30,13 @@ class ElementDynAttrMutableValueImpl implements ElementDynamicAttribute
 {
 	private $value;
 	
+	/**
+	 * this method return a string representing the value
+	 */
+	public function displayDebug($nb = 0, $noHTML=false){
+		return "CLASS: ".get_class($this)."\nvalue is: ".put($this->value);
+	}
+	
 	// Object lifecycle
 	
 	public static function createInstance($defaultValue = null) {
