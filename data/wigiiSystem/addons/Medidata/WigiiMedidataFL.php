@@ -38,7 +38,17 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		}
 		return $this->_debugLogger;
 	}
-	
+
+	private $trm;
+	public function setTrm($trm) {
+		$this->trm = $trm;
+	}
+	protected function getTrm() {
+		if(!isset($this->trm)) {
+			$this->trm = TemplateRecordManager::createInstance();
+		}
+		return $this->trm;
+	}
 	
 	// Wigii Medidata General Invoice Request 4.5
 	
@@ -89,6 +99,15 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$options->setValue('xmlSchema','generalInvoiceRequest_450.xsd');
 		$options->setValue('namespaceURI','http://www.forum-datenaustausch.ch/invoice');
 		$options->setValue('namespacePrefix','invoice');
+		// loads attached legal entity if not defined
+		if(is_null($options->getValue('legalEntity'))) $options->setValue('legalEntity', $this->evaluateFuncExp(fx('getLegalEntityAttr',$customerOrder->getFieldValue('legalEntity'),fs_e('this'))));
+		// loads attached customer if not defined
+		if(is_null($options->getValue('customer'))) $options->setValue('customer', $this->evaluateFuncExp(fx('getContactAttr',$customerOrder->getFieldValue('customer'),fs_e('this'))));
+		// loads attached invoice to if not defined
+		if(is_null($options->getValue('invoiceTo'))) {
+			if($customerOrder->getFieldValue('customer') == $customerOrder->getFieldValue('invoiceTo')) $options->setValue('invoiceTo',$options->getValue('customer'));
+			else $options->setValue('invoiceTo', $this->evaluateFuncExp(fx('getContactAttr',$customerOrder->getFieldValue('invoiceTo'),fs_e('this'))));
+		}		
 		return $options;
 	}
 	
@@ -126,8 +145,8 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue = $this->createXmlElement($invoiceRequest, 'processing', $options);
 		// transport
 		$xml = $this->createXmlElement($returnValue, 'transport', $options);
-		$xml->setAttribute('from', 'customerOrder.GLN_LegalEntity');
-		$xml->setAttribute('to', 'customerOrder.GLN_Insurance');
+		$xml->setAttribute('from', 'XXXXcustomerOrder.GLN_LegalEntity');
+		$xml->setAttribute('to', 'XXXXcustomerOrder.GLN_Insurance');
 		// via Medidata
 		$xml = $this->createXmlElement($xml, 'via', $options);
 		$xml->setAttribute('via', '7601001304307');
@@ -199,72 +218,87 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice tiers payant node
 	 */
 	protected function createInvoice45TiersPayant($invoiceBody,$customerOrder,$options) {
+		$legalEntity = $options->getValue('legalEntity');
+		$insurance = $options->getValue('invoiceTo');
+		$patient = $options->getValue('customer');
 		$returnValue = $this->createXmlElement($invoiceBody, 'tiers_payant', $options);
 		$returnValue->setAttribute('payment_period', 'P60D');
 		// biller
 		$xml = $this->createXmlElement($returnValue, 'biller', $options);
-		$xml->setAttribute('ean_party', 'customerOrder.GLN_LegalEntity');
-		$xml->setAttribute('zsr', 'customerOrder.RCC_LegalEntity');
+		$xml->setAttribute('ean_party', 'XXXXcustomerOrder.GLN_LegalEntity');
+		$xml->setAttribute('zsr', 'XXXXcustomerOrder.RCC_LegalEntity');
 		$xml->setAttribute('specialty', 'Orthopédie');
-		$xml->setAttribute('uid_number', 'customerOrder.IDE_LegalEntity');
+		$xml->setAttribute('uid_number', $this->assertNoSepNotNull($legalEntity, 'IDE'));
 		$xml = $this->createXmlElement($xml, 'company', $options);
-		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.name_LegalEntity');
+		$this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($legalEntity, 'entityName'));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
-		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_LegalEntity');
-		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_LegalEntity');
-		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_LegalEntity');
+		$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($legalEntity, 'entityAddress','street'));
+		$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($legalEntity, 'entityAddress','zip_code'));
+		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($legalEntity, 'entityAddress','city'));
 		// debitor
 		$xml = $this->createXmlElement($returnValue, 'debitor', $options);
-		$xml->setAttribute('ean_party', 'customerOrder.GLN_Insurance');
+		$xml->setAttribute('ean_party', 'XXXXcustomerOrder.GLN_Insurance');
 		$xml = $this->createXmlElement($xml, 'company', $options);
-		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.name_Insurance');
+		$this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($insurance, 'company'));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
-		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_Insurance');
-		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_Insurance');
-		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_Insurance');
+		$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($insurance, 'address','street'));
+		$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($insurance, 'address','zip_code'));
+		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($insurance, 'address','city'));
 		// provider
 		$xml = $this->createXmlElement($returnValue, 'provider', $options);
-		$xml->setAttribute('ean_party', 'customerOrder.GLN_LegalEntity');
-		$xml->setAttribute('zsr', 'customerOrder.RCC_LegalEntity');
+		$xml->setAttribute('ean_party', 'XXXXcustomerOrder.GLN_LegalEntity');
+		$xml->setAttribute('zsr', 'XXXXcustomerOrder.RCC_LegalEntity');
 		$xml->setAttribute('specialty', 'Orthopédie');
 		$xml = $this->createXmlElement($xml, 'company', $options);
-		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.name_LegalEntity');
+		$this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($legalEntity, 'entityName'));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
-		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_LegalEntity');
-		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_LegalEntity');
-		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_LegalEntity');
+		$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($legalEntity, 'entityAddress','street'));
+		$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($legalEntity, 'entityAddress','zip_code'));
+		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($legalEntity, 'entityAddress','city'));
 		// insurance
 		$xml = $this->createXmlElement($returnValue, 'insurance', $options);
-		$xml->setAttribute('ean_party', 'customerOrder.GLN_Insurance');
+		$xml->setAttribute('ean_party', 'XXXXcustomerOrder.GLN_Insurance');
 		$xml = $this->createXmlElement($xml, 'company', $options);
-		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.name_Insurance');
+		$this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($insurance, 'company'));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
-		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_Insurance');
-		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_Insurance');
-		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_Insurance');
+		$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($insurance, 'address','street'));
+		$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($insurance, 'address','zip_code'));
+		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($insurance, 'address','city'));
 		// patient
 		$xml = $this->createXmlElement($returnValue, 'patient', $options);
-		$xml->setAttribute('gender', 'customerOrder.gender_Patient');
-		$xml->setAttribute('birthdate', 'customerOrder.dateOfBirth_Patient');
-		$xml->setAttribute('ssn', 'customerOrder.ssn');
+		$xml->setAttribute('gender', ($this->assertNotNull($patient, 'title')=='mr'?'male':'female'));
+		$xml->setAttribute('birthdate', $this->assertDateNotNull($patient, 'dateOfBirth'));
+		$xml->setAttribute('ssn', $this->assertNoSepNotNull($patient, 'noAVS'));
 		$xml = $this->createXmlElement($xml, 'person', $options);
-		$xml->setAttribute('salutation', 'customerOrder.title_Patient');
-		$this->createXmlElement($xml, 'familyname', $options, 'customerOrder.last_name_Patient');
-		$this->createXmlElement($xml, 'givenname', $options, 'customerOrder.first_name_Patient');
+		$xml->setAttribute('salutation', $this->formatValue($patient, 'title'));
+		$this->createXmlElement($xml, 'familyname', $options, $this->assertNotNull($patient, 'last_name'));
+		$this->createXmlElement($xml, 'givenname', $options, $this->assertNotNull($patient, 'first_name'));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
-		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_Patient');
-		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_Patient');
-		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_Patient');
+		$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($patient, 'address','street'));
+		$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($patient, 'address','zip_code'));
+		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($patient, 'address','city'));
 		// guarantor
 		$xml = $this->createXmlElement($returnValue, 'guarantor', $options);
 		$xml = $this->createXmlElement($xml, 'person', $options);
-		$xml->setAttribute('salutation', 'customerOrder.title_Patient');
-		$this->createXmlElement($xml, 'familyname', $options, 'customerOrder.last_name_Patient');
-		$this->createXmlElement($xml, 'givenname', $options, 'customerOrder.first_name_Patient');
-		$xml = $this->createXmlElement($xml, 'postal', $options);
-		$this->createXmlElement($xml, 'street', $options, 'customerOrder.street_Patient');
-		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_Patient');
-		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_Patient');
+		// takes tutor as guarantor if defined
+		if(!empty($patient->getFieldValue('tutor_last_name'))) {
+			$this->createXmlElement($xml, 'familyname', $options, $this->assertNotNull($patient, 'tutor_last_name'));
+			$this->createXmlElement($xml, 'givenname', $options, $this->assertNotNull($patient, 'tutor_first_name'));
+			$xml = $this->createXmlElement($xml, 'postal', $options);
+			$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($patient, 'tutor_address','street'));
+			$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($patient, 'tutor_address','zip_code'));
+			$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($patient, 'tutor_address','city'));
+		}
+		// else patient is guarantor
+		else {
+			$xml->setAttribute('salutation', $this->formatValue($patient, 'title'));
+			$this->createXmlElement($xml, 'familyname', $options, $this->assertNotNull($patient, 'last_name'));
+			$this->createXmlElement($xml, 'givenname', $options, $this->assertNotNull($patient, 'first_name'));
+			$xml = $this->createXmlElement($xml, 'postal', $options);
+			$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($patient, 'address','street'));
+			$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($patient, 'address','zip_code'));
+			$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($patient, 'address','city'));
+		}
 		// balance
 		$this->createInvoice45Balance($returnValue, $customerOrder, $options);
 		return $returnValue;
@@ -278,6 +312,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice balance node
 	 */
 	protected function createInvoice45Balance($invoiceTiersType,$customerOrder,$options) {
+		$legalEntity = $options->getValue('legalEntity');
 		$returnValue = $this->createXmlElement($invoiceTiersType, 'balance', $options);
 		$returnValue->setAttribute('currency', 'CHF');
 		$returnValue->setAttribute('amount', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
@@ -285,17 +320,17 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue->setAttribute('amount_obligations', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
 		// vat
 		$vat = $this->createXmlElement($returnValue, 'vat', $options);
-		$vat->setAttribute('vat_number', 'customerOrder.IDE_LegalEntity');
+		$vat->setAttribute('vat_number', $this->assertNoSepNotNull($legalEntity, 'IDE'));
 		$vat->setAttribute('vat', $this->assertNumericNotNull($customerOrder, 'vatAmount'));
 		// vat 7.7
 		$xml = $this->appendXmlElement($vat, 'vat_rate', $options);
-		$xml->setAttribute('vat_rate', 'customerOrder.VATValue_LegalEntity');
+		$xml->setAttribute('vat_rate', $this->assertNumericNotNull($legalEntity, 'VATvalue'));
 		$xml->setAttribute('amount', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
 		$xml->setAttribute('vat', $this->assertNumericNotNull($customerOrder, 'vatAmount'));
 		// vat 0
 		$xml = $this->appendXmlElement($vat, 'vat_rate', $options);
 		$xml->setAttribute('vat_rate', 0);
-		$xml->setAttribute('amount', 'customerOrder.vatAmount0');
+		$xml->setAttribute('amount', 'XXXXcustomerOrder.vatAmount0');
 		$xml->setAttribute('vat', 0);		
 		return $returnValue;
 	}
@@ -308,9 +343,10 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice esr QR node
 	 */
 	protected function createInvoice45esrQR($invoiceBody,$customerOrder,$options) {
+		$legalEntity = $options->getValue('legalEntity');
 		$returnValue = $this->createXmlElement($invoiceBody, 'esrQR', $options);
 		$returnValue->setAttribute('type', 'esrQR');
-		$returnValue->setAttribute('iban', 'customerOrder.iban_LegalEntity');
+		$returnValue->setAttribute('iban', $this->assertNoSepNotNull($legalEntity, 'IBAN'));
 		$returnValue->setAttribute('reference_number', $this->assertNotNull($customerOrder,'customerOrderNumber'));
 		// bank
 		$xml = $this->createXmlElement($returnValue, 'bank', $options);
@@ -322,10 +358,11 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		// creditor
 		$xml = $this->createXmlElement($returnValue, 'creditor', $options);
 		$xml = $this->createXmlElement($xml, 'company', $options);
-		$this->createXmlElement($xml, 'companyname', $options, 'customerOrder.legalEntity');
+		$this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($legalEntity, 'entityName'));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
-		$this->createXmlElement($xml, 'zip', $options, 'customerOrder.zip_LegalEntity');
-		$this->createXmlElement($xml, 'city', $options, 'customerOrder.city_LegalEntity');
+		$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($legalEntity, 'entityAddress','street'));
+		$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($legalEntity, 'entityAddress','zip_code'));
+		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($legalEntity, 'entityAddress','city'));
 		return $returnValue;
 	}
 	
@@ -337,11 +374,12 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice ivg node
 	 */
 	protected function createInvoice45ivg($invoiceBody,$customerOrder,$options) {
+		$patient = $options->getValue('customer');
 		$returnValue = $this->createXmlElement($invoiceBody, 'ivg', $options);
-		$returnValue->setAttribute('case_id', 'customerOrder.case_id');
-		$returnValue->setAttribute('case_date', 'customerOrder.case_date');
-		$returnValue->setAttribute('ssn', 'customerOrder.ssn');
-		$returnValue->setAttribute('nif', 'customerOrder.NIF_LegalEntity');
+		$returnValue->setAttribute('case_id', 'XXXXcustomerOrder.case_id');
+		$returnValue->setAttribute('case_date', 'XXXXcustomerOrder.case_date');
+		$returnValue->setAttribute('ssn', $this->assertNoSepNotNull($patient, 'noAVS'));
+		$returnValue->setAttribute('nif', 'XXXXcustomerOrder.NIF_LegalEntity');
 		return $returnValue;
 	}
 	
@@ -353,14 +391,16 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice treatment node
 	 */
 	protected function createInvoice45Treatment($invoiceBody,$customerOrder,$options) {
+		$patient = $options->getValue('customer');
 		$returnValue = $this->createXmlElement($invoiceBody, 'treatment', $options);
 		$returnValue->setAttribute('date_begin', $this->assertDateNotNull($customerOrder, 'orderDate'));
 		$returnValue->setAttribute('date_end', $this->assertDateNotNull($customerOrder, 'orderDate'));
-		$returnValue->setAttribute('canton', 'VD');
+		$returnValue->setAttribute('canton', $this->assertCanton($patient, 'address'));
 		$returnValue->setAttribute('reason', 'unknown');
 		return $returnValue;
 	}
 	
+	protected $tariffTypeMapping = array('OSM'=>'326','ASTO'=>'327');
 	/**
 	 * Creates an invoice request services node
 	 * @param DOMElement $invoiceBody current invoice body node
@@ -380,20 +420,30 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 				$catalogOrder = $data->getDbEntity();				
 				$service = $this->appendXmlElement($services, 'service', $options);
 				$service->setAttribute('record_id',$servicesCount);
-				$service->setAttribute('tariff_type','catalogOrder.tariff_type');
-				$service->setAttribute('code',$this->assertNotNull($catalogOrder, 'articleNumber'));
-				$service->setAttribute('name',$this->assertNotNull($catalogOrder, 'designation'));
+				
+				$articleNumber = $this->assertNotNull($catalogOrder, 'articleNumber');
+				list($designation,$tariffType) = explode($articleNumber,$this->assertNotNull($catalogOrder, 'designation'));
+				$tariffType = trim($tariffType);
+				$remark = str_replace(array('OSM','ASTO'), "", $tariffType);
+				if(!empty($remark) && $remark==$tariffType) $remark=null;
+				if(!empty($remark)) $tariffType = str_replace($remark,"",$tariffType);
+				$tariffType = $this->tariffTypeMapping[$tariffType];
+				if(empty($tariffType)) throw new WigiiMedidataException('tariff type is empty for article '.$articleNumber,WigiiMedidataException::XML_VALIDATION_ERROR);
+				
+				$service->setAttribute('tariff_type',$tariffType);
+				$service->setAttribute('code',$articleNumber);				
+				$service->setAttribute('name',trim($designation));
 				$service->setAttribute('session','1');
 				$service->setAttribute('quantity',$this->assertNumericNotNull($catalogOrder, 'quantity'));
 				$service->setAttribute('date_begin',$this->assertDateNotNull($catalogOrder, 'orderDate'));
-				$service->setAttribute('provider_id','customerOrder.GLN_LegalEntity');
-				$service->setAttribute('responsible_id','customerOrder.GLN_ServiceResponsible');
+				$service->setAttribute('provider_id','XXXXcustomerOrder.GLN_LegalEntity');
+				$service->setAttribute('responsible_id','XXXXcustomerOrder.GLN_ServiceResponsible');
 				$service->setAttribute('unit',$this->assertNumericNotNull($catalogOrder, 'price'));
 				$service->setAttribute('unit_factor','1');
 				$service->setAttribute('amount',$this->assertNumericNotNull($catalogOrder, 'orderTotal'));
 				$service->setAttribute('vat_rate','7.7');
 				$service->setAttribute('obligation','1');				
-				$service->setAttribute('remark','');
+				if(!empty($remark)) $service->setAttribute('remark',$remark);
 				$service->setAttribute('services_attributes','0');
 			})
 		));
@@ -553,11 +603,26 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * Asserts that a field value is not null and returns it
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
+	 * @param String $subfieldName optional subfield name
 	 * @return Scalar element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
-	protected function assertNotNull($element,$fieldName) {
-		$returnValue = $element->getFieldValue($fieldName);
+	protected function assertNotNull($element,$fieldName,$subfieldName=null) {
+		$returnValue = $element->getFieldValue($fieldName,$subfieldName);
+		if(!is_numeric($returnValue) && empty($returnValue)) throw new WigiiMedidataException("Field '$fieldName' cannot be empty",WigiiMedidataException::XML_VALIDATION_ERROR);
+		return $returnValue;
+	}
+	/**
+	 * Asserts that a field value doesn't contain any natural separator and is not null, then returns it
+	 * @param Element $element element from which to get the field value
+	 * @param String $fieldName the field name
+	 * @param String $subfieldName optional subfield name
+	 * @return Scalar element field value
+	 * @throws WigiiMedidataException if assertion fails
+	 */
+	protected function assertNoSepNotNull($element,$fieldName,$subfieldName=null) {
+		$returnValue = $element->getFieldValue($fieldName,$subfieldName);
+		if(!empty($returnValue)) $returnValue = str_replace(array('.','-'), "", preg_replace("/".ValueListArrayMapper::Natural_Separators."/", "", $returnValue));
 		if(!is_numeric($returnValue) && empty($returnValue)) throw new WigiiMedidataException("Field '$fieldName' cannot be empty",WigiiMedidataException::XML_VALIDATION_ERROR);
 		return $returnValue;
 	}
@@ -612,4 +677,57 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertNumericNotNull($element,$fieldName) {return $this->assertNumeric($element, $fieldName,false);}
+	
+	private $cantonCodeMapping = array(
+			'vaud'=>'VD',
+			'valais'=>'VS',
+			'genève'=>'GE','geneve'=>'GE',
+			'neuchatel'=>'NE','neuchâtel'=>'NE',
+			'fribourg'=>'FR',
+			'berne'=>'BE','bern'=>'BE',
+			'tessin'=>'TI',
+			'allemagne'=>'D','france'=>'F','italie'=>'I','autriche'=>'A'		
+	);
+	/**
+	 * Asserts that a field value is a canton code and returns it
+	 * @param Element $element element from which to get the field value
+	 * @param String $fieldName the field name
+	 * @param Boolean $allowNull optional flag allowing null values or not. Default to true.
+	 * @return Scalar element field value
+	 * @throws WigiiMedidataException if assertion fails
+	 */
+	protected function assertCanton($element,$fieldName,$allowNull=true) {
+		// checks for canton
+		$returnValue = $element->getFieldValue($fieldName,'state');
+		if(!empty($returnValue)) {
+			$s = $this->cantonCodeMapping[strtolower($returnValue)];
+			if(!empty($s)) $returnValue = $s;
+		}
+		// checks for country
+		if(empty($returnValue)) {
+			$returnValue = $element->getFieldValue($fieldName,'country');
+			if(!empty($returnValue)) {
+				$s = $this->cantonCodeMapping[strtolower($returnValue)];
+				if(!empty($s)) $returnValue = $s;
+			}
+		}
+		if(empty($returnValue) && !$allowNull) throw new WigiiMedidataException("Field '$fieldName' is not a valid canton",WigiiMedidataException::XML_VALIDATION_ERROR);		
+		return $returnValue;
+	}
+	/**
+	 * Asserts that a field value is a non null canton code and returns it
+	 * @param Element $element element from which to get the field value
+	 * @param String $fieldName the field name
+	 * @return Scalar element field value
+	 * @throws WigiiMedidataException if assertion fails
+	 */
+	protected function assertCantonNotNull($element,$fieldName) {return $this->assertCanton($element, $fieldName,false);}	
+	/**
+	 * Formats and translates a field value using the Wigii TRM
+	 * @param Element $element element from which to get the field value
+	 * @param String $fieldName the field name
+	 */
+	protected function formatValue($element, $fieldName) {
+		return html_entity_decode($this->getTrm()->formatValueFromFS(fs($fieldName), $element), ENT_COMPAT, "UTF-8");
+	}	
 }
