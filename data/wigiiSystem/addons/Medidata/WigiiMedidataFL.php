@@ -142,11 +142,13 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice processing node
 	 */
 	protected function createInvoice45Processing($invoiceRequest,$customerOrder,$options) {
+		$legalEntity = $options->getValue('legalEntity');
+		$insurance = $options->getValue('invoiceTo');
 		$returnValue = $this->createXmlElement($invoiceRequest, 'processing', $options);
 		// transport
 		$xml = $this->createXmlElement($returnValue, 'transport', $options);
-		$xml->setAttribute('from', 'XXXXcustomerOrder.GLN_LegalEntity');
-		$xml->setAttribute('to', 'XXXXcustomerOrder.GLN_Insurance');
+		$xml->setAttribute('from', $this->assertNoSepNotNull($legalEntity,'noGLN'));
+		$xml->setAttribute('to', $this->assertNoSepNotNull($insurance,'noGLN'));
 		// via Medidata
 		$xml = $this->createXmlElement($xml, 'via', $options);
 		$xml->setAttribute('via', '7601001304307');
@@ -225,8 +227,8 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue->setAttribute('payment_period', 'P60D');
 		// biller
 		$xml = $this->createXmlElement($returnValue, 'biller', $options);
-		$xml->setAttribute('ean_party', 'XXXXcustomerOrder.GLN_LegalEntity');
-		$xml->setAttribute('zsr', 'XXXXcustomerOrder.RCC_LegalEntity');
+		$xml->setAttribute('ean_party', $this->assertNoSepNotNull($legalEntity,'noGLN'));
+		$xml->setAttribute('zsr', $this->assertNoSepNotNull($legalEntity,'noRCC'));
 		$xml->setAttribute('specialty', 'Orthopédie');
 		$xml->setAttribute('uid_number', $this->assertNoSepNotNull($legalEntity, 'IDE'));
 		$xml = $this->createXmlElement($xml, 'company', $options);
@@ -237,7 +239,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($legalEntity, 'entityAddress','city'));
 		// debitor
 		$xml = $this->createXmlElement($returnValue, 'debitor', $options);
-		$xml->setAttribute('ean_party', 'XXXXcustomerOrder.GLN_Insurance');
+		$xml->setAttribute('ean_party', $this->assertNoSepNotNull($insurance,'noGLN'));
 		$xml = $this->createXmlElement($xml, 'company', $options);
 		$this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($insurance, 'company'));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
@@ -246,8 +248,8 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($insurance, 'address','city'));
 		// provider
 		$xml = $this->createXmlElement($returnValue, 'provider', $options);
-		$xml->setAttribute('ean_party', 'XXXXcustomerOrder.GLN_LegalEntity');
-		$xml->setAttribute('zsr', 'XXXXcustomerOrder.RCC_LegalEntity');
+		$xml->setAttribute('ean_party', $this->assertNoSepNotNull($legalEntity,'noGLN'));
+		$xml->setAttribute('zsr', $this->assertNoSepNotNull($legalEntity,'noRCC'));
 		$xml->setAttribute('specialty', 'Orthopédie');
 		$xml = $this->createXmlElement($xml, 'company', $options);
 		$this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($legalEntity, 'entityName'));
@@ -257,7 +259,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($legalEntity, 'entityAddress','city'));
 		// insurance
 		$xml = $this->createXmlElement($returnValue, 'insurance', $options);
-		$xml->setAttribute('ean_party', 'XXXXcustomerOrder.GLN_Insurance');
+		$xml->setAttribute('ean_party', $this->assertNoSepNotNull($insurance,'noGLN'));
 		$xml = $this->createXmlElement($xml, 'company', $options);
 		$this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($insurance, 'company'));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
@@ -374,12 +376,13 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice ivg node
 	 */
 	protected function createInvoice45ivg($invoiceBody,$customerOrder,$options) {
+		$legalEntity = $options->getValue('legalEntity');
 		$patient = $options->getValue('customer');
 		$returnValue = $this->createXmlElement($invoiceBody, 'ivg', $options);
 		$returnValue->setAttribute('case_id', 'XXXXcustomerOrder.case_id');
 		$returnValue->setAttribute('case_date', 'XXXXcustomerOrder.case_date');
 		$returnValue->setAttribute('ssn', $this->assertNoSepNotNull($patient, 'noAVS'));
-		$returnValue->setAttribute('nif', 'XXXXcustomerOrder.NIF_LegalEntity');
+		$returnValue->setAttribute('nif', $this->assertNoSepNotNull($legalEntity,'noNIF'));
 		return $returnValue;
 	}
 	
@@ -413,6 +416,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		// iterates through the CatalogOrders linked to this CustomerOrder and create service nodes.
 		sel($this->getPrincipal(),$this->evaluateFuncExp(fx('getCustomerOrderDetail',$customerOrder->getFieldValue('customerOrderNumber'))),dfasl(
 			dfas('CallbackDFA','setProcessDataChunkCallback',function($data,$callbackDFA) use($services,$customerOrder, $options){
+				$legalEntity = $options->getValue('legalEntity');
 				$servicesCount = $callbackDFA->getValueInContext('servicesCount');
 				$servicesCount++;
 				$callbackDFA->setValueInContext('servicesCount',$servicesCount);
@@ -436,15 +440,17 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 				$service->setAttribute('session','1');
 				$service->setAttribute('quantity',$this->assertNumericNotNull($catalogOrder, 'quantity'));
 				$service->setAttribute('date_begin',$this->assertDateNotNull($catalogOrder, 'orderDate'));
-				$service->setAttribute('provider_id','XXXXcustomerOrder.GLN_LegalEntity');
-				$service->setAttribute('responsible_id','XXXXcustomerOrder.GLN_ServiceResponsible');
+				$service->setAttribute('provider_id',$this->assertNoSepNotNull($legalEntity,'noGLN'));
+				$glnPrincipal = $this->assertNoSep($legalEntity,'noGLNResponsible');
+				if(empty($glnPrincipal)) $glnPrincipal = $this->assertNoSepNotNull($legalEntity,'noGLN');
+				$service->setAttribute('responsible_id',$glnPrincipal);
 				$service->setAttribute('unit',$this->assertNumericNotNull($catalogOrder, 'price'));
 				$service->setAttribute('unit_factor','1');
 				$service->setAttribute('amount',$this->assertNumericNotNull($catalogOrder, 'orderTotal'));
 				$service->setAttribute('vat_rate','7.7');
 				$service->setAttribute('obligation','1');				
 				if(!empty($remark)) $service->setAttribute('remark',$remark);
-				$service->setAttribute('services_attributes','0');
+				$service->setAttribute('service_attributes','0');
 			})
 		));
 		return $services;
@@ -624,6 +630,19 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue = $element->getFieldValue($fieldName,$subfieldName);
 		if(!empty($returnValue)) $returnValue = str_replace(array('.','-'), "", preg_replace("/".ValueListArrayMapper::Natural_Separators."/", "", $returnValue));
 		if(!is_numeric($returnValue) && empty($returnValue)) throw new WigiiMedidataException("Field '$fieldName' cannot be empty",WigiiMedidataException::XML_VALIDATION_ERROR);
+		return $returnValue;
+	}
+	/**
+	 * Asserts that a field value doesn't contain any natural separator and returns it
+	 * @param Element $element element from which to get the field value
+	 * @param String $fieldName the field name
+	 * @param String $subfieldName optional subfield name
+	 * @return Scalar element field value
+	 * @throws WigiiMedidataException if assertion fails
+	 */
+	protected function assertNoSep($element,$fieldName,$subfieldName=null) {
+		$returnValue = $element->getFieldValue($fieldName,$subfieldName);
+		if(!empty($returnValue)) $returnValue = str_replace(array('.','-'), "", preg_replace("/".ValueListArrayMapper::Natural_Separators."/", "", $returnValue));
 		return $returnValue;
 	}
 	/**
