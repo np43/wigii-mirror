@@ -5069,7 +5069,7 @@ order by isParent DESC
 				for($i = 0; $i < $n; $i++)
 				{
 					$sql = $eltQP->getSql($i, $this->getSqlBuilderForUpdateMultipleElement($principal, $strategy, $element, true));
-//					fput($sql."\n\n");
+// 					fput($sql."\n\n");
 					$returnValue += $mysqlF->update($principal, $sql, $dbCS);
 				}
 				$eltQP->freeMemory();
@@ -5584,10 +5584,10 @@ order by isParent DESC
 		}
 		else
 		{
-			$sqlB->reset();
+			$sqlB->reset($principal, $element, $idsAreNew); //must set $idsAreNew else reset make it false by default
 		}
 		$sqlB->setTripod($this->getTripod());
-		$sqlB->setElement($element);
+		$sqlB->setElement($element); //even if element is already passed in reset, element must be set after tripod defined
 		return $sqlB;
 	}
 
