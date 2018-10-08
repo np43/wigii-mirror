@@ -40,7 +40,7 @@ class PWithModuleWithElementPListWithFieldname extends BaseEventModel {
 	public function setFieldname($var){ $this->fieldname = $var; }
 	public function getFieldname(){ return $this->fieldname; }
 	
-	public static function createInstance($p, $module, $elementPList, $fieldname){
+	public static function createInstance($p, $module=MANDATORY_ARG, $elementPList=MANDATORY_ARG, $fieldname=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

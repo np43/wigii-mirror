@@ -117,7 +117,7 @@ class DbConnectionSettings extends Model
 		$this->hostname = $hostname;
 	}
 	
-	public function displayDebug(){
+	public function displayDebug($nb = 0, $noHTML=false){
 		$returnValue = "CLASS: ".get_class($this)."\n";
 		$returnValue .= "DbName: ".$this->getDbName()."\n";
 		$returnValue .= "DbHost: ".$this->getHost()."\n";

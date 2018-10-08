@@ -43,7 +43,7 @@ class MatrixUserPListAdminRenderer extends MatrixRenderer implements UserPList {
 	public function setWorkingModule($workingModule){ $this->workingModule = $workingModule; }
 	protected function getWorkingModule(){ return $this->workingModule; }
 
-	public static function createInstance($p, $id, $workingModule){
+	public static function createInstance($p, $id=MANDATORY_ARG, $workingModule=MANDATORY_ARG){
 		$r = new self();
 		$r->setId($id);
 		$r->setP($p);

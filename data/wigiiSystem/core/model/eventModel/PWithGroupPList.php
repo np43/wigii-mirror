@@ -32,7 +32,7 @@ class PWithGroupPList extends BaseEventModel {
 	public function setGroupPList($var){ $this->groupPList = $var; }
 	public function getGroupPList(){ return $this->groupPList; }
 
-	public static function createInstance($p, $groupPList){
+	public static function createInstance($p, $groupPList=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setGroupPList($groupPList);

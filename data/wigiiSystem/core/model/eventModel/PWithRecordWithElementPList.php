@@ -37,7 +37,7 @@ class PWithRecordWithElementPList extends BaseEventModel {
 	public function setElementPList($var){ $this->elementPList = $var; }
 	public function getElementPList(){ return $this->elementPList; }
 	
-	public static function createInstance($p, $record, $elementPList){
+	public static function createInstance($p, $record=MANDATORY_ARG, $elementPList=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setRecord($record);

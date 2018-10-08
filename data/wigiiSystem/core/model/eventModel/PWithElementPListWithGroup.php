@@ -36,7 +36,7 @@ class PWithElementPListWithGroup extends BaseEventModel {
 	public function setElementPList($var){ $this->elementPList = $var; }
 	public function getElementPList(){ return $this->elementPList; }
 	
-	public static function createInstance($p, $elementPList, $group){
+	public static function createInstance($p, $elementPList=MANDATORY_ARG, $group=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setElementPList($elementPList);

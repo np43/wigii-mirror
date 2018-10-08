@@ -38,7 +38,7 @@ class PWithUserIdWithWigiiNamespaceNameWithModuleName extends BaseEventModel {
 	public function setModuleName($var){ $this->module = $var; }
 	public function getModuleName(){ return $this->module; }
 	
-	public static function createInstance($p, $userId, $wigiiNamespaceName, $moduleName){
+	public static function createInstance($p, $userId=MANDATORY_ARG, $wigiiNamespaceName=MANDATORY_ARG, $moduleName=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setUserId($userId);

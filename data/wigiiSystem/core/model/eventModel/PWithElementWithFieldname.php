@@ -36,7 +36,7 @@ class PWithElementWithFieldname extends BaseEventModel {
 	public function setFieldname($var){ $this->fieldname = $var; }
 	public function getFieldname(){ return $this->fieldname; }
 	
-	public static function createInstance($p, $element, $fieldname){
+	public static function createInstance($p, $element=MANDATORY_ARG, $fieldname=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setElement($element);

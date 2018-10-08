@@ -54,7 +54,7 @@ class ExternalAccessDeleteFormExecutor extends EditElementFormExecutor {
 	public function getGroupSubscriptionRecord(){ return $this->groupSubscriptionRecord; }
 	protected function setGroupSubscriptionRecord($var){ $this->groupSubscriptionRecord = $var; }
 	
-	public static function createInstance($wigiiExecutor, $elementP, $fieldName, $fieldXml, $externalAccessLevel, $externalAccessEndDate, $groupSubscriptionRecord, $formId, $submitUrl){
+	public static function createInstance($wigiiExecutor, $elementP, $fieldName, $fieldXml, $externalAccessLevel=MANDATORY_ARG, $externalAccessEndDate=MANDATORY_ARG, $groupSubscriptionRecord=MANDATORY_ARG, $formId=MANDATORY_ARG, $submitUrl=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($elementP->getDbEntity());

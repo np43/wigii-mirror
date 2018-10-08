@@ -204,7 +204,7 @@ class ListContext extends ListFilter {
 	private $defaultGroupByAscending;
 	private $searchBar;
 
-    public static function createInstance($p, $module, $configS)
+	public static function createInstance($p=MANDATORY_ARG, $module=MANDATORY_ARG, $configS=MANDATORY_ARG)
 	{
 		$returnValue = new self();
 		$returnValue->setCrtView($returnValue->getDefaultView($p, $module, $configS));

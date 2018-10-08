@@ -66,7 +66,7 @@ class DeleteMultipleElementFormExecutor extends DeleteElementFormExecutor {
 		$this->record = $record;
 	}
 
-	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $rootPrincipal, $elementPAList){
+	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $rootPrincipal=MANDATORY_ARG, $elementPAList=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

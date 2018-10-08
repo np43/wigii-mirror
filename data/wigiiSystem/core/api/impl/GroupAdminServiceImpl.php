@@ -3831,7 +3831,7 @@ class GroupSqlBuilderForInsertLeafInGroupGroup extends MySqlQueryBuilder impleme
 		$returnValue->reset($principal, $group);
 		return $returnValue;
 	}
-	public function reset($principal, $group)
+	public function reset($principal=MANDATORY_ARG, $group=MANDATORY_ARG)
 	{
 		parent::reset();
 		if(is_null($group)) throw new GroupAdminServiceException('group can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
@@ -3932,7 +3932,7 @@ class GroupSqlBuilderToConnectGroupToParentInGroupGroup extends GroupSqlBuilderF
 		$returnValue->reset($principal, $group);
 		return $returnValue;
 	}
-	public function reset($principal, $group)
+	public function reset($principal=MANDATORY_ARG, $group=MANDATORY_ARG)
 	{
 		if(is_null($group)) throw new GroupAdminServiceException('group can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
 		$this->groupId = $group->getId();
@@ -4025,7 +4025,7 @@ class GroupSqlBuilderToDisconnectGroupFromParentInGroupGroup extends MySqlQueryB
 		$returnValue->reset($principal, $group);
 		return $returnValue;
 	}
-	public function reset($principal, $group)
+	public function reset($principal=MANDATORY_ARG, $group=MANDATORY_ARG)
 	{
 		parent::reset();
 		if(is_null($group)) throw new GroupAdminServiceException('group can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
@@ -4133,7 +4133,7 @@ class GroupSqlBuilderToDisconnectGroupFromParentInElementGroup extends MySqlQuer
 		$returnValue->reset($principal, $group);
 		return $returnValue;
 	}
-	public function reset($principal, $group)
+	public function reset($principal=MANDATORY_ARG, $group=MANDATORY_ARG)
 	{
 		parent::reset();
 		if(is_null($group)) throw new GroupAdminServiceException('group can not be null', GroupAdminServiceException::INVALID_ARGUMENT);

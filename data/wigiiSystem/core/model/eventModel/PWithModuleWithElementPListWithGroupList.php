@@ -32,7 +32,7 @@ class PWithModuleWithElementPListWithGroupList extends PWithModuleWithElementPLi
 	public function setGroupList($var){ $this->groupList = $var; }
 	public function getGroupList(){ return $this->groupList; }
 	
-	public static function createInstance($p, $module, $elementPList, $groupList){
+	public static function createInstance($p, $module=MANDATORY_ARG, $elementPList=MANDATORY_ARG, $groupList=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

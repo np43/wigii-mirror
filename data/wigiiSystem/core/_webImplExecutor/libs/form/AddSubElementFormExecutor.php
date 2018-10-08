@@ -42,7 +42,7 @@ class AddSubElementFormExecutor extends AddElementFormExecutor {
 		return $this->linkName;
 	}
 
-	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $masterElementId, $linkName){
+	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $masterElementId=MANDATORY_ARG, $linkName=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

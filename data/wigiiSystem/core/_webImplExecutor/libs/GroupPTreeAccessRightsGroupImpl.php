@@ -37,7 +37,7 @@ class GroupPTreeAccessRightsGroupImpl extends GroupPTreeGroupPanelImpl {
 //	protected $nbLevelToExpandOnInit;
 //	protected $displayCM;
 
-	public static function createInstance($p, $exec, $nbLevelToExpandOnInit = 100, $displayContextMenu = false){
+    public static function createInstance($p, $exec, $nbLevelToExpandOnInit = 100, $displayContextMenu = false, $countData=UNUSED_ARG){
 		$gt = new self();
 		$gt->setNbLevelToExpandOnInit($nbLevelToExpandOnInit);
 		$gt->setP($p);

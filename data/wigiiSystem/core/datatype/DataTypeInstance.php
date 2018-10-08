@@ -30,7 +30,7 @@ class DataTypeInstance extends DataType
 	/**
 	 * Generic factory for a specific datatypes using introspection.
 	 */
-	public static function createInstance($dataTypeName)
+    public static function createInstance($dataTypeName=MANDATORY_ARG)
 	{
 		if(!isset($dataTypeName)) throw new ServiceException("cannot create an instance with a null class name", ServiceException::INVALID_ARGUMENT);
 		$returnValue = ServiceProvider::createWigiiObject($dataTypeName);

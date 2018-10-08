@@ -35,7 +35,7 @@ class DetailUserFormExecutor extends FormExecutor {
 	protected function setModule($module){ $this->module = $module; }
 	protected function getModule(){ return $this->module; }
 
-	public static function createInstance($wigiiExecutor, $module, $userP, $record, $formId, $submitUrl){
+	public static function createInstance($wigiiExecutor, $module, $userP, $record, $formId=MANDATORY_ARG, $submitUrl=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setUserP($userP);

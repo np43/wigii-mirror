@@ -37,7 +37,7 @@ class ActivityRecord extends Record
 	public function getModule(){ return $this->module; }
 	public function setModule($module){ $this->module = $module; }
 	
-	public static function createInstance($activity, $module = null, $fieldList = null, $wigiiBag = null)
+	public static function createInstance($activity=MANDATORY_ARG, $module = null, $fieldList = null, $wigiiBag = null)
 	{
 		$ar = new ActivityRecord();
 		$ar->setActivity($activity);

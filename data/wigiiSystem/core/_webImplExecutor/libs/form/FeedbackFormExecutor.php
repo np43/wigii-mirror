@@ -31,7 +31,7 @@ class FeedbackFormExecutor extends FormExecutor {
 	public function setRootPrincipal($rootPrincipal){ $this->rootPrincipal = $rootPrincipal; }
 	protected function getRootPrincipal(){ return $this->rootPrincipal; }
 
-	public static function createInstance($rootPrincipal, $wigiiExecutor, $record, $formId, $submitUrl){
+	public static function createInstance($rootPrincipal, $wigiiExecutor, $record, $formId, $submitUrl=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

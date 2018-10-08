@@ -39,7 +39,7 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 	protected function setActOnCheckedRecordRequest($request){ $this->actOnCheckedRecordRequest = $request; }
 	protected function getActOnCheckedRecordRequest(){ return $this->actOnCheckedRecordRequest; }
 
-	public static function createInstance($wigiiExecutor, $isNew, $filename, $record, $formId, $submitUrl, $actOnCheckedRecordRequest=""){
+	public static function createInstance($wigiiExecutor, $isNew, $filename, $record, $formId=MANDATORY_ARG, $submitUrl=MANDATORY_ARG, $actOnCheckedRecordRequest=""){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

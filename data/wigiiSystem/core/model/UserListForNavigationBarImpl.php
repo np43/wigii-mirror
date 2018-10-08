@@ -43,13 +43,13 @@ class UserListForNavigationBarImpl extends ObjectListArrayImpl implements UserLi
 	private $adminRoleIds;
 
 
-	public static function createInstance($defaultWigiiNamespace) {
+	public static function createInstance($defaultWigiiNamespace=MANDATORY_ARG) {
 		$returnValue = new self();
 		$returnValue->reset($defaultWigiiNamespace);
 		return $returnValue;
 	}
 
-	public function reset($defaultWigiiNamespace)
+	public function reset($defaultWigiiNamespace=MANDATORY_ARG)
 	{
 		parent::reset();
 		$this->roleIds = array();

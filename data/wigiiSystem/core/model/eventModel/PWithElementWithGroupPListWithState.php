@@ -31,7 +31,7 @@ class PWithElementWithGroupPListWithState extends PWithElementWithGroupPList {
 	public function setState($var){ $this->state = $var; }
 	public function getState(){ return $this->state; }
 
-	public static function createInstance($p, $element, $groupPList, $state){
+	public static function createInstance($p, $element=MANDATORY_ARG, $groupPList=MANDATORY_ARG, $state=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setElement($element);

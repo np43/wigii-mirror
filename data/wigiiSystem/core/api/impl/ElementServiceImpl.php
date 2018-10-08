@@ -7313,13 +7313,13 @@ class ElementSqlBuilderForGetAllElementsInGroups extends ElementSqlBuilder
 		return $returnValue;
 	}
 
-	public static function createInstance($principal, $groupList, $pRightsFromDb, $includeChildrenGroups)
+	public static function createInstance($principal=MANDATORY_ARG, $groupList=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG, $includeChildrenGroups=MANDATORY_ARG)
 	{
 		$returnValue = ElementSqlBuilderForGetAllElementsInGroups::createNonInitInstance();
 		$returnValue->reset($principal, $groupList, $pRightsFromDb, $includeChildrenGroups);
 		return $returnValue;
 	}
-	public function reset($principal, $groupList, $pRightsFromDb, $includeChildrenGroups)
+	public function reset($principal=MANDATORY_ARG, $groupList=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG, $includeChildrenGroups=MANDATORY_ARG)
 	{
 		parent::reset();
 		if(is_null($principal)) throw new ElementServiceException('principal can not be null', ElementServiceException::INVALID_ARGUMENT);
@@ -7522,13 +7522,13 @@ class ElementSqlBuilderForGetPagedElementsInGroups extends ElementSqlBuilder
 		return $returnValue;
 	}
 
-	public static function createInstance($principal, $groupList, $pRightsFromDb, $includeChildrenGroups)
+	public static function createInstance($principal=MANDATORY_ARG, $groupList=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG, $includeChildrenGroups=MANDATORY_ARG)
 	{
 	    $returnValue = self::createNonInitInstance();
 		$returnValue->reset($principal, $groupList, $pRightsFromDb, $includeChildrenGroups);
 		return $returnValue;
 	}
-	public function reset($principal, $groupList, $pRightsFromDb, $includeChildrenGroups)
+	public function reset($principal=MANDATORY_ARG, $groupList=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG, $includeChildrenGroups=MANDATORY_ARG)
 	{
 		parent::reset();
 		unset($this->sqlForCountElements); // cannot be put into freeMemory because should be kept  to be read into a second query.
@@ -7843,13 +7843,13 @@ class ElementSqlBuilderForGetSelectedElementsInGroups extends ElementSqlBuilder
 		return $returnValue;
 	}
 
-	public static function createInstance($elementInGroupSqlB, $principal, $groupList, $pRightsFromDb)
+	public static function createInstance($elementInGroupSqlB=MANDATORY_ARG, $principal=MANDATORY_ARG, $groupList=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG)
 	{
 		$returnValue = ElementSqlBuilderForGetSelectedElementsInGroups::createNonInitInstance();
 		$returnValue->reset($elementInGroupSqlB, $principal, $groupList, $pRightsFromDb);
 		return $returnValue;
 	}
-	public function reset($elementInGroupSqlB, $principal, $groupList, $pRightsFromDb)
+	public function reset($elementInGroupSqlB=MANDATORY_ARG, $principal=MANDATORY_ARG, $groupList=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG)
 	{
 		parent::reset();
 		if(is_null($elementInGroupSqlB)) throw new ElementServiceException('elementInGroupSqlB can not be null', ElementServiceException::INVALID_ARGUMENT);
@@ -8031,13 +8031,13 @@ class ElementSqlBuilderForGetSelectedElements extends ElementSqlBuilder
 		return $returnValue;
 	}
 
-	public static function createInstance($elementInIdListSqlB, $principal, $groupList, $pRightsFromDb)
+	public static function createInstance($elementInIdListSqlB=MANDATORY_ARG, $principal=MANDATORY_ARG, $groupList=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG)
 	{
 		$returnValue = ElementSqlBuilderForGetSelectedElements::createNonInitInstance();
 		$returnValue->reset($elementInIdListSqlB, $principal, $groupList, $pRightsFromDb);
 		return $returnValue;
 	}
-	public function reset($elementInIdListSqlB, $principal, $groupList, $pRightsFromDb)
+	public function reset($elementInIdListSqlB=MANDATORY_ARG, $principal=MANDATORY_ARG, $groupList=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG)
 	{
 		parent::reset();
 		if(is_null($elementInIdListSqlB)) throw new ElementServiceException('elementInIdListSqlB can not be null', ElementServiceException::INVALID_ARGUMENT);
@@ -8206,13 +8206,13 @@ class ElementSqlBuilderForGetSubElementsForField extends ElementSqlBuilder
 		return $returnValue;
 	}
 
-	public static function createInstance($principal, $masterElementId, $fieldName)
+	public static function createInstance($principal=MANDATORY_ARG, $masterElementId=MANDATORY_ARG, $fieldName=MANDATORY_ARG)
 	{
 		$returnValue = ElementSqlBuilderForGetSubElementsForField::createNonInitInstance();
 		$returnValue->reset($principal, $masterElementId, $fieldName);
 		return $returnValue;
 	}
-	public function reset($principal, $masterElementId, $fieldName)
+	public function reset($principal=MANDATORY_ARG, $masterElementId=MANDATORY_ARG, $fieldName=MANDATORY_ARG)
 	{
 		parent::reset();
 		if(is_null($principal)) throw new ElementServiceException('principal can not be null', ElementServiceException::INVALID_ARGUMENT);
@@ -8306,13 +8306,13 @@ class ElementSqlBuilderForFillElement extends ElementSqlBuilder
 		return $returnValue;
 	}
 
-	public static function createInstance($principal, $element, $pRightsFromDb)
+	public static function createInstance($principal=MANDATORY_ARG, $element=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG)
 	{
 		$returnValue = ElementSqlBuilderForFillElement::createNonInitInstance();
 		$returnValue->reset($principal, $element, $pRightsFromDb);
 		return $returnValue;
 	}
-	public function reset($principal, $element, $pRightsFromDb)
+	public function reset($principal=MANDATORY_ARG, $element=MANDATORY_ARG, $pRightsFromDb=MANDATORY_ARG)
 	{
 		parent::reset();
 		if(is_null($principal)) throw new ElementServiceException('principal can not be null', ElementServiceException::INVALID_ARGUMENT);
@@ -8460,7 +8460,7 @@ class ElementSqlBuilderForMultipleElement extends ElementSqlBuilder
 		return $returnValue;
 	}
 
-	public static function createInstance($principal, $element, $idsAreNew=false)
+	public static function createInstance($principal=MANDATORY_ARG, $element=MANDATORY_ARG, $idsAreNew=false)
 	{
 		$returnValue = ElementSqlBuilderForMultipleElement::createNonInitInstance();
 		$returnValue->reset($principal, $element, $idsAreNew);

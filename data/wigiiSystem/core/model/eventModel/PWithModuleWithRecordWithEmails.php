@@ -40,7 +40,7 @@ class PWithModuleWithRecordWithEmails extends BaseEventModel {
 	public function setEmails($var){ $this->emails = $var; }
 	public function getEmails(){ return $this->emails; }
 	
-	public static function createInstance($p, $module, $record, $emails){
+	public static function createInstance($p, $module=MANDATORY_ARG, $record=MANDATORY_ARG, $emails=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

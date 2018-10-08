@@ -47,7 +47,7 @@ class AddSubscriptionFormExecutor extends AddElementFormExecutor {
 //	protected function setLanguage($var){ $this->language = $var; }
 //	protected function getLanguage(){ return $this->language; }
 
-	public static function createInstance($wigiiExecutor, $groupP, $subscriptionR, $record, $formId, $submitUrl){
+	public static function createInstance($wigiiExecutor, $groupP, $subscriptionR, $record, $formId=MANDATORY_ARG, $submitUrl=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

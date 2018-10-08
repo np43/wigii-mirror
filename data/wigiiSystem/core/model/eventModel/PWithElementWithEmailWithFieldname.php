@@ -40,7 +40,7 @@ class PWithElementWithEmailWithFieldname extends BaseEventModel {
 	public function setEmail($var){ $this->email = $var; }
 	public function getEmail(){ return $this->email; }
 	
-	public static function createInstance($p, $element, $email, $fieldname){
+	public static function createInstance($p, $element=MANDATORY_ARG, $email=MANDATORY_ARG, $fieldname=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setElement($element);

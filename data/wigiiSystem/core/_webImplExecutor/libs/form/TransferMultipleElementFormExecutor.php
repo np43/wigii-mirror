@@ -56,7 +56,7 @@ class TransferMultipleElementFormExecutor extends FormExecutor {
 	protected function setGeneralListContext($var){$this->generalListContext = $var; }
 	protected function getGeneralListContext(){return $this->generalListContext; }
 
-	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $rootPrincipal, $elementPAList, $lc){
+	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $rootPrincipal=MANDATORY_ARG, $elementPAList=MANDATORY_ARG, $lc=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

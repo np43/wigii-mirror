@@ -32,7 +32,7 @@ class PWithUser extends BaseEventModel {
 	public function setUser($var){ $this->user = $var; }
 	public function getUser(){ return $this->user; }
 	
-	public static function createInstance($p, $user){
+	public static function createInstance($p, $user=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setUser($user);

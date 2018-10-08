@@ -43,7 +43,7 @@ class UpdateElementInFormExecutor extends FormExecutor implements ElementDataTyp
 		return $this->writeGroupPList;
 	}
 
-	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $rootPrincipal, $writeGroupPList) {
+	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $rootPrincipal=MANDATORY_ARG, $writeGroupPList=MANDATORY_ARG) {
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

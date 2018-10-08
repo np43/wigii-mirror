@@ -36,7 +36,7 @@ class PWithElementWithRecord extends BaseEventModel {
 	public function setRecord($var){ $this->record = $var; }
 	public function getRecord(){ return $this->record; }
 	
-	public static function createInstance($p, $element, $record){
+	public static function createInstance($p, $element=MANDATORY_ARG, $record=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setElement($element);

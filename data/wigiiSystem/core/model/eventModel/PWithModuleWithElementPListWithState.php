@@ -32,7 +32,7 @@ class PWithModuleWithElementPListWithState extends PWithModuleWithElementPList {
 	public function setState($var){ $this->state = $var; }
 	public function getState(){ return $this->state; }
 	
-	public static function createInstance($p, $module, $elementPList, $state){
+	public static function createInstance($p, $module=MANDATORY_ARG, $elementPList=MANDATORY_ARG, $state=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

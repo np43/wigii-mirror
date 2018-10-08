@@ -40,7 +40,7 @@ class PWithModuleWithElementIdsWithGroupIds extends BaseEventModel {
 	public function setGroupIds($var){ $this->groupIds = $var; }
 	public function getGroupIds(){ return $this->groupIds; }
 	
-	public static function createInstance($p, $module, $elementIds, $groupIds){
+	public static function createInstance($p, $module=MANDATORY_ARG, $elementIds=MANDATORY_ARG, $groupIds=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

@@ -42,14 +42,14 @@ class WigiiBagFiller extends ElementPMapper implements RecordStructureFactory
 
 	// Object life cycle
 
-	public static function createInstance($principal, $wigiiBag, $pRights = null)
+	public static function createInstance($principal, $wigiiBag, $pRights = null, $elementEvaluator=UNUSED_ARG)
 	{
 		$returnValue = new WigiiBagFiller();
 		$returnValue->reset($principal, $wigiiBag, $pRights);
 		return $returnValue;
 	}
 
-	public function reset($principal, $wigiiBag, $pRights=null)
+	public function reset($principal, $wigiiBag, $pRights=null, $elementEvaluator=UNUSED_ARG)
 	{
 		$this->wigiiBag = $wigiiBag;
 		$this->inReset=true;

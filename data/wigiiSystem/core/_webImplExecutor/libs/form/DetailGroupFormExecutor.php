@@ -31,7 +31,7 @@ class DetailGroupFormExecutor extends FormExecutor {
 	protected function setGroupP($groupP){ $this->groupP = $groupP; }
 	public function getGroupP(){ return $this->groupP; }
 
-	public static function createInstance($wigiiExecutor, $groupP, $record, $formId, $submitUrl){
+	public static function createInstance($wigiiExecutor, $groupP, $record, $formId, $submitUrl=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setGroupP($groupP);

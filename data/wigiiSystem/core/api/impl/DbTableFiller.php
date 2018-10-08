@@ -57,14 +57,14 @@ class DbTableFiller extends ElementPMapper implements RecordStructureFactory
 	 * @param $createTable if true then does CREATE TABLE SELECT 
 	 * 					   else does INSERT INTO TABLE SELECT 
 	 */
-	public static function createInstance($principal, $dbTable, $createTable)
+	public static function createInstance($principal, $dbTable, $createTable=MANDATORY_ARG)
 	{
 		$returnValue = new DbTableFiller();
 		$returnValue->reset($principal, $dbTable, $createTable);
 		return $returnValue;
 	}
 
-	public function reset($principal, $dbTable, $createTable)
+	public function reset($principal, $dbTable, $createTable=MANDATORY_ARG)
 	{
 		parent::reset($principal, $this);
 		$this->dbTable = $dbTable;

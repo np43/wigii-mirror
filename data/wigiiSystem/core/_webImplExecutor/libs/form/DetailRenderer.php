@@ -103,7 +103,7 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 		$r->setDetailId($detailId);
 		return $r;
 	}
-	public function reset($detailId, $templateRecordManager, $totalWidth=null, $labelWidth = null, $visibleLanguage=null){
+	public function reset($detailId=MANDATORY_ARG, $templateRecordManager=MANDATORY_ARG, $totalWidth=null, $labelWidth = null, $visibleLanguage=null){
 		parent::reset();
 		$this->setTemplateRecordManager($templateRecordManager);
 		if($totalWidth && $labelWidth) $this->initializeFieldWidth($totalWidth, $labelWidth);

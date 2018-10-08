@@ -23,6 +23,7 @@
 
 /**
  * Created by LWR, the 22 july 09
+ * Modifiedd by Medair (CWE) 18.09.2018 to match PHP 7 constraints
  */
 
 if(!defined("CORE_PATH")) define("CORE_PATH", wigiiSystem_PATH . "core/");
@@ -31,6 +32,16 @@ if(!defined("TEMPLATE_PATH")) define("TEMPLATE_PATH", IMPL_PATH . "templates/");
 if(!defined("DATATYPE_PATH")) define("DATATYPE_PATH", CORE_PATH . "datatype/");
 if(!defined("LANG_FOLDER")) define("LANG_FOLDER", CORE_PATH . "langs/");
 if(!defined("CLIENT_CONFIG_PATH")) define("CLIENT_CONFIG_PATH", wigiiSystem_PATH . "configs/" . CLIENT_NAME . "/");
+// Medair (CWE) 18.09.2018: in PHP 7, an inherited method should have same signature as parent, except for optional arguments.
+// In order to allow sub class to specialize method signature by adding mandatory arguments, the MANDATORY_ARG symbol has been defined.
+// for example: parent class defined method createInstance()
+// subclass redefines method createInstance with two arguments $principal and $group
+// it can be written: createInstance($principal=MANDATORY_ARG,$group=MANDATORY_ARG)
+// the programmer knows that the two arguments are mandatory. 
+// Checks for non-null values still have to be done in the code as usual.
+if(!defined("MANDATORY_ARG")) define("MANDATORY_ARG",null);
+// Medair (CWE) 18.09.2018: to specialize a function in a subclass by reducing the number of arguments, unused arguments can be tagged with the UNUSED_ARG symbol.
+if(!defined("UNUSED_ARG")) define("UNUSED_ARG",null);
 
 define("ACCENT_list", "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýýþÿ");
 define("Replace_ACCENT_list", "AAAAAAACEEEEIIIIDNOOOOOOUUUUYPBaaaaaaaceeeeiiiionoooooouuuuyypy");

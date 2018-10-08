@@ -124,7 +124,7 @@ class AuthenticationServiceWebImpl extends AuthenticationServiceImpl {
 	 * Returns an minimal principal. This is normally used to replace
 	 * the mainPrincipal with an empty one
 	 */
-	protected function createMinimalPrincipal($clientName){
+	protected function createMinimalPrincipal($clientName=MANDATORY_ARG){
 		$p = Principal::createInstanceFromArray(array(
 			"username"=>"MinimalPrincipal",
 			"wigiiNamespace"=>$this->getWigiiNamespaceAdminService()->getEmptyWigiiNamespaceForClient($this->getAuthenticationServicePrincipal(), $this->getClientAdminService()->getClient($this->getAuthenticationServicePrincipal(), $clientName))

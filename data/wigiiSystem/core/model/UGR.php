@@ -32,7 +32,7 @@ class UGR extends DbEntityInstance
 	private $canWriteElement;
 	private $canShareElement;
 
-	public static function createInstance($groupId, $userId, $array=null, $colPrefix='')
+	public static function createInstance($groupId=MANDATORY_ARG, $userId=MANDATORY_ARG, $array=null, $colPrefix='')
 	{
 		$ugr = new UGR();
 		$ugr->setGroupId($groupId);

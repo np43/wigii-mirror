@@ -35,7 +35,7 @@ class DeleteUserFormExecutor extends FormExecutor {
 	protected function setActOnCheckedRecordRequest($request){ $this->actOnCheckedRecordRequest = $request; }
 	protected function getActOnCheckedRecordRequest(){ return $this->actOnCheckedRecordRequest; }
 
-	public static function createInstance($wigiiExecutor, $userP, $record, $formId, $submitUrl, $actOnCheckedRecordRequest=""){
+	public static function createInstance($wigiiExecutor, $userP, $record, $formId, $submitUrl=MANDATORY_ARG, $actOnCheckedRecordRequest=""){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setUserP($userP);

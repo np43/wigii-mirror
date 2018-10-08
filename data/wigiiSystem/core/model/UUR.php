@@ -31,7 +31,7 @@ class UUR extends DbEntityInstance
 	private $isOwner;
 	private $hasRole;
 
-	public static function createInstance($user1Id, $user2Id, $array=null, $colPrefix='')
+	public static function createInstance($user1Id=MANDATORY_ARG, $user2Id=MANDATORY_ARG, $array=null, $colPrefix='')
 	{
 		$uur = new UUR();
 		$uur->setUser1Id($user1Id);

@@ -36,7 +36,7 @@ class PWithModuleWithElementIds extends BaseEventModel {
 	public function setElementIds($var){ $this->elementIds = $var; }
 	public function getElementIds(){ return $this->elementIds; }
 	
-	public static function createInstance($p, $module, $elementIds){
+	public static function createInstance($p, $module=MANDATORY_ARG, $elementIds=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

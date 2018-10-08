@@ -40,7 +40,7 @@ class PWithRecordWithElementPListWithGroupPList extends BaseEventModel {
 	public function setGroupPList($var){ $this->groupPList = $var; }
 	public function getGroupPList(){ return $this->groupPList; }
 	
-	public static function createInstance($p, $record, $elementPList, $groupPList){
+	public static function createInstance($p, $record=MANDATORY_ARG, $elementPList=MANDATORY_ARG, $groupPList=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setRecord($record);

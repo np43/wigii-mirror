@@ -1,4 +1,5 @@
-set PATH=C:\wamp\bin\php\php5.6.35;%PATH%
+rem set PATH=C:\wamp\bin\php\php5.6.35;%PATH%
+set PATH=C:\wamp\bin\php\php7.1.16;%PATH%
 set DOC_CODEBASE=C:\Users\Camille\Documents\dev\php-src\Wigii_git
 set DOC_OUTPUT=C:\Users\Camille\Documents\dev\wigii-doc
 rmdir %DOC_OUTPUT% /s /q

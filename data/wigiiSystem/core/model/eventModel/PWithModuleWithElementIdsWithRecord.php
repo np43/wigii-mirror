@@ -40,7 +40,7 @@ class PWithModuleWithElementIdsWithRecord extends BaseEventModel {
 	public function setRecord($var){ $this->record = $var; }
 	public function getRecord(){ return $this->record; }
 	
-	public static function createInstance($p, $module, $elementIds, $record){
+	public static function createInstance($p, $module=MANDATORY_ARG, $elementIds=MANDATORY_ARG, $record=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

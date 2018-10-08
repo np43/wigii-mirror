@@ -117,8 +117,7 @@ class SystemConsoleServiceImpl implements SystemConsoleService {
 			//do not show operations stack as this makes it less redable
 //			$message = $message . " (" . implode(" >> ", $this->operationsStackName) . ")";
 		}
-
-		$this->typeList[$type] = $this->typeList[$type] + 1;
+		$this->typeList[$type] = (int)$this->typeList[$type] + 1;		
 		$this->messages[] = array (
 			"type" => $type,
 			"attachedClass" => $attachedClass,

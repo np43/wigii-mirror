@@ -36,7 +36,7 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 	protected function setWigiiExecutor($var){$this->wigiiExecutor = $var; }
 	protected function getWigiiExecutor(){return $this->wigiiExecutor; }
 
-	public static function createInstance($wigiiExecutor, $wigiiNamespace, $module, $filtersRec, $listContext){
+	public static function createInstance($wigiiExecutor, $wigiiNamespace, $module, $filtersRec, $listContext=MANDATORY_ARG){
 		$ssFl = new self();
 		$ssFl->wigiiNamespace = $wigiiNamespace;
 		$ssFl->module = $module;

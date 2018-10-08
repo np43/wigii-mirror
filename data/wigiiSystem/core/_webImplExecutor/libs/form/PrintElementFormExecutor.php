@@ -27,7 +27,7 @@
  */
 class PrintElementFormExecutor extends DetailElementFormExecutor {
 
-	public static function createInstance($wigiiExecutor, $record, $elementP, $formId, $submitUrl){
+    public static function createInstance($wigiiExecutor, $record, $elementP, $formId, $submitUrl=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setElementP($elementP);

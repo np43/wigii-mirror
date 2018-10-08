@@ -32,7 +32,7 @@ class PWithGroup extends BaseEventModel {
 	public function setGroup($var){ $this->group = $var; }
 	public function getGroup(){ return $this->group; }
 	
-	public static function createInstance($p, $group){
+	public static function createInstance($p, $group=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setGroup($group);

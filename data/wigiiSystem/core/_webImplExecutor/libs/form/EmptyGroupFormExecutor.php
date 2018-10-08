@@ -39,7 +39,7 @@ class EmptyGroupFormExecutor extends FormExecutor {
 	public function setRootPrincipal($rootP){ $this->rootPrincipal = $rootP; }
 	protected function getRootPrincipal(){ return $this->rootPrincipal; }
 	
-	public static function createInstance($wigiiExecutor, $groupP, $record, $formId, $submitUrl, $actOnCheckedRecordRequest=""){
+	public static function createInstance($wigiiExecutor, $groupP, $record, $formId, $submitUrl=MANDATORY_ARG, $actOnCheckedRecordRequest=""){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setGroupP($groupP);

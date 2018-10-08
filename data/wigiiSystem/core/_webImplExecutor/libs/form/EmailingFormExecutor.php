@@ -68,7 +68,7 @@ class EmailingFormExecutor extends FormExecutor {
 	public function setFieldList($var){$this->fieldList = $var; }
 	protected function getFieldList(){return $this->fieldList; }
 
-	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $elementIds){
+	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $elementIds=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

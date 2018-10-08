@@ -35,7 +35,7 @@ class ExternalAccessRequestFormExecutor extends FormExecutor {
 	protected function setSubscriptionGroupRec($var){ $this->subscriptionGroupRec = $var; }
 	protected function getSubscriptionGroupRec(){ return $this->subscriptionGroupRec; }
 
-	public static function createInstance($wigiiExecutor, $groupP, $record, $subscriptionGroupRec, $formId, $submitUrl){
+	public static function createInstance($wigiiExecutor, $groupP, $record, $subscriptionGroupRec, $formId=MANDATORY_ARG, $submitUrl=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

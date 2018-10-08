@@ -28,7 +28,7 @@
 class NewCopyGroupFormExecutor extends EditGroupFormExecutor {
 
 	private $originalConfigFiles;
-	public static function createInstance($wigiiExecutor, $groupP, $record, $formId, $submitUrl, $actOnCheckedRecordRequest=""){
+	public static function createInstance($wigiiExecutor, $groupP, $record, $formId, $submitUrl=MANDATORY_ARG, $actOnCheckedRecordRequest=""){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setGroupP($groupP);

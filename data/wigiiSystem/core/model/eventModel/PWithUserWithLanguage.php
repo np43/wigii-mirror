@@ -36,7 +36,7 @@ class PWithUserWithLanguage extends BaseEventModel {
 	public function setLanguage($var){ $this->language = $var; }
 	public function getLanguage(){ return $this->language; }
 	
-	public static function createInstance($p, $user, $language){
+	public static function createInstance($p, $user=MANDATORY_ARG, $language=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setUser($user);

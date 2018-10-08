@@ -32,7 +32,7 @@ class Element extends Record implements SysInformation
 {
 	// Object lifecycle
 	
-	public static function createInstance($module, $fieldList = null, $wigiiBag = null, $array=null, $colPrefix='')
+    public static function createInstance($module=MANDATORY_ARG, $fieldList = null, $wigiiBag = null, $array=null, $colPrefix='')
 	{
 		$e = new Element();
 		$e->setModule($module);

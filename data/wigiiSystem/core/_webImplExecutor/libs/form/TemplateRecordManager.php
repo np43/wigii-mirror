@@ -1841,7 +1841,7 @@ class TemplateRecordManager extends Model {
 		}
 		return $value;
 	}
-	public function formatValue($fieldName, $subFieldName, $value, $field, $doRegroupSimilarValue = false){
+	public function formatValue($fieldName=MANDATORY_ARG, $subFieldName=MANDATORY_ARG, $value=MANDATORY_ARG, $field=MANDATORY_ARG, $doRegroupSimilarValue = false){
 		$exec = $this->getExecutionService();
 		if($this->getDetailRenderer()){
 			$fieldId = $this->getDetailRenderer()->getDetailId()."__".$fieldName;

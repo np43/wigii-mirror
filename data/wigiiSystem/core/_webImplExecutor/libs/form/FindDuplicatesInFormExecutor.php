@@ -35,7 +35,7 @@ class FindDuplicatesInFormExecutor extends FormExecutor {
 	protected function setRootPrincipal($var){$this->rootPrincipal = $var; }
 	protected function getRootPrincipal(){return $this->rootPrincipal; }
 
-	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $rootPrincipal, $crtSelectedGroupP){
+	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl, $rootPrincipal=MANDATORY_ARG, $crtSelectedGroupP=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setRecord($record);

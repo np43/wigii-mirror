@@ -36,7 +36,7 @@ class GroupPTreeAdminGroupImpl extends GroupPTreeGroupPanelImpl {
 //	protected $nbLevelToExpandOnInit;
 //	protected $displayCM;
 	
-	public static function createInstance($p, $exec, $nbLevelToExpandOnInit, $displayContextMenu = true){
+    public static function createInstance($p, $exec, $nbLevelToExpandOnInit, $displayContextMenu = true, $countData=UNUSED_ARG){
 		$gt = new self();
 		$gt->setNbLevelToExpandOnInit($nbLevelToExpandOnInit);
 		$gt->setP($p);

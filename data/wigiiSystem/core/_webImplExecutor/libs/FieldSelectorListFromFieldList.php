@@ -30,7 +30,7 @@ class FieldSelectorListFromFieldList extends FieldSelectorListArrayWebImpl imple
 
 	//by default do not add SysInfo Fields
 	//SysInfo fields are added only if searchable = 1, see ListContext.php->addLogExpOnTextSearch
-	public static function createInstance($errorOnDuplicate=true, $addSysInfoFields=false)
+    public static function createInstance($errorOnDuplicate=true, $addSysInfoFields=false, $copyFromFieldSelectorList=UNUSED_ARG)
 	{
 		$returnValue = new self();
 		$returnValue->reset($errorOnDuplicate, $addSysInfoFields);

@@ -32,7 +32,7 @@ class PWithModule extends BaseEventModel {
 	public function setModule($var){ $this->module = $var; }
 	public function getModule(){ return $this->module; }
 	
-	public static function createInstance($p, $module){
+	public static function createInstance($p, $module=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

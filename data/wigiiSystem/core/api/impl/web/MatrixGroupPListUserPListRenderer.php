@@ -64,7 +64,7 @@ class MatrixGroupPListUserPListRenderer extends MatrixRenderer implements GroupP
 	protected function getTotalNumberOfUsers(){ return $this->totalNbOfUsers; }
 
 	//we need the adminContext to add the userListFilter to the GroupAdminService->getAllUsers()
-	public static function createInstance($p, $id, $ac){
+	public static function createInstance($p, $id=MANDATORY_ARG, $ac=MANDATORY_ARG){
 		$r = new self();
 		$r->setId($id);
 		$r->setP($p);

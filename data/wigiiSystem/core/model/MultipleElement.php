@@ -35,7 +35,7 @@ class MultipleElement extends Element {
 	/**
 	 * elementList cannot be null or empty
 	 */
-	public static function createInstance($elementList)
+	public static function createInstance($elementList=MANDATORY_ARG, $fieldList = UNUSED_ARG, $wigiiBag = UNUSED_ARG, $array=UNUSED_ARG, $colPrefix=UNUSED_ARG)
 	{
 		$e = new self();
 		if($elementList == null || $elementList->isEmpty()) throw ElementServiceException("elementList cannot be empty", ElementServiceException::INVALID_ARGUMENT);

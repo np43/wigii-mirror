@@ -32,7 +32,7 @@ class PWithModuleWithElementPListWithGroupListWithArray extends PWithModuleWithE
 	public function setArray($var){ $this->myArray = $var; }
 	public function getArray(){ return $this->myArray; }
 	
-	public static function createInstance($p, $module, $elementPList, $groupList, $array){
+	public static function createInstance($p, $module=MANDATORY_ARG, $elementPList=MANDATORY_ARG, $groupList=MANDATORY_ARG, $array=MANDATORY_ARG){
 		$r = new self();
 		$r->setP($p);
 		$r->setModule($module);

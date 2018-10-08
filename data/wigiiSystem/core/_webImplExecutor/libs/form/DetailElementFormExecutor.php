@@ -31,7 +31,7 @@ class DetailElementFormExecutor extends FormExecutor {
 	protected function setElementP($elemenP){ $this->elementP = $elemenP; }
 	protected function getElementP(){ return $this->elementP; }
 
-	public static function createInstance($wigiiExecutor, $record, $elementP, $formId, $submitUrl){
+	public static function createInstance($wigiiExecutor, $record, $elementP, $formId, $submitUrl=MANDATORY_ARG){
 		$fe = new self();
 		$fe->setWigiiExecutor($wigiiExecutor);
 		$fe->setElementP($elementP);
