@@ -158,6 +158,27 @@ class PhpStdFL extends FuncExpVMAbstractFL
 		return array_values($arr);
 	}
 	/**
+	 * FuncExp signature : <code>array_merge(array1,array2,array3...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) array1: Array. The source array
+	 * - Arg(1) array2: Array. The array to add
+	 * - Arg(2...) array3...: Array. The other arrays to add
+	 * @return Array returns an array containing a union of all the arrays (use the standard php array_merge method)
+	 */
+	public function array_merge($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException("array_merge function takes at least two parameters, the array1 and array2", FuncExpEvalException::INVALID_ARGUMENT);
+		$returnValue = $this->evaluateArg($args[0]);
+		if(!is_array($returnValue)) throw new FuncExpEvalException('array1 should be an array',FuncExpEvalException::INVALID_ARGUMENT);
+		for($i = 1; $i<$nArgs; $i++){
+			$arri = $this->evaluateArg($args[$i]);
+			if($arri===null) continue; //ignores null args
+			if(!is_array($arri)) throw new FuncExpEvalException('array'.$i.' should be an array',FuncExpEvalException::INVALID_ARGUMENT);
+			$returnValue = array_merge($returnValue, $arri);
+		}
+		return $returnValue;
+	}
+	/**
 	 * Returns the difference of two arrays
 	 * FuncExp signature : <code>array_diff(array1,array2)</code><br/>
 	 * Where arguments are :

@@ -1462,7 +1462,31 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	}
 	
 	// Configuration builder
-
+	
+	/**
+	 * FuncExp signature : <code>dtAttributs_merge(field1,field2,field3...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) value or multiple value (array): of type Attributs or MultipleAttributs
+	 * - Arg(1) value or multiple value (array): of type Attributs or MultipleAttributs
+	 * - Arg(2...) value or multiple value (array): of type Attributs or MultipleAttributs
+	 * @return Array returns an array containing a merge of all values compatible for MultipleAttributs Value
+	 * Note: use newMap("value",dtAttributs_merge(....)) if you want to store the result in a MultipleAttributs field.
+	 */
+	public function dtAttributs_merge($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 2) throw new FuncExpEvalException("dtAttributs_merge function takes at least two parameters, field1, field2", FuncExpEvalException::INVALID_ARGUMENT);
+		$returnValue = array();
+		for($i = 0; $i<$nArgs; $i++){
+			$val = $this->evaluateArg($args[$i]);
+			if($val===null) continue; //ignores null args
+			if(is_array($val)){
+				$returnValue = array_merge($returnValue,array_combine(array_values($val),array_values($val)));
+			} else {
+				$returnValue[$val] = $val;
+			}
+		}
+		return $returnValue;
+	}
 	/**
 	 * Creates an StdClass instance which maps a Field in the Wigii XML configuration file.
 	 * See method 'cfgField' in FuncExpBuilder class.<br/>
