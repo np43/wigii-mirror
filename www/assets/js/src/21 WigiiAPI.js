@@ -2211,6 +2211,17 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				return self;
 			};
 			/**
+			 * Append a string to current buffer but replace any new line with a br tag
+			 */
+			self.putNl2Br = function(str) {
+				if (typeof str === 'undefined' || str === null) {
+					//nothing to do
+				} else {
+					self.buffer += (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + '<br />' + '$2');					
+				}
+				return self;
+			}
+			/**
 			 * Implodes some arguments with a separator and adds the string to the given buffer
 			 * @param String sep the separator to be added between each arguments
 			 * @return HtmlBuilder for chaining
