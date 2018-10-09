@@ -32,7 +32,9 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 	public function setFactory($factory) {$this->factory = $factory; }
 	protected function getFactory(){
 		if(!isset($this->factory)){
-			$this->factory = "Excel5";
+		    // Medair (CWE) 08.10.2018: generate xlsx format
+			//$this->factory = "Excel5";
+		    $this->factory = "Excel2007";
 		}
 		return $this->factory;
 	}
@@ -43,13 +45,15 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 
 
 	public static function getContentTypeHeader(){
-		return 'application/vnd.ms-excel';
-//		return 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+	    // Medair (CWE) 08.10.2018: generate xlsx format
+		//return 'application/vnd.ms-excel';
+		return 'application/excel';
 	}
 
 	public static function getFileExtensions(){
-		return 'xls';
-//		return 'xlsx';
+	    // Medair (CWE) 08.10.2018: generate xlsx format
+		//return 'xls';
+        return 'xlsx';
 	}
 	
 	protected function preventFormulasInCellValue($valToInsert){

@@ -32,7 +32,12 @@ class DataType
 
 	public function __sleep(){
 		if($this->xml) $this->xml = $this->xml->asXml();
-		return array("dataTypeName", "xml");
+		$returnValue = array("dataTypeName", "xml");
+		// Medair (CWE) 08.10.2018: for PHP 7.1 automatic serialization, ensure that all variables exist with null value by default. If a variable has been destroyed with unset, unserialize will fail.
+		foreach($returnValue as $varName) {
+		    if(!isset($this->{$varName})) $this->{$varName} = null;
+		}
+		return $returnValue;
 	}
 	public function __wakeup(){
 		if($this->xml) $this->xml = simplexml_load_string($this->xml);

@@ -39,7 +39,12 @@ class FieldSelectorListFromFieldList extends FieldSelectorListArrayWebImpl imple
 
 	function __sleep(){
 		//serialize all except the xml
-		return array("selectedLanguage", "objArray");
+		$returnValue = array("selectedLanguage", "objArray");
+		// Medair (CWE) 08.10.2018: for PHP 7.1 automatic serialization, ensure that all variables exist with null value by default. If a variable has been destroyed with unset, unserialize will fail.
+		foreach($returnValue as $varName) {
+		    if(!isset($this->{$varName})) $this->{$varName} = null;
+		}
+		return $returnValue;
 	}
 
 	private $fieldsXml = array();

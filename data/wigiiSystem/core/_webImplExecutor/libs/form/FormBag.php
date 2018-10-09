@@ -69,12 +69,16 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 		}
 		return $this->_debugLogger;
 	}
-
-	//don't stores the formFieldList because it contains some xml data...
+	
 	public function __sleep(){
 		if(isset($this->fixedBag) && !$this->loadedFromFixedBag) $this->loadFromFixedBag();
-
-		return array("bag", "errors", "helps", "disabled", "hidden", "readonly", "filled", "changed", "multipleChecked", "multipleAddOnlyChecked");
+		//don't stores the formFieldList because it contains some xml data...
+		$returnValue = array("bag", "errors", "helps", "disabled", "hidden", "readonly", "filled", "changed", "multipleChecked", "multipleAddOnlyChecked");
+		// Medair (CWE) 08.10.2018: for PHP 7.1 automatic serialization, ensure that all variables exist with null value by default. If a variable has been destroyed with unset, unserialize will fail.
+		foreach($returnValue as $varName) {
+		    if(!isset($this->{$varName})) $this->{$varName} = null;
+		}
+		return $returnValue;
 	}
 
 	public static function createInstance(){

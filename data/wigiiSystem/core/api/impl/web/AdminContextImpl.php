@@ -49,7 +49,12 @@ class AdminContextImpl extends Model implements AdminContext {
 		$this->debugLogger()->write("creating instance");
 	}
 	public function __sleep(){
-		return array("workingModule", "subScreenName", "userListFilter", "user2ListFilter", "groupListFilter", "userFilterPost", "user2FilterPost", "groupFilterPost", "userFilterIsSet", "user2FilterIsSet");
+		$returnValue = array("workingModule", "subScreenName", "userListFilter", "user2ListFilter", "groupListFilter", "userFilterPost", "user2FilterPost", "groupFilterPost", "userFilterIsSet", "user2FilterIsSet");
+		// Medair (CWE) 08.10.2018: for PHP 7.1 automatic serialization, ensure that all variables exist with null value by default. If a variable has been destroyed with unset, unserialize will fail.
+		foreach($returnValue as $varName) {
+		    if(!isset($this->{$varName})) $this->{$varName} = null;
+		}
+		return $returnValue;
 	}
 
 	public static function createInstance($rootPrincipal){

@@ -50,14 +50,7 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 
 	public function __construct(){
 		$this->debugLogger()->write("creating instance");
-	}
-	// Changed by CWE on February 14th 2014
-	// Replaced magic function __sleep with PHP Serializable implementation in order to support subclassing.
-	/*
-	public function __sleep(){
-		return array("groupPListPerModule", "includeChildrenGroupsPerModule", "rootGroupsPerModule", "groupForConfigCache");
-	}
-	*/
+	}	
 	public function serialize() {
 		return serialize(array("groupPListPerModule" => $this->groupPListPerModule,
 			"includeChildrenGroupsPerModule" => $this->includeChildrenGroupsPerModule,

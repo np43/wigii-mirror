@@ -865,6 +865,7 @@ class RecordEvaluator implements FuncExpEvaluator
 				$v =  $this->evaluateArg($arg);
 				if(is_array($v)) $v = array_sum($v);
 				else $v = str_replace("'", "", $v);
+				if($v==null) $v=0;
 				$total += $v;
 			}
 			return $total;
@@ -881,6 +882,7 @@ class RecordEvaluator implements FuncExpEvaluator
 				$v = $this->evaluateArg($arg);
 				if(is_array($v)) $v = array_product($v);
 				else $v = str_replace("'", "", $v);
+				if($v==null) $v=0;
 				$total *= $v;
 			}
 			return $total;
@@ -896,7 +898,9 @@ class RecordEvaluator implements FuncExpEvaluator
 		//if the evaluateArg is numeric it could have 1000 separators
 		$arg1 = str_replace("'", "", $this->evaluateArg($args[1]));
 		if($arg1!=0){
-			return (str_replace("'", "", $this->evaluateArg($args[0]))/$arg1);
+		    $dividend = str_replace("'", "", $this->evaluateArg($args[0]));
+		    if($dividend==null) $dividend = 0;
+			return $dividend/$arg1;
 		}
 		else return "NA";
 	}
