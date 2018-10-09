@@ -1190,7 +1190,7 @@ class TemplateRecordManager extends Model {
 	public function getCaptchaFile(){
 		$img = new Securimage();
 		//Warning we need to reset the font filename to the wigii architechture
-		$img->ttf_file = IMPL_PATH."libs/securimage/elephant.ttf";
+		$img->ttf_file = realpath(IMPL_PATH."libs/securimage/elephant.ttf");
 //		$img->bgimg = IMPL_PATH."libs/securimage/images/bg.png";
 		$img->show(); // alternate use:  $img->show('/path/to/background.jpg');
 	}
