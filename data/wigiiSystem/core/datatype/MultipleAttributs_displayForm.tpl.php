@@ -135,6 +135,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 	if($chosen) $this->put('chosen ');
 	
 	if((string)$fieldXml["allowNewValues"]=="1") $this->put('allowNewValues ');
+	if((string)$fieldXml["displayDBValue"]=="1") $this->put('displayDBValue ');
 	$this->put('"');
 	if((string)$fieldXml["size"]!="") $this->put(' size="'.(string)$fieldXml["size"].'" ');
 	elseif((string)$fieldXml["searchable"]!="1") $this->put(' size="5" ');

@@ -26,7 +26,7 @@
  * by LWR
  */
 
-
+if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 $fieldXml = $field->getXml();
 
 //defining width if existant
@@ -46,11 +46,44 @@ $isNotExpanded = !$isFilled && $fieldXml["expand"]!="1" && (!$isRequire || $fiel
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 $isNoAutofill = $fieldXml["noAutofill"]=="1" || ($this->getConfigService()->getParameter($this->getP(), $exec->getCrtModule(), "noAutofill")=='1') && $fieldXml["noAutofill"]!="0";
 $inputId = $formId.'_'.$fieldName.'_'.$subFieldName;
-
-
-
-//value
 $subFieldName = "value";
+
+
+// CWE 10.10.2018 displays string as a drop-down
+if($fieldXml['dropDown']=="1") {
+	$inputNode = "select";
+	$inputType = null;
+	$inputId = $formId.'_'.$fieldName.'_'.$subFieldName.'_'.($inputType==null?$inputNode:$inputType);
+	$inputName = $fieldName.'_'.$subFieldName;
+	
+	$this->put('<'.$inputNode.' id="'.$inputId.'" name="'.$inputName.'" ');
+	if($inputType != null) $this->put(' type="'.$inputType.'" ');
+	if($disabled) $this->put(' disabled ');
+	if($readonly) $this->put(' disabled ');
+	$this->put('class="');
+	if($readonly) $this->put('removeDisableOnSubmit ');
+	if((string)$fieldXml["allowNewValues"]=="1") $this->put('allowNewValues ');
+	$this->put('flex displayDBValue ');
+	$this->put('"');
+	$this->put(' style="'.$valueWidth);
+	if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome
+	$this->put('"');
+	
+	$this->put('>');
+	
+	$val = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, $subFieldName));
+	$labelForTitle = $transS->t($p, $val);
+	$label = $labelForTitle;	
+	$label = str_replace(" ", "&nbsp;", $label);
+	$this->put('<option value="" ></option>');
+	if(!empty($val)) $this->put('<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>');
+	
+	$this->put('</'.$inputNode.'>');
+}
+
+// else standard value display
+else {
+	
 $inputNode = "input";
 if($fieldXml["secret"]=="1") $inputType = "password";
 else $inputType = "text";
@@ -80,4 +113,6 @@ myVal = $.cookie('cookie_form_value_".$inputId."');
 if(myVal != ''){ $('#".$inputId."').val(myVal); }
 }
 $('#".$inputId."').bind('keydown blur', function(){ $.cookie('cookie_form_value_".$inputId."', $(this).val(), { path: '/', expires: 365, secure: ".strtolower(put(HTTPS_ON))." }); }); ");
+}
+
 }

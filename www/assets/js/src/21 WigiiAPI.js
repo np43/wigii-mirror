@@ -1610,6 +1610,22 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				return returnValue;
 			};
+			
+			/**
+			 * Selects a field in the Wigii Form and returns a JQuery pointer on its input element
+			 * @param String fieldName the field selector
+			 * @return JQuery jquery collection on the selected fields input
+			 */
+			self.fieldInput = function(fieldName) {
+				var returnValue = undefined;
+				if($.isArray(fieldName)){
+					var fieldSelector = '#'+self.formId()+'__';
+					returnValue = $(fieldSelector+fieldName.join(' :input, '+fieldSelector)+' :input');
+				} else if(fieldName) {
+					returnValue = $('#'+self.formId()+'__'+fieldName+' :input');
+				}
+				return returnValue;
+			};
 
 			/**
 			 * Returns a selection of fields in the Wigii Form			 
@@ -2867,6 +2883,38 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				return (!returnValue?{$:selection}:returnValue);
 			};
+			
+			/**
+			 * Fills a set of drop-downs given some options
+			 * @param Object options a bag of parameters of the form
+			 * - arr|array: Array containing the values or objects used to populate the drop-down
+			 * - val|value: String|Function the name of a field in the object to be used as a drop-down value or a callback function computing the drop-down values.
+			 * The callback function is of the form value(i,data,selector) where i=0..array.length, data = array[i], selector is the given JQuery selector to access the DOM context.
+			 * The function should return a scalar value used a the drop-down value.
+			 * - lab|label String|Function the name of a field in the object to be used as a drop-down label or a callback function computing the drop-down labels.
+			 * The callback function is of the form label(i,data,selector) where i=0..array.length, data = array[i], selector is the given JQuery selector to access the DOM context.
+			 * The function should return a scalar value used a the drop-down label.
+			 * @return JQuery selector for chaining
+			 */
+			self.fillDropDown = function(selection,options) {
+				var returnValue=undefined;
+				// filters on select objects				
+				if(selection && selection.length>0) {
+					selection = selection.filter('select');
+					if(selection && selection.length>0) {
+						if(!options) options = {};
+						var arr = options.arr || options.array;
+						var val = options.val || options.value;
+						var lab = options.lab || options.label;
+						selection.each(function(){
+							var dropdown = $(this);
+							wigiiApi.fillDropDownFromArray(dropdown,arr,val,lab,options);
+						});
+						returnValue = selection;
+					}
+				}								
+				return (!returnValue?{$:selection}:returnValue);
+			};
 		};
 		
 		
@@ -3885,7 +3933,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		};		
 		/**
 		 * Returns a string representing a date in a French style (d.m.Y H:i:s).
-		 *@param Integer timestamp timestamp to convert to date string
+		 *@param Integer|String timestamp timestamp to convert to date string or Wigii date string.
 		 *@param String options a formating option string. One of : 
 		 * noSeconds: display date and time up to minutes, 
 		 * noTime: displays only date without time, 
@@ -4094,6 +4142,62 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			boxOptions.top = Math.ceil(boxTop);
 			return boxOptions;
 		};
+		
+		/**
+		 * Fills a drop-down (html select element) from an array. All existing options are flushed.
+		 * @param JQuery selector JQuery selector on an existing select element
+		 * @param Array array array of objects or values to fill the drop-down with
+		 * @param String|Function value the name of a field in the object to be used as a drop-down value or a callback function computing the drop-down values.
+		 * The callback function is of the form value(i,data,selector) where i=0..array.length, data = array[i], selector is the given JQuery selector to access the DOM context.
+		 * The function should return a scalar value used a the drop-down value.
+		 * @param String|Function label the name of a field in the object to be used as a drop-down label or a callback function computing the drop-down labels.
+		 * The callback function is of the form label(i,data,selector) where i=0..array.length, data = array[i], selector is the given JQuery selector to access the DOM context.
+		 * The function should return a scalar value used a the drop-down label.
+		 * @param Object options a bag of options to customize the rendering process
+		 * @return JQuery returns the updated select element
+		 */
+		wigiiApi.fillDropDownFromArray = function(selector,array,value,label,options) {
+			if(!selector) throw wigiiApi.createServiceException("selector cannot be empty", wigiiApi.errorCodes.INVALID_ARGUMENT);
+			var currentVal = selector.val();
+			var newVal='';
+			// empties current drop-down
+			selector.empty();
+			if(array) {
+				// checks arguments
+				if(!$.isArray(array)) throw wigiiApi.createServiceException("fillDropDownFromArray needs an array", wigiiApi.errorCodes.INVALID_ARGUMENT);
+				var isValFx=false;
+				if($.isFunction(value)) isValFx=true;
+				var isLabFx = false;
+				if($.isFunction(label)) isLabFx=true;				
+				// loops through array and creates html
+				var html = wigiiApi.getHtmlBuilder();
+				var v,l;				
+				selector.append(html.reset().putStartTag('option','value',"").put("").putEndTag('option').html());
+				for(var i=0;i<array.length;i++) {
+					var data = array[i];
+					var isObj = $.isPlainObject(data);
+					// generates value
+					if(isValFx) v = value(i,data,selector);
+					else if(isObj) v = data[value];
+					else v = data;
+					if(currentVal==v) newVal=v;
+					// generates label
+					if(label) {
+						if(isLabFx) l = label(i,data,selector);
+						else if(isObj) l = data[label];
+						else l = data;
+					}					
+					// no label, then takes value
+					else l = v;
+					// generates html
+					selector.append(html.reset().putStartTag('option','value',v).put(l).putEndTag('option').html());
+				}				
+			}
+			// if select2 drop-down, then triggers change to refresh the list
+			selector.val(newVal).trigger('change');
+			return selector;
+		};
+		
 		// Link with WigiiExecutor.js
 		
 		wigiiApi.initContext = function() {

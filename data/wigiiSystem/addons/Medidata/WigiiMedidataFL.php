@@ -50,6 +50,41 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		return $this->trm;
 	}
 	
+	/**
+	 * Gets a table with the medical cases attached to a customer<br/>
+	 * FuncExp signature : <code>getCustomerMediCaseTable(customerNumber)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) customerNumber: String|LogExp. Contact number of type Customer for which to get the medical cases
+	 * @return Array of StdClass instances of the form {contactNumber,caseNumber,caseLaw,caseDate,caseTariff}
+	 */
+	public function getCustomerMediCaseTable($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('getCustomerMediCaseTable takes at least one parameter which is the customer number', FuncExpEvalException::INVALID_ARGUMENT);
+		$customerNumber = $this->evaluateArg($args[0]);
+		if(!($customerNumber instanceof LogExp)) $customerNumber = lxEq(fs('contactNumber'),$customerNumber);
+		// loads the customers and extracts the medical cases
+		return sel($this->getPrincipal(),elementPList(lxInGR($this->evaluateFuncExp(fx('companyDataConfig','customerGroupLx'))),lf(null,$customerNumber)),dfasl(
+			dfas("ElementMatrixDFA",
+				"setColumns",array('caseNumber_','caseLaw_','caseDate_','caseTariff_'),
+				"setFromRow","1",
+				"setCalculatedColumns",array('contactNumber'=>fs('contactNumber'))
+			),
+			dfas("CallbackDFA","setProcessDataChunkCallback",function($data,$callbackDFA){
+				// keeps only rows with a case number
+				if(oVal($data->{'caseNumber_'})) {
+					$callbackDFA->writeResultToOutput((object)array(
+						'contactNumber'=>$data->contactNumber,
+						'caseNumber'=>oVal($data->{'caseNumber_'}),
+						'caseLaw'=>oVal($data->{'caseLaw_'}),
+						'caseDate'=>oVal($data->{'caseDate_'}),
+						'caseTariff'=>oVal($data->{'caseTariff_'}),
+					));
+				}
+			}),
+			dfas("ArrayBufferDFA")
+		));
+	}
+	
 	// Wigii Medidata General Invoice Request 4.5
 	
 	/**

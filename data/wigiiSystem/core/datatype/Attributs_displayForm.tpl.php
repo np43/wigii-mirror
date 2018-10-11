@@ -407,6 +407,7 @@ $flex = (string)$fieldXml["flex"]=="1";
 if($flex) $this->put('flex ');
 $flex = $flex || $chosen;
 if((string)$fieldXml["allowNewValues"]=="1") $this->put('allowNewValues ');
+if((string)$fieldXml["displayDBValue"]=="1") $this->put('displayDBValue ');
 $this->put('"');
 $this->put(' style="'.$valueWidth);
 if($readonly) $this->put('background-color:#E3E3E3;'); //disabled make color as white in Google Chrome

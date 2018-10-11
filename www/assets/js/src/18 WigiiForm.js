@@ -599,7 +599,9 @@ function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, tem
 		}		
 		if(maxSelection != false && current.hasClass('chosen')) options.maximumSelectionLength = maxSelection;
 		if(current.hasClass('allowNewValues')) options.tags = [];
-
+		// CWE 11.10.2018 if displayDBValue then shows db value instead of label, but keeps label in search/drop-down
+		if(current.hasClass('displayDBValue')) options.templateSelection = function(data){return data.id;};
+		
 		// Medair (CWE) 08.02.2018: add support of ajax data sources
 		var attributeMatchExp = current.attr("data-attributematchexp") || false;
 		if(attributeMatchExp) {

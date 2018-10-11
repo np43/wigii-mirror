@@ -144,12 +144,15 @@ class ObjectDFAWithFuncExpVM implements DataFlowActivity
 				foreach($data as $property => $value) {
 					$vmCtx->setVariable(fs($property), $value);
 				}
+				// loads the object under the local variable 'this'
+				$vmCtx->setVariable(fs('this'), $data);
 			}
 			// else scalars or object manipulated as a whole.
 			elseif(!($data instanceof ElementP || $data instanceof Element)) {
-				// loads the object under the local variable 'value'
+				// loads the object under the local variable 'value' or 'this'
 				$vmCtx = $this->vm->getFuncExpVMServiceProvider()->getFuncExpVMContext();
 				$vmCtx->setVariable(fs('value'), $data);
+				$vmCtx->setVariable(fs('this'), $data);
 			}
 			
 			// evaluates the object according to subclass code
