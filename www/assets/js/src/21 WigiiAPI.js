@@ -2886,7 +2886,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			
 			/**
 			 * Fills a set of drop-downs given some options
-			 * @param Object options a bag of parameters of the form
+			 * @param Object|Array options a bag of parameters of the form
 			 * - arr|array: Array containing the values or objects used to populate the drop-down
 			 * - val|value: String|Function the name of a field in the object to be used as a drop-down value or a callback function computing the drop-down values.
 			 * The callback function is of the form value(i,data,selector) where i=0..array.length, data = array[i], selector is the given JQuery selector to access the DOM context.
@@ -2894,6 +2894,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * - lab|label String|Function the name of a field in the object to be used as a drop-down label or a callback function computing the drop-down labels.
 			 * The callback function is of the form label(i,data,selector) where i=0..array.length, data = array[i], selector is the given JQuery selector to access the DOM context.
 			 * The function should return a scalar value used a the drop-down label.
+			 * If options is an array, then considers it as an array of values used to fill the drop-down.
 			 * @return JQuery selector for chaining
 			 */
 			self.fillDropDown = function(selection,options) {
@@ -2902,7 +2903,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(selection && selection.length>0) {
 					selection = selection.filter('select');
 					if(selection && selection.length>0) {
-						if(!options) options = {};
+						if($.isArray(options)) options = {arr:options};
+						else if(!options) options = {};
 						var arr = options.arr || options.array;
 						var val = options.val || options.value;
 						var lab = options.lab || options.label;
