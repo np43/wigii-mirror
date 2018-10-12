@@ -390,9 +390,8 @@ class AuthenticationServiceImpl implements AuthenticationService
 			$userd = $realUser->getDetail();
 			$userd->setInfo_lastLogout(time());
 			$userd->setInfo_lastSessionContext($principal->serializeSessionContext());
-
-			//store in DB the user login informations + session context
-			$this->getUserAdminService()->persistUserLoginInformation($this->getAuthenticationServicePrincipal(), $realUser);
+			//store in DB the user logout informations + session context
+			$this->getUserAdminService()->persistUserLogoutInformation($this->getAuthenticationServicePrincipal(), $realUser);
 
 			//keept the current clientName to be able to create the MinimalPrincipal
 			$clientName = $principal->getWigiiNamespace()->getClient()->getClientName();
@@ -720,17 +719,21 @@ class AuthenticationServiceImpl implements AuthenticationService
 			}
 			catch(ServiceException $ue) {
 				if($ue->getCode()==UserAdminServiceException::INVALID_PASSWORD) {									
-					if($userd->getAuthenticationMethod()=='usual') {
-						throw new AuthenticationServiceException($ue->getMessage(), AuthenticationServiceException::INVALID_PASSWORD_LENGTH);
-					}
-					else {
-						throw new AuthenticationServiceException($ue->getMessage(), AuthenticationServiceException::INVALID_PASSWORD_LENGTH_POP3);
-					}
+					//change on 12.10.2018, by Lionel Weber
+					//if password is invalid but authentication was successfull, then force change of password next time
+					//and do not throw exception
+					$userd->forceResetPassword();
+					//throw new AuthenticationServiceException($p->getUserlabel() . " password is expired.", AuthenticationServiceException :: EXPIRED_PASSWORD);
+// 					if($userd->getAuthenticationMethod()=='usual') {
+// 						throw new AuthenticationServiceException($ue->getMessage(), AuthenticationServiceException::INVALID_PASSWORD_LENGTH);
+// 					}
+// 					else {
+// 						throw new AuthenticationServiceException($ue->getMessage(), AuthenticationServiceException::INVALID_PASSWORD_LENGTH_POP3);
+// 					}
 				}
 				else throw $ue;
 			}
 		}
-
 
 		//store in DB the user login informations
 		$this->getUserAdminService()->persistUserLoginInformation($p, $returnValue->getAttachedUser());

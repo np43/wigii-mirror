@@ -296,9 +296,10 @@ class EditUserFormExecutor extends FormExecutor {
 		}
 
 		$user->getDetail()->setPasswordLife($userEditRec->getFieldValue("$passwordLifeFieldName"));
-		if($user->getDetail()->getPasswordLife() <= 0){
-			$user->getDetail()->setPasswordLife(null);
-		}
+		//from 12.10.2018, we accept negative passwordLife as being used to force the reset of password
+// 		if($user->getDetail()->getPasswordLife() <= 0){
+// 			$user->getDetail()->setPasswordLife(null);
+// 		}
 
 		//the other password details are already changed if necessary in the setClearPassword
 		$user->getDetail()->setDescription($userEditRec->getFieldValue("description"));

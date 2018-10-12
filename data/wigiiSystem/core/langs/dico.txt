@@ -910,6 +910,8 @@ nbDatasDisplayedOn:#-Elements# display:#-Elements# affichés:::::::::
 nbDatasFound:found:trouvés:::::::::
 neverExpires:never:jamais:::::::::
 newPassword:New password:Nouveau mot de passe:::::::::
+samePassword:The new password must be different than the old one.:Le nouveau mot-de-passe doit être différent de l'ancien.:::::
+passwordDifferent:The password is not equal:Le mot de passe n'est pas identique::::::
 noGroupFound:#Group# not found:#Group# introuvable:::::::::
 noGroupFoundExplanation:#ThisGroup# is probably deleted or you don't have rigths to view it.:#ThisGroup# est probablement supprimé ou vous n'avez pas les droits pour le visualiser.:::::::::
 noParent:No parent:Aucun parent:::::::::
@@ -998,6 +1000,7 @@ approvedThe:Approved on :Approuvé le :::::::
 dismissedThe:Dismissed on :Rejeté le :::::::
 blockedThe:Blocked on :Bloqué le :::::::
 stayConnected:Stay connected:Rester connecté:::::::::
+stayConnectedExplanation:Tick this box only if you can garanty the security of the access of this device. Any one able to steal the content of your cookies would be able then to connect with your credentials from elswhere.:Activer cette case à cocher seulement si vous pouvez garantir la sécurité de l'accès de cet appareil. Toutes personnes ayant accès au contenu de vos cookies pourraient ensuite accéder à votre compte depuis un autre appareil.::::::
 subject:Subject:Sujet:::::::::
 switchMultipleSelectionMode:Switch to multiple selection mode:Switch dans le mode de sélection multiple:::::::::
 sys_creationDate:Created on:Créé le:::::::::
@@ -1343,7 +1346,7 @@ Transfer_tab_help_SDN:IRS only can see this tab:Seul les IRS peuvent voir cet on
 Contacts_tab_help_SDN:NRS and IRS have access to some #groups# in this tab:NRS et IRS peuvent accéder à certain #-groups# dans cet onglet:::::::::
 Filemanager_tab_help_SDN:NRS and IRS have access to some #groups# in this tab:NRS et IRS peuvent accéder à certain #-groups# dans cet onglet:::::::::
 
-passworLife_help:Define the number of days the password is valid. Leave it empty for no expiration. Type <b>'reset'</b> to reset the password date to today.:Défini le nombre de jour que le mot-de-passe reste valide. Laisser le champ vide pour définir aucune expiration. Typer 'reset' pour redéfinir la date de changement de password à aujourd'hui.::::::::
+passworLife_help:Examples\:<br />30 = password must reset every 30days<br />-1 = password must be reset on next login<br />-30 = password must reset at next login and must be redefined every 30 days<br />reset = reset the password date to today:Exemples\:<br />30 = le mot-de-passe doit être changé tous les 30 jours<br />-1 = le mot-de-passe doit être changé au prochain login<br />-30 = le mot-de-passe doit être changé au prochain login ainsi que tous les 30 jours<br />reset = défini la date de changement de password à aujourd'hui.::::::::
 
 feedbackAccessToElement:Feedback is about #element#:Le feedback est à propos #ofElement#:::::::::
 directAccessElement:Direct access to #thisElement#:Accès direct à #thisElement#:::::::::

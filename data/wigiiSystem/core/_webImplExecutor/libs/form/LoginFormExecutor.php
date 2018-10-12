@@ -57,7 +57,7 @@ class LoginFormExecutor extends FormExecutor {
 			else {
 				//Create an instance of ValueObject to send a hidden password
 				$authS->login($username, ValueObject::createInstance($pwd), $p->getWigiiNamespace()->getClient()->getClientName());
-			}			
+			}
 		} catch (AuthenticationServiceException $authE){
 			switch($authE->getCode()){
 				case AuthenticationServiceException::FORBIDDEN:
@@ -166,6 +166,7 @@ class LoginFormExecutor extends FormExecutor {
 	protected function doRenderForm($p, $exec){
 
 		$configS = $this->getWigiiExecutor()->getConfigurationContext();
+		$transS = ServiceProvider::getTranslationService();
 
 		$exec->addJsCode("clearTimeout(externalAccessTimeoutTimer); $.unblockUI();");
 
@@ -183,10 +184,14 @@ class LoginFormExecutor extends FormExecutor {
 		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog());
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
-
+		
+		//add explanation of risk after the stayConnected label
+		$exec->addJsCode("
+			$('#login_form__stayConnected .label').append(' <img style=\"margin-top:-4px;\" src=\"".SITE_ROOT_forFileUrl."images/icones/tango/22x22/apps/help-browser.png\" id=\"stayConnectedExplanation\"/>');
+			$('#login_form__stayConnected .label #stayConnectedExplanation').mouseenter(function(){ showHelp(this, \"".$transS->t($p, "stayConnectedExplanation")."\",null,\"fromCenter\",200,200,8000); }).mouseleave(function(){ hideHelp(); });
+		");
 		//if in the dialog
 		if($exec->getIdAnswer() =="elementDialog"){
-			$transS = ServiceProvider::getTranslationService();
 			$this->getWigiiExecutor()->openAsDialogForm(
 				$exec->getIdAnswer(), $this->getTotalWidth()+$this->getCorrectionWidth(),
 				'$("form", this).submit();', $transS->t($p, "login"),

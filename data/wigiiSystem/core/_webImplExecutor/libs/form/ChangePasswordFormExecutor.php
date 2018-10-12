@@ -67,6 +67,10 @@ class ChangePasswordFormExecutor extends FormExecutor {
 				$transS = ServiceProvider::getTranslationService();
 				$this->addErrorToField($transS->h($p, "invalidPassword"), "oldPassword");
 				return;
+			} else if($e->getCode() == UserAdminServiceException::INVALID_ARGUMENT){
+				$transS = ServiceProvider::getTranslationService();
+				$this->addErrorToField($transS->h($p, "invalidPassword").": ".$e->getMessage(), "newPassword");
+				return;
 			}
 			throw $e;
 		}

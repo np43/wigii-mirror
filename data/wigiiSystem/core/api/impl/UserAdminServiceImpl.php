@@ -3120,8 +3120,13 @@ WHERE (
 			$origPasswordLength = $userD->getPasswordLength();
 
 			//set new values:
-			$userD->setClearPassword($newPassword);
-
+			try{
+				$userD->setClearPassword($newPassword);
+			} catch (UserAdminServiceException $gaE){
+				if($gaE->getCode() == UserAdminServiceException::INVALID_PASSWORD){
+					throw new UserAdminServiceException($gaE->getMessage(), UserAdminServiceException::INVALID_ARGUMENT);
+				}
+			}
 			if($this->getMySqlFacade()->update($principal,
 				$this->getSqlForChangeOwnPassword($realUser, $oldPassword),
 				$dbCS) < 1){
@@ -3168,6 +3173,7 @@ WHERE (
 		$sqlB = $this->getMySqlFacade()->getSqlBuilder();
 		$sqlB->setTableForUpdate('Users');
 		$sqlB->updateValue('password', $userD->getPassword(), MySqlQueryBuilder::SQLTYPE_VARCHAR);
+		$sqlB->updateValue('passwordLife', $userD->getPasswordLife(), MySqlQueryBuilder::SQLTYPE_INT);
 		$sqlB->updateValue('passwordDate', $userD->getPasswordDate(), MySqlQueryBuilder::SQLTYPE_INT);
 		$sqlB->updateValue('passwordHistory', $userD->getPasswordHistory(), MySqlQueryBuilder::SQLTYPE_TEXT);
 		$sqlB->updateValue('passwordLength', $userD->getPasswordLength(), MySqlQueryBuilder::SQLTYPE_TEXT);
@@ -3314,6 +3320,7 @@ WHERE (
 		$sqlB->updateValue('info_lastLogout', $userD->getInfo_lastLogout(), MySqlQueryBuilder::SQLTYPE_INT);
 		$sqlB->updateValue('info_lastSessionContext', $userD->getInfo_lastSessionContext(), MySqlQueryBuilder::SQLTYPE_TEXT);
 		$sqlB->updateValue('info_resetSessionContext', $userD->getInfo_resetSessionContext(), MySqlQueryBuilder::SQLTYPE_BOOLEAN);
+		$sqlB->updateValue('passwordLife', $userD->getPasswordLife(), MySqlQueryBuilder::SQLTYPE_VARCHAR);
 		$sqlB->updateValue('password', $userD->getPassword(), MySqlQueryBuilder::SQLTYPE_VARCHAR);
 		$sqlB->updateValue('passwordDate', $userD->getPasswordDate(), MySqlQueryBuilder::SQLTYPE_INT);
 		$sqlB->updateValue('passwordHistory', $userD->getPasswordHistory(), MySqlQueryBuilder::SQLTYPE_TEXT);
@@ -3321,6 +3328,61 @@ WHERE (
 
 		$sqlB->setWhereClauseSingleId('id_user', $user->getId());
 
+		return $sqlB->getSql();
+	}
+	
+	public function persistUserLogoutInformation($principal, $user)
+	{
+		$this->executionSink()->publishStartOperation("persistUserLogoutInformation", $principal);
+		try
+		{
+			// checks authorization
+			$this->assertPrincipalAuthorizedForPersistUserLogoutInformation($principal);
+			
+			// ok, go on
+			$dbCS = $this->getDbAdminService()->getDbConnectionSettingsForClient($principal, $user->getWigiiNamespace()->getClient());
+			$returnValue = $this->getMySqlFacade()->update($principal,
+					$this->getSqlForPersistUserLogoutInformation($user),
+					$dbCS);
+		}
+		catch (UserAdminServiceException $uaE){
+			$this->executionSink()->publishEndOperationOnError("persistUserLogoutInformation", $uaE, $principal);
+			throw $uaE;
+		}
+		catch (AuthorizationServiceException $asE){
+			$this->executionSink()->publishEndOperationOnError("persistUserLogoutInformation", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			$this->executionSink()->publishEndOperationOnError("persistUserLogoutInformation", $e, $principal);
+			throw new UserAdminServiceException('',UserAdminServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("persistUserLogoutInformation", $principal);
+		return $returnValue;
+	}
+	/**
+	 * In this implementation, only the AuthenticationService is authorized to call this method
+	 */
+	protected function assertPrincipalAuthorizedForPersistUserLogoutInformation($principal)
+	{
+		$this->getAuthorizationService()->assertPrincipalIsAuthenticationService($principal);
+	}
+	protected function getSqlForPersistUserLogoutInformation($user)
+	{
+		if(is_null($user)) throw new UserAdminServiceException('user can not be null', UserAdminServiceException::INVALID_ARGUMENT);
+		$userD = $user->getDetail();
+		if(is_null($userD)) throw new UserAdminServiceException('user detail can not be null', UserAdminServiceException::INVALID_ARGUMENT);
+		
+		$sqlB = $this->getMySqlFacade()->getSqlBuilder();
+		$sqlB->setTableForUpdate('Users');
+		$sqlB->updateValue('info_lastLogout', $userD->getInfo_lastLogout(), MySqlQueryBuilder::SQLTYPE_INT);
+		$sqlB->updateValue('info_lastSessionContext', $userD->getInfo_lastSessionContext(), MySqlQueryBuilder::SQLTYPE_TEXT);
+		$sqlB->updateValue('info_resetSessionContext', $userD->getInfo_resetSessionContext(), MySqlQueryBuilder::SQLTYPE_BOOLEAN);
+		//on logout do not persist password info
+		
+		$sqlB->setWhereClauseSingleId('id_user', $user->getId());
+		
 		return $sqlB->getSql();
 	}
 

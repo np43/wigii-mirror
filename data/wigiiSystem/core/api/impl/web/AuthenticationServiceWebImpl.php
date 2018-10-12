@@ -235,7 +235,13 @@ class AuthenticationServiceWebImpl extends AuthenticationServiceImpl {
 		if(!$this->isNotBlacklisted($user)) return false; //throw new AuthenticationServiceException('User '.$username." is unauthorized in Admin config file for client ".$client->getClientName(), AuthenticationServiceException::FORBIDDEN);
 		//check if md5 is equal to password:
 		if($user->getDetail()->getPassword()!=$md5Pass) return false;
+		//check if password match minimum length
+		if(!defined('PASSWORD_minLength')) define ('PASSWORD_minLength', 8);
+		if(!defined('PASSWORD_maxLength')) define ('PASSWORD_maxLength', 32);
+		if($user->getDetail()->getPasswordLength()>PASSWORD_maxLength || $user->getDetail()->getPasswordLength()<PASSWORD_minLength) return false;
 		$returnValue = $this->createPrincipalInstance($user);
+		//check if user is not expired
+		if($returnValue->passwordExpired()) return false;
 		$userd = $returnValue->getAttachedUser()->getDetail();
 		$userd->setInfo_nbFailedLogin(0);
 		$userd->setInfo_lastFailedLogin(null);

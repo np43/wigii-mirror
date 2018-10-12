@@ -4626,6 +4626,8 @@ invalidCompleteCache();
 	
 		// try auto login using credentials cookie
 		$returnValue = $authS->autoLogin();
+		//if unsuccessfull, remove the cookie
+		if(!$returnValue) $exec->addJsCode($authS->getJsCodeToUnsetWigiiCredentialCookie($p));
 		// if not successfull, try auto login as public user
 		if(!$returnValue &&
 				(strpos($exec->findUrl(), 'JSCode/'.WigiiNamespace::EMPTY_NAMESPACE_URL.'/'.Module::EMPTY_MODULE_URL.'/wakeup')===false) &&

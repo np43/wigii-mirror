@@ -468,20 +468,42 @@ class UserDetail extends Model
 	{
 		$this->passwordDate = $this->formatValue($var);
 	}
+	//force the reset of the password at next login
+	public function forceResetPassword(){
+		if(!$this->passwordLife) {
+			$this->passwordLife = -1;
+		} else if($this->passwordLife > 0) {
+			$this->passwordLife = - $this->passwordLife;
+		}
+	}
+	public function isResetPasswordForced(){
+		return $this->passwordLife < 0;
+	}
+	//restore back the value of the passwordLife after password reset occured
+	public function actOnForceResetPassword(){
+		if($this->passwordLife == -1){
+			$this->passwordLife = null;
+		} else if($this->isResetPasswordForced()) {
+			$this->passwordLife = - $this->passwordLife;
+		}
+	}
+	
 	/**
 	 * Hashes given clear password and sets it
 	 */
 	public function setClearPassword($var)
 	{
-		if(!defined('PASSWORD_minLength')) define ('PASSWORD_minLength', 3);
+		if(!defined('PASSWORD_minLength')) define ('PASSWORD_minLength', 8);
 		if(!defined('PASSWORD_maxLength')) define ('PASSWORD_maxLength', 32);
-		ArgValidator::assertBoundedString('password length must be between '.PASSWORD_minLength.' and '.PASSWORD_maxLength,
-											$var, PASSWORD_minLength, PASSWORD_maxLength, UserAdminServiceException::INVALID_PASSWORD);
+		if(!ArgValidator::getInstance()->checkBoundedString($var, PASSWORD_minLength, PASSWORD_maxLength)){
+			throw new UserAdminServiceException('password length must be between '.PASSWORD_minLength.' and '.PASSWORD_maxLength, UserAdminServiceException::INVALID_PASSWORD);
+		}
 		$md5 = md5($var);
 		if($md5 != $this->getPassword()){
 			$this->setPasswordLength(strlen($var));
 			if($this->canModifyOwnPassword() || $this->getPasswordDate()==null){
 				$this->setPasswordDate(time()); //the date is set the first time but then never more if cannot change password (this is to keep the user expiration even with external authentication)
+				$this->actOnForceResetPassword();
 			}
 			$this->setPasswordHistory($md5.";".$this->getPasswordHistory());
 		}
