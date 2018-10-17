@@ -4619,6 +4619,7 @@ invalidCompleteCache();
         }
     }
 	
+    //this method is called at each request, even if principal is already logged in
 	protected function doAutoLoginIfNeeded() {
 		$this->executionSink()->publishStartOperation("doAutoLoginIfNeeded");
 		$authS = ServiceProvider :: getAuthenticationService();
@@ -4626,13 +4627,17 @@ invalidCompleteCache();
 	
 		// try auto login using credentials cookie
 		$returnValue = $authS->autoLogin();
-		//if unsuccessfull, remove the cookie
-		if(!$returnValue) $exec->addJsCode($authS->getJsCodeToUnsetWigiiCredentialCookie($p));
-		// if not successfull, try auto login as public user
-		if(!$returnValue &&
-				(strpos($exec->findUrl(), 'JSCode/'.WigiiNamespace::EMPTY_NAMESPACE_URL.'/'.Module::EMPTY_MODULE_URL.'/wakeup')===false) &&
-				(strpos($exec->findUrl(), 'loginForm/'.WigiiNamespace::EMPTY_NAMESPACE_URL.'/'.Module::ADMIN_MODULE.'/login')===false)) $returnValue = $authS->autoLoginAsPublic();
-		// if logged in, then stores roles in session
+		//if still not logged in
+		if($authS->isMainPrincipalMinimal()){
+			//if unsuccessfull, remove the cookie
+			$exec->addJsCode($authS->getJsCodeToUnsetWigiiCredentialCookie($p));
+			// if not successfull, try auto login as public user
+			if(	(strpos($exec->findUrl(), 'JSCode/'.WigiiNamespace::EMPTY_NAMESPACE_URL.'/'.Module::EMPTY_MODULE_URL.'/wakeup')===false) &&
+				(strpos($exec->findUrl(), 'loginForm/'.WigiiNamespace::EMPTY_NAMESPACE_URL.'/'.Module::ADMIN_MODULE.'/login')===false)){
+					$returnValue = $authS->autoLoginAsPublic();
+			}
+		}
+		// if auto logged in, then stores roles in session
 		if($returnValue) $this->storeAdminAndCalculatedRoleIdsInSession($authS->getMainPrincipal());
 		$this->executionSink()->publishEndOperation('doAutoLoginIfNeeded');
 		return $returnValue;
