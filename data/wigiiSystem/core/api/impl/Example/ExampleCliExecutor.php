@@ -72,5 +72,12 @@ class ExampleCliExecutor extends CliExecutor {
 	protected function hello($argc, $argv, $subArgIndex) {
 		$p = $this->getCurrentPrincipal();
 		$this->executionSink()->log("Hello ".$p->getUsername());
-	}	
+	}
+	
+	/**
+	 * Computes md5 hash from a given string
+	 */
+	protected function md5($argc, $argv, $subArgIndex) {		
+		$this->executionSink()->log(md5($argv[$subArgIndex]));
+	}
 }

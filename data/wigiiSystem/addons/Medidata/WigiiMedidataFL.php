@@ -238,8 +238,18 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$this->createInvoice45TiersPayant($returnValue, $customerOrder, $options);
 		// esr QR
 		$this->createInvoice45esrQR($returnValue, $customerOrder, $options);
-		// ivg
-		$this->createInvoice45ivg($returnValue, $customerOrder, $options);
+		// case management
+		switch($customerOrder->getFieldValue('caseLaw')){
+			case 'LAI':
+				// ivg
+				$this->createInvoice45ivg($returnValue, $customerOrder, $options);
+				break;
+			case 'LAA':
+				// uvg
+				$this->createInvoice45uvg($returnValue, $customerOrder, $options);
+				break;
+			// default node is not created.
+		}
 		// treatment
 		$this->createInvoice45Treatment($returnValue, $customerOrder, $options);
 		// services
@@ -402,9 +412,9 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($legalEntity, 'entityAddress','city'));
 		return $returnValue;
 	}
-	
+			
 	/**
-	 * Creates an invoice request ivg node
+	 * Creates an invoice request ivg (LAI) node
 	 * @param DOMElement $invoiceBody current invoice body node
 	 * @param Element $customerOrder element of type CustomerOrders sourcing the invoice creation
 	 * @param WigiiBPLParameter $options optional bag of options to configure the generation process
@@ -414,10 +424,28 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$legalEntity = $options->getValue('legalEntity');
 		$patient = $options->getValue('customer');
 		$returnValue = $this->createXmlElement($invoiceBody, 'ivg', $options);
-		$returnValue->setAttribute('case_id', 'XXXXcustomerOrder.case_id');
-		$returnValue->setAttribute('case_date', 'XXXXcustomerOrder.case_date');
+		$returnValue->setAttribute('case_id', $this->assertNotNull($customerOrder, 'caseNumber'));
+		$returnValue->setAttribute('case_date', $this->assertDateNotNull($customerOrder, 'caseDate'));
 		$returnValue->setAttribute('ssn', $this->assertNoSepNotNull($patient, 'noAVS'));
 		$returnValue->setAttribute('nif', $this->assertNoSepNotNull($legalEntity,'noNIF'));
+		return $returnValue;
+	}
+	
+	/**
+	 * Creates an invoice request uvg (LAA) node
+	 * @param DOMElement $invoiceBody current invoice body node
+	 * @param Element $customerOrder element of type CustomerOrders sourcing the invoice creation
+	 * @param WigiiBPLParameter $options optional bag of options to configure the generation process
+	 * @return DOMElement the created invoice ivg node
+	 */
+	protected function createInvoice45uvg($invoiceBody,$customerOrder,$options) {
+		$legalEntity = $options->getValue('legalEntity');
+		$patient = $options->getValue('customer');
+		$returnValue = $this->createXmlElement($invoiceBody, 'uvg', $options);
+		$returnValue->setAttribute('insured_id', $this->assertNotNull($customerOrder, 'caseNumber'));
+		$returnValue->setAttribute('case_id', $this->assertNotNull($customerOrder, 'caseNumber'));
+		$returnValue->setAttribute('case_date', $this->assertDateNotNull($customerOrder, 'caseDate'));
+		$returnValue->setAttribute('ssn', $this->assertNoSepNotNull($patient, 'noAVS'));
 		return $returnValue;
 	}
 	
