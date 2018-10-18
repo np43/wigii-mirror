@@ -529,7 +529,7 @@ else {
 		}
 	}
 	// Medair (CWE) 08.02.2018: adds support of ajax drop-downs
-	if(!$valExistsInOption && !empty($attributeMatchExp)) {
+	if(!$valExistsInOption && !empty($attributeMatchExp) && $val && $val!='none') {
 	    $attributeMatchExp = (string)$fieldXml['attributeMatchExp'];
 	    // parses attribute match exp to a valid FuncExp
 	    $attributeMatchExp = str2fx($attributeMatchExp);
@@ -552,7 +552,7 @@ else {
 	    }
 	}
 	// Adds non matching value as a new value if allowed
-	if($fieldXml["allowNewValues"]=="1" && !$valExistsInOption){
+	if($fieldXml["allowNewValues"]=="1" && !$valExistsInOption && $val && $val!='none'){
 		$labelForTitle = $transS->t($p, $val);
 		$label = $labelForTitle;
 		if(!$flex && strlen($label)>64) {
@@ -562,7 +562,7 @@ else {
 		$this->put('<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>');
 	}	
 	// CWE 25.02.2016: displays a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.
-	elseif(!$valExistsInOption && $val && !$isPublicPrincipal) {
+	elseif(!$valExistsInOption && $val && $val!='none' && !$isPublicPrincipal) {
 		$currentFlow = $this->evalfx(fx('ctlCurrentFlow'));
 		if($currentFlow == ElementEvaluator::ELEMENT_FLOW_COPY || $currentFlow == ElementEvaluator::ELEMENT_FLOW_EDIT) {
 			$deprecatedMessage=str_replace('$value$',"&apos;".$val."&apos;",$transS->t($p,'removeDeprecatedValue'));
