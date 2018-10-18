@@ -66,7 +66,84 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$returnValue->setFormExecutor($formExecutor);
 		return $returnValue;
 	}
-		
+	
+	/**
+	 * Copy a file from a the uploaded folder to the web client folder
+	 * FuncExp signature : <code>copyFileToClientWebFolder(booleanFieldName,fileFieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) booleanFieldName: string, a field name of type Booleans (indicates if file must be stored in public wcsm folder)
+	 * - Arg(1) fileFieldName: string, a field name of type Files
+	 * @return true if copy was successfull
+	 */
+	public function copyFileToClientWebFolder($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$this->assertFxOriginIsNotPublic();
+		if($nArgs < 2) throw new FuncExpEvalException('The getFileWebUrl function takes at least two argument which is the booleanFieldName and the fileFieldName', FuncExpEvalException::INVALID_ARGUMENT);
+		$returnValue = false;
+		$booleanFieldName = $this->evaluateArg($args[0]);
+		$fileFieldName = $this->evaluateArg($args[1]);
+		//lookup current element
+		$path = str_replace(["/","\\"],"",$this->getRecord()->getFieldValue($fileFieldName,"path"));
+		$oldRecord = $this->evaluateFuncExp(fx("getOldElement"));
+		if($oldRecord && $oldRecord->getFieldValue($fileFieldName,"path") && $oldRecord->getFieldValue($booleanFieldName)){
+			$oldFileName = str_replace(["/","\\"],"",$oldRecord->getFieldValue($fileFieldName,"name").$oldRecord->getFieldValue($fileFieldName,"type"));
+			@unlink(CLIENT_WEB_PATH."wcms/".$oldFileName);
+		}
+		if($path && $this->getRecord()->getFieldValue($booleanFieldName)){
+			$filename = str_replace(["/","\\"],"",$this->getRecord()->getFieldValue($fileFieldName,"name").$this->getRecord()->getFieldValue($fileFieldName,"type"));
+			$filepath =  CLIENT_WEB_PATH."wcms/".$filename;
+			if(!copy(FILES_PATH.$path,$filepath)) throw new ServiceException("Error on copying ".$filePath." in the Client web folder:".$filepath, ServiceException::FORBIDDEN);
+			$returnValue = true;
+		}
+		return $returnValue;
+	}
+	
+	private $siteMapCache = null;
+	protected function getCurrentSiteMap(){
+		$crtGroupId = $this->evaluateFuncExp(fx("cfgCurrentGroup", "id"));
+		if($this->siteMapCache==null) $this->siteMapCache = Array();
+		if($this->siteMapCache[$crtGroupId]) return $this->siteMapCache[$crtGroupId];
+		$sitemap = ServiceProvider::getDataFlowService ()->processDataSource (
+				$this->getPrincipal(),
+				elementPList (
+						lxInG(lxEq(fs("id"), $crtGroupId)),
+						lf ( NULL, lxEq ( fs ( "contentType" ), "siteMap"), NULL, 1, 1 ) ),
+				dfasl ( dfas ( "MapElement2ValueDFA", "setElement2ValueFuncExp", fs("siteUrl")) ),
+				true,null,'getCurrentSiteMap('.$crtGroupId.')'
+				);
+		$this->siteMapCache[$crtGroupId] = $sitemap;
+		return $sitemap;
+	}
+	
+	/**
+	 * Calculate the public url to access the file based on a File field and a boolean indicating if we use the wcsm public folder to store the content
+	 * FuncExp signature : <code>getFileWebUrl(statusFieldName,booleanFieldName,fileFieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) statusFieldName: string, a field name of type Attributs which must have the value == "published"
+	 * - Arg(1) booleanFieldName: string, a field name of type Booleans (indicates if file must be stored in public wcsm folder)
+	 * - Arg(2) fileFieldName: string, a field name of type Files
+	 * @return string : the url
+	 */
+	public function getFileWebUrl($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		$this->assertFxOriginIsNotPublic();
+		if($nArgs < 3) throw new FuncExpEvalException('The getFileWebUrl function takes at least three argument which is the statusFieldName, booleanFieldName and the fileFieldName', FuncExpEvalException::INVALID_ARGUMENT);
+		$published = $this->evaluateArg($args[0]);
+		if($this->getRecord()->getFieldValue($published)!="published") return null;
+		$booleanFieldName = $this->evaluateArg($args[1]);
+		$fileFieldName = $this->evaluateArg($args[2]);
+		$path = str_replace(["/","\\"],"",$this->getRecord()->getFieldValue($fileFieldName,"path"));
+		if($path){
+			$filename = str_replace(["/","\\"],"",$this->getRecord()->getFieldValue($fileFieldName,"name").$this->getRecord()->getFieldValue($fileFieldName,"type"));
+			if($this->getRecord()->getFieldValue($booleanFieldName)){
+				return SITE_ROOT.CLIENT_NAME."/wcms/".$filename;
+			} else {
+				return SITE_ROOT."wcms".$this->getCurrentSiteMap().$filename;
+			}
+		}
+		return null;
+	}
+	
 	// Content authoring and publishing
 	
 	/**
@@ -1564,7 +1641,7 @@ HTMLCSS;
 			case "intro": $returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); break;
 			case "logo": $returnValue = fsl(fs("contentLogo")); break;
 			case "menu": $returnValue = fsl(fs("contentMenu")); break;
-			case "image": $returnValue = fsl(fs("contentImage")); break;
+			case "image": $returnValue = fsl(fs("contentImage"),fs("storeInWebClientFolder"),fs("fileUrl")); break;
 			case "footer": $returnValue = fsl(fs("contentFooter")); break;
 			case "css": $returnValue = fsl(fs("contentCSS")); break;
 			case "js": $returnValue = fsl(fs("contentJS")); break;

@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<!-- Config version G132 -->
+<!-- Config version G308 -->
 <CMS>
 
 	<parameters
@@ -167,6 +167,8 @@
 			<groupContent groupEnd="1" expand="1"/>
 			<groupImage groupStart="1"><label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></groupImage>
 				<contentImage enableDynamicAttributes="1"  excelExport="auto" type="Files" require='eq(contentType,"image")' disabled='notNullAndNotEq(contentType,"image")' expand="1" displayContentInDetail="1" noLabel="1"><label_l01>Image or File</label_l01><label_l02>Image ou Fichier</label_l02></contentImage>
+				<storeInWebClientFolder labelWidth="300" enableDynamicAttributes="1" excelExport="auto" type="Booleans" require='0' disabled='notNullAndNotEq(contentType,"image")' expand="1" funcExp='ctlSeq(copyFileToClientWebFolder("storeInWebClientFolder","contentImage"),ctlIgnoreReturnValue())'><label_l01>Store content in client web folder</label_l01><label_l02>Stocker le contenu dans le dossier web du client</label_l02></storeInWebClientFolder>
+				<fileUrl labelWidth="300" type="Urls" onlyUrl="1" onlyInDetail="1" funcExp='newMap("url",getFileWebUrl("status","storeInWebClientFolder","contentImage"))' ><label_l01>Public url to access this file</label_l01><label_l02>Url publique d'accès du fichier</label_l02></fileUrl>
 			<groupImage groupEnd="1" expand="1"/>
 			<groupFooter groupStart="1"><label_l01>Footer</label_l01><label_l02>Pied de page</label_l02></groupFooter>
 				<contentFooter enableDynamicAttributes="1"  excelExport="auto" type="Texts" require='eq(contentType,"footer")' disabled='notNullAndNotEq(contentType,"footer")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" noLabel="1" ><label_l01>Page Footer</label_l01><label_l02>Pied de page</label_l02></contentFooter>
