@@ -489,16 +489,20 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 				$service->setAttribute('record_id',$servicesCount);
 				
 				$articleNumber = $this->assertNotNull($catalogOrder, 'articleNumber');
-				list($designation,$tariffType) = explode($articleNumber,$this->assertNotNull($catalogOrder, 'designation'));
+				$tariffNumber = $catalogOrder->getFieldValue('tariffNumber');
+				if(empty($tariffNumber)) $tariffNumber = $articleNumber;
+				list($designation,$tariffType) = explode($tariffNumber,$this->assertNotNull($catalogOrder, 'designation'));
 				$tariffType = trim($tariffType);
 				$remark = str_replace(array('OSM','ASTO'), "", $tariffType);
 				if(!empty($remark) && $remark==$tariffType) $remark=null;
 				if(!empty($remark)) $tariffType = str_replace($remark,"",$tariffType);
+				$coTariffType = $catalogOrder->getFieldValue('tariffType');
+				if(!empty($coTariffType) && $coTariffType!='none') $tariffType = $coTariffType; 
 				$tariffType = $this->tariffTypeMapping[$tariffType];
 				if(empty($tariffType)) throw new WigiiMedidataException('tariff type is empty for article '.$articleNumber,WigiiMedidataException::XML_VALIDATION_ERROR);
 				
 				$service->setAttribute('tariff_type',$tariffType);
-				$service->setAttribute('code',$articleNumber);				
+				$service->setAttribute('code',$tariffNumber);				
 				$service->setAttribute('name',trim($designation));
 				$service->setAttribute('session','1');
 				$service->setAttribute('quantity',$this->assertNumericNotNull($catalogOrder, 'quantity'));
