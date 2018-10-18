@@ -38,16 +38,27 @@ if($isAllDay){
 	$begTime = null;
 	$endTime = null;
 }
+$yearIsDifferent = $endDate && substr($begDate,0,4)!=substr($endDate,0,4);
+$monthIsDifferent = $endDate && substr($begDate,5,2)!=substr($endDate,5,2);
 if($fieldXml["displayAsTitle1"]=="1" || $fieldXml["displayAsTitle2"]=="1" || $fieldXml["displayAsTitle3"]=="1"){
-	$dateFormat = "ddd, dd mmm yyyy";
+	$begDateFormat = "ddd, dd";
+	$endDateFormat = "ddd, dd mmm yyyy";
 	$timeFontSize = "small";
 } else {
-	$dateFormat = "dd mmm yyyy";
+	$begDateFormat = "dd";
+	$endDateFormat = "dd mmm yyyy";
 	$timeFontSize = "x-small";
 }
+if(!$endDate || $begDate==$endDate || $monthIsDifferent || $yearIsDifferent){
+	$begDateFormat .= " mmm";
+}
+if(!$endDate || $begDate==$endDate || $yearIsDifferent){
+	$begDateFormat .= " yyyy";
+}
+
+// if begDate is empty, then consider all subfields as empty
 if(!empty($begDate)){
-	// si la date de début est vide, tous les champs sont considérés comme vides
-	$this->put(Dates::formatDisplay($begDate, $dateFormat, null));
+	$this->put(Dates::formatDisplay($begDate, $begDateFormat, null));
 
 	if($begDate == $endDate || empty($endDate))
 		null;
@@ -74,7 +85,7 @@ if(!empty($endDate) && $begDate != $endDate){
 	}
 
 	if ($begDate != $endDate)
-	$this->put(Dates::formatDisplay($endDate, $dateFormat, null));
+		$this->put(Dates::formatDisplay($endDate, $endDateFormat, null));
 
 	if(!$isAllDay && !empty($endTime)){
 		$this->put('<font style="font-size:'.$timeFontSize.';">');

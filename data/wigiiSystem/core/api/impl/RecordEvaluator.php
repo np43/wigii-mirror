@@ -65,10 +65,10 @@ class RecordEvaluator implements FuncExpEvaluator
 		unset($this->funcExpVM);
 		unset($this->callingFuncExpEvaluator);		
 		unset($this->currentFuncExp);
+		unset($this->trm);
 		// contextual information that can be kept between two evaluations
 		if(!$keepContext) {
 			//$this->debugLogger()->write('frees context');
-			unset($this->trm);
 			unset($this->formExecutor);
 			$this->lockedForEvaluation = false;
 		}		
@@ -494,6 +494,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	private function getTrm() {
 		if(!isset($this->trm)) {
 			$this->trm = TemplateRecordManager::createInstance();
+			$this->trm->setRecord($this->getRecord());
 		}
 		return $this->trm;
 	}

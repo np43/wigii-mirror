@@ -1436,9 +1436,17 @@ class TemplateRecordManager extends Model {
 	}
 	public function doFormatForTimeRanges($isAllDay, $begTime, $endTime, $begDate, $endDate, $doRegroupSimilarValue){
 		$now = time();
-
+		$yearIsDifferent = $endDate && substr($begDate,0,4)!=substr($endDate,0,4);
+		$monthIsDifferent = $endDate && substr($begDate,5,2)!=substr($endDate,5,2);
+		$begDateFormat = "d";
+		if(!$endDate || $begDate==$endDate || $monthIsDifferent || $yearIsDifferent){
+			$begDateFormat .= ".m";
+		}
+		if(!$endDate || $begDate==$endDate || $yearIsDifferent){
+			$begDateFormat .= ".Y";
+		}
 		$d = $m = $y = $h = $i = $s = null;
-		if($begTime!=null && Dates::fromString($begDate.(!$isAllDay ? " ".$begTime : ""), $d, $m, $y, $h, $i, $s)){
+		if($begDate!=null && Dates::fromString($begDate.(!$isAllDay ? " ".$begTime : ""), $d, $m, $y, $h, $i, $s)){
 			if($h || $i || $s) $time = "$h:$i:$s";
 			else $time = "";
 			$value = strtotime("$y/$m/$d $time");
@@ -1456,9 +1464,9 @@ class TemplateRecordManager extends Model {
 		if(!$doRegroupSimilarValue){
 			if ($value==null) return null;
 			if($isAllDay){
-				return date("d.m.Y", $value).($begDate!=$endDate && $endValue ? ' <img src="'.SITE_ROOT_forFileUrl.'images/gui/arrow-right-0.png" alt=">" /> '.date("d.m.Y", $endValue) : "");
+				return date($begDateFormat, $value).($begDate!=$endDate && $endValue ? ' - '.date("d.m.Y", $endValue) : "");
 			} else {
-				return date(($begTime ? "d.m.Y H:i" : "d.m.Y"), $value).($begDate!=$endDate && $endValue ? ' <img src="'.SITE_ROOT_forFileUrl.'images/gui/arrow-right-0.png" alt=">" /> '.date(($endTime ? "d.m.Y H:i" : "d.m.Y"), $endValue) : "");
+				return date(($begTime ? $begDateFormat." H:i" : $begDateFormat), $value).($begDate!=$endDate && $endValue ? ' - '.date(($endTime ? "d.m.Y H:i" : "d.m.Y"), $endValue) : "");
 			}
 		}
 		if ($value==null) $value = $this->t("empty");

@@ -634,7 +634,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 								fx('htmlEndTag', 'p'))
 						),
 				fx('htmlEndTag','div'),
-				fx('htmlStartTag','div','class', 'wigii-cms a-top'),$atopLink,fx('htmlEndTag','div'),
+				//fx('htmlStartTag','div','class', 'wigii-cms a-top'),$atopLink,fx('htmlEndTag','div'),
 				fx('htmlEndTag','div'),"\n",
 				fx('htmlStartTag','div','class','wigii-cms content'),fx('first',$fxHtmlContent,
 						fx('concat',fx('htmlStartTag', 'p'),$transS->t($principal,"cmsNoContentAvailable",null,$language).$languages[$language],' ',
@@ -643,6 +643,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 						),
 				//fx('htmlStartTag','p','style','text-align:center;'),$this->cms_getArticleSep($options),fx('htmlEndTag','p'),
 				fx('htmlEndTag','div'),"\n",
+				fx('htmlStartTag','div','class', 'wigii-cms a-top'),$atopLink,fx('htmlEndTag','div'),
+				fx('htmlStartTag','div','style', 'clear:both;'),fx('htmlEndTag','div'),
 				fx('htmlEndTag','div'),"\n")
 			)
 		);
@@ -1088,6 +1090,15 @@ JSPUBLICCOMMENTS;
 		$metaAuthor = $options->getValue('metaAuthor');
 		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";		
 		$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
+		$wigiiJS .= "<script type='text/javascript' >
+SITE_ROOT = '".SITE_ROOT."';
+CLIENT_NAME = '".CLIENT_NAME."';
+EXEC_answerRequestSeparator = '".ExecutionServiceImpl::answerRequestSeparator."';
+EXEC_answerParamSeparator = '".ExecutionServiceImpl::answerParamSeparator."';
+EXEC_requestSeparator = '".ExecutionServiceImpl::requestSeparator."';
+EXEC_foundInJSCache = '".ExecutionServiceImpl::answerFoundInJSCache."';
+wigii().initContext();
+</script>";
 		//$wigiiCSS = '<link rel="stylesheet" href="'.SITE_ROOT_forFileUrl.'/assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
 		$wigiiCSS = '';/* not compatible yet with CMS */
 		$returnValue = <<<HTMLHEAD
@@ -1168,7 +1179,7 @@ a 								{ text-decoration: none;}
 a:hover 						{ text-decoration: underline; }
 div.wigii-globalContainer 		{ min-height:100%; }
 div.wigii-globalContainer>div.wigii-cms
-								{ padding-top:10px; padding-bottom:30px; border-bottom:2px solid #fff; }
+								{ padding-top:10px; padding-bottom:20px; border-bottom:2px solid #fff; }
 div.wigii-cms-public-comments	{ width:$publicCommentsWidth; color:#$publicCommentsTextColor;background-color:#$publicCommentsBgColor;padding:0px 5px 0px 10px; box-sizing:border-box; position:fixed;right:0;border-left:2px solid #fff;}
 div.wigii-cms-public-comments:hover	{ overflow-y:auto;}
 div.wigii-cms-public-comments p	{ margin:0px;}
@@ -1177,8 +1188,8 @@ div.wigii-cms-public-comments-hr	{ background-color:#$publicCommentsTextColor; h
 div.wigii-cms-add-public-comments	{ cursor:pointer; text-align:center;margin-bottom:16px;}
 div.wigii-cms 					{ width:$articleWidth; box-sizing:border-box; }
 div.wigii-cms div.wigii-cms		{ width:100%; }
-div.wigii-cms  div.wigii-cms.title-content 	{ float:left; width:80%; }
-div.wigii-cms  div.wigii-cms.a-top { float:right; width:20%; margin-top:24px; margin-bottom:24px; font-size:small; text-align:right; }
+div.wigii-cms  div.wigii-cms.title-content 	{ /* not needed any more now the top link is at the bottom of articles: float:left; width:80%; */ }
+div.wigii-cms  div.wigii-cms.a-top { float:right; width:20%; margin-top:4px; font-size:small; text-align:right; }
 div.wigii-cms.content 			{ clear:left; margin:0px; }
 div.wigii-cms.content p			{ margin-top:6px; margin-bottom:6px; }
 div.wigii-globalContainer>div.wigii-footer.wigii-cms.content
@@ -1419,6 +1430,7 @@ HTMLCSS;
 					if($s) header('Content-type: '.$s);
 					$s = $element->getFieldValue($fieldName,'size');
 					if($s) header('Content-Length: '.$s);
+					header('Cache-Control: private, max-age=0, no-cache');
 					
 					$path = FILES_PATH.$element->getFieldValue($fieldName, "path");
 					if(!file_exists($path)) echo $element->getFieldValue($fieldName, "content");
