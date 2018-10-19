@@ -480,9 +480,10 @@ addElementButton:Add:Ajouter:::::
 exportElementButton:Export:Exporter:::::::
 emailingButton:Email:Email:::::::
 emailingMultipleAdvanced:Advanced emailing:Emailing avancé:
+uploadedFileSize:File size (:La taille du fichier (::::::
 totalAttachementFilesize:Total attached file size (:La taille totale des fichiers attachés(::::::
 totalAttachementFilesizeExceed:) cannot exceed :) ne peut excéder :::::
-toAttacheBigerFilesLinkItInTheEmail:To attach bigger files link them in the email using the link icon with which you can use to upload on the server.:Pour attacher de plus gros fichier veuillez faire un lien dans l'email en utilisant le bouton lien avec lequel vous pouvez uploader directement sur le serveur.:::::
+toAttacheBigerFilesLinkItInTheEmail:To attach bigger files link them in the email using the link icon.:Pour attacher de plus gros fichier veuillez faire un lien dans l'email en utilisant le bouton lien.:::::
 multipleUnsubscribeEmails:Unsubscribe:Désinscrire:
 multipleUnsubscribeEmails_help:All selected #elements# email addresses matching the unsubscribe email list will be deleted.:Toutes les adresses emails des #-elements# sélectionnés correspondant à la liste d'email de désinscription seront effacés.:
 unsubscribeEmails:Unsubscribe:Désinscrire:

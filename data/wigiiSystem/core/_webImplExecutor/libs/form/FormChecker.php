@@ -193,7 +193,7 @@ class FormChecker implements FieldListVisitor {
 		//pas de sens d'avoir un nom sans fichier... ATTENTION en multipleEdit il ne devrait jamais y avoir la possibilité de changer qqch à un Files, car ça n'a pas de sens
 		//we need those checks here, because some of the hidden subfields of a file are require. --> it is important
 		//to empty them before checking if the file has content based only on values in require subfields.
-		$oldBoxId=null;
+		$oldBoxId=null;$maxFileSize=0;
 		if($dataTypeName == "Files"){
 			if((!($fieldParams["htmlArea"]=="1" || $fieldParams["allowAudioRecording"]=="1") && $get[$fieldName."_path"]==null) || ($fieldParams["htmlArea"]=="1" && $get[$fieldName."_textContent"]==null) || ($fieldParams["allowAudioRecording"]=="1" && $get[$fieldName."_path"]==null && $get[$fieldName."_audioContent"]==null)){
 				$get[$fieldName."_name"] = null;
@@ -272,6 +272,8 @@ class FormChecker implements FieldListVisitor {
 			// records old Box ID if present
 			$oldBoxId = $recBag->getValue($ff->getRecord()->getId(), $dataTypeName, $fieldName, "path");
 			$oldBoxId = (strpos($oldBoxId,"box://")===0?str_replace("box://", '', $oldBoxId):null);
+			// Medair (CWE) 19.10.2018: checks if the file size is limited
+			$maxFileSize = (int)$fieldParams["maxFileSize"];			
 		}
 
 		//we need to go on each subfield then
@@ -373,6 +375,14 @@ class FormChecker implements FieldListVisitor {
 				$ff->addErrorToField($errorText, $fieldName);
 			}
 
+			// Medair (CWE) 19.10.2018: checks if the file size is limited
+			if($dataTypeName=="Files" && $subFieldName=="size" && $maxFileSize>0) {
+			    $size = $recBag->getValue($ff->getRecord()->getId(), $dataTypeName, $fieldName, "size");
+			    if($size > $maxFileSize) {
+			        $ff->addErrorToField($transS->t($p, "uploadedFileSize").formatFileSize($size).$transS->t($p, "totalAttachementFilesizeExceed").formatFileSize($maxFileSize), $fieldName);
+			    }
+			}
+			
 			/**
 			 * Check filled subField
 			 */
