@@ -468,7 +468,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// if not found, loads SiteMap for current WigiiNamespace
 			if(!$returnValue) {
 				$this->siteMap = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)),
-						lf(fsl(fs('siteUrl'),fs('folderId')), lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')))),
+						lf(fsl(fs('siteUrl'),fs('folderId')), lxAnd(lxEq(fs('contentType'),'siteMap'),lxIn(fs('status'),['published','testing'])))),
 						dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','siteUrl','setValueField','folderId'))
 						);
 				// stores siteMap into session
@@ -517,7 +517,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// if not found, loads forwardMap for current WigiiNamespace
 			if(!$returnValue) {
 				$this->forwardMap = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)),
-						lf(fsl(fs('fromUrl'),fs('toUrl')), lxAnd(lxEq(fs('contentType'),'forward'),lxEq(fs('status'),'published')))),
+						lf(fsl(fs('fromUrl'),fs('toUrl')), lxAnd(lxEq(fs('contentType'),'forward'),lxIn(fs('status'),['published','testing'])))),
 						dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','fromUrl','setValueField','toUrl'))
 						);
 				// stores forwardMap into session
@@ -630,7 +630,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
 				lf(
 					fsl(fs('contentType'),fs('contentTitle'),fs('contentHTML'),fs('contentNCD'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
-					lxAnd(lxIn(fs('contentType'),array('content','ncd')),lxEq(fs('status'),'published')),
+						lxAnd(lxIn(fs('contentType'),array('content','ncd')),lxIn(fs('status'),['published','testing'])),
 					fskl(fsk('contentPosition'))
 				)),
 				dfasl(
@@ -1054,7 +1054,7 @@ JSPUBLICCOMMENTS;
 	protected function cms_getIntro($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(fsl(fs('siteTitle'),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG','url')),
-						lxAnd(lxEq(fs('contentType'),'intro'),lxEq(fs('status'),'published')),
+						lxAnd(lxEq(fs('contentType'),'intro'),lxIn(fs('status'),['published','testing'])),
 						null,1,1)),
 				dfasl(dfas("NullDFA")));
 		if(isset($returnValue)) $returnValue = $returnValue->getDbEntity();
@@ -1068,7 +1068,7 @@ JSPUBLICCOMMENTS;
 	protected function cms_getLogo($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(fsl(fs('contentLogo')),
-						lxAnd(lxEq(fs('contentType'),'logo'),lxEq(fs('status'),'published')),
+						lxAnd(lxEq(fs('contentType'),'logo'),lxIn(fs('status'),['published','testing'])),
 						null,1,1)),
 				dfasl(
 						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentLogo')),
@@ -1086,7 +1086,7 @@ JSPUBLICCOMMENTS;
 	protected function cms_getMenu($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(fsl(fs('contentMenu')),
-						lxAnd(lxEq(fs('contentType'),'menu'),lxEq(fs('status'),'published')),
+						lxAnd(lxEq(fs('contentType'),'menu'),lxIn(fs('status'),['published','testing'])),
 						null,1,1)),
 				dfasl(
 						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentMenu')),
@@ -1104,7 +1104,7 @@ JSPUBLICCOMMENTS;
 	protected function cms_getFooter($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(fsl(fs('contentFooter')),
-						lxAnd(lxEq(fs('contentType'),'footer'),lxEq(fs('status'),'published')),
+						lxAnd(lxEq(fs('contentType'),'footer'),lxIn(fs('status'),['published','testing'])),
 						null,1,1)),
 				dfasl(
 						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentFooter')),
@@ -1123,7 +1123,7 @@ JSPUBLICCOMMENTS;
 		return sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(
 						fsl(fs('contentCSS')),
-						lxAnd(lxEq(fs('contentType'),'css'),lxEq(fs('status'),'published'))
+						lxAnd(lxEq(fs('contentType'),'css'),lxIn(fs('status'),['published','testing']))
 						)),
 				dfasl(
 						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentCSS')),
@@ -1140,7 +1140,7 @@ JSPUBLICCOMMENTS;
 		return sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(
 						fsl(fs('contentJS')),
-						lxAnd(lxEq(fs('contentType'),'js'),lxEq(fs('status'),'published'))
+						lxAnd(lxEq(fs('contentType'),'js'),lxIn(fs('status'),['published','testing']))
 						)),
 				dfasl(
 						dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs('contentJS')),
@@ -1349,7 +1349,7 @@ HTMLCSS;
 	protected function cms_getSiteMap($options) {
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf(fsl(fs('siteUrl'),fs('forceHeight'),fs('forceHeightFirst'),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('publicCommentsBgColor'),fs('publicCommentsTextColor'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs('supportedLanguage'),fs('defaultLanguage')),
-						lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')),
+						lxAnd(lxEq(fs('contentType'),'siteMap'),lxIn(fs('status'),['published','testing'])),
 						null,1,1)),
 				dfasl(dfas("NullDFA")));
 		if(isset($returnValue)) $returnValue = $returnValue->getDbEntity();
@@ -1365,13 +1365,13 @@ HTMLCSS;
 		$principal = $this->getPrincipal();
 		// gets published site maps
 		$returnValue = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)),
-			lf(fsl(fs('siteUrl'),fs('folderId')), lxAnd(lxEq(fs('contentType'),'siteMap'),lxEq(fs('status'),'published')))),
+			lf(fsl(fs('siteUrl'),fs('folderId')), lxAnd(lxEq(fs('contentType'),'siteMap'),lxIn(fs('status'),['published','testing'])))),
 			dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','siteUrl','setValueField','folderId'))
 		);
 		if(!isset($returnValue)) $returnValue = array();
 		// gets all published forward urls
 		$forwardUrls = sel($principal,elementPList(lxInGR($this->getSiteMapLx($principal)),
-			lf(fsl(fs('fromUrl'),fs('toUrl')), lxAnd(lxEq(fs('contentType'),'forward'),lxEq(fs('status'),'published')))),
+			lf(fsl(fs('fromUrl'),fs('toUrl')), lxAnd(lxEq(fs('contentType'),'forward'),lxIn(fs('status'),['published','testing'])))),
 			dfasl(dfas('ArrayBufferDFA','setUnpair', true, 'setKeyField','fromUrl','setValueField','toUrl'))
 		);
 		if(!isset($forwardUrls)) $forwardUrls = array();
@@ -1454,7 +1454,7 @@ HTMLCSS;
 				
 				$element = sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
 						lf($fslForFetch,
-								lxAnd(lxEq(fs_e('id'),$fileName),lxEq(fs($fieldName,'type'),'.nohtml.txt'),lxEq(fs('status'),'published')),
+								lxAnd(lxEq(fs_e('id'),$fileName),lxEq(fs($fieldName,'type'),'.nohtml.txt'),lxIn(fs('status'),['published','testing'])),
 								null,1,1)),
 						dfasl(dfas("NullDFA")));
 				
@@ -1496,7 +1496,7 @@ HTMLCSS;
 				
 				$element = sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
 						lf($fslForFetch,
-								lxAnd(lxEq(fs($fieldName,'name'),$fileName),lxEq(fs($fieldName,'type'),$fileExt),lxEq(fs('status'),'published')),
+								lxAnd(lxEq(fs($fieldName,'name'),$fileName),lxEq(fs($fieldName,'type'),$fileExt),lxIn(fs('status'),['published','testing'])),
 								null,1,1)),
 						dfasl(dfas("NullDFA")));
 				
@@ -1623,6 +1623,8 @@ HTMLCSS;
 			$fieldName = $field->getFieldName();
 			if($fieldName == 'contentType') continue;
 			if($fieldName == 'status') continue;
+			if($fieldName == 'idCMS') continue;
+			if($fieldName == 'archiveSummary') continue;
 			if($fieldName == 'comments') continue;
 			if(!$fslForUpdate->containsFieldSelector($fieldName)) {
 				if(!is_null($field->getDataType()) && $formBag->isFilled($fieldName)) {

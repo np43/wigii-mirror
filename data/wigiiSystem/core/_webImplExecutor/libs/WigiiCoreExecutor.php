@@ -10639,6 +10639,7 @@ onUpdateErrorCounter = 0;
 						//copy
 						else {							
 							//recopy the fixed bag as normal bag without elementId
+							$element->setDynamicAttribute("previousId", ElementDynAttrFixedValueImpl::createInstance($element->getId()),false);
 							$element->setId(0);
 							$element->getWigiiBag()->loadFromFixedBag();
 							// CWE 30.06.2018 executes any Element_beforeCopyExp if defined
