@@ -103,6 +103,12 @@ class WigiiExecutor extends WigiiCoreExecutor {
 			default: return parent::shouldByPassFooter($action, $parameters);
 		}
 	}
+	protected function shouldByPassAutoLogin($action) {
+		switch ($action) {
+			case 'fx': return true;
+			default: return parent::shouldByPassAutoLogin($action);
+		}
+	}
 	
 	// WebExecutor provider
 	

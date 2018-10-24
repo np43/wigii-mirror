@@ -4597,7 +4597,10 @@ invalidCompleteCache();
 				return false;
 		}
 	}
-
+	protected function shouldByPassAutoLogin($action) {
+		return false;
+	}
+	
     /**
      * Return true if the current action requires a responsive HTML rendering
      * Typcally used in the public access to be compatible with mobile
@@ -4625,8 +4628,9 @@ invalidCompleteCache();
 		$authS = ServiceProvider :: getAuthenticationService();
 		$exec = ServiceProvider :: getExecutionService();
 	
-		// try auto login using credentials cookie
-		$returnValue = $authS->autoLogin();
+		// try auto login using credentials cookie, except if shouldByPassAutoLogin
+		if($this->shouldByPassAutoLogin($exec->getCrtAction())) $returnValue = false;
+		else $returnValue = $authS->autoLogin();
 		//if still not logged in
 		if($authS->isMainPrincipalMinimal()){
 			//if unsuccessfull, remove the cookie
