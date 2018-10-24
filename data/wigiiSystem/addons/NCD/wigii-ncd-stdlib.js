@@ -1734,7 +1734,8 @@ wncd.AgileStoryBoard = function(container, options) {
 			story.label=element.label.value;
 			story.description=element.description.value;
 			story.status=element.status.value;
-			story.position=element.position.value;
+			if(element.position) story.position=element.position.value;
+			else story.position = 0;
 		};
 	}
 	if(!self.options.renderStory) self.options.renderStory = function(storyBoard,storyHtml,story) {		
