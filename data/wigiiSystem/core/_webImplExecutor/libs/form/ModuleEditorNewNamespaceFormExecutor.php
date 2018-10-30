@@ -114,6 +114,7 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 	protected function actOnCheckedRecord($p, $exec) {
 		$transS = ServiceProvider::getTranslationService();
 		$wNAS = ServiceProvider::getWigiiNamespaceAdminService();
+		$mAS = ServiceProvider::getModuleAdminService();
 		$configS = $this->getWigiiExecutor()->getConfigurationContext();
 		$userAS = ServiceProvider::getUserAdminService();
 		$groupAS = ServiceProvider::getGroupAdminService();
@@ -145,8 +146,7 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 		foreach($wigiiNamespaceNames as $wigiiNamespaceName){
 			$wigiiNamespaceName = trim($wigiiNamespaceName);
 			$wigiiNamespace = $wNAS->getWigiiNamespace($p, $wigiiNamespaceName);
-			$moduleAccess = $user->getDetail()->getModuleAccess();
-			
+			$moduleAccess = $mAS->formatModuleArray($p, $rec->getFieldValue("moduleEditorNewNamespaceTabs"));
 			//create NAdmin role if not existing
 			$NAdminId = $userAS->doesUsernameExist($p, "NAdmin@".$wigiiNamespace->getWigiiNamespaceName());
 			if(!$NAdminId){
@@ -167,7 +167,11 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 				}
 			}
 			//merge modules for the nadmin
-			$NAdminModuleAccess = array_merge($nAdmin->getDetail()->getModuleAccess(),$moduleAccess);
+			if($nAdmin->getDetail()->getModuleAccess()){
+				$NAdminModuleAccess = array_merge($nAdmin->getDetail()->getModuleAccess(),$moduleAccess);
+			} else {
+				$NAdminModuleAccess = $moduleAccess;
+			}
 			$nAdmin->getDetail()->setModuleAccess($NAdminModuleAccess);
 			$nAdmin->getDetail()->setGroupCreator($NAdminModuleAccess);
 			$nAdmin->getDetail()->setRootGroupCreator($NAdminModuleAccess);
