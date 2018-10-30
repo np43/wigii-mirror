@@ -195,6 +195,8 @@ class ExportExcelFormExecutor extends ExportFormExecutor {
 			$transS->t($p, "ok"), $transS->t($p, "cancel"), null);
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 
 		$exec->addJsCode("$('#".$this->getFormId()."').parents('.ui-dialog').find('button:last').focus();");
 	}

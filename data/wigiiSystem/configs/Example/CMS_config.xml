@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<!-- Config version G308 -->
+<!-- Config version G313 -->
 <CMS>
 
 	<parameters
@@ -20,7 +20,7 @@
 
 		ExcelExport_enableSysDate="0"
 		ExcelExport_enableCreationSysDate="0"
-		ExcelExport_enableId="0"
+		ExcelExport_enableId="1"
 
 		Element_enableLockedStatus="0"
 		Element_enableImportant1Status="0"
@@ -190,10 +190,59 @@
 				<attribute>writing<label_l01>Writing</label_l01><label_l02>En rédaction</label_l02></attribute>
 				<attribute>published<label_l01>Published</label_l01><label_l02>Publié</label_l02></attribute>
 			</status>
+			<idCMS enableDynamicAttributes="1" hidden="isNull(idCMS.url)" clearOnCopy="1" onlyUrl="1" defaultExp='newMap("target","_blank","url",concat(sysSiteRootUrl(),sysCrtWigiiNamespace("url"),"/",sysCrtModule("url"),"/item/",__element.previousId))' type="Urls"><label_l01>Link to published article</label_l01><label_l02>Lien vers l'article publié</label_l02></idCMS>
 			<comments excelExport="none" type="Blobs" require="0" isInLine="1" htmlArea="1" activateHtmlArea="0" isJournal="1" allowOnReadOnly="0" height="400" clearOnCopy="1" funcExp='trackHistory(status)'><label_l01>Comments</label_l01><label_l02>Commentaires</label_l02></comments>
 		<groupRight groupEnd="1" expand="1" noFieldset="1" />		
-		<onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='ctlSeq(cms_authoringOnSave(),logTrue())' />
-		<contentSummary type="Strings" hidden="1" htmlArea="0" funcExp='implode(" ",siteUrl,cms_summarize(contentTitle),concat(contentImage.name,contentImage.type),implode(concat(" -",txtGt()," "),fromUrl,toUrl))'><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentSummary>
+		<onSaveFuncExp excelExport="none" type="Booleans" hidden="1" clearOnCopy="1" funcExp='
+	ctlSeq(
+		ctlIf(
+			logNot(eltAttr("callFromCMS")),
+			ctlSeq(
+				ctlIf(
+					logAnd(eq(status,"testing"),isNotNull(idCMS.url)),
+					updateElementFields(
+						getExplodedValue("/",idCMS.url,"100"),
+						newMap(
+							"status","archived",
+							"archiveSummary",NULL,
+							"__element.callFromCMS",logTrue()
+						)
+					)
+				),
+				ctlIf(
+					logAnd(eq(status,"published"),isNotNull(idCMS.url)),
+					ctlSeq(
+						updateElementFields(
+							getExplodedValue("/",idCMS.url,"100"),
+							newMap(
+								"status","archived",
+								"archiveSummary",concat("Archivé le ",date("Y.m.d H:i")),
+								"__element.callFromCMS",logTrue()
+							)
+						),
+						setVal(idCMS.url,NULL)
+					)
+				),
+				ctlIf(
+					logAnd(eq(status,"writing"),isNotNull(idCMS.url)),
+					ctlSeq(
+						updateElementFields(
+							getExplodedValue("/",idCMS.url,"100"),
+							newMap(
+								"status","published",
+								"archiveSummary",NULL,
+								"__element.callFromCMS",logTrue()
+							)
+						)
+					)
+				),
+				cms_authoringOnSave()
+			)
+		),
+		logTrue()
+	)' />
+		<archiveSummary type="Strings" hidden="1" htmlArea="0" />
+		<contentSummary type="Strings" hidden="1" htmlArea="0" funcExp='implode(" ",archiveSummary,siteUrl,cms_summarize(contentTitle),concat(contentImage.name,contentImage.type),implode(concat(" -",txtGt()," "),fromUrl,toUrl))'><label_l01>Content</label_l01><label_l02>Contenu</label_l02></contentSummary>
 	</fields>
 
 	<selectSearchBar>

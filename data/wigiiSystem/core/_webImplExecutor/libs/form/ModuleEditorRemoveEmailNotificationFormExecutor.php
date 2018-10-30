@@ -100,6 +100,8 @@ class ModuleEditorRemoveEmailNotificationFormExecutor extends FormExecutor {
 		
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
 		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
+		
 		$exec->addJsCode("$('#moduleEditorRemoveEmailNotification_form__freeText').addClass('R');");
 	}
 }

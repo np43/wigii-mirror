@@ -112,6 +112,8 @@ class HtmlContentGroupFormExecutor extends FormExecutor {
 			$transS->t($p, "ok"), $transS->t($p, "cancel"), $cancelJsCode);
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 	}
 }
 

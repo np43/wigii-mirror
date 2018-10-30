@@ -410,6 +410,8 @@ $('#filtersDialog').parent().append($('#addFieldMenu')).append($('#addGroupOpera
 
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 	}
 	
 	

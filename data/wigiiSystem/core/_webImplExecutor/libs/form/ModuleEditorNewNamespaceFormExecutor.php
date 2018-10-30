@@ -41,6 +41,7 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 	protected function getUser($p){
 		if(!isset($this->user)){
 			$rec = $this->getRecord();
+			$wigiiNamespaceName = trim(preg_split("/[,;]+/", $rec->getFieldValue("moduleEditorNewNamespaceName"))[0]);//take first namespace
 			$this->user = $this->createUser($p, $rec->getFieldValue("username"), $rec->getFieldValue("moduleEditorNewNamespaceName"), $rec->getFieldValue("moduleEditorNewNamespaceTabs"));
 		}
 		return $this->user;
@@ -52,23 +53,34 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 		$argValid = TechnicalServiceProvider::getArgValidator();
 		$rec = $this->getRecord();
 
-		$wigiiNamespaceName = $rec->getFieldValue("moduleEditorNewNamespaceName");
-		$wigiiNamespace = $wNAS->getWigiiNamespace($p, $wigiiNamespaceName);
-		$username = $rec->getFieldValue("username");
-
+		
+		//lookup if multinamespace are defined
+		$wigiiNamespaceNames = preg_split("/[,;]+/", $rec->getFieldValue("moduleEditorNewNamespaceName"));
+		
 		//check the syntax of the wigiiNamespace name
-		if($wigiiNamespaceName && !$argValid->checkAlphaNumSpaceDashUnderscorePoint($wigiiNamespaceName, 2, 64)){
-			$this->addErrorToField($transS->h($p, "wigiiNamespaceWrongFormat"), "moduleEditorNewNamespaceName");
+		if($wigiiNamespaceNames){
+			$aNamespaceWithError = false;
+			foreach($wigiiNamespaceNames as $wigiiNamespaceName){
+				$wigiiNamespaceName = trim($wigiiNamespaceName);
+				$wigiiNamespace = $wNAS->getWigiiNamespace($p, $wigiiNamespaceName);
+				if($wigiiNamespaceName && !$argValid->checkAlphaNumSpaceDashUnderscorePoint($wigiiNamespaceName, 2, 64)){
+					$aNamespaceWithError = true;
+				}
+				//if namespace already exist, then only update existing namespace with adding the new selected modules
+		// 		//check that the namespace is not existing
+		// 		if($wigiiNamespaceName && $userAS->doesWigiiNamespaceExist($p, $wigiiNamespace)){
+		// 			$this->addErrorToField($transS->h($p, "wigiiNamespaceAlreadyExist"), "moduleEditorNewNamespaceName");
+		// 		}
+			}
+			if($aNamespaceWithError) $this->addErrorToField($transS->h($p, "wigiiNamespaceWrongFormat"), "moduleEditorNewNamespaceName");
 		}
+		
 		//check the syntax of the username
+		$username = $rec->getFieldValue("username");
+		
 		if($username && !$argValid->checkNoSpecialCharsString($username, USERNAME_minLength, USERNAME_maxLength, false)){
 			$this->addErrorToField($transS->h($p, "usernameWrongFormat"), "username");
 		}
-		//if namespace already exist, then only update existing namespace with adding the new selected modules
-// 		//check that the namespace is not existing
-// 		if($wigiiNamespaceName && $userAS->doesWigiiNamespaceExist($p, $wigiiNamespace)){
-// 			$this->addErrorToField($transS->h($p, "wigiiNamespaceAlreadyExist"), "moduleEditorNewNamespaceName");
-// 		}
 		//check if the user exists that password or authentication server are defined
 		if(!$userAS->doesUsernameExist($p, $username)){
 			//password or authentication server needs to be filled up
@@ -101,15 +113,14 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 
 	protected function actOnCheckedRecord($p, $exec) {
 		$transS = ServiceProvider::getTranslationService();
+		$wNAS = ServiceProvider::getWigiiNamespaceAdminService();
 		$configS = $this->getWigiiExecutor()->getConfigurationContext();
 		$userAS = ServiceProvider::getUserAdminService();
 		$groupAS = ServiceProvider::getGroupAdminService();
 		$rec = $this->getRecord();
 		$user = $this->getUser($p);
-		$moduleAccess = $user->getDetail()->getModuleAccess();
-		$wigiiNamespace = $user->getWigiiNamespace();
 		$configPrefix = $rec->getFieldValue("moduleEditorNewNamespaceConfigPrefixToUse");
-
+		
 		//create user if not existing
 		$userId = $userAS->doesUsernameExist($p, $user->getUsername());
 		if(!$userId){
@@ -125,103 +136,114 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 			$userP = $userAS->getUser($p, $userId);
 			$user = $userP->getDbEntity();
 		}
-		//create NAdmin role if not existing
-		$NAdminId = $userAS->doesUsernameExist($p, "NAdmin@".$wigiiNamespace->getWigiiNamespaceName());
-		if(!$NAdminId){
-			$nAdmin = $this->createUser($p, "NAdmin@".$wigiiNamespace->getWigiiNamespaceName(), $wigiiNamespace->getWigiiNamespaceName(), array_merge(array("Admin"), array_keys($moduleAccess)));
-			$nAdmin->setRole(true);
-			//need to add every admin rights
-			$nAdmin->getDetail()->setUserCreator(true);
-			$nAdmin->getDetail()->setAdminCreator(true);
-			$nAdmin->getDetail()->setReadAllUsersInWigiiNamespace(true);
-			$nAdmin->getDetail()->setWigiiNamespaceCreator(false);
-			$nAdmin->getDetail()->setModuleEditor(true);
-		} else {
-			$nAdminP = $userAS->getUser($p, $NAdminId);
-			$nAdmin = $nAdminP->getDbEntity();
-			if(!$rec->getFieldValue("moduleEditorNewNamespaceOverwriteExistingConfig")){
-				//only keep the modules not existing already in the nadmin (for the group creation) 
-				$moduleAccess = array_diff_key($moduleAccess,$nAdmin->getDetail()->getModuleAccess());
-			}
-		}
-		//merge modules for the nadmin
-		$NAdminModuleAccess = array_merge($nAdmin->getDetail()->getModuleAccess(),$moduleAccess);
-		$nAdmin->getDetail()->setModuleAccess($NAdminModuleAccess);
-		$nAdmin->getDetail()->setGroupCreator($NAdminModuleAccess);
-		$nAdmin->getDetail()->setRootGroupCreator($NAdminModuleAccess);
-		$nAdmin->getDetail()->setReadAllGroupsInWigiiNamespace($NAdminModuleAccess);
-		$userAS->persistUser($p, $nAdmin);
-
-		//link user to NAdmin
-//		fput("user ".$user->getUsername()." id ".$user->getId()." nadmin: ".$nAdmin->getId());
-		$userAS->setUserOwnership($p, $nAdmin->getId(), $user->getId());
-		$userAS->setUserRole($p, $user->getId(), $nAdmin->getId());
-
-		//create 1 folder per tab
+		
+		$wigiiNamespaceNames = preg_split("/[,;]+/", $rec->getFieldValue("moduleEditorNewNamespaceName"));
 		$supportName = $rec->getFieldValue("moduleEditorNewNamespaceSupportName");
 		$supportEmail = $rec->getFieldValue("moduleEditorNewNamespaceSupportEmail");
+		
 		$configFileSummary = Array();
-		foreach($moduleAccess as $module){
-			//create or get id of root Groups
-			$group = $groupAS->getOrCreateRootGroupByName($p, $module, $wigiiNamespace, $transS->t($p, $module->getModuleName()));
-			$trash = $groupAS->getOrCreateRootGroupByName($p, $module, $wigiiNamespace, $transS->t($p, "trashbinGroupName"));
-			/* before 12.09.2018 the root groups where always created
-			$group = $this->createGroup($p, $transS->t($p, $module->getModuleName()), $module, $wigiiNamespace);
-			$trash = $this->createGroup($p, $transS->t($p, "trashbinGroupName"), $module, $wigiiNamespace);
-			$groupAS->persistGroup($p, $group);
-			$groupAS->persistGroup($p, $trash);
-			*/
+		foreach($wigiiNamespaceNames as $wigiiNamespaceName){
+			$wigiiNamespaceName = trim($wigiiNamespaceName);
+			$wigiiNamespace = $wNAS->getWigiiNamespace($p, $wigiiNamespaceName);
+			$moduleAccess = $user->getDetail()->getModuleAccess();
 			
-			//link each folder to NAdmin
-			$groupAS->setUserRight($p, UGR::createInstance($group->getId(), $nAdmin->getId(), array("canModify"=>true, "canWriteElement"=>true, "canShareElement"=>true)));
-			$groupAS->setUserRight($p, UGR::createInstance($trash->getId(), $nAdmin->getId(), array("canModify"=>true, "canWriteElement"=>true, "canShareElement"=>true)));
-			//remove link of current superadmin to created folders
-			$groupAS->removeUser($p, $group->getId(), $p->getUserId());
-			$groupAS->removeUser($p, $trash->getId(), $p->getUserId());
-			//copy general config to namespace config
-			$generalConfigFile = $configS->getModuleConfigFilename($p, $module, null);
-			if($configPrefix){
-				$newGeneralConfigFile = str_replace($module->getModuleName()."_config.xml",$configPrefix.$module->getModuleName()."_config.xml",$generalConfigFile);
-				if(file_exists($newGeneralConfigFile)) $generalConfigFile = $newGeneralConfigFile;
-			}
-			$configFileSummary[] = $generalConfigFile;
-			$generalConfig = simplexml_load_file($generalConfigFile);
-			if($generalConfig->parameters){
-				if(!$generalConfig->parameters["trashBinGroup"]) $generalConfig->parameters->addAttribute("trashBinGroup", $trash->getId());
-				else $generalConfig->parameters["trashBinGroup"] = $trash->getId();
-			}
-			if($supportEmail){
-				if($generalConfig->feedbackOnElement->fields->feedback_for){
-					$checkedAttr = $generalConfig->feedbackOnElement->fields->feedback_for->xpath("attribute[@checked='1']");
-					if($checkedAttr) unset($checkedAttr[0][checked]);
-					$suppNode = $generalConfig->feedbackOnElement->fields->feedback_for->addChild("attribute", ($supportName ? $supportName : $supportEmail));
-					$suppNode->addAttribute("checked", "1");
-					$suppNode->addAttribute("email", $supportEmail);
-				}
-				if($generalConfig->feedbackOnSystem->fields->feedback_for){
-					$checkedAttr = $generalConfig->feedbackOnSystem->fields->feedback_for->xpath("attribute[@checked='1']");
-					if($checkedAttr) unset($checkedAttr[0][checked]);
-					$suppNode = $generalConfig->feedbackOnSystem->fields->feedback_for->addChild("attribute", ($supportName ? $supportName : $supportEmail));
-					$suppNode->addAttribute("checked", "1");
-					$suppNode->addAttribute("email", $supportEmail);
+			//create NAdmin role if not existing
+			$NAdminId = $userAS->doesUsernameExist($p, "NAdmin@".$wigiiNamespace->getWigiiNamespaceName());
+			if(!$NAdminId){
+				$nAdmin = $this->createUser($p, "NAdmin@".$wigiiNamespace->getWigiiNamespaceName(), $wigiiNamespace->getWigiiNamespaceName(), array_merge(array("Admin"), array_keys($moduleAccess)));
+				$nAdmin->setRole(true);
+				//need to add every admin rights
+				$nAdmin->getDetail()->setUserCreator(true);
+				$nAdmin->getDetail()->setAdminCreator(true);
+				$nAdmin->getDetail()->setReadAllUsersInWigiiNamespace(true);
+				$nAdmin->getDetail()->setWigiiNamespaceCreator(false);
+				$nAdmin->getDetail()->setModuleEditor(true);
+			} else {
+				$nAdminP = $userAS->getUser($p, $NAdminId);
+				$nAdmin = $nAdminP->getDbEntity();
+				if(!$rec->getFieldValue("moduleEditorNewNamespaceOverwriteExistingConfig")){
+					//only keep the modules not existing already in the nadmin (for the group creation)
+					$moduleAccess = array_diff_key($moduleAccess,$nAdmin->getDetail()->getModuleAccess());
 				}
 			}
-			$namespaceConfigFile = $configS->getModuleConfigFilename($p, $module, $wigiiNamespace);
-			$fileContent =  $generalConfig->asXml();
-			// Puts all FuncExp into single quotes, then call html_entity_decode.
-			// A FuncExp is a string having parenthesis and no quotes inside.			
-			$fileContent = html_entity_decode(preg_replace('/="([^"\']+[(][^"\']*[)][^"\']*)"/', '=\'$1\'', $fileContent),ENT_QUOTES);
-			file_put_contents($namespaceConfigFile,$fileContent);
+			//merge modules for the nadmin
+			$NAdminModuleAccess = array_merge($nAdmin->getDetail()->getModuleAccess(),$moduleAccess);
+			$nAdmin->getDetail()->setModuleAccess($NAdminModuleAccess);
+			$nAdmin->getDetail()->setGroupCreator($NAdminModuleAccess);
+			$nAdmin->getDetail()->setRootGroupCreator($NAdminModuleAccess);
+			$nAdmin->getDetail()->setReadAllGroupsInWigiiNamespace($NAdminModuleAccess);
+			$userAS->persistUser($p, $nAdmin);
+			
+			//link user to NAdmin
+			//		fput("user ".$user->getUsername()." id ".$user->getId()." nadmin: ".$nAdmin->getId());
+			$userAS->setUserOwnership($p, $nAdmin->getId(), $user->getId());
+			$userAS->setUserRole($p, $user->getId(), $nAdmin->getId());
+			
+			//create 1 folder per tab
+			
+			foreach($moduleAccess as $module){
+				//create or get id of root Groups
+				$group = $groupAS->getOrCreateRootGroupByName($p, $module, $wigiiNamespace, $transS->t($p, $module->getModuleName()));
+				$trash = $groupAS->getOrCreateRootGroupByName($p, $module, $wigiiNamespace, $transS->t($p, "trashbinGroupName"));
+				/* before 12.09.2018 the root groups where always created
+				 $group = $this->createGroup($p, $transS->t($p, $module->getModuleName()), $module, $wigiiNamespace);
+				 $trash = $this->createGroup($p, $transS->t($p, "trashbinGroupName"), $module, $wigiiNamespace);
+				 $groupAS->persistGroup($p, $group);
+				 $groupAS->persistGroup($p, $trash);
+				 */
+				
+				//link each folder to NAdmin
+				$groupAS->setUserRight($p, UGR::createInstance($group->getId(), $nAdmin->getId(), array("canModify"=>true, "canWriteElement"=>true, "canShareElement"=>true)));
+				$groupAS->setUserRight($p, UGR::createInstance($trash->getId(), $nAdmin->getId(), array("canModify"=>true, "canWriteElement"=>true, "canShareElement"=>true)));
+				//remove link of current superadmin to created folders
+				$groupAS->removeUser($p, $group->getId(), $p->getUserId());
+				$groupAS->removeUser($p, $trash->getId(), $p->getUserId());
+				//copy general config to namespace config
+				$generalConfigFile = $configS->getModuleConfigFilename($p, $module, null);
+				if($configPrefix){
+					$newGeneralConfigFile = str_replace($module->getModuleName()."_config.xml",$configPrefix.$module->getModuleName()."_config.xml",$generalConfigFile);
+					if(file_exists($newGeneralConfigFile)) $generalConfigFile = $newGeneralConfigFile;
+				}
+				$generalConfig = simplexml_load_file($generalConfigFile);
+				if($generalConfig->parameters){
+					if(!$generalConfig->parameters["trashBinGroup"]) $generalConfig->parameters->addAttribute("trashBinGroup", $trash->getId());
+					else $generalConfig->parameters["trashBinGroup"] = $trash->getId();
+				}
+				if($supportEmail){
+					if($generalConfig->feedbackOnElement->fields->feedback_for){
+						$checkedAttr = $generalConfig->feedbackOnElement->fields->feedback_for->xpath("attribute[@checked='1']");
+						if($checkedAttr) unset($checkedAttr[0][checked]);
+						$suppNode = $generalConfig->feedbackOnElement->fields->feedback_for->addChild("attribute", ($supportName ? $supportName : $supportEmail));
+						$suppNode->addAttribute("checked", "1");
+						$suppNode->addAttribute("email", $supportEmail);
+					}
+					if($generalConfig->feedbackOnSystem->fields->feedback_for){
+						$checkedAttr = $generalConfig->feedbackOnSystem->fields->feedback_for->xpath("attribute[@checked='1']");
+						if($checkedAttr) unset($checkedAttr[0][checked]);
+						$suppNode = $generalConfig->feedbackOnSystem->fields->feedback_for->addChild("attribute", ($supportName ? $supportName : $supportEmail));
+						$suppNode->addAttribute("checked", "1");
+						$suppNode->addAttribute("email", $supportEmail);
+					}
+				}
+				$namespaceConfigFile = $configS->getModuleConfigFilename($p, $module, $wigiiNamespace);
+				$fileContent =  $generalConfig->asXml();
+				// Puts all FuncExp into single quotes, then call html_entity_decode.
+				// A FuncExp is a string having parenthesis and no quotes inside.
+				$fileContent = html_entity_decode(preg_replace('/="([^"\']+[(][^"\']*[)][^"\']*)"/', '=\'$1\'', $fileContent),ENT_QUOTES);
+				file_put_contents($namespaceConfigFile,$fileContent);
+				$configFileSummary[] = "<br />".$generalConfigFile."<br />".$namespaceConfigFile;
+			}
+			
+			//remove link of current superadmin to nadmin
+			if($user->getId() != $p->getUserId()){
+				$userAS->removeUserRole($p, $p->getUserId(), $nAdmin->getId());
+			}
 		}
-
-//		//remove link of current superadmin to nadmin
-		if($user->getId() != $p->getUserId()){
-			$userAS->removeUserRole($p, $p->getUserId(), $nAdmin->getId());
-		}
+		
 
 		//important to clear the cancel stack
 		$exec->addJsCode("actOnCloseDialog('".$exec->getIdAnswer()."');");
-		$this->getWigiiExecutor()->openAsMessage($exec->getIdAnswer(),350, $transS->t($p, "operationDoneSuccessfully"), "Please find bellow the list of the modules added to the namespace:<br/>".put($moduleAccess)."<br /><br />Find bellow the list of configuration files used during the creation process:<br />".put($configFileSummary), null, "Ok", null, null, "done");
+		$this->getWigiiExecutor()->openAsMessage($exec->getIdAnswer(),500, $transS->t($p, "operationDoneSuccessfully"), '<div style="overflow:auto;max-height:300px;">'."Please find bellow the list of the modules added to the namespace:<br/>".put($moduleAccess)."<br /><br />Find bellow the list of configuration files used during the creation process:<br />".put($configFileSummary).'</div>', null, "Ok", null, null, "done");
 		//$this->getWigiiExecutor()->operationSuccessfullMessage($exec->getIdAnswer(), 350, $transS->t($p, "operationDoneSuccessfully").put($moduleAccess), "", "done");
 	}
 
@@ -249,6 +271,9 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 			$transS->t($p, "ok"), $transS->t($p, "cancel"));
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
+		
 
 		//add js code to disable password if authenticationMethod normal is selected
 		$exec->addJsCode("" .

@@ -515,10 +515,15 @@
 
 	<moduleEditorNewNamespace>
 		<fields>
-			<moduleEditorNewNamespaceName type="Strings" require="1" />
-			<moduleEditorNewNamespaceConfigPrefixToUse type="Strings" expand="1" require="0" />
+			<moduleEditorNewNamespaceName type="Strings" require="1" help="moduleEditorNewNamespaceName_help" jsCodeInForm="
+/* this js code is in this first field as the xml is reset for moduleEditorNewNamespaceTabs */
+$('#$$idForm$$__moduleEditorNewNamespaceTabs div.label').click(function(){
+	$(this).next().find(':input').attr('checked','checked');
+}).attr('style','cursor:pointer;');
+ "/>
+			<moduleEditorNewNamespaceConfigPrefixToUse type="Strings" expand="1" require="0"/>
 			<moduleEditorNewNamespaceOverwriteExistingConfig type="Booleans" expand="1" require="0" />
-			<moduleEditorNewNamespaceTabs type="MultipleAttributs" useCheckboxes="1" isInLine="1" useMultipleColumn="2" require="1" />
+			<moduleEditorNewNamespaceTabs type="MultipleAttributs" useCheckboxes="1" isInLine="1" useMultipleColumn="2" require="1" help="clicLableToSelectAllTabs"/>
 			<freeText><HR /></freeText>
 			<freeText needTranslation="1">moduleEditorNewNamespaceSupportExplanation</freeText>
 			<moduleEditorNewNamespaceSupportName type="Strings" require="0" expand="1"/>

@@ -320,6 +320,7 @@ class PrintElementFormExecutor extends DetailElementFormExecutor {
 			"");
 
 		$exec->addJsCode($this->getDetailRenderer()->getJsCodeAfterShow());
+				
 	}
 }
 

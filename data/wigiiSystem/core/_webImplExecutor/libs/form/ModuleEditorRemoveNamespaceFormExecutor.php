@@ -112,6 +112,8 @@ class ModuleEditorRemoveNamespaceFormExecutor extends FormExecutor {
 		
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
 		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
+		
 		$exec->addJsCode("$('#moduleEditorRemoveNamespace_form__freeText').addClass('R');");
 	}
 }

@@ -150,6 +150,9 @@ class AddIndicatorFormExecutor extends FormExecutor {
 			$transS->t($p, "ok"), $transS->t($p, "cancel"));
 		
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
+		
 	}
 }
 

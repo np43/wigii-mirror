@@ -193,6 +193,8 @@ class ConfigEditGroupFormExecutor extends FormExecutor {
 			$transS->t($p, "ok"), $transS->t($p, "cancel"), $cancelJsCode, '{ my : "top", at: "top" }', null, false, true);
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 
 		$this->getTrm()->addJsCode("" .
 				"function getLineNumber(textarea, indicator) {" .

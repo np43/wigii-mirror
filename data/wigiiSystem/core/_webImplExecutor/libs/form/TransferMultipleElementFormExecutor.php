@@ -319,6 +319,8 @@ $('#".$this->getFormId()."__keepInOriginalGroup').after($('#".$this->getFormId()
 ");
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 	}
 }
 

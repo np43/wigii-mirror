@@ -425,6 +425,8 @@ class EmailingFormExecutor extends FormExecutor {
 			'');
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 
 		//add emailLabels merging fields:
 		$label = $label1 = $label2 = $label3 = $other1 = $other2 = $other3 = $confirmation = $unsubscribe = $access = $link = $editlink = null;

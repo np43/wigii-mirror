@@ -868,9 +868,11 @@ moduleEditorZip_help:Download all the current files into a ZIP folder.:Télécha
 moduleEditorNewNamespace:Namespace wizard:Assistant Espace de nom:
 moduleEditorNewNamespace_help:Open a wizard to help you creating or updating a namespace.:Ouvre un assistant pour créer ou mettre à jour un espace de nom.::::
 moduleEditorNewNamespaceName:Namespace name:Nom de l'espace de nom:
+moduleEditorNewNamespaceName_help:To manage multiple namespace in one operation, add several namespaces separated by a comma:Pour gérer plusieurs espace de nom en une opération, saisissez une liste d'espace de noms séparés par des virgules:::::::::
 moduleEditorNewNamespaceConfigPrefixToUse:Configuration file prefix to use (optional):Préfix des fichiers de configurations a utiliser (optionnel):::::::::
 moduleEditorNewNamespaceOverwriteExistingConfig:Do you want to overwrite existing configuration?:Voulez-vous écraser les configurations existantes?:::::::::
-moduleEditorNewNamespaceTabs:Select the tabs to enable:Sélectionné les onglets à activer:
+moduleEditorNewNamespaceTabs:Select the tabs to enable:Sélectionné les onglets à activer:::::::::
+clicLableToSelectAllTabs:Click on the label to select all tabs.:Cliquez sur le label pour sélectionner tous les onglets.:::::::::
 moduleEditorNewNamespaceSupportExplanation:Define a support name and email to add it in the feedback options.:Définisser un nom et un email pour le support afin de l'ajouter dans les options de feedback.:
 moduleEditorNewNamespaceSupportName:Name:Nom:
 moduleEditorNewNamespaceSupportEmail:Email:Email:

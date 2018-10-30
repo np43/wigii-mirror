@@ -380,6 +380,8 @@ class FeedbackFormExecutor extends FormExecutor {
 			'});' .
 			'');
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 	}
 }
 

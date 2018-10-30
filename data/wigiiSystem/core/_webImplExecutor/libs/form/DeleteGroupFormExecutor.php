@@ -274,6 +274,8 @@ class DeleteGroupFormExecutor extends FormExecutor {
 
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 	}
 	public function getDialogBoxTitle($p){
 		$transS = ServiceProvider::getTranslationService();

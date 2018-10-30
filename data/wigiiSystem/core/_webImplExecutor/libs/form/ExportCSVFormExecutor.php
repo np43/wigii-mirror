@@ -188,6 +188,8 @@ class ExportCSVFormExecutor extends ExportFormExecutor {
 			$transS->t($p, "ok"), $transS->t($p, "cancel"), null);
 
 		$this->getTrm()->addJsCodeAfterFormIsShown($this->getFormId());
+		
+		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 
 	}
 
