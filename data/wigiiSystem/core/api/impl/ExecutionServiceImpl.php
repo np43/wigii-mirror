@@ -402,9 +402,9 @@ class ExecutionServiceImpl implements ExecutionService {
 					}
 				}
 			}
-			// CWE 17.07.2018: activates adaptive wigii namespace selection on calculated roles
-			if($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->setAdaptiveWigiiNamespace(true);
-			else $p->setAdaptiveWigiiNamespace(false);			
+			// CWE 02.11.2018: doesn't set adaptive wigii namespace, but on calculated roles, automatically binds to crt namespace.
+			$p->setAdaptiveWigiiNamespace(false);
+			if($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->bindToWigiiNamespace($this->getCrtWigiiNamespace());
 			
 			if($this->executionSink()->isEnabled()) $this->executionSink()->log("\n".str_repeat("-",100)."\n".str_repeat("-",100)."\n"."Request: ".$this->getCrtRequest()." loaded."."\n".str_repeat("-",100)."\n".str_repeat("-",100));
 
