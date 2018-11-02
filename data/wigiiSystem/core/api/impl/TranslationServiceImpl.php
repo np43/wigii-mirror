@@ -392,7 +392,7 @@ class TranslationServiceImpl implements TranslationService {
 		//if no xmlNode, or xmlNode was not successful look in the dictionary
 		$dicoKey = $this->getDictionaryKey($principal);
 		if(empty($returnValue)){			
-			if(!isset($this->dictionary) || !isset($this->dictionary[$dicoKey])){
+			if(!isset($this->dictionary) || empty($this->dictionary[$dicoKey])){
 				$this->setDictionary($principal);
 			}
 			$returnValue = $this->dictionary[$dicoKey][$key][$lang];
