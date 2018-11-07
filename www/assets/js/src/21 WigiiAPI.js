@@ -3344,7 +3344,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * @return String complete encoded url ready to be passed to an AJAX query.
 		 */
 		wigiiApi.buildUpdateUrl = function(url) {
-			return encodeURI(wigiiApi.SITE_ROOT +"Update/"+wigiiApi.crtContextId+wigiiApi.EXEC_requestSeparator+url);
+			return encodeURI(wigiiApi.SITE_ROOT +"Update/"+window.crtContextId+wigiiApi.EXEC_requestSeparator+url);
 		};
 		/**
 		 * Builds a Wigii Update callback function which can be passed as a SUCCESS function to an AJAX query.
@@ -4204,7 +4204,6 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		
 		wigiiApi.initContext = function() {
 			wigiiApi.SITE_ROOT = window.SITE_ROOT;
-			wigiiApi.crtContextId = window.crtContextId;
 			wigiiApi.EXEC_answerRequestSeparator = window.EXEC_answerRequestSeparator;
 			wigiiApi.EXEC_answerParamSeparator = window.EXEC_answerParamSeparator;
 			wigiiApi.EXEC_requestSeparator = window.EXEC_requestSeparator;			
