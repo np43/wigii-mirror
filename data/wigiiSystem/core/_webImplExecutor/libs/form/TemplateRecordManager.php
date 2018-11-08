@@ -1746,7 +1746,7 @@ class TemplateRecordManager extends Model {
 			foreach($value as $key=>$val){
 				if($val!=null && $val!="none"){
 					$color = $xml->xpath('attribute[@color and (text()="'.($labelDBValue ? $labelDBValue[$key] : $value[$key]).'")]');
-					if($color){ $color = (string)$color[0]["color"]; }
+					if($color){ $color = str_replace("#","",(string)$color[0]["color"]); }
 					$returnValue .= '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'" >'.$value[$key].'</span> ';
 				}
 			}
@@ -1754,7 +1754,7 @@ class TemplateRecordManager extends Model {
 		} else {
 			if($value!=null && $value!="none"){
 				$color = $xml->xpath('attribute[@color and (text()="'.($labelDBValue ? $labelDBValue : $value).'")]');
-				if($color){ $color = (string)$color[0]["color"]; }
+				if($color){ $color = str_replace("#","",(string)$color[0]["color"]); }
 				return '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'" >'.$value.'</span> ';
 			}
 		}
