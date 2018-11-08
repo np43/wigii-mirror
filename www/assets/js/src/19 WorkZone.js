@@ -3602,7 +3602,8 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtLanguage, crtView, c
 				columnHeaderFormat: 'ddd',
 				titleFormat: 'MMMM YYYY',
 				timeFormat: 'H:mm',
-				displayEventTime : true
+				displayEventTime : true,
+				displayEventEnd : true
 			},
 			agendaWeek : {
 				columnHeaderFormat: 'ddd DD MMM',
