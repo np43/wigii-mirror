@@ -118,7 +118,11 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 				// evaluates FuncExp
 				if(isset($fx)) {
 					// binds to WigiiNamespace from request
-					if(!$authS->isMainPrincipalMinimal()) $p->bindToWigiiNamespace($exec->getCrtWigiiNamespace());
+					if(!$authS->isMainPrincipalMinimal()) {
+						$p->bindToWigiiNamespace($exec->getCrtWigiiNamespace());
+						// CWE 09.11.2018: activates adaptive namespace for Fx requests.
+						$p->setAdaptiveWigiiNamespace(true);
+					}					
 					// evaluates FuncExp
 					$fxEval = $this->getFuncExpEval($p, $exec);
 					$result = $fxEval->evaluateFuncExp($fx, $this);
@@ -136,6 +140,8 @@ class FxWebServiceFormExecutor extends WebServiceFormExecutor {
 				}
 				// binds to WigiiNamespace from request
 				$p->bindToWigiiNamespace($exec->getCrtWigiiNamespace());
+				// CWE 09.11.2018: activates adaptive namespace for Fx requests.
+				$p->setAdaptiveWigiiNamespace(true);
 				// evaluates FuncExp
 				$fxEval = $this->getFuncExpEval($p, $exec);
 				$result = $fxEval->evaluateFuncExp($fx, $this);
