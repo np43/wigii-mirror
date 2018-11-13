@@ -2919,6 +2919,215 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 		};
 		
+		/**
+		 * DataFlowService javascript implementation
+		 */
+		wigiiApi.DataFlowService = function() {
+			var self = this;			
+			
+			/**
+			 * Reads the data coming from the source and processes it through the selected flow activities
+			 *@param Function source a data flow source function. 
+			 * A data source function is a function which takes an open DataFlowContext in parameter and then calls processDataChunk as many times as needed.
+			 * var rangeGen = function(from,to,step) { return function(dataFlowContext) {
+			 *	for(var i=from;i<=to;i+=step) dataFlowContext.processDataChunk(i);
+			 * }};
+			 *@param Array activities an array of activity functions. An activity function is a function which receives the current chunk of data, 
+			 * an activity context in which a processing state can be stored and the data flow context to get insight on the global state of the data flow beeing executed.
+			 * var power = function(factor) { return function(data,activityCtx,dataFlowContext) {
+			 * 		var returnValue = 1;
+			 *		for(var i=0;i<factor;i++) returnValue *= data;
+			 *		return returnValue;
+			 * }};
+			 * var sum = function(data,activityCtx,dataFlowContext) {
+			 *	 switch(activityCtx.state) {
+			 *	 	case dataFlowContext.DFA_STARTSTREAM: activityCtx.sum = 0; break;
+			 *		case dataFlowContext.DFA_RUNNING: activityCtx.sum += data; break;
+			 *		case dataFlowContext.DFA_ENDSTREAM: dataFlowContext.writeResultToOuput(activityCtx.sum,activityCtx); break;
+			 *	 }	
+			 * };
+			 *@example wigii().getDataFlowService().processDataSource(rangeGen(-10,10,2),[power(3),sum])
+			 *@return Any the data flow result
+			 */
+			self.processDataSource = function(source,activities) {
+				var dfCtx = self.startStream(activities);
+				source(dfCtx);
+				return self.endStream(dfCtx);
+			};
+			
+			/**
+			 * Starts a new data flow stream
+			 *@param Array activities an array functions describing the pipe of activities
+			 *@return wigiiApi.DataFlowService.DataFlowContext a DataFlowContext instance referencing the open stream
+			 */
+			self.startStream = function(activities) {
+				return new self.DataFlowContext(self, activities);
+			};
+			/**
+			 * Processes a data chunk in the context of an open stream
+			 *@param Any data chunk of data to be processed.
+			 * Must be compatible with the first step of the pipe of activities
+			 *@param wigiiApi.DataFlowService.DataFlowContext the reference to the current open stream
+			 */
+			self.processDataChunk = function(data,dataFlowContext) {
+				if(!dataFlowContext.impl.dataFlow) throw wigiiApi.createServiceException('DataFlow is not running, call startStream to start it', wigiiApi.errorCodes.INVALID_STATE);
+				// pushes data to first activity
+				var dataFlowActivity = self.impl.getOpenedDataFlowActivityForStep(0,dataFlowContext);							
+				dataFlowActivity.state = dataFlowContext.DFA_RUNNING;
+				var result = dataFlowContext.activities[0](data,dataFlowActivity,dataFlowContext);
+				if(result !== undefined) dataFlowContext.writeResultToOuput(result,dataFlowActivity);
+			};
+			/**
+			 * Ends the current running data flow stream
+			 * After the call of this method, the DataFlowContext is closed and any calls to processDataChunk will fail.			
+			 *@param wigiiApi.DataFlowService.DataFlowContext the reference to the current open stream
+			 *@return optionally returns some data if the last stage of the list of activities writes some output.
+			 */
+			self.endStream = function(dataFlowContext) {
+				var returnValue = undefined;
+				if(dataFlowContext.impl.dataFlow) {
+					for(var stepId=0; stepId < dataFlowContext.activities.length; stepId++) {
+						// if activity is open, 
+						if(stepId < dataFlowContext.impl.dataFlow.length) {
+							var dataFlowActivity = dataFlowContext.impl.dataFlow[stepId];
+							// calls end stream on activity
+							dataFlowActivity.state = dataFlowContext.DFA_ENDSTREAM;
+							dataFlowContext.activities[stepId](undefined,dataFlowActivity,dataFlowContext);
+							// flushes output buffer
+							returnValue = self.impl.flushStepBufferIntoActivity(stepId,dataFlowContext);
+						}
+					}
+					dataFlowContext.impl.dataFlow = undefined;
+				}
+				return returnValue;
+			};
+			
+			/**
+			 * An open data flow context for the given list of activities
+			 */
+			self.DataFlowContext = function(dataFlowService, activities) {
+				var self = this;
+				self.impl = {dfS:dataFlowService,dataFlow:[]};
+				
+				/**
+				 * Data Flow Activity state START OF STREAM
+				 */
+				self.DFA_STARTSTREAM = 1;
+				/**
+				 * Data Flow Activity state RUNNING
+				 */
+				self.DFA_RUNNING = 2;
+				/**
+				 * Data Flow Activity state END OF STREAM
+				 */
+				self.DFA_ENDSTREAM = 3;							
+				
+				// Accessors
+				
+				self.activities = activities;
+				
+				/**
+				 * Returns a reference to the underlying DataFlow Service
+				 */
+				self.getDataFlowService = function() {return self.impl.dfS;};
+				
+				// Methods 
+				
+				/**
+				 * Writes some data to the output data flow
+				 * The underlying DataFlowService will process the data chunk and
+				 * call if needed the next steps in the data flow chain.
+				 * This method can be called as many times a needed.
+				 * Each call results in one data chunk to be passed to the DataFlowService for further processing.
+				 * @param Any resultData some result data, can be any kind of object
+				 * @param wigiiApi.DataFlowService.DataFlowActivityContext the reference to the current executing dataflow activity
+				 */
+				self.writeResultToOuput = function(resultData,dataFlowActivityContext) {
+					self.impl.dfS.impl.processResultFromActivity(resultData,dataFlowActivityContext);
+				};		
+
+				/**
+				 * Shortcut on self.getDataFlowService().processDataChunk
+				 * Pushes a data chunk at the beginning of the flow
+				 */
+				self.processDataChunk = function(data) {
+					self.impl.dfS.processDataChunk(data,self);
+				};
+			};
+			
+			/**
+			 * A running data flow activity context
+			 */
+			self.DataFlowActivityContext = function(stepId,dataFlowContext) {
+				var self = this;
+				self.impl = {dfCtx:dataFlowContext, stepBuffer:[]};
+				/**
+				 * The current executing step ID in this DataFlow
+				 */
+				self.stepId = stepId;
+				/**
+				 * The current state of this activity in this DataFlow. 
+				 * One of DataFlowContext.DFA_STARTSTREAM, DataFlowContext.DFA_RUNNING, DataFlowContext.DFA_ENDSTREAM.
+				 */
+				self.state = undefined;
+				/**
+				 * True if the current step is the last step of the dataflow
+				 * Or equivalently if no more DataFlowActivity is coming after the one which is currently executing
+				 */
+				self.isCurrentStepTheLastStep = (stepId==dataFlowContext.activities.length-1);
+			};
+			
+			// Implementation
+			
+			self.impl = {};
+			self.impl.processResultFromActivity = function(resultData,dataFlowActivityContext) {
+				if(resultData !== undefined) {
+					// if buffer is not empty, flushes it
+					if(dataFlowActivityContext.impl.stepBuffer.length>0) self.impl.flushStepBufferIntoActivity(dataFlowActivityContext.stepId, dataFlowActivityContext.impl.dfCtx);
+					// stores data in buffer
+					dataFlowActivityContext.impl.stepBuffer.push(resultData);
+				}
+			};
+			self.impl.getOpenedDataFlowActivityForStep = function(stepId,dataFlowContext) {
+				var returnValue = undefined;
+				// checks if current step is already running
+				if(!dataFlowContext.impl.dataFlow) dataFlowContext.impl.dataFlow = [];
+				if(stepId < dataFlowContext.impl.dataFlow.length) returnValue = dataFlowContext.impl.dataFlow[stepId];
+				// if not, then creates it and starts the stream on it
+				else {
+					returnValue = new self.DataFlowActivityContext(stepId,dataFlowContext);
+					dataFlowContext.impl.dataFlow.push(returnValue);
+					returnValue.state = dataFlowContext.DFA_STARTSTREAM;
+					dataFlowContext.activities[stepId](undefined,returnValue,dataFlowContext);
+				}
+				return returnValue;
+			};
+			self.impl.flushStepBufferIntoActivity = function(stepId,dataFlowContext) {
+				if(!dataFlowContext.impl.dataFlow) throw wigiiApi.createServiceException('DataFlow is not running, call startStream to start it', wigiiApi.errorCodes.INVALID_STATE);
+				if(stepId < dataFlowContext.impl.dataFlow.length) {
+					var dataFlowActivity = dataFlowContext.impl.dataFlow[stepId];
+					// flushes buffer in next activity if not last one.
+					if(!dataFlowActivity.isCurrentStepTheLastStep) {
+						var nextStepId = stepId+1;
+						while(dataFlowActivity.impl.stepBuffer.length>0) {
+							var data = dataFlowActivity.impl.stepBuffer.shift();							
+							var nextActivityContext = self.impl.getOpenedDataFlowActivityForStep(nextStepId,dataFlowContext);
+							// pushes data to next activity
+							nextActivityContext.state = dataFlowContext.DFA_RUNNING;
+							var result = dataFlowContext.activities[nextStepId](data,nextActivityContext,dataFlowContext);
+							if(result !== undefined) dataFlowContext.writeResultToOuput(result,nextActivityContext);
+						}
+					}
+					// if last step, returns buffered value
+					else if(dataFlowActivity.impl.stepBuffer.length>1) throw wigiiApi.createServiceException('On the DataFlow last step, only one result can be generated. You should add a new step to merge the multiple results into one.', wigiiApi.errorCodes.INVALID_STATE);
+					else return dataFlowActivity.impl.stepBuffer.shift();
+				}
+			};
+		};
+		
+		
+		
+		
 		
 		
 		// Models
@@ -3234,6 +3443,15 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			return wigiiApi.wncdContainerInstance;
 		};
 		/**
+		 * Returns DataFlowService instance
+		 */
+		wigiiApi.getDataFlowService = function() {
+			if(!wigiiApi['dataflowServiceInstance']) {
+				wigiiApi.dataflowServiceInstance = new wigiiApi.DataFlowService();
+			}
+			return wigiiApi.dataflowServiceInstance;
+		};
+		/**
 		 * Creates an HtmlBuilder instance
 		 */
 		wigiiApi.getHtmlBuilder = function() {			
@@ -3310,7 +3528,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.matrix = function(matrix,selectedRows) {
 			return new wigiiApi.MatrixHelper(matrix,selectedRows);
-		};
+		};		
 		
 		// Wigii client
 					
@@ -3860,6 +4078,33 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				else throw wigiiApi.createServiceException('step cannot be 0',wigiiApi.errorCodes.INVALID_ARGUMENT);
 			}
 		};
+		
+		/**
+		 * Reads the data coming from the source and processes it through the selected flow activities
+		 *@param Function source a data flow source function. 
+		 * A data source function is a function which takes an open DataFlowContext in parameter and then calls processDataChunk as many times as needed.
+		 * var rangeGen = function(from,to,step) { return function(dataFlowContext) {
+		 *	for(var i=from;i<=to;i+=step) dataFlowContext.processDataChunk(i);
+		 * }};
+		 *@param Array activities an array of activity functions. An activity function is a function which receives the current chunk of data, 
+		 * an activity context in which a processing state can be stored and the data flow context to get insight on the global state of the data flow beeing executed.
+		 * var power = function(factor) { return function(data,activityCtx,dataFlowContext) {
+		 * 		var returnValue = 1;
+		 *		for(var i=0;i<factor;i++) returnValue *= data;
+		 *		return returnValue;
+		 * }};
+		 * var sum = function(data,activityCtx,dataFlowContext) {
+		 *	 switch(activityCtx.state) {
+		 *	 	case dataFlowContext.DFA_STARTSTREAM: activityCtx.sum = 0; break;
+		 *		case dataFlowContext.DFA_RUNNING: activityCtx.sum += data; break;
+		 *		case dataFlowContext.DFA_ENDSTREAM: dataFlowContext.writeResultToOuput(activityCtx.sum,activityCtx); break;
+		 *	 }	
+		 * };
+		 *@example wigii().sel(rangeGen(-10,10,2),[power(3),sum])
+		 *@see wigiiApi.DataFlowService method processDataSource
+		 *@return Any the data flow result
+		 */
+		wigiiApi.sel = function(source,activities) { return wigiiApi.getDataFlowService().processDataSource(source,activities); };
 		
 		/**
 		 * Converts a date to a string in format YYYY-MM-DD
