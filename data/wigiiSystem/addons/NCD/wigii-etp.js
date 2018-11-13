@@ -585,7 +585,8 @@
 	wigiiNcdEtp.panier = panier; 
 	wigiiNcdEtp.formulaire = formulaire;
 	wigiiNcdEtp.serveur = serveur; 
-
+	wigiiNcdEtp.ctlSel = wigiiNcd().sel;
+	
 	// English translation
 	wigiiNcdEtp.program = wigiiNcdEtp.programme; 
 	wigiiNcdEtp.button = wigiiNcdEtp.bouton; 

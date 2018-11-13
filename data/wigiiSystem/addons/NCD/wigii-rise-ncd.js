@@ -272,5 +272,1486 @@
 			wigiiApi.riseNcdInstance = new RiseNcd();
 		}
 		return wigiiApi.riseNcdInstance;
-	};	
+	};
+	
+	
+	
+	// Wigii NCD Move Forward
+	
+	/**
+	 * Move Forward NCD object constructor
+	 * @param Object self javascript object to initialize as a Move Forward object or undefined to create a new object
+	 * @param Object options a set of options to configure Move Forward
+	 */
+	var mfNcd = function(self, options) {
+		self = self || {};
+		var mf = self; // ref to current library
+		self.className = 'MoveForward';
+		self.instantiationTime = Date.now();
+		self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
+		self.options = options || {};
+		
+		self.context = self.context || {};
+		self.context.backgroundId=undefined;
+		self.context.explorerId=undefined;
+		self.context.sceneId=undefined;
+		self.context.sceneQueue=[];
+		
+		self.impl = self.impl || {};
+		self.impl.gameBoard=undefined;		
+		self.impl.gameRuntime=undefined;
+		
+		// Properties
+	
+		self.$ = function() {return $('#'+self.ctxKey);}
+		
+		// Move Forward objects
+		
+		/**
+		 * MoveForward client Message Service
+		 *@param wncd.MoveForward mf the current instance of the MoveForward client
+		 *@param wncd.HtmlEmitter messageEmitter the html emitter linked to the message zone in the MoveForward client
+		 *@param Object options a bag of options to configure the MessageService
+		 */
+		self.MessageService = function(mf,messageEmitter,options) {
+			var self = this;
+			self.className = 'MessageService';
+			self.instantiationTime = Date.now();
+			self.ctxKey = mf.ctxKey+'_'+self.className;
+			self.options = options || {};
+			self.context = {
+				mf:mf,
+				messageEmitter:messageEmitter
+			};
+			self.impl = {				
+			};
+			
+			// Methods
+			
+			/**
+			 * Logs a message in the player message zone
+			 */
+			self.log = function(msg) {
+				self.context.messageEmitter.reset().p().out(msg).$p();
+			};
+			/**
+			 * Clears the message zone
+			 */
+			self.clear = function() {
+				self.context.messageEmitter.reset();
+			};			
+		};		
+		
+		/**
+		 * MoveForward Game board based on HTML canvas
+		 *@param wncd.MoveForward mf the current instance of the MoveForward client
+		 *@param Canvas canvas the html canvas linked to the game board zone in which to draw some 2D or 3D scenes
+		 *@param Object options a bag of options to configure the game board
+		 */
+		self.GameBoard = function(mf,canvas,options) {
+			var self = this;
+			self.className = 'GameBoard';
+			self.instantiationTime = Date.now();
+			self.ctxKey = mf.ctxKey+'_'+self.className;
+			self.options = options || {};
+			self.context = {
+				mf:mf,
+				canvas:canvas,
+				width:canvas.width,
+				height:canvas.height,
+				ctx2D:canvas.getContext("2d")
+			};
+			self.impl = {				
+			};
+			
+			// Drawing pen
+			
+			self.Pen = function(width,color) {
+				var self = this;
+				self.width = width;
+				self.color = color;
+			};
+			self.Crayon = self.Pen;
+			
+			// Drawing tools
+			
+			self.drawLine = function(pen,x1,y1,x2,y2) {
+				var ctx = self.context.ctx2D;
+				ctx.strokeStyle = pen.color;
+				ctx.lineWidth = pen.width;
+				ctx.moveTo(x1,y1);
+				ctx.lineTo(x2,y2);
+				ctx.stroke();
+				return self;
+			};
+			self.tracerTrait = self.drawLine;
+			
+			self.drawSquare = function(pen,x,y,l) {
+				var ctx = self.context.ctx2D;
+				ctx.fillStyle = pen.color;
+				ctx.fillRect(x-l/2,y-l/2,l,l);
+				return self;
+			};
+			self.tracerCarre = self.drawSquare;
+			
+			self.drawCircle = function(pen,x,y,r) {
+				var ctx = self.context.ctx2D;	
+				ctx.fillStyle = pen.color;
+				ctx.beginPath();
+				ctx.arc(x,y,r,0,2*Math.PI);
+				ctx.fill();
+				return self;
+			};
+			self.tracerCercle = self.drawCircle;
+			
+			// Event handling
+			
+			self.impl.mousePos = function(evt) {
+				var rect = self.context.canvas.getBoundingClientRect();
+				return {
+					x: Math.floor(evt.clientX - rect.left),
+					y: Math.floor(evt.clientY - rect.top)
+				};
+			};
+			self.onMouseMove = function(eventHandler) {
+				self.context.canvas.addEventListener('mousemove',function(evt){
+					var p = self.mousePos(evt);
+					eventHandler(p.x,p.y);
+				});
+				return self;
+			};
+			self.onMouseDown = function(eventHandler) {
+				self.context.canvas.addEventListener('mousedown',function(evt){
+					var p = self.mousePos(evt);
+					eventHandler(p.x,p.y);
+				});
+				return self;
+			};
+			self.onMouseUp = function(eventHandler) {
+				self.context.canvas.addEventListener('mouseup',function(evt){
+					var p = self.mousePos(evt);
+					eventHandler(p.x,p.y);
+				});
+				return self;
+			};
+			self.onClick = function(eventHandler) {
+				self.context.canvas.addEventListener('mousedown',function(evt){
+					var p = self.mousePos(evt);
+					eventHandler(p.x,p.y);
+				});
+			};
+			
+			// Implementation 
+			
+			self.impl.showBanner = function(txt,color) {
+				var ctx = self.context.ctx2D;
+				ctx.font = "30px Arial";
+				ctx.fillStyle = color || self.context.backgroundColor;
+				ctx.textAlign = "center";
+				ctx.fillText(txt,self.context.width/2,self.context.height/2);
+			};
+			
+			self.impl.showBanner(self.ctxKey);
+		};		
+		
+		/**
+		 * MoveForward client Game board based on SVG technology
+		 *@param wncd.MoveForward mf the current instance of the MoveForward client
+		 *@param JQuery svg jquery selector on the SVG container
+		 *@param Object options a bag of options to configure the game board
+		 */
+		self.GameBoardSVG = function(mf,svg,options) {
+			var self = this;
+			self.className = 'GameBoardSVG';
+			self.instantiationTime = Date.now();
+			self.ctxKey = mf.ctxKey+'_'+self.className;
+			self.options = options || {};
+			svg = $(svg);
+			self.context = {
+				mf:mf,				
+			};			
+			self.impl = {				
+				svgEmitter:svg.wncd('html')
+			};
+			/**
+			 * Emits some SVG code
+			 *@param String svg some valid svg code to emit
+			 *@param String defs some svg definitions to add
+			 */
+			self.impl.svgEmitter.putSVG = function(svg,defs) {
+				var div= document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+				var svgTag = ["svg"];
+				for(var xmlns in self.options.svgXmlNamespaces) {
+					svgTag.push(xmlns)
+					svgTag.push(self.options.svgXmlNamespaces[xmlns]);
+				}
+				div.innerHTML= wncd.getHtmlBuilder().tag.apply(undefined,svgTag).out(defs||'').out(svg).$tag('svg').html();
+				var frag= document.createDocumentFragment();
+				while (div.firstChild.firstChild) frag.appendChild(div.firstChild.firstChild);
+				self.impl.svgEmitter.putHtml(frag);
+				return self.impl.svgEmitter;
+			};
+			/**
+			 * SVG Builder
+			 */
+			self.impl.svgEmitter.svgBuilder = function() {
+				var svgBuilder = self.impl.svgEmitter.htmlBuilder();
+				svgBuilder.emit = function() {
+					self.impl.svgEmitter.putSVG(svgBuilder.html());
+					return self.impl.svgEmitter;
+				}
+				return svgBuilder;
+			};
+			
+			// Accessors
+			
+			self.$ = function() { return self.svgEmitter().$();};
+			
+			self.svgEmitter = function() {
+				return self.impl.svgEmitter;
+			};
+			
+			/**
+			 * Center of the game board in view port coordinates
+			 */
+			self.cx = function() {
+				var r = self.$()[0].getBoundingClientRect();
+				return Math.floor(r.left+(r.right-r.left)/2);
+			};
+			/**
+			 * Center of the game board in view port coordinates
+			 */
+			self.cy = function() {
+				var r = self.$()[0].getBoundingClientRect();
+				return Math.floor(r.top+(r.bottom-r.top)/2);
+			};
+			/**
+			 * Returns x coordinate of a named inner point
+			 *@param String name a specific inner point given by its name. For example :
+			 * N: top edge, center point;
+			 * S: bottom edge, center point;
+			 * W: left edge, center point;
+			 * E: right edge, center point;
+			 * NE: top-right corner;
+			 * SE: bottom-right corner;
+			 * SW: bottom-left corner;
+			 * NW: top-left corner.
+			 * Name can also be the ID of an inner SVG element for which a Rectangle will be calculated and its center returned.
+			 */
+			self.x = function(name) {
+				var r = self.$()[0].getBoundingClientRect();
+				var halfWidth = Math.floor((r.right-r.left)/2);
+				var cx = Math.floor(r.left + halfWidth - mf.impl.gameBoard.cx());
+				if(name===undefined 
+					|| name=='center'
+					|| name=='N'
+					|| name=='S') return cx;
+				if(name=='E'
+					|| name=='NE'
+					|| name=='SE') return cx + halfWidth;
+				if(name=='W'
+					|| name=='NW'
+					|| name=='SW') return cx - halfWidth;
+			};
+			
+			/**
+			 * Returns y coordinate of a named inner point
+			 *@param String name a specific inner point given by its name. For example :
+			 * N: top edge, center point;
+			 * S: bottom edge, center point;
+			 * W: left edge, center point;
+			 * E: right edge, center point;
+			 * NE: top-right corner;
+			 * SE: bottom-right corner;
+			 * SW: bottom-left corner;
+			 * NW: top-left corner.
+			 * Name can also be the ID of an inner SVG element for which a Rectangle will be calculated and its center returned.
+			 */
+			self.y = function(name) {
+				var r = self.$()[0].getBoundingClientRect();
+				var halfHeight = Math.floor((r.bottom-r.top)/2);
+				var cy = -Math.floor(r.top + halfHeight - mf.impl.gameBoard.cy());
+				if(name===undefined 
+					|| name=='center'
+					|| name=='W'
+					|| name=='E') return cy;
+				if(name=='S'
+					|| name=='SW'
+					|| name=='SE') return cy - halfHeight;
+				if(name=='N'
+					|| name=='NW'
+					|| name=='NE') return cy + halfHeight;
+			};
+			/**
+			 * Game board width
+			 */
+			self.width = function() {
+				var r = self.$()[0].getBoundingClientRect();
+				return r.right-r.left;
+			};
+			/**
+			 * Game board width
+			 */
+			self.height = function() {
+				var r = self.$()[0].getBoundingClientRect();
+				return r.bottom-r.top;
+			};
+			
+			// Methods
+			
+			/**
+			 * Loads a game SceneBackground given its catalog ID and replaces current one
+			 *@return MoveForward.GameBoardSVG for chaining
+			 */
+			self.loadBackground = function(backgroundId,options) {
+				// hides old background
+				var oldSceneBackground = wncd.mf.background;
+				if(oldSceneBackground) oldSceneBackground.$().hide();
+				// creates new background
+				var options = options || {};
+				options.gameBoard = self;				
+				var newSceneBackground = new mf.SceneBackground(backgroundId,options);
+				wncd.mf.background = newSceneBackground;
+				mf.context.backgroundId = backgroundId;
+				// disposes old background
+				if(oldSceneBackground) oldSceneBackground.$().remove();
+				return self;
+			};
+			/**
+			 * Loads user explorer given its VisibleObject catalog ID and replaces current one
+			 *@return MoveForward.GameBoardSVG for chaining
+			 */
+			self.loadExplorer = function(explorerId,options) {
+				if(!explorerId) throw wncd.createServiceException("explorerId cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+				wncd.mf.explorer = new mf.Explorer(explorerId,options);				
+				mf.context.explorerId = explorerId;
+				return self;
+			};			
+			
+			/**
+			 * Gets a SVG rectangle service around the given SVG object
+			 *@param Object|JQuery svgObj MoveForward object which map to a SVG element through the $() method 
+			 * or directly a JQuery selector on a SVG element.
+			 *@return MoveForward.RectangleSVGService
+			 */
+			self.getRectangleService = function(svgObj) {
+				return new mf.RectangleSVGService(svgObj);
+			};
+		};
+		
+		/**
+		 * SVG Rectangle service which helps manipulating SVG object clipped into a rectangle
+		 *@param Object|JQuery|String svgObj MoveForward object which map to a SVG element through the $() method or a JQuery selector on a SVG element.
+		 */
+		self.RectangleSVGService = function(svgObj) {
+			var self = this;
+			var svgObj = svgObj;
+			self.className = 'RectangleSVGService';
+			self.instantiationTime = Date.now();
+			self.ctxKey = mf.ctxKey+'_'+self.className+'_'+self.instantiationTime;
+			self.impl = {				
+			};
+			
+			// registers SVG object and checks that it exposes a $() method pointing on its SVG node. If creates a wrapper.
+			if(!svgObj) throw wncd.createServiceException("svgObj cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+			if(!$.type(svgObj) === 'object') svgObj = $(svgObj);
+			if(svgObj.jquery === $().jquery) svgObj = {$:function(){ return svgObj;}};
+			self.impl.svgObj = svgObj;
+			
+			// Accessors
+			
+			self.$ = function(){return self.impl.svgObj.$();};
+			
+			// Methods
+			
+			/**
+			 * Returns x coordinate of the rectangle center or a named inner point
+			 *@param String name a specific inner point given by its name. For example :
+			 * N: top edge, center point;
+			 * S: bottom edge, center point;
+			 * W: left edge, center point;
+			 * E: right edge, center point;
+			 * NE: top-right corner;
+			 * SE: bottom-right corner;
+			 * SW: bottom-left corner;
+			 * NW: top-left corner.
+			 * Name can also be the ID of an inner SVG element for which a Rectangle will be calculated and its center returned.
+			 */
+			self.x = function(name) {
+				var r = self.$()[0].getBoundingClientRect();
+				var halfWidth = Math.floor((r.right-r.left)/2);
+				var cx = Math.floor(r.left + halfWidth - mf.impl.gameBoard.cx());
+				if(name===undefined 
+					|| name=='center'
+					|| name=='N'
+					|| name=='S') return cx;
+				if(name=='E'
+					|| name=='NE'
+					|| name=='SE') return cx + halfWidth;
+				if(name=='W'
+					|| name=='NW'
+					|| name=='SW') return cx - halfWidth;
+			};
+			
+			/**
+			 * Returns y coordinate of the rectangle center or a named inner point
+			 *@param String name a specific inner point given by its name. For example :
+			 * N: top edge, center point;
+			 * S: bottom edge, center point;
+			 * W: left edge, center point;
+			 * E: right edge, center point;
+			 * NE: top-right corner;
+			 * SE: bottom-right corner;
+			 * SW: bottom-left corner;
+			 * NW: top-left corner.
+			 * Name can also be the ID of an inner SVG element for which a Rectangle will be calculated and its center returned.
+			 */
+			self.y = function(name) {
+				var r = self.$()[0].getBoundingClientRect();
+				var halfHeight = Math.floor((r.bottom-r.top)/2);
+				var cy = -Math.floor(r.top + halfHeight - mf.impl.gameBoard.cy());
+				if(name===undefined 
+					|| name=='center'
+					|| name=='W'
+					|| name=='E') return cy;
+				if(name=='S'
+					|| name=='SW'
+					|| name=='SE') return cy - halfHeight;
+				if(name=='N'
+					|| name=='NW'
+					|| name=='NE') return cy + halfHeight;
+			};
+			
+			/**
+			 * Returns the width of the rectangle in units 
+			 * or scales the underlying object to have a width equal to the given percentage of GameBoard width.
+			 *@param String percent a portion of the GameBoard width in percentage
+			 */
+			self.width = function(percent) {
+				var r = self.$()[0].getBoundingClientRect();
+				var w = Math.floor(r.right-r.left);
+				if(percent && w>0) {
+					// computes new width
+					var newW = w;
+					if($.type(percent)==='number') newW = percent; 
+					else if(percent.indexOf('px')>0) newW = Number(percent.replace('px','').trim());
+					else if(percent.indexOf('%')>0) newW = Number(percent.replace('%','').trim())/100 * mf.impl.gameBoard.width();
+					newW = Math.abs(newW);
+					if(newW != w) {
+						var cx = self.x(); var cy = self.y();
+						newW = newW/w;					
+						// adds scale transformation
+						var t = mf.impl.gameBoard.$()[0].createSVGTransform();
+						t.setScale(newW,newW);
+						var tList = self.$()[0].transform;
+						if(tList) tList = tList.baseVal;
+						if(tList) {
+							// prepends new transformation
+							tList.insertItemBefore(t,0);
+							// consolidates in one matrix
+							tList.consolidate();
+							// re-centers the object
+							self.position(cx,cy);
+						}
+					}
+					return self;
+				}
+				else return w;
+			};
+			
+			/**
+			 * Returns the height of the rectangle in units 
+			 * or scales the underlying object to have a height equal to the given percentage of GameBoard height.
+			 *@param String percent a portion of the GameBoard height in percentage
+			 */
+			self.height = function(percent) {
+				var r = self.$()[0].getBoundingClientRect();
+				var h = Math.floor(r.bottom-r.top);
+				if(percent && h>0) {
+					// computes new height
+					var newH = h;
+					if($.type(percent)==='number') newH = percent; 
+					else if(percent.indexOf('px')>0) newH = Number(percent.replace('px','').trim());
+					else if(percent.indexOf('%')>0) newH = Number(percent.replace('%','').trim())/100 * mf.impl.gameBoard.height();
+					newH = Math.abs(newH);
+					if(newH != h) {
+						var cx = self.x(); var cy = self.y();
+						newH = newH/h;
+						// adds scale transformation
+						var t = mf.impl.gameBoard.$()[0].createSVGTransform();
+						t.setScale(newH,newH);
+						var tList = self.$()[0].transform;
+						if(tList) tList = tList.baseVal;
+						if(tList) {
+							// prepends new transformation
+							tList.insertItemBefore(t,0);
+							// consolidates in one matrix
+							tList.consolidate();
+							// re-centers the object
+							self.position(cx,cy);
+						}
+					}
+					return self;
+				}
+				else return h;
+			};
+			
+			/**
+			 * Scales the underlying object to take the given percentage of the GameBoard size, but keeping the right proportions.
+			 * If object height is bigger than object width, then scales to height(percent)
+			 * else scales to width(percent).
+			 */
+			self.size = function(percent) {
+				if(self.height() > self.width()) return self.height(percent);
+				else self.width(percent);
+			};
+			
+			/**
+			 * Positions the underlying object relatively to a given point (x,y)
+			 *@param Int x horizontal coordinate of the point on which to position the object
+			 *@param Int y vertical coordinate of the point on which to position the object
+			 *@param String pos specifies the position of the rectangle relatively to the given point.
+			 * If pos equals :
+			 * center: svg object is centered on the given point (x,y)
+			 * N: svg object bottom edge center is on the given point
+			 * S: svg object top edge center is on the given point
+			 * W: svg object right edge center is on the given point
+			 * E: svg object left edge center is on the given point
+			 * NE: svg object bottom left corner is on the given point
+			 * SE: svg object top left corner is on the given point
+			 * SW: svg object top right corner is on the given point
+			 * NW: svg object bottom left corner is on the given point
+			 */
+			self.position = function(x,y,pos) {
+				// computes position
+				var basePos = 'center';
+				switch(pos) {
+					case 'N': basePos='S';break;
+					case 'S': basePos='N';break;
+					case 'E': basePos='W';break;
+					case 'W': basePos='E';break;
+					case 'NE': basePos='SW';break;
+					case 'NW': basePos='SE';break;
+					case 'SW': basePos='NE';break;
+					case 'SE': basePos='NW';break;
+				}
+				// computes translation amplitude
+				var dx = x-self.x(basePos);
+				var dy = y-self.y(basePos);
+				// creates translation transformation
+				var t = mf.impl.gameBoard.$()[0].createSVGTransform();
+				t.setTranslate(dx,-dy);
+				var tList = self.$()[0].transform;
+				if(tList) tList = tList.baseVal;
+				if(tList) {
+					// prepends new transformation
+					tList.insertItemBefore(t,0);
+					// consolidates in one matrix
+					tList.consolidate();
+				}
+			};
+			
+			/**
+			 * Exposes all RectangleService methods directly into the attached SVG object
+			 */
+			self.attach = function() {
+				self.impl.svgObj.x = function(name) {return self.x(name);};
+				self.impl.svgObj.y = function(name) {return self.y(name);};
+				self.impl.svgObj.width = function(percent) {
+					if(percent===undefined) return self.width();
+					else {
+						self.width(percent);
+						return self.impl.svgObj;
+					}
+				};
+				self.impl.svgObj.height = function(percent) {
+					if(percent===undefined) return self.height();
+					else {
+						self.height(percent);
+						return self.impl.svgObj;
+					}
+				};
+				self.impl.svgObj.position = function(x,y,pos) {
+					self.position(x,y,pos);
+					return self.impl.svgObj;
+				};
+			};
+		};
+		
+		
+		// Move Forward Logical Objects
+		
+		/**
+		 * Object Visible State
+		 */
+		self.ObjVisibleState = function(name,objs,options) {
+			var self = this;
+			self.className = 'ObjVisibleState';
+			self.instantiationTime = Date.now();
+			self.ctxKey = mf.className+'_'+self.className+'_'+self.instantiationTime;
+			self.options = options || {};
+			self.context = {
+				name:name,
+				objs:undefined,
+				objsOnBoard:{},
+				objVisible:undefined,
+				selectionSense:undefined
+			};
+			self.impl = {};
+			
+			// Accessors
+			
+			self.$ = function() { return mf.impl.gameBoard.svgEmitter().$().find('#'+self.ctxKey+self.context.objVisible);};
+			self.name = function() {return self.context.name;};
+			
+			// Methods
+			
+			/**
+			 * Shows the visible state views
+			 *@param Object options some options to configure the way views a shown. 
+			 * It supports the following attributes :
+			 * dx: int. A positive or negative horizontal offset from current position,
+			 * dy: int. A positive or negative vertical offset from current position,
+			 * dHeight: int. A positive or negative height offset from current height,
+			 * dWidth: int. A positive or negative width offset from current width,
+			 * freq: Number. Frequency of view changing (x/seconds). Defaults to 1.
+			 * nStep: int. Number of animated steps to execute. 
+			 * If not defined, then animation runs until self.context.stop is true.			 
+			 */
+			self.show = function(options) {
+				// shows animation if several views or if specific animation options are defined
+				if(self.context.objs && (self.context.objs.length > 1) || options) {
+					var f = 1;
+					if(options && options.freq) f = options.freq;
+					var nStep = undefined;
+					if(options && options.nStep) nStep = options.nStep;
+					self.context.stop = false;
+					self.impl.animationRuntime.program(wncd.ctlGen(
+						function(step){return !self.context.stop && (!nStep || step<=nStep);},
+						function(step){return wncd.ctlSeq(wncd.script(function(){
+							self.impl.show((step-1)%self.context.objs.length,options)
+						}),wncd.pause(1/f));}
+					));
+				}
+				// else shows only single view
+				else self.impl.show(0,options);
+			};
+			self.impl.show = function(index,options) {
+				if(!index) index=0;
+				if(self.context.objs && (index !== self.context.objVisible || options)) {
+					var pos = undefined;
+					if(self.context.objVisible !== undefined) {
+						// stores current position and size
+						pos = {x:self.x(),y:self.y(),height:self.height(),width:self.width()};
+						// hides current object
+						self.$().hide();					
+					}
+					self.context.objVisible=index;
+					// if new obj is not on board, then adds it
+					if(!self.context.objsOnBoard[index]) {
+						var code = self.context.objs[index];
+						var svgObj = mf.impl.gameBoard.svgEmitter().putSVG(code.svg,code.svgDefs)
+						.$().find('#'+code.id).attr('id',self.ctxKey+index);
+						// binds selection sense if defined
+						if(self.context.selectionSense) self.context.selectionSense.bind(svgObj);
+						self.context.objsOnBoard[index] = true;						
+					}
+					// else only shows it
+					else {
+						self.$().show();
+					}					
+					if(pos) {
+						// transforms current position and size with provided offset
+						if(options) {
+							if(options.dx) pos.x += options.dx;
+							if(options.dy) pos.y += options.dy;
+							if(options.dHeight) {
+								pos.height += options.dHeight;
+								pos.width = undefined;
+							}
+							else if(options.dWidth) {
+								pos.width += options.dWidth;
+								pos.height = undefined;
+							}
+						}
+						// sets position and size on new object
+						self.position(pos.x,pos.y);
+						if(pos.height) self.height(pos.height);
+						else if(pos.width) self.width(pos.width);
+					}
+				}
+			};			
+			/**
+			 * Hides current visible state
+			 */
+			self.hide = function() {
+				if(self.context.objVisible !== undefined) {
+					self.$().hide();
+					self.context.objVisible = undefined;
+					// stops animation
+					self.context.stop=true;
+				}
+			};
+			
+			// Loads visible state attached SVG drawings from catalog
+			if(mf.options.startupMode != 'documentation') {				
+				if($.type(objs)!=='array') objs = [objs];
+				var asyncLoader = {readyIndex:{},loadingSequence:objs,nbLoaded:0};
+				for(var i=0;i<objs.length;i++) {					
+					wncd.mf.actOnCode(objs[i],function(code){
+						asyncLoader.readyIndex[code.id] = code;
+						asyncLoader.nbLoaded++;						
+						// if all loaded, then finalizes context with ready data
+						if(asyncLoader.nbLoaded == asyncLoader.loadingSequence.length) {
+							self.context.objs = [];
+							var readyStamp = '';
+							for(var i=0;i<asyncLoader.loadingSequence.length;i++) {
+								var obj = asyncLoader.readyIndex[asyncLoader.loadingSequence[i]];
+								self.context.objs.push(obj);								
+								readyStamp += (i>0?', ':'')+obj.type+" "+obj.id;
+							}
+							//wncd.mf.message.log("Visible state '"+self.name()+"' received "+readyStamp);
+							// Creates a wncd Runtime to execute animations
+							self.impl.animationRuntime = wncd.createRuntime(mf.impl.gameBoard.svgEmitter());
+						}
+					});
+				}
+				// attach a RectangleService to ease svg object manipulation
+				wncd.mf.background.gameBoard().getRectangleService(self).attach();
+			}
+		};
+		
+		/**
+		 * Visible objects displayed on scene background and game board
+		 */
+		self.VisibleObject = function(states,options) {
+			var self = this;
+			self.className = 'VisibleObject';
+			self.instantiationTime = Date.now();
+			self.ctxKey = mf.className+'_'+self.className+'_'+self.instantiationTime;
+			self.options = options || {};
+			self.context = {
+				sceneBackground:undefined,
+				name:undefined,
+				selectionSense:undefined				
+			};			
+			self.impl = {
+			};
+
+			// Properties and accessors
+			
+			/**
+			 * JQuery pointer on the underyling visible SVG element
+			 */
+			self.$ = function() {return self.context.visibleState.$();};
+			
+			/**
+			 *@return Array an array with the VisibleObject states name
+			 */
+			self.states = function() {
+				var returnValue=[];
+				for(var i=0;i<self.context.visibleStates.length;i++) {
+					var visibleState = self.context.visibleStates[i];
+					returnValue.push(visibleState.name());
+				}
+				return returnValue;
+			};
+			
+			// Methods
+			
+			/**
+			 * Resets the VisibleObject configuration using a set of options
+			 *@return MoveForward.VisibleObject for chaining
+			 */
+			self.reset = function(options) {
+				if(options) {
+					self.context.name = options.name || self.context.name;
+					self.context.sceneBackground = options.sceneBackground || self.context.sceneBackground;
+				}
+				return self;
+			};
+			
+			/**
+			 * Displays the visible object into the chosen state
+			 *@param String state name of the visible state in which to show the visible object
+			 *@param Object options some options to configure the way the state is displayed
+			 *@return MoveForward.VisibleObject for chaining
+			 */
+			self.show = function(state,options) {
+				if(self.context.visibleStatesIndex) {
+					var visibleState = self.context.visibleStatesIndex[state];
+					if(visibleState) {						
+						var pos = undefined;
+						if(self.context.visibleState) {
+							// stores current position and size
+							pos = {x:self.x(),y:self.y(),height:self.height()};
+							// hides previous visible state
+							self.context.visibleState.hide();
+						}
+						// shows new state
+						visibleState.show(options);						
+						self.context.visibleState = visibleState;
+						// sets same position and size on new visible state
+						if(pos) {
+							self.position(pos.x,pos.y);
+							self.height(pos.height);
+						}
+					}
+				}
+				return self;
+			};			
+			
+			/**
+			 * Registers a onClick event handler
+			 */
+			self.click = function(onClick) {
+				if($.isFunction(onClick)) {
+					if(!self.context.onClickSubscribers) self.context.onClickSubscribers = [];
+					self.context.onClickSubscribers.push(onClick);
+				}
+				else if(onClick===undefined) {
+					if(self.context.onClickSubscribers) {
+						for(var i=0;i<self.context.onClickSubscribers.length;i++) {
+							var eh = self.context.onClickSubscribers[i];
+							if($.isFunction(eh)) eh(self);
+						}
+					}
+				}
+				return self;
+			};
+			
+			// Implementation
+			
+			self.impl.onSelect = function(selectionSense) {
+				self.click();
+			};
+			
+			// Initializes VisibleObject
+			if(mf.options.startupMode != 'documentation') {
+				// Creates a SelectionSense
+				self.context.selectionSense = wncd.createSelectionSense(self.impl.onSelect);
+				// Loads object visible states from catalog
+				wncd.mf.createAndAct(states,function(visibleStates){
+					self.context.visibleStates = ($.type(visibleStates)==='array'?visibleStates:[visibleStates]);
+					self.context.visibleStatesIndex = {};
+					// creates VisibleState index					
+					for(var i=0;i<self.context.visibleStates.length;i++) {
+						var visibleState = self.context.visibleStates[i];						
+						visibleState.ctxKey += i;/* avoids clashes by appending numerical index */
+						// injects selection sense
+						visibleState.context.selectionSense = self.context.selectionSense;
+						self.context.visibleStatesIndex[visibleState.name()] = visibleState;						
+					}
+					//wncd.mf.message.log("Visible object "+(self.context.objectID?"'"+self.context.objectID+"' ":"")+"received "+self.context.visibleStates.length+" VisibleStates: "+self.states().join(','));
+				});	
+				// attach a RectangleService to ease svg object manipulation
+				wncd.mf.background.gameBoard().getRectangleService(self).attach();
+			}
+		};
+		
+		/**
+		 * Scene background displayed on game board
+		 */
+		self.SceneBackground = function(objId,options) {
+			var self = this;
+			self.className = 'SceneBackground';
+			self.instantiationTime = Date.now();
+			self.ctxKey = mf.className+'_'+self.className+'_'+self.instantiationTime;
+			self.options = options || {};
+			self.context = {
+				gameBoard:options.gameBoard,
+				visibleObjects:[],
+				visibleObjectsIndex:{}
+			};			
+			self.impl = {				
+			};
+			
+			// Accessors
+			
+			self.gameBoard = function() { return self.context.gameBoard;};
+			self.$ = function() {return $('#'+self.ctxKey);};
+			
+			// Methods
+			
+			/**
+			 * Loads a scene background given its catalog ID
+			 *@param String objId catalog ID of the SVG drawing to be used as a background
+			 *@param Object options an optional bag of options to configure the scene background
+			 *@return MoveForward.SceneBackground the new loaded scene background instance
+			 */
+			self.load = function(objId,options) {
+				self.context.gameBoard.loadBackground(objId,options);
+				return wncd.mf.background;
+			};
+			
+			/**
+			 * Adds a visible object to the scene background
+			 *@param VisibleObject|String visibleObj a VisibleObject instance or its catalog ID
+			 *@param Object options an optional bag of options to configure the visible object and its layout in the scene background
+			 *@param Function actOnDone optional callback which is called when the VisibleObject has been successfully added to the scene background
+			 *@return MoveForward.SceneBackground for chaining
+			 */
+			self.add = function(visibleObj,options,actOnDone) {
+				if(!visibleObj) throw wncd.createServiceException("visibleObj cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+				// sets default options
+				options = options || {};
+				options.sceneBackground = self;
+				// if needed, loads VisibleObject given its catalog ID and then register it into the visibleObjects collection
+				wncd.mf.createAndAct(visibleObj,function(visibleObj) {
+					visibleObj.reset(options);
+					visibleObj.ctxKey += self.context.visibleObjects.length;/* avoids clashes by appending numerical index */
+					self.context.visibleObjects.push(visibleObj);
+					// hides old visible object stored on this name
+					var oldVisibleObj = self.context.visibleObjectsIndex[visibleObj.context.name];
+					if(oldVisibleObj) oldVisibleObj.$().hide();
+					self.context.visibleObjectsIndex[visibleObj.context.name] = visibleObj;
+					if($.isFunction(actOnDone)) actOnDone(visibleObj);
+				});
+				return self;
+			};
+			
+			/**
+			 * Returns a reference to a visible object displayed on the scene background given its logical name
+			 *@return MoveForward.VisibleObject
+			 */
+			self.visibleObject = function(name) {
+				return self.context.visibleObjectsIndex[name];
+			};
+			
+			/**
+			 * Iterates on each selected visible objects and calls doAction on it
+			 *@param Function doAction callback of the form doAction(visibleObject)
+			 */
+			self.forEachSelectedObjects = function(doAction) {
+				for(var i=0;i<self.context.visibleObjects.length;i++) {
+					var visibleObj = self.context.visibleObjects[i];
+					if(visibleObj.context.selectionSense.selected()) doAction(visibleObj);
+				}
+			};
+			
+			/**
+			 * Clears selection of visible objects
+			 */
+			self.clearSelection = function() {
+				self.forEachSelectedObjects(function(visibleObj){visibleObj.context.selectionSense.selected(false);});
+			};
+			
+			if(objId && mf.options.startupMode != 'documentation') {
+				// Loads scene background from catalog and displays it
+				wncd.mf.actOnCode(objId,function(code){
+					if(code && code.type == 'svg') {
+						try {
+							self.context.gameBoard.svgEmitter().putSVG(code.svg,code.svgDefs)
+							.$().find('#'+code.id).attr('id',self.ctxKey);
+							// attach a RectangleService to ease svg object manipulation
+							self.context.gameBoard.getRectangleService(self).attach();
+							// moves background to top of svg to ensure it stays on the back
+							var firstChild = self.context.gameBoard.svgEmitter().$().children("g").first();
+							if(firstChild.attr('id') != self.ctxKey) self.$().insertBefore(firstChild);
+						}
+						catch(exc) {
+							mf.impl.publishException(exc);
+						}
+					}
+				});
+			}
+		};
+		
+		/**
+		 * Scene facade
+		 */
+		self.Scene = function() {
+			var self = this;
+			/**
+			 * Scene context
+			 */
+			self.context = {
+			};			
+			
+			// Methods
+			
+			/**
+			 * Interrupts current scene to call a sub-scene to execute a specific task
+			 *@param String sceneId catalog ID of the scene to load and execute.
+			 *@return Function a wncd FuncExp which executes the specified scene
+			 */
+			self.call = function(sceneId) {
+				return ctlSeq(
+					scripte(function(){
+						mf.impl.playSceneScript(sceneId);
+					}),
+					wncd.interrupt()
+				);
+			};
+			/**
+			 * Returns to calling scene once sub-scene is finished
+			 */
+			self.resume = function() {
+				if(wncd.program.context.interruption) {
+					var ctx = wncd.program.context.interruption
+					wncd.program.context.interruption = undefined;
+					ctx.resume();
+				}
+			};
+			/**
+			 * Chains future scene once current one is over 
+			 *@param String sceneId catalog ID of the scene to add to waiting queue.			 
+			 */
+			self.queue = function(sceneId) {
+				if(sceneId) mf.context.sceneQueue.push(sceneId);
+				return self;
+			};
+		};
+		
+		/**
+		 * The user as an explorer, displayed on game board
+		 */
+		self.Explorer = function(visibleObjectId,options) {
+			var self = this;
+			self.className = 'Explorer';
+			self.instantiationTime = Date.now();
+			self.ctxKey = mf.className+'_'+self.className+'_'+self.instantiationTime;
+			self.options = options || {};
+			self.context = {
+				visibleObject:undefined
+			};
+			self.impl = {				
+			};
+			
+			// Accessors
+			
+			/**
+			 * JQuery pointer on the underyling visible SVG element
+			 */
+			self.$ = function() {return self.context.visibleObject.$();};
+			
+			// Methods
+			
+			self.show = function(state,options) {
+				if(self.context.visibleObject) self.context.visibleObject.show(state,options);
+				return self;
+			};
+			
+			// Loading
+			
+			if(!visibleObjectId) throw wncd.createServiceException("visibleObjectId cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
+			if(!wncd.mf.background) throw wncd.createServiceException("no SceneBackground available, please load one first",wncd.errorCodes.INVALID_STATE);
+			// sets default options
+			if(!self.options.name) self.options.name = 'explorer';
+			if(mf.options.startupMode != 'documentation') {
+				// loads explorer VisibleObject from catalog and adds it to current background
+				wncd.mf.background.add(visibleObjectId,self.options,function(visibleObj){
+					self.context.visibleObject = visibleObj;
+					// attach a RectangleService to ease svg object manipulation
+					wncd.mf.background.gameBoard().getRectangleService(self).attach();
+				});
+			}
+		};
+		
+		/**
+		 * Move Forward Natural Code Development interface
+		 * Exposed through the wncd.mf symbol
+		 */
+		self.MoveForwardNCD = function() {
+			var self = this;
+			self.ctxKey = mf.ctxKey;
+			
+			// Move Forward Natural Code Language
+			
+			/**
+			 * Creates an Object Visible State
+			 *@param String|Array objs one catalog ID or an array of catalog IDs of the SVG drawings to associate with the visible state.
+			 *@param Object options an optional bag of options to configure the visible state
+			 *@return MoveForward.ObjVisibleState
+			 */
+			self.visibleState = function(name,objs,options) {
+				var returnValue = new mf.ObjVisibleState(name,objs,options);
+				return returnValue;
+			};
+			/**
+			 * Creates a visible object instance exposing several visible states
+			 *@param MoveForward.ObjVisibleState|Array states a single or an array of visible states to be associated with this visible object
+			 *@param Object options an optional bag of options to configure the visible object
+			 *@return MoveForward.VisibleObject 
+			 */
+			self.visibleObject = function(states,options) {
+				var returnValue = new mf.VisibleObject(states,options);
+				return returnValue;
+			};
+						
+			/**
+			 * Scene facade
+			 */			
+			self.scene = new mf.Scene();
+			/**
+			 * Scene background
+			 */
+			self.background = undefined; /* loaded afterwards */
+			/**
+			 * Explorer
+			 */
+			self.explorer = undefined; /* loaded afterwards */
+			/**
+			 * Message Service facade
+			 */
+			self.message = undefined; /* loaded afterwards */
+			/**
+			 * Game pad left
+			 */
+			self.padLeft = undefined; /* loaded afterwards */
+			/**
+			 * Game pad right
+			 */
+			self.padRight = undefined; /* loaded afterwards */
+			
+			// Natural Code Development interface
+			
+			/**
+			 * Selects or adds a visible object on the scene background
+			 *@param String name the logical name of the visible object present on the scene (for example, explorer or bootle or chair, etc)
+			 *@param Object options a bag of options to be applied when loading the visible object from the catalog. Supports the following options:
+			 * - load: CatalogId. Instructs the system to load the visible object from the catalog using the given ID.
+			 * - show: VisibleState name. Instructs the system to show the visible object in this state by default. (for example: walking).
+			 * - freq: Positive int. Gives the frequency at which the visible state should change its inner views.
+			 * - x: int. Gives the X (horizontal) coordinate (relative to SVG container center) where to position the visible object.
+			 * - y: int. Gives the Y (vertical) coordinate (relative to SVG container center) where to position the visible object.
+			 * - position: string, one of N,S,E,W,NW,NE,center,SE,SW. Gives the positioning code of the visible object relative to the center of the container. Center by default.
+			 * - width: string. Relative (%) or absolute (px) width of the visible object
+			 * - height: string. Relative (%) or absolute (px) height of the visible object
+			 * - size: percent. Relative (%) size of the visible object according to container.
+			 */
+			self.vo = function(name,options) {
+				// applies some options on a visible object
+				var applyOptions = function(visibleObj,options) {
+					if(!visibleObj) return;
+					if(!options) return;
+					if(options.show) visibleObj.show(options.show,options);
+					var x = (options.x !== undefined? options.x : visibleObj.x());
+					var y = (options.y !== undefined? options.y : visibleObj.y());
+					var pos = options.position || 'center';
+					if(options.x !== undefined || options.y !== undefined || options.position !== undefined) visibleObj.position(x,y,pos);
+					if(options.width) visibleObj.width(options.width);
+					if(options.height) visibleObj.height(options.height);
+					if(options.size) visibleObj.size(options.size);
+				};
+				// loads from catalog if options.load is defined
+				if(options && options.load) {
+					options.name = name;
+					if(!(options.width || options.height || options.size)) options.size = '100%';
+					if(!(options.x || options.y || options.position)) {
+						options.x = 0; options.y = 0; options.position = 'center';
+					}
+					self.background.add(options.load,options,function(visibleObj){applyOptions(visibleObj,options);});
+				}
+				// fetches visible object by name and applies options
+				else {
+					var returnValue = self.background.visibleObject(name);
+					if(returnValue && options) applyOptions(returnValue,options);
+					return returnValue;
+				}
+			};
+			
+			/**
+			 * Fetches some code given its catalog ID and acts on it
+			 *@param String codeId the catalog ID of the object to retrieve and act on.
+			 * The catalog ID can be followed with an hashtag and SVG ID to select a specific SVG element instead of whole code.
+			 * This is useful to load at once a bunch of SVG objects defined in one drawing, instead of loading them separately.
+			 * Example: load PERS201800007#face or PERS201800007#droite_marche_1
+			 *@param Function action callback on the fetched code. Callback is a function which takes one parameter of type object of the form
+			 *{ id: object ID in catalog, optionally followed by svgId,
+			 *  type: svg|ncd type of code fetched,
+			 *  svg: String. SVG code fetched if defined,
+			 *  ncd: String. WNCD code fetched if defined
+			 *  objectName: String. Name of object in catalog
+			 *  objectType: String. Type of object in catalog
+			 *}
+			 * If type is ncd both svg and ncd code can be defined. In that case, ncd holds an expression which uses in some way the svg code.
+			 *@return MoveForward.MoveForwardNCD for chaining
+			 */
+			self.actOnCode = function(codeId,action) {
+				wncd.server.rise().mf_actOnCode(codeId,action,mf.impl.publishException);
+				return self;
+			};
+			/**
+			 * Fetches an object given its catalog ID, creates a local instance and acts with it
+			 *@param String|Array objId the catalog ID of the object to retrieve and act with, 
+			 * or an array of object ID to retrieve multiple objects
+			 *@param Function action callback on the instantiated object(s) of the form action(obj) or action(array)
+			 *@return MoveForward.MoveForwardNCD for chaining
+			 */
+			self.createAndAct = function(objId,action) {
+				// asynchronous object constructor
+				var doCreateAndAct = function(objId,action) {
+					self.actOnCode(objId,function(code){
+						if(code && code.type == 'ncd') {
+							try {
+								// instantiates the object from its code only if a callback is given
+								if($.isFunction(action)) {
+									var obj = wncd.fxString2obj(code.ncd);
+									// injects catalog attributes in context
+									if(obj.context) {
+										obj.context.objectID = objId;
+										obj.context.objectName = code.objectName;
+										obj.context.objectType = code.objectType;
+										// calls action on object
+										action(obj);	
+									}
+									else {
+										// calls action on object with context
+										action(obj,{
+											objectID: objId,
+											objectName: code.objectName,
+											objectType: code.objectType
+										});
+									}
+								}
+							}
+							catch(exc) {
+								mf.impl.publishException(exc);
+							}
+						}
+					});
+				};
+				// creates from object ID
+				if($.type(objId)==='string') doCreateAndAct(objId,action);
+				// creates an array of objects given their IDs
+				else if($.type(objId)==='array' && $.type(objId[0])==='string') {
+					var asyncLoader = {readyIndex:{},loadingSequence:objId,nbLoaded:0};
+					for(var i=0;i<objId.length;i++) {
+						doCreateAndAct(objId[i],function(obj){
+							asyncLoader.readyIndex[obj.context.objectID] = obj;
+							asyncLoader.nbLoaded++;						
+							// if all loaded, then calls the action with the array of ready data
+							if(asyncLoader.nbLoaded == asyncLoader.loadingSequence.length) {
+								var returnValue = [];
+								for(var i=0;i<asyncLoader.loadingSequence.length;i++) {
+									obj = asyncLoader.readyIndex[asyncLoader.loadingSequence[i]];
+									returnValue.push(obj);
+								}
+								if($.isFunction(action)) action(returnValue);
+							}
+						});
+					}
+				}
+				// if objId is not a string or an array, assumes it is already the object instance and then acts on it directly
+				else if($.isFunction(action)) action(objId);
+				return self;
+			};			
+			/**
+			 * Includes a piece of code from catalogue and executes it
+			 *@param String codeId the ID of the code to be included
+			 *@param Function actAfterInclude optional function to be executed after code has been included
+			 *@return MoveForward.MoveForwardNCD for chaining
+			 */
+			self.include = function(codeId,actAfterInclude) {
+				self.actOnCode(codeId,function(code){
+					if(code && code.type == 'ncd') {
+						try {
+							// runs code
+							wncd.fxString2obj(code.ncd);
+							// calls action after include if defined
+							if($.isFunction(actAfterInclude)) actAfterInclude();
+						}
+						catch(exc) {
+							mf.impl.publishException(exc);
+						}
+					}
+				});
+				return self;
+			};
+			/**
+			 * Includes a piece of code from catalogue and executes it only once.
+			 *@param String codeId the ID of the code to be included
+			 *@param Function actAfterInclude optional function to be executed after code has been included
+			 *@return MoveForward.MoveForwardNCD for chaining
+			 */
+			self.includeOnce = function(codeId,actAfterInclude) {
+				// includes code only if not already in cache
+				if(!wncd.server.rise().mfCodeCache[codeId])	self.include(codeId,actAfterInclude);
+				else if($.isFunction(actAfterInclude)) actAfterInclude();
+				return self;
+			};
+			/**
+			 * Registers a keydown event handler on the Move Forward console.
+			 *@param Function eh event handler for keydown event (cf. https://api.jquery.com/keydown/)
+			 *@param Boolean keepActive if true, then keydown event handler stays active even if scene changes.
+			 * Else keydown event handler is removed when scene changes. 
+			 * By default, keyboards events are automatically removed when scene changes.
+			 *@return MoveForward.MoveForwardNCD for chaining
+			 */
+			self.keydown = function(eh,keepActive) {
+				// sticks event handler on body
+				$('body').keydown(eh);
+				return self;
+			};
+			/**
+			 * Registers a keyup event handler on the Move Forward console.
+			 *@param Function eh event handler for keyup event (cf. https://api.jquery.com/keyup/)
+			 *@param Boolean keepActive if true, then keyup event handler stays active even if scene changes.
+			 * Else keyup event handler is removed when scene changes. 
+			 * By default, keyboards events are automatically removed when scene changes.
+			 *@return MoveForward.MoveForwardNCD for chaining
+			 */
+			self.keyup = function(eh,keepActive) {
+				// sticks event handler on body
+				$('body').keyup(eh);
+				return self;
+			};
+			/**
+			 * Registers a keypress event handler on the Move Forward console.
+			 *@param Function eh event handler for keypress event (cf. https://api.jquery.com/keypress/)
+			 *@param Boolean keepActive if true, then keypress event handler stays active even if scene changes.
+			 * Else keydpress event handler is removed when scene changes. 
+			 * By default, keyboards events are automatically removed when scene changes.
+			 *@return MoveForward.MoveForwardNCD for chaining
+			 */
+			self.keypress = function(eh,keepActive) {
+				// sticks event handler on body
+				$('body').keypress(eh);
+				return self;
+			};
+		};		
+				
+		// Implementation
+				
+		self.impl.publishException = function(exception,context) {
+			if($.isPlainObject(exception)) wncd.publishWigiiException(exception,context);
+			else wigii().publishException(exception);
+		};
+		
+		/**
+		 * Plays a scene given its catalog ID
+		 *@param String sceneId the catalog ID of the scene for which to load the script
+		 * A scene script should be a FuncExp: either a scripte object or a ctlSeq object or a ctlGen object.
+		 */
+		self.impl.playSceneScript = function(sceneId) {
+			wncd.mf.createAndAct(sceneId,function(sceneScript,context){
+				// Injects scene attributes in facade
+				wncd.mf.scene.objectID = context.objectID;
+				wncd.mf.scene.objectName = context.objectName;
+				wncd.mf.scene.objectType = context.objectType;
+				self.context.sceneId = wncd.mf.scene.objectID;
+				// Runs the scene script in the context of the dedicated wncd Runtime for the game
+				self.impl.gameRuntime.program(sceneScript);
+			});
+		};
+		/**
+		 * Plays at Move Forward.
+		 * Runs the scenes waiting in the queue until the queue is empty.
+		 */
+		self.impl.play = function() {
+			// Reads next waiting scene in queue
+			var sceneId = self.context.sceneQueue.shift();
+			if(sceneId) {
+				// Loads the scene
+				wncd.mf.createAndAct(sceneId,function(sceneScript,context){
+					// Injects scene attributes in facade
+					wncd.mf.scene.objectID = context.objectID;
+					wncd.mf.scene.objectName = context.objectName;
+					wncd.mf.scene.objectType = context.objectType;
+					self.context.sceneId = wncd.mf.scene.objectID;
+					// Runs the scene script in the context of the dedicated wncd Runtime for the game
+					// Then interrupts stack by pausing 100ms and plays again until queue is empty.
+					self.impl.gameRuntime.program(ctlSeq(
+						sceneScript,
+						pause(0.1),
+						scripte(function(){self.impl.play();})
+					));
+				});
+			}
+			//else wncd.mf.message.log("End.");
+		};
+		return self;
+	};
+		
+	// Registers MoveForwardNcd constructor into the Wigii JS client
+	if(!wigiiApi['createMoveForwardNcd']) wigiiApi.createMoveForwardNcd = mfNcd;
+	
+	// Extends Wigii JQueryService with mf plugin
+	if(!wigiiApi.getJQueryService()['mf']) wigiiApi.getJQueryService().mf = function(selection,options) {
+		var returnValue=undefined;
+		// checks we have only one element			
+		if(selection && selection.length==1) {
+			// Checks if we already have a Move Forward environment attached to current selection
+			var mfEnv = undefined;
+			var mfEnvCtxKey = selection.attr('data-wncd-mfctxkey');
+			if(mfEnvCtxKey) mfEnv = selection.data(mfEnvCtxKey);
+			// creates Move Forward environment
+			if(!mfEnv) {			
+				mfEnv = wigiiApi.createMoveForwardNcd({},options);
+				
+				// Define default options
+				mfEnv.options.startupMode = 'multipleInstance'; /* conscious of the fact that several mf environments can be loaded on the same page */
+				if(mfEnv.options.svgBoard===undefined) mfEnv.options.svgBoard=true;
+			
+				// creates game board HtmlEmitter on selected html element				
+				mfEnv.impl.boardEmitter = wncd.html(selection).reset();
+				var board = mfEnv.impl.boardEmitter;
+				// if max width or max height on container, then initializes board to max.
+				var maxWidth = board.$().css('max-width');
+				if(maxWidth) maxWidth = Number(maxWidth.replace('px','').trim());
+				var maxHeight = board.$().css('max-height');
+				if(maxHeight) maxHeight = Number(maxHeight.replace('px','').trim());
+				if(maxWidth && maxHeight) {
+					mfEnv.context.boardMaxWidth = maxWidth-5;
+					mfEnv.context.boardMaxHeight = maxHeight-5;
+					mfEnv.context.boardWidth = mfEnv.context.boardMaxWidth;
+					mfEnv.context.boardHeight = mfEnv.context.boardMaxHeight;
+				}
+				// else takes container width
+				else {
+					mfEnv.context.boardWidth = board.$().width()-5;
+					mfEnv.context.boardHeight = board.$().height()-5;
+				}
+				
+				
+				// creates SVG board
+				if(mfEnv.options.svgBoard) {
+					// injects default supported SVG related xml namespaces
+					if(!mfEnv.options.svgXmlNamespaces) mfEnv.options.svgXmlNamespaces = {
+						"xmlns:dc":"http://purl.org/dc/elements/1.1/",
+						"xmlns:cc":"http://creativecommons.org/ns#",
+						"xmlns:rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+						"xmlns:sodipodi":"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd",
+						"xmlns:inkscape":"http://www.inkscape.org/namespaces/inkscape"
+					};
+					mfEnv.options.svgXmlNamespaces["xmlns:svg"] = "http://www.w3.org/2000/svg";
+					mfEnv.options.svgXmlNamespaces["xmlns:xlink"]="http://www.w3.org/1999/xlink";
+					mfEnv.options.svgXmlNamespaces["xmlns"] = "http://www.w3.org/2000/svg";				
+					var svgTag = ["svg","width",mfEnv.context.boardWidth,"height",mfEnv.context.boardHeight];
+					for(var xmlns in mfEnv.options.svgXmlNamespaces) {
+						svgTag.push(xmlns)
+						svgTag.push(mfEnv.options.svgXmlNamespaces[xmlns]);
+					}
+					board.htmlBuilder().tag.apply(undefined,svgTag).$tag("svg").emit();
+					mfEnv.impl.gameBoard = new mfEnv.GameBoardSVG(mfEnv,board.$().find("svg"),mfEnv.options);
+				}
+				// or creates Canvas board
+				else {
+					board.htmlBuilder().tag("canvas","width",mfEnv.context.boardWidth,"height",mfEnv.context.boardHeight).$tag("canvas").emit();
+					mfEnv.impl.gameBoard = new mfEnv.GameBoard(mfEnv,board.$().find("canvas").get(0),mfEnv.options);
+				}
+				
+				// creates game Runtime
+				mfEnv.impl.gameRuntime = wncd.createRuntime(board);
+										
+				// Launches Move Forward NCD engine
+				mfEnv.impl.mfNcd = new mfEnv.MoveForwardNCD();
+				wncd.mf = mfEnv.impl.mfNcd;
+				
+				// loads empty background
+				if(mfEnv.options.svgBoard) mfEnv.impl.gameBoard.loadBackground();
+				
+				// stores Move Forward environment in selection and sets ctxKey as DOM data attribute
+				selection.data(mfEnv.ctxKey,mfEnv);
+				selection.attr('data-wncd-mfctxkey',mfEnv.ctxKey);
+			}
+			// aligns wncd.mf on current Move Forward environment
+			else wncd.mf = mfEnv.impl.mfNcd;
+			
+			returnValue = wncd.mf;
+		}
+		else if(selection && selection.length>1) throw wigiiApi.createServiceException('Wigii mf selector can only be activated on a JQuery collection containing one element and not '+selection.length, wigiiApi.errorCodes.INVALID_ARGUMENT);
+		return (!returnValue?{$:selection}:returnValue);
+	};
 })(wigii,jQuery,"https://rise.wigii.org/")

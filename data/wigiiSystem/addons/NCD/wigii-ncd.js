@@ -2334,6 +2334,36 @@
 		wigiiNcd.getWigiiContainer = wigiiNcd.wigiiContainer;
 		
 		/**
+		 * Reads the data coming from the source and processes it through the selected flow activities
+		 *@param Function source a data flow source function. 
+		 * A data source function is a function which takes an open DataFlowContext in parameter and then calls processDataChunk as many times as needed.
+		 * var rangeGen = function(from,to,step) { return function(dataFlowContext) {
+		 *	for(var i=from;i<=to;i+=step) dataFlowContext.processDataChunk(i);
+		 * }};
+		 *@param Array activities an array of activity functions. An activity function is a function which receives the current chunk of data, 
+		 * an activity context in which a processing state can be stored and the data flow context to get insight on the global state of the data flow beeing executed.
+		 * var power = function(factor) { return function(data,activityCtx,dataFlowContext) {
+		 * 		var returnValue = 1;
+		 *		for(var i=0;i<factor;i++) returnValue *= data;
+		 *		return returnValue;
+		 * }};
+		 * var sum = function(data,activityCtx,dataFlowContext) {
+		 *	 switch(activityCtx.state) {
+		 *	 	case dataFlowContext.DFA_STARTSTREAM: activityCtx.sum = 0; break;
+		 *		case dataFlowContext.DFA_RUNNING: activityCtx.sum += data; break;
+		 *		case dataFlowContext.DFA_ENDSTREAM: dataFlowContext.writeResultToOuput(activityCtx.sum,activityCtx); break;
+		 *	 }	
+		 * };
+		 *@example wigii().sel(rangeGen(-10,10,2),[power(3),sum])
+		 *@see WigiiApi.sel method
+		 *@return Any the data flow result
+		 */
+		wigiiNcd.sel = function(source,activities) { 
+			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, sel fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);
+			return wigii().sel(source,activities); 
+		};
+		
+		/**
 		 * JQuery collection event handlers
 		 */
 		wigiiNcd.JQueryService = function() {

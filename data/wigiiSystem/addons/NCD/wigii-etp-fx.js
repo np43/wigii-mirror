@@ -1505,6 +1505,7 @@
 	programme.bindSelectionSense = wigiiNcd().bindSelectionSense; 
 	programme.createCountingSense = wigiiNcd().createCountingSense;
 	programme.bindCountingSense = wigiiNcd().bindCountingSense;
+	programme.ctlSel = wigiiNcd().sel;	
 	
 	
 	// Publish language
