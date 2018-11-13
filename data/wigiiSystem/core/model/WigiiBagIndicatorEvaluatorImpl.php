@@ -172,7 +172,13 @@ class WigiiBagIndicatorEvaluatorImpl implements WigiiBag, IndicatorEvaluator {
 				//the setValue don't set more than one none empty subfieldValue to prevent calculating several time
 				//the same field
 				if($values==null) $result = null;
-				else $result = array_reduce($values, reduce_count, 0);
+				else {
+					$result = 0;
+					foreach($values as $key=>$val){
+						if($val) $result++;
+					}
+					//$result = array_reduce($values, reduce_count, 0);
+				}
 				break;
 			case Indicator::FUNC_COUNT_DISTINCT:
 				$result = array_fill_keys($values, 1);
