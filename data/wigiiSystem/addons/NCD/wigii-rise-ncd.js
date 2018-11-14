@@ -300,6 +300,7 @@
 		self.impl = self.impl || {};
 		self.impl.gameBoard=undefined;		
 		self.impl.gameRuntime=undefined;
+		self.impl.pendingObjects = {};
 		
 		// Properties
 	
@@ -637,6 +638,60 @@
 			self.getRectangleService = function(svgObj) {
 				return new mf.RectangleSVGService(svgObj);
 			};
+			
+			/**
+			 * Flips the height and the width of the game board. 
+			 * Only if options.flippable is true and not a square board (height != width)
+			 */
+			self.flip = function() {
+				if(!self.options.flippable) return;
+				var w = self.width();
+				var h = self.height();
+				if(w != h) {
+					self.$().height(w);					
+					self.$().width(h);
+					mf.context.boardWidth = h;
+					mf.context.boardHeight = w;
+					wigii().log("flip board "+h+" "+w);
+				}
+				return self;
+			};
+			
+			/**
+			 * Aligns the board with the given rectangle.
+			 * Flips the board if needed and 
+			 * scales the edges to have the same shape as the given rectangle.
+			 */
+			self.alignWith = function(rectangle) {
+				if(!self.options.flippable) return;
+				var rH = rectangle.height();
+				var rW = rectangle.width();
+				var bH = self.height();
+				var bW = self.width();				
+				// flips board if needed
+				if((rH - rW) * (bH - bW) < 0) self.flip();
+				// if height is bigger than width, then shapes according to height
+				if(rH > rW) {
+					bH = mf.context.boardMaxHeight;
+					bW = Math.ceil(rH/mf.context.boardMaxHeight*rW);
+					self.$().height(bH);
+					self.$().width(bW);
+					mf.context.boardWidth = bW;
+					mf.context.boardHeight = bH;
+					wigii().log("resize board to "+bW+" "+bH);
+				}
+				// else if width is bigger than height, then shapes according to width
+				else if(rW > rH) {
+					bW = mf.context.boardMaxWidth
+					bH = Math.ceil(rW/mf.context.boardMaxWidth*rH);
+					self.$().width(bW);
+					self.$().height(bH);
+					mf.context.boardWidth = bW;
+					mf.context.boardHeight = bH;
+					wigii().log("resize board to "+bW+" "+bH);
+				}
+				return self;
+			};
 		};
 		
 		/**
@@ -797,13 +852,14 @@
 			};
 			
 			/**
-			 * Scales the underlying object to take the given percentage of the GameBoard size, but keeping the right proportions.
-			 * If object height is bigger than object width, then scales to height(percent)
-			 * else scales to width(percent).
+			 * Scales the underlying object to take the given percentage of the GameBoard size, but keeping the right proportions.			
 			 */
-			self.size = function(percent) {
-				if(self.height() > self.width()) return self.height(percent);
-				else self.width(percent);
+			self.size = function(percent) {				
+				// flip and adapts game board shape if needed
+				mf.impl.gameBoard.alignWith(self);				
+				// resizes the biggest edge
+				if(self.width() > self.height()) return self.width(percent);
+				else self.height(percent);
 			};
 			
 			/**
@@ -875,6 +931,10 @@
 					self.position(x,y,pos);
 					return self.impl.svgObj;
 				};
+				self.impl.svgObj.size = function(percent) {
+					self.size(percent);
+					return self.impl.svgObj;
+				};
 			};
 		};
 		
@@ -895,7 +955,8 @@
 				objs:undefined,
 				objsOnBoard:{},
 				objVisible:undefined,
-				selectionSense:undefined
+				selectionSense:undefined,
+				ready:false
 			};
 			self.impl = {};
 			
@@ -923,6 +984,7 @@
 				if(self.context.objs && (self.context.objs.length > 1) || options) {
 					var f = 1;
 					if(options && options.freq) f = options.freq;
+					self.context.freq = f;
 					var nStep = undefined;
 					if(options && options.nStep) nStep = options.nStep;
 					self.context.stop = false;
@@ -965,6 +1027,12 @@
 						if(options) {
 							if(options.dx) pos.x += options.dx;
 							if(options.dy) pos.y += options.dy;
+						}
+						// sets position on new object
+						self.position(pos.x,pos.y);
+												
+						// transforms current size with provided offset
+						if(options) {
 							if(options.dHeight) {
 								pos.height += options.dHeight;
 								pos.width = undefined;
@@ -973,9 +1041,8 @@
 								pos.width += options.dWidth;
 								pos.height = undefined;
 							}
-						}
-						// sets position and size on new object
-						self.position(pos.x,pos.y);
+						}						
+						// sets size on new object						
 						if(pos.height) self.height(pos.height);
 						else if(pos.width) self.width(pos.width);
 					}
@@ -991,6 +1058,31 @@
 					// stops animation
 					self.context.stop=true;
 				}
+			};
+			
+			/**
+			 * Registers a onReady event handler
+			 */
+			self.ready = function(onReady) {
+				if($.isFunction(onReady)) {
+					if(self.context.ready) onReady(self);
+					else {
+						if(!self.context.onReadySubscribers) self.context.onReadySubscribers = [];
+						self.context.onReadySubscribers.push(onReady);
+					}
+				}
+				else if(onReady===undefined) {
+					self.context.ready = true;
+					if(self.context.onReadySubscribers) {
+						for(var i=0;i<self.context.onReadySubscribers.length;i++) {
+							var eh = self.context.onReadySubscribers[i];
+							if($.isFunction(eh)) eh(self);
+						}
+						// empties subscribers list
+						self.context.onReadySubscribers=undefined;
+					}					
+				}
+				return self;
 			};
 			
 			// Loads visible state attached SVG drawings from catalog
@@ -1013,6 +1105,8 @@
 							//wncd.mf.message.log("Visible state '"+self.name()+"' received "+readyStamp);
 							// Creates a wncd Runtime to execute animations
 							self.impl.animationRuntime = wncd.createRuntime(mf.impl.gameBoard.svgEmitter());
+							// marks visible state as ready
+							self.ready();
 						}
 					});
 				}
@@ -1033,7 +1127,8 @@
 			self.context = {
 				sceneBackground:undefined,
 				name:undefined,
-				selectionSense:undefined				
+				selectionSense:undefined,
+				ready:false
 			};			
 			self.impl = {
 			};
@@ -1055,6 +1150,13 @@
 					returnValue.push(visibleState.name());
 				}
 				return returnValue;
+			};
+			
+			/**
+			 * Returns the name of the current visible state or undefined if not visible.
+			 */
+			self.state = function() {
+				if(self.context.visibleState) return self.context.visibleState.context.name;
 			};
 			
 			// Methods
@@ -1081,8 +1183,11 @@
 				if(self.context.visibleStatesIndex) {
 					var visibleState = self.context.visibleStatesIndex[state];
 					if(visibleState) {						
+						options = options || {};
 						var pos = undefined;
 						if(self.context.visibleState) {
+							// takes current frequency if defined
+							options.freq = options.freq || self.context.visibleState.context.freq;
 							// stores current position and size
 							pos = {x:self.x(),y:self.y(),height:self.height()};
 							// hides previous visible state
@@ -1120,6 +1225,31 @@
 				return self;
 			};
 			
+			/**
+			 * Registers a onReady event handler
+			 */
+			self.ready = function(onReady) {
+				if($.isFunction(onReady)) {
+					if(self.context.ready) onReady(self);
+					else {
+						if(!self.context.onReadySubscribers) self.context.onReadySubscribers = [];
+						self.context.onReadySubscribers.push(onReady);
+					}
+				}
+				else if(onReady===undefined) {
+					self.context.ready = true;
+					if(self.context.onReadySubscribers) {
+						for(var i=0;i<self.context.onReadySubscribers.length;i++) {
+							var eh = self.context.onReadySubscribers[i];
+							if($.isFunction(eh)) eh(self);
+						}
+						// empties subscribers list
+						self.context.onReadySubscribers=undefined;
+					}					
+				}
+				return self;
+			};
+			
 			// Implementation
 			
 			self.impl.onSelect = function(selectionSense) {
@@ -1133,16 +1263,24 @@
 				// Loads object visible states from catalog
 				wncd.mf.createAndAct(states,function(visibleStates){
 					self.context.visibleStates = ($.type(visibleStates)==='array'?visibleStates:[visibleStates]);
-					self.context.visibleStatesIndex = {};
+					self.context.visibleStatesIndex = {};					
+					self.context.visibleStatesToLoad = self.context.visibleStates.length;
+					var onReadyVisibleState = function(visibleState) {
+						self.context.visibleStatesToLoad -= 1;
+						// marks visible object as ready once all visible states are successfully loaded
+						if(self.context.visibleStatesToLoad<=0) self.ready();						
+					};						
 					// creates VisibleState index					
 					for(var i=0;i<self.context.visibleStates.length;i++) {
 						var visibleState = self.context.visibleStates[i];						
 						visibleState.ctxKey += i;/* avoids clashes by appending numerical index */
 						// injects selection sense
 						visibleState.context.selectionSense = self.context.selectionSense;
-						self.context.visibleStatesIndex[visibleState.name()] = visibleState;						
+						self.context.visibleStatesIndex[visibleState.name()] = visibleState;
+						// registers ready callback
+						visibleState.ready(onReadyVisibleState);
 					}
-					//wncd.mf.message.log("Visible object "+(self.context.objectID?"'"+self.context.objectID+"' ":"")+"received "+self.context.visibleStates.length+" VisibleStates: "+self.states().join(','));
+					//wncd.mf.message.log("Visible object "+(self.context.objectID?"'"+self.context.objectID+"' ":"")+"received "+self.context.visibleStates.length+" VisibleStates: "+self.states().join(','));					
 				});	
 				// attach a RectangleService to ease svg object manipulation
 				wncd.mf.background.gameBoard().getRectangleService(self).attach();
@@ -1205,7 +1343,8 @@
 					var oldVisibleObj = self.context.visibleObjectsIndex[visibleObj.context.name];
 					if(oldVisibleObj) oldVisibleObj.$().hide();
 					self.context.visibleObjectsIndex[visibleObj.context.name] = visibleObj;
-					if($.isFunction(actOnDone)) actOnDone(visibleObj);
+					// queues ready callback
+					if(actOnDone) visibleObj.ready(actOnDone);
 				});
 				return self;
 			};
@@ -1441,7 +1580,8 @@
 					if(!(options.x || options.y || options.position)) {
 						options.x = 0; options.y = 0; options.position = 'center';
 					}
-					self.background.add(options.load,options,function(visibleObj){applyOptions(visibleObj,options);});
+					var opt = options;
+					self.background.add(options.load,options,function(visibleObj){applyOptions(visibleObj,opt);});
 				}
 				// fetches visible object by name and applies options
 				else {
@@ -1454,9 +1594,9 @@
 			/**
 			 * Fetches some code given its catalog ID and acts on it
 			 *@param String codeId the catalog ID of the object to retrieve and act on.
-			 * The catalog ID can be followed with an hashtag and SVG ID to select a specific SVG element instead of whole code.
+			 * The catalog ID can be followed with a double underscore and SVG ID to select a specific SVG element instead of whole code.
 			 * This is useful to load at once a bunch of SVG objects defined in one drawing, instead of loading them separately.
-			 * Example: load PERS201800007#face or PERS201800007#droite_marche_1
+			 * Example: load PERS201800007__face or PERS201800007__droite_marche_1
 			 *@param Function action callback on the fetched code. Callback is a function which takes one parameter of type object of the form
 			 *{ id: object ID in catalog, optionally followed by svgId,
 			 *  type: svg|ncd type of code fetched,
@@ -1469,8 +1609,27 @@
 			 *@return MoveForward.MoveForwardNCD for chaining
 			 */
 			self.actOnCode = function(codeId,action) {
-				wncd.server.rise().mf_actOnCode(codeId,action,mf.impl.publishException);
+				// Registers codeId in pending objects until code is received
+				mf.impl.pendingObjects[codeId] = Date.now();
+				// Removes codeId from pending object on reception or failure
+				var onReception = function(code) {
+					delete mf.impl.pendingObjects[codeId];
+					action(code);
+				};
+				var onFailure = function(exception,context) {
+					delete mf.impl.pendingObjects[codeId];
+					mf.impl.publishException(exception,context);
+				};
+				// calls rise.wigii.org
+				wncd.server.rise().mf_actOnCode(codeId,onReception,onFailure);
 				return self;
+			};
+			/**
+			 * Returns map of pending objects not yet loaded.
+			 * Key is object catalog ID, value is timestamp when http request has been sent.
+			 */
+			self.pendingObjects = function() {
+				return mf.impl.pendingObjects;
 			};
 			/**
 			 * Fetches an object given its catalog ID, creates a local instance and acts with it
@@ -1697,11 +1856,13 @@
 					mfEnv.context.boardMaxHeight = maxHeight-5;
 					mfEnv.context.boardWidth = mfEnv.context.boardMaxWidth;
 					mfEnv.context.boardHeight = mfEnv.context.boardMaxHeight;
+					mfEnv.options.flippable = (mfEnv.options.flippable !== false);
 				}
 				// else takes container width
 				else {
 					mfEnv.context.boardWidth = board.$().width()-5;
 					mfEnv.context.boardHeight = board.$().height()-5;
+					mfEnv.options.flippable = false;
 				}
 				
 				
