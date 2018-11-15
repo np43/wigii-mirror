@@ -286,6 +286,7 @@
 	var mfNcd = function(self, options) {
 		self = self || {};
 		var mf = self; // ref to current library
+		mf.ncd = undefined; // internal ref to contextual wncd.mf language
 		self.className = 'MoveForward';
 		self.instantiationTime = Date.now();
 		self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
@@ -606,13 +607,13 @@
 			 */
 			self.loadBackground = function(backgroundId,options) {
 				// hides old background
-				var oldSceneBackground = wncd.mf.background;
+				var oldSceneBackground = mf.ncd.background;
 				if(oldSceneBackground) oldSceneBackground.$().hide();
 				// creates new background
 				var options = options || {};
 				options.gameBoard = self;				
 				var newSceneBackground = new mf.SceneBackground(backgroundId,options);
-				wncd.mf.background = newSceneBackground;
+				mf.ncd.background = newSceneBackground;
 				mf.context.backgroundId = backgroundId;
 				// disposes old background
 				if(oldSceneBackground) oldSceneBackground.$().remove();
@@ -624,7 +625,7 @@
 			 */
 			self.loadExplorer = function(explorerId,options) {
 				if(!explorerId) throw wncd.createServiceException("explorerId cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
-				wncd.mf.explorer = new mf.Explorer(explorerId,options);				
+				mf.ncd.explorer = new mf.Explorer(explorerId,options);				
 				mf.context.explorerId = explorerId;
 				return self;
 			};			
@@ -877,8 +878,17 @@
 			 * SE: svg object top left corner is on the given point
 			 * SW: svg object top right corner is on the given point
 			 * NW: svg object bottom left corner is on the given point
+			 *
+			 * This function also supports passing an object {x,y,pos|position} describing the position instead of individual arguments.
+			 * position({x:0,y:0,pos:'N'})
 			 */
 			self.position = function(x,y,pos) {
+				// checks if first argument is an object and extracts the fields (x,y,pos)
+				if($.isPlainObject(x)) {
+					y = x.y;
+					pos = x.pos || x.position;
+					x = x.x;
+				}
 				// computes position
 				var basePos = 'center';
 				switch(pos) {
@@ -1090,7 +1100,7 @@
 				if($.type(objs)!=='array') objs = [objs];
 				var asyncLoader = {readyIndex:{},loadingSequence:objs,nbLoaded:0};
 				for(var i=0;i<objs.length;i++) {					
-					wncd.mf.actOnCode(objs[i],function(code){
+					mf.ncd.actOnCode(objs[i],function(code){
 						asyncLoader.readyIndex[code.id] = code;
 						asyncLoader.nbLoaded++;						
 						// if all loaded, then finalizes context with ready data
@@ -1102,7 +1112,7 @@
 								self.context.objs.push(obj);								
 								readyStamp += (i>0?', ':'')+obj.type+" "+obj.id;
 							}
-							//wncd.mf.message.log("Visible state '"+self.name()+"' received "+readyStamp);
+							//mf.ncd.message.log("Visible state '"+self.name()+"' received "+readyStamp);
 							// Creates a wncd Runtime to execute animations
 							self.impl.animationRuntime = wncd.createRuntime(mf.impl.gameBoard.svgEmitter());
 							// marks visible state as ready
@@ -1111,7 +1121,7 @@
 					});
 				}
 				// attach a RectangleService to ease svg object manipulation
-				wncd.mf.background.gameBoard().getRectangleService(self).attach();
+				mf.ncd.background.gameBoard().getRectangleService(self).attach();
 			}
 		};
 		
@@ -1169,6 +1179,8 @@
 				if(options) {
 					self.context.name = options.name || self.context.name;
 					self.context.sceneBackground = options.sceneBackground || self.context.sceneBackground;
+					self.options.showStateDefaultPosition = options.showStateDefaultPosition || self.options.showStateDefaultPosition;					
+					self.options.showStateDefaultSize = options.showStateDefaultSize || self.options.showStateDefaultSize;					
 				}
 				return self;
 			};
@@ -1196,11 +1208,14 @@
 						// shows new state
 						visibleState.show(options);						
 						self.context.visibleState = visibleState;
-						// sets same position and size on new visible state
-						if(pos) {
-							self.position(pos.x,pos.y);
-							self.height(pos.height);
-						}
+						// shows it in default position 
+						if(self.options.showStateDefaultPosition) self.position(self.options.showStateDefaultPosition);
+						// or keeps actual position
+						else if(pos) self.position(pos.x,pos.y);
+						// shows it in default size
+						if(self.options.showStateDefaultSize) self.size(self.options.showStateDefaultSize);
+						// or keeps actual size
+						else if(pos) self.height(pos.height);
 					}
 				}
 				return self;
@@ -1261,7 +1276,7 @@
 				// Creates a SelectionSense
 				self.context.selectionSense = wncd.createSelectionSense(self.impl.onSelect);
 				// Loads object visible states from catalog
-				wncd.mf.createAndAct(states,function(visibleStates){
+				mf.ncd.createAndAct(states,function(visibleStates){
 					self.context.visibleStates = ($.type(visibleStates)==='array'?visibleStates:[visibleStates]);
 					self.context.visibleStatesIndex = {};					
 					self.context.visibleStatesToLoad = self.context.visibleStates.length;
@@ -1280,10 +1295,10 @@
 						// registers ready callback
 						visibleState.ready(onReadyVisibleState);
 					}
-					//wncd.mf.message.log("Visible object "+(self.context.objectID?"'"+self.context.objectID+"' ":"")+"received "+self.context.visibleStates.length+" VisibleStates: "+self.states().join(','));					
+					//mf.ncd.message.log("Visible object "+(self.context.objectID?"'"+self.context.objectID+"' ":"")+"received "+self.context.visibleStates.length+" VisibleStates: "+self.states().join(','));					
 				});	
 				// attach a RectangleService to ease svg object manipulation
-				wncd.mf.background.gameBoard().getRectangleService(self).attach();
+				mf.ncd.background.gameBoard().getRectangleService(self).attach();
 			}
 		};
 		
@@ -1319,7 +1334,7 @@
 			 */
 			self.load = function(objId,options) {
 				self.context.gameBoard.loadBackground(objId,options);
-				return wncd.mf.background;
+				return mf.ncd.background;
 			};
 			
 			/**
@@ -1335,7 +1350,7 @@
 				options = options || {};
 				options.sceneBackground = self;
 				// if needed, loads VisibleObject given its catalog ID and then register it into the visibleObjects collection
-				wncd.mf.createAndAct(visibleObj,function(visibleObj) {
+				mf.ncd.createAndAct(visibleObj,function(visibleObj) {
 					visibleObj.reset(options);
 					visibleObj.ctxKey += self.context.visibleObjects.length;/* avoids clashes by appending numerical index */
 					self.context.visibleObjects.push(visibleObj);
@@ -1377,7 +1392,7 @@
 			
 			if(objId && mf.options.startupMode != 'documentation') {
 				// Loads scene background from catalog and displays it
-				wncd.mf.actOnCode(objId,function(code){
+				mf.ncd.actOnCode(objId,function(code){
 					if(code && code.type == 'svg') {
 						try {
 							self.context.gameBoard.svgEmitter().putSVG(code.svg,code.svgDefs)
@@ -1474,15 +1489,15 @@
 			// Loading
 			
 			if(!visibleObjectId) throw wncd.createServiceException("visibleObjectId cannot be null",wncd.errorCodes.INVALID_ARGUMENT);
-			if(!wncd.mf.background) throw wncd.createServiceException("no SceneBackground available, please load one first",wncd.errorCodes.INVALID_STATE);
+			if(!mf.ncd.background) throw wncd.createServiceException("no SceneBackground available, please load one first",wncd.errorCodes.INVALID_STATE);
 			// sets default options
 			if(!self.options.name) self.options.name = 'explorer';
 			if(mf.options.startupMode != 'documentation') {
 				// loads explorer VisibleObject from catalog and adds it to current background
-				wncd.mf.background.add(visibleObjectId,self.options,function(visibleObj){
+				mf.ncd.background.add(visibleObjectId,self.options,function(visibleObj){
 					self.context.visibleObject = visibleObj;
 					// attach a RectangleService to ease svg object manipulation
-					wncd.mf.background.gameBoard().getRectangleService(self).attach();
+					mf.ncd.background.gameBoard().getRectangleService(self).attach();
 				});
 			}
 		};
@@ -1576,12 +1591,17 @@
 				// loads from catalog if options.load is defined
 				if(options && options.load) {
 					options.name = name;
-					if(!(options.width || options.height || options.size)) options.size = '100%';
+					if(!(options.width || options.height || options.size)) {
+						options.size = '100%';
+						options.showStateDefaultSize = '100%';
+					}
 					if(!(options.x || options.y || options.position)) {
 						options.x = 0; options.y = 0; options.position = 'center';
+						options.showStateDefaultPosition = {x:0,y:0,position:'center'};
 					}
 					var opt = options;
 					self.background.add(options.load,options,function(visibleObj){applyOptions(visibleObj,opt);});
+					return self; /* for chaining */
 				}
 				// fetches visible object by name and applies options
 				else {
@@ -1646,7 +1666,7 @@
 							try {
 								// instantiates the object from its code only if a callback is given
 								if($.isFunction(action)) {
-									var obj = wncd.fxString2obj(code.ncd);
+									var obj = mf.impl.runNcdCode(code.ncd);
 									// injects catalog attributes in context
 									if(obj.context) {
 										obj.context.objectID = objId;
@@ -1707,7 +1727,7 @@
 					if(code && code.type == 'ncd') {
 						try {
 							// runs code
-							wncd.fxString2obj(code.ncd);
+							mf.impl.runNcdCode(code.ncd);
 							// calls action after include if defined
 							if($.isFunction(actAfterInclude)) actAfterInclude();
 						}
@@ -1784,13 +1804,14 @@
 		 * A scene script should be a FuncExp: either a scripte object or a ctlSeq object or a ctlGen object.
 		 */
 		self.impl.playSceneScript = function(sceneId) {
-			wncd.mf.createAndAct(sceneId,function(sceneScript,context){
+			mf.ncd.createAndAct(sceneId,function(sceneScript,context){
 				// Injects scene attributes in facade
-				wncd.mf.scene.objectID = context.objectID;
-				wncd.mf.scene.objectName = context.objectName;
-				wncd.mf.scene.objectType = context.objectType;
-				self.context.sceneId = wncd.mf.scene.objectID;
+				mf.ncd.scene.objectID = context.objectID;
+				mf.ncd.scene.objectName = context.objectName;
+				mf.ncd.scene.objectType = context.objectType;
+				self.context.sceneId = mf.ncd.scene.objectID;
 				// Runs the scene script in the context of the dedicated wncd Runtime for the game
+				wncd.mf = mf.ncd;
 				self.impl.gameRuntime.program(sceneScript);
 			});
 		};
@@ -1803,22 +1824,30 @@
 			var sceneId = self.context.sceneQueue.shift();
 			if(sceneId) {
 				// Loads the scene
-				wncd.mf.createAndAct(sceneId,function(sceneScript,context){
+				mf.ncd.createAndAct(sceneId,function(sceneScript,context){
 					// Injects scene attributes in facade
-					wncd.mf.scene.objectID = context.objectID;
-					wncd.mf.scene.objectName = context.objectName;
-					wncd.mf.scene.objectType = context.objectType;
-					self.context.sceneId = wncd.mf.scene.objectID;
+					mf.ncd.scene.objectID = context.objectID;
+					mf.ncd.scene.objectName = context.objectName;
+					mf.ncd.scene.objectType = context.objectType;
+					self.context.sceneId = mf.ncd.scene.objectID;
 					// Runs the scene script in the context of the dedicated wncd Runtime for the game
 					// Then interrupts stack by pausing 100ms and plays again until queue is empty.
 					self.impl.gameRuntime.program(ctlSeq(
+						scripte(function(){wncd.mf = mf.ncd;}),
 						sceneScript,
 						pause(0.1),
 						scripte(function(){self.impl.play();})
 					));
 				});
 			}
-			//else wncd.mf.message.log("End.");
+			//else mf.ncd.message.log("End.");
+		};
+		/**
+		 * Runs some NCD code in the scope of Move Forward
+		 */
+		self.impl.runNcdCode = function(code) {
+			wncd.mf = mf.ncd;
+			return wncd.fxString2obj(code);
 		};
 		return self;
 	};
@@ -1898,7 +1927,8 @@
 										
 				// Launches Move Forward NCD engine
 				mfEnv.impl.mfNcd = new mfEnv.MoveForwardNCD();
-				wncd.mf = mfEnv.impl.mfNcd;
+				// Exposes MF NCD language internally through contextual mf.ncd symbol
+				mfEnv.ncd = mfEnv.impl.mfNcd;
 				
 				// loads empty background
 				if(mfEnv.options.svgBoard) mfEnv.impl.gameBoard.loadBackground();
@@ -1906,11 +1936,9 @@
 				// stores Move Forward environment in selection and sets ctxKey as DOM data attribute
 				selection.data(mfEnv.ctxKey,mfEnv);
 				selection.attr('data-wncd-mfctxkey',mfEnv.ctxKey);
-			}
-			// aligns wncd.mf on current Move Forward environment
-			else wncd.mf = mfEnv.impl.mfNcd;
+			}			
 			
-			returnValue = wncd.mf;
+			returnValue = mfEnv.ncd;
 		}
 		else if(selection && selection.length>1) throw wigiiApi.createServiceException('Wigii mf selector can only be activated on a JQuery collection containing one element and not '+selection.length, wigiiApi.errorCodes.INVALID_ARGUMENT);
 		return (!returnValue?{$:selection}:returnValue);
