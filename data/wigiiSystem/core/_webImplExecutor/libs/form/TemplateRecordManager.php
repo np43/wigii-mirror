@@ -2120,7 +2120,7 @@ class TemplateRecordManager extends Model {
 						return $this->doFormatForText($value);
 						break;
 					case "thumbnail":
-						if($this->getRecord()!=null){
+						if($this->getRecord()!=null && $this->getRecord()->getFieldValue($fieldName, "size")){
 							return $this->doFormatForThumbs($this->getRecord()->getId(), $fieldName);
 						}
 						break;
