@@ -311,8 +311,9 @@ interface GroupAdminService
 	 * @param Principal $principal authenticated user performing the operation
 	 * @param Int $parentGroupId the id of the parent group for which to get the first sub group
 	 * @param String $groupName the name of the group to fetch or to create. Should be unique.
+	 * @param String $groupNameFilter, optional a filter to find the name (for example: %id%). This allows typically the creation of folder in which the name might change on time but that contains a specific ID that remain.
 	 * @return GroupP the groupP model wrapping the fetched or created group.
 	 * @throws GroupAdminServiceException in case of error. 
 	 */
-	public function getOrCreateSubGroupByName($principal, $parentGroupId, $groupName);
+	public function getOrCreateSubGroupByName($principal, $parentGroupId, $groupName, $groupNameFilter=null);
 }

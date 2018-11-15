@@ -3783,13 +3783,14 @@ where $select_Groups_whereClause ";
 		}
 		return $groupP;
 	}
-	public function getOrCreateSubGroupByName($principal, $parentGroupId, $groupName) {
+	public function getOrCreateSubGroupByName($principal, $parentGroupId, $groupName, $groupNameFilter=null) {
 		if(!isset($parentGroupId)) throw new GroupAdminServiceException('parentGroupId cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
 		if(empty($groupName)) throw new GroupAdminServiceException('groupName cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);		
 		// 1. fetch group in db
+		if(!$groupNameFilter) $groupNameFilter = $groupName;//if filter is not defined, then take the groupname as the filter
 		$groupPList = GroupPListArrayImpl::createInstance();
 		$listFilter = lf($this->getFieldSelectorListForGroupWithoutDetail(), 
-				lxAnd(lxEq(fs('groupname'), $groupName), lxEq(fs('id_group_parent'), $parentGroupId)), 
+				lxAnd(lxLike(fs('groupname'), $groupNameFilter), lxEq(fs('id_group_parent'), $parentGroupId)), 
 				null, 1, 1);
 		$this->getSelectedGroups($principal, $listFilter, $groupPList);
 		switch($listFilter->getTotalNumberOfObjects()) {
@@ -3807,7 +3808,14 @@ where $select_Groups_whereClause ";
 				$this->persistGroup($principal, $groupP->getGroup());
 				$groupP->setRights(PrincipalRights::createInstance(array('canWriteElement' => true)));
 				break;
-			case 1: $groupP = reset($groupPList->getListIterator()); break;
+			case 1: 
+				$groupP = reset($groupPList->getListIterator());
+				//update the name of the group is necessary:
+				if($groupP->getGroup()->getGroupName()!=$groupName){
+					$groupP->getGroup()->setGroupName($groupName);
+					$this->persistGroup($principal, $groupP->getGroup());
+				}
+				break;
 			default: throw new GroupAdminServiceException("group $groupName is not a unique child of group $parentGroupId", GroupAdminServiceException::INVALID_ARGUMENT);
 		}
 		return $groupP;
