@@ -4695,6 +4695,8 @@ invalidCompleteCache();
 				// checks if public principal is authorized
 				if($webExec->isPublicPrincipalAuthorized()) {
 					$p = $this->getPublicPrincipal();
+					// binds to WigiiNamespace from request
+					$p->bindToWigiiNamespace($exec->getCrtWigiiNamespace());
 				}
 				// checks if MinimalPrincial is authorized
 				elseif (!$webExec->isMinimalPrincipalAuthorized()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);

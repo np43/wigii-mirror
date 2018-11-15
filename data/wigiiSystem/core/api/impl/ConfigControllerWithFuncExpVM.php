@@ -80,9 +80,11 @@ abstract class ConfigControllerWithFuncExpVM implements ConfigController
 		$this->vm = null;		
 		$returnValue = null;
 		try {
-			// gets vm linked to parent evaluator
-			$this->vm = $this->getFuncExpVM($principal, $this->getFuncExpVMClassName(), 
-					$this->getElementEvaluator($principal, $this->getElementEvaluatorClassName($xmlConfig)));
+			// gets parent element evaluator
+			$parentEvaluator= $this->getElementEvaluator($principal, $this->getElementEvaluatorClassName($xmlConfig));
+			$parentEvaluator->setContext($principal, null);
+			// gets vm linked to parent evaluator			
+			$this->vm = $this->getFuncExpVM($principal, $this->getFuncExpVMClassName(), $parentEvaluator);
 			// configures the vm
 			if(isset($this->vmModules)) $this->vm->useModules($this->vmModules);
 			$this->vm->setFreeParentEvaluatorOnFreeMemory(true);
