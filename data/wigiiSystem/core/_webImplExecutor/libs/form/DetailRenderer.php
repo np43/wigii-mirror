@@ -316,91 +316,102 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 			$additionalInformations = $rm->getAdditionalInformation($fieldName);
 			if($additionalInformations) $rm->put('<div class="addinfo ui-corner-all SBIB">'.$additionalInformations.'</div>');
 		}
-
-		//display label
-		if($dataType!=null && $fieldXml["noLabel"]!="1"){
-			//20 is the label padding
-			$noPadding = "";
-			if($dataTypeName=="Files"){
-				if($fieldXml["displayPreviewOnly"]=="1"){
-					$labelWidth = $this->getIsInLineWidth();
+		
+		$order = ["label","value"];
+		if($fieldXml["labelOnRight"]=="1"){
+			$order = ["value","label"];
+		}
+		foreach($order as $do){
+			switch($do){
+				case "label":
+					//display label
+					if($dataType!=null && $fieldXml["noLabel"]!="1"){
+						//20 is the label padding
+						$noPadding = "";
+						if($dataTypeName=="Files"){
+							if($fieldXml["displayPreviewOnly"]=="1"){
+								$labelWidth = $this->getIsInLineWidth();
+							} else {
+								$labelWidth = min($this->getLabelWidth(), 100);
+							}
+						} else if($dataTypeName=="Urls" && $fieldXml["bigLabel"]=="1"){
+							$labelWidth = min($this->getLabelWidth(), 100);
+						} else if(($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1"){
+							$labelWidth = $this->getIsInLineWidth();
+							$noPadding = "padding-right:0px;"; //don't need the right padding if is inline
+						} else {
+							$labelWidth = $this->getLabelWidth();
+						}
+						$style = "width: 100%; max-width:".$labelWidth."px;$noPadding";
+						if($dataTypeName=="Files"){
+							$style .= "text-align:center;";
+						}
+						$rm->put('<div class="label" style="'.$style.'" >');
+						$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage());
+						$rm->put('</div>');
+					}
+					break;
+				case "value":
+				//display value
+				if($dataType && ($dataTypeName=="Files")){
+					if($fieldXml["displayPreviewOnly"]=="1"){
+						$valueWidth = $this->getIsInLineWidth();
+					} else {
+						$valueWidth = $this->getIsInLineWidth()-($labelWidth+20);
+					}
+				} else if($dataType && ($dataTypeName=="Urls" && $fieldXml["bigLabel"]=="1")){
+					$valueWidth = $this->getIsInLineWidth()-($labelWidth+20);
+				} else if((($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1") || $dataType==null || $fieldXml["noLabel"] =="1"){
+					$valueWidth = $this->getIsInLineWidth();
 				} else {
-					$labelWidth = min($this->getLabelWidth(), 100);
+					$valueWidth = $this->getValueWidth();
 				}
-			} else if($dataTypeName=="Urls" && $fieldXml["bigLabel"]=="1"){
-				$labelWidth = min($this->getLabelWidth(), 100);
-			} else if(($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1"){
-				$labelWidth = $this->getIsInLineWidth();
-				$noPadding = "padding-right:0px;"; //don't need the right padding if is inline
-			} else {
-				$labelWidth = $this->getLabelWidth();
-			}
-			$style = "width: 100%; max-width:".$labelWidth."px;$noPadding";
-			if($dataTypeName=="Files"){
-				$style .= "text-align:center;";
-			}
-			$rm->put('<div class="label" style="'.$style.'" >');
-			$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage());
-			$rm->put('</div>');
-		}
-
-		//display value
-		if($dataType && ($dataTypeName=="Files")){
-			if($fieldXml["displayPreviewOnly"]=="1"){
-				$valueWidth = $this->getIsInLineWidth();
-			} else {
-				$valueWidth = $this->getIsInLineWidth()-($labelWidth+20);
-			}
-		} else if($dataType && ($dataTypeName=="Urls" && $fieldXml["bigLabel"]=="1")){
-			$valueWidth = $this->getIsInLineWidth()-($labelWidth+20);
-		} else if((($isTitle || $fieldXml["isInLine"] =="1") && $fieldXml["displayAsTag"]!="1") || $dataType==null || $fieldXml["noLabel"] =="1"){
-			$valueWidth = $this->getIsInLineWidth();
-		} else {
-			$valueWidth = $this->getValueWidth();
-		}
-		$style = "width: 100%; max-width:".$valueWidth."px;overflow:hidden;";
-		$class = "";
-		if($dataType!=null){
-			if($dataTypeName == "Blobs" ||
-				$dataTypeName == "Texts"){
-				$class .= " text ";
-			}
-			if($dataTypeName == "Files"){
-				$class .= " file ";
-			}
-			$class = "value ".$class;
-		} else {
-			//for freetext, use the class value only if isLabel!=1
-			if($fieldXml["displayAsLabel"]=="1"){
-				$class = "label";
-			} else {
-				$class = "value";
+				$style = "width: 100%; max-width:".$valueWidth."px;overflow:hidden;";
+				$class = "";
+				if($dataType!=null){
+					if($dataTypeName == "Blobs" ||
+						$dataTypeName == "Texts"){
+						$class .= " text ";
+					}
+					if($dataTypeName == "Files"){
+						$class .= " file ";
+					}
+					$class = "value ".$class;
+				} else {
+					//for freetext, use the class value only if isLabel!=1
+					if($fieldXml["displayAsLabel"]=="1"){
+						$class = "label";
+					} else {
+						$class = "value";
+					}
+				}
+				//for print we don't limit the width to prevent hidding some information
+				if($rm->isForPrint() && $dataType!= null && ($dataTypeName=="Blobs" || ($dataTypeName=="Files" && $fieldXml["htmlArea"] && $fieldXml["displayContentInDetail"]))){
+					$style = preg_replace('/width: 100%; max-width:(.*)px/', "", $style);
+					$valueWidth =null;
+				}
+				$dataAttributes='';
+				if($dataTypeName=='Attributs') {
+					$dataAttributes='data-wigii-dbvalue="'.$rm->formatValueToPreventInjection($rm->getRecord()->getFieldValue($field->getFieldName())).'"';
+				}	
+				elseif($dataTypeName=='MultipleAttributs') {
+					$dbValue = $rm->getRecord()->getFieldValue($field->getFieldName());
+					if(is_array($dbValue)) $dbValue = implode(',',$dbValue);
+					$dataAttributes='data-wigii-dbvalue="'.$rm->formatValueToPreventInjection($dbValue).'"';
+				}	
+				$rm->put('<div class="'.$class.'" style="'.$style.'" '.$dataAttributes.'>');
+				if($dataType!= null && $dataTypeName!="Links" &&
+					!$rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName()) &&
+					!($dataTypeName=="Emails" && $rm->getRecord()->getFieldValue($field->getFieldName(), "proofStatus")==Emails::PROOF_STATUS_DELETED)
+					){
+					$rm->displayEvenIfEmpty($fieldName, $valueWidth, $this->getVisibleLanguage());
+				} else {
+					$rm->displayValue($fieldName, $valueWidth, $this->getVisibleLanguage());
+				}
+				$rm->put('</div>');
+				break;
 			}
 		}
-		//for print we don't limit the width to prevent hidding some information
-		if($rm->isForPrint() && $dataType!= null && ($dataTypeName=="Blobs" || ($dataTypeName=="Files" && $fieldXml["htmlArea"] && $fieldXml["displayContentInDetail"]))){
-			$style = preg_replace('/width: 100%; max-width:(.*)px/', "", $style);
-			$valueWidth =null;
-		}
-		$dataAttributes='';
-		if($dataTypeName=='Attributs') {
-			$dataAttributes='data-wigii-dbvalue="'.$rm->formatValueToPreventInjection($rm->getRecord()->getFieldValue($field->getFieldName())).'"';
-		}	
-		elseif($dataTypeName=='MultipleAttributs') {
-			$dbValue = $rm->getRecord()->getFieldValue($field->getFieldName());
-			if(is_array($dbValue)) $dbValue = implode(',',$dbValue);
-			$dataAttributes='data-wigii-dbvalue="'.$rm->formatValueToPreventInjection($dbValue).'"';
-		}	
-		$rm->put('<div class="'.$class.'" style="'.$style.'" '.$dataAttributes.'>');
-		if($dataType!= null && $dataTypeName!="Links" &&
-			!$rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName()) &&
-			!($dataTypeName=="Emails" && $rm->getRecord()->getFieldValue($field->getFieldName(), "proofStatus")==Emails::PROOF_STATUS_DELETED)
-			){
-			$rm->displayEvenIfEmpty($fieldName, $valueWidth, $this->getVisibleLanguage());
-		} else {
-			$rm->displayValue($fieldName, $valueWidth, $this->getVisibleLanguage());
-		}
-		$rm->put('</div>');			
 		
 		// adds any dynamically generated hidden divs
 		if((string)$fieldXml["divExp"]!=null) $this->resolveDivExp((string)$fieldXml["divExp"]);

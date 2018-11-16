@@ -328,7 +328,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * @return mixed, the value of the field
 	 */
 	public function fsVal($args) {
-		return $this->evaluateArg($args[0]);
+		if($args[0] instanceof FieldSelector){
+			return $this->evaluateArg($args[0]);
+		} else {
+			//evaluate the expression as a fieldName and returns the field value
+			return $this->evaluateArg(fs($this->evaluateArg($args[0])));
+		}
 	}
 	
 	/**

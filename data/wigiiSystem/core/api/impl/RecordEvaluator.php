@@ -456,6 +456,17 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 	
 	/**
+	 * Returns the name of the field currently beeing evaluated.
+	 * FuncExp signature : <code>ctlCurrentFieldname()</code><br/>
+	 * @return String the name of the field
+	 */
+	public function ctlCurrentFieldName($args) {
+		if(is_null($this->record)) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
+		if(is_null($this->currentField)) throw new RecordException("no Field is currently beeing evaluated", RecordException::INVALID_STATE);
+		return $this->currentField->getFieldName();
+	}
+	
+	/**
 	 * Updates current field subfield value in wigii bag with new value
 	 */
 	protected function updateCurrentFieldSubFieldValue($subFieldName, $newValue)

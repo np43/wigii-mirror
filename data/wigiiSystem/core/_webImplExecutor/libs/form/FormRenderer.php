@@ -387,176 +387,187 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 			$rm->put('<div class="fieldError" style="width: 100%; max-width:'.($this->getIsInLineWidth()).'px;">'.$error.'</div>');
 		}
 
-		//display label
-		$countSubFields = 0;
-		if(($dataType!=null && $fieldXml["noLabel"]!="1")){
-			//display label on full width if field dispay more than one subfield
-			$countSubFields = count($dataType->getXml()->xpath("*[@type!='hidden']")); //count only none hidden sub fields
-			if(	($dataTypeName=="Urls" && $fieldXml["onlyUrl"] =="1") ||
-				($dataTypeName=="TimeRanges" && $fieldXml["onlyDate"] =="1")
-				){
-				$countSubFields = 1;
-			}
-
-			//20 is the label padding
-			$noPadding = "";
-			if(!$isCollapse && ($countSubFields > 1 || $fieldXml["isInLine"] =="1")){
-				$labelWidth = $this->getIsInLineWidth();
-				$noPadding = "padding-right:0px;"; //don't need the right padding if is inline
-			} else {
-				$labelWidth = $this->getLabelWidth();
-			}
-			if($fieldName == 'stayConnected'){
-                $style = "width:auto;$noPadding";
-            }else{
-			    $style = "width: 100%; max-width:".$labelWidth."px;$noPadding";
-            }
-			$rm->put('<div class="label" style="'.$style.'" >');
-			//if multiple mode then add multiple check box
-			if($this->isMultiple()){
-				$tempClass = "checkField";
-				if($rm->getRecord()->getWigiiBag()->isDisabled($fieldName)){
-					$tempClass .= " disabled ";
-					$disabled = ' disabled="on" ';
-				} else $disabled = null;
-				$checked = $rm->getRecord()->getWigiiBag()->isMultipleChecked($fieldName);
-				if($checked) $checked = ' checked="on" ';
-				else $checked = null;
-				$multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheck").'\');" onmouseout="hideHelp();" ';
-				$rm->put('<span class="checkField M" style="padding:5px 0px 1px 0px;"><input id="'.$this->getFormId().'_'.$fieldName.'_check" type="checkbox" name="'.$fieldName.'_check" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /></span> ');
-				if(	($dataTypeName == "Emails" && $fieldXml["isMultiple"]=="1") ||
-					($dataTypeName == "Addresses") ||
-					($dataTypeName == "Blobs") ||
-					($dataTypeName == "Floats") ||
-					($dataTypeName == "Links") ||
-					($dataTypeName == "Numerics") ||
-					($dataTypeName == "Texts") ||
-					$dataTypeName == "MultipleAttributs"){
-					$checked = $rm->getRecord()->getWigiiBag()->isMultipleAddOnlyChecked($fieldName);
-					//by default check this checkbox
-					if($_POST["action"]==null) $checked = true;
-					if($checked) $checked = ' checked="on" ';
-					else $checked = null;
-					$multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheckAddOnly").'\');" onmouseout="hideHelp();" ';
-					$rm->put('<input id="'.$this->getFormId().'_'.$fieldName.'_checkAddOnly" type="checkbox" name="'.$fieldName.'_checkAddOnly" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /> ');
-				}
-			}
-			//add red cross on error
-			if(!empty($error)){
-				$rm->put('<img class="icon" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/emblems/emblem-unreadable.png" /> ');
-			}
-			//add * on require
-			if($isRequire){
-				$rm->put('* ');
-			}
-//			$rm->put('<label>');
-			if($dataTypeName == "Files" && $fieldXml["displayPreviewOnly"]=="1"){
-				//dispaly picture in form
-				$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage(), true);
-			} else {
-				$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage(), false);
-			}
-//			$rm->put('</label>');
-			//add a "+add" button
-			if($dataTypeName == "Blobs" && $fieldXml["isJournal"]=="1"){
-				// CWE 09.05.2018: if field is readonly and allowOnReadOnly=0, then add button is disabled
-				if($rm->getRecord()->getWigiiBag()->isReadonly($fieldName) ||
-				   $rm->getRecord()->getWigiiBag()->isDisabled($fieldName)) {
-					$allowJournal = ($fieldXml["allowOnReadOnly"]!="0");
-				}
-				else $allowJournal = true;
-				if($allowJournal) {
-					$textAreaId = $this->getFormId()."_".$fieldName."_value_textarea";
-					//readonly is added in Blobs_displayForm on the textarea field.
-					if($fieldXml["protectExistingEntries"]=="1"){
-						$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
-						$rm->put('&nbsp;&nbsp;&nbsp; (<span class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
-					} else {
-						$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
-						if($fieldXml["htmlArea"]=="1"){ //if htmlArea then make the editor editable
-							$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="CKEDITOR.instances[\''.$textAreaId.'\'].setReadOnly(false);" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
-						} else { //if none htmlArea enable the textarea after
-							$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="$(\'#'.$textAreaId.'\').removeAttr(\'disabled\').css(\'background-color\', \'#fff\');" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
+		$order = ["label","value"];
+		if($fieldXml["labelOnRight"]=="1"){
+			$order = ["value","label"];
+		}
+		foreach($order as $do){
+			switch($do){
+				case "label":
+					//display label
+					$countSubFields = 0;
+					if(($dataType!=null && $fieldXml["noLabel"]!="1")){
+						//display label on full width if field dispay more than one subfield
+						$countSubFields = count($dataType->getXml()->xpath("*[@type!='hidden']")); //count only none hidden sub fields
+						if(	($dataTypeName=="Urls" && $fieldXml["onlyUrl"] =="1") ||
+								($dataTypeName=="TimeRanges" && $fieldXml["onlyDate"] =="1")
+								){
+									$countSubFields = 1;
+						}
+						
+						//20 is the label padding
+						$noPadding = "";
+						if(!$isCollapse && ($countSubFields > 1 || $fieldXml["isInLine"] =="1")){
+							$labelWidth = $this->getIsInLineWidth();
+							$noPadding = "padding-right:0px;"; //don't need the right padding if is inline
+						} else {
+							$labelWidth = $this->getLabelWidth();
+						}
+						if($fieldName == 'stayConnected'){
+							$style = "width:auto;$noPadding";
+						}else{
+							$style = "width: 100%; max-width:".$labelWidth."px;$noPadding";
+						}
+						$rm->put('<div class="label" style="'.$style.'" >');
+						//if multiple mode then add multiple check box
+						if($this->isMultiple()){
+							$tempClass = "checkField";
+							if($rm->getRecord()->getWigiiBag()->isDisabled($fieldName)){
+								$tempClass .= " disabled ";
+								$disabled = ' disabled="on" ';
+							} else $disabled = null;
+							$checked = $rm->getRecord()->getWigiiBag()->isMultipleChecked($fieldName);
+							if($checked) $checked = ' checked="on" ';
+							else $checked = null;
+							$multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheck").'\');" onmouseout="hideHelp();" ';
+							$rm->put('<span class="checkField M" style="padding:5px 0px 1px 0px;"><input id="'.$this->getFormId().'_'.$fieldName.'_check" type="checkbox" name="'.$fieldName.'_check" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /></span> ');
+							if(	($dataTypeName == "Emails" && $fieldXml["isMultiple"]=="1") ||
+									($dataTypeName == "Addresses") ||
+									($dataTypeName == "Blobs") ||
+									($dataTypeName == "Floats") ||
+									($dataTypeName == "Links") ||
+									($dataTypeName == "Numerics") ||
+									($dataTypeName == "Texts") ||
+									$dataTypeName == "MultipleAttributs"){
+										$checked = $rm->getRecord()->getWigiiBag()->isMultipleAddOnlyChecked($fieldName);
+										//by default check this checkbox
+										if($_POST["action"]==null) $checked = true;
+										if($checked) $checked = ' checked="on" ';
+										else $checked = null;
+										$multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheckAddOnly").'\');" onmouseout="hideHelp();" ';
+										$rm->put('<input id="'.$this->getFormId().'_'.$fieldName.'_checkAddOnly" type="checkbox" name="'.$fieldName.'_checkAddOnly" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /> ');
+							}
+						}
+						//add red cross on error
+						if(!empty($error)){
+							$rm->put('<img class="icon" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/emblems/emblem-unreadable.png" /> ');
+						}
+						//add * on require
+						if($isRequire){
+							$rm->put('* ');
+						}
+						//			$rm->put('<label>');
+						if($dataTypeName == "Files" && $fieldXml["displayPreviewOnly"]=="1"){
+							//dispaly picture in form
+							$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage(), true);
+						} else {
+							$rm->displayLabel($fieldName, $labelWidth, $this->getVisibleLanguage(), false);
+						}
+						//			$rm->put('</label>');
+						//add a "+add" button
+						if($dataTypeName == "Blobs" && $fieldXml["isJournal"]=="1"){
+							// CWE 09.05.2018: if field is readonly and allowOnReadOnly=0, then add button is disabled
+							if($rm->getRecord()->getWigiiBag()->isReadonly($fieldName) ||
+									$rm->getRecord()->getWigiiBag()->isDisabled($fieldName)) {
+										$allowJournal = ($fieldXml["allowOnReadOnly"]!="0");
+									}
+									else $allowJournal = true;
+									if($allowJournal) {
+										$textAreaId = $this->getFormId()."_".$fieldName."_value_textarea";
+										//readonly is added in Blobs_displayForm on the textarea field.
+										if($fieldXml["protectExistingEntries"]=="1"){
+											$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
+											$rm->put('&nbsp;&nbsp;&nbsp; (<span class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
+										} else {
+											$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
+											if($fieldXml["htmlArea"]=="1"){ //if htmlArea then make the editor editable
+												$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="CKEDITOR.instances[\''.$textAreaId.'\'].setReadOnly(false);" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
+											} else { //if none htmlArea enable the textarea after
+												$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="$(\'#'.$textAreaId.'\').removeAttr(\'disabled\').css(\'background-color\', \'#fff\');" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
+											}
+										}
+									}
+						}
+						$rm->put('</div>');
+						if($isCollapse){
+							$rm->put('<div class="addC d" style="');
+							$rm->put('width: 100%; max-width:'.($this->getValueWidth()).'px;');
+							$rm->put('"><span>+</span> <u>');
+							$rm->put($rm->t("cickToAdd".$dataTypeName."Content"));
+							$rm->put('</u></div>');
 						}
 					}
-				}
-			}
-			$rm->put('</div>');
-			if($isCollapse){
-				$rm->put('<div class="addC d" style="');
-				$rm->put('width: 100%; max-width:'.($this->getValueWidth()).'px;');
-				$rm->put('"><span>+</span> <u>');
-				$rm->put($rm->t("cickToAdd".$dataTypeName."Content"));
-				$rm->put('</u></div>');
+					
+					//Display label div in case of MultipleEdit and noLabel=1
+					if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){
+						$rm->put('<div class="label" style="width:0px;" >'); //Padding is 20px
+						$tempClass = "checkField";
+						if($rm->getRecord()->getWigiiBag()->isDisabled($fieldName)){
+							$tempClass .= " disabled ";
+							$disabled = ' disabled="on" ';
+						} else $disabled = null;
+						$checked = $rm->getRecord()->getWigiiBag()->isMultipleChecked($fieldName);
+						if($checked) $checked = ' checked="on" ';
+						else $checked = null;
+						$multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheck").'\');" onmouseout="hideHelp();" ';
+						$rm->put('<span class="checkField M" style="padding:5px 0px 1px 0px;"><input id="'.$this->getFormId().'_'.$fieldName.'_check" style="margin-top:1px" type="checkbox" name="'.$fieldName.'_check" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /></span> ');
+						if(	($dataTypeName == "Emails" && $fieldXml["isMultiple"]=="1") ||
+								($dataTypeName == "Addresses") ||
+								($dataTypeName == "Blobs") ||
+								($dataTypeName == "Floats") ||
+								($dataTypeName == "Links") ||
+								($dataTypeName == "Numerics") ||
+								($dataTypeName == "Texts") ||
+								$dataTypeName == "MultipleAttributs"){
+									$checked = $rm->getRecord()->getWigiiBag()->isMultipleAddOnlyChecked($fieldName);
+									//by default check this checkbox
+									if($_POST["action"]==null) $checked = true;
+									if($checked) $checked = ' checked="on" ';
+									else $checked = null;
+									$multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheckAddOnly").'\');" onmouseout="hideHelp();" ';
+									$rm->put('<input id="'.$this->getFormId().'_'.$fieldName.'_checkAddOnly" style="margin-top:1px" type="checkbox" name="'.$fieldName.'_checkAddOnly" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /> ');
+						}
+						$rm->put('</div>');
+					}
+					break;
+				case "value":
+					//display value
+					if($dataType==null || ($countSubFields > 1 || $fieldXml["isInLine"] =="1" || $fieldXml["noLabel"] =="1")){
+						$valueWidth = $this->getIsInLineWidth();
+					} elseif($dataType instanceof Links) { //To prevent the showing on multiple line
+						$valueWidth = $this->getValueWidth()-5;
+					}else {
+						$valueWidth = $this->getValueWidth();
+					}
+					if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){
+						$valueWidth -= 25;
+					}
+					$useMultipleColumn = (int)(string)$fieldXml["useMultipleColumn"];
+					if($useMultipleColumn>0){
+						$style = "width: 100%; max-width:".$valueWidth."px;";
+					} else {
+						$style = "width: 100%; max-width:".$valueWidth."px;";
+					}
+					if($dataType != null){
+						$class = "value";
+					} else {
+						//for freetext, use the class value only if isLabel!=1
+						if($fieldXml["displayAsLabel"]=="1"){
+							$class = "label";
+						} else {
+							$class = "value";
+						}
+					}
+					$rm->put('<div class="'.$class.'" style="'.$style.'" >');
+					if((int)(string)$fieldXml["displayViewOnly"] == 1){
+						$rm->displayValue($fieldName, $valueWidth, $this->getVisibleLanguage());
+					} else{
+						$rm->displayForm($this->getFormId(), $fieldName, $valueWidth, $this->getLabelWidth(), $this->getVisibleLanguage());
+					}
+					$rm->put('</div>');
+					break;
 			}
 		}
-
-		//Display label div in case of MultipleEdit and noLabel=1
-        if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){
-            $rm->put('<div class="label" style="width:0px;" >'); //Padding is 20px
-            $tempClass = "checkField";
-            if($rm->getRecord()->getWigiiBag()->isDisabled($fieldName)){
-                $tempClass .= " disabled ";
-                $disabled = ' disabled="on" ';
-            } else $disabled = null;
-            $checked = $rm->getRecord()->getWigiiBag()->isMultipleChecked($fieldName);
-            if($checked) $checked = ' checked="on" ';
-            else $checked = null;
-            $multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheck").'\');" onmouseout="hideHelp();" ';
-            $rm->put('<span class="checkField M" style="padding:5px 0px 1px 0px;"><input id="'.$this->getFormId().'_'.$fieldName.'_check" style="margin-top:1px" type="checkbox" name="'.$fieldName.'_check" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /></span> ');
-            if(	($dataTypeName == "Emails" && $fieldXml["isMultiple"]=="1") ||
-                ($dataTypeName == "Addresses") ||
-                ($dataTypeName == "Blobs") ||
-                ($dataTypeName == "Floats") ||
-                ($dataTypeName == "Links") ||
-                ($dataTypeName == "Numerics") ||
-                ($dataTypeName == "Texts") ||
-                $dataTypeName == "MultipleAttributs"){
-                $checked = $rm->getRecord()->getWigiiBag()->isMultipleAddOnlyChecked($fieldName);
-                //by default check this checkbox
-                if($_POST["action"]==null) $checked = true;
-                if($checked) $checked = ' checked="on" ';
-                else $checked = null;
-                $multipleHelp = ' onmouseover="showHelp(this, \''.$rm->h("multipleCheckboxCheckAddOnly").'\');" onmouseout="hideHelp();" ';
-                $rm->put('<input id="'.$this->getFormId().'_'.$fieldName.'_checkAddOnly" style="margin-top:1px" type="checkbox" name="'.$fieldName.'_checkAddOnly" class="'.$tempClass.'" '.$checked.' '.$disabled.' '.$multipleHelp.' /> ');
-            }
-            $rm->put('</div>');
-        }
-
-		//display value
-		if($dataType==null || ($countSubFields > 1 || $fieldXml["isInLine"] =="1" || $fieldXml["noLabel"] =="1")){
-			$valueWidth = $this->getIsInLineWidth();
-		} elseif($dataType instanceof Links) { //To prevent the showing on multiple line
-            $valueWidth = $this->getValueWidth()-5;
-        }else {
-            $valueWidth = $this->getValueWidth();
-        }
-        if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){
-            $valueWidth -= 25;
-        }
-        $useMultipleColumn = (int)(string)$fieldXml["useMultipleColumn"];
-		if($useMultipleColumn>0){
-            $style = "width: 100%; max-width:".$valueWidth."px;";
-        } else {
-            $style = "width: 100%; max-width:".$valueWidth."px;";
-        }
-		if($dataType != null){
-			$class = "value";
-		} else {
-			//for freetext, use the class value only if isLabel!=1
-			if($fieldXml["displayAsLabel"]=="1"){
-				$class = "label";
-			} else {
-				$class = "value";
-			}
-		}
-		$rm->put('<div class="'.$class.'" style="'.$style.'" >');
-		if((int)(string)$fieldXml["displayViewOnly"] == 1){
-            $rm->displayValue($fieldName, $valueWidth, $this->getVisibleLanguage());
-        } else{
-            $rm->displayForm($this->getFormId(), $fieldName, $valueWidth, $this->getLabelWidth(), $this->getVisibleLanguage());
-        }
-		$rm->put('</div>');
 
 		// adds any dynamically generated hidden divs
 		if((string)$fieldXml["divExp"]!=null) $this->resolveDivExp((string)$fieldXml["divExp"]);
