@@ -158,6 +158,7 @@
 		 * - show: VisibleState name. Instructs the system to show the visible object in this state by default. (for example: walking).
 		 * - freq: Positive int. Gives the frequency at which the visible state should change its inner views.
 		 * - actOnDone: optional callback which is called when the VisibleObject has been successfully loaded.
+		 * - addVOTo: Object. Optional object which will receive the loaded VisibleObject under property 'vo'. The property has boolean value false, until the VisibleObject is loaded.
 		 * - x: int. Gives the X (horizontal) coordinate (relative to SVG container center) where to position the visible object.
 		 * - y: int. Gives the Y (vertical) coordinate (relative to SVG container center) where to position the visible object.
 		 * - position: string, one of N,S,E,W,NW,NE,center,SE,SW. Gives the positioning code of the visible object relative to the center of the container. Center by default.
@@ -1415,7 +1416,8 @@
 			 *@return MoveForward.VisibleObject
 			 */
 			self.visibleObject = function(name) {
-				return self.context.visibleObjectsIndex[name];
+				if(name===undefined) if(self.context.visibleObjects.length>0) return self.context.visibleObjects[0];
+				else return self.context.visibleObjectsIndex[name];
 			};
 			
 			/**
@@ -1614,6 +1616,7 @@
 			 * - show: VisibleState name. Instructs the system to show the visible object in this state by default. (for example: walking).
 			 * - freq: Positive int. Gives the frequency at which the visible state should change its inner views.
 			 * - actOnDone: optional callback which is called when the VisibleObject has been successfully loaded.
+			 * - addVOTo: Object. Optional object which will receive the loaded VisibleObject under property 'vo'. The property has boolean value false, until the VisibleObject is loaded.
 			 * - x: int. Gives the X (horizontal) coordinate (relative to SVG container center) where to position the visible object.
 			 * - y: int. Gives the Y (vertical) coordinate (relative to SVG container center) where to position the visible object.
 			 * - position: string, one of N,S,E,W,NW,NE,center,SE,SW. Gives the positioning code of the visible object relative to the center of the container. Center by default.
@@ -1648,6 +1651,7 @@
 					}
 					var opt = options;
 					var voProxy = {loaded:false,loading:true};
+					if(options.addVOTo) options.addVOTo.vo = false;
 					self.background.add(options.load,options,function(visibleObj){
 						applyOptions(visibleObj,opt);
 						// changes vo proxy to indicate that loading is finished 
@@ -1656,6 +1660,8 @@
 						voProxy.loading=false;
 						voProxy.obj=visibleObj;
 						voProxy.read = function(){return voProxy.obj;};
+						// stores visible object in given container
+						if(opt.addVOTo) opt.addVOTo.vo = visibleObj;
 						// calls actOnDone callback if defined
 						if($.isFunction(opt.actOnDone)) opt.actOnDone(visibleObj);
 					});
@@ -1678,6 +1684,7 @@
 			 * - show: VisibleState name. Instructs the system to show the visible object in this state by default. (for example: walking).
 			 * - freq: Positive int. Gives the frequency at which the visible state should change its inner views.
 			 * - actOnDone: optional callback which is called when the VisibleObject has been successfully loaded.
+			 * - addVOTo: Object. Optional object which will receive the loaded VisibleObject under property 'vo'. The property has boolean value false, until the VisibleObject is loaded.
 			 * - x: int. Gives the X (horizontal) coordinate (relative to SVG container center) where to position the visible object.
 			 * - y: int. Gives the Y (vertical) coordinate (relative to SVG container center) where to position the visible object.
 			 * - position: string, one of N,S,E,W,NW,NE,center,SE,SW. Gives the positioning code of the visible object relative to the center of the container. Center by default.
