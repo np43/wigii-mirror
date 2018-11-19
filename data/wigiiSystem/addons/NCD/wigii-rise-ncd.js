@@ -138,6 +138,50 @@
 		};
 		
 		/**
+		 * Loads some svg code from Rise.wigii.org catalog and displays it into a given svg tag
+		 *@param String codeId ID of the object stored into the catalog
+		 *@param String jquery selector on a svg tag
+		 */
+		riseNcd.loadSVG = function(codeId,selector) {
+			riseNcd.mf_actOnCode(codeId, function(code){
+				riseNcd.putSVG(code.svgDefs, selector);
+				riseNcd.putSVG(code.svg, selector);
+			});
+		};
+		
+		/**
+		 * Loads a visible object from the catalog and displays it into the given target div.
+		 *@param String catalogId Visible Object ID to load from rise.wigii.org Move Forward catalog.
+		 *@param JQuery targetDiv a JQuery selector on a div in which to display the loaded visible object
+		 *@param object options a bag of options to be applied when loading the visible object from the catalog. Supports the following options:
+		 * - name: VisibleObject logical name to identify it on the scene (for example, explorer or bootle or chair, etc). If not given, a name is generated based on the catalogId.
+		 * - show: VisibleState name. Instructs the system to show the visible object in this state by default. (for example: walking).
+		 * - freq: Positive int. Gives the frequency at which the visible state should change its inner views.
+		 * - actOnDone: optional callback which is called when the VisibleObject has been successfully loaded.
+		 * - x: int. Gives the X (horizontal) coordinate (relative to SVG container center) where to position the visible object.
+		 * - y: int. Gives the Y (vertical) coordinate (relative to SVG container center) where to position the visible object.
+		 * - position: string, one of N,S,E,W,NW,NE,center,SE,SW. Gives the positioning code of the visible object relative to the center of the container. Center by default.
+		 * - width: string. Relative (%) or absolute (px) width of the visible object
+		 * - height: string. Relative (%) or absolute (px) height of the visible object
+		 * - size: percent. Relative (%) size of the visible object according to container. 
+		 *@return object return a Visible Object proxy of the form {loading:true,loaded:false}
+		 * Once loading is false and loaded is true, then the proxy exposes a read method which enables to fetch the loaded and ready MoveForward.VisibleObject
+		 *@example var exploVo = wncd.mf.load("PERS201800031",$("explo#div"));
+		 * then in the playing control loop ...
+		 * if(exploVo.loading) break;
+		 * if(exploVo.loaded) exploVo = exploVo.read();
+		 * ... exploVo normal usage.
+		 */
+		riseNcd.loadVisibleObject = function(catalogId,targetDiv,options) {
+			options = options || {};
+			options.load = catalogId;
+			return $(targetDiv).wigii('mf').vo(options.name,options);
+		};
+		/**
+		 *@see loadVisibleObject
+		 */
+		riseNcd.loadVO = riseNcd.loadVisibleObject;
+		/**
 		 * Fetches asynchronously an object into Rise.wigii.org Move Forward catalog and executes some action on the fetched code
 		 *@param String codeId ID of the object stored into the catalog
 		 *@param Function callback action to do on the fetched code. Callback is a function which takes one parameter of type object of the form
@@ -1353,7 +1397,9 @@
 				mf.ncd.createAndAct(visibleObj,function(visibleObj) {
 					visibleObj.reset(options);
 					visibleObj.ctxKey += self.context.visibleObjects.length;/* avoids clashes by appending numerical index */
-					self.context.visibleObjects.push(visibleObj);
+					// generates a name if no logical name is given
+					if(!visibleObj.context.name) visibleObj.context.name = visibleObj.context.objectID+"_"+self.context.visibleObjects.length;
+					self.context.visibleObjects.push(visibleObj);					
 					// hides old visible object stored on this name
 					var oldVisibleObj = self.context.visibleObjectsIndex[visibleObj.context.name];
 					if(oldVisibleObj) oldVisibleObj.$().hide();
@@ -1567,6 +1613,7 @@
 			 * - load: CatalogId. Instructs the system to load the visible object from the catalog using the given ID.
 			 * - show: VisibleState name. Instructs the system to show the visible object in this state by default. (for example: walking).
 			 * - freq: Positive int. Gives the frequency at which the visible state should change its inner views.
+			 * - actOnDone: optional callback which is called when the VisibleObject has been successfully loaded.
 			 * - x: int. Gives the X (horizontal) coordinate (relative to SVG container center) where to position the visible object.
 			 * - y: int. Gives the Y (vertical) coordinate (relative to SVG container center) where to position the visible object.
 			 * - position: string, one of N,S,E,W,NW,NE,center,SE,SW. Gives the positioning code of the visible object relative to the center of the container. Center by default.
@@ -1600,8 +1647,19 @@
 						options.showStateDefaultPosition = {x:0,y:0,position:'center'};
 					}
 					var opt = options;
-					self.background.add(options.load,options,function(visibleObj){applyOptions(visibleObj,opt);});
-					return self; /* for chaining */
+					var voProxy = {loaded:false,loading:true};
+					self.background.add(options.load,options,function(visibleObj){
+						applyOptions(visibleObj,opt);
+						// changes vo proxy to indicate that loading is finished 
+						// and enables read function to fetch available VisibleObject
+						voProxy.loaded=true;
+						voProxy.loading=false;
+						voProxy.obj=visibleObj;
+						voProxy.read = function(){return voProxy.obj;};
+						// calls actOnDone callback if defined
+						if($.isFunction(opt.actOnDone)) opt.actOnDone(visibleObj);
+					});
+					return voProxy;
 				}
 				// fetches visible object by name and applies options
 				else {
@@ -1611,6 +1669,47 @@
 				}
 			};
 			
+			/**
+			 * Loads a visible object from the catalog and displays it into the given target div.
+			 *@param String catalogId Visible Object ID to load from rise.wigii.org Move Forward catalog.
+			 *@param JQuery targetDiv a JQuery selector on a div in which to display the loaded visible object			 
+			 *@param object options a bag of options to be applied when loading the visible object from the catalog. Supports the following options:
+			 * - name: VisibleObject logical name to identify it on the scene (for example, explorer or bootle or chair, etc). If not given, a name is generated based on the catalogId.
+			 * - show: VisibleState name. Instructs the system to show the visible object in this state by default. (for example: walking).
+			 * - freq: Positive int. Gives the frequency at which the visible state should change its inner views.
+			 * - actOnDone: optional callback which is called when the VisibleObject has been successfully loaded.
+			 * - x: int. Gives the X (horizontal) coordinate (relative to SVG container center) where to position the visible object.
+			 * - y: int. Gives the Y (vertical) coordinate (relative to SVG container center) where to position the visible object.
+			 * - position: string, one of N,S,E,W,NW,NE,center,SE,SW. Gives the positioning code of the visible object relative to the center of the container. Center by default.
+			 * - width: string. Relative (%) or absolute (px) width of the visible object
+			 * - height: string. Relative (%) or absolute (px) height of the visible object
+			 * - size: percent. Relative (%) size of the visible object according to container. 
+			 *@return object return a Visible Object proxy of the form {loading:true,loaded:false}
+			 * Once loading is false and loaded is true, then the proxy exposes a read method which enables to fetch the loaded and ready MoveForward.VisibleObject
+			 *@example var exploVo = wncd.mf.load("PERS201800031",$("explo#div"));
+			 * then in the playing control loop ...
+			 * if(exploVo.loading) break;
+			 * if(exploVo.loaded) exploVo = exploVo.read();
+			 * ... exploVo normal usage.
+			 */
+			self.load = function(catalogId,targetDiv,options) { return wncd.server.rise().loadVisibleObject(catalogId,targetDiv,options);};
+			/**
+			 *@see MoveForwardNCD.load
+			 */
+			self.loadVO = self.load;
+			
+			/**
+			 * Loads some svg code the catalog and displays it into a given svg tag
+			 *@param String codeId ID of the object stored into the catalog
+			 *@param String jquery selector on a svg tag
+			 */
+			self.loadSVG = function(codeId,selector) {return wncd.server.rise().loadSVG(codeId,selector);};
+			/**
+			 * Displays svg code in a given svg tag
+			 * @param String svg code to insert
+			 * @param String jquery selector on a svg tag
+			 */
+			self.putSVG = function(svg,selector) {return wncd.server.rise().putSVG(svg,selector);};
 			/**
 			 * Fetches some code given its catalog ID and acts on it
 			 *@param String codeId the catalog ID of the object to retrieve and act on.
@@ -1666,7 +1765,7 @@
 							try {
 								// instantiates the object from its code only if a callback is given
 								if($.isFunction(action)) {
-									var obj = mf.impl.runNcdCode(code.ncd);
+									var obj = mf.impl.fxString2obj(code.ncd);
 									// injects catalog attributes in context
 									if(obj.context) {
 										obj.context.objectID = objId;
@@ -1727,7 +1826,7 @@
 					if(code && code.type == 'ncd') {
 						try {
 							// runs code
-							mf.impl.runNcdCode(code.ncd);
+							mf.impl.fxString2obj(code.ncd);
 							// calls action after include if defined
 							if($.isFunction(actAfterInclude)) actAfterInclude();
 						}
@@ -1811,7 +1910,6 @@
 				mf.ncd.scene.objectType = context.objectType;
 				self.context.sceneId = mf.ncd.scene.objectID;
 				// Runs the scene script in the context of the dedicated wncd Runtime for the game
-				wncd.mf = mf.ncd;
 				self.impl.gameRuntime.program(sceneScript);
 			});
 		};
@@ -1833,7 +1931,6 @@
 					// Runs the scene script in the context of the dedicated wncd Runtime for the game
 					// Then interrupts stack by pausing 100ms and plays again until queue is empty.
 					self.impl.gameRuntime.program(ctlSeq(
-						scripte(function(){wncd.mf = mf.ncd;}),
 						sceneScript,
 						pause(0.1),
 						scripte(function(){self.impl.play();})
@@ -1843,11 +1940,18 @@
 			//else mf.ncd.message.log("End.");
 		};
 		/**
-		 * Runs some NCD code in the scope of Move Forward
+		 * @return Object Converts an Fx string back to its object representation (in the scope of Move Forward)
 		 */
-		self.impl.runNcdCode = function(code) {
-			wncd.mf = mf.ncd;
-			return wncd.fxString2obj(code);
+		self.impl.fxString2obj = function(code) {
+			if(code) {
+				// Remaps wncd.mf.* to mf.ncd.* to stay contextual
+				code = code.replace(/wncd\.mf\./g,'mf.ncd.');
+				// initializes scope
+				var wigiiNcd = window.wigiiNcd;
+				// evaluates code
+				var returnValue = eval(code);
+				return returnValue;
+			}
 		};
 		return self;
 	};
