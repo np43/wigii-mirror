@@ -2403,6 +2403,91 @@
 			};
 		};
 		
+		/**
+		 * Wigii NCD data flow sources library
+		 */
+		wigiiNcd.source = {};
+		
+		/**
+		 * Returns a DataFlow source which generates a range of numbers, starting from one number, to another number, by a given step.
+		 * @param Number from start number, can be integer, float, positive, null or negative.
+		 * @param Number to stop number, can be integer, float, positive, null or negative.
+		 * @param Number step increment number, can be integer, float, positive or negative. Not null.
+		 */
+		wigiiNcd.source.genRange = function(from,to,step) { return function(dataFlowContext) {
+			if(!($.isNumeric(from) && $.isNumeric(to) && $.isNumeric(step))) throw wigiiNcd.createServiceException('from, to and step should all be numbers',wigiiNcd.errorCodes.INVALID_ARGUMENT);			
+			if(step>0) {
+				while(from<to) {
+					dataFlowContext.processDataChunk(from);
+					from += step;
+				}
+			}
+			else if(step<0) {
+				while(from>to) {
+					dataFlowContext.processDataChunk(from);
+					from -= step;
+				}
+			}
+			else throw wigiiNcd.createServiceException('step cannot be 0',wigiiNcd.errorCodes.INVALID_ARGUMENT);
+		}};
+		
+		/**
+		 * Returns a DataFlow source which generates a linear sequence of numbers
+		 * @param Number length a positive integer which is the length of the sequence. Will compute the sequence for integers in range 1..length.
+		 * @param Number factor a number which will be used as a multiplier factor
+		 * @param Number shift a number which will be used as a shift value.
+		 * @param Boolean alternateSign If true then the signs of the numbers in the sequence alternate. Once positive, once negative. Else always positive.
+		 */
+		wigiiNcd.source.linearSequence = function(length,factor,shift,alternateSign) { return function(dataFlowContext) {
+			if(!($.isNumeric(length) && $.isNumeric(factor) && $.isNumeric(shift))) throw wigiiNcd.createServiceException('length should be a positive integer, factor and shift should be numbers',wigiiNcd.errorCodes.INVALID_ARGUMENT);			
+			var negative = false;
+			for(var i=1; i <= length; i++) {
+				dataFlowContext.processDataChunk((negative ? -(factor*i+shift): factor*i+shift));
+				if(alternateSign) negative = !negative;
+			}
+		}};
+		
+		/**
+		 * Wigii NCD data flow activities library
+		 */
+		wigiiNcd.dfa = {};
+		
+		/**
+		 * An Array Buffer data flow activity
+		 *@param Object options the following configuring options are supported:
+		 * - unpair: Boolean. If true, indicates that the flow is a flow of pairs (key,value) represented as objects
+		 * 	 These pairs are unpaired and stored into the array as key=>value.
+		 * 	 Else, queues the data in the array as it arrives without handling keys.
+		 * - keyField: Defines the name of the field to be used as a key. If unpair and not set, then defaults to 'key'.
+		 * - valueField: If unpairing, then defines the name of the field to be used as a value, defaults to 'value'
+		 *@return Function a function compatible with data flow activities
+		 */
+		wigiiNcd.dfa.arrayBuffer = function(options) { var options = options || {}; return function(data,activityCtx,dataFlowContext) {
+			if(activityCtx.state==dataFlowContext.DFA_STARTSTREAM) {
+				if(options.unpair) {
+					activityCtx.buffer = {};
+					if(!options.keyField) options.keyField = 'key';
+					if(!options.valueField) options.valueField = 'value';
+				}
+				else if(options.keyField) activityCtx.buffer = {};
+				else activityCtx.buffer = [];
+			}
+			else if(activityCtx.state==dataFlowContext.DFA_RUNNING) {
+				if(options.unpair) {
+					if($.isPlainObject(data)) {
+						activityCtx.buffer[data[options.keyField]] = (data.hasOwnProperty(options.valueField)? data[options.valueField]:data);
+					}
+					else activityCtx.buffer[data] = data;
+				}
+				else if(options.keyField) {
+					if($.isPlainObject(data)) activityCtx.buffer[data[options.keyField]] = data;
+					else activityCtx.buffer[data] = data;
+				}
+				else activityCtx.buffer.push(data);
+			}
+			else if(activityCtx.state==dataFlowContext.DFA_ENDSTREAM) dataFlowContext.writeResultToOuput(activityCtx.buffer,activityCtx);
+		}};
+		
 		// Service providing
 		
 		/**
@@ -2655,7 +2740,7 @@
 		/**
 		 * @return String returns the Wigii NCD version number
 		 */
-		wigiiNcd.version = function() {return "2.0";};
+		wigiiNcd.version = function() {return "2.10";};
 	};	
 	// Default WigiiNCD instance
 	var wigiiNcdInstance = new WigiiNcd();

@@ -52,7 +52,7 @@
 	var wigiiNcdEtp = {};
 	wigiiNcdEtp.instantiationTime = Date.now();ncdprivate('instantiationTime');
 	wigiiNcdEtp.ctxKey = 'WigiiNcdEtp_'+wigiiNcdEtp.instantiationTime;ncdprivate('ctxKey');
-	wigiiNcdEtp.version = function() {return "2.0";};
+	wigiiNcdEtp.version = function() {return "2.10";};
 	
 	// Execution environment
 
@@ -586,6 +586,11 @@
 	wigiiNcdEtp.formulaire = formulaire;
 	wigiiNcdEtp.serveur = serveur; 
 	wigiiNcdEtp.ctlSel = wigiiNcd().sel;
+	
+	// publishes data flow activities with dfa prefix
+	for(var s in wigiiNcd().dfa) {
+		wigiiNcdEtp['dfa'+s.substring(0,1).toUpperCase()+s.substring(1)] = wigiiNcd().dfa[s];
+	};
 	
 	// English translation
 	wigiiNcdEtp.program = wigiiNcdEtp.programme; 
