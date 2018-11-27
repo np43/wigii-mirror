@@ -531,7 +531,13 @@
 				var htmlb = wigiiNcd.getHtmlBuilder();
 				htmlb.putStartTag('p','class',self.emittedClass()+'-error').put(exception.code).prepend(' ',wigiiNcd.errorLabels[exception.code]).putBr()
 				.implode(' : ',exception.name,exception.message.replace(/</g,'&lt;').replace(/>/g,'&gt;'))
-				.putEndTag('p');	
+				.putEndTag('p');
+				if(exception.fileName && exception.lineNumber) {
+					htmlb.putStartTag('p','class',self.emittedClass()+'-error').put('in file ').put(exception.fileName).put(' on line ').put(exception.lineNumber).putEndTag('p');
+				}
+				if(exception.stack) {
+					htmlb.putStartTag('pre','class',self.emittedClass()+'-error').put(exception.stack).putEndTag('pre');
+				}
 				self.impl.putHtml(htmlb.html());
 				return self;
 			};
@@ -1942,6 +1948,199 @@
 			};
 		};				
 		
+		/**
+		 * A Wigii Graph
+		 */
+		wigiiNcd.Graph = function() {
+			var self = this;
+			self.className = 'Graph';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className;
+			self.context = {graphNodes:[]};
+			
+			// Properties
+			
+			/**
+			 * Gets or sets a reference on the GraphNode of the parent graph containing this graph			 
+			 */
+			self.parentGraphNode = function(graphNode) {
+				if(graphNode===undefined) return self.context.parentGraphNode;							
+				else {
+					// unlinks old parent graph node
+					if(self.context.parentGraphNode) {
+						self.context.parentGraphNode.context.subGraph = undefined;
+						self.context.parentGraphNode = undefined;
+					}
+					// links new parent graph node only if not null
+					if(graphNode!==null) {
+						self.context.parentGraphNode = graphNode;
+						graphNode.context.subGraph = self;
+					}
+				}
+				return self;
+			};
+			/**
+			 * Iterates on the list of GraphNodes and calls the given callback
+			 * @param Function callback of the form callback(graphNode)
+			 */
+			self.forEachGraphNode = function(callback) {
+				for(var i=0;i<self.context.graphNodes.length;i++) { 
+					callback(self.context.graphNodes[i]);
+				}
+			};
+			/**
+			 * Returns true if this graph is empty (has no GraphNode)
+			 */
+			self.isEmpty = function()  {return self.context.graphNodes.length==0;};
+			/**
+			 * Returns the number of GraphNodes contained in this graph
+			 */
+			self.countGraphNodes = function() {return self.context.graphNodes.length;};
+			
+			// Methods			
+			
+			/**
+			 * Creates a new unlinked GraphNode instance living in this graph
+			 * @return wigiiNcd.GraphNode an instance of a GraphNode
+			 */
+			self.createGraphNode = function() {
+				var returnValue = new wigiiNcd.GraphNode(self);
+				self.context.graphNodes.push(returnValue);
+				return returnValue;
+			};
+		};
+		
+		/**
+		 * A Wigii Graph Node
+		 *@param wigiiNcd.Graph graph the graph in which lives the node
+		 */
+		wigiiNcd.GraphNode = function(graph) {
+			var self = this;
+			self.className = 'GraphNode';
+			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className;
+			self.context = {graph:graph};
+			
+			// Properties
+			
+			/**
+			 * Sets or gets the value of the graph node
+			 */
+			self.value = function(val) {
+				if(val===undefined) return self.context.value;
+				else if(val===null) self.context.value=undefined;
+				else self.context.value = val;
+				return self;
+			};
+			
+			/**
+			 * Gets or sets the value of an attribute
+			 * If no key is given, returns the map of all attributes
+			 */
+			self.attribute = function(key,val) {
+				if(self.context.attributes) self.context.attributes = {};
+				if(!key) return self.context.attributes;
+				else if(val===undefined) return self.context.attributes[key];
+				else if(val===null) delete self.context.attributes[key];
+				else self.context.attributes[key] = val;
+				return self;
+			};
+			
+			/**
+			 * Gets or sets a departing link with a given name to a given graph node
+			 * If no name is given, returns the map of all departing nodes
+			 */
+			self.depLink = function(name,graphNode) {
+				if(!self.context.depLinks) self.context.depLinks = {};
+				if(!name) return self.context.depLinks;
+				else if(graphNode===undefined) return self.context.depLinks[name];
+				else {
+					// removes old link
+					if(self.context.depLinks[name]) {
+						delete self.context.depLinks[name].context.arrLinks[name];
+						delete self.context.depLinks[name];
+					}
+					// adds new link only if not null
+					if(graphNode!==null) {
+						self.context.depLinks[name] = graphNode;
+						if(!graphNode.context.arrLinks) graphNode.context.arrLinks = {};
+						graphNode.context.arrLinks[name] = self;
+					}
+				}
+				return self;
+			};
+			/**
+			 * Gets or sets an attribute of a departing link
+			 * If no key is given, returns the map of all attributes of the given departing node
+			 */
+			self.depLinkAttr = function(name,key,val) {
+				if(!name) throw wigiiNcd.createServiceException("link name cannot be null",wigiiNcd.errorCodes.INVALID_ARGUMENT);
+				if(!self.context.depLinkAttr) self.context.depLinkAttr = {};
+				if(!self.context.depLinkAttr[name]) self.context.depLinkAttr[name] = {};
+				if(key===undefined) return self.context.depLinkAttr[name];
+				else if(key===null) self.context.depLinkAttr[name] = {};
+				else if(val===undefined) return self.context.depLinkAttr[name][key];
+				else if(val===null) delete self.context.depLinkAttr[name][key];
+				else self.context.depLinkAttr[name][key] = val;
+				return self;
+			};			
+			/**
+			 * Gets or sets an arriving link with a given name from a given graph node
+			 * If no name is given, returns the map of all arriving nodes
+			 */
+			self.arrLink = function(name,graphNode) {
+				if(!self.context.arrLinks) self.context.arrLinks = {};
+				if(!name) return self.context.arrLinks;
+				else if(graphNode===undefined) return self.context.arrLinks[name];
+				else {
+					// removes old link
+					if(self.context.arrLinks[name]) {
+						delete self.context.arrLinks[name].context.depLinks[name];
+						delete self.context.arrLinks[name]
+					}
+					// adds new link only if not null
+					if(graphNode!==null) {
+						if(!graphNode.context.depLinks) graphNode.context.depLinks = {};
+						graphNode.context.depLinks[name] = self;
+						self.context.arrLinks[name] = graphNode;
+					}
+				}
+				return self;
+			};
+			/**
+			 * Gets or sets an attribute of an arriving link
+			 * If no key is given, returns the map of all attributes of the given arriving node
+			 */
+			self.arrLinkAttr = function(name,key,val) {
+				var depNode = self.arrLink(name);
+				if(!depNode) throw wigiiNcd.createServiceException("no arriving link with name "+name,wigiiNcd.errorCodes.INVALID_ARGUMENT);
+				var returnValue = depNode.depLinkAttr(name,key,val);
+				if(key===undefined || val===undefined) return returnValue;
+				else return self;
+			};
+			/**
+			 * Gets or sets a reference to the sub graph attached to this graph node
+			 */
+			self.subGraph = function(graph) {
+				if(graph===undefined) return self.context.subGraph;							
+				else {
+					// unlinks old sub graph
+					if(self.context.subGraph) {
+						self.context.subGraph.context.parentGraphNode = undefined;
+						self.context.subGraph = undefined;
+					}
+					// links new sub graph if not null
+					if(graph!==null) {
+						self.context.subGraph = graph;
+						graph.context.parentGraphNode = self;
+					}
+				}
+				return self;
+			};
+			/**
+			 * Returns a reference to the graph containing this graph node
+			 */
+			self.graph = function() {return self.context.graph;};
+		};
+		
 		// Wigii Sense Services 
 		
 		/**
@@ -2488,6 +2687,250 @@
 			else if(activityCtx.state==dataFlowContext.DFA_ENDSTREAM) dataFlowContext.writeResultToOuput(activityCtx.buffer,activityCtx);
 		}};
 		
+		/**
+		 * A data flow activity which transforms a flow of points {x,y,weight,color} to an SVG path element.
+		 * x,y coordinates should already be in SVG coordinate system. If path and points are plotted, then everything is grouped into an SVG g element.
+		 *@param Object options the following configuring options are supported:
+		 * - stroke: String. Stroke color code (as described in SVG path),
+		 * - strokeWidth: int. Stroke width (as described in SVG path),
+		 * - strokeLineCap: String. Stroke line cap (as described in SVG path),
+		 * - fill: String. Fill color code if path is closed,
+		 * - close: Boolean. If true, then path is forced to close (adds a path Z command),
+		 * - pointRadius: int|Function|Boolean. If defined, then the path points are plotted using this value as a radius (or edge length if shape is not circle). A function of point can be given to compute a radius. 
+		 * By default, points are not plotted. If true is given, then pointRadius=strokeWidth
+		 * - pointDefaultRadius: int. If given then this radius will be taken as unit for weight = 1. Then point radius will be equal to weight*defaultPointRadius.
+		 * - pointStroke: String|Function|Boolean. Point stroke color if points are plotted. A function of point can be given. If true is given, then point color is the one given in the point itself (point color attribute).
+		 * - pointStrokeWidth: int. Point stroke width. Defaults to strokeWidth.
+		 * - pointFill: String|Function|Boolean. Point fill color if points are plotted. A function of point can be given. If true is given, then point fill color is the one given in the point itself (point color attribute).
+		 * - pointShape: String. One of circle|square|triangle|diamond. The edge length of the shape is given by the radius parameter.
+		 * - id: String. HTML/SVG id of the element
+		 * - style: String. CSS style string
+		 * - cssClass: String. CSS class string
+		 *@return Function a function compatible with data flow activities
+		 */
+		wigiiNcd.dfa.points2SVG = function(options) { var options = options || {}; return function(data,activityCtx,dataFlowContext) {
+			var svgTag;
+			if(activityCtx.state==dataFlowContext.DFA_STARTSTREAM) {
+				// saves options in context
+				activityCtx.options = options;
+				// defines default options
+				if(options.stroke===false) options.stroke = 'none';
+				else if(options.stroke===undefined) options.stroke='#3333ff';
+				if(options.strokeLineCap===undefined) options.strokeLineCap="round";
+				if(options.pointDefaultRadius && !options.pointRadius) options.pointRadius=true;
+				if(options.pointRadius===true) options.pointRadius = options.strokeWidth||2;
+				if(options.pointRadius) {
+					if(options.pointStroke===undefined && options.stroke!='none') options.pointStroke = options.stroke;
+					if(options.pointStrokeWidth===undefined) options.pointStrokeWidth = options.strokeWidth;
+					if(options.pointFill===undefined && options.stroke!='none') options.pointFill = options.pointStroke;
+					if(options.pointShape===undefined) options.pointShape = 'circle';
+					// points SVG buffer
+					activityCtx.pointsSVG = wncd.getHtmlBuilder();
+				}				
+			}
+			else if(activityCtx.state==dataFlowContext.DFA_RUNNING) {
+				// draws path
+				if(!activityCtx.path) activityCtx.path = "M"+data.x+" "+data.y;
+				else activityCtx.path += " L"+data.x+" "+data.y;
+				
+				// draws point
+				if(options.pointRadius) {				
+					// computes point radius
+					var radius = options.pointRadius;
+					if(options.pointDefaultRadius) radius = Number(data.weight||0)*options.pointDefaultRadius;
+					else if($.isFunction(options.pointRadius)) radius = options.pointRadius(data,activityCtx);
+					
+					// computes point svg shape
+					svgTag = [];
+					if(options.pointShape==='circle') {
+						svgTag.push('circle');
+						svgTag.push('cx');
+						svgTag.push(data.x);
+						svgTag.push('cy');
+						svgTag.push(data.y);
+						svgTag.push('r');
+						svgTag.push(radius);
+					}
+					else if(options.pointShape==='square') {
+						svgTag.push('rect');
+						svgTag.push('x');
+						svgTag.push(data.x-radius);
+						svgTag.push('y');
+						svgTag.push(data.y-radius);
+						svgTag.push('width');
+						svgTag.push(radius*2);
+						svgTag.push('height');
+						svgTag.push(radius*2);
+					}
+					else if(options.pointShape==='triangle') {
+						// cos(60) = 0.5 = demiBase / radius
+						var demiBase = 0.5*radius;
+						// sin(60) = sqrt(3)/2 = hauteur / radius
+						var hauteur = Math.sqrt(3)/2*radius;
+						// tan(30) = dHauteur / demiBase
+						var dHauteur = Math.tan(Math.PI/6)*demiBase;
+						var points = '';
+						// sommet
+						points += data.x+","+(data.y-hauteur+dHauteur);
+						// base gauche
+						points += " "+(data.x-demiBase)+","+(data.y+dHauteur);
+						// base droite
+						points += " "+(data.x+demiBase)+","+(data.y+dHauteur);
+						// close
+						points += " Z";
+						svgTag.push('polygon');
+						svgTag.push('points');
+						svgTag.push(points);
+					}
+					else if(options.pointShape==='diamond') {						
+						var demiBase = radius/2;
+						// tan(60) = hauteur / demiBase
+						var hauteur = Math.tan(Math.PI/3)*demiBase;						
+						var points = '';
+						// sommet
+						points += data.x+","+(data.y-hauteur);
+						// milieu gauche
+						points += " "+(data.x-demiBase)+","+data.y;
+						// base
+						points += " "+data.x+","+(data.y+hauteur);
+						// milieu droite
+						points += " "+(data.x+demiBase)+","+data.y;
+						// close
+						points += " Z";
+						svgTag.push('polygon');
+						svgTag.push('points');
+						svgTag.push(points);
+					}
+					if(options.pointStroke) {
+						svgTag.push('stroke');
+						svgTag.push(($.isFunction(options.pointStroke) ? options.pointStroke(data,activityCtx) : options.pointStroke));
+					}
+					if(options.pointStrokeWidth) {
+						svgTag.push('stroke-width');
+						svgTag.push(options.pointStrokeWidth);
+					}
+					if(options.pointFill) {
+						svgTag.push('fill');
+						svgTag.push(($.isFunction(options.pointFill) ? options.pointFill(data,activityCtx) : options.pointFill));
+					}
+					activityCtx.pointsSVG.tag.apply(undefined,svgTag).$tag(svgTag[0]);
+				}
+			}
+			else if(activityCtx.state==dataFlowContext.DFA_ENDSTREAM) {
+				// closes path if needed
+				if(options.close) activityCtx.path += " Z";
+				
+				var svgBuilder = wncd.getHtmlBuilder();
+				var initPathOptions = function(pathTag) {
+					// fill only if closed
+					if(options.close) {
+						if(options.fill && options.fill !== 'css') {
+							pathTag.push('fill');
+							pathTag.push(options.fill);
+						}
+					}
+					else {
+						pathTag.push('fill');
+						pathTag.push('none');
+					}
+					// puts stroke if not taken over by css
+					if(options.stroke && options.stroke!=='css') {
+						pathTag.push('stroke');
+						pathTag.push(options.stroke);
+					}
+					if(options.strokeWidth) {
+						pathTag.push('stroke-width');
+						pathTag.push(options.strokeWidth);
+					}
+					// puts line cap if not taken over by css
+					if(options.strokeLineCap && options.strokeLineCap!=='css') {
+						pathTag.push('stroke-linecap');
+						pathTag.push(options.strokeLineCap);
+					}
+				};
+				svgTag = [];
+				// if draw points, then creates an svg group
+				if(options.pointRadius) {
+					svgTag.push('g');
+				}
+				// else only creates a path
+				else {
+					svgTag.push('path');
+				}
+				// puts html attributes
+				if(options.id) {
+					svgTag.push('id');
+					svgTag.push(options.id);
+				}
+				if(options.cssClass) {
+					svgTag.push('class');
+					svgTag.push(options.cssClass);
+				}
+				if(options.style) {
+					svgTag.push('style');
+					svgTag.push(options.style);
+				}
+				// puts path and points in the group
+				if(options.pointRadius) {
+					var pathTag=['path','d',activityCtx.path];
+					initPathOptions(pathTag);
+					svgBuilder.tag.apply(undefined,svgTag)
+					.tag.apply(undefined,pathTag).$tag(pathTag[0])
+					.putHtmlBuilder(activityCtx.pointsSVG)
+					.$tag(svgTag[0]);
+				}
+				// else puts path only
+				else {
+					svgTag.push('d');
+					svgTag.push(activityCtx.path);
+					initPathOptions(svgTag);					
+					svgBuilder.tag.apply(undefined,svgTag).$tag(svgTag[0]);
+				}
+				dataFlowContext.writeResultToOuput(svgBuilder.html(),activityCtx);
+			}
+		}};
+		
+		/**
+		 * A data flow activity which translates and autosizes a flow of points {x,y} to have all coordinates contained in range coordMin..coordMax.		 
+		 *@param Object options the following configuring options are supported:
+		 * - coordMin: int. Min value allowed for any x or y coordinate of any point in the flow. Defaults to 0.
+		 * - coordMax: int. Max value allowed for any x or y coordinate of any point in the flow. Defaults to 1024.
+		 *@return Function a function compatible with data flow activities
+		 */
+		wigiiNcd.dfa.autoSizePoints = function(options) { var options = options || {}; return function(data,activityCtx,dataFlowContext) {
+			if(activityCtx.state==dataFlowContext.DFA_STARTSTREAM) {
+				if(options.coordMin===undefined) options.coordMin = 0;
+				if(options.coordMax===undefined) options.coordMax = 1024;
+				activityCtx.buffer = [];
+			}
+			else if(activityCtx.state==dataFlowContext.DFA_RUNNING) {
+				// computes min and max of each coordinate x and y
+				if(activityCtx.minX===undefined) activityCtx.minX = data.x;
+				else if(data.x < activityCtx.minX) activityCtx.minX = data.x;
+				if(activityCtx.maxX===undefined) activityCtx.maxX = data.x;
+				else if(data.x > activityCtx.maxX) activityCtx.maxX = data.x;
+				if(activityCtx.minY===undefined) activityCtx.minY = data.y;
+				else if(data.y < activityCtx.minY) activityCtx.minY = data.y;
+				if(activityCtx.maxY===undefined) activityCtx.maxY = data.y;
+				else if(data.y > activityCtx.maxY) activityCtx.maxY = data.y;
+				// bufferizes points
+				activityCtx.buffer.push(data);
+			}
+			else if(activityCtx.state==dataFlowContext.DFA_ENDSTREAM) {
+				// autosizing factor
+				var factor = Math.max(Math.abs(activityCtx.maxX-activityCtx.minX), Math.abs(activityCtx.maxY-activityCtx.minY));
+				factor = Math.abs(options.coordMax-options.coordMin)/factor;
+				// translates and transforms every points
+				var p;
+				for(var i=0;i<activityCtx.buffer.length;i++) {
+					p = activityCtx.buffer[i];
+					p.x = (p.x - activityCtx.minX) * factor + options.coordMin;
+					p.y = options.coordMax - ((p.y - activityCtx.minY) * factor + options.coordMin); // flips y coordinate to have it growing towards the top of the screen
+					dataFlowContext.writeResultToOuput(p,activityCtx);
+				}				
+			}
+		}};
+		
 		// Service providing
 		
 		/**
@@ -2556,7 +2999,12 @@
 		wigiiNcd.wrapTextInput = function(txtInput, cssClass) {
 			return new wigiiNcd.TextInputWrapper(txtInput, cssClass);
 		};
-		
+		/**
+		 * Creates a new Wigii Graph instance
+		 */
+		wigiiNcd.createGraph = function() {
+			return new wigiiNcd.Graph();
+		};		
 		/**
 		 * Returns a JQueryService instance
 		 */
@@ -2740,7 +3188,7 @@
 		/**
 		 * @return String returns the Wigii NCD version number
 		 */
-		wigiiNcd.version = function() {return "2.10";};
+		wigiiNcd.version = function() {return "2.11";};
 	};	
 	// Default WigiiNCD instance
 	var wigiiNcdInstance = new WigiiNcd();
@@ -3345,7 +3793,7 @@
 	var wigiiNcdEtp = {};
 	wigiiNcdEtp.instantiationTime = Date.now();ncdprivate('instantiationTime');
 	wigiiNcdEtp.ctxKey = 'WigiiNcdEtp_'+wigiiNcdEtp.instantiationTime;ncdprivate('ctxKey');
-	wigiiNcdEtp.version = function() {return "2.10";};
+	wigiiNcdEtp.version = function() {return "2.11";};
 	
 	// Execution environment
 

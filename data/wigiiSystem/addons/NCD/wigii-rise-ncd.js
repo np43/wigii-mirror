@@ -698,7 +698,6 @@
 					self.$().width(h);
 					mf.context.boardWidth = h;
 					mf.context.boardHeight = w;
-					wigii().log("flip board "+h+" "+w);
 				}
 				return self;
 			};
@@ -724,7 +723,6 @@
 					self.$().width(bW);
 					mf.context.boardWidth = bW;
 					mf.context.boardHeight = bH;
-					wigii().log("resize board to "+bW+" "+bH);
 				}
 				// else if width is bigger than height, then shapes according to width
 				else if(rW > rH) {
@@ -734,7 +732,6 @@
 					self.$().height(bH);
 					mf.context.boardWidth = bW;
 					mf.context.boardHeight = bH;
-					wigii().log("resize board to "+bW+" "+bH);
 				}
 				return self;
 			};
@@ -762,6 +759,7 @@
 			// Accessors
 			
 			self.$ = function(){return self.impl.svgObj.$();};
+			self.getBoundingClientRect = function() {return self.$()[0].getBoundingClientRect();}
 			
 			// Methods
 			
@@ -900,12 +898,11 @@
 			/**
 			 * Scales the underlying object to take the given percentage of the GameBoard size, but keeping the right proportions.			
 			 */
-			self.size = function(percent) {				
-				// flip and adapts game board shape if needed
-				mf.impl.gameBoard.alignWith(self);				
-				// resizes the biggest edge
-				if(self.width() > self.height()) return self.width(percent);
-				else self.height(percent);
+			self.size = function(percent) {
+				// if board is horizontal, then resizes height of object to ensure not to cut some edges
+				if(mf.impl.gameBoard.width() > mf.impl.gameBoard.height()) return self.height(percent);
+				// else resizes width
+				else self.width(percent);
 			};
 			
 			/**
@@ -990,6 +987,9 @@
 					self.size(percent);
 					return self.impl.svgObj;
 				};
+				self.impl.svgObj.getBoundingClientRect = function() {
+					return self.getBoundingClientRect();
+				};
 			};
 		};
 		
@@ -1066,7 +1066,7 @@
 					self.context.objVisible=index;
 					// if new obj is not on board, then adds it
 					if(!self.context.objsOnBoard[index]) {
-						var code = self.context.objs[index];
+						var code = self.context.objs[index];						
 						var svgObj = mf.impl.gameBoard.svgEmitter().putSVG(code.svg,code.svgDefs)
 						.$().find('#'+code.id).attr('id',self.ctxKey+index);
 						// binds selection sense if defined
@@ -1144,26 +1144,58 @@
 			if(mf.options.startupMode != 'documentation') {				
 				if($.type(objs)!=='array') objs = [objs];
 				var asyncLoader = {readyIndex:{},loadingSequence:objs,nbLoaded:0};
-				for(var i=0;i<objs.length;i++) {					
-					mf.ncd.actOnCode(objs[i],function(code){
-						asyncLoader.readyIndex[code.id] = code;
-						asyncLoader.nbLoaded++;						
-						// if all loaded, then finalizes context with ready data
-						if(asyncLoader.nbLoaded == asyncLoader.loadingSequence.length) {
-							self.context.objs = [];
-							var readyStamp = '';
-							for(var i=0;i<asyncLoader.loadingSequence.length;i++) {
-								var obj = asyncLoader.readyIndex[asyncLoader.loadingSequence[i]];
-								self.context.objs.push(obj);								
-								readyStamp += (i>0?', ':'')+obj.type+" "+obj.id;
-							}
-							//mf.ncd.message.log("Visible state '"+self.name()+"' received "+readyStamp);
-							// Creates a wncd Runtime to execute animations
-							self.impl.animationRuntime = wncd.createRuntime(mf.impl.gameBoard.svgEmitter());
-							// marks visible state as ready
-							self.ready();
+				var validateAndTagSVG = function(svg,id) {
+					// parses SVG xml code
+					var svgCode = $.parseXML(svg);					
+					// sets ID on root element
+					svgCode = $(svgCode).children()[0];
+					svgCode.id = id;
+					// returns modified SVG as a string
+					var returnValue = wigiiApi.xml2string(svgCode);
+					return returnValue;
+				};
+				var actOnCode = function(code){
+					// if no svg code and some serialized NCD code, then calls it to generate some SVG code
+					if(!code.svg && code.ncd) {
+						code.svg = mf.impl.fxString2obj(code.ncd);
+						// validates and tags generated svg code
+						code.svg = validateAndTagSVG(code.svg,code.id);
+					}
+					asyncLoader.readyIndex[code.id] = code;
+					asyncLoader.nbLoaded++;						
+					// if all loaded, then finalizes context with ready data
+					if(asyncLoader.nbLoaded == asyncLoader.loadingSequence.length) {
+						self.context.objs = [];
+						var readyStamp = '';
+						for(var i=0;i<asyncLoader.loadingSequence.length;i++) {
+							var obj = asyncLoader.readyIndex[asyncLoader.loadingSequence[i]];
+							self.context.objs.push(obj);								
+							readyStamp += (i>0?', ':'')+obj.type+" "+obj.id;
 						}
-					});
+						//mf.ncd.message.log("Visible state '"+self.name()+"' received "+readyStamp);
+						// Creates a wncd Runtime to execute animations
+						self.impl.animationRuntime = wncd.createRuntime(mf.impl.gameBoard.svgEmitter());
+						// marks visible state as ready
+						self.ready();
+					}
+				};
+				for(var i=0;i<objs.length;i++) {
+					// if objs[i] is function, then executes svg generator and builds a dynamic code object
+					if($.isFunction(objs[i])) {
+						var dynCode = {};
+						dynCode.svg = objs[i](self.options);
+						dynCode.id = 'DYNCOD'+self.ctxKey+i;
+						// validates and tags generated svg code
+						dynCode.svg = validateAndTagSVG(dynCode.svg,dynCode.id);
+						// replaces code generator by dynamic code id
+						objs[i] = dynCode.id;
+						// acts on dynamic code
+						actOnCode(dynCode);
+					}
+					// else loads code from catalog
+					else {
+						mf.ncd.actOnCode(objs[i],actOnCode);
+					}
 				}
 				// attach a RectangleService to ease svg object manipulation
 				mf.ncd.background.gameBoard().getRectangleService(self).attach();
@@ -1450,6 +1482,8 @@
 							// moves background to top of svg to ensure it stays on the back
 							var firstChild = self.context.gameBoard.svgEmitter().$().children("g").first();
 							if(firstChild.attr('id') != self.ctxKey) self.$().insertBefore(firstChild);
+							// centers and resizes background to take full screen
+							self.position(0,0).size("100%");
 						}
 						catch(exc) {
 							mf.impl.publishException(exc);
