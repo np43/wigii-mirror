@@ -2706,6 +2706,7 @@
 		 * - id: String. HTML/SVG id of the element
 		 * - style: String. CSS style string
 		 * - cssClass: String. CSS class string
+		 * - outputPathString: Boolean. If true, only outputs path description (value of d attribute), skipping whole SVG construction. False by default.
 		 *@return Function a function compatible with data flow activities
 		 */
 		wigiiNcd.dfa.points2SVG = function(options) { var options = options || {}; return function(data,activityCtx,dataFlowContext) {
@@ -2734,7 +2735,7 @@
 				else activityCtx.path += " L"+data.x+" "+data.y;
 				
 				// draws point
-				if(options.pointRadius) {				
+				if(options.pointRadius && !options.outputPathString) {				
 					// computes point radius
 					var radius = options.pointRadius;
 					if(options.pointDefaultRadius) radius = Number(data.weight||0)*options.pointDefaultRadius;
@@ -2826,73 +2827,80 @@
 				// closes path if needed
 				if(options.close) activityCtx.path += " Z";
 				
-				var svgBuilder = wncd.getHtmlBuilder();
-				var initPathOptions = function(pathTag) {
-					// fill only if closed
-					if(options.close) {
-						if(options.fill && options.fill !== 'css') {
-							pathTag.push('fill');
-							pathTag.push(options.fill);
+				// if outputPathString then only dumps path description
+				if(options.outputPathString) {
+					dataFlowContext.writeResultToOuput(activityCtx.path,activityCtx);
+				}
+				// else constructs svg code
+				else {
+					var svgBuilder = wncd.getHtmlBuilder();
+					var initPathOptions = function(pathTag) {
+						// fill only if closed
+						if(options.close) {
+							if(options.fill && options.fill !== 'css') {
+								pathTag.push('fill');
+								pathTag.push(options.fill);
+							}
 						}
+						else {
+							pathTag.push('fill');
+							pathTag.push('none');
+						}
+						// puts stroke if not taken over by css
+						if(options.stroke && options.stroke!=='css') {
+							pathTag.push('stroke');
+							pathTag.push(options.stroke);
+						}
+						if(options.strokeWidth) {
+							pathTag.push('stroke-width');
+							pathTag.push(options.strokeWidth);
+						}
+						// puts line cap if not taken over by css
+						if(options.strokeLineCap && options.strokeLineCap!=='css') {
+							pathTag.push('stroke-linecap');
+							pathTag.push(options.strokeLineCap);
+						}
+					};
+					svgTag = [];
+					// if draw points, then creates an svg group
+					if(options.pointRadius) {
+						svgTag.push('g');
 					}
+					// else only creates a path
 					else {
-						pathTag.push('fill');
-						pathTag.push('none');
+						svgTag.push('path');
 					}
-					// puts stroke if not taken over by css
-					if(options.stroke && options.stroke!=='css') {
-						pathTag.push('stroke');
-						pathTag.push(options.stroke);
+					// puts html attributes
+					if(options.id) {
+						svgTag.push('id');
+						svgTag.push(options.id);
 					}
-					if(options.strokeWidth) {
-						pathTag.push('stroke-width');
-						pathTag.push(options.strokeWidth);
+					if(options.cssClass) {
+						svgTag.push('class');
+						svgTag.push(options.cssClass);
 					}
-					// puts line cap if not taken over by css
-					if(options.strokeLineCap && options.strokeLineCap!=='css') {
-						pathTag.push('stroke-linecap');
-						pathTag.push(options.strokeLineCap);
+					if(options.style) {
+						svgTag.push('style');
+						svgTag.push(options.style);
 					}
-				};
-				svgTag = [];
-				// if draw points, then creates an svg group
-				if(options.pointRadius) {
-					svgTag.push('g');
+					// puts path and points in the group
+					if(options.pointRadius) {
+						var pathTag=['path','d',activityCtx.path];
+						initPathOptions(pathTag);
+						svgBuilder.tag.apply(undefined,svgTag)
+						.tag.apply(undefined,pathTag).$tag(pathTag[0])
+						.putHtmlBuilder(activityCtx.pointsSVG)
+						.$tag(svgTag[0]);
+					}
+					// else puts path only
+					else {
+						svgTag.push('d');
+						svgTag.push(activityCtx.path);
+						initPathOptions(svgTag);					
+						svgBuilder.tag.apply(undefined,svgTag).$tag(svgTag[0]);
+					}
+					dataFlowContext.writeResultToOuput(svgBuilder.html(),activityCtx);
 				}
-				// else only creates a path
-				else {
-					svgTag.push('path');
-				}
-				// puts html attributes
-				if(options.id) {
-					svgTag.push('id');
-					svgTag.push(options.id);
-				}
-				if(options.cssClass) {
-					svgTag.push('class');
-					svgTag.push(options.cssClass);
-				}
-				if(options.style) {
-					svgTag.push('style');
-					svgTag.push(options.style);
-				}
-				// puts path and points in the group
-				if(options.pointRadius) {
-					var pathTag=['path','d',activityCtx.path];
-					initPathOptions(pathTag);
-					svgBuilder.tag.apply(undefined,svgTag)
-					.tag.apply(undefined,pathTag).$tag(pathTag[0])
-					.putHtmlBuilder(activityCtx.pointsSVG)
-					.$tag(svgTag[0]);
-				}
-				// else puts path only
-				else {
-					svgTag.push('d');
-					svgTag.push(activityCtx.path);
-					initPathOptions(svgTag);					
-					svgBuilder.tag.apply(undefined,svgTag).$tag(svgTag[0]);
-				}
-				dataFlowContext.writeResultToOuput(svgBuilder.html(),activityCtx);
 			}
 		}};
 		
