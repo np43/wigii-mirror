@@ -52,7 +52,7 @@
 	var wigiiNcdEtp = {};
 	wigiiNcdEtp.instantiationTime = Date.now();ncdprivate('instantiationTime');
 	wigiiNcdEtp.ctxKey = 'WigiiNcdEtp_'+wigiiNcdEtp.instantiationTime;ncdprivate('ctxKey');
-	wigiiNcdEtp.version = function() {return "2.10";};
+	wigiiNcdEtp.version = function() {return "2.11";};
 	
 	// Execution environment
 

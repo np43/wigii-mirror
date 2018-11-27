@@ -2740,80 +2740,86 @@
 					if(options.pointDefaultRadius) radius = Number(data.weight||0)*options.pointDefaultRadius;
 					else if($.isFunction(options.pointRadius)) radius = options.pointRadius(data,activityCtx);
 					
-					// computes point svg shape
-					svgTag = [];
-					if(options.pointShape==='circle') {
-						svgTag.push('circle');
-						svgTag.push('cx');
-						svgTag.push(data.x);
-						svgTag.push('cy');
-						svgTag.push(data.y);
-						svgTag.push('r');
-						svgTag.push(radius);
+					// computes point svg shape using provided function
+					if($.isFunction(options.pointShape)) {
+						activityCtx.pointsSVG.put(options.pointShape(data,activityCtx));
 					}
-					else if(options.pointShape==='square') {
-						svgTag.push('rect');
-						svgTag.push('x');
-						svgTag.push(data.x-radius);
-						svgTag.push('y');
-						svgTag.push(data.y-radius);
-						svgTag.push('width');
-						svgTag.push(radius*2);
-						svgTag.push('height');
-						svgTag.push(radius*2);
+					// or default shape
+					else {
+						svgTag = [];
+						if(options.pointShape==='circle') {
+							svgTag.push('circle');
+							svgTag.push('cx');
+							svgTag.push(data.x);
+							svgTag.push('cy');
+							svgTag.push(data.y);
+							svgTag.push('r');
+							svgTag.push(radius);
+						}
+						else if(options.pointShape==='square') {
+							svgTag.push('rect');
+							svgTag.push('x');
+							svgTag.push(data.x-radius);
+							svgTag.push('y');
+							svgTag.push(data.y-radius);
+							svgTag.push('width');
+							svgTag.push(radius*2);
+							svgTag.push('height');
+							svgTag.push(radius*2);
+						}
+						else if(options.pointShape==='triangle') {
+							// cos(60) = 0.5 = demiBase / radius
+							var demiBase = 0.5*radius;
+							// sin(60) = sqrt(3)/2 = hauteur / radius
+							var hauteur = Math.sqrt(3)/2*radius;
+							// tan(30) = dHauteur / demiBase
+							var dHauteur = Math.tan(Math.PI/6)*demiBase;
+							var points = '';
+							// sommet
+							points += data.x+","+(data.y-hauteur+dHauteur);
+							// base gauche
+							points += " "+(data.x-demiBase)+","+(data.y+dHauteur);
+							// base droite
+							points += " "+(data.x+demiBase)+","+(data.y+dHauteur);
+							// close
+							points += " Z";
+							svgTag.push('polygon');
+							svgTag.push('points');
+							svgTag.push(points);
+						}
+						else if(options.pointShape==='diamond') {						
+							var demiBase = radius/2;
+							// tan(60) = hauteur / demiBase
+							var hauteur = Math.tan(Math.PI/3)*demiBase;						
+							var points = '';
+							// sommet
+							points += data.x+","+(data.y-hauteur);
+							// milieu gauche
+							points += " "+(data.x-demiBase)+","+data.y;
+							// base
+							points += " "+data.x+","+(data.y+hauteur);
+							// milieu droite
+							points += " "+(data.x+demiBase)+","+data.y;
+							// close
+							points += " Z";
+							svgTag.push('polygon');
+							svgTag.push('points');
+							svgTag.push(points);
+						}
+						if(options.pointStroke) {
+							svgTag.push('stroke');
+							svgTag.push(($.isFunction(options.pointStroke) ? options.pointStroke(data,activityCtx) : options.pointStroke));
+						}
+						if(options.pointStrokeWidth) {
+							svgTag.push('stroke-width');
+							svgTag.push(options.pointStrokeWidth);
+						}
+						if(options.pointFill) {
+							svgTag.push('fill');
+							svgTag.push(($.isFunction(options.pointFill) ? options.pointFill(data,activityCtx) : options.pointFill));
+						}
+						activityCtx.pointsSVG.tag.apply(undefined,svgTag).$tag(svgTag[0]);
 					}
-					else if(options.pointShape==='triangle') {
-						// cos(60) = 0.5 = demiBase / radius
-						var demiBase = 0.5*radius;
-						// sin(60) = sqrt(3)/2 = hauteur / radius
-						var hauteur = Math.sqrt(3)/2*radius;
-						// tan(30) = dHauteur / demiBase
-						var dHauteur = Math.tan(Math.PI/6)*demiBase;
-						var points = '';
-						// sommet
-						points += data.x+","+(data.y-hauteur+dHauteur);
-						// base gauche
-						points += " "+(data.x-demiBase)+","+(data.y+dHauteur);
-						// base droite
-						points += " "+(data.x+demiBase)+","+(data.y+dHauteur);
-						// close
-						points += " Z";
-						svgTag.push('polygon');
-						svgTag.push('points');
-						svgTag.push(points);
-					}
-					else if(options.pointShape==='diamond') {						
-						var demiBase = radius/2;
-						// tan(60) = hauteur / demiBase
-						var hauteur = Math.tan(Math.PI/3)*demiBase;						
-						var points = '';
-						// sommet
-						points += data.x+","+(data.y-hauteur);
-						// milieu gauche
-						points += " "+(data.x-demiBase)+","+data.y;
-						// base
-						points += " "+data.x+","+(data.y+hauteur);
-						// milieu droite
-						points += " "+(data.x+demiBase)+","+data.y;
-						// close
-						points += " Z";
-						svgTag.push('polygon');
-						svgTag.push('points');
-						svgTag.push(points);
-					}
-					if(options.pointStroke) {
-						svgTag.push('stroke');
-						svgTag.push(($.isFunction(options.pointStroke) ? options.pointStroke(data,activityCtx) : options.pointStroke));
-					}
-					if(options.pointStrokeWidth) {
-						svgTag.push('stroke-width');
-						svgTag.push(options.pointStrokeWidth);
-					}
-					if(options.pointFill) {
-						svgTag.push('fill');
-						svgTag.push(($.isFunction(options.pointFill) ? options.pointFill(data,activityCtx) : options.pointFill));
-					}
-					activityCtx.pointsSVG.tag.apply(undefined,svgTag).$tag(svgTag[0]);
 				}
 			}
 			else if(activityCtx.state==dataFlowContext.DFA_ENDSTREAM) {
@@ -2891,7 +2897,8 @@
 		}};
 		
 		/**
-		 * A data flow activity which translates and autosizes a flow of points {x,y} to have all coordinates contained in range coordMin..coordMax.		 
+		 * A data flow activity which translates and autosizes a flow of points {x,y} to have all coordinates contained in range coordMin..coordMax 
+		 * and compatible with screen coordinate system (y is flipped to grow towards bottom instead of top).
 		 *@param Object options the following configuring options are supported:
 		 * - coordMin: int. Min value allowed for any x or y coordinate of any point in the flow. Defaults to 0.
 		 * - coordMax: int. Max value allowed for any x or y coordinate of any point in the flow. Defaults to 1024.
