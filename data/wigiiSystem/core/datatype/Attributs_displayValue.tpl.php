@@ -106,7 +106,7 @@ if((string)$xml["isTimeline"]=="1"){
             if($attribute == "none") continue;
 
             // filters dropdown using prefix filter
-            if($filterDropDown && strpos((string)$attribute, $prefixFilter)!==0) continue;
+            if($filterDropDown && (strpos((string)$attribute, $prefixFilter)!==0 || preg_match($regexFilter,(string)$attribute))) continue;
             // CWE 09.02.2016: in public: filters disabled options
             if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
 

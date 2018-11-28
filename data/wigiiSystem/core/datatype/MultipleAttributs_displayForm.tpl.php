@@ -43,7 +43,9 @@ $isPublicPrincipal = ServiceProvider::getAuthorizationService()->isPublicPrincip
 
 // getting prefixFilter if defined
 $prefixFilter = (string)$fieldXml['prefixFilter'];
-$filterDropDown = !empty($prefixFilter);
+$regexFilter = (string)$fieldXml['regexFilter'];
+$filterDropDown = !empty($prefixFilter) || !empty($regexFilter);
+
 
 $subFieldName = "value";
 
@@ -61,7 +63,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 	foreach($fieldXml->attribute as $attribute_key => $attribute){
 
 		// filters dropdown using prefix filter
-		if($filterDropDown && $attribute != "none" && strpos((string)$attribute, $prefixFilter)!==0) continue;
+		if($filterDropDown && $attribute != "none" && (($prefixFilter ? strpos((string)$attribute, $prefixFilter)!==0 : false) || ($regexFilter ? preg_match($regexFilter,(string)$attribute)===0 : false))) continue;
 		
 		// CWE 09.02.2016: in public: filters disabled options
 		if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
@@ -253,7 +255,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 		$existingKeys = array();
 		foreach($attributes as $attribute_key => $attribute){			
 			// filters dropdown using prefix filter
-			if($filterDropDown && $attribute != "none" && strpos((string)$attribute, $prefixFilter)!==0) continue;
+			if($filterDropDown && $attribute != "none" && (($prefixFilter ? strpos((string)$attribute, $prefixFilter)!==0 : false) || ($regexFilter ? preg_match($regexFilter,(string)$attribute)===0 : false))) continue;
 			// CWE 09.02.2016: in public: filters disabled options
 			if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
 			

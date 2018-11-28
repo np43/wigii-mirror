@@ -83,7 +83,7 @@ if(!($readonly || $disabled) && $fieldXml["isBirthDate"]!="1") {
 $('#".$inputId."')
 .datepicker({ dateFormat: 'dd.mm.yy', changeYear: true, firstDay:1,	constrainInput:false, showOn:'button' })
 .click(function(){ $(this).datepicker('hide'); }).css('max-width',".($parentWidth-30).")
-".($isNotExpanded ? ".hide()" : "").";");
+;");
 }
 if($minDate) {
     if (preg_match('^[0-9]{1,2}\.[0-12]{2}\.\d{4}^', $minDate)) {

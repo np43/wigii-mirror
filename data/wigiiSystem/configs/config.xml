@@ -43,6 +43,7 @@
 			jsCodeInDetailExp,
 			jsCodeInFormExp,			
 			prefixFilter,
+			regexFilter,
 			class,
 			totalWidth,
 			labelWidth,
