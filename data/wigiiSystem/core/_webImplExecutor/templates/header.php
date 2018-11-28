@@ -396,6 +396,9 @@ emptyDialog("changePasswordDialog");
 if( $('#downloadingDialog').is(':ui-dialog')) { $('#downloadingDialog').dialog("destroy"); }
 actOnCloseDialog("downloadingDialog");
 emptyDialog("downloadingDialog");
+if( $('#activityDialog').is(':ui-dialog')) { $('#activityDialog').dialog("destroy"); }
+actOnCloseDialog("activityDialog");
+emptyDialog("activityDialog");
 }
 </script>
 <?
@@ -443,6 +446,7 @@ if(!$rCompanyColor) $rCompanyColor = "#fff";
 <div id='importDialog' style='top:0px; left:0px;display:none;'></div>
 <div id='changePasswordDialog' style='top:0px; left:0px;display:none;'></div>
 <div id='downloadingDialog' style='top:0px; left:0px;display:none;'></div>
+<div id='activityDialog' style='top:0px; left:0px;display:none;'></div>
 <script type="text/javascript" >
 $('#systemConsole').css('display','none').resizable({handles:'e,w',stop:function(event,ui){$(this).css('height','auto');}}).draggable({cursor:'crosshair',handle:'.header'});
 </script>

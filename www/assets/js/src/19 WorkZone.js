@@ -3945,7 +3945,7 @@ function addScrollWithShadow(idScrollElement, elementPreviousTop) {
 	
 	var scrollElement = $('#'+idScrollElement);
 	var element = idScrollElement;
-	if(jQuery.inArray(idScrollElement, ['elementDialog', 'emailingDialog', 'filtersDialog']) > -1)
+	if(jQuery.inArray(idScrollElement, ['elementDialog', 'emailingDialog', 'filtersDialog', 'activityDialog']) > -1)
 		element = ((scrollElement.find('div.T').length == 0) ? "neighbour" : "children");
 	var cssArray = {"height":"na","overflow-x":"hidden","overflow-y":"auto","margin-right":"na"};
 	switch(element){
@@ -3990,7 +3990,7 @@ function addScrollWithShadow(idScrollElement, elementPreviousTop) {
 function resize_scrollArea(keepScrollPosition){
 	if (arguments.length<1) keepScrollPosition = false;
 	if(isWorkzoneViewDocked() && !crtModuleName=='Admin') return true;
-	var elements = ['elementDialog', 'emailingDialog', 'filtersDialog'];
+	var elements = ['elementDialog', 'emailingDialog', 'filtersDialog', 'activityDialog'];
 	var element = null;
 	var elementName = 'elementDialog';
 	var elementPreviousTop = 0;

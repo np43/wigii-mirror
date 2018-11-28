@@ -930,6 +930,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 					$this->actOnCheckedRecord($p, $exec);
 
 					if(!$this->hasError()){
+						
 						$this->executionSink()->publishEndOperation("ResolveForm", $p);
 						return;
 					}

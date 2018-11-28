@@ -467,6 +467,9 @@ class WigiiCoreExecutor {
 	protected function createFeedbackFormExecutor($record, $formId, $submitUrl) {
 		return FeedbackFormExecutor :: createInstance($this->getRootPrincipal(), $this, $record, $formId, $submitUrl);
 	}
+	protected function createActivityFormExecutor($record, $formId, $submitUrl) {
+		return ActivityFormExecutor :: createInstance($this, $record, $formId, $submitUrl);
+	}
 	protected function createEmailingFormExecutor($record, $formId, $submitUrl, $elementIds) {
 		return EmailingFormExecutor :: createInstance($this, $record, $formId, $submitUrl, $elementIds);
 	}
@@ -7960,7 +7963,33 @@ onUpdateErrorCounter = 0;
 				$form->ResolveForm($p, $exec, $state);
 
 				break;
-
+			case "activity" :
+				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
+				if (!isset ($configS)) $configS = $this->getConfigurationContext();
+				
+				
+				$action = $exec->getCrtRequest();
+				$activityName = $exec->getCrtParameters(0);
+				$activityRec = $this->createActivityRecordForForm($p, Activity :: createInstance($activityName), $exec->getCrtModule());
+				
+				$activityXml = $configS->ma($p, $activityRec->getModule(), $activityRec->getActivity());
+				
+				$totalWidth = (string)$activityXml["totalWidth"];
+				$labelWidth = (string)$activityXml["labelWidth"];
+				if(!$totalWidth) $totalWidth = 450;
+				if(!$labelWidth) $labelWidth = 200;
+				
+				$form = $this->createActivityFormExecutor($activityRec, "activity_form", $action);
+				$form->setCorrectionWidth(43);
+				$form->setLabelWidth($labelWidth);
+				$form->setTotalWidth($totalWidth);
+				
+				$state = "start";
+				if ($_POST["action"] != null)
+					$state = addslashes($_POST["action"]);
+					$form->ResolveForm($p, $exec, $state);
+					
+					break;
 			//unsubscribe emails is the black list feature, do not mix with the usual unsubscribeEmail that the email owner would do
 			case "unsubscribeEmails" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
