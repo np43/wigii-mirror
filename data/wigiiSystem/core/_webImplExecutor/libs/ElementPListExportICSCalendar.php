@@ -82,7 +82,7 @@ class ElementPListExportICSCalendar extends ElementPListWebImplWithWigiiExecutor
 	private $date;
 	public function setDate($date, $fieldName, $isTimeRanges, $endDateFieldName=null){
 		$d = explode("-",$date); 
-		$this->date = mktime(0,0,0,$d[1], $d[2], $d[0]); //from format Y-m-d
+		$this->date = mktime(0,0,0,(int)$d[1], (int)$d[2], (int)$d[0]); //from format Y-m-d
 		$dateExp = LogExp::createAndExp();
 		
 		if($isTimeRanges){

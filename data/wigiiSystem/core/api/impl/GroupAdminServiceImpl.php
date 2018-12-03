@@ -3787,10 +3787,15 @@ where $select_Groups_whereClause ";
 		if(!isset($parentGroupId)) throw new GroupAdminServiceException('parentGroupId cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
 		if(empty($groupName)) throw new GroupAdminServiceException('groupName cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);		
 		// 1. fetch group in db
-		if(!$groupNameFilter) $groupNameFilter = $groupName;//if filter is not defined, then take the groupname as the filter
 		$groupPList = GroupPListArrayImpl::createInstance();
+		if($groupNameFilter){
+			$nameFilter = lxLike(fs('groupname'), $groupNameFilter);
+		} else {
+			$nameFilter = lxEq(fs('groupname'), $groupName);
+		}
+		
 		$listFilter = lf($this->getFieldSelectorListForGroupWithoutDetail(), 
-				lxAnd(lxLike(fs('groupname'), $groupNameFilter), lxEq(fs('id_group_parent'), $parentGroupId)), 
+				lxAnd($nameFilter, lxEq(fs('id_group_parent'), $parentGroupId)), 
 				null, 1, 1);
 		$this->getSelectedGroups($principal, $listFilter, $groupPList);
 		switch($listFilter->getTotalNumberOfObjects()) {

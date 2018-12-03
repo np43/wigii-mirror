@@ -725,8 +725,14 @@ class ElementEvaluator extends RecordEvaluator
 	 * FuncExp signature : <code>cfgParentGroup(name, returnAttribute=groupname|id|group, silent=false)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) name: String|Array|SimpleXmlElement the name or possible names of the group to search for in the parent hierarchy. If name is not defined, returns the direct parent group.
-	 * - Arg(1) returnAttribute: String. The name of the group attribute to return. Defaults to groupname. If 'group' then returns Group object.
+	 * - Arg(1) returnAttribute: String. The name of the group attribute to return. Defaults to groupname. If 'group' then returns Group object, if 'groupnameMatch' then return the value matching using separator and index.
 	 * - Arg(2) silent: Boolean. If true, then if parent group cannot be retrieved, then no Exception is thrown, but null is returned instead, else Exception is thrown as usual. Defaults to silent (true).	 
+	 * - Arg(3) separator|start: 
+	 * 				if String. optional, If defined, then use the string as a separator to explode the groupname to consider for matching. I.E =" ", and next parameter to 0 then takes the first word of the groupname to do the matching
+	 * 				if INT. opitonal, If defined do the comparaison starting from this character num	 
+	 * - Arg(4) index|len: INT = 0
+	 * 				if Arg3 is String : optional, If defined, then compare the exploded value at this index
+	 * 				if Arg3 is Int : optional, If defined, then takes len char after start for the comparaison	 
 	 * @return String|Int|Group
 	 * @throws ServiceException INVALID_STATE if Wigii is not capable to return a current selected group name in the calling context.
 	 */
@@ -738,6 +744,10 @@ class ElementEvaluator extends RecordEvaluator
 		else $returnAttribute='groupname';
 		if($nArgs>2) $silent=$this->evaluateArg($args[2]);
 		else $silent=true;
+		if($nArgs>3) $separator=$this->evaluateArg($args[3]);
+		else $separator=null;
+		if($nArgs>4) $index=$this->evaluateArg($args[4]);
+		else $index = 0;
 		
 		// gets starting point		
 		$group = $this->evaluateFuncExp(fx('cfgCurrentGroup', 'group', true),$this);
@@ -779,7 +789,13 @@ class ElementEvaluator extends RecordEvaluator
 				$group = $gAS->getGroupWithoutDetail($p, $parentId);
 				if(isset($group)) {				
 					// checks for group name matching
-					if($matches[$group->getGroupName()]) {
+					$groupnameMatch= $group->getGroupName();
+					if($separator && is_numeric($separator)){
+						$groupnameMatch = substr($groupnameMatch, $separator, $index);
+					} else if($separator && is_string($separator)){
+						$groupnameMatch = explode($separator, $groupnameMatch)[$index];
+					}
+					if($matches[$groupnameMatch]) {
 						$returnValue = $group;
 						break;
 					}
@@ -794,6 +810,7 @@ class ElementEvaluator extends RecordEvaluator
 		}
 		if(isset($returnValue)) {	
 			if($returnAttribute == 'group') return $returnValue;
+			if($returnAttribute == 'groupnameMatch') return $groupnameMatch;
 			else return $returnValue->getAttribute($returnAttribute);
 		}
 	}

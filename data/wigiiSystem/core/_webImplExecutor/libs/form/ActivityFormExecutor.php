@@ -26,7 +26,9 @@
  * by LWR
  */
 class ActivityFormExecutor extends FormExecutor {
-
+	
+	private $fromKeepModifyingExp = false; //flag to indicate no error but keep displaying
+	
 	public static function createInstance($wigiiExecutor, $record, $formId, $submitUrl=MANDATORY_ARG){
 		$ae = new self();
 		$ae->setWigiiExecutor($wigiiExecutor);
@@ -44,12 +46,14 @@ class ActivityFormExecutor extends FormExecutor {
 		$keepModifyingExp = (string)$activityXml["keepModifyingExp"];
 		if($keepModifyingExp && $this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $keepModifyingExp, $this->getRecord()) == '1') {
 			$this->addStateError();
+			$this->fromKeepModifyingExp = true;
 			return;
 		}
 		
 		$resultExp= (string)$activityXml["resultExp"];
 		if($resultExp){
 			$this->evaluateFuncExp($p, $exec, str2fx($resultExp), $this->getRecord());
+			if($this->hasError()) return; //if resultExp add some error, then return to renderForm
 		}
 		
 		//important to clear the cancel stack
@@ -58,7 +62,7 @@ class ActivityFormExecutor extends FormExecutor {
 	}
 
 	protected function doSpecificCheck($p, $exec){
-	        
+		$this->fromKeepModifyingExp = false;
 	}
 
 	protected function doRenderForm($p, $exec){
@@ -96,7 +100,7 @@ class ActivityFormExecutor extends FormExecutor {
 		$exec->addJsCode($this->getFormRenderer()->getJsCodeAfterShow());
 		
 		$resultExp= (string)$activityXml["resultExp"];
-		if(((string)$activityXml["executeResultExpOnStart"]=="1" || $originalState!="start") && $resultExp){
+		if((((string)$activityXml["executeResultExpOnStart"]=="1" && $originalState=="start") || $this->fromKeepModifyingExp) && $resultExp){
 			$this->evaluateFuncExp($p, $exec, str2fx($resultExp), $this->getRecord());
 		}
 	}
