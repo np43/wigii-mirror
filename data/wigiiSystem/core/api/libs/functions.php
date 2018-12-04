@@ -642,18 +642,18 @@ function str2array($str, $level=1) {
   return $rest;
 }
 //return a string HH:MM format from a float. HH can be more than 24, and seconds are rounded
-function float2time($timeAsFloat){ 
+function float2time($timeAsFloat,$sep=":"){ 
 	$hour = (int) $timeAsFloat;
 	$min = round(fmod($timeAsFloat, 1) * 60);
 	if($min == 60){
 		$hour ++;
 		$min = 0;
 	}
-	return sprintf('%02d:%02d', $hour, $min);
+	return sprintf('%02d'.$sep.'%02d', $hour, $min);
 }
 //return a float from a string in format HH:MM or HH:MM:SS, HH can be more than 24
-function time2float($timeAsString){ 
-	list($h, $m, $s) = explode(":",$timeAsString);
+function time2float($timeAsString,$sep=":"){ 
+	list($h, $m, $s) = explode($sep,$timeAsString);
 	return $h+($m/60)+($s/3600);
 }
 /**
