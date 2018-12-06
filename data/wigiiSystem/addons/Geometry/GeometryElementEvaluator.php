@@ -46,12 +46,12 @@ class GeometryElementEvaluator extends ReportingElementEvaluator
 		$this->setDefaultReportingFacadeClassName('GeometryReportingFacade');
 		if(!isset($this->rewriteTags)) $this->rewriteTags = array('red1', 'redn', 'red1G', 'rednG', 'red1E', 'rednE', 'lxInput');
 	}
-	public function freeMemory()
+	public function freeMemory($keepContext=false)
 	{		
 		unset($this->internalState);
 		unset($this->nextStateExp);
 		unset($this->innerFieldsConfig);		
-		parent::freeMemory();
+		parent::freeMemory($keepContext);
 	}	
 	
 	// dependency injection

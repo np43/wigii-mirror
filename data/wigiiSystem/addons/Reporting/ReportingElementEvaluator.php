@@ -40,9 +40,9 @@ class ReportingElementEvaluator extends ElementEvaluator implements ReportingOut
 		$returnValue->reset();
 		return $returnValue;
 	}
-	public function freeMemory()
+	public function freeMemory($keepContext=false)
 	{		
-		parent::freeMemory();
+		parent::freeMemory($keepContext);
 		unset($this->reportParamsFsl);
 		unset($this->reportDFASL);		
 	}	
