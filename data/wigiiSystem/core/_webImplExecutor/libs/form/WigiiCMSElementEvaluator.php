@@ -802,6 +802,9 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 	public function cms_getArticleStyle($article) {
 		$returnValue = '';
 		if(isset($article)) {
+			// background-image
+			$s = $article->getFieldValue('imgArticleBG','url');
+			if($s) $returnValue .= "background:url('".$s."') no-repeat center center; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover; background-size: cover;";
 			// background-color
 			$s = $article->getFieldValue('articleBgColor');
 			if($s){
@@ -816,9 +819,6 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				else $returnValue .= '1';
 				$returnValue .= ');';
 			}
-			// background-image
-			$s = $article->getFieldValue('imgArticleBG','url');
-			if($s) $returnValue .= "background:url('".$s."') no-repeat center center; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover; background-size: cover;";
 		}
 		return $returnValue;
 	}
@@ -837,6 +837,9 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$language = $options->getValue('language');
 		
 		$style = '';
+		// background-image
+		$s = $options->getValue('imgIntroBG');
+		if($s) $style .= "background:url('".$s."') no-repeat center center; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover; background-size: cover;";
 		// background-color
 		$s = $options->getValue('introBgColor');
 		if($s){
@@ -850,9 +853,6 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			else $style .= '1';
 			$style .= ');';
 		}
-		// background-image
-		$s = $options->getValue('imgIntroBG');
-		if($s) $style .= "background:url('".$s."') no-repeat center center; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover; background-size: cover;";
 		
 		// stores css string into options
 		if(!empty($css)) $options->setValue('css',$css);
