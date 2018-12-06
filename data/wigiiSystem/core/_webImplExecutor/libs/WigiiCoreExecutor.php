@@ -46,8 +46,8 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Registers a WigiiExecutor subclass as current singleton instance
-	 */
+	* Registers a WigiiExecutor subclass as current singleton instance
+	*/
 	protected static function registerSingleInstance($wigiiExecutor) {
 		if (isset (self :: $singleton))
 			throw new ServiceException("WigiiExecutor singleton has already been set, cannot change it dynamically", ServiceException :: FORBIDDEN);
@@ -55,10 +55,10 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Starts the current WigiiExecutor singleton
-	 * Creates a default WigiiExecutor instance if needed
-	 * Returns the current started singleton.
-	 */
+	* Starts the current WigiiExecutor singleton
+	* Creates a default WigiiExecutor instance if needed
+	* Returns the current started singleton.
+	*/
 	public static function start() {
 		$instance = self :: getInstance();
 		$instance->doStart();
@@ -66,8 +66,8 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Starts WigiiExecutor
-	 */
+	* Starts WigiiExecutor
+	*/
 	protected function doStart() {
 		$this->startTechnicalServiceProvider();
 		$this->startServiceProvider();
@@ -76,14 +76,14 @@ class WigiiCoreExecutor {
 		register_shutdown_function(array($this, "exit_handler"));
 	}
 	/**
-	 * Default starts TechnicalServiceProviderWebImpl
-	 */
+	* Default starts TechnicalServiceProviderWebImpl
+	*/
 	protected function startTechnicalServiceProvider() {
 		TechnicalServiceProviderWebImpl :: start(EXECUTION_SINK_ENABLED, DEBUG_LOGGER_ENABLED, GLOBAL_STATISTIC_ENABLED, ELEMENT_STATISTIC_ENABLED, FILE_STATISTIC_ENABLED);
 	}
 	/**
-	 * Default starts ServiceProviderWebImpl
-	 */
+	* Default starts ServiceProviderWebImpl
+	*/
 	protected function startServiceProvider() {
 		ServiceProviderWebImpl :: start(SESSION_CACHE_EXEC_ENABLED, SESSION_CACHE_BUILD_ENABLED, SYS_CONSOLE_ENABLED, $this);
 	}
@@ -115,8 +115,8 @@ class WigiiCoreExecutor {
 	
 	
 	/**
-	 * Adds a system principal or a list of system principals to the WigiiExecutor
-	 */
+	* Adds a system principal or a list of system principals to the WigiiExecutor
+	*/
 	public function addSystemPrincipal($systemPrincipal) {
 		if (is_null($systemPrincipal))
 			return;
@@ -125,8 +125,8 @@ class WigiiCoreExecutor {
 	}
 	private $systemPrincipals;
 	/**
-	 * Returns the list of actual system principals owned by the WigiiExecutor
-	 */
+	* Returns the list of actual system principals owned by the WigiiExecutor
+	*/
 	protected function getSystemPrincipals() {
 		//autowired
 		if (!isset ($this->systemPrincipals)) {
@@ -135,8 +135,8 @@ class WigiiCoreExecutor {
 		return $this->systemPrincipals;
 	}
 	/**
-	 * Gets the root principal
-	 */
+	* Gets the root principal
+	*/
 	protected function getRootPrincipal() {
 		$this->executionSink()->publishStartOperation("getRootPrincipal");
 		$returnValue = ServiceProvider :: getAuthorizationService()->findRootPrincipal($this->getSystemPrincipals());
@@ -146,8 +146,8 @@ class WigiiCoreExecutor {
 		return $returnValue;
 	}
 	/**
-	 * Gets the public principal
-	 */
+	* Gets the public principal
+	*/
 	protected function getPublicPrincipal() {
 		$this->executionSink()->publishStartOperation("getPublicPrincipal");
 		$returnValue = ServiceProvider :: getAuthorizationService()->findPublicPrincipal($this->getSystemPrincipals());
@@ -225,28 +225,28 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Returns an instance of an ElementPolicyEvaluator for the given principal and module.
-	 * @param Principal $principal principal executing the request
-	 * @param Module $module module for which to get an ElementPolicyEvaluator
-	 * @return ElementPolicyEvaluator or null if none is activated for this principal and module.
-	 */
+	* Returns an instance of an ElementPolicyEvaluator for the given principal and module.
+	* @param Principal $principal principal executing the request
+	* @param Module $module module for which to get an ElementPolicyEvaluator
+	* @return ElementPolicyEvaluator or null if none is activated for this principal and module.
+	*/
 	public function getElementPolicyEvaluator($principal, $module) {
 		$policyEvaluator = null;
 		if(ServiceProvider::getAuthorizationService()->isElementPolicyEvaluatorEnabled($principal, $module)) {
 			$policyEvaluatorClassName = (string)$this->getConfigurationContext()->getParameter($principal, $module, 'Element_policyEvaluator');
 			$policyEvaluator = ServiceProvider::getElementPolicyEvaluator($principal, $policyEvaluatorClassName);
-			if($policyEvaluator instanceof ElementPolicyEvaluator) $policyEvaluator->setWigiiExecutor($this);			 
+			if($policyEvaluator instanceof ElementPolicyEvaluator) $policyEvaluator->setWigiiExecutor($this);			
 		}
 		return $policyEvaluator;
 	}
 	
 	/**
-	 * Returns an instance of a FuncExpEvaluator configured for the context of the given Record.
-	 * @param Principal $p principal executing the request
-	 * @param ExecutionService $exec current ExecutionService instance
-	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
-	 * @return FuncExpEvaluator
-	 */
+	* Returns an instance of a FuncExpEvaluator configured for the context of the given Record.
+	* @param Principal $p principal executing the request
+	* @param ExecutionService $exec current ExecutionService instance
+	* @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	* @return FuncExpEvaluator
+	*/
 	public function getFuncExpEvaluator($p, $exec, $rec) {
 		// gets a RecordEvaluator based on given record
 		if(isset($rec)) {
@@ -275,13 +275,13 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Evaluates a FuncExp in the context of the given Record.
-	 * @param Principal $p principal executing the request
-	 * @param ExecutionService $exec current ExecutionService instance
-	 * @param FuncExp $fx the FuncExp instance to evaluate
-	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
-	 * @return Any FuncExp result
-	 */
+	* Evaluates a FuncExp in the context of the given Record.
+	* @param Principal $p principal executing the request
+	* @param ExecutionService $exec current ExecutionService instance
+	* @param FuncExp $fx the FuncExp instance to evaluate
+	* @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	* @return Any FuncExp result
+	*/
 	public function evaluateFuncExp($p,$exec,$fx,$rec=null) {
 		$fxEval = $this->getFuncExpEvaluator($p, $exec, $rec);
 		$returnValue = null;
@@ -297,13 +297,13 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Evaluates a Configuration Parameter which can be either a constant or a FuncExp.
-	 * @param Principal $p principal executing the request
-	 * @param ExecutionService $exec current ExecutionService instance
-	 * @param String $parameter the configuration parameter to evaluate
-	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
-	 * @return Any FuncExp result
-	 */
+	* Evaluates a Configuration Parameter which can be either a constant or a FuncExp.
+	* @param Principal $p principal executing the request
+	* @param ExecutionService $exec current ExecutionService instance
+	* @param String $parameter the configuration parameter to evaluate
+	* @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
+	* @return Any FuncExp result
+	*/
 	public function evaluateConfigParameter($p,$exec,$parameter,$rec=null) {
 		$parameter=(string)$parameter;
 		// checks that parameter is not already resolved
@@ -690,10 +690,10 @@ class WigiiCoreExecutor {
 	
 	private $workzoneViewDocked = null;
 	/**
-	 * Returns true if Workzone has a docked ListView and ElementDialog,
-	 * @param wigiiModule : String|WigiiModule = null, if defined then return isWorkzoneViewDocked on this module
-	 * Returns false if ElementDialog shows as a popup.	 
-	 */
+	* Returns true if Workzone has a docked ListView and ElementDialog,
+	* @param wigiiModule : String|WigiiModule = null, if defined then return isWorkzoneViewDocked on this module
+	* Returns false if ElementDialog shows as a popup.	
+	*/
 	public function isWorkzoneViewDocked($wigiiModule=null) {
 		if($wigiiModule){
 			if (is_string($wigiiModule)){
@@ -711,8 +711,8 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * flag to tell to use public principal for the download:
-	 */
+	* flag to tell to use public principal for the download:
+	*/
 	private $usePublicPrincipalForDownloadRequest = null;
 	public function doesPrincipalForDownloadRequestShouldBePublic() {
 		return $this->usePublicPrincipalForDownloadRequest;
@@ -740,8 +740,8 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * this method should be called after each userAdminService->calculateAllMergedRoles($p)
-	 */
+	* this method should be called after each userAdminService->calculateAllMergedRoles($p)
+	*/
 	public function storeAdminAndCalculatedRoleIdsInSession($p){
 		$userAS = ServiceProvider::getUserAdminService();
 		$sessAS = ServiceProvider::getSessionAdminService();
@@ -757,8 +757,8 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * List Context management
-	 */
+	* List Context management
+	*/
 	private $listContextList;
 	public function getListContext($p, $wigiiNamespace, $module, $name) {
 		$this->executionSink()->publishStartOperation("getListContext " . $name);
@@ -819,8 +819,8 @@ class WigiiCoreExecutor {
 	//	}
 	
 	/**
-	 * Configuration Context management
-	 */
+	* Configuration Context management
+	*/
 	private $configurationContext;
 	public function getConfigurationContext() {
 		//as getConfigurationContext() is done each time we access to the config, do not log it as publishStartOperation
@@ -876,8 +876,8 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Admin Context management
-	 */
+	* Admin Context management
+	*/
 	private $adminContext;
 	public function getAdminContext($p) {
 		$sessAS = ServiceProvider :: getSessionAdminService();
@@ -938,9 +938,9 @@ class WigiiCoreExecutor {
 		$this->executionSink()->publishEndOperation("clearDico");
 	}
 	/**
-	 * global context management:
-	 * this is called only when logout, or just after autoLogin
-	 */
+	* global context management:
+	* this is called only when logout, or just after autoLogin
+	*/
 	public function clearWigiiContext() {
 		$this->executionSink()->publishStartOperation("clearWigiiContext");
 		$this->clearAdminContext();
@@ -1038,10 +1038,10 @@ class WigiiCoreExecutor {
 		$activity = Activity :: createInstance("exportMenu");
 		$act = $configS->mf($p, $exec->getCrtModule(), $activity);
 
-        if(!isset($configS)) $configS= $this->getConfigurationContext();
+		if(!isset($configS)) $configS= $this->getConfigurationContext();
 
-        $companyColor = $configS->getParameter($p, null, "companyColor");
-        $rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
+		$companyColor = $configS->getParameter($p, null, "companyColor");
+		$rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
 
 		if (!empty ($act)) {
 			$options = $optionHelp = null;
@@ -1054,7 +1054,7 @@ class WigiiCoreExecutor {
 					"$(document).ready(function(){
 					if($('#searchBar .toolbarBox .exportMenuButton').length==0){ " .
 						"$('#searchBar .toolbarBox').prepend('<div id=\"exportMenuButton\" class=\"exportMenuButton L H \" style=\"color:". $rCompanyColor. "\">".$transS->h($p, "exportElementButton")."</div>');" .
-                "$('#searchBar .toolbarBox .exportMenuButton').append('" .
+					"$('#searchBar .toolbarBox .exportMenuButton').append('" .
 							"<div class=\"cm SBB\" id=\"exportMenu\" style=\"display:none;margin-top:-16px;\" >" .
 							"<div class=\"exit SBB\">x</div>" .
 							"$options" .
@@ -1066,7 +1066,7 @@ class WigiiCoreExecutor {
 				$JsCode.= "setListenersToMenu('exportMenuButton', 'exportMenu', 'elementDialog', 'export');";
 			}
 			$JsCode.= " }
-			 });";
+			});";
 			$exec->addJsCode($JsCode);
 		}
 
@@ -1102,20 +1102,20 @@ class WigiiCoreExecutor {
 		$this->executionSink()->publishEndOperation("includeRunMenu", $p);
 	}
 	protected function includeCoverPage($crtGroupP, $p, $exec, $transS, $configS) {
-	    //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start cover page"] = microtime(true);
-	    $this->debugLogger()->logBeginOperation("cover page");
-        $htmlContent=null;
-        $groupPortalAction = $configS->getParameter($p, $exec->getCrtModule(), "Group_portalAction");
-        // redirects to portal action
-        if(!empty($groupPortalAction)) {
-            // evaluates any FuncExp given as a groupPortalAction
-            $groupPortalAction = $this->evaluateConfigParameter($p,$exec,$groupPortalAction);
-            ?><div id="groupPortalAction" class="portal" style="overflow:hidden; display:none; padding-left:10px; padding-right:10px;"><?
+		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start cover page"] = microtime(true);
+		$this->debugLogger()->logBeginOperation("cover page");
+		$htmlContent=null;
+		$groupPortalAction = $configS->getParameter($p, $exec->getCrtModule(), "Group_portalAction");
+		// redirects to portal action
+		if(!empty($groupPortalAction)) {
+				// evaluates any FuncExp given as a groupPortalAction
+				$groupPortalAction = $this->evaluateConfigParameter($p,$exec,$groupPortalAction);
+				?><div id="groupPortalAction" class="portal" style="overflow:hidden; display:none; padding-left:10px; padding-right:10px;"><?
 			if($configS->getParameter($p, $exec->getCrtModule(), "Group_portalActionRefreshOnMultipleChange") != "1"){					
 				$groupPortalAction =  'groupPortalAction/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/".$groupPortalAction."/".$crtGroupP->getId();
 				$exec->addJsCode("update('".$groupPortalAction."');");					
 			}
-			?></div><?    		
+			?></div><?			
 		} 
 		// renders group cover page
 		else if($crtGroupP->getGroup()->getDetail()!=null){
@@ -1145,30 +1145,30 @@ class WigiiCoreExecutor {
 		else {
 			$exec->addJsCode("removeCoverPageItems();");
 		}
-    	$this->debugLogger()->logEndOperation("cover page");
+		$this->debugLogger()->logEndOperation("cover page");
 	}	
 	protected function includeGroupPortal($crtGroupP, $p, $exec, $transS, $configS) {
-	    $this->debugLogger()->logBeginOperation("group portal");
-	    $url = null;
-	    //we the group details	    
-	    //if detail = null, then do nothing
-	    if($crtGroupP->getGroup()->getDetail()!=null){ 	        
-	        $portalRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupPortal"), $exec->getCrtModule());
-	        $portalRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getGroup()->getDetail()->getPortal(), $portalRec->getActivity());
-	        $url = $portalRec->getFieldValue("url", "url");
-	        // evaluates any given FuncExp
-	        $url = $this->evaluateConfigParameter($p,$exec,$url);
-	        if(!empty($url)){
-	            $cooKieName = $portalRec->getFieldValue("groupPortalCookieName");
-	            if($portalRec->getFieldValue("groupPortalCookieIncludeRoles")){
-	                $roleList = $p->getRoleListener()->getRolesPerWigiiNamespaceModule($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl(), $exec->getCrtModule()->getModuleUrl());
-	                if($roleList) $roleList = implode(";", $roleList);
-	            } else $roleList = null;
-	            if($cooKieName){
-	                $result = getExternalCookieConnectionValue($portalRec->getFieldValue("groupPortalCookieSeparator"), $p->getRealUsername(), $portalRec->getFieldValue("groupPortalCookieCustomParameter"), $portalRec->getFieldValue("groupPortalCookieExpiration"), $roleList, $portalRec->getFieldValue("groupPortalCookieEncrypt"), $portalRec->getFieldValue("groupPortalCookieRotationKey"));
-	                $exec->addJsCode("$.cookie('".$cooKieName."', '".$result."', { path: '/', domain: '".$portalRec->getFieldValue("groupPortalCookieDomain")."', secure: ".strtolower(put(HTTPS_ON))." }); ");
-	            }
-	            ?><div class="portal" style="overflow:hidden; "><?
+		$this->debugLogger()->logBeginOperation("group portal");
+		$url = null;
+		//we the group details		
+		//if detail = null, then do nothing
+		if($crtGroupP->getGroup()->getDetail()!=null){ 			
+			$portalRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupPortal"), $exec->getCrtModule());
+			$portalRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getGroup()->getDetail()->getPortal(), $portalRec->getActivity());
+			$url = $portalRec->getFieldValue("url", "url");
+			// evaluates any given FuncExp
+			$url = $this->evaluateConfigParameter($p,$exec,$url);
+			if(!empty($url)){
+					$cooKieName = $portalRec->getFieldValue("groupPortalCookieName");
+					if($portalRec->getFieldValue("groupPortalCookieIncludeRoles")){
+						$roleList = $p->getRoleListener()->getRolesPerWigiiNamespaceModule($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl(), $exec->getCrtModule()->getModuleUrl());
+						if($roleList) $roleList = implode(";", $roleList);
+					} else $roleList = null;
+					if($cooKieName){
+						$result = getExternalCookieConnectionValue($portalRec->getFieldValue("groupPortalCookieSeparator"), $p->getRealUsername(), $portalRec->getFieldValue("groupPortalCookieCustomParameter"), $portalRec->getFieldValue("groupPortalCookieExpiration"), $roleList, $portalRec->getFieldValue("groupPortalCookieEncrypt"), $portalRec->getFieldValue("groupPortalCookieRotationKey"));
+						$exec->addJsCode("$.cookie('".$cooKieName."', '".$result."', { path: '/', domain: '".$portalRec->getFieldValue("groupPortalCookieDomain")."', secure: ".strtolower(put(HTTPS_ON))." }); ");
+					}
+					?><div class="portal" style="overflow:hidden; "><?
 					if(!preg_match('#^(((ht|f)tp(s?))\://)#i', $url)) $url = "http://".$url;
 					?><a class="media {type:'html'}" href="<?=$url;?>" ></a><?
 				?></div><?
@@ -1179,275 +1179,275 @@ class WigiiCoreExecutor {
 		return $url;
 	}
 	protected function prepareSortByOptions($lc, $currentConfigKey, $p, $exec, $transS, $configS, $sessAS) {
-	    $fieldSelectorList = $sessAS->getData($this, $currentConfigKey."_sortByFieldselectorList");
-	    $sortByOptions = $sessAS->getData($this, $currentConfigKey."_sortByOptions");
-	    if($fieldSelectorList==null){
-	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start sortBy"] = microtime(true);
-	        $this->debugLogger()->write("start sortBy");
-	        //sortBy
-	        //look if a groupBy activity is defined. Otherwise just list all available fields
-	        $sortByActivity = Activity :: createInstance("sortBy");
-	        $sortByOptions = array();
-	        if($configS->ma($p, $exec->getCrtModule(), $sortByActivity)){
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather activity config"] = microtime(true);
-	            $this->debugLogger()->write("gather activity config");
-	            $fieldSelectorList = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
-	            $fieldSelectorList->setSelectedLanguages(array ($transS->getLanguage() => $transS->getLanguage()));
-	            $configS->getFields($p, $exec->getCrtModule(), $sortByActivity, $fieldSelectorList);
-	            $fieldList = FormFieldList :: createInstance(null);
-	            $configS->getFields($p, $exec->getCrtModule(), null, $fieldList);
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
-	            $this->debugLogger()->write("config gathered");
-	            $trmTemp = $this->createTRM(null, false, false, false, true, false, false); //we want to be able to buffer the result
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
-	            $this->debugLogger()->write("build sortByOptionArray for activity");
-	            foreach($fieldSelectorList->getListIterator() as $key=>$fieldSelector){
-	                if($fieldSelector->isElementAttributeSelector()) $fieldXml = null;
-	                else $fieldXml = $fieldList->getField($fieldSelector->getFieldName())->getXml();
-	                $xmlHeader = $fieldSelectorList->getXml($key);
-	                $trmTemp->displayHeaderLabel($fieldSelector, $fieldXml, $xmlHeader, true);
-	                $label = $trmTemp->getHtmlAndClean();
-	                $sortByOptions[$key] = $label;
-	            }
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
-	            $this->debugLogger()->write("build sortByOptionArray for activity");
-	        } else {
-	            //create the fieldSelectorList for all fields and for element info
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather all config"] = microtime(true);
-	            $this->debugLogger()->write("gather all config");
-	            $elementFieldsXml = $configS->mf($p, $exec->getCrtModule());
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
-	            $fieldSelectorList = FieldSelectorListArrayWebImpl::createInstance(false, false);
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for fields"] = microtime(true);
-	            foreach($elementFieldsXml->children() as $elementFieldXml){
-	                if($lc->byPassDataTypeForSortByFilter($elementFieldXml["type"])) continue;
-	                $subFieldNames = $lc->defineDataTypeSubFieldForSortByFilter($elementFieldXml["type"]);
-	                foreach($subFieldNames as $subFieldName){
-	                    $key = $fieldSelectorList->addFieldSelector($elementFieldXml->getName(), $subFieldName);
-	                    $label = $transS->t($p, $elementFieldXml->getName(), $elementFieldXml);
-	                    if($subFieldName != "" && $subFieldName != "value") $label .= " ".$transS->t($p, $elementFieldXml["type"]."_".$subFieldName);
-	                    $sortByOptions[$key] = $label;
-	                }
-	            }
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for subFields"] = microtime(true);
-	            //add the element infos
-	            $subFieldNames = $lc->defineElementSubFieldForSortByFilter();
-	            foreach($subFieldNames as $subFieldName){
-	                $fieldSelector = FieldSelector::createElementAttributeSelector($subFieldName);
-	                $key = $fieldSelectorList->addFieldSelectorInstance($fieldSelector);
-	                $label = $transS->t($p, $subFieldName);
-	                $sortByOptions[$key] = $label;
-	            }
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."sortByOptionArray built"] = microtime(true);
-	        }
-	        $sessAS->storeData($this, $currentConfigKey."_sortByFieldselectorList", $fieldSelectorList);
-	        $sessAS->storeData($this, $currentConfigKey."_sortByOptions", $sortByOptions);
-	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."sortBy stored in session"] = microtime(true);
-	        $this->debugLogger()->write("sortBy stored in session");
-	    } 
-	    $lc->setSortByFieldSelectorList($fieldSelectorList);
-	    return $sortByOptions;
+		$fieldSelectorList = $sessAS->getData($this, $currentConfigKey."_sortByFieldselectorList");
+		$sortByOptions = $sessAS->getData($this, $currentConfigKey."_sortByOptions");
+		if($fieldSelectorList==null){
+			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start sortBy"] = microtime(true);
+			$this->debugLogger()->write("start sortBy");
+			//sortBy
+			//look if a groupBy activity is defined. Otherwise just list all available fields
+			$sortByActivity = Activity :: createInstance("sortBy");
+			$sortByOptions = array();
+			if($configS->ma($p, $exec->getCrtModule(), $sortByActivity)){
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather activity config"] = microtime(true);
+					$this->debugLogger()->write("gather activity config");
+					$fieldSelectorList = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
+					$fieldSelectorList->setSelectedLanguages(array ($transS->getLanguage() => $transS->getLanguage()));
+					$configS->getFields($p, $exec->getCrtModule(), $sortByActivity, $fieldSelectorList);
+					$fieldList = FormFieldList :: createInstance(null);
+					$configS->getFields($p, $exec->getCrtModule(), null, $fieldList);
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
+					$this->debugLogger()->write("config gathered");
+					$trmTemp = $this->createTRM(null, false, false, false, true, false, false); //we want to be able to buffer the result
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
+					$this->debugLogger()->write("build sortByOptionArray for activity");
+					foreach($fieldSelectorList->getListIterator() as $key=>$fieldSelector){
+						if($fieldSelector->isElementAttributeSelector()) $fieldXml = null;
+						else $fieldXml = $fieldList->getField($fieldSelector->getFieldName())->getXml();
+						$xmlHeader = $fieldSelectorList->getXml($key);
+						$trmTemp->displayHeaderLabel($fieldSelector, $fieldXml, $xmlHeader, true);
+						$label = $trmTemp->getHtmlAndClean();
+						$sortByOptions[$key] = $label;
+					}
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
+					$this->debugLogger()->write("build sortByOptionArray for activity");
+			} else {
+					//create the fieldSelectorList for all fields and for element info
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather all config"] = microtime(true);
+					$this->debugLogger()->write("gather all config");
+					$elementFieldsXml = $configS->mf($p, $exec->getCrtModule());
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
+					$fieldSelectorList = FieldSelectorListArrayWebImpl::createInstance(false, false);
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for fields"] = microtime(true);
+					foreach($elementFieldsXml->children() as $elementFieldXml){
+						if($lc->byPassDataTypeForSortByFilter($elementFieldXml["type"])) continue;
+						$subFieldNames = $lc->defineDataTypeSubFieldForSortByFilter($elementFieldXml["type"]);
+						foreach($subFieldNames as $subFieldName){
+							$key = $fieldSelectorList->addFieldSelector($elementFieldXml->getName(), $subFieldName);
+							$label = $transS->t($p, $elementFieldXml->getName(), $elementFieldXml);
+							if($subFieldName != "" && $subFieldName != "value") $label .= " ".$transS->t($p, $elementFieldXml["type"]."_".$subFieldName);
+							$sortByOptions[$key] = $label;
+						}
+					}
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for subFields"] = microtime(true);
+					//add the element infos
+					$subFieldNames = $lc->defineElementSubFieldForSortByFilter();
+					foreach($subFieldNames as $subFieldName){
+						$fieldSelector = FieldSelector::createElementAttributeSelector($subFieldName);
+						$key = $fieldSelectorList->addFieldSelectorInstance($fieldSelector);
+						$label = $transS->t($p, $subFieldName);
+						$sortByOptions[$key] = $label;
+					}
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."sortByOptionArray built"] = microtime(true);
+			}
+			$sessAS->storeData($this, $currentConfigKey."_sortByFieldselectorList", $fieldSelectorList);
+			$sessAS->storeData($this, $currentConfigKey."_sortByOptions", $sortByOptions);
+			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."sortBy stored in session"] = microtime(true);
+			$this->debugLogger()->write("sortBy stored in session");
+		} 
+		$lc->setSortByFieldSelectorList($fieldSelectorList);
+		return $sortByOptions;
 	}
 	protected function includeSortByMenu($lc, $sortByOptions, $p, $exec, $transS, $configS) {
-	    $exec->addJsCode("" .
-	        "$('#searchBar .toolbarBox .sortBy').removeClass('disabledR');" .
-	        "$('#searchBar .toolbarBox .sortBy .SBB').removeClass('SBB').addClass('SBIB');" .
-	        "$('#searchBar .toolbarBox .sortBy div.disabledBg').removeClass('disabledBg');");
-	    if($sortByOptions[$lc->getSortedBy()]){
-	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start define sortBy value"] = microtime(true);
-	        $this->debugLogger()->write("define sortByValue");
-	        $exec->addJsCode("" .
-	            "$('#searchBar .toolbarBox .sortBy .direction').removeClass('".($lc->isAscending() ? "DESC" : "ASC")."').addClass('".($lc->isAscending() ? "ASC" : "DESC")."');" .
-	            "$('#searchBar .toolbarBox .sortBy .value').html('<a href=\"#".$lc->getSortedBy()."\">".str_replace("'", "\\'", $sortByOptions[$lc->getSortedBy()])."</a>');");
-	    }
-	    if($sortByOptions){
-	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start loading sortBy menu"] = microtime(true);
-	        $this->debugLogger()->write("loading sortBy menu");
-	        $options = "";
-	        if($lc->isAscending()){
-	            $glyphicon = "glyphicon-triangle-top";
-	            $order = "ASC";
-	        } else{
-	            $glyphicon = "glyphicon-triangle-bottom";
-	            $order = "DESC";
-	        }
-	        $selected = $sortByOptions[$lc->getSortedBy()];
-            $options .= '<li style="color:red;"><a href="#'.$lc->getSortedBy().'" class="changeOrder '. $order .'" style="margin-left:-17px; color: red; clear:none;" title="'.str_replace("'", "\\'", strip_tags($selected)).'"><span class="glyphicon '. $glyphicon. '" aria-hidden="true"></span>'.str_replace("'", "\\'", strip_tags($selected)).'</a></li>';
-	        foreach($sortByOptions as $key=>$label){
-                if($label != $selected) $options .= '<li><a href="#'.$key.'" title="'.str_replace("'", "\\'", strip_tags($label)).'">'.str_replace("'", "\\'", strip_tags($label)).'</a></li>';
-	        }
-	        $exec->addJsCode(
-	            "$('#searchBar .toolbarBox .sortBy .value').html('
-                ". $options. "'
-                );".
-	            "setListenersToMenuBsp('searchBar .toolbarBox .sortBy .value', 'sortByMenu', 'moduleView', 'changeSortByKey', null, true);".
-	            //add listener to direction
-	            "$('#searchBar .toolbarBox .sortBy .direction').click(function(){ " .
-	            "update('moduleView/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/changeSortByKey/'+$('a:first', $(this).next()).attr('href').replace('#', '')+'/'+$(this).hasClass('DESC'));" .
-	            " });");
-	    }
+		$exec->addJsCode("" .
+			"$('#searchBar .toolbarBox .sortBy').removeClass('disabledR');" .
+			"$('#searchBar .toolbarBox .sortBy .SBB').removeClass('SBB').addClass('SBIB');" .
+			"$('#searchBar .toolbarBox .sortBy div.disabledBg').removeClass('disabledBg');");
+		if($sortByOptions[$lc->getSortedBy()]){
+			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start define sortBy value"] = microtime(true);
+			$this->debugLogger()->write("define sortByValue");
+			$exec->addJsCode("" .
+					"$('#searchBar .toolbarBox .sortBy .direction').removeClass('".($lc->isAscending() ? "DESC" : "ASC")."').addClass('".($lc->isAscending() ? "ASC" : "DESC")."');" .
+					"$('#searchBar .toolbarBox .sortBy .value').html('<a href=\"#".$lc->getSortedBy()."\">".str_replace("'", "\\'", $sortByOptions[$lc->getSortedBy()])."</a>');");
+		}
+		if($sortByOptions){
+			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start loading sortBy menu"] = microtime(true);
+			$this->debugLogger()->write("loading sortBy menu");
+			$options = "";
+			if($lc->isAscending()){
+					$glyphicon = "glyphicon-triangle-top";
+					$order = "ASC";
+			} else{
+					$glyphicon = "glyphicon-triangle-bottom";
+					$order = "DESC";
+			}
+			$selected = $sortByOptions[$lc->getSortedBy()];
+				$options .= '<li style="color:red;"><a href="#'.$lc->getSortedBy().'" class="changeOrder '. $order .'" style="margin-left:-17px; color: red; clear:none;" title="'.str_replace("'", "\\'", strip_tags($selected)).'"><span class="glyphicon '. $glyphicon. '" aria-hidden="true"></span>'.str_replace("'", "\\'", strip_tags($selected)).'</a></li>';
+			foreach($sortByOptions as $key=>$label){
+					if($label != $selected) $options .= '<li><a href="#'.$key.'" title="'.str_replace("'", "\\'", strip_tags($label)).'">'.str_replace("'", "\\'", strip_tags($label)).'</a></li>';
+			}
+			$exec->addJsCode(
+					"$('#searchBar .toolbarBox .sortBy .value').html('
+					". $options. "'
+					);".
+					"setListenersToMenuBsp('searchBar .toolbarBox .sortBy .value', 'sortByMenu', 'moduleView', 'changeSortByKey', null, true);".
+					//add listener to direction
+					"$('#searchBar .toolbarBox .sortBy .direction').click(function(){ " .
+					"update('moduleView/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/changeSortByKey/'+$('a:first', $(this).next()).attr('href').replace('#', '')+'/'+$(this).hasClass('DESC'));" .
+					" });");
+		}
 	}
 	protected function prepareGroupyByOptions($lc, $currentConfigKey, $p, $exec, $transS, $configS, $sessAS) {
-	    $fieldSelectorList = $sessAS->getData($this, $currentConfigKey."_groupByfieldselectorList");
-	    $groupByOptions = $sessAS->getData($this, $currentConfigKey."_groupByOptions");
-	    if($fieldSelectorList==null){
-	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start groupBy"] = microtime(true);
-	        //look if a groupBy activity is defined. Otherwise just list all available fields
-	        $groupByActivity = Activity :: createInstance("groupBy");
-	        $groupByOptions = array();
-	        if($configS->ma($p, $exec->getCrtModule(), $groupByActivity)){
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather activity config"] = microtime(true);
-	            $fieldSelectorList = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
-	            $fieldSelectorList->setSelectedLanguages(array ($transS->getLanguage() => $transS->getLanguage()));
-	            $configS->getFields($p, $exec->getCrtModule(), $groupByActivity, $fieldSelectorList);
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
-	            $fieldList = FormFieldList :: createInstance(null);
-	            $configS->getFields($p, $exec->getCrtModule(), null, $fieldList);
-	            $trmTemp = $this->createTRM(null, false, false, false, true, false, false); //we want to be able to buffer the result
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for fields"] = microtime(true);
-	            foreach($fieldSelectorList->getListIterator() as $key=>$fieldSelector){
-	                if($fieldSelector->isElementAttributeSelector()) $fieldXml = null;
-	                else $fieldXml = $fieldList->getField($fieldSelector->getFieldName())->getXml();
-	                $xmlHeader = $fieldSelectorList->getXml($key);
-	                $trmTemp->displayHeaderLabel($fieldSelector, $fieldXml, $xmlHeader, true);
-	                $label = $trmTemp->getHtmlAndClean();
-	                $groupByOptions[$key] = $label;
-	            }
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
-	        } else {
-	            //create the fieldSelectorList for all fields and for element info
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather all config"] = microtime(true);
-	            $elementFieldsXml = $configS->mf($p, $exec->getCrtModule());
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
-	            $fieldSelectorList = FieldSelectorListArrayWebImpl::createInstance(false, false);
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for fields"] = microtime(true);
-	            foreach($elementFieldsXml->children() as $elementFieldXml){
-	                if($lc->byPassDataTypeForGroupByFilter($elementFieldXml["type"])) continue;
-	                if($elementFieldXml["groupable"]=="0") continue;
-	                $subFieldNames = $lc->defineDataTypeSubFieldForGroupByFilter($elementFieldXml["type"]);
-	                foreach($subFieldNames as $subFieldName){
-	                    $key = $fieldSelectorList->addFieldSelector($elementFieldXml->getName(), $subFieldName);
-	                    $label = $transS->t($p, $elementFieldXml->getName(), $elementFieldXml);
-	                    if($subFieldName != "" && $subFieldName != "value") $label .= " ".$transS->t($p, $elementFieldXml["type"]."_".$subFieldName);
-	                    $groupByOptions[$key] = $label;
-	                }
-	            }
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for subFields"] = microtime(true);
-	            //add the element infos
-	            $subFieldNames = $lc->defineElementSubFieldForGroupByFilter();
-	            foreach($subFieldNames as $subFieldName){
-	                $fieldSelector = FieldSelector::createElementAttributeSelector($subFieldName);
-	                $key = $fieldSelectorList->addFieldSelectorInstance($fieldSelector);
-	                $label = $transS->t($p, $subFieldName);
-	                $groupByOptions[$key] = $label;
-	            }
-	            //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."groupByOptionArray built"] = microtime(true);
-	        }
-	        $sessAS->storeData($this, $currentConfigKey."_groupByfieldselectorList", $fieldSelectorList);
-	        $sessAS->storeData($this, $currentConfigKey."_groupByOptions", $groupByOptions);
-	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."groupBy stored in session"] = microtime(true);
-	        $this->debugLogger()->write("groupBy stored in session");
-	    } else {
-	        //		fput("found ".$currentConfigKey."_groupBy"." in session!");
-	    }
-	    $lc->setGroupByFieldSelectorList($fieldSelectorList);
-	    return $groupByOptions;
+		$fieldSelectorList = $sessAS->getData($this, $currentConfigKey."_groupByfieldselectorList");
+		$groupByOptions = $sessAS->getData($this, $currentConfigKey."_groupByOptions");
+		if($fieldSelectorList==null){
+			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start groupBy"] = microtime(true);
+			//look if a groupBy activity is defined. Otherwise just list all available fields
+			$groupByActivity = Activity :: createInstance("groupBy");
+			$groupByOptions = array();
+			if($configS->ma($p, $exec->getCrtModule(), $groupByActivity)){
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather activity config"] = microtime(true);
+					$fieldSelectorList = FieldSelectorListForActivity :: createInstance(false, false, true); //no issue if double time the same
+					$fieldSelectorList->setSelectedLanguages(array ($transS->getLanguage() => $transS->getLanguage()));
+					$configS->getFields($p, $exec->getCrtModule(), $groupByActivity, $fieldSelectorList);
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
+					$fieldList = FormFieldList :: createInstance(null);
+					$configS->getFields($p, $exec->getCrtModule(), null, $fieldList);
+					$trmTemp = $this->createTRM(null, false, false, false, true, false, false); //we want to be able to buffer the result
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for fields"] = microtime(true);
+					foreach($fieldSelectorList->getListIterator() as $key=>$fieldSelector){
+						if($fieldSelector->isElementAttributeSelector()) $fieldXml = null;
+						else $fieldXml = $fieldList->getField($fieldSelector->getFieldName())->getXml();
+						$xmlHeader = $fieldSelectorList->getXml($key);
+						$trmTemp->displayHeaderLabel($fieldSelector, $fieldXml, $xmlHeader, true);
+						$label = $trmTemp->getHtmlAndClean();
+						$groupByOptions[$key] = $label;
+					}
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build sortByOptionArray for activity"] = microtime(true);
+			} else {
+					//create the fieldSelectorList for all fields and for element info
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."gather all config"] = microtime(true);
+					$elementFieldsXml = $configS->mf($p, $exec->getCrtModule());
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."config gathered"] = microtime(true);
+					$fieldSelectorList = FieldSelectorListArrayWebImpl::createInstance(false, false);
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for fields"] = microtime(true);
+					foreach($elementFieldsXml->children() as $elementFieldXml){
+						if($lc->byPassDataTypeForGroupByFilter($elementFieldXml["type"])) continue;
+						if($elementFieldXml["groupable"]=="0") continue;
+						$subFieldNames = $lc->defineDataTypeSubFieldForGroupByFilter($elementFieldXml["type"]);
+						foreach($subFieldNames as $subFieldName){
+							$key = $fieldSelectorList->addFieldSelector($elementFieldXml->getName(), $subFieldName);
+							$label = $transS->t($p, $elementFieldXml->getName(), $elementFieldXml);
+							if($subFieldName != "" && $subFieldName != "value") $label .= " ".$transS->t($p, $elementFieldXml["type"]."_".$subFieldName);
+							$groupByOptions[$key] = $label;
+						}
+					}
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."build groupByOptionArray for subFields"] = microtime(true);
+					//add the element infos
+					$subFieldNames = $lc->defineElementSubFieldForGroupByFilter();
+					foreach($subFieldNames as $subFieldName){
+						$fieldSelector = FieldSelector::createElementAttributeSelector($subFieldName);
+						$key = $fieldSelectorList->addFieldSelectorInstance($fieldSelector);
+						$label = $transS->t($p, $subFieldName);
+						$groupByOptions[$key] = $label;
+					}
+					//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."groupByOptionArray built"] = microtime(true);
+			}
+			$sessAS->storeData($this, $currentConfigKey."_groupByfieldselectorList", $fieldSelectorList);
+			$sessAS->storeData($this, $currentConfigKey."_groupByOptions", $groupByOptions);
+			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."groupBy stored in session"] = microtime(true);
+			$this->debugLogger()->write("groupBy stored in session");
+		} else {
+			//		fput("found ".$currentConfigKey."_groupBy"." in session!");
+		}
+		$lc->setGroupByFieldSelectorList($fieldSelectorList);
+		return $groupByOptions;
 	}
 	protected function includeGroupByMenu($lc, $groupByOptions, $p, $exec, $transS, $configS) {
-	    //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start define groupBy value"] = microtime(true);
-	    $exec->addJsCode("" .
-	   	    "$('#searchBar .toolbarBox .groupBy').removeClass('disabledR');" .
-	   	    "$('#searchBar .toolbarBox .groupBy .SBB').removeClass('SBB').addClass('SBIB');" .
-	   	    "$('#searchBar .toolbarBox .groupBy div.disabledBg').removeClass('disabledBg');");
-	    $this->debugLogger()->write("start define groupBy value");
-	    if($lc->getGroupBy()==null){
-	        $exec->addJsCode("$('#searchBar .toolbarBox .groupBy .value').html('<a href=\"#null\">".str_replace("'", "\\'", $transS->t($p, "selectInList"))."</a>');");
-	    } else if($groupByOptions[$lc->getGroupBy()]){
-	        $exec->addJsCode("$('#searchBar .toolbarBox .groupBy .value').html('<a href=\"#".$lc->getGroupBy()."\">".str_replace("'", "\\'", $groupByOptions[$lc->getGroupBy()])."</a>');");
-	    }
-	    if($groupByOptions){
-	        //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start loading groupBy menu"] = microtime(true);
-	        $this->debugLogger()->write("loading groupBy menu");
-	        $options = "";
-	        $selected = $groupByOptions[$lc->getGroupBy()];
-	        //add option to reset the groupBy to nothing
-            if($selected) $options .= '<li style="color:red;"><a href="#null" style="margin-left:-20px; color: red; clear:none;" title="'.str_replace("'", "\\'", strip_tags($selected)).'"><span style="margin-right: 3px; margin-top: 3px;" class="glyphicon glyphicon-remove" aria-hidden="true"></span>'.str_replace("'", "\\'", strip_tags($selected)).'</a></li>';
-	            
-	            foreach($groupByOptions as $key=>$label){
-	                if($label != $selected) $options .= '<li><a href="#'.$key.'" title="'.str_replace("'", "\\'", strip_tags($label)).'">'.str_replace("'", "\\'", strip_tags($label)).'</a></li>';
-	            }
-	            $exec->addJsCode(
-	                "$('#searchBar .toolbarBox .groupBy .value').html('
-                ". $options. "'
-                );".
-                "setListenersToMenuBsp('searchBar .toolbarBox .groupBy .value', 'groupByMenu', 'moduleView', 'changeGroupByKey', null, true);");
-	    }
+		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start define groupBy value"] = microtime(true);
+		$exec->addJsCode("" .
+				"$('#searchBar .toolbarBox .groupBy').removeClass('disabledR');" .
+				"$('#searchBar .toolbarBox .groupBy .SBB').removeClass('SBB').addClass('SBIB');" .
+				"$('#searchBar .toolbarBox .groupBy div.disabledBg').removeClass('disabledBg');");
+		$this->debugLogger()->write("start define groupBy value");
+		if($lc->getGroupBy()==null){
+			$exec->addJsCode("$('#searchBar .toolbarBox .groupBy .value').html('<a href=\"#null\">".str_replace("'", "\\'", $transS->t($p, "selectInList"))."</a>');");
+		} else if($groupByOptions[$lc->getGroupBy()]){
+			$exec->addJsCode("$('#searchBar .toolbarBox .groupBy .value').html('<a href=\"#".$lc->getGroupBy()."\">".str_replace("'", "\\'", $groupByOptions[$lc->getGroupBy()])."</a>');");
+		}
+		if($groupByOptions){
+			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start loading groupBy menu"] = microtime(true);
+			$this->debugLogger()->write("loading groupBy menu");
+			$options = "";
+			$selected = $groupByOptions[$lc->getGroupBy()];
+			//add option to reset the groupBy to nothing
+				if($selected) $options .= '<li style="color:red;"><a href="#null" style="margin-left:-20px; color: red; clear:none;" title="'.str_replace("'", "\\'", strip_tags($selected)).'"><span style="margin-right: 3px; margin-top: 3px;" class="glyphicon glyphicon-remove" aria-hidden="true"></span>'.str_replace("'", "\\'", strip_tags($selected)).'</a></li>';
+					
+					foreach($groupByOptions as $key=>$label){
+						if($label != $selected) $options .= '<li><a href="#'.$key.'" title="'.str_replace("'", "\\'", strip_tags($label)).'">'.str_replace("'", "\\'", strip_tags($label)).'</a></li>';
+					}
+					$exec->addJsCode(
+						"$('#searchBar .toolbarBox .groupBy .value').html('". $options. "');".
+						"setListenersToMenuBsp('searchBar .toolbarBox .groupBy .value', 'groupByMenu', 'moduleView', 'changeGroupByKey', null, true);");
+		}
 	}
 	protected function includeAddElementButton($crtGroupP, $p, $exec, $transS, $configS) {
-	    if($crtGroupP != null && $crtGroupP->getRights()!=null && $crtGroupP->getRights()->canShareElement()){
-	        $crtGroupIsWritable = true;
-	    }
-	    else {
-	        $crtGroupIsWritable = false;
-	    }
-	    //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar addElement"] = microtime(true);
-	    $this->debugLogger()->write("start searchBar toolbar addElement");
-	    if($crtGroupIsWritable){
-	        $exec->addJsCode("" .
-	            "$('#searchBar .toolbarBox .addNewElement')" .
-	            ".addClass('Green')" .
-	            ".removeClass('disabledBg')" .
-	            ".unbind('click').click(function(){ ".$exec->getUpdateJsCode($p->getRealUserId(), "'+crtRoleId+'", "'+crtWigiiNamespaceUrl+'", "'+crtModuleName+'", 'elementDialog', 'addElement', "element/add/".$crtGroupP->getId())." })" .
-	            ".find('font').addClass('H');");
-	    } else {
-	        $exec->addJsCode("" .
-	            "$('#searchBar .toolbarBox .addNewElement')" .
-	            ".removeClass('Green')" .
-	            ".addClass('disabledBg')" .
-	            ".unbind('click')" .
-	            ".find('font').removeClass('H');");
-	    }
+		if($crtGroupP != null && $crtGroupP->getRights()!=null && $crtGroupP->getRights()->canShareElement()){
+			$crtGroupIsWritable = true;
+		}
+		else {
+			$crtGroupIsWritable = false;
+		}
+		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar addElement"] = microtime(true);
+		$this->debugLogger()->write("start searchBar toolbar addElement");
+		if($crtGroupIsWritable){
+			$exec->addJsCode("" .
+					"$('#searchBar .toolbarBox .addNewElement')" .
+					".addClass('Green')" .
+					".removeClass('disabledBg')" .
+					".unbind('click').click(function(){ ".$exec->getUpdateJsCode($p->getRealUserId(), "'+crtRoleId+'", "'+crtWigiiNamespaceUrl+'", "'+crtModuleName+'", 'elementDialog', 'addElement', "element/add/".$crtGroupP->getId())." })" .
+					".find('font').addClass('H');");
+		} else {
+			$exec->addJsCode("" .
+					"$('#searchBar .toolbarBox .addNewElement')" .
+					".removeClass('Green')" .
+					".addClass('disabledBg')" .
+					".unbind('click')" .
+					".find('font').removeClass('H');");
+		}
 	}
 	protected function includeSwitchViewButton($lc, $p, $exec, $transS, $configS) {
-	    $crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
-	    $crtModule = $exec->getCrtModule()->getModuleUrl();
-	    //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar switchView"] = microtime(true);
-	    $moduleTemplates = $lc->getAvailableTemplates($p, $exec->getCrtModule(), $configS);
-	    if(count($moduleTemplates)>1){
-	        $first = true;
-	        foreach($moduleTemplates as $moduleView=>$moduleTemplate){
-	            if($lc->getCrtView() == $moduleView) continue;
-	            $moduleViewActivity = Activity::createInstance($moduleView."View");
-	            $moduleViewXml = $configS->ma($p, $exec->getCrtModule(),$moduleViewActivity);
-	            if($first){
-	                $exec->addJsCode("" .
-	                    "$('#searchBar .toolbarBox .switchView')" .
-	                    ".removeClass('disabledR')" .
-	                    ".html('".$transS->h($p, $moduleViewActivity->getActivityName(),$moduleViewXml)."')" .
-	                    ".unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); })" .
-	                    ".show();");
-	                $first = false;
-	            } else {
-	                $exec->addJsCode("" .
-	                    "$('#searchBar .toolbarBox .switchView:first')" .
-	                		".clone().html('".$transS->h($p, $moduleViewActivity->getActivityName(),$moduleViewXml)."')" .
-	                    ".unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); })" .
-	                    ".insertAfter($('#searchBar .toolbarBox .switchView:first'));");
-	            }
-	        }
-	    } else {
-	        $exec->addJsCode("" .
-	            "$('#searchBar .toolbarBox .switchView')" .
-	            ".addClass('disabledR')" .
-	            ".unbind('click')" .
-	            ".hide();");
-	    }
+		$crtWigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
+		$crtModule = $exec->getCrtModule()->getModuleUrl();
+		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start searchBar toolbar switchView"] = microtime(true);
+		$moduleTemplates = $lc->getAvailableTemplates($p, $exec->getCrtModule(), $configS);
+		if(count($moduleTemplates)>1){
+			$first = true;
+			foreach($moduleTemplates as $moduleView=>$moduleTemplate){
+					if($lc->getCrtView() == $moduleView) continue;
+					$moduleViewActivity = Activity::createInstance($moduleView."View");
+					$moduleViewXml = $configS->ma($p, $exec->getCrtModule(),$moduleViewActivity);
+					if($first){
+						$exec->addJsCode("" .
+							"$('#searchBar .toolbarBox .switchView')" .
+							".removeClass('disabledR')" .
+							".html('".$transS->h($p, $moduleViewActivity->getActivityName(),$moduleViewXml)."')" .
+							".unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); })" .
+							".show();");
+						$first = false;
+					} else {
+						//for an unknow reason it apears the code bellow is not working directly when cliking on a folder (refresh is ok)
+						//even though the code works perfectly. The only solution I'v found is to add a small timeout to ensure DOM is properly  set for the first button before adding the others
+						$exec->addJsCode("" .
+							"setTimeout(function(){ $('#searchBar .toolbarBox .switchView:first')" .
+								".clone().html('".$transS->h($p, $moduleViewActivity->getActivityName(),$moduleViewXml)."')" .
+							".unbind('click').click(function(){ update('NoAnswer/$crtWigiiNamespace/$crtModule/switchView/$moduleView'); })" .
+							".insertAfter($('#searchBar .toolbarBox .switchView:first'));},1);");
+					}
+			}
+		} else {
+			$exec->addJsCode("" .
+					"$('#searchBar .toolbarBox .switchView')" .
+					".addClass('disabledR')" .
+					".unbind('click')" .
+					".hide();");
+		}
 	}
 	/**
-	 * Includes Module Help anchor in ListView if configuration parameter WigiiHelp_module is defined
-	 * @param Principal $p current principal
-	 * @param ExecutionService $exec current request
-	 */
+	* Includes Module Help anchor in ListView if configuration parameter WigiiHelp_module is defined
+	* @param Principal $p current principal
+	* @param ExecutionService $exec current request
+	*/
 	protected function includeModuleHelpAnchor($p,$exec) {
 		// gets help anchor data
 		$helpExp = $this->getModuleHelpAnchor($p, $exec);	
@@ -1461,10 +1461,10 @@ class WigiiCoreExecutor {
 		?>/></div><?
 	}
 	/**
-	 * Refreshes Module Help anchor in ListView if configuration parameter WigiiHelp_module is defined 
-	 * @param Principal $p current principal
-	 * @param ExecutionService $exec current request
-	 */
+	* Refreshes Module Help anchor in ListView if configuration parameter WigiiHelp_module is defined 
+	* @param Principal $p current principal
+	* @param ExecutionService $exec current request
+	*/
 	protected function refreshModuleHelpAnchor($p,$exec) {
 		// gets help anchor data
 		$helpExp = $this->getModuleHelpAnchor($p, $exec);
@@ -1489,11 +1489,11 @@ class WigiiCoreExecutor {
 		}
 	}
 	/**
-	 * Interprets the WigiiHelp_module expression and returns an array with all the needed help info
-	 * @param Principal $p current principal
-	 * @param ExecutionService $exec current request
-	 * @return Array an array containing the help info
-	 */
+	* Interprets the WigiiHelp_module expression and returns an array with all the needed help info
+	* @param Principal $p current principal
+	* @param ExecutionService $exec current request
+	* @return Array an array containing the help info
+	*/
 	protected function getModuleHelpAnchor($p,$exec) {
 		$configS = $this->getConfigurationContext();
 		// gets help expression
@@ -1565,9 +1565,9 @@ class WigiiCoreExecutor {
 		return $html;
 	}
 	/**
-	 * Prepares ListContext to filter on duplicates
-	 * @param ListContext $listContext
-	 */
+	* Prepares ListContext to filter on duplicates
+	* @param ListContext $listContext
+	*/
 	public function prepareListContextForDuplicates($listContext,$p,$exec) {
 		$elS = ServiceProvider :: getElementService();
 		$configS = $this->getConfigurationContext();
@@ -1761,22 +1761,22 @@ class WigiiCoreExecutor {
 					elementDialogButtons.first().click(function(){".$cancelJsCode . ' ' . $closeJsCode . ' actOnCancelDialog("' . $domId . '");  ' . ($scrollTopOnEnd ? ' $(window).scrollTop(0); ' : '')." manageWorkzoneViewDocked('hide')});
 					if(!$('#scrollElement').children().first().hasClass('elementDetail')) $('#scrollElement').children().first().css('position','relative');
 			".
-                '$("#scrollElement").css("max-width", "'. ($width). 'px");
-                $("#scrollElement").css("width", "100%");
-                margin = (($(window).width()-'. ($width). ')/2);
-                $(".ui-dialog").css("left", margin+"px");
-                $(window).resize(function(){
-                    if($(window).width() < ' . ($width) . '){
-                        $(".ui-dialog").css("left", "0px");
-                        $(".ui-dialog").css("width", "100%");
-                        $(".ui-dialog").css("max-width", '. ($width). ');
-                    }else{
-                        margin = (($(window).width()-'. ($width). ')/2);
-                        $(".ui-dialog").css("left", margin+"px");
-                        $(".ui-dialog").css("width", '. ($width). ');
-                        
-                    }
-                 });');
+					'$("#scrollElement").css("max-width", "'. ($width). 'px");
+					$("#scrollElement").css("width", "100%");
+					margin = (($(window).width()-'. ($width). ')/2);
+					$(".ui-dialog").css("left", margin+"px");
+					$(window).resize(function(){
+						if($(window).width() < ' . ($width) . '){
+								$(".ui-dialog").css("left", "0px");
+								$(".ui-dialog").css("width", "100%");
+								$(".ui-dialog").css("max-width", '. ($width). ');
+						}else{
+								margin = (($(window).width()-'. ($width). ')/2);
+								$(".ui-dialog").css("left", margin+"px");
+								$(".ui-dialog").css("width", '. ($width). ');
+								
+						}
+					});');
 			return true;
 		}		
 		
@@ -1811,53 +1811,53 @@ class WigiiCoreExecutor {
 				'};'.
 				'resize_scrollArea();');
 
-		        $exec->addJsCode( '
-		        ariaForm = "[aria-describedBy=\"' . $domId . '\"]";
-		        
-		        margin = (($(window).width()-'. ($width). ')/2);
-                $(ariaForm).css("left", margin+"px");
-                $(ariaForm).css("top", "0px");
-                $(ariaForm).css("width", "100%");
-                $(ariaForm).css("max-width", '. ($width). ');
-        
-                if($(window).width() < ' . ($width) . '){
-                    $(ariaForm).css("left", "0px");
-                    $(ariaForm).css("top", "0px");
-                    $(ariaForm).css("width", "100%");
-                    $(ariaForm).css("max-width", '. ($width). ');
-                }else{
-                    margin = (($(window).width()-'. ($width). ')/2);
-                    $(ariaForm).css("top", "0px");
-                    $(ariaForm).css("left", margin+"px");
-                }
-        
-                $(window).resize(function(){
-                    if($(window).width() < ' . ($width) . '){
-                        $(ariaForm).css("left", "0px");
-                        $(ariaForm).css("top", "0px");
-                        $(ariaForm).css("width", "100%");
-                        $(ariaForm).css("max-width", '. ($width). ');
-                    }else{
-                        margin = (($(window).width()-'. ($width). ')/2);
-                        $(ariaForm).css("width", "100%");
-                        $(ariaForm).css("top", "0px");
-                        $(ariaForm).css("left", margin+"px");
-                    }
-                    if("'. $domId.'" == "multipleDialog"){
-                        margin = ($(window).width()-($(ariaForm).width()+23));
-                        marginTop = ($(window).height()-($(ariaForm).height()+17));
-                        $(ariaForm).css("left", margin+"px");
-                        $(ariaForm).css("top", marginTop+"px");
-                     }
-                });
-                
-                 if("'. $domId.'" == "multipleDialog"){
-                    margin = ($(window).width()-($(ariaForm).width()+23));
-                    marginTop = ($(window).height()-($(ariaForm).height()+4));
-                    $(ariaForm).css("left", margin+"px");
-                    $(ariaForm).css("top", marginTop+"px");
-                 }
-                ');
+				$exec->addJsCode( '
+				ariaForm = "[aria-describedBy=\"' . $domId . '\"]";
+				
+				margin = (($(window).width()-'. ($width). ')/2);
+					$(ariaForm).css("left", margin+"px");
+					$(ariaForm).css("top", "0px");
+					$(ariaForm).css("width", "100%");
+					$(ariaForm).css("max-width", '. ($width). ');
+		
+					if($(window).width() < ' . ($width) . '){
+						$(ariaForm).css("left", "0px");
+						$(ariaForm).css("top", "0px");
+						$(ariaForm).css("width", "100%");
+						$(ariaForm).css("max-width", '. ($width). ');
+					}else{
+						margin = (($(window).width()-'. ($width). ')/2);
+						$(ariaForm).css("top", "0px");
+						$(ariaForm).css("left", margin+"px");
+					}
+		
+					$(window).resize(function(){
+						if($(window).width() < ' . ($width) . '){
+								$(ariaForm).css("left", "0px");
+								$(ariaForm).css("top", "0px");
+								$(ariaForm).css("width", "100%");
+								$(ariaForm).css("max-width", '. ($width). ');
+						}else{
+								margin = (($(window).width()-'. ($width). ')/2);
+								$(ariaForm).css("width", "100%");
+								$(ariaForm).css("top", "0px");
+								$(ariaForm).css("left", margin+"px");
+						}
+						if("'. $domId.'" == "multipleDialog"){
+								margin = ($(window).width()-($(ariaForm).width()+23));
+								marginTop = ($(window).height()-($(ariaForm).height()+17));
+								$(ariaForm).css("left", margin+"px");
+								$(ariaForm).css("top", marginTop+"px");
+							}
+					});
+					
+					if("'. $domId.'" == "multipleDialog"){
+						margin = ($(window).width()-($(ariaForm).width()+23));
+						marginTop = ($(window).height()-($(ariaForm).height()+4));
+						$(ariaForm).css("left", margin+"px");
+						$(ariaForm).css("top", marginTop+"px");
+					}
+					');
 		/*$exec->addJsCode('$("#elementDialog")
 				.css("height",window.innerHeight-$("#elementDialog").prev().outerHeight(true)-$("#elementDialog").next().outerHeight(true)-30)
 				.css("overflow-x","auto")
@@ -1875,16 +1875,16 @@ class WigiiCoreExecutor {
 				');
 		*/
 		/*
-		 	$("<div />").css({
-				    position: "absolute",
-				    width: "100%",
-				    height: "100%",
-				    left: 0,
-				    top: 0,
-				    zIndex: 1000000,  // to be on the safe side
-				    background: "url(/img/loading.gif) no-repeat 50% 50%"
+			$("<div />").css({
+					position: "absolute",
+					width: "100%",
+					height: "100%",
+					left: 0,
+					top: 0,
+					zIndex: 1000000,  // to be on the safe side
+					background: "url(/img/loading.gif) no-repeat 50% 50%"
 				}).appendTo("#elementDialog"); 
-		 */
+		*/
 	
 		if ($dialogTitle == null) {
 			$exec->addJsCode(' $("#' . $domId . '").prev().css("display","none"); ');
@@ -1930,31 +1930,31 @@ class WigiiCoreExecutor {
 				'}).dialog("moveToTop");' .
 				' $(".elementDialog").css("float","none"); ' .
 				''.
-        ' margin = (($(window).width()-'. ($width). ')/2);
-        ariaForm3B = "[aria-describedBy=\"' . $domId . '\"]";
-        if($(window).width() < ' . ($width) . '){
-            $(ariaForm3B).css("left", "0px");
-            $(ariaForm3B).css("width", "100%");
-            $(ariaForm3B).css("max-width", '. ($width). ');
-        }else{
-            margin = (($(window).width()-'. ($width). ')/2);
-            $(ariaForm3B).css("left", margin+"px");
-            /* $(ariaForm3B).css("height", $(window).height()); */
-        }
+		' margin = (($(window).width()-'. ($width). ')/2);
+		ariaForm3B = "[aria-describedBy=\"' . $domId . '\"]";
+		if($(window).width() < ' . ($width) . '){
+				$(ariaForm3B).css("left", "0px");
+				$(ariaForm3B).css("width", "100%");
+				$(ariaForm3B).css("max-width", '. ($width). ');
+		}else{
+				margin = (($(window).width()-'. ($width). ')/2);
+				$(ariaForm3B).css("left", margin+"px");
+				/* $(ariaForm3B).css("height", $(window).height()); */
+		}
 
-        $(window).resize(function(){
-            if($(window).width() < ' . ($width) . '){
-                $(ariaForm3B).css("left", "0px");
-                $(ariaForm3B).css("width", "100%");
-                $(ariaForm3B).css("max-width", '. ($width). ');
-            }else{
-                margin = (($(window).width()-'. ($width). ')/2);
-                $(ariaForm3B).css("left", margin+"px");
-                $(ariaForm3B).css("width", '. ($width). ');
-            }
-        });
+		$(window).resize(function(){
+				if($(window).width() < ' . ($width) . '){
+					$(ariaForm3B).css("left", "0px");
+					$(ariaForm3B).css("width", "100%");
+					$(ariaForm3B).css("max-width", '. ($width). ');
+				}else{
+					margin = (($(window).width()-'. ($width). ')/2);
+					$(ariaForm3B).css("left", margin+"px");
+					$(ariaForm3B).css("width", '. ($width). ');
+				}
+		});
 
-        ');
+		');
 		if ($dialogTitle == null) {
 			$exec->addJsCode(' $("#' . $domId . '").prev().css("display","none"); ');
 		}
@@ -1970,7 +1970,7 @@ class WigiiCoreExecutor {
 				}
 				manageWorkzoneViewDocked('show',".$this->getConfigurationContext()->getParameter($p, $exec->getCrtModule(), "elementTotalWidth").");".
 				'$("#scrollElement").css("max-width", "'. ($width). 'px");
-                $("#scrollElement").css("width", "100%");
+					$("#scrollElement").css("width", "100%");
 			');
 			return true;
 		}
@@ -1978,42 +1978,42 @@ class WigiiCoreExecutor {
 				'myPosition = dialogPos["' . $domId . '"]; if(myPosition == null){ myPosition = { my : "center", at: "center" }; }' .
 				'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
 				'title: "' . $dialogTitle . '", width:' . ($width) . ', position: myPosition,' .
-            'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
+				'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
 				'beforeClose: function(){ ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '"); $(this).dialog("destroy"); $(window).scrollTop(0); },' .
 				'closeOnEscape: true, resizable:false' .
 				'}).dialog("moveToTop")'.
 				'; '.
-            '
-            aria = "[aria-describedBy=\"'.$domId .'\"]";
-		        
-            margin = (($(window).width()-'. ($width). ')/2);
-                  $(aria).css("left", margin+"px");
-                  $(aria).css("width", "100%");
-                  $(aria).css("max-width", '. ($width). ');
-                  
-                  
-                  if($(window).width() < ' . ($width) . '){
-                        $(aria).css("left", "0px");
-                        $(aria).css("top", "0px");
-                        $(aria).css("width", "100%");
-                        $(aria).css("max-width", '. ($width). ');
-                    }else{
-                        margin = (($(window).width()-'. ($width). ')/2);
-                        $(aria).css("left", margin+"px");
-                    }
-                  
-            $(window).resize(function(){
-                    if($(window).width() < ' . ($width) . '){
-                        $(aria).css("left", "0px");
-                        $(aria).css("top", "0px");
-                        $(aria).css("width", "100%");
-                        $(aria).css("max-width", '. ($width). ');
-                    }else{
-                        margin = (($(window).width()-'. ($width). ')/2);
-                        $(aria).css("left", margin+"px");
-                        $(aria).css("width", '. ($width). ');
-                    }
-                 });');
+				'
+				aria = "[aria-describedBy=\"'.$domId .'\"]";
+				
+				margin = (($(window).width()-'. ($width). ')/2);
+						$(aria).css("left", margin+"px");
+						$(aria).css("width", "100%");
+						$(aria).css("max-width", '. ($width). ');
+						
+						
+						if($(window).width() < ' . ($width) . '){
+								$(aria).css("left", "0px");
+								$(aria).css("top", "0px");
+								$(aria).css("width", "100%");
+								$(aria).css("max-width", '. ($width). ');
+						}else{
+								margin = (($(window).width()-'. ($width). ')/2);
+								$(aria).css("left", margin+"px");
+						}
+						
+				$(window).resize(function(){
+						if($(window).width() < ' . ($width) . '){
+								$(aria).css("left", "0px");
+								$(aria).css("top", "0px");
+								$(aria).css("width", "100%");
+								$(aria).css("max-width", '. ($width). ');
+						}else{
+								margin = (($(window).width()-'. ($width). ')/2);
+								$(aria).css("left", margin+"px");
+								$(aria).css("width", '. ($width). ');
+						}
+					});');
 		$exec->addJsCode('addScrollWithShadow("elementDialog");
 						resize_scrollArea();');
 		if ($dialogTitle == null) {
@@ -2022,11 +2022,11 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Sends some JS code to resize ListView (or BlogView or CalendarView) depending of element size and config parameters :
-	 * - minWidth: Integer. Min width of list view (defined in activity)
-	 * - GroupList_collapsed: Boolean. If true group panel is always collapsed by default (defined as module parameter)
-	 * - ListView_collapsed: Boolean. If true listView (blogView or calendarView) is always collapsed by default (defined as module parameter)
-	 */
+	* Sends some JS code to resize ListView (or BlogView or CalendarView) depending of element size and config parameters :
+	* - minWidth: Integer. Min width of list view (defined in activity)
+	* - GroupList_collapsed: Boolean. If true group panel is always collapsed by default (defined as module parameter)
+	* - ListView_collapsed: Boolean. If true listView (blogView or calendarView) is always collapsed by default (defined as module parameter)
+	*/
 	public function manageListViewDockedSize() {
 		$exec = ServiceProvider :: getExecutionService();
 		
@@ -2088,11 +2088,11 @@ class WigiiCoreExecutor {
 	}	
 	
 	/**
-	 * fetches the table of elements
-	 * Do not define the fieldSelectorList, this will be defined automatically from the config
-	 * @param $onlyRows = false, if true only the data rows are generated (only a list of tr)
-	 * @param $onlyRowsContent = false, if true only the content of the row is generated (without the tr)
-	 */
+	* fetches the table of elements
+	* Do not define the fieldSelectorList, this will be defined automatically from the config
+	* @param $onlyRows = false, if true only the data rows are generated (only a list of tr)
+	* @param $onlyRowsContent = false, if true only the content of the row is generated (without the tr)
+	*/
 	protected function getAllElementsInListView($p, $exec, $listContext, $onlyRows = false, $onlyRowsContent = false, $desiredPage = null, $resetGroupBy=false) {
 		$this->executionSink()->publishStartOperation("getAllElementsInListView");
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start getAllElementsInListView"] = microtime(true);
@@ -2189,25 +2189,25 @@ class WigiiCoreExecutor {
 				}
 				
 				// Medair 20.03.2017: computes duplicate Ids and filters on duplicated element
-                $duplicatedIds = $listContext->getDuplicatesIds();
-                if(empty($duplicatedIds)) {
-                    $duplicatedIds = ValueListArrayImpl::createInstance();
-                    $elS->findDuplicatesFromSelectedElementsInGroups($p, $groupLogExp, $listContext->getGroupByItemFieldSelector(), $duplicatedIds);
-                    $duplicatedIds = $duplicatedIds->getListIterator();
-                    $listContext->setDuplicatesIds($duplicatedIds);
-                }
-                // adds filter on duplicate Ids
-                $lx = $listContext->getFieldSelectorLogExp();
-                if(!empty($duplicatedIds)) {
-                    if(isset($lx)) $lx = lxAnd(lxIn(fs_e('id'), $duplicatedIds), $lx);
-                    else $lx = lxIn(fs_e('id'), $duplicatedIds);
-                }
-                //if no duplicate generate negative where clause to show an empty list
-                else {
-                    if(isset($lx)) $lx = lxAnd(lxEq(fs_e('id'), null), $lx);
-                    else $lx = lxEq(fs_e('id'), null);
-                }
-                $listContext->setFieldSelectorLogExp($lx);
+					$duplicatedIds = $listContext->getDuplicatesIds();
+					if(empty($duplicatedIds)) {
+						$duplicatedIds = ValueListArrayImpl::createInstance();
+						$elS->findDuplicatesFromSelectedElementsInGroups($p, $groupLogExp, $listContext->getGroupByItemFieldSelector(), $duplicatedIds);
+						$duplicatedIds = $duplicatedIds->getListIterator();
+						$listContext->setDuplicatesIds($duplicatedIds);
+					}
+					// adds filter on duplicate Ids
+					$lx = $listContext->getFieldSelectorLogExp();
+					if(!empty($duplicatedIds)) {
+						if(isset($lx)) $lx = lxAnd(lxIn(fs_e('id'), $duplicatedIds), $lx);
+						else $lx = lxIn(fs_e('id'), $duplicatedIds);
+					}
+					//if no duplicate generate negative where clause to show an empty list
+					else {
+						if(isset($lx)) $lx = lxAnd(lxEq(fs_e('id'), null), $lx);
+						else $lx = lxEq(fs_e('id'), null);
+					}
+					$listContext->setFieldSelectorLogExp($lx);
 
 			}
 			else {
@@ -2239,11 +2239,11 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * fetches the table of elements
-	 * Do not define the fieldSelectorList, this will be defined automatically from the config
-	 * @param $onlyRows = false, if true only the data rows are generated (only a list of tr)
-	 * @param $onlyRowsContent = false, if true only the content of the row is generated (without the tr)
-	 */
+	* fetches the table of elements
+	* Do not define the fieldSelectorList, this will be defined automatically from the config
+	* @param $onlyRows = false, if true only the data rows are generated (only a list of tr)
+	* @param $onlyRowsContent = false, if true only the content of the row is generated (without the tr)
+	*/
 	protected function getAllElementsInBlogView($p, $exec, $listContext, $onlyRows = false, $onlyRowsContent = false, $desiredPage = null, $resetGroupBy=false) {
 		$this->executionSink()->publishStartOperation("getAllElementsInBlogView");
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start getAllElementsInBlogView"] = microtime(true);
@@ -2265,29 +2265,29 @@ class WigiiCoreExecutor {
 			}
 			
 			if($fsl->containsField($field->getFieldName())) {
-			    if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Emails") {
-			        //if Emails then take all the subfields, there are usefull to display confirmation status, etc.
-			        $fsl->addFieldSelector($field->getFieldName(), "proofStatus");
-			        $fsl->addFieldSelector($field->getFieldName(), "proofKey");
-			        $fsl->addFieldSelector($field->getFieldName(), "proof");
-			        $fsl->addFieldSelector($field->getFieldName(), "externalConfigGroup");
-			        $fsl->addFieldSelector($field->getFieldName(), "externalAccessLevel");
-			        $fsl->addFieldSelector($field->getFieldName(), "externalCode");
-			        $fsl->addFieldSelector($field->getFieldName(), "externalAccessEndDate");
-			        $fsl->addFieldSelector($field->getFieldName(), "value");
-			    }
-			    elseif ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Files") {			        
-			        //if Files then take all the subfields, there are usefull to display download, dates, size, etc.
-			        $fsl->addFieldSelector($field->getFieldName(), "name");
-			        $fsl->addFieldSelector($field->getFieldName(), "type");
-			        $fsl->addFieldSelector($field->getFieldName(), "size");
-			        $fsl->addFieldSelector($field->getFieldName(), "mime");
-			        $fsl->addFieldSelector($field->getFieldName(), "date");
-			        $fsl->addFieldSelector($field->getFieldName(), "user");
-			        $fsl->addFieldSelector($field->getFieldName(), "username");
-			        $fsl->addFieldSelector($field->getFieldName(), "version");
-			        $fsl->addFieldSelector($field->getFieldName(), "textContent");
-			    }			    
+				if ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Emails") {
+					//if Emails then take all the subfields, there are usefull to display confirmation status, etc.
+					$fsl->addFieldSelector($field->getFieldName(), "proofStatus");
+					$fsl->addFieldSelector($field->getFieldName(), "proofKey");
+					$fsl->addFieldSelector($field->getFieldName(), "proof");
+					$fsl->addFieldSelector($field->getFieldName(), "externalConfigGroup");
+					$fsl->addFieldSelector($field->getFieldName(), "externalAccessLevel");
+					$fsl->addFieldSelector($field->getFieldName(), "externalCode");
+					$fsl->addFieldSelector($field->getFieldName(), "externalAccessEndDate");
+					$fsl->addFieldSelector($field->getFieldName(), "value");
+				}
+				elseif ($field->getDataType() && $field->getDataType()->getDataTypeName() == "Files") {					
+					//if Files then take all the subfields, there are usefull to display download, dates, size, etc.
+					$fsl->addFieldSelector($field->getFieldName(), "name");
+					$fsl->addFieldSelector($field->getFieldName(), "type");
+					$fsl->addFieldSelector($field->getFieldName(), "size");
+					$fsl->addFieldSelector($field->getFieldName(), "mime");
+					$fsl->addFieldSelector($field->getFieldName(), "date");
+					$fsl->addFieldSelector($field->getFieldName(), "user");
+					$fsl->addFieldSelector($field->getFieldName(), "username");
+					$fsl->addFieldSelector($field->getFieldName(), "version");
+					$fsl->addFieldSelector($field->getFieldName(), "textContent");
+				}				
 			}
 		}
 	
@@ -2339,25 +2339,25 @@ class WigiiCoreExecutor {
 					}
 				}
 				// Medair 20.03.2017: computes duplicate Ids and filters on duplicated elements
-                $duplicatedIds = $listContext->getDuplicatesIds();
-                if(empty($duplicatedIds)) {
-                    $duplicatedIds = ValueListArrayImpl::createInstance();
-                    $elS->findDuplicatesFromSelectedElementsInGroups($p, $groupLogExp, $listContext->getGroupByItemFieldSelector(), $duplicatedIds);
-                    $duplicatedIds = $duplicatedIds->getListIterator();
-                    $listContext->setDuplicatesIds($duplicatedIds);
-                }
-                // adds filter on duplicate Ids
-                $lx = $listContext->getFieldSelectorLogExp();
-                if(!empty($duplicatedIds)) {
-                    if(isset($lx)) $lx = lxAnd(lxIn(fs_e('id'), $duplicatedIds), $lx);
-                    else $lx = lxIn(fs_e('id'), $duplicatedIds);
-                }
-                //if no duplicate generate negative where clause to show an empty list
-                else {
-                    if(isset($lx)) $lx = lxAnd(lxEq(fs_e('id'), null), $lx);
-                    else $lx = lxEq(fs_e('id'), null);
-                }
-                $listContext->setFieldSelectorLogExp($lx);
+					$duplicatedIds = $listContext->getDuplicatesIds();
+					if(empty($duplicatedIds)) {
+						$duplicatedIds = ValueListArrayImpl::createInstance();
+						$elS->findDuplicatesFromSelectedElementsInGroups($p, $groupLogExp, $listContext->getGroupByItemFieldSelector(), $duplicatedIds);
+						$duplicatedIds = $duplicatedIds->getListIterator();
+						$listContext->setDuplicatesIds($duplicatedIds);
+					}
+					// adds filter on duplicate Ids
+					$lx = $listContext->getFieldSelectorLogExp();
+					if(!empty($duplicatedIds)) {
+						if(isset($lx)) $lx = lxAnd(lxIn(fs_e('id'), $duplicatedIds), $lx);
+						else $lx = lxIn(fs_e('id'), $duplicatedIds);
+					}
+					//if no duplicate generate negative where clause to show an empty list
+					else {
+						if(isset($lx)) $lx = lxAnd(lxEq(fs_e('id'), null), $lx);
+						else $lx = lxEq(fs_e('id'), null);
+					}
+					$listContext->setFieldSelectorLogExp($lx);
 			}
 			else {
 				$groupLogExp = $listContext->getGroupLogExp();
@@ -2388,12 +2388,12 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * Fetches the list of elements
-	 * Do not define the fieldSelectorList, this will be defined automatically from the config
-	 * @param $onlyRows = false, if true only the data rows are generated
-	 * @param $onlyRowsContent = false, if true only the content of the row is generated
-	 * @return StdClass the wncd model
-	 */
+	* Fetches the list of elements
+	* Do not define the fieldSelectorList, this will be defined automatically from the config
+	* @param $onlyRows = false, if true only the data rows are generated
+	* @param $onlyRowsContent = false, if true only the content of the row is generated
+	* @return StdClass the wncd model
+	*/
 	protected function getAllElementsInWncdView($p, $exec, $listContext, $onlyRows = false, $onlyRowsContent = false, $desiredPage = null, $resetGroupBy=false) {
 		$this->executionSink()->publishStartOperation("getAllElementsInWncdView");
 		//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start getAllElementsInWncdView"] = microtime(true);
@@ -2432,11 +2432,11 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * fetches the table of elements
-	 * Do not define the fieldSelectorList, this will be defined automatically from the config
-	 * fromGetNextElementInCalendar will prevent recalculating searchBar. this should be used
-	 * when wanting to get next page of the calendar
-	 */
+	* fetches the table of elements
+	* Do not define the fieldSelectorList, this will be defined automatically from the config
+	* fromGetNextElementInCalendar will prevent recalculating searchBar. this should be used
+	* when wanting to get next page of the calendar
+	*/
 	protected function getAllElementsInCalendarView($p, $exec, $originalListContext, $fromGetNextElementInCalendar = false) {
 		$this->executionSink()->publishStartOperation("getAllElementsInCalendarView");
 	
@@ -2744,7 +2744,7 @@ class WigiiCoreExecutor {
 	}
 	//COMMON Templates
 	protected function includeTemplateAll($p, $exec){
-        include(TEMPLATE_PATH . "all.tpl.php");
+		include(TEMPLATE_PATH . "all.tpl.php");
 	}
 	protected function includeTemplateFooterBar($p, $exec){
 		include(TEMPLATE_PATH . "footerBar.tpl.php");
@@ -2756,11 +2756,11 @@ class WigiiCoreExecutor {
 		include(TEMPLATE_PATH . "moduleView.tpl.php");
 	}
 	protected function includeTemplateNavigation($p, $exec){
-	    include(TEMPLATE_PATH . "navigationBar.bsp.php");		
+		include(TEMPLATE_PATH . "navigationBar.bsp.php");		
 	}
 	protected function includeTemplateSearchBar($p, $exec){
-	    // 28.11.2017: search bar is included directly into navigation bar.
-	    //include(TEMPLATE_PATH . "searchBar.tpl.php");
+		// 28.11.2017: search bar is included directly into navigation bar.
+		//include(TEMPLATE_PATH . "searchBar.tpl.php");
 	}
 	protected function includeTemplateWorkZone($p, $exec){
 		include(TEMPLATE_PATH . "workZone.tpl.php");
@@ -2810,9 +2810,9 @@ class WigiiCoreExecutor {
 		
 
 	/**
-	 * Returns a WigiiEventsDispatcher used to throw some Wigii events
-	 * @return WigiiEventsDispatcher
-	 */
+	* Returns a WigiiEventsDispatcher used to throw some Wigii events
+	* @return WigiiEventsDispatcher
+	*/
 	public function throwEvent() {
 		$this->executionSink()->log("throwEvent");
 		// autowired
@@ -2829,8 +2829,8 @@ class WigiiCoreExecutor {
 	}
 	
 	/**
-	 * delete the credential cookie
-	 */
+	* delete the credential cookie
+	*/
 	public function getJsCodeBeforeLogout($p) {
 		$code = ServiceProvider :: getAuthenticationService()->getJsCodeToUnsetWigiiCredentialCookie($p);
 		$code .= "
@@ -2847,12 +2847,12 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * Pushes some data back to the client in JSON format.
-	 * Data can already be a JSON string, or StdClass, Array, DataFlowSelector or a ServiceException instance.
-	 * @param Principal $p current principal executing the request
-	 * @param ExecutionService $exec
-	 * @param String|Array|StdClass|DataFlowSelector|ServiceException $data
-	 */
+	* Pushes some data back to the client in JSON format.
+	* Data can already be a JSON string, or StdClass, Array, DataFlowSelector or a ServiceException instance.
+	* @param Principal $p current principal executing the request
+	* @param ExecutionService $exec
+	* @param String|Array|StdClass|DataFlowSelector|ServiceException $data
+	*/
 	public function pushJson($p, $exec, $data) {
 		if(!isset($data)) return;
 		if(!isset($p) || !isset($exec)) throw new ServiceException("principal and execution service cannot be null", ServiceException::INVALID_ARGUMENT);
@@ -2884,13 +2884,13 @@ invalidCompleteCache();
 		echo $data;
 	}
 	/**
-	 * Converts a PHP ServiceException to a StdClass ready to be pushed in JSON to client
-	 * @param Principal $p current principal executing the request
-	 * @param ExecutionService $exec 
-	 * @param ServiceException|Exception $exception the exception to be converted to StdClass
-	 * @return StdClass a stdClass instance of the form :
-	 * {context: calls getExecutionContext(), exception:{class: exception class, message: error message, code: exception code}}
-	 */
+	* Converts a PHP ServiceException to a StdClass ready to be pushed in JSON to client
+	* @param Principal $p current principal executing the request
+	* @param ExecutionService $exec 
+	* @param ServiceException|Exception $exception the exception to be converted to StdClass
+	* @return StdClass a stdClass instance of the form :
+	* {context: calls getExecutionContext(), exception:{class: exception class, message: error message, code: exception code}}
+	*/
 	public function convertServiceExceptionToJson($p,$exec,$exception) {
 		if(!isset($exception)) return null;
 		if($exception instanceof ServiceException) $exception = $exception->getWigiiRootException();		
@@ -2904,14 +2904,14 @@ invalidCompleteCache();
 		return (object)$returnValue;
 	}
 	/**
-	 * Gets an StdClass instance representing the current execution context, ready to be pushed in JSON to client 
-	 * @param Principal $p current principal executing the request
-	 * @param ExecutionService $exec
-	 * @return StdClass a stdClass instance of the form :
-	 * {request: sub-url, wigiiNamespace: current namespace, module: current module, action: current action, 
-	 *  realUsername: real user name, username: role name, principalNamespace: principal current namespace,
-	 *  version: Wigii system version label}
-	 */
+	* Gets an StdClass instance representing the current execution context, ready to be pushed in JSON to client 
+	* @param Principal $p current principal executing the request
+	* @param ExecutionService $exec
+	* @return StdClass a stdClass instance of the form :
+	* {request: sub-url, wigiiNamespace: current namespace, module: current module, action: current action, 
+	*  realUsername: real user name, username: role name, principalNamespace: principal current namespace,
+	*  version: Wigii system version label}
+	*/
 	public function getExecutionContext($p,$exec) {
 		if(!isset($p) || !isset($exec)) throw new ServiceException("principal and execution service cannot be null", ServiceException::INVALID_ARGUMENT);
 		$returnValue = array();
@@ -2927,9 +2927,9 @@ invalidCompleteCache();
 	}
 		
 	/**
-	 * if obtaining lock failed -> display message and return false
-	 * else return 1 if shouldUnLock, return 0 if shouldNotUnLock
-	 */
+	* if obtaining lock failed -> display message and return false
+	* else return 1 if shouldUnLock, return 0 if shouldNotUnLock
+	*/
 	public function lockEntity($p, $exec, $jsCode, $dbEntityName, $dbEntity) {
 		$this->executionSink()->log("lockEntity $dbEntityName ".$dbEntity->getId());
 		try {
@@ -2986,13 +2986,13 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * autoSave a subField value in an existing element
-	 * fieldSelector: FieldSelector used to update the element. If null, it will be created with fieldName, subFieldName
-	 * the $_POST must contain:
-	 * 	"autoSaveFieldId"=>html id of the wrapping field in the form (could contain subFields)
-	 * 	"autoSaveMesssageTargetId"=>html id of the autoSave message handler (usually the same than autoSaveFieldId, could be different in the case of Blobs, htmlArea)
-	 * 	"fieldName_subFieldName" of each subfield of the field => related value
-	 */
+	* autoSave a subField value in an existing element
+	* fieldSelector: FieldSelector used to update the element. If null, it will be created with fieldName, subFieldName
+	* the $_POST must contain:
+	* 	"autoSaveFieldId"=>html id of the wrapping field in the form (could contain subFields)
+	* 	"autoSaveMesssageTargetId"=>html id of the autoSave message handler (usually the same than autoSaveFieldId, could be different in the case of Blobs, htmlArea)
+	* 	"fieldName_subFieldName" of each subfield of the field => related value
+	*/
 	protected function autoSave($p, $exec, $elementP, $fieldName, $fsl=null, $isForExternalAccess=false){
 		$configS = $this->getConfigurationContext();
 		$transS = ServiceProvider :: getTranslationService();
@@ -3169,8 +3169,8 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * check-out / check-in message management
-	 */
+	* check-out / check-in message management
+	*/
 	protected function checkOutInField($p, $exec, $element, $fileField, $checkField, $message, $isCheckOut = true) {
 		$this->executionSink()->publishStartOperation("checkOutInField");
 
@@ -3339,8 +3339,8 @@ invalidCompleteCache();
 
 	private $indicatorListPerModule;
 	/**
-	 * When manipulating the indicatorList you always need to go through this method to be sure to always get the unique one.
-	 */
+	* When manipulating the indicatorList you always need to go through this method to be sure to always get the unique one.
+	*/
 	public function getIndicatorList($p, $exec) {
 		$this->executionSink()->publishStartOperation("getIndicatorList");
 
@@ -3418,11 +3418,11 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * set the language for the system
-	 * looks for the title value
-	 * default take the first language of defined title
-	 * if several take the lang param in account
-	 */
+	* set the language for the system
+	* looks for the title value
+	* default take the first language of defined title
+	* if several take the lang param in account
+	*/
 	protected function setLanguageToPBasedOnGroupSubscription($p, $exec, $transS, $groupSubscriptionRecord, $lang){
 		$title = array();
 		if($groupSubscriptionRecord){
@@ -3445,8 +3445,8 @@ invalidCompleteCache();
 	}
 	
 	/**
-	 * checks if subscriptions are closed
-	 */
+	* checks if subscriptions are closed
+	*/
 	protected function checkClosedOnGroupSubscription($p, $exec, $transS, $groupSubscriptionRecord, $form, &$state){
 		if($groupSubscriptionRecord){
 			if($groupSubscriptionRecord->getFieldValue("closeGroupSubscription")){
@@ -3456,8 +3456,8 @@ invalidCompleteCache();
 	}
 	
 	/**
-	 * checks subscription period
-	 */
+	* checks subscription period
+	*/
 	protected function checkPeriodOnGroupSubscription($p, $exec, $transS, $groupSubscriptionRecord, $form, &$state){
 		if($groupSubscriptionRecord){
 			$now = time();
@@ -3489,8 +3489,8 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * checks max subscription number
-	 */
+	* checks max subscription number
+	*/
 	protected function checkMaxSubscriptionOnGroupSubscription($p, $exec, $transS, $groupSubscriptionRecord, $form, $elS, $groupP, &$state){
 		if($groupSubscriptionRecord){
 			$max = $groupSubscriptionRecord->getFieldValue("maxSubscriptionNb");
@@ -3501,7 +3501,7 @@ invalidCompleteCache();
 				$count = $elementCounter->getTotal();
 				if ($max <= $count) {
 					$state = "closed";
-					$form->addAdditionalText($transS->t($p, "subscriptionMaxNbReached")); //changed on the 24.04.2018, there is no added value showing the max number . ($max)); //changed on the 17/11/2017 by LWR, it is not good to indicate to the public what is the real number of final subscribers, as mybe we are ok to add some manual entries and we don't want that the public sees it (taht for example allow overboocking)   
+					$form->addAdditionalText($transS->t($p, "subscriptionMaxNbReached")); //changed on the 24.04.2018, there is no added value showing the max number . ($max)); //changed on the 17/11/2017 by LWR, it is not good to indicate to the public what is the real number of final subscribers, as mybe we are ok to add some manual entries and we don't want that the public sees it (taht for example allow overboocking)	
 				}
 			}
 //			echo $max."<br>";
@@ -3513,8 +3513,8 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * return false if not, return array of emailFields if yes
-	 */
+	* return false if not, return array of emailFields if yes
+	*/
 	protected function canCrtModuleEmailing($module) {
 		$this->executionSink()->publishStartOperation("canCrtModuleEmailing");
 
@@ -3522,7 +3522,7 @@ invalidCompleteCache();
 		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
 		$emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and @enableForEmailing='1' and not(@hidden='1')]");
 		if(!$emailFields){			
-		    $emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and not(@enableForEmailing='0') and not(@hidden='1')]");
+			$emailFields = $configS->mf($p, $module)->xpath("*[@type='Emails' and not(@enableForEmailing='0') and not(@hidden='1')]");
 		}
 		$this->executionSink()->publishEndOperation("canCrtModuleEmailing");
 
@@ -3531,8 +3531,8 @@ invalidCompleteCache();
 		return $emailFields;
 	}
 	/**
-	 * return false if not, return array of emailFields if yes 
-	 */
+	* return false if not, return array of emailFields if yes 
+	*/
 	protected function canCrtModuleUnsubscribeEmails($module) {
 		$this->executionSink()->publishStartOperation("canCrtModuleUnsubscribeEmails");
 
@@ -3546,8 +3546,8 @@ invalidCompleteCache();
 		return $emailFields;
 	}
 	/**
-	 * return false if not, return array of fileFields if yes
-	 */
+	* return false if not, return array of fileFields if yes
+	*/
 	protected function canCrtModuleDownloading($module) {
 		$this->executionSink()->publishStartOperation("canCrtModuleDownloading");
 
@@ -3578,8 +3578,8 @@ invalidCompleteCache();
 //		return $fileFields;
 //	}
 	/**
-	 * return false if not, return array of fileFields if yes
-	 */
+	* return false if not, return array of fileFields if yes
+	*/
 	protected function doesCrtModuleHasHtmlAreaFiles($module) {
 		$this->executionSink()->publishStartOperation("doesCrtModuleHasHtmlAreaFiles");
 
@@ -3594,10 +3594,10 @@ invalidCompleteCache();
 		return $fileFields;
 	}
 	/**
-	 * Checks if a module has a field tagged with isKey or isUnique
-	 * Warning a module should not have several isKey or isUnique fields
-	 * @return SimpleXMLElement|Boolean returns false if not, returns the first found field if yes
-	 */
+	* Checks if a module has a field tagged with isKey or isUnique
+	* Warning a module should not have several isKey or isUnique fields
+	* @return SimpleXMLElement|Boolean returns false if not, returns the first found field if yes
+	*/
 	public function doesCrtModuleHasIsKeyField($p, $module) {
 		$this->executionSink()->publishStartOperation("doesCrtModuleHasIsKeyField");
 
@@ -3619,7 +3619,7 @@ invalidCompleteCache();
 			case "Blobs":
 			case "Texts":
 			case "Varchars":
-			    throw new ServiceException("isKey or isUnique field cannot be ".$field['type'].".", ServiceException::INVALID_ARGUMENT);
+				throw new ServiceException("isKey or isUnique field cannot be ".$field['type'].".", ServiceException::INVALID_ARGUMENT);
 				break;
 			default:
 				break;
@@ -3627,23 +3627,23 @@ invalidCompleteCache();
 		return $field;
 	}
 	/**
-	 * return false if not, return the first found field if yes	 
-	 */
+	* return false if not, return the first found field if yes	
+	*/
 	public function doesCrtModuleHasFindDuplicateField($p, $module,$allowedFieldForDuplicates) {
-	    $this->executionSink()->publishStartOperation("doesCrtModuleHasFindDuplicateField");
-	    
-	    $configS = $this->getConfigurationContext();
-	    $fields = $configS->mf($p, $module)->xpath("*[@isDefaultForFindDuplicates='1']");
-	    
-	    $this->executionSink()->publishEndOperation("doesCrtModuleHasFindDuplicateField");
-	    
-	    if (!is_array($fields) || $fields == null)
-	        return false;
-	        	        
-	        $field = $fields[0];
-	        if(!array_key_exists((string)$field['type'], $allowedFieldForDuplicates)) 
-	            throw new ServiceException("Config parameter isDefaultForFindDuplicates cannot be applied to ".$field['type'].". Only ".implode(", ",array_keys($allowedFieldForDuplicates))." are allowed.", ServiceException::CONFIGURATION_ERROR);
-	        return $field;
+		$this->executionSink()->publishStartOperation("doesCrtModuleHasFindDuplicateField");
+		
+		$configS = $this->getConfigurationContext();
+		$fields = $configS->mf($p, $module)->xpath("*[@isDefaultForFindDuplicates='1']");
+		
+		$this->executionSink()->publishEndOperation("doesCrtModuleHasFindDuplicateField");
+		
+		if (!is_array($fields) || $fields == null)
+			return false;
+						
+			$field = $fields[0];
+			if(!array_key_exists((string)$field['type'], $allowedFieldForDuplicates)) 
+					throw new ServiceException("Config parameter isDefaultForFindDuplicates cannot be applied to ".$field['type'].". Only ".implode(", ",array_keys($allowedFieldForDuplicates))." are allowed.", ServiceException::CONFIGURATION_ERROR);
+			return $field;
 	}
 	public function getSubFieldnameForIsKeyField($isKeyXml){
 		switch($isKeyXml->type){
@@ -3659,9 +3659,9 @@ invalidCompleteCache();
 		return $subFieldName;
 	}
 	/**
-	 * return false if not, return array of fields with an email attribut if yes
-	 * this cheks only for DataType Attributs, MultipleAttributs and Booleans
-	 */
+	* return false if not, return array of fields with an email attribut if yes
+	* this cheks only for DataType Attributs, MultipleAttributs and Booleans
+	*/
 	protected function doesCrtModuleHasFiledsWithEmailAttributForNotification($module) {
 		$this->executionSink()->publishStartOperation("doesCrtModuleHasFiledsWithEmailAttributForNotification");
 
@@ -3685,8 +3685,8 @@ invalidCompleteCache();
 		return $r;
 	}
 	/**
-	 * return first Emails field with enableForEmailing, or then just first Email field. return false if no Emails 
-	 */
+	* return first Emails field with enableForEmailing, or then just first Email field. return false if no Emails 
+	*/
 	public function doesGroupHasEmailField($p, $exec, $group) {
 		$this->executionSink()->publishStartOperation("doesGroupHasEmailField");
 
@@ -3703,8 +3703,8 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * @param boolean $computeElementPolicy if true, then Element policy is calculated for each element of the list.
-	 */
+	* @param boolean $computeElementPolicy if true, then Element policy is calculated for each element of the list.
+	*/
 	public function getAllElementIdsInListView($p, $exec, $listContext, $computeElementPolicy=false) {
 		$this->executionSink()->publishStartOperation("getAllElementIdsInListView");
 
@@ -3728,10 +3728,10 @@ invalidCompleteCache();
 		return $elementIdsList;
 	}
 	/**
-	 * fetches the emails from a listContext
-	 * Do not define the fieldSelectorList, this will be defined automatically from the config
-	 * $includMergingInfo should be = false when first displaying the email dialog content
-	 */
+	* fetches the emails from a listContext
+	* Do not define the fieldSelectorList, this will be defined automatically from the config
+	* $includMergingInfo should be = false when first displaying the email dialog content
+	*/
 	protected function getAllEmailsInListView($p, $exec, $listContext, $includeMergingInfo) {
 		$this->executionSink()->publishStartOperation("getAllEmailsInListView");
 
@@ -3793,9 +3793,9 @@ invalidCompleteCache();
 		return array ($emailLabel, $fieldList, $wigiiBag->getElementIds(), $wigiiBag->getEmails());
 	}
 	/**
-	 * fetches the files from a listContext
-	 * Do not define the fieldSelectorList, this will be defined automatically from the config
-	 */
+	* fetches the files from a listContext
+	* Do not define the fieldSelectorList, this will be defined automatically from the config
+	*/
 	protected function getAllFilesInListView($p, $exec, $listContext) {
 		$this->executionSink()->publishStartOperation("getAllFilesInListView");
 
@@ -3849,12 +3849,12 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * create and send an email with the validation link. The validation link should be in the message. If the message
-	 * is null, an automatic basic message is setup containing the validation link.
-	 * @param $elementP: ElementP / Element, externalValidationLink has no need of write rights
-	 * @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
-	 * to be the element field value
-	 */
+	* create and send an email with the validation link. The validation link should be in the message. If the message
+	* is null, an automatic basic message is setup containing the validation link.
+	* @param $elementP: ElementP / Element, externalValidationLink has no need of write rights
+	* @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
+	* to be the element field value
+	*/
 	public function sendExternalValidationLink($p, $exec, $elementP, $fieldName, $code, $email = null, $subject=null) {
 		$this->executionSink()->publishStartOperation("sendExternalValidationLink");
 
@@ -3910,10 +3910,10 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * send an email to the field content of an element
-	 * * @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
-	 * to be the element field value
-	 */
+	* send an email to the field content of an element
+	* * @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
+	* to be the element field value
+	*/
 	public function doSendEmail($p, $exec, $elementP, $fieldName, $email, $subject=null) {
 		$this->executionSink()->publishStartOperation("doSendEmail");
 
@@ -3957,10 +3957,10 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * send an email to the field content of an element
-	 * * @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
-	 * to be the element field value
-	 */
+	* send an email to the field content of an element
+	* * @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
+	* to be the element field value
+	*/
 	public function sendEmail($p, $exec, $elementP, $fieldName, $email, $subject=null) {
 		$this->executionSink()->publishStartOperation("sendEmail");
 
@@ -3983,12 +3983,12 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * enables read only external access and send an email with the access link. The access link should be in the message. If the message
-	 * is null, an automatic basic message is setup containing the access link.
-	 * @param $elementP: ElementP / Element, externalAccessViewLink must have write rights
-	 * @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
-	 * to be the element field value
-	 */
+	* enables read only external access and send an email with the access link. The access link should be in the message. If the message
+	* is null, an automatic basic message is setup containing the access link.
+	* @param $elementP: ElementP / Element, externalAccessViewLink must have write rights
+	* @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
+	* to be the element field value
+	*/
 	public function setExternalAccessViewLink($p, $exec, $elementP, $fieldName, $code, $externalAccessEndDate = null, $email = null, $subject=null) {
 		$this->executionSink()->publishStartOperation("setExternalAccessViewLink");
 
@@ -4070,12 +4070,12 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * enables read/write external access and send an email with the access link. The access link should be in the message. If the message
-	 * is null, an automatic basic message is setup containing the access link.
-	 * @param $elementP: ElementP / Element, externalAccessEditLink must have write rights
-	 * @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
-	 * to be the element field value
-	 */
+	* enables read/write external access and send an email with the access link. The access link should be in the message. If the message
+	* is null, an automatic basic message is setup containing the access link.
+	* @param $elementP: ElementP / Element, externalAccessEditLink must have write rights
+	* @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
+	* to be the element field value
+	*/
 	public function setExternalAccessEditLink($p, $exec, $elementP, $fieldName, $code, $externalAccessEndDate = null, $email = null, $subject=null) {
 		$this->executionSink()->publishStartOperation("setExternalAccessEditLink");
 
@@ -4157,11 +4157,11 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * disabled external access.
-	 * @param $elementP: ElementP / Element, must have write rights
-	 * @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
-	 * to be the element field value
-	 */
+	* disabled external access.
+	* @param $elementP: ElementP / Element, must have write rights
+	* @param $email = null: WigiiEmail / String, if the email is null a standard one is construct. If the email is a string, then it will be used for the body. The recipients are forced
+	* to be the element field value
+	*/
 	public function stopExternalAccess($p, $exec, $elementP, $fieldName, $code) {
 		$this->executionSink()->publishStartOperation("stopExternalAccess");
 
@@ -4194,14 +4194,14 @@ invalidCompleteCache();
 	}
 
 	/**
-	 * Create the XMl code for the 'Access all folders', 'Root folder creator', 'Folder creator' option in Admin role/user popup
-	 * @param Principal $p 	 
-	 * @param Field $field the field for which xml needs to be changed
-	 * @param array $moduleAccess the complete list of Modules
-	 * @param array $adminRight the list of module access for the admin 
-	 * @param array $userRight the list of module access for the users
-	 * @return SimpleXMLElement the XMl code
-	 */
+	* Create the XMl code for the 'Access all folders', 'Root folder creator', 'Folder creator' option in Admin role/user popup
+	* @param Principal $p 	
+	* @param Field $field the field for which xml needs to be changed
+	* @param array $moduleAccess the complete list of Modules
+	* @param array $adminRight the list of module access for the admin 
+	* @param array $userRight the list of module access for the users
+	* @return SimpleXMLElement the XMl code
+	*/
 	private function createMultipleCheckForAdminForm($p, $field, $moduleAccess, $adminRight, $userRight) {
 		$transS = ServiceProvider :: getTranslationService();		
 		
@@ -4229,11 +4229,11 @@ invalidCompleteCache();
 	}
 	
 	/**
-	 * Create access and folder creator form
-	 * @param User $user $user current user 
-	 * @param Principal $p
-	 * @param Record $userEditRec record user edit form
-	 */
+	* Create access and folder creator form
+	* @param User $user $user current user 
+	* @param Principal $p
+	* @param Record $userEditRec record user edit form
+	*/
 	private function createAccessAndFolderCreatorForm($user, $p, $userEditRec){
 		// full module access
 		$moduleAccess = $p->getModuleAccess();
@@ -4269,9 +4269,9 @@ invalidCompleteCache();
 	
 	
 	/**
-	 * Processes the HTTP request
-	 * Postcondition: this method never throws an exception, all errors are trapped and displayed correctly to the user
-	 */
+	* Processes the HTTP request
+	* Postcondition: this method never throws an exception, all errors are trapped and displayed correctly to the user
+	*/
 	public function processAndEnds($started = false) {
 		try {
 			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."start process and ends"] = microtime(true);
@@ -4331,26 +4331,26 @@ invalidCompleteCache();
 			}
 	
 			/*
-			 if ($exec->getRemainingRequests() == null) {
-			 //				if(!$started) eput("no remaining request, add the default");
-			 if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) {
-			 $exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/display/all");
-			 //					if(!$started) eput("add request: /display/all");
-			 } else {
-			 if($hasRelogedIn){
-			 $exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
-			 //						if(!$started) eput("add request: /start");
-			 } else {
-			 $roleId = $p->getValueInGeneralContext("lastRoleId");
-			 // checks role validity
-			 if($p->getRoleListener()->getUser($roleId)) {
-			 $exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/navigate/user/" . $roleId);
-			 }
-			 else $exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
-			 }
-			 }
-			 }
-			 */
+			if ($exec->getRemainingRequests() == null) {
+			//				if(!$started) eput("no remaining request, add the default");
+			if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) {
+			$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/display/all");
+			//					if(!$started) eput("add request: /display/all");
+			} else {
+			if($hasRelogedIn){
+			$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
+			//						if(!$started) eput("add request: /start");
+			} else {
+			$roleId = $p->getValueInGeneralContext("lastRoleId");
+			// checks role validity
+			if($p->getRoleListener()->getUser($roleId)) {
+			$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/navigate/user/" . $roleId);
+			}
+			else $exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
+			}
+			}
+			}
+			*/
 	
 			//we keep in memory the lastAction, just to be able to manage the sending of footer for downloads or JSON
 			$lastAction = null;
@@ -4387,8 +4387,8 @@ invalidCompleteCache();
 						if ($exec->getCrtAction() == "display" && $exec->getCrtParameters(0) == "detachModule")
 							$SITE_TITLE = ServiceProvider :: getTranslationService()->t($p, $exec->getCrtModule()->getModuleName()) . " : " . $SITE_TITLE;
 						if ($exec->getIdAnswer()=="newDialog" || !$exec->getIsUpdating()){
-                            include_once (IMPL_PATH . "templates/header.php");
-                        }
+									include_once (IMPL_PATH . "templates/header.php");
+								}
 					}
 					else $byPassedHeader=true;
 					$started = true;
@@ -4465,9 +4465,9 @@ invalidCompleteCache();
 					}
 				}
 				/*
-				 if (!isset ($_SESSION["RemainingUpdates"])) $_SESSION["RemainingUpdates"] = array ();
-				 $_SESSION["RemainingUpdates"][] = (!$exec->getIsUpdating() ? "mainDiv/" : "").$exec->getCrtRequest();
-				 */
+				if (!isset ($_SESSION["RemainingUpdates"])) $_SESSION["RemainingUpdates"] = array ();
+				$_SESSION["RemainingUpdates"][] = (!$exec->getIsUpdating() ? "mainDiv/" : "").$exec->getCrtRequest();
+				*/
 				//eput($exec->displayDebug());
 				//				$exec->addRequests('elementDialog/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl().'/'.$exec->getCrtModule()->getModuleUrl().'/display/login');
 				$this->executionSink()->publishEndOperationOnError("processAndEnds", $ase, $p);
@@ -4549,8 +4549,8 @@ invalidCompleteCache();
 	}
 	
 	/**
-	 * Defines each action on which we need to not send other information before and after the specific action
-	 */
+	* Defines each action on which we need to not send other information before and after the specific action
+	*/
 	protected function shouldByPassHeader($action) {
 		$exec = ServiceProvider :: getExecutionService();
 		switch ($action) {
@@ -4563,7 +4563,7 @@ invalidCompleteCache();
 			case "getNextElementInList" :
 			case "getNextElementInBlog" :
 			case "getNextElementInPreviewList" :
-            case "getCalendarEvents" :
+			case "getCalendarEvents" :
 				//			case "JSON":
 				//			case "PDF":
 				//			case "Excel"
@@ -4572,10 +4572,10 @@ invalidCompleteCache();
 				//			case "CSVPretty":
 				return true;
 				break;
-            case "element":
-            	if($exec->getCrtParameters(0) == "template") return true;
-            	else return false;
-            	break;
+			case "element":
+					if($exec->getCrtParameters(0) == "template") return true;
+					else return false;
+					break;
 			default :
 				return false;
 		}
@@ -4604,28 +4604,28 @@ invalidCompleteCache();
 		return false;
 	}
 	
-    /**
-     * Return true if the current action requires a responsive HTML rendering
-     * Typcally used in the public access to be compatible with mobile
-     */
-    public function shouldBeResponsive($action) {
-        $exec = ServiceProvider :: getExecutionService();
-        switch ($action) {
-            case "newSubscription" :
-            case "externalAccess" :
-            case "externalAccessRequest" :
-                return true;
-                break;
-            case "element":
-            	if($exec->getCrtParameters(0) == "print" || $exec->getCrtParameters(0) == "template") return true;
-            	else return false;
-                break;
-            default :
-                return false;
-        }
-    }
+	/**
+	* Return true if the current action requires a responsive HTML rendering
+	* Typcally used in the public access to be compatible with mobile
+	*/
+	public function shouldBeResponsive($action) {
+		$exec = ServiceProvider :: getExecutionService();
+		switch ($action) {
+				case "newSubscription" :
+				case "externalAccess" :
+				case "externalAccessRequest" :
+					return true;
+					break;
+				case "element":
+					if($exec->getCrtParameters(0) == "print" || $exec->getCrtParameters(0) == "template") return true;
+					else return false;
+					break;
+				default :
+					return false;
+		}
+	}
 	
-    //this method is called at each request, even if principal is already logged in
+	//this method is called at each request, even if principal is already logged in
 	protected function doAutoLoginIfNeeded() {
 		$this->executionSink()->publishStartOperation("doAutoLoginIfNeeded");
 		$authS = ServiceProvider :: getAuthenticationService();
@@ -4651,22 +4651,22 @@ invalidCompleteCache();
 	}
 	
 	/**
-	 * Given an action, finds a WebExecutor class name which can handle it.
-	 * @param String $action ExecutionService action in the Wigii communication protocol.
-	 * @return String|StdClass|WebExecutor the name of a class implementing WebExecutor interface, or null if not found;
-	 * or a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options,
-	 * or an instance of a ready to use WebExecutor
-	 */
+	* Given an action, finds a WebExecutor class name which can handle it.
+	* @param String $action ExecutionService action in the Wigii communication protocol.
+	* @return String|StdClass|WebExecutor the name of a class implementing WebExecutor interface, or null if not found;
+	* or a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options,
+	* or an instance of a ready to use WebExecutor
+	*/
 	protected function findWebExecutorForAction($action) {return null;}
 	/**
-	 * Runs the WebExecutor on the given http request
-	 * @param String|StdClass|WebExecutor $webExecClass the name of the WebExecutor implementation to instanciate and run, or
-	 * a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options,
-	 * or an already instanciated WebExecutor class
-	 * @param ExecutionService $exec current ExecutionService
-	 * @throws AuthenticationServiceException if main principal is minimal.
-	 * @throws Exception any exception that occur during WebExecutor execution.
-	 */
+	* Runs the WebExecutor on the given http request
+	* @param String|StdClass|WebExecutor $webExecClass the name of the WebExecutor implementation to instanciate and run, or
+	* a StdClass instance of the form {className: String, options: ObjectConfigurator} defining the class name to instantiate and some configuration options,
+	* or an already instanciated WebExecutor class
+	* @param ExecutionService $exec current ExecutionService
+	* @throws AuthenticationServiceException if main principal is minimal.
+	* @throws Exception any exception that occur during WebExecutor execution.
+	*/
 	protected function runWebExecutor($webExecClass,$exec) {
 		if(!isset($webExecClass)) return;
 		if(!isset($exec)) throw new ServiceException('ExecutionService cannot be null', ServiceException::INVALID_ARGUMENT);		
@@ -4711,9 +4711,9 @@ invalidCompleteCache();
 	}
 	
 	/**
-	 * Executes the requested action
-	 * @param ExecutionService $exec The execution service for this request
-	 */
+	* Executes the requested action
+	* @param ExecutionService $exec The execution service for this request
+	*/
 	protected function executeAction($exec) {
 		if(false){ //this is just a place to develope some js script without the need to compile js and reload browser to test the result. This section should be then copy paste in js files and the if turned to false
 ?><script type="text/javascript" >
@@ -5650,7 +5650,7 @@ crtLang = '" . $transS->getLanguage() . "';
 					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
 					throw new ServiceException('admin functions can only be access in Admin module', ServiceException :: FORBIDDEN);
-                // Medair(CWE) 13.03.2018: allows group config to be edited only by ConfigEditors
+					// Medair(CWE) 13.03.2018: allows group config to be edited only by ConfigEditors
 				if (!$p->isModuleEditor()) throw new ServiceException('insufficient rights to edit group config. Needs Config Editor admin rights.', ServiceException :: FORBIDDEN);
 					
 				if (!isset ($transS))
@@ -6724,16 +6724,16 @@ onUpdateErrorCounter = 0;
 					break;
 				}
 
-                if($configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic")){
-                    $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic");
-                }else{
-                    $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
-                }
-                if($labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic")){
-                    $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic");
-                }else{
-                    $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
-                }
+					if($configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic")){
+						$totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic");
+					}else{
+						$totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
+					}
+					if($labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic")){
+						$labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic");
+					}else{
+						$labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
+					}
 
 				if (!$exec->getIsUpdating()) {
 					$action = "mainDiv/" . $exec->getCrtRequest();
@@ -7044,16 +7044,16 @@ onUpdateErrorCounter = 0;
 					break;
 				}
 				//eput($record);
-                if($configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic")){
-                    $totalWidth = $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic");
-                }else{
-                    $totalWidth = $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
-                }
-                if($labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic")){
-                    $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic");
-                }else{
-                    $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
-                }
+					if($configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic")){
+						$totalWidth = $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidthPublic");
+					}else{
+						$totalWidth = $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
+					}
+					if($labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic")){
+						$labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidthPublic");
+					}else{
+						$labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");
+					}
 				if (!$exec->getIsUpdating()) {
 					$action = "mainDiv/" . $exec->getCrtRequest();
 				} else {
@@ -7456,16 +7456,16 @@ onUpdateErrorCounter = 0;
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 
 				//define the sorting by
-                $key = $exec->getCrtParameters(0);
-                $ascending = ($exec->getCrtParameters(1) == "true" ? true : ($exec->getCrtParameters(1) == "false" ? false : null));
-                if($ascending === null){
-                    switch ($key){
-                        case "(__element(sys_date))":
-                        case "(__element(sys_creationDate))":
-                            $ascending = false;
-                            break;
-                    }
-                }
+					$key = $exec->getCrtParameters(0);
+					$ascending = ($exec->getCrtParameters(1) == "true" ? true : ($exec->getCrtParameters(1) == "false" ? false : null));
+					if($ascending === null){
+						switch ($key){
+								case "(__element(sys_date))":
+								case "(__element(sys_creationDate))":
+									$ascending = false;
+									break;
+						}
+					}
 
 				$lc->setSortedBy($key, $ascending);
 				$exec->addJsCode("invalidCache('moduleView');");
@@ -7553,9 +7553,9 @@ onUpdateErrorCounter = 0;
 				}
 				$attribute .= '</attribute><attribute optGroupEnd="1"/>';
 				/**
-				 * currently the ElementService is not able to manage element Attribute in a efficient way because of
-				 * a bug into the getAllElements with an empty fieldSelector
-				 */
+				* currently the ElementService is not able to manage element Attribute in a efficient way because of
+				* a bug into the getAllElements with an empty fieldSelector
+				*/
 				//			$attribute .= '<attribute optGroupStart="1">'.$transS->t($p, "elementAttribute");
 				//			//add the element attributes
 				//			$fsl = $elS->getFieldSelectorListForElementAttributForImport();
@@ -7745,16 +7745,16 @@ onUpdateErrorCounter = 0;
 				$emailIsValid = validateEmail($pEmail); $unauthorizedEmail = false;
 				// Medair (CWE) 11.04.2017 checks for authorized direct sender
 				if($pEmail && $emailIsValid && defined("EmailService_sendOnBehalfOfUser") && EmailService_sendOnBehalfOfUser) {
-				    try {
-				        $this->getEmailService()->isEmailAuthorizedDirectSender($p,$pEmail,$p->getRealUsername());
-				    }
-				    catch(AuthorizationServiceException $ase) {
-				        if($ase->getCode() == AuthorizationServiceException::NOT_ALLOWED) {
-				            $unauthorizedEmail = true;
-				            $emailIsValid = false;
-				        }
-				        else throw $ase;
-				    }
+					try {
+						$this->getEmailService()->isEmailAuthorizedDirectSender($p,$pEmail,$p->getRealUsername());
+					}
+					catch(AuthorizationServiceException $ase) {
+						if($ase->getCode() == AuthorizationServiceException::NOT_ALLOWED) {
+								$unauthorizedEmail = true;
+								$emailIsValid = false;
+						}
+						else throw $ase;
+					}
 				}
 				if ($pEmail && $emailIsValid) {
 					echo "emailAdressIsDefined";
@@ -7775,8 +7775,8 @@ onUpdateErrorCounter = 0;
 				} else {
 					echo "defineANewEmailAdress";
 					echo ExecutionServiceImpl :: answerParamSeparator;
-					if (($exec->getCrtAction() == "setKeepNotifiedEmail") || !$emailIsValid) {					    
-					    echo '<span class="error">' . ($unauthorizedEmail ? $transS->t($p, "unauthorizedEmail"): $transS->t($p, "invalidEmail")) . '</span><br />';
+					if (($exec->getCrtAction() == "setKeepNotifiedEmail") || !$emailIsValid) {						
+						echo '<span class="error">' . ($unauthorizedEmail ? $transS->t($p, "unauthorizedEmail"): $transS->t($p, "invalidEmail")) . '</span><br />';
 					}
 					echo '<label for="KeepNotifiedEmailInput" >' . $transS->t($p, "keepNotifiedEmailInputLabel") . '</label><br /><input id="KeepNotifiedEmailInput" type="text" value="' . $pEmail . '" />';
 					$exec->addJsCode("$('#organizeDialog #KeepNotifiedEmailInput').focus().keydown(function(e){if(e.keyCode == 13){ $('#organizeDialog').closest('.ui-dialog').find('.ui-dialog-buttonpane .ok').click(); e.stopPropagation(); }});");
@@ -8331,49 +8331,49 @@ onUpdateErrorCounter = 0;
 				$form->setLabelWidth($labelWidth);
 				$form->setTotalWidth($totalWidth);
 				//			$form->setDottedLineSeparatorBetweenField(true);
-                $domId = 'changePasswordDialog';
-                $exec->addJsCode('' .
-                    'myPosition = dialogPos["' . $domId . '"]; if(myPosition == null){ myPosition = { my : "center", at: "center" }; }' .
-                    'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
-                    'title: "' . $dialogTitle . '", width:' . ($width + 17) . ', position: myPosition,' .
-                    'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
-                    'beforeClose: function(){ ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '"); $(this).dialog("destroy"); $(window).scrollTop(0); },' .
-                    'closeOnEscape: true, resizable:false' .
-                    '}).dialog("moveToTop")'.
-                    '; '.
-                    '
-            aria = "[aria-describedBy=\"'.$domId .'\"]";
-            
-            width = "450";
-		        
-            margin = (($(window).width()-width)/2);
-                  $(aria).css("left", margin+"px");
-                  $(aria).css("width", "100%");
-                  $(aria).css("max-width", width);
-                  
-                  
-                  if($(window).width() < width){
-                        $(aria).css("left", "0px");
-                        $(aria).css("top", "0px");
-                        $(aria).css("width", "100%");
-                        $(aria).css("max-width", width);
-                    }else{
-                        margin = (($(window).width()-width)/2);
-                        $(aria).css("left", margin+"px");
-                    }
-                  
-            $(window).resize(function(){
-                    if($(window).width() < width){
-                        $(aria).css("left", "0px");
-                        $(aria).css("top", "0px");
-                        $(aria).css("width", "100%");
-                        $(aria).css("max-width", width);
-                    }else{
-                        margin = (($(window).width()-width)/2);
-                        $(aria).css("left", margin+"px");
-                        $(aria).css("width", width);
-                    }
-                 });');
+					$domId = 'changePasswordDialog';
+					$exec->addJsCode('' .
+						'myPosition = dialogPos["' . $domId . '"]; if(myPosition == null){ myPosition = { my : "center", at: "center" }; }' .
+						'if($("#' . $domId . '").is(":ui-dialog")) { $("#' . $domId . '").dialog("destroy"); } $("#' . $domId . '").dialog({' .
+						'title: "' . $dialogTitle . '", width:' . ($width + 17) . ', position: myPosition,' .
+						'dragStop: function(event, ui){ dialogPos["' . $domId . '"] = { my : "left top", at: "left+"+$(this).parent().offset().left+" top+"+$(this).parent().offset().top }; },' .
+						'beforeClose: function(){ ' . $closeJsCode . ' actOnCloseDialog("' . $domId . '"); $(this).dialog("destroy"); $(window).scrollTop(0); },' .
+						'closeOnEscape: true, resizable:false' .
+						'}).dialog("moveToTop")'.
+						'; '.
+						'
+				aria = "[aria-describedBy=\"'.$domId .'\"]";
+				
+				width = "450";
+				
+				margin = (($(window).width()-width)/2);
+						$(aria).css("left", margin+"px");
+						$(aria).css("width", "100%");
+						$(aria).css("max-width", width);
+						
+						
+						if($(window).width() < width){
+								$(aria).css("left", "0px");
+								$(aria).css("top", "0px");
+								$(aria).css("width", "100%");
+								$(aria).css("max-width", width);
+						}else{
+								margin = (($(window).width()-width)/2);
+								$(aria).css("left", margin+"px");
+						}
+						
+				$(window).resize(function(){
+						if($(window).width() < width){
+								$(aria).css("left", "0px");
+								$(aria).css("top", "0px");
+								$(aria).css("width", "100%");
+								$(aria).css("max-width", width);
+						}else{
+								margin = (($(window).width()-width)/2);
+								$(aria).css("left", margin+"px");
+								$(aria).css("width", width);
+						}
+					});');
 
 				$state = "start";
 				if ($_POST["action"] != null)
@@ -8389,11 +8389,11 @@ onUpdateErrorCounter = 0;
 
 				// Medair (CWE) 05.12.2017 rejects CSV import if CSVImport_enableExp = 0
 				if($this->evaluateConfigParameter($p,$exec,(string)$configS->getParameter($p, $exec->getCrtModule(), 'CSVImport_enableExp')) === '0')
-				    throw new AuthorizationServiceException("CSV Import is not allowed", AuthorizationServiceException::UNAUTHORIZED);
-				    
+					throw new AuthorizationServiceException("CSV Import is not allowed", AuthorizationServiceException::UNAUTHORIZED);
+					
 				$totalWidth = 450;
 				$labelWidth = 200;
-				    
+					
 				//the dialog box parameters is independant of the module
 				$importToRec = $this->createActivityRecordForForm($p, Activity :: createInstance("importElementIn"), null);
 
@@ -8436,8 +8436,8 @@ onUpdateErrorCounter = 0;
 
 				// Medair (CWE) 05.12.2017 rejects CSV update if CSVUpdate_enableExp = 0
 				if($this->evaluateConfigParameter($p,$exec,(string)$configS->getParameter($p, $exec->getCrtModule(), 'CSVUpdate_enableExp')) === '0')
-				    throw new AuthorizationServiceException("CSV Update is not allowed", AuthorizationServiceException::UNAUTHORIZED);
-				    
+					throw new AuthorizationServiceException("CSV Update is not allowed", AuthorizationServiceException::UNAUTHORIZED);
+					
 				$totalWidth = 450;
 				$labelWidth = 200;
 
@@ -8554,8 +8554,8 @@ onUpdateErrorCounter = 0;
 				if($defaultField) $defaultField = (string)$defaultField->getName();
 				// if not, takes first emailing field
 				else {
-				    $defaultField = $this->canCrtModuleEmailing($exec->getCrtModule());
-				    if($defaultField) $defaultField = (string)$defaultField[0]->getName();
+					$defaultField = $this->canCrtModuleEmailing($exec->getCrtModule());
+					if($defaultField) $defaultField = (string)$defaultField[0]->getName();
 				}
 				$html2text = new Html2text();
 				foreach($fieldXml->children() as $field){
@@ -8770,9 +8770,9 @@ onUpdateErrorCounter = 0;
 						if(isset($querySourceLf)) {
 							// Medair (CWE) 08.01.2018: merge given fsl with existing one to preserve extra needed calculated fields dependencies
 							if(!is_null($listFilter->getFieldSelectorList())) {
-							    $querySourceFsl = $querySourceLf->getFieldSelectorList();
-							    if($querySourceFsl instanceof FieldSelectorListArrayImpl) $querySourceFsl->mergeFieldSelectorList($listFilter->getFieldSelectorList());
-							    else $querySourceLf->setFieldSelectorList($listFilter->getFieldSelectorList());
+								$querySourceFsl = $querySourceLf->getFieldSelectorList();
+								if($querySourceFsl instanceof FieldSelectorListArrayImpl) $querySourceFsl->mergeFieldSelectorList($listFilter->getFieldSelectorList());
+								else $querySourceLf->setFieldSelectorList($listFilter->getFieldSelectorList());
 							}
 							if(!is_null($listFilter->getFieldSortingKeyList())) $querySourceLf->setFieldSortingKeyList($listFilter->getFieldSortingKeyList());
 							if($listFilter->getPageSize() > 0) {
@@ -8821,12 +8821,12 @@ onUpdateErrorCounter = 0;
 				}
 				// else subitem or links
 				else {
-				    $fsl = $listFilter->getFieldSelectorList();
+					$fsl = $listFilter->getFieldSelectorList();
 					$elementPList = ElementPListRowsForPreview::createInstance($this->createTRM(), $p, $exec, $this->getConfigurationContext(), $fsl, $sessElementId, $linkName, $elementIsBlocked, $previewListId, $linkType);
 					$elementPList->setElementIsReadonly($elementIsReadonly);
 					if($linkType == Links::LINKS_TYPE_SUBITEM) {
-					    // Medair (CWE) 08.01.2018, adds calculated on fetch dependencies to fsl
-				        $listFilter->setFieldSelectorList(ServiceProvider::getWigiiBPL()->buildFslForSubElementWithFxDependencies($p, $sessElementId, $linkName, $fsl));
+						// Medair (CWE) 08.01.2018, adds calculated on fetch dependencies to fsl
+						$listFilter->setFieldSelectorList(ServiceProvider::getWigiiBPL()->buildFslForSubElementWithFxDependencies($p, $sessElementId, $linkName, $fsl));
 						$nbRow = $elS->getSubElementsForField($p, $sessElementId, $linkName, $elementPList, $listFilter);
 						$total = $listFilter->getTotalNumberOfObjects();
 						$listFilter->setFieldSelectorList($fsl);/* restores original field selector list before serialization to session */
@@ -9341,7 +9341,7 @@ onUpdateErrorCounter = 0;
 												$res = fopen($path, "x");
 												fwrite($res, $content);
 												fclose($res);
-												//										 	xattr_set($path, "owner", "lionel");
+												//											xattr_set($path, "owner", "lionel");
 											}
 											if (!extractSafeZipFile($path, $folderPath . '/')) {
 												echo "FAILED to unzip!!!!";
@@ -9402,8 +9402,8 @@ onUpdateErrorCounter = 0;
 						}
 
 						if (($content != null && $storeFileContentIntoDatabase) || ($content != null && !file_exists($path))) {
-							//						 	fput("download file with addslashes: ".md5(addslashes($content)));
-							//						 	fput("download file as is: ".md5($content));
+							//							fput("download file with addslashes: ".md5(addslashes($content)));
+							//							fput("download file as is: ".md5($content));
 							session_write_close();
 							if ($fieldXml["htmlArea"] == "1") {
 								$content = $this->createTrm()->wrapHtmlFilesWithHeader($content, $filename);
@@ -9474,12 +9474,12 @@ onUpdateErrorCounter = 0;
 				$form->ResolveForm($p, $exec, $state);
 				break;
 //				/**
-//				 * Export urls can be:
-//				 * CSV/export/urlencode('separator')/encoding/[includeChildrenGroup:BOOL{/groupId}+]
-//				 * separator can be the character you want
-//				 * encoding can be: ISO-8859-1 or UTF-8
-//				 * if includeChildrenGroup and groupIds are not defined, then the elementList context will be used
-//				 */
+//				* Export urls can be:
+//				* CSV/export/urlencode('separator')/encoding/[includeChildrenGroup:BOOL{/groupId}+]
+//				* separator can be the character you want
+//				* encoding can be: ISO-8859-1 or UTF-8
+//				* if includeChildrenGroup and groupIds are not defined, then the elementList context will be used
+//				*/
 //			case "JSON" :
 //				if (!isset ($headerText))
 //					$headerText = 'Content-type: application/json';
@@ -9681,7 +9681,7 @@ onUpdateErrorCounter = 0;
 
 				$lc->setGroupPList($groupList, $withChildren);
 				//Medair (LMA, CWE) 28.03.2017
-                // Reset showOnlyDuplicates on folder navigation
+					// Reset showOnlyDuplicates on folder navigation
 				$lc->setGroupByOnlyDuplicates(false);
 				$this->getConfigurationContext()->setGroupPList($p, $exec->getCrtModule(), $groupList, $withChildren);
 
@@ -9947,8 +9947,8 @@ onUpdateErrorCounter = 0;
 					}	
 					// Medair (CWE) 19.09.2017: if Group_selectAllGroupsOnSearch = 0 and only one group selected, then hides found groups which are not children from current group.
 					if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") == "0" && $lc->getGroupPList()->count()==1) {
-					    $currentGroupId = reset($lc->getGroupPList()->getListIterator())->getId();
-					    $currentGroupSelector = '#group_'.$currentGroupId.' ';
+						$currentGroupId = reset($lc->getGroupPList()->getListIterator())->getId();
+						$currentGroupSelector = '#group_'.$currentGroupId.' ';
 					}
 					else $currentGroupId = null;
 					$exec->addJsCode("" .
@@ -9957,14 +9957,14 @@ onUpdateErrorCounter = 0;
 						"$('#groupPanel li').show();" .
 						"");
 					foreach($countData as $groupId=>$nb){
-					    // Medair (CWE) 19.09.2017: if Group_selectAllGroupsOnSearch = 0, only keeps sub-groups of current group
-					    if($groupId == $currentGroupId || $currentGroupId==null) $cgs = '';
-					    else $cgs = $currentGroupSelector;
-					    
+						// Medair (CWE) 19.09.2017: if Group_selectAllGroupsOnSearch = 0, only keeps sub-groups of current group
+						if($groupId == $currentGroupId || $currentGroupId==null) $cgs = '';
+						else $cgs = $currentGroupSelector;
+						
 						if($nb == null){
-						    $exec->addJsCode("$('$cgs#group_$groupId>div span.description').before('<span class=\"R nb empty\"></span>');");
+							$exec->addJsCode("$('$cgs#group_$groupId>div span.description').before('<span class=\"R nb empty\"></span>');");
 						} else {
-						    $exec->addJsCode("$('$cgs#group_$groupId>div span.description').before('<span class=\"R nb\">&nbsp;($nb)</span>');");
+							$exec->addJsCode("$('$cgs#group_$groupId>div span.description').before('<span class=\"R nb\">&nbsp;($nb)</span>');");
 						}
 					}
 
@@ -10443,15 +10443,15 @@ onUpdateErrorCounter = 0;
 				if (!isset ($transS))
 					$transS = ServiceProvider :: getTranslationService();
 
-                $totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
-                $labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");               
+					$totalWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementTotalWidth");
+					$labelWidth = 0 + $configS->getParameter($p, $exec->getCrtModule(), "elementLabelWidth");					
 
 				$elementId = $exec->getCrtParameters(1);
 				$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
 
 				// single element management
 				if ($elementId != "multiple" && 
-				        ($exec->getCrtParameters(0) == "detail" || 
+						($exec->getCrtParameters(0) == "detail" || 
 						$exec->getCrtParameters(0) == "print" || 
 						$exec->getCrtParameters(0) == "template" || 
 						$exec->getCrtParameters(0) == "manageEmail" || 
@@ -10499,8 +10499,8 @@ onUpdateErrorCounter = 0;
 						break;
 					} else if($elementP->getRights() == null ||
 							/* by default, allows only read access on blocked element except managed exceptions:
-							 * - Medair (CWE) 29.01.2018: allows sharing of blocked elements if Element_Blocked_enableSharing is defined in config 
-							 */
+							* - Medair (CWE) 29.01.2018: allows sharing of blocked elements if Element_Blocked_enableSharing is defined in config 
+							*/
 							(($element->isState_blocked() || $elementP->isParentElementState_blocked()) &&
 							$exec->getCrtParameters(0) != "detail" &&
 							$exec->getCrtParameters(0) != "addJournalItem" &&
@@ -10514,20 +10514,20 @@ onUpdateErrorCounter = 0;
 					}
 					// Medair (CWE) 12.03.2018: filters element against listFilterExp if defined in config
 					if(!$element->isSubElement()) {
-    					$listFilterExp=(string)$configS->getParameter($p,$exec->getCrtModule(),'listFilterExp');
-    					if(!empty($listFilterExp)) {
-    					    $listFilterExp = $this->evaluateFuncExp($p, $exec, str2fx($listFilterExp));
-    					    if(isset($listFilterExp)) {
-        					    if($listFilterExp instanceof LogExp) {
-        					        // if filter evaluates to false, then element cannot be accessed.
-        					        if(!TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($element, $listFilterExp)) {
-        					            $this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
-        					            break;
-        					        }
-        					    }
-        					    else throw new ListContextException('listFilterExp is not a valid LogExp', ListContextException::CONFIGURATION_ERROR);
-    					    }
-    					}
+						$listFilterExp=(string)$configS->getParameter($p,$exec->getCrtModule(),'listFilterExp');
+						if(!empty($listFilterExp)) {
+							$listFilterExp = $this->evaluateFuncExp($p, $exec, str2fx($listFilterExp));
+							if(isset($listFilterExp)) {
+								if($listFilterExp instanceof LogExp) {
+									// if filter evaluates to false, then element cannot be accessed.
+									if(!TechnicalServiceProvider::getFieldSelectorLogExpRecordEvaluator()->evaluate($element, $listFilterExp)) {
+											$this->openAsMessage($exec->getIdAnswer(), $totalWidth - $labelWidth, $transS->t($p, "elementUnreachable") . " (" . $transS->t($p, "id") . ": " . $elementId . ")", $transS->t($p, "elementUnreachableExplanation"), "actOnCloseDialog('".$exec->getIdAnswer()."');");
+											break;
+									}
+								}
+								else throw new ListContextException('listFilterExp is not a valid LogExp', ListContextException::CONFIGURATION_ERROR);
+							}
+						}
 					}
 					//on edit or on doDelete lock try to lock the element:
 					//do not lock on addJournalItem as it is a one shot action. This will be done with the appropriate p in $this->addJournalItem
@@ -10542,7 +10542,7 @@ onUpdateErrorCounter = 0;
 					}
 					//add element to the current selected element in list context
 					$this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList")->setCrtSelectedItem($elementId);
-                    //on delete we need the file fields to do file management
+						//on delete we need the file fields to do file management
 					if ($exec->getCrtParameters(0) == "delete") {
 						$fileFields = $configS->mf($p, $element->getModule())->xpath("*[@type='Files'] | *[@type='Blobs' and @htmlArea='1'] | *[@type='Texts' and @htmlArea='1']");
 					} else $fileFields = null;
@@ -10552,7 +10552,7 @@ onUpdateErrorCounter = 0;
 							($exec->getCrtParameters(0) == "delete" && $_POST["action"]!=null) ||
 							($exec->getCrtParameters(0) == "edit" && $_POST["action"]!=null) ||
 							($exec->getCrtParameters(0) == "transfer" && $_POST["action"]!=null) ||
-						 	 $exec->getCrtParameters(0) == "setGroupsContainingElements")) {
+							$exec->getCrtParameters(0) == "setGroupsContainingElements")) {
 
 						$mlc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "multipleElementList");
 						//if multiple operation but no multiple selection:
@@ -10591,7 +10591,7 @@ onUpdateErrorCounter = 0;
 							
 							if (/* if multiple edit always takes all the fields to ensure correct recalculation of the element (and not only the modified ones) */
 									($exec->getCrtParameters(0) == "edit" || $exec->getCrtParameters(0) == "delete" /*&& $_POST[$fieldName . "_check"] === "on"*/) || 
-							 	/* for email notification purpose, takes fields having an email set */
+								/* for email notification purpose, takes fields having an email set */
 								$dataTypeName == "Booleans" && isset ($fieldXml["email"]) ||
 								($dataTypeName == "Attributs" && $fieldXml->xpath("child::attribute[@email]")) ||
 								($dataTypeName == "MultipleAttributs" && $fieldXml->xpath("child::attribute[@email]"))
@@ -10650,7 +10650,7 @@ onUpdateErrorCounter = 0;
 						$nbRows = $elS->getSelectedElements($p, $lc->getMultipleSelection(), $elementPAList, $mlc);
 						
 						if($elementPAList->atLeastOneHasSpecificAttribut() 
-						    && !(($exec->getCrtParameters(0) == "setGroupsContainingElements") && ($this->evaluateConfigParameter($p, $exec, $configS->getParameter($p, $exec->getCrtModule(), "Element_Blocked_enableSharing"))=="1"))
+							&& !(($exec->getCrtParameters(0) == "setGroupsContainingElements") && ($this->evaluateConfigParameter($p, $exec, $configS->getParameter($p, $exec->getCrtModule(), "Element_Blocked_enableSharing"))=="1"))
 						) throw new AuthorizationServiceException("multiple operation is not authorized on blocked elements.", AuthorizationServiceException::FORBIDDEN);						
 						if($exec->getCrtParameters(0) == "delete" && $configS->getParameter($p, $exec->getCrtModule(),'enableDeleteOnlyForAdmin')=="1" && !$elementPAList->allHaveAdminRights()) throw new AuthorizationServiceException("cannot delete elements in non admin groups.", AuthorizationServiceException::FORBIDDEN);
 					}
@@ -10853,10 +10853,10 @@ onUpdateErrorCounter = 0;
 						
 						// Medair (CWE) 02.02.2018 blocks sharing to trashbin or any subfolders if element is blocked.
 						if($element->isState_blocked()) {
-						    $trashBinGroups = ServiceProvider::getWigiiBPL()->groupGetTrashbin($p, $this, wigiiBPLParam('includeSubGroups',true));
-						    if(!empty($trashBinGroups) && !empty(array_intersect_key($requestedSharing, $trashBinGroups))) {
-						        throw new AuthorizationServiceException("A blocked element cannot be shared in trashbin", AuthorizationServiceException::FORBIDDEN);	
-						    }
+							$trashBinGroups = ServiceProvider::getWigiiBPL()->groupGetTrashbin($p, $this, wigiiBPLParam('includeSubGroups',true));
+							if(!empty($trashBinGroups) && !empty(array_intersect_key($requestedSharing, $trashBinGroups))) {
+								throw new AuthorizationServiceException("A blocked element cannot be shared in trashbin", AuthorizationServiceException::FORBIDDEN);	
+							}
 						}
 						
 						$originalSharing = explode(",", $_POST["original"]);						
@@ -10987,10 +10987,10 @@ onUpdateErrorCounter = 0;
 							
 							// Medair (CWE) 02.02.2018 blocks sharing to trashbin or any subfolders if one element is blocked.
 							if($elementPAList->atLeastOneHasSpecificAttribut()) {
-							    $trashBinGroups = ServiceProvider::getWigiiBPL()->groupGetTrashbin($p, $this, wigiiBPLParam('includeSubGroups',true));
-							    if(!empty($trashBinGroups) && !empty(array_intersect_key($changeToShare, $trashBinGroups))) {
-							        throw new AuthorizationServiceException("Blocked elements cannot be shared in trashbin", AuthorizationServiceException::FORBIDDEN);
-							    }
+								$trashBinGroups = ServiceProvider::getWigiiBPL()->groupGetTrashbin($p, $this, wigiiBPLParam('includeSubGroups',true));
+								if(!empty($trashBinGroups) && !empty(array_intersect_key($changeToShare, $trashBinGroups))) {
+									throw new AuthorizationServiceException("Blocked elements cannot be shared in trashbin", AuthorizationServiceException::FORBIDDEN);
+								}
 							}
 							
 							//eput("add sharing for ".implode(", ", $changeToShare));
@@ -11082,12 +11082,12 @@ onUpdateErrorCounter = 0;
 
 						break;
 						/**
-						 * manageEmail is the entry point for sending email to the field content with different purpose:
-						 * - confirmation email
-						 * - external access email in read
-						 * - external access email in write
-						 * - stop external access
-						 */
+						* manageEmail is the entry point for sending email to the field content with different purpose:
+						* - confirmation email
+						* - external access email in read
+						* - external access email in write
+						* - stop external access
+						*/
 					case "manageEmails" :
 						if (ServiceProvider :: getAuthorizationService()->isPublicPrincipal($p))
 								throw new ServiceException("principal cannot be public for manageEmail action", ServiceException :: FORBIDDEN);
@@ -11790,12 +11790,12 @@ onUpdateErrorCounter = 0;
 				$typeId = $exec->getCrtParameters(1);
 				// Medair (CWE) 16.02.2018 extracts target modifier if folder, item or editItem type.
 				if($type == "folder" || $type == "item" || $type == "editItem") {
-				    $fromRole = null;
-				    $targetModifier = $exec->getCrtParameters(2);
+					$fromRole = null;
+					$targetModifier = $exec->getCrtParameters(2);
 				}
 				else {
-				    $fromRole = $exec->getCrtParameters(2);
-				    $targetModifier = null;
+					$fromRole = $exec->getCrtParameters(2);
+					$targetModifier = null;
 				}
 				if(!$fromRole) $fromRole = $p->getUserId();
 				$fromWigiiNamespace = $exec->getCrtParameters(3);
@@ -11908,74 +11908,74 @@ onUpdateErrorCounter = 0;
 					}
 				}
 
-                //if getting out from Admin, then force going to Home module
-                if ($fromModule == Module :: ADMIN_MODULE && !$exec->getCrtModule()->isAdminModule()){
-                    $lastModule=$mAS->getHomeModule($p);
-                } else {
+					//if getting out from Admin, then force going to Home module
+					if ($fromModule == Module :: ADMIN_MODULE && !$exec->getCrtModule()->isAdminModule()){
+						$lastModule=$mAS->getHomeModule($p);
+					} else {
 
 
-                    // Checks module access	and calculates module to which navigate and workingModule in case of Admin
-                    $lastModule = $exec->getCrtModule()->getModuleName();
-                    $workingModule = null;
-                    // if lastModule is not null and p has no access to module then error
-                    if ($lastModule && $lastModule != Module::HOME_MODULE && !$p->getModuleAccess($lastModule)) {
-                        if ($p->isRealUserPublic()) {
-                            throw new AuthenticationServiceException('public access forbidden', AuthenticationServiceException::FORBIDDEN_PUBLIC_USER);
-                        } else {
-                            $exec->addJsCode("alert('" . $transS->h($p, "noModuleAccessFoundForRole") . ": " . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "->" . $transS->t($p, $exec->getCrtModule()->getModuleName()) . ". " . $transS->h($p, "noModuleAccessFoundForRoleExplanation") . "');");
-                            $exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : '') . WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
-                        }
-                        break;
-                    }
-                    // if lastModule is null then gives first accessible module or Home if only Admin rights.
-                    if (!$lastModule) {
-                        if ($p->getWigiiNamespace()->getWigiiNamespaceName() != WigiiNamespace::EMPTY_NAMESPACE_NAME) $lastModule = $p->getFirstNoneAdminAccessibleModule();
-                        if (!$lastModule) $lastModule = Module::HOME_MODULE;
-                    }
-                    // if lastModule is not null and p has access to module
-                    if ($lastModule != Module::HOME_MODULE) {
-                        // gets Module object
-                        $lastModule = $p->getModuleAccess($lastModule);
+						// Checks module access	and calculates module to which navigate and workingModule in case of Admin
+						$lastModule = $exec->getCrtModule()->getModuleName();
+						$workingModule = null;
+						// if lastModule is not null and p has no access to module then error
+						if ($lastModule && $lastModule != Module::HOME_MODULE && !$p->getModuleAccess($lastModule)) {
+								if ($p->isRealUserPublic()) {
+									throw new AuthenticationServiceException('public access forbidden', AuthenticationServiceException::FORBIDDEN_PUBLIC_USER);
+								} else {
+									$exec->addJsCode("alert('" . $transS->h($p, "noModuleAccessFoundForRole") . ": " . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "->" . $transS->t($p, $exec->getCrtModule()->getModuleName()) . ". " . $transS->h($p, "noModuleAccessFoundForRoleExplanation") . "');");
+									$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : '') . WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
+								}
+								break;
+						}
+						// if lastModule is null then gives first accessible module or Home if only Admin rights.
+						if (!$lastModule) {
+								if ($p->getWigiiNamespace()->getWigiiNamespaceName() != WigiiNamespace::EMPTY_NAMESPACE_NAME) $lastModule = $p->getFirstNoneAdminAccessibleModule();
+								if (!$lastModule) $lastModule = Module::HOME_MODULE;
+						}
+						// if lastModule is not null and p has access to module
+						if ($lastModule != Module::HOME_MODULE) {
+								// gets Module object
+								$lastModule = $p->getModuleAccess($lastModule);
 
-                        //When we navigate, the search field should be filled with the last text enter.
-                        if (!isset($lc)) $lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
-                        $exec->addJsCode("$('nav .firstBox input:first').val('" . $lc->getTextSearch() . "')");
-                        if ($lc->getSearchBar()) {
-                            $exec->addJsCode("$('#searchField input, #filtersButton, #removeFiltersButton').addClass('R')");
-                        } else {
-                            $exec->addJsCode("$('#searField input, #filtersButton, #removeFiltersButton').removeClass('R');" .
-                                "$('#searchField input').attr('placeholder', '" . $transS->t($p,"defineFilters") . $transS->t($p, $exec->getCrtModule()->getModuleName())."...');");
-                        }
+								//When we navigate, the search field should be filled with the last text enter.
+								if (!isset($lc)) $lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
+								$exec->addJsCode("$('nav .firstBox input:first').val('" . $lc->getTextSearch() . "')");
+								if ($lc->getSearchBar()) {
+									$exec->addJsCode("$('#searchField input, #filtersButton, #removeFiltersButton').addClass('R')");
+								} else {
+									$exec->addJsCode("$('#searField input, #filtersButton, #removeFiltersButton').removeClass('R');" .
+										"$('#searchField input').attr('placeholder', '" . $transS->t($p,"defineFilters") . $transS->t($p, $exec->getCrtModule()->getModuleName())."...');");
+								}
 
-                        // if navigating in or to Admin: calculates workingModule
-                        if ($lastModule->isAdminModule()) {
+								// if navigating in or to Admin: calculates workingModule
+								if ($lastModule->isAdminModule()) {
 
-                            // if going to admin in same namespace, keeps current module
-                            if ($fromWigiiNamespace == $p->getWigiiNamespace()->getWigiiNamespaceUrl() && $toWorkingModule == null) $toWorkingModule = $fromModule;
-                            // if going to admin in other namespace retrieves last working module
-                            else if ($toWorkingModule == null) $toWorkingModule = $p->getValueInRoleContext("lastWorkingModule");
+									// if going to admin in same namespace, keeps current module
+									if ($fromWigiiNamespace == $p->getWigiiNamespace()->getWigiiNamespaceUrl() && $toWorkingModule == null) $toWorkingModule = $fromModule;
+									// if going to admin in other namespace retrieves last working module
+									else if ($toWorkingModule == null) $toWorkingModule = $p->getValueInRoleContext("lastWorkingModule");
 
-                            // checks admin working module access
-                            if ($toWorkingModule) {
-                                $workingModule = $p->getModuleAccess($toWorkingModule);
-                            }
-                            if (!$workingModule || $workingModule->isAdminModule()) {
-                                $workingModule = $p->getFirstNoneAdminAccessibleModule();
-                            }
+									// checks admin working module access
+									if ($toWorkingModule) {
+										$workingModule = $p->getModuleAccess($toWorkingModule);
+									}
+									if (!$workingModule || $workingModule->isAdminModule()) {
+										$workingModule = $p->getFirstNoneAdminAccessibleModule();
+									}
 
-                            // Persists admin working module in context
-                            $this->getAdminContext($p)->setWorkingModule($workingModule);
-                            $p->setValueInRoleContext("lastWorkingModule", $workingModule->getModuleName());
-                        } // if p is bound to a namespace, then forces a non Admin module
-                        else if ($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole() && $lastModule->isAdminModule()) {
-                            $lastModule = $p->getFirstNoneAdminAccessibleModule();
-                        }
-                        // Persists lastModule in context
-                        $p->setValueInRoleContext("lastModule", $lastModule->getModuleName());
-                        // Persists principal context in DB
-                        $this->persistMainPrincipalSessionContext($p, $exec);
-                    } else $lastModule = $mAS->getHomeModule($p);
-                }
+									// Persists admin working module in context
+									$this->getAdminContext($p)->setWorkingModule($workingModule);
+									$p->setValueInRoleContext("lastWorkingModule", $workingModule->getModuleName());
+								} // if p is bound to a namespace, then forces a non Admin module
+								else if ($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole() && $lastModule->isAdminModule()) {
+									$lastModule = $p->getFirstNoneAdminAccessibleModule();
+								}
+								// Persists lastModule in context
+								$p->setValueInRoleContext("lastModule", $lastModule->getModuleName());
+								// Persists principal context in DB
+								$this->persistMainPrincipalSessionContext($p, $exec);
+						} else $lastModule = $mAS->getHomeModule($p);
+					}
 				// Breaks html generation if found in cache
 				if($type == "user" && $exec->wasFoundInJSCache()) {
 					break;
@@ -11985,7 +11985,7 @@ onUpdateErrorCounter = 0;
 				$additionalJsCode = null;
 				// Direct url access navigation 
 				if (!$exec->getIsUpdating() || $exec->getIdAnswer() == "mainDiv") {
-				    $exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type=="item" || $type=="editItem" || $type=="folder" ? $type."/".$typeId.($targetModifier?"/".$targetModifier:"") : "all"));
+					$exec->addRequests(($exec->getIsUpdating() ? "mainDiv/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/".($type=="item" || $type=="editItem" || $type=="folder" ? $type."/".$typeId.($targetModifier?"/".$targetModifier:"") : "all"));
 				}
 				// Full screen update 
 				else if ($type=="item" || $type=="editItem" || $type=="folder" || $type==null){
@@ -12005,12 +12005,12 @@ onUpdateErrorCounter = 0;
 						// $exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
 						
 						// loads admin console
-					    $exec->addRequests(($exec->getIsUpdating() ? "workZone/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/adminWorkZone/");
+						$exec->addRequests(($exec->getIsUpdating() ? "workZone/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/adminWorkZone/");
 					} 
 					// Navigates through User modules and namespaces or goes out of Admin 
 					else {
-					    // since 4.602 28.11.2017 the navigation bar doesn't need to be refreshed. it is loaded once at the beginning.
-					    // if($fromModule == null || $fromModule == Module :: ADMIN_MODULE) $exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
+						// since 4.602 28.11.2017 the navigation bar doesn't need to be refreshed. it is loaded once at the beginning.
+						// if($fromModule == null || $fromModule == Module :: ADMIN_MODULE) $exec->addRequests(($exec->getIsUpdating() ? "navigationBar/" : "") . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $lastModule->getModuleUrl() . "/display/navigationBar/");
 						
 						//load the workZone. This include:
 						//	- the group selector pannel
@@ -12020,14 +12020,14 @@ onUpdateErrorCounter = 0;
 				}
 
 				// JS to adjust GUI on client side
-                $currentModuleLabel = $transS->t($p, "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl());
-                if($currentModuleLabel == "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl()) $currentModuleLabel = $transS->t($p, $lastModule->getModuleUrl());
+					$currentModuleLabel = $transS->t($p, "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl());
+					if($currentModuleLabel == "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl()) $currentModuleLabel = $transS->t($p, $lastModule->getModuleUrl());
 
 				$defaultWigiiNamespaceUrl = (string) $configS->getParameter($p, null, "defaultWigiiNamespace");				
 				if(!$defaultWigiiNamespaceUrl){
-				    $defaultWigiiNamespaceUrl = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+					$defaultWigiiNamespaceUrl = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
 				}
-                $exec->addJsCode("
+					$exec->addJsCode("
 closeStandardsDialogs();
 crtLanguage = '" . $transS->getLanguage(true) . "';
 crtLang = '" . $transS->getLanguage() . "';
@@ -12122,7 +12122,7 @@ $additionalJsCode
 						$this->includeTemplateIndicators($p, $exec);
 						break;
 					case "navigationBar" :
-					    // since 4.602 28.11.2017 the navigation bar doesn't need to be repainted. It is constructed once at the beginning.
+						// since 4.602 28.11.2017 the navigation bar doesn't need to be repainted. It is constructed once at the beginning.
 						//$this->includeTemplateNavigation($p, $exec);
 						break;
 					case "adminNavigationBar" :
@@ -12145,10 +12145,10 @@ $additionalJsCode
 							}
 							// Medair (CWE) 16.02.2018 if add modifier then opens a form to add element
 							elseif($exec->getCrtParameters(2) == "add") {
-							    $exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/add/".$crtSelectedGroupId);
+								$exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/add/".$crtSelectedGroupId);
 							}
-						} else if($exec->getCrtParameters(0) == "item" || $exec->getCrtParameters(0) == "editItem"){						    
-						    $elS = ServiceProvider::getElementService();
+						} else if($exec->getCrtParameters(0) == "item" || $exec->getCrtParameters(0) == "editItem"){							
+							$elS = ServiceProvider::getElementService();
 							$configS = $this->getConfigurationContext();
 							//find first group of the item:
 							//reset filters
@@ -12164,27 +12164,27 @@ $additionalJsCode
 									$groupPath = $elS->getGroupsPathContainingElement($p, $elementP);
 								}
 								if($groupPath){
-								    // Medair (CWE) 16.02.2018 if a target group is given, tries to open element in it, else keeps first match								    
-								    $crtSelectedGroupId = $exec->getCrtParameters(2);
-								    $foundCrtSelectedGroupId=false;
-								    if(isset($crtSelectedGroupId)) {
-								        foreach($groupPath as $eltGroup => $path) {
-								            // checks if target group belongs to element group path. If yes, then opens the card in the matching element group.
-								            if(array_key_exists($crtSelectedGroupId, $path)) {
-								                $foundCrtSelectedGroupId=true;
-								                $crtSelectedGroupId = $eltGroup;
-								            }
-								        }
-								    }
-								    if(!$foundCrtSelectedGroupId) {
-								        reset($groupPath);
-								        $crtSelectedGroupId = key($groupPath);
-								    }								
+									// Medair (CWE) 16.02.2018 if a target group is given, tries to open element in it, else keeps first match									
+									$crtSelectedGroupId = $exec->getCrtParameters(2);
+									$foundCrtSelectedGroupId=false;
+									if(isset($crtSelectedGroupId)) {
+										foreach($groupPath as $eltGroup => $path) {
+												// checks if target group belongs to element group path. If yes, then opens the card in the matching element group.
+												if(array_key_exists($crtSelectedGroupId, $path)) {
+													$foundCrtSelectedGroupId=true;
+													$crtSelectedGroupId = $eltGroup;
+												}
+										}
+									}
+									if(!$foundCrtSelectedGroupId) {
+										reset($groupPath);
+										$crtSelectedGroupId = key($groupPath);
+									}								
 									$lc->setGroupPList($this->getConfigurationContext()->getGroupPList($p, $exec->getCrtModule(), $crtSelectedGroupId), false);
 									$lc->setCrtSelectedItem($exec->getCrtParameters(1));
 									// Medair (CWE) 15.02.2018 if editItem and principal has no edit rights on element shows detail, else opens edit form
 									if($exec->getCrtParameters(0) == "editItem" && $elementP->getRights()->canWriteElement() && !$elementP->getElement()->isState_blocked() && !$elementP->isParentElementState_blocked()) {
-									    $exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/edit/".$exec->getCrtParameters(1));									    
+										$exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/edit/".$exec->getCrtParameters(1));										
 									}
 									// else displays element detail
 									else $exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/element/detail/".$exec->getCrtParameters(1));
@@ -12285,7 +12285,7 @@ $additionalJsCode
 					$htmlRendererDfa = $this->getElementPListHtmlRendererDFAS(array(
 						'setOutputEnabled' => $outputEnabled,
 						'setRedirectIfOneElement' => !$outputEnabled,
-					    'setOpenElementInEdit' => !$outputEnabled && $editElement,
+						'setOpenElementInEdit' => !$outputEnabled && $editElement,
 						'setRedirectIfOneGroup' => !$outputEnabled,
 						'setFilterOnElements' => !$outputEnabled && ($filterOnElements || $editElement),
 						'setListIsNavigable' => true,
@@ -12400,12 +12400,12 @@ $additionalJsCode
 	}
 	
 	/**
-	 * Binds all required JS services to the module view beeing displayed.
-	 * @param Principal $p current principal
-	 * @param ExecutionService $exec current request
-	 */
+	* Binds all required JS services to the module view beeing displayed.
+	* @param Principal $p current principal
+	* @param ExecutionService $exec current request
+	*/
 	public function bindJsServicesOnModuleView($p,$exec) {
-	    $this->debugLogger()->logBeginOperation('bindJsServicesOnModuleView');
+		$this->debugLogger()->logBeginOperation('bindJsServicesOnModuleView');
 		// binds standard Wigii JS services
 		$config = $this->getConfigurationContext();
 		$module = $exec->getCrtModule();
