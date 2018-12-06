@@ -339,4 +339,16 @@ class PhpStdFL extends FuncExpVMAbstractFL
 	    if($returnValue === false) throw new FuncExpEvalException('JSON encode error '.json_last_error().' '.json_last_error_msg(), FuncExpEvalException::INVALID_ARGUMENT);
 	    return $returnValue;
 	}
+	/**
+	 * synonym of is_numeric. See http://www.php.net/is_numeric
+	 */
+	public function isNumeric($args){
+		return is_numeric($this->evaluateArg($args[0]));
+	}
+	/**
+	 * is_numeric. See http://www.php.net/is_numeric
+	 */
+	public function is_numeric($args){
+		return is_numeric($this->evaluateArg($args[0]));
+	}
 }

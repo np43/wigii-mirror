@@ -88,35 +88,54 @@ class DimensionDataFlowConnector implements DataFlowDumpable {
 	/**
 	 * Sets the dimension selector. Can be a group id, a group name or a group log exp.
 	 * @param String|Int|LogExp $selector
+	 * @return DimensionDataFlowConnector for chaining
 	 */
 	public function setSelector($selector) {
 		$this->selector = $selector;
+		return $this;
 	}
 
 	private $attrLogExp;
 	/**
 	 * Sets a LogExp used to filter the list of attributes (for instance filtering some specific values, see module Dimensions for details about the available fields)
-	 * @param LogExp $attrLogExp 
+	 * @param LogExp $attrLogExp
+	 * @return DimensionDataFlowConnector for chaining 
 	 */
 	public function setAttrLogExp($attrLogExp) {
 	    $this->attrLogExp = $attrLogExp;
+	    return $this;
 	}
 
 	private $sortOrder;
 	/**
 	 * Sets the sort order
 	 * @param int $sortOrder One of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label. (by default is ascending by label)
+	 * @return DimensionDataFlowConnector for chaining
 	 */
 	public function setSortOrder($sortOrder) {
 	    $this->sortOrder = $sortOrder;
+	    return $this;
 	}
 
 	private $firstMatch;
 	/**
 	 * @param Boolean $bool if set to true, then returns only first match, else dumps whole selection. Not active by default.
+	 * @return DimensionDataFlowConnector for chaining
 	 */
 	public function setFirstMatch($bool) {
 	    $this->firstMatch = $bool;
+	    return $this;
+	}
+	
+	private $wigiiNamespace;
+	/**
+	 * Sets the WigiiNamespace into which to lookup for Dimensions module
+	 * @param WigiiNamespace|String $wigiiNamespace a valid and accessible WigiiNamespace
+	 * @return DimensionDataFlowConnector for chaining
+	 */
+	public function setWigiiNamespace($wigiiNamespace) {
+		$this->wigiiNamespace = $wigiiNamespace;
+		return $this;
 	}
 	
 	// DataFlowDumpable implementation
@@ -131,7 +150,11 @@ class DimensionDataFlowConnector implements DataFlowDumpable {
 	    $p = $dataFlowContext->getPrincipal();
 	    
 	    // gets setup wigii namespace and binds to it
-	    $setupNS =  $this->getWigiiNamespaceAdminService()->getSetupWigiiNamespace($p);
+	    if($this->wigiiNamespace) {
+	    	if($this->wigiiNamespace instanceof WigiiNamespace) $setupNS = $this->wigiiNamespace;
+	    	else $setupNS = $this->getWigiiNamespaceAdminService()->getWigiiNamespace($p, $this->wigiiNamespace);
+	    }
+	    else $setupNS =  $this->getWigiiNamespaceAdminService()->getSetupWigiiNamespace($p);
 	    $origNS = $p->getWigiiNamespace();
 	    $p->bindToWigiiNamespace($setupNS);
 	    $cacheKey = $p->getUsername();

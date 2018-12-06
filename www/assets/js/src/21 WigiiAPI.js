@@ -2924,6 +2924,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 */
 		wigiiApi.DataFlowService = function() {
 			var self = this;			
+			self.className = 'DataFlowService';
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
 			
 			/**
 			 * Reads the data coming from the source and processes it through the selected flow activities
@@ -3007,6 +3009,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 */
 			self.DataFlowContext = function(dataFlowService, activities) {
 				var self = this;
+				self.className = 'DataFlowContext';
+				self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
 				self.impl = {dfS:dataFlowService,dataFlow:[]};
 				
 				/**
@@ -3060,6 +3064,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 */
 			self.DataFlowActivityContext = function(stepId,dataFlowContext) {
 				var self = this;
+				self.className = 'DataFlowActivityContext';
+				self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
 				self.impl = {dfCtx:dataFlowContext, stepBuffer:[]};
 				/**
 				 * The current executing step ID in this DataFlow

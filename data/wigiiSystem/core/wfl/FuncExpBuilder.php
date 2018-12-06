@@ -1111,9 +1111,10 @@ class FuncExpBuilder {
 	 * @param String|Int|LogExp $selector The dimension selector. Can be a group id, a group name or a group log exp.
 	 * @param LogExp $attrLogExp An optional LogExp used to filter the list of attributes (for instance filtering some specific values, see module Dimensions for details about the available fields)
 	 * @param Int $sortOrder One of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label. (by default is ascending by label)
+	 * @param WigiiNamespace|String $namespace Optional WigiiNamespace into which to look for a Dimensions module. If not defined, then takes Client Setup namespace.
 	 * @return DimensionDataFlowConnector returns a DimensionDataFlowConnector instance that can be used as a DataFlow source.
 	 */
-	public function dimension2df($selector, $attrLogExp = null, $sortOrder = 3) {
+	public function dimension2df($selector, $attrLogExp = null, $sortOrder = 3, $namespace=null) {
 	    $returnValue = ServiceProvider::getExclusiveAccessObject('DimensionDataFlowConnector');
 	    $returnValue->setSelector($selector);
 	    if($selector instanceof FuncExpParameter) $selector->registerSetterMethod('setSelector', $returnValue);
@@ -1121,6 +1122,8 @@ class FuncExpBuilder {
 	    if($attrLogExp instanceof FuncExpParameter) $attrLogExp->registerSetterMethod('setAttrLogExp', $returnValue);
 	    $returnValue->setSortOrder($sortOrder);
 	    if($sortOrder instanceof FuncExpParameter) $sortOrder->registerSetterMethod('setSortOrder', $returnValue);
+	    $returnValue->setWigiiNamespace($namespace);
+	    if($namespace instanceof FuncExpParameter) $sortOrder->registerSetterMethod('setWigiiNamespace', $returnValue);
 	    return $returnValue;
 	}
 	

@@ -1331,11 +1331,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * Selects a dimension and pushes cfgAttribut StdClasses into a DataFlow
 	 * cfgAttribut StdClasses are of the form {value, attributes, label}. See cfgAttribut FuncExp for more details.
 	 * See method 'dimension2df' in FuncExpBuilder class.<br/>
-	 * FuncExp signature : <code>dimension2df(selector, attrLogExp = null, sortOrder = 3)</code><br/>
+	 * FuncExp signature : <code>dimension2df(selector, attrLogExp = null, sortOrder = 3, namespace=null)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) selector: String|Int|LogExp. The dimension selector. Can be a group id, a group name or a group log exp.
 	 * - Arg(1) attrLogExp: LogExp. An optional LogExp used to filter the list of attributes (for instance filtering some specific values, see module Dimensions for details about the available fields)
 	 * - Arg(2) sortOrder: int. One of 0 = no sorting, keep dimension element id ordering, 1 = ascending by value, 2 = descending by value, 3 = ascending by label, 4 = descending by label. (by default is ascending by label)
+	 * - Arg(3) namespace: WigiiNamespace|String. Optional WigiiNamespace into which to look for a Dimensions module. If not defined, then takes Client Setup namespace.
 	 * @return DimensionDataFlowConnector returns a DimensionDataFlowConnector instance that can be used as a DataFlow source.
 	 */
 	public function dimension2df($args) {
@@ -1343,7 +1344,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    if($nArgs < 1) throw new FuncExpEvalException('The dimension2df function takes at least one argument which is the dimension selector. Can be a group id, a group name or a group log exp.', FuncExpEvalException::INVALID_ARGUMENT);
 	    return $this->getFuncExpBuilder()->dimension2df($this->evaluateArg($args[0]),
 	        ($nArgs > 1 ? $this->evaluateArg($args[1]) : null),
-	        ($nArgs > 2 ? $this->evaluateArg($args[2]) : 3));
+	        ($nArgs > 2 ? $this->evaluateArg($args[2]) : 3),
+	    	($nArgs > 3 ? $this->evaluateArg($args[3]) : null));
 	}
 	
 	/**
@@ -2225,6 +2227,51 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    }
 	    $returnValue = Indicator::createInstance ( $fs, $field->getDataType (), $function, $label, null, $isRecursive, true);
 	    return $returnValue;
+	}
+	
+	/**
+	 * Lookups in group hierarchy for for an existing value in a given drop-down which matches the group name (or a pattern inside the group name). Returns the first possible match.
+	 * FuncExp signature : <code>getDropdownValueFromGroupOrParentGroups(fieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: FieldSelector of the dropDown field. A Field from which to get the possible values as a drop-down.
+	 * - Arg(1) separator|start: = null
+	 * 				if String. optional, If defined, then use the string as a separator to explode the groupname to consider for matching. I.E =" ", and next parameter to 0 then takes the first word of the groupname to do the matching
+	 * 				if INT. opitonal, If defined do the comparaison starting from this character num
+	 * - Arg(2) index|len: INT = 0
+	 * 				if Arg1 is String : optional, If defined, then compare the exploded value at this index
+	 * 				if Arg1 is Int : optional, If defined, then takes len char after start for the comparaison
+	 * @return String the current nearest value found in the group hierachy from the drop down list
+	 */
+	public function getDropdownValueFromGroupOrParentGroups($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The getDropdownValueFromGroupOrParentGroups function takes at least one argument which is the field name', FuncExpEvalException::INVALID_ARGUMENT);
+		$dropdown=$this->evaluateFuncExp(fx('cfgFieldXml',$args[0]));
+		if($nArgs>1) $separator=$this->evaluateArg($args[1]);
+		else $separator=null;
+		if($nArgs>2) $index=$this->evaluateArg($args[2]);
+		else $index = 0;
+		
+		// builds $dropdown array for pattern matching
+		$matchers=array();
+		foreach($dropdown->attribute as $attribute_key => $attribute){
+			$val = (string)$attribute;
+			$matchers[$val]=$val;
+		}
+		
+		$returnValue = $this->evaluateFuncExp(fx('cfgCurrentGroup','groupname',true),$this);
+		// checks current group matching
+		if(isset($returnValue)) {
+			if($separator && is_numeric($separator)){
+				$returnValue= substr($returnValue, $separator, $index);
+			} else if($separator && is_string($separator)){
+				$returnValue= explode($separator, $returnValue)[$index];
+			}
+			if(!$matchers[$returnValue]) {
+				// checks parent group matching
+				$returnValue = $this->evaluateFuncExp(fx('cfgParentGroup',$matchers,'groupnameMatch',true,$separator,$index),$this);
+			}
+		}
+		return $returnValue;
 	}
 	
 	// WigiiBPLParameter builder

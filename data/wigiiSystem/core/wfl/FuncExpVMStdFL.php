@@ -2126,6 +2126,66 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    return $returnValue;
 	}
 
+	/**
+	 * Returns the number of week days (mon-fri) between a start date (included) and an end date (included).
+	 * FuncExp signature : <code>ctlWeekDays(startDate,endDate)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) startDate: String|Timestamp. The start date in Wigii format (yyyy-mm-dd hh:mm:ss) or now if null. Also supports timestamps.
+	 * - Arg(1) endDate: String|Timestamp. The end date in Wigii format (yyyy-mm-dd hh:mm:ss) or now if null. Also supports timestamps.
+	 * @return int the number of week days. If start date is bigger than end date, then there are inverted.
+	 */ 
+	public function ctlWeekDays($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		
+		// parses startDate to unixtimestamp
+		if($nArgs>0) $startDate = $this->evaluateArg($args[0]);
+		else $startDate = null;
+		if($startDate==null) $startDate = time();
+		else {
+			$d = strtotime($startDate);
+			if($d===false) throw new FuncExpEvalException('invalid startDate format '.$startDate,FuncExpEvalException::INVALID_ARGUMENT);
+			else $startDate = $d;
+		}
+		// converts to DateTime object and ensures to be at 0h
+		$startDate = new DateTime((new DateTime())->setTimestamp($startDate)->format('Y-m-d'));
+		
+		// parses endDate to unixtimestamp
+		if($nArgs>1) $endDate = $this->evaluateArg($args[1]);
+		else $endDate = null;
+		if($endDate==null) $endDate = time();
+		else {
+			$d = strtotime($endDate);
+			if($d===false) throw new FuncExpEvalException('invalid endDate format '.$endDate,FuncExpEvalException::INVALID_ARGUMENT);
+			else $endDate = $d;
+		}
+		// converts to DateTime object and ensures to be at 0h
+		$endDate = new DateTime((new DateTime())->setTimestamp($endDate)->format('Y-m-d'));
+		
+		// swaps if startDate > endDate
+		if($startDate > $endDate) {
+			$d = $endDate;
+			$endDate = $startDate;
+			$startDate = $d;
+		}
+		
+		// if on week-end, then startDate = next monday, endDate = last friday.
+		if($startDate->format('N') > 5) $startDate = new DateTime($startDate->format('Y-m-d')." next Monday");
+		if($endDate->format('N') > 5) $endDate = new DateTime($endDate->format('Y-m-d')." last Friday");
+		// if startDate and endDate get inverted, then we were on a week-end, then return 0.
+		if($startDate > $endDate) return 0;
+		else if($startDate == $endDate) return 1;
+		// ** at this point: startDate < endDate and startDate is a week day, endDate is a week day. **
+		// computes startDate next saturday and endDate last sunday
+		$nextSaturday = new DateTime($startDate->format('Y-m-d')." next Saturday");
+		$lastSunday = new DateTime($endDate->format('Y-m-d')." last Sunday");
+		// if nextSaturday > lastSunday, then startDate and endDate are in the same week
+		if($nextSaturday > $lastSunday) return $endDate->diff($startDate,true)->format('%a')+1;
+		// else computes number of weeks
+		$nbWeeks = (int)($lastSunday->diff($nextSaturday,true)->format('%a')/7);
+		// nb week days = startDate up to next saturday + nbWeeks * 5 + last sunday up to endDate
+		return $nextSaturday->diff($startDate,true)->format('%a')+$nbWeeks*5+$endDate->diff($lastSunday,true)->format('%a');
+	}
+	
     /**
      * Give the percentage of already elapsed time between startDate and endDate (Based on now)
      * FuncExp signature : <code>ctlTimeProgression(startDate:Dates, endDates:Dates)</code><br/>
@@ -2775,7 +2835,72 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 		return $returnValue;
 	}
-	
+	/**
+	 * Summarizes some html content down to a given number of letters and returns pure text.
+	 * FuncExp signature : <code>txtSummarize(str,len)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. Evaluates to a string which can contain some HTML tags
+	 * - Arg(1) len : Int. Length of the summary. Defaults to 50.
+	 * @return String the summarized string with no html tags left
+	 */	
+	public function txtSummarize($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs<1) throw new FuncExpEvalException('txtSummarize takes at least 1 argument: the text string to summarize', FuncExpEvalException::INVALID_ARGUMENT);
+		
+		$returnValue = $this->evaluateArg($args[0]);
+		if(!empty($returnValue)) {
+			$html2text = new Html2text();
+			$html2text->setHtml($returnValue);
+			$returnValue = $html2text->getText();
+			
+			if($nArgs>1) $len = $this->evaluateArg($args[1]);
+			else $len = 50;
+			if(strlen($returnValue)>$len){
+				$returnValue= substr($returnValue, 0, $len);
+				$returnValue.= "...";
+			}
+		}
+		return $returnValue;		
+	}	
+	/**
+	 * @deprecated deprecated synonym of txtSummarize
+	 */
+	public function summmarize($args){return $this->txtSummarize($args);}
+	/**
+	 * Adds some HTML formatting to the given string by interpreting the tags:
+	 * $b$, $endb$: to put in bold
+	 * $i$, $endi$: to put in italic
+	 * $br$ or \n: to add br tag
+	 * $p$, $pMargin$, $endp$: to add a paragraph (with optional left margin)
+	 * @return String the formatted html string
+	 */
+	public function txtFormat($args){
+		return str_replace(array('$b$','$endb$','$i$','$endi$','$br$', "\n", '$p$', '$endp$','$hr$', '$nbsp$', '$pMargin$'), array('<b>','</b>','<i>','</i>','<br />','<br />', '<p>', '</p>', '<hr />', ' ', '<p style="margin-left:40px;">'),$this->evaluateArg($args[0]));
+	}
+	/**
+	 * @deprecated deprecated synonym of txtFormat
+	 */
+	public function format($args){return $this->txtFormat($args);}
+	/**
+	 * Removes new lines (br or backslash n) in given string and replaces them by spaces
+	 */
+	public function txtRemoveNewlines($args){
+		return str_replace(array('<br>', '<br/>', '<br />', "\n"), " ",$this->evaluateArg($args[0]));
+	}
+	/**
+	 * @deprecated deprecated synonym of txtRemoveNewlines
+	 */
+	public function removeNewlines($args){return $this->txtRemoveNewlines($args);}
+	/**
+	 * Removes tabs in given string and replaces them by spaces
+	 */
+	public function txtRemoveTabs($args){
+		return str_replace(array("\t"), " ",$this->evaluateArg($args[0]));
+	}
+	/**
+	 * @deprecated deprecated synonym of txtRemoveTabs
+	 */
+	public function removeTabs($args){return $this->txtRemoveTabs($args);}
 	/**
 	 * Implodes values.
 	 * FuncExp signature: <code>implode(sep, val1, val2, ..., valn)</code><br/>
@@ -3027,5 +3152,43 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		else $returnValue = stripos($str,$token);
 		if($returnValue===false) return false;
 		else return true;
+	}
+	/**
+	 * Returns a string in HH:MM format from a float. HH can be more than 24, and seconds are rounded
+	 * FuncExp signature: <code>float2time(timeAsFloat)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) timeAsFloat: Float. A number of hours as a float number.
+	 * - Arg(1) sep: String. Optional time separator. Defaults to colon.
+	 * @return String a time in HH:MM format
+	 */	
+	public function float2time($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		return float2time($this->evaluateArg ($args [0]),
+				($nArgs>1?$this->evaluateArg ($args [1]):":"));
+	}
+	/**
+	 * Returns a float from a string in HH:MM or HH:MM:SS format, HH can be more than 24
+	 * FuncExp signature: <code>time2float(timeAsString)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) timeAsString: String. A time string.
+	 * - Arg(1) sep: String. Optional time separator. Defaults to colon.
+	 * @return Float a number of hours as a float
+	 */	
+	public function time2float($args){
+		return time2float($this->evaluateArg ( $args [0] ),
+				($nArgs>1?$this->evaluateArg ($args [1]):":"));
+	}
+	
+	/**
+	 * getCurrentTime rounded to previous 5min
+	 */
+	public function getRoundedTimeFloor5(){
+		return date("H:i",floor(time()/300)*300);
+	}
+	/**
+	 * getCurrentTime rounded to next 5min
+	 */
+	public function getRoundedTimeCeil5(){
+		return date("H:i",ceil(time()/300)*300);
 	}
 }
