@@ -2608,7 +2608,7 @@
 		wigiiNcd.source = {};
 		
 		/**
-		 * Returns a DataFlow source which generates a range of numbers, starting from one number, to another number, by a given step.
+		 * Returns a DataFlow source which generates a range of numbers, starting from one number, to another number (not included), by a given step.
 		 * @param Number from start number, can be integer, float, positive, null or negative.
 		 * @param Number to stop number, can be integer, float, positive, null or negative.
 		 * @param Number step increment number, can be integer, float, positive or negative. Not null.
@@ -2628,6 +2628,20 @@
 				}
 			}
 			else throw wigiiNcd.createServiceException('step cannot be 0',wigiiNcd.errorCodes.INVALID_ARGUMENT);
+		}};
+		
+		/**
+		 * Returns a DataFlow source which generates a finite quantity of numbers, starting from one number, going to another number included.
+		 * @param Number from start number, can be integer, float, positive, null or negative.
+		 * @param Number to stop number, can be integer, float, positive, null or negative.
+		 * @param Number nbSlices Quantity of slices to generate. Numbers a equally distributed between from and to limits.
+		 */
+		wigiiNcd.source.genInterval = function(from,to,nbSlices) { return function(dataFlowContext) {
+			if(!($.isNumeric(from) && $.isNumeric(to) && $.isNumeric(nbSlices))) throw wigiiNcd.createServiceException('from, to and nbSlices should all be numbers',wigiiNcd.errorCodes.INVALID_ARGUMENT);	
+			var factor = (to-from)/nbSlices;
+			for(var i=0; i <= nbSlices; i++) {
+				dataFlowContext.processDataChunk(from+factor*i);
+			}
 		}};
 		
 		/**
