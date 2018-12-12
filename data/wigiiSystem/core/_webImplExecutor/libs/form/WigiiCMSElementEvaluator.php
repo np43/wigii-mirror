@@ -32,6 +32,7 @@
  * Updated by Weber wwigii-system.net for Wigii.org on 29.11.2017 to enforce the support of javascript into the page rendering process.
  * Updated by Weber wwigii-system.net for Wigii.org on 22.01.2018 to support NCD based articles.
  * Updated by Wigii.org (Camille Weber) on 05.03.2018 to move it to standard Wigii distribution
+ * Updated by Wigii.org (Lionel Weber) on 12.12.2018 to support HTMLCode based articles
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -152,11 +153,12 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 	public function cms_authoringOnLoadJS($args) {
 		return '(function(){
 	var displayForm = function() {
-		$("#$$idForm$$__groupSiteMap, #$$idForm$$__groupIntro, #$$idForm$$__groupLogo, #$$idForm$$__groupMenu, #$$idForm$$__groupNCD, #$$idForm$$__groupContent, #$$idForm$$__groupImage, #$$idForm$$__groupFooter, #$$idForm$$__groupCSS, #$$idForm$$__groupJS, #$$idForm$$__groupForward").hide();
+		$("#$$idForm$$__groupSiteMap, #$$idForm$$__groupIntro, #$$idForm$$__groupLogo, #$$idForm$$__groupMenu, #$$idForm$$__groupNCD, #$$idForm$$__groupHTMLCode, #$$idForm$$__groupContent, #$$idForm$$__groupImage, #$$idForm$$__groupFooter, #$$idForm$$__groupCSS, #$$idForm$$__groupJS, #$$idForm$$__groupForward").hide();
 		if($("#$$idForm$$_contentType_value_select").val()=="none") $("#$$idForm$$_contentType_value_select").val("content");
 		switch($("#$$idForm$$_contentType_value_select").val()) {
-		case "content": $("#$$idForm$$__groupContent, #$$idForm$$__contentHTML").show();break;
-		case "ncd": $("#$$idForm$$__groupContent, #$$idForm$$__groupNCD").show();$("#$$idForm$$__contentHTML").hide();break;
+		case "content": $("#$$idForm$$__groupContent, #$$idForm$$__contentTitle,#$$idForm$$__contentHTML,#$$idForm$$__articleBgColor,#$$idForm$$__articleBgAlpha,#$$idForm$$__imgArticleBG").show();break;
+		case "ncd": $("#$$idForm$$__groupContent, #$$idForm$$__contentTitle,#$$idForm$$__groupNCD,#$$idForm$$__articleBgColor,#$$idForm$$__articleBgAlpha,#$$idForm$$__imgArticleBG").show();$("#$$idForm$$__contentHTML,#$$idForm$$__groupHTMLCode").hide();break;
+		case "htmlCode": $("#$$idForm$$__groupContent, #$$idForm$$__contentTitle,#$$idForm$$__groupHTMLCode").show();$("#$$idForm$$__contentHTML,#$$idForm$$__groupNCD,#$$idForm$$__articleBgColor,#$$idForm$$__articleBgAlpha,#$$idForm$$__imgArticleBG").hide();break;
 		case "siteMap": $("#$$idForm$$__groupSiteMap").show();break;
 		case "intro": $("#$$idForm$$__groupIntro").show();break;
 		case "logo": $("#$$idForm$$__groupLogo").show();break;
@@ -183,7 +185,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$choosePosition = sel($this->getPrincipal(), elementPList(lxInG(lxEq(fs('id'),$groupId)),
 				lf(
 						fsl(fs('contentPosition'),fs('contentSummary'),fs('contentNextId')),
-						lxIn(fs('contentType'),array('content','ncd')),
+						lxIn(fs('contentType'),array('content','ncd','htmlCode')),
 						fskl(fsk('contentPosition','value'))
 						)),
 				dfasl(
@@ -262,6 +264,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		switch($contentType) {
 			case "content": 
 			case "ncd":	
+			case "htmlCode":	
 				$this->cms_authoringOnSaveContent(); break;
 			case "siteMap": $this->cms_auhoringOnSaveSiteMap(); break;
 			case "forward": $this->cms_auhoringOnSaveForward(); break;
@@ -325,7 +328,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$prevPos = sel($this->getPrincipal(), elementPList(lxInG(lxEq(fs('id'),$groupId)),
 					lf(
 							fsl(fs('contentPosition'),fs('contentNextId')),
-							lxAnd(lxIn(fs('contentType'),array('content','ncd')),lxSm(fs('contentPosition'),$nextPos)),
+							lxAnd(lxIn(fs('contentType'),array('content','ncd','htmlCode')),lxSm(fs('contentPosition'),$nextPos)),
 							fskl(fsk('contentPosition','value',false)),
 							1,1
 							)), dfasl(
@@ -536,6 +539,20 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$this->executionSink()->publishEndOperation("cms_getForwardUrlForUrl", $principal);
 		return $returnValue;
 	}
+	private $cms_fieldsXml = null;
+	/**
+	 * return Xml from the field if exist, false if the field doesn't exist in the config
+	 * @param string $fieldName
+	 * @return SimpleXMLElement or false
+	 */
+	protected function getFieldXml($fieldName){
+		if(!$this->cms_fieldsXml){
+			$this->cms_fieldsXml= ServiceProvider::getConfigService()->mf($this->getPrincipal(),ServiceProvider::getExecutionService()->getCrtModule());
+		}
+		$returnValue = $this->cms_fieldsXml->{$fieldName};
+		if($returnValue->getName()) return $returnValue;
+		return false;
+	}
 	/**
 	 * Gets the content associated to the given URL<br/>
 	 * FuncExp signature is: <code>cms_getContent(url,options)</code><br/>
@@ -626,11 +643,17 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			// renders header
 			echo $this->cms_composeHeader($options,$css,$logo,$menu,$intro)."\n";
 			
+			$contentFsl = fsl(fs('contentType'),fs('contentTitle'),fs('contentHTML'),fs('contentNCD'));
+			//check if config manage contentHTMLCode, if not ignore
+			if($this->getFieldXml("contentHTMLCode")){
+				$contentFsl->addFieldSelectorInstance(fs('contentHTMLCode'));
+			}
+			$contentFsl->mergeFieldSelectorList(fsl(fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')));
 			// renders article content
 			sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
 				lf(
-					fsl(fs('contentType'),fs('contentTitle'),fs('contentHTML'),fs('contentNCD'),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG','url')),
-						lxAnd(lxIn(fs('contentType'),array('content','ncd')),lxIn(fs('status'),['published','testing'])),
+					$contentFsl,
+						lxAnd(lxIn(fs('contentType'),array('content','ncd','htmlCode')),lxIn(fs('status'),['published','testing'])),
 					fskl(fsk('contentPosition'))
 				)),
 				dfasl(
@@ -642,6 +665,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 							switch($articleType) {
 								case 'content': $this->cms_composeArticle($article, $options, fx('oCall',$this,'cms_getArticleHtmlContent',$article,$options),$callbackDFA); break;
 								case 'ncd': $this->cms_composeArticle($article, $options, fx('oCall',$this,'cms_getArticleNcdContent',$article,$options),$callbackDFA); break;
+								case 'htmlCode': $callbackDFA->writeResultToOutput($article->getFieldValue('contentHTMLCode')[$options->getValue('language')]); break;
 							}
 						}
 						catch(Exception $e) {
@@ -1266,7 +1290,7 @@ div.wigii-cms-add-public-comments	{ cursor:pointer; text-align:center;margin-bot
 div.wigii-cms 					{ width:$articleWidth; box-sizing:border-box; }
 div.wigii-cms div.wigii-cms		{ width:100%; }
 div.wigii-cms  div.wigii-cms.title-content 	{ /* not needed any more now the top link is at the bottom of articles: float:left; width:80%; */ }
-div.wigii-cms  div.wigii-cms.a-top { float:right; width:20%; margin-top:4px; font-size:small; text-align:right; }
+div.wigii-cms  div.wigii-cms.a-top { float:right; width:20%; min-width:100px; margin-top:4px; margin-bottom:10px;font-size:small; text-align:right; }
 div.wigii-cms.content 			{ clear:left; margin:0px; }
 div.wigii-cms.content p			{ margin-top:6px; margin-bottom:6px; }
 div.wigii-globalContainer>div.wigii-footer.wigii-cms.content
@@ -1639,6 +1663,7 @@ HTMLCSS;
 		switch($contentType) {
 			case "content": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentHTML"),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG'),fs('imgArticleBG','url')); break;
 			case "ncd": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentNCD"),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG'),fs('imgArticleBG','url')); break;
+			case "htmlCode": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs('contentType'),fs('contentTitle'),fs('contentHTMLCode')); break;
 			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("forceHeight"),fs("forceHeightFirst"),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('publicCommentsBgColor'),fs('publicCommentsTextColor'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
 			case "intro": $returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); break;
 			case "logo": $returnValue = fsl(fs("contentLogo")); break;
