@@ -70,9 +70,9 @@ VALUES (NULL , '1', '2', NULL , '1'), (NULL , '1', '2', '1' , NULL);
 -------------------------------------------
 -- index.php
 -------------------------------------------
-	- rename example.index.php in index.php
+	- rename example.index.php to index.php
 	- replace the xxx.xx with the hostname from your website
-	- if you want to change the ClientName then you need to copy each folders named Example and renaming them with the new clientName.
+	- if you want to change the ClientName then you need to copy each folders named Example and rename them with the new clientName.
 	- Note: by default the GlobalStatistics are enabled. That means that any action in the system is stored in this table without any automatic cleanup. This is to let you be able to have a track of what happens. You can manually clean it sometimes if you want.
 
 -------------------------------------------
@@ -86,27 +86,31 @@ VALUES (NULL , '1', '2', NULL , '1'), (NULL , '1', '2', '1' , NULL);
 -------------------------------------------
 - change the files in data/wigiiSystem/configs/Example/
 	- config.php, 
-		- replace the xxx.xx with correct values (the system need a pop3 email account to send emails with.
+		- replace the xxx.xx with correct values (the system needs a pop3 email account to send emails with)
 		- change the default language: l01: english, l02: french
 	- config.xml
 		- replace the xxx.xx with correct values
 		- define your custom banner color and title
 	- start.php
 		- replace the ...... witht the correct mysql datbase configuration
-		- if you are in development uncomment REDIRECT_ALL_EMAILS_TO and all emails of the notification will be redirected to this capture adress with the list of the recipients added in the top of the message
+		- if you are in development uncomment REDIRECT_ALL_EMAILS_TO and all emails of the notification will be redirected to this capture address with the list of the recipients added at the top of the message
 	- you can make changes in any of the other config files to match you personal needs
 
 -------------------------------------------
 -- Folder rights
 -------------------------------------------	
 - add 777 rights on the following folders:
-	- data\wigiiSystem\configs\Example
-	- users\Example\data\uploadedFiles
-	- www\tempUploadedFiles
+	- data\wigiiSystem\configs\ClientFolder
+	- users\ClientFolder\data\uploadedFiles
+	- data\wigiiSystem\tempUploadedFiles
+	- tmp  (temp folder for session files, defined in .htaccess and index.php)
+	- log  (folder for Wigii error log files)
 	- www\temporary_unzipForViewing
 	- www\ClientFolder
 	- www\ClientFolder\imageForHtmlEditor
+	- www\ClientFolder\wcms
 
+note: Wigii system folders location can be re-defined in index.php file to best accomodate your server constraints.
 
 Installation completed :) !
 

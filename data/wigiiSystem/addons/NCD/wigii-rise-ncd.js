@@ -31,6 +31,17 @@
 	var wigiiApi = wigii();
 	if(!wigiiApi.SITE_ROOT) wigiiApi.SITE_ROOT = SITE_ROOT;
 	
+	// Configuration options
+	var wigiiRiseNcdOptions = undefined;
+	if(window.wigiiRiseNcd && window.wigiiRiseNcd.options) wigiiRiseNcdOptions = window.wigiiRiseNcd.options;
+	if(!wigiiRiseNcdOptions) wigiiRiseNcdOptions = {};
+	
+	/**
+	 * Pulls a wncd attribute marker from Wigii API. 
+	 * Activates it only if loadNcdAttributes is defined in loading options.
+	 */
+	var ncddoc = wigiiApi.getWncdAttrFx(wigiiRiseNcdOptions.loadNcdAttributes);
+	
 	/**
 	 * Rise NCD client class
 	 */
@@ -74,11 +85,11 @@
 		riseNcd.createDataStorage = function(groupId, description) {
 			return riseNcd.call('riseNcd_createDataStorage("'+groupId+'"'+(description?',"'+description+'"':'')+')');
 		};
-		/**
+		ncddoc(function(){/**
 		 * Calls synchronously Rise NCD Web service and returns the result as a String
 		 *@param String fx the FuncExp to call as a web service expression
 		 *@param Object|Array data optional data to post with the Fx call. (if null, then calls using GET, else POSTS)
-		 */
+		*/},
 		riseNcd.call = function(fx,data) {		
 			var url = wigiiApi.SITE_ROOT+'NCD/Espace/fx/'+$.base64EncodeUrl(fx);
 			var returnValue;
@@ -104,7 +115,7 @@
 				});
 			}
 			return returnValue;
-		};
+		});
 		
 		// Projet ATELIER ENCODE / PARTAGE
 		
@@ -120,11 +131,11 @@
 		
 		// Projet ATELIER ENCODE / MOVE Forward
 		
-		/**
+		ncddoc(function(){/**
 		 * display svg code in a given svg tag
 		 * @param String svg code to insert
 		 * @param String jquery selector on a svg tag
-		 */
+		*/},
 		riseNcd.putSVG = function(svg, selector) {
 			var div= document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
 			var svgTag = ["svg"];
@@ -135,21 +146,21 @@
 			}
 			$(selector).append(frag);
 			return true;
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Loads some svg code from Rise.wigii.org catalog and displays it into a given svg tag
 		 *@param String codeId ID of the object stored into the catalog
 		 *@param String jquery selector on a svg tag
-		 */
+		*/},
 		riseNcd.loadSVG = function(codeId,selector) {
 			riseNcd.mf_actOnCode(codeId, function(code){
 				riseNcd.putSVG(code.svgDefs, selector);
 				riseNcd.putSVG(code.svg, selector);
 			});
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Loads a visible object from the catalog and displays it into the given target div.
 		 *@param String catalogId Visible Object ID to load from rise.wigii.org Move Forward catalog.
 		 *@param JQuery targetDiv a JQuery selector on a div in which to display the loaded visible object
@@ -172,17 +183,15 @@
 		 * if(exploVo.loading) break;
 		 * if(exploVo.loaded) exploVo = exploVo.read();
 		 * ... exploVo normal usage.
-		 */
+		*/},
 		riseNcd.loadVisibleObject = function(catalogId,targetDiv,options) {
 			options = options || {};
 			options.load = catalogId;
 			return $(targetDiv).wigii('mf').vo(options.name,options);
-		};
-		/**
-		 *@see loadVisibleObject
-		 */
+		});			
 		riseNcd.loadVO = riseNcd.loadVisibleObject;
-		/**
+		
+		ncddoc(function(){/**
 		 * Fetches asynchronously an object into Rise.wigii.org Move Forward catalog and executes some action on the fetched code
 		 *@param String codeId ID of the object stored into the catalog
 		 *@param Function callback action to do on the fetched code. Callback is a function which takes one parameter of type object of the form
@@ -196,7 +205,7 @@
 		 * If type is ncd both svg and ncd code can be defined. In that case, ncd holds an expression which uses in some way the svg code.
 		 *@param Function exceptionHandler an optional exception handler in case of error. Function signature is exceptionHandler(exception,context) where exception is Wigii API exception object of the form {name:string,code:int,message:string}
 		 * and context is an object with some server context information of the form {request:string, wigiiNamespace:string, module:string, action:string, realUsername:string, username:string, principalNamespace:string, version:string}
-		 */
+		*/},
 		riseNcd.mf_actOnCode = function(codeId,callback,exceptionHandler) {
 			// if code is already in cache, then executes directly action on it
 			if(riseNcd.context.mfCodeCache[codeId]) {
@@ -303,13 +312,14 @@
 					});
 				}
 			}
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Clears current Move Forward cache 
-		 */
+		*/},
 		riseNcd.mf_clearCache = function() {
 			riseNcd.context.mfCodeCache = {};
-		};		
+		});		
 	};
 	// registers the RiseNcd plugin into the Wigii JS client
 	if(!wigiiApi['getRiseNcd']) wigiiApi.getRiseNcd = function() {
@@ -354,12 +364,12 @@
 		
 		// Move Forward objects
 		
-		/**
+		ncddoc(function(){/**
 		 * MoveForward client Message Service
 		 *@param wncd.MoveForward mf the current instance of the MoveForward client
 		 *@param wncd.HtmlEmitter messageEmitter the html emitter linked to the message zone in the MoveForward client
 		 *@param Object options a bag of options to configure the MessageService
-		 */
+		*/},
 		self.MessageService = function(mf,messageEmitter,options) {
 			var self = this;
 			self.className = 'MessageService';
@@ -387,14 +397,14 @@
 			self.clear = function() {
 				self.context.messageEmitter.reset();
 			};			
-		};		
+		});		
 		
-		/**
+		ncddoc(function(){/**
 		 * MoveForward Game board based on HTML canvas
 		 *@param wncd.MoveForward mf the current instance of the MoveForward client
 		 *@param Canvas canvas the html canvas linked to the game board zone in which to draw some 2D or 3D scenes
 		 *@param Object options a bag of options to configure the game board
-		 */
+		*/},
 		self.GameBoard = function(mf,canvas,options) {
 			var self = this;
 			self.className = 'GameBoard';
@@ -499,14 +509,14 @@
 			};
 			
 			self.impl.showBanner(self.ctxKey);
-		};		
+		});		
 		
-		/**
+		ncddoc(function(){/**
 		 * MoveForward client Game board based on SVG technology
 		 *@param wncd.MoveForward mf the current instance of the MoveForward client
 		 *@param JQuery svg jquery selector on the SVG container
 		 *@param Object options a bag of options to configure the game board
-		 */
+		*/},
 		self.GameBoardSVG = function(mf,svg,options) {
 			var self = this;
 			self.className = 'GameBoardSVG';
@@ -735,12 +745,12 @@
 				}
 				return self;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * SVG Rectangle service which helps manipulating SVG object clipped into a rectangle
 		 *@param Object|JQuery|String svgObj MoveForward object which map to a SVG element through the $() method or a JQuery selector on a SVG element.
-		 */
+		*/},
 		self.RectangleSVGService = function(svgObj) {
 			var self = this;
 			var svgObj = svgObj;
@@ -991,14 +1001,14 @@
 					return self.getBoundingClientRect();
 				};
 			};
-		};
+		});
 		
 		
 		// Move Forward Logical Objects
 		
-		/**
+		ncddoc(function(){/**
 		 * Object Visible State
-		 */
+		*/},
 		self.ObjVisibleState = function(name,objs,options) {
 			var self = this;
 			self.className = 'ObjVisibleState';
@@ -1200,11 +1210,11 @@
 				// attach a RectangleService to ease svg object manipulation
 				mf.ncd.background.gameBoard().getRectangleService(self).attach();
 			}
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Visible objects displayed on scene background and game board
-		 */
+		*/},
 		self.VisibleObject = function(states,options) {
 			var self = this;
 			self.className = 'VisibleObject';
@@ -1377,11 +1387,11 @@
 				// attach a RectangleService to ease svg object manipulation
 				mf.ncd.background.gameBoard().getRectangleService(self).attach();
 			}
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Scene background displayed on game board
-		 */
+		*/},
 		self.SceneBackground = function(objId,options) {
 			var self = this;
 			self.className = 'SceneBackground';
@@ -1491,11 +1501,11 @@
 					}
 				});
 			}
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Scene facade
-		 */
+		*/},
 		self.Scene = function() {
 			var self = this;
 			/**
@@ -1537,11 +1547,11 @@
 				if(sceneId) mf.context.sceneQueue.push(sceneId);
 				return self;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * The user as an explorer, displayed on game board
-		 */
+		*/},
 		self.Explorer = function(visibleObjectId,options) {
 			var self = this;
 			self.className = 'Explorer';
@@ -1582,38 +1592,39 @@
 					mf.ncd.background.gameBoard().getRectangleService(self).attach();
 				});
 			}
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Move Forward Natural Code Development interface
 		 * Exposed through the wncd.mf symbol
-		 */
+		*/},
 		self.MoveForwardNCD = function() {
 			var self = this;
 			self.ctxKey = mf.ctxKey;
 			
 			// Move Forward Natural Code Language
 			
-			/**
+			ncddoc(function(){/**
 			 * Creates an Object Visible State
 			 *@param String|Array objs one catalog ID or an array of catalog IDs of the SVG drawings to associate with the visible state.
 			 *@param Object options an optional bag of options to configure the visible state
 			 *@return MoveForward.ObjVisibleState
-			 */
+			*/},
 			self.visibleState = function(name,objs,options) {
 				var returnValue = new mf.ObjVisibleState(name,objs,options);
 				return returnValue;
-			};
-			/**
+			});
+			
+			ncddoc(function(){/**
 			 * Creates a visible object instance exposing several visible states
 			 *@param MoveForward.ObjVisibleState|Array states a single or an array of visible states to be associated with this visible object
 			 *@param Object options an optional bag of options to configure the visible object
 			 *@return MoveForward.VisibleObject 
-			 */
+			*/},
 			self.visibleObject = function(states,options) {
 				var returnValue = new mf.VisibleObject(states,options);
 				return returnValue;
-			};
+			});
 						
 			/**
 			 * Scene facade
@@ -1642,7 +1653,7 @@
 			
 			// Natural Code Development interface
 			
-			/**
+			ncddoc(function(){/**
 			 * Selects or adds a visible object on the scene background
 			 *@param String name the logical name of the visible object present on the scene (for example, explorer or bootle or chair, etc)
 			 *@param Object options a bag of options to be applied when loading the visible object from the catalog. Supports the following options:
@@ -1657,7 +1668,7 @@
 			 * - width: string. Relative (%) or absolute (px) width of the visible object
 			 * - height: string. Relative (%) or absolute (px) height of the visible object
 			 * - size: percent. Relative (%) size of the visible object according to container.
-			 */
+			*/},
 			self.vo = function(name,options) {
 				// applies some options on a visible object
 				var applyOptions = function(visibleObj,options) {
@@ -1707,9 +1718,9 @@
 					if(returnValue && options) applyOptions(returnValue,options);
 					return returnValue;
 				}
-			};
+			});
 			
-			/**
+			ncddoc(function(){/**
 			 * Loads a visible object from the catalog and displays it into the given target div.
 			 *@param String catalogId Visible Object ID to load from rise.wigii.org Move Forward catalog.
 			 *@param JQuery targetDiv a JQuery selector on a div in which to display the loaded visible object			 
@@ -1732,26 +1743,25 @@
 			 * if(exploVo.loading) break;
 			 * if(exploVo.loaded) exploVo = exploVo.read();
 			 * ... exploVo normal usage.
-			 */
-			self.load = function(catalogId,targetDiv,options) { return wncd.server.rise().loadVisibleObject(catalogId,targetDiv,options);};
-			/**
-			 *@see MoveForwardNCD.load
-			 */
+			*/},
+			self.load = function(catalogId,targetDiv,options) { return wncd.server.rise().loadVisibleObject(catalogId,targetDiv,options);});			
 			self.loadVO = self.load;
 			
-			/**
+			ncddoc(function(){/**
 			 * Loads some svg code the catalog and displays it into a given svg tag
 			 *@param String codeId ID of the object stored into the catalog
 			 *@param String jquery selector on a svg tag
-			 */
-			self.loadSVG = function(codeId,selector) {return wncd.server.rise().loadSVG(codeId,selector);};
-			/**
+			*/},
+			self.loadSVG = function(codeId,selector) {return wncd.server.rise().loadSVG(codeId,selector);});
+			
+			ncddoc(function(){/**
 			 * Displays svg code in a given svg tag
 			 * @param String svg code to insert
 			 * @param String jquery selector on a svg tag
-			 */
-			self.putSVG = function(svg,selector) {return wncd.server.rise().putSVG(svg,selector);};
-			/**
+			*/},
+			self.putSVG = function(svg,selector) {return wncd.server.rise().putSVG(svg,selector);});
+			
+			ncddoc(function(){/**
 			 * Fetches some code given its catalog ID and acts on it
 			 *@param String codeId the catalog ID of the object to retrieve and act on.
 			 * The catalog ID can be followed with a double underscore and SVG ID to select a specific SVG element instead of whole code.
@@ -1767,7 +1777,7 @@
 			 *}
 			 * If type is ncd both svg and ncd code can be defined. In that case, ncd holds an expression which uses in some way the svg code.
 			 *@return MoveForward.MoveForwardNCD for chaining
-			 */
+			*/},
 			self.actOnCode = function(codeId,action) {
 				// Registers codeId in pending objects until code is received
 				mf.impl.pendingObjects[codeId] = Date.now();
@@ -1783,21 +1793,23 @@
 				// calls rise.wigii.org
 				wncd.server.rise().mf_actOnCode(codeId,onReception,onFailure);
 				return self;
-			};
-			/**
+			});
+			
+			ncddoc(function(){/**
 			 * Returns map of pending objects not yet loaded.
 			 * Key is object catalog ID, value is timestamp when http request has been sent.
-			 */
+			*/},
 			self.pendingObjects = function() {
 				return mf.impl.pendingObjects;
-			};
-			/**
+			});
+			
+			ncddoc(function(){/**
 			 * Fetches an object given its catalog ID, creates a local instance and acts with it
 			 *@param String|Array objId the catalog ID of the object to retrieve and act with, 
 			 * or an array of object ID to retrieve multiple objects
 			 *@param Function action callback on the instantiated object(s) of the form action(obj) or action(array)
 			 *@return MoveForward.MoveForwardNCD for chaining
-			 */
+			*/},
 			self.createAndAct = function(objId,action) {
 				// asynchronous object constructor
 				var doCreateAndAct = function(objId,action) {
@@ -1855,13 +1867,14 @@
 				// if objId is not a string or an array, assumes it is already the object instance and then acts on it directly
 				else if($.isFunction(action)) action(objId);
 				return self;
-			};			
-			/**
+			});
+			
+			ncddoc(function(){/**
 			 * Includes a piece of code from catalogue and executes it
 			 *@param String codeId the ID of the code to be included
 			 *@param Function actAfterInclude optional function to be executed after code has been included
 			 *@return MoveForward.MoveForwardNCD for chaining
-			 */
+			*/},
 			self.include = function(codeId,actAfterInclude) {
 				self.actOnCode(codeId,function(code){
 					if(code && code.type == 'ncd') {
@@ -1877,59 +1890,63 @@
 					}
 				});
 				return self;
-			};
-			/**
+			});
+			
+			ncddoc(function(){/**
 			 * Includes a piece of code from catalogue and executes it only once.
 			 *@param String codeId the ID of the code to be included
 			 *@param Function actAfterInclude optional function to be executed after code has been included
 			 *@return MoveForward.MoveForwardNCD for chaining
-			 */
+			*/},
 			self.includeOnce = function(codeId,actAfterInclude) {
 				// includes code only if not already in cache
 				if(!wncd.server.rise().mfCodeCache[codeId])	self.include(codeId,actAfterInclude);
 				else if($.isFunction(actAfterInclude)) actAfterInclude();
 				return self;
-			};
-			/**
+			});
+			
+			ncddoc(function(){/**
 			 * Registers a keydown event handler on the Move Forward console.
 			 *@param Function eh event handler for keydown event (cf. https://api.jquery.com/keydown/)
 			 *@param Boolean keepActive if true, then keydown event handler stays active even if scene changes.
 			 * Else keydown event handler is removed when scene changes. 
 			 * By default, keyboards events are automatically removed when scene changes.
 			 *@return MoveForward.MoveForwardNCD for chaining
-			 */
+			*/},
 			self.keydown = function(eh,keepActive) {
 				// sticks event handler on body
 				$('body').keydown(eh);
 				return self;
-			};
-			/**
+			});
+			
+			ncddoc(function(){/**
 			 * Registers a keyup event handler on the Move Forward console.
 			 *@param Function eh event handler for keyup event (cf. https://api.jquery.com/keyup/)
 			 *@param Boolean keepActive if true, then keyup event handler stays active even if scene changes.
 			 * Else keyup event handler is removed when scene changes. 
 			 * By default, keyboards events are automatically removed when scene changes.
 			 *@return MoveForward.MoveForwardNCD for chaining
-			 */
+			*/},
 			self.keyup = function(eh,keepActive) {
 				// sticks event handler on body
 				$('body').keyup(eh);
 				return self;
-			};
-			/**
+			});
+			
+			ncddoc(function(){/**
 			 * Registers a keypress event handler on the Move Forward console.
 			 *@param Function eh event handler for keypress event (cf. https://api.jquery.com/keypress/)
 			 *@param Boolean keepActive if true, then keypress event handler stays active even if scene changes.
 			 * Else keydpress event handler is removed when scene changes. 
 			 * By default, keyboards events are automatically removed when scene changes.
 			 *@return MoveForward.MoveForwardNCD for chaining
-			 */
+			*/},
 			self.keypress = function(eh,keepActive) {
 				// sticks event handler on body
 				$('body').keypress(eh);
 				return self;
-			};
-		};		
+			});
+		});		
 				
 		// Implementation
 				
@@ -1938,11 +1955,11 @@
 			else wigii().publishException(exception);
 		};
 		
-		/**
+		ncddoc(function(){/**
 		 * Plays a scene given its catalog ID
 		 *@param String sceneId the catalog ID of the scene for which to load the script
 		 * A scene script should be a FuncExp: either a scripte object or a ctlSeq object or a ctlGen object.
-		 */
+		*/},
 		self.impl.playSceneScript = function(sceneId) {
 			mf.ncd.createAndAct(sceneId,function(sceneScript,context){
 				// Injects scene attributes in facade
@@ -1953,11 +1970,12 @@
 				// Runs the scene script in the context of the dedicated wncd Runtime for the game
 				self.impl.gameRuntime.program(sceneScript);
 			});
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Plays at Move Forward.
 		 * Runs the scenes waiting in the queue until the queue is empty.
-		 */
+		*/},
 		self.impl.play = function() {
 			// Reads next waiting scene in queue
 			var sceneId = self.context.sceneQueue.shift();
@@ -1979,10 +1997,11 @@
 				});
 			}
 			//else mf.ncd.message.log("End.");
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * @return Object Converts an Fx string back to its object representation (in the scope of Move Forward)
-		 */
+		*/},
 		self.impl.fxString2obj = function(code) {
 			if(code) {
 				// Remaps wncd.mf.* to mf.ncd.* to stay contextual
@@ -1993,7 +2012,8 @@
 				var returnValue = eval(code);
 				return returnValue;
 			}
-		};
+		});
+		
 		return self;
 	};
 		

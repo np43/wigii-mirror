@@ -41,6 +41,48 @@
 	var ncdprivate = function(memberName) {
 		wigiiNcdOptions.privateNcdMembers[memberName] = true;
 	};
+	/**
+	 * Attaches a comment and some custom attributes to a given function.
+	 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+	 * and can be used as meta information further down in the code.
+	 * NCD attributes are not loaded by default. To load them wigiiNcdOptions.loadNcdAttributes should be true.
+	 *@param String|Function comment a comment describing the function, as a string or as a source code native comment wrapped into a function
+	 *@param Function|Object f the function to which to add the NCD attributes. 
+	 * Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+	 *@return Function returns f for chaining
+	 */
+	var wigiiNcdAttr = function(comment,f) {
+		if(wigiiNcdOptions.loadNcdAttributes && f) {
+			// extracts any list of pairs key,value
+			var args = undefined;
+			if(arguments.length > 2) {
+				args = Array.prototype.slice.call(arguments);
+				comment = args[0];
+				f = args[args.length-1];
+			}
+			// extracts source code comment from wrapping function
+			if($.isFunction(comment)) {
+				comment = comment.toString().match(/(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)/g);
+				if(comment) comment = comment[0];				
+			}
+			// stores attributes
+			var wncdAttr = f.wncdAttr || {};
+			if(comment) wncdAttr.comment = comment;
+			if(args && args.length>0) {
+				var i=0; var key,value;
+				while(i<args.length) {
+					key = args[i]; i++;
+					if(i<args.length) {
+						value = args[i]; i++;
+					}
+					if(key && value!==undefined) wncdAttr[key] = value;
+				}
+			}
+			f.wncdAttr = wncdAttr;			
+		}
+		return f;
+	};
+	var ncddoc = wigiiNcdAttr;
 	
 	// Wigii NCD
 	var WigiiNcd = function() {
@@ -151,25 +193,25 @@
 		
 		// NCD Exceptions
 		
-		/**
+		ncddoc(function(){/**
 		 * ServiceException class
 		 * @param String message the error message
 		 * @param Number code the error code
 		 * @param Object previous if defined, the previous exception in the chain if wrapping.
-		 */
+		*/},
 		wigiiNcd.ServiceException = function(message,code,previous) {			
 			var self = this;
 			self.name = 'ServiceException';
 			self.message = message;
 			self.code = code || wigiiNcd.errorCodes.UNKNOWN_ERROR;
 			self.previousException = previous; 
-		};
+		});
 		
 		// NCD Services
 		
-		/**
+		ncddoc(function(){/**
 		 * A String Stack object
-		 */
+		*/},
 		wigiiNcd.StringStack = function() {
 			var self = this;
 			self.className = 'StringStack';
@@ -245,12 +287,12 @@
 				if(!$.isFunction(eventHandler)) throw wigiiNcd.createServiceException('pop event handler should be a function', wigiiNcd.errorCodes.INVALID_ARGUMENT);
 				self.popSubscribers.push(eventHandler);
 			};			
-		}
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * HTML Emitter object
 		 *@param jQuery|DOM.Element output the element in which to emit HTML code, defaults to body if not specified.
-		 */
+		*/},
 		wigiiNcd.HtmlEmitter = function(output) {
 			var self = this;
 			self.className = 'HtmlEmitter';
@@ -585,12 +627,12 @@
 				var starttag = start.substring(i+1,j).trim();
 				if(endtag != starttag) throw wigiiNcd.createServiceException("invalid end tag '"+endtag+"' in context "+start+content.substr(0,64)+(content.length>64?'...':'')+end, wigiiNcd.errorCodes.SYNTAX_ERROR);
 			});
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * HTML String builder
 		 *@param wigiiNcd.HtmlEmitter optional HtmlEmitter instance that can be linked to html builder in which to emit the constructed html code.
-		 */
+		*/},
 		wigiiNcd.HtmlBuilder = function(htmlEmitter) {
 			var self = this;
 			self.className = 'HtmlBuilder';
@@ -919,14 +961,14 @@
 			self.gt = self.putGt;
 			self.lt = self.putLt;
 			self.out = self.put;
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * NCD 2D fixed Grid
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the 2D Grid
 		 *@param int nRows number of rows in the Grid
 		 *@param int nCols number of columns in the Grid
-		 */
+		*/},
 		wigiiNcd.Grid = function(htmlEmitter, nRows,nCols) {
 			var self = this;
 			self.className = 'Grid';
@@ -960,14 +1002,15 @@
 			};
 			self.nRows = function() {return nRows;}
 			self.nCols = function() {return nCols;}
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * NCD 2D fixed Grid cell
 		 *@param wigiiNcd.Grid grid reference to grid container in which lives the cell
 		 *@param int x row index from 0..Grid.nRows-1
 		 *@param int y col index from 0..Grid.nCols-1
 		 *@apram string id HTML ID of the cell element in the DOM.
-		 */
+		*/},
 		wigiiNcd.GridCell = function(grid, x,y, id) {
 			var self = this;
 			self.className = 'GridCell';
@@ -1049,12 +1092,12 @@
 				else if(onClick===undefined) $("#"+id).click();
 				return self;
 			};			
-		};
+		});
 		
-		/**		
+		ncddoc(function(){/**		
 		 * NCD TextArea
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the text area component
-		 */
+		*/},
 		wigiiNcd.TextArea = function(htmlEmitter, cssClass, index) {
 			var self = this;
 			self.className = 'TextArea';
@@ -1121,12 +1164,12 @@
 				wigiiNcd.bindAutoCompletionSense(self,propositionGenerator,options);
 				return self; 
 			};
-		};			
+		});			
 		
-		/**		
+		ncddoc(function(){/**		
 		 * NCD TextInput
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the text input component
-		 */
+		*/},
 		wigiiNcd.TextInput = function(htmlEmitter, cssClass, index) {
 			var self = this;
 			self.className = 'TextInput';
@@ -1192,12 +1235,12 @@
 				wigiiNcd.bindAutoCompletionSense(self,propositionGenerator,options);
 				return self; 
 			};
-		};
+		});
 		
-		/**		
+		ncddoc(function(){/**		
 		 * NCD Password Input
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the password input component
-		 */
+		*/},
 		wigiiNcd.PasswordInput = function(htmlEmitter, cssClass, index) {
 			var self = this;
 			self.className = 'PasswordInput';
@@ -1263,12 +1306,12 @@
 				wigiiNcd.bindAutoCompletionSense(self,propositionGenerator,options);
 				return self; 
 			};
-		};
+		});
 		
-		/**		
+		ncddoc(function(){/**		
 		 * NCD Text input wrapper
 		 *@param jQuery|DOM.Element txtInput a text input or text area DOM element to wrap as NCD
-		 */
+		*/},
 		wigiiNcd.TextInputWrapper = function(txtInput, cssClass, index) {
 			var self = this;
 			self.className = 'TextInputWrapper';
@@ -1336,12 +1379,12 @@
 				wigiiNcd.bindAutoCompletionSense(self,propositionGenerator,options);
 				return self; 
 			};
-		};
+		});
 		
-		/**		
+		ncddoc(function(){/**		
 		 * NCD CheckBox
 		 *@param wigiiNcd.HtmlEmitter htmlEmitter underlying open HTML emitter to which dump the checkbox component
-		 */
+		*/},
 		wigiiNcd.CheckBox = function(htmlEmitter, cssClass,index) {
 			var self = this;
 			self.className = 'CheckBox';
@@ -1397,9 +1440,9 @@
 				// registers onclick event handler on checkbox
 				$("#"+self.ctxKey).click(function(){self.toggle();self.onClick();})
 			}
-		};
+		});
 		
-		/**
+		 ncddoc(function(){/**
 		 * A selectable, browseable, unordered list, implemented as a ul>li set.
 		 *@param wncd.HtmlEmitter htmlEmitter an open HtmlEmitter in which to render the unordered list.
 		 *@param Function itemGenerator a function which generates some items to add to the list. 
@@ -1421,8 +1464,8 @@
 		 * - unselectedClass: String. Name of class added when an item is unselected. Defaults to no class.
 		 * - maxSelection: Integer. Maximum number of items that can be selected into the list. Defaults to no maximum.
 		 * - highlightedClass: String. Name of class added when an item is highlighted (using the iterator). Defaults to 'highlighted'
-		 */
-		wigiiNcd.UnorderedList = function(htmlEmitter, itemGenerator, itemRenderer, options) {
+		 */},
+		 wigiiNcd.UnorderedList = function(htmlEmitter, itemGenerator, itemRenderer, options) {
 			var self = this;
 			self.className = 'UnorderedList';
 			self.ctxKey = wigiiNcd.ctxKey+'_'+self.className+Date.now();
@@ -1734,14 +1777,14 @@
 				e.stopPropagation();
 			};
 			self.$().find('> li').click(self.impl.onLiClick);
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * NCD Grid Turtle
 		 *@param wigiiNcd.Grid grid the underlying Grid on which the turtle lives
 		 *@param String headColor HTML color code for turtle head (defaults to red)
 		 *@param String tailColor HTML color code for turtle tail (defaults to blue)
-		 */
+		*/},
 		wigiiNcd.GridTurtle = function(grid,headColor,tailColor) {
 			var self = this;
 			headColor = headColor || 'red';
@@ -1946,11 +1989,11 @@
 				if(ry < 0) ry = grid.nCols()+ry;
 				return grid.cell(rx, ry);
 			};
-		};				
+		});				
 		
-		/**
+		ncddoc(function(){/**
 		 * A Wigii Graph
-		 */
+		*/},
 		wigiiNcd.Graph = function() {
 			var self = this;
 			self.className = 'Graph';
@@ -2007,12 +2050,12 @@
 				self.context.graphNodes.push(returnValue);
 				return returnValue;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * A Wigii Graph Node
 		 *@param wigiiNcd.Graph graph the graph in which lives the node
-		 */
+		*/},
 		wigiiNcd.GraphNode = function(graph) {
 			var self = this;
 			self.className = 'GraphNode';
@@ -2139,16 +2182,16 @@
 			 * Returns a reference to the graph containing this graph node
 			 */
 			self.graph = function() {return self.context.graph;};
-		};
+		});
 		
 		// Wigii Sense Services 
 		
-		/**
+		ncddoc(function(){/**
 		 * Wigii Selection Sense
 		 * A stateful object which reacts on click and selects an HTML element.
 		 *@param Function onClick callback function triggered on click. Function signature is onClick(selectionSense)
 		 *@param Object options an optional set of options to parametrize the Wigii Selection Sense
-		 */
+		*/},
 		wigiiNcd.SelectionSense = function(onClick, options) {
 			var self = this;
 			self.className = 'SelectionSense';
@@ -2222,14 +2265,14 @@
 				}
 				return self;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Wigii Counting Sense
 		 * A stateful object which reacts on click and counts up or down.
 		 *@param Function onClick callback function triggered on click. Function signature is onClick(countingSense)
 		 *@param Object options an optional set of options to parametrize the Wigii Counting Sense
-		 */
+		*/},
 		wigiiNcd.CountingSense = function(onClick, options) {
 			var self = this;
 			self.className = 'CountingSense';
@@ -2296,9 +2339,9 @@
 				self.anchors.push(anchor);				
 				return self;
 			};			
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Wigii Autocompletion Sense
 		 * A stateful object which manages autocompletion of text.
 		 *@param Function|Array propositionGenerator a function which generates some propositions or an array of propositions.
@@ -2309,7 +2352,7 @@
 		 * - matchClass: String. CSS class associated to matching pattern in list items. Default to 'match'.
 		 * - matchTag: String. Default tag associated to matching pattern in list items. Default to 'strong'.
 		 * - actionOnChosenProposition: String. One of 'replace','append','prepend'. Defaults to 'replace'. 
-		 */
+		*/},
 		wigiiNcd.AutocompletionSense = function(propositionGenerator,options) {
 			var self = this;
 			self.className = 'AutocompletionSense';
@@ -2474,16 +2517,16 @@
 				self.options.panel.out("ready");
 				self.context.interactivePanelReady=true;
 			};		
-		};
+		});
 		
 		// Connectors
 		
-		/**
+		ncddoc(function(){/**
 		 * Shows a popup on the screen with a message
 		 *@param String|Function message the message to display in the popup. Can be some HTML, a simple string or a function which returns some HTML or write into the currentDiv.
 		 * If message is a function, it receives the wigiiApi.Popup instance as first argument to enable interacting with the popup object (for instance to hide or close it).
 		 *@param Object options an optional bag of options to configure the popup. The bag of options should be compatible with the wigiiApi.Popup options (it supports for instance the closeable or resizable options)
-		 */
+		*/},
 		wigiiNcd.popup = function(message,options) {
 			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, popup fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);
 			// sets fixed options
@@ -2508,31 +2551,32 @@
 			}
 			else wrappedMessage = message;		
 			wigii('HelpService').showFloatingHelp(undefined, undefined, wrappedMessage, options);
-		}
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Publishes a server side Wigii Exception into a popup
 		 *@param Object exception server side Wigii Exception received through a json ajax call.
 		 *@param Object context server side execution context details, packaged into the json ajax response.
-		 */
+		*/},
 		wigiiNcd.publishWigiiException = function(exception,context) {
 			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, publishWigiiException fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);			
 			wigiiNcd.popup(wigii().exception2html(exception,context));
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 *@return WigiiApi.WncdContainer returns a Wigii Api WNCD container to host NCD components into a Wigii Module View
-		 */
+		*/},
 		wigiiNcd.wigiiContainer = function() {
 			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, wigiiContainer fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);
 			return wigii().getWncdContainer(wncd);
-		};
-		/**		 
-		 *@return WigiiApi.WncdContainer returns a Wigii Api WNCD container to host NCD components into a Wigii Module View
-		 */
-		wigiiNcd.getWigiiContainer = wigiiNcd.wigiiContainer;
+		});
 		
-		/**
+		ncddoc(function(){/**		 
+		 *@return WigiiApi.WncdContainer returns a Wigii Api WNCD container to host NCD components into a Wigii Module View
+		*/},
+		wigiiNcd.getWigiiContainer = wigiiNcd.wigiiContainer);
+		
+		ncddoc(function(){/**
 		 * Reads the data coming from the source and processes it through the selected flow activities
 		 *@param Function source a data flow source function. 
 		 * A data source function is a function which takes an open DataFlowContext in parameter and then calls processDataChunk as many times as needed.
@@ -2556,15 +2600,15 @@
 		 *@example wigii().sel(rangeGen(-10,10,2),[power(3),sum])
 		 *@see WigiiApi.sel method
 		 *@return Any the data flow result
-		 */
+		*/},
 		wigiiNcd.sel = function(source,activities) { 
 			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, sel fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);
 			return wigii().sel(source,activities); 
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * JQuery collection event handlers
-		 */
+		*/},
 		wigiiNcd.JQueryService = function() {
 			var self = this;
 			self.className = 'JQueryService';
@@ -2600,19 +2644,19 @@
 				else if(selection && selection.length>1) throw wigiiNcd.createServiceException('Wigii NCD wrap selector can only be activated on a JQuery collection containing one element and not '+selection.length, wigiiNcd.errorCodes.INVALID_ARGUMENT);
 				return (!returnValue?{$:selection}:returnValue);
 			};
-		};
+		});
 		
 		/**
 		 * Wigii NCD data flow sources library
 		 */
 		wigiiNcd.source = {};
 		
-		/**
+		ncddoc(function(){/**
 		 * Returns a DataFlow source which generates a range of numbers, starting from one number, to another number (not included), by a given step.
 		 * @param Number from start number, can be integer, float, positive, null or negative.
 		 * @param Number to stop number, can be integer, float, positive, null or negative.
 		 * @param Number step increment number, can be integer, float, positive or negative. Not null.
-		 */
+		*/},
 		wigiiNcd.source.genRange = function(from,to,step) { return function(dataFlowContext) {
 			if(!($.isNumeric(from) && $.isNumeric(to) && $.isNumeric(step))) throw wigiiNcd.createServiceException('from, to and step should all be numbers',wigiiNcd.errorCodes.INVALID_ARGUMENT);			
 			if(step>0) {
@@ -2628,29 +2672,29 @@
 				}
 			}
 			else throw wigiiNcd.createServiceException('step cannot be 0',wigiiNcd.errorCodes.INVALID_ARGUMENT);
-		}};
+		}});
 		
-		/**
+		ncddoc(function(){/**
 		 * Returns a DataFlow source which generates a finite quantity of numbers, starting from one number, going to another number included.
 		 * @param Number from start number, can be integer, float, positive, null or negative.
 		 * @param Number to stop number, can be integer, float, positive, null or negative.
 		 * @param Number nbSlices Quantity of slices to generate. Numbers a equally distributed between from and to limits.
-		 */
+		*/},
 		wigiiNcd.source.genInterval = function(from,to,nbSlices) { return function(dataFlowContext) {
 			if(!($.isNumeric(from) && $.isNumeric(to) && $.isNumeric(nbSlices))) throw wigiiNcd.createServiceException('from, to and nbSlices should all be numbers',wigiiNcd.errorCodes.INVALID_ARGUMENT);	
 			var factor = (to-from)/nbSlices;
 			for(var i=0; i <= nbSlices; i++) {
 				dataFlowContext.processDataChunk(from+factor*i);
 			}
-		}};
+		}});
 		
-		/**
+		ncddoc(function(){/**
 		 * Returns a DataFlow source which generates a linear sequence of numbers
 		 * @param Number length a positive integer which is the length of the sequence. Will compute the sequence for integers in range 1..length.
 		 * @param Number factor a number which will be used as a multiplier factor
 		 * @param Number shift a number which will be used as a shift value.
 		 * @param Boolean alternateSign If true then the signs of the numbers in the sequence alternate. Once positive, once negative. Else always positive.
-		 */
+		*/},
 		wigiiNcd.source.linearSequence = function(length,factor,shift,alternateSign) { return function(dataFlowContext) {
 			if(!($.isNumeric(length) && $.isNumeric(factor) && $.isNumeric(shift))) throw wigiiNcd.createServiceException('length should be a positive integer, factor and shift should be numbers',wigiiNcd.errorCodes.INVALID_ARGUMENT);			
 			var negative = false;
@@ -2658,14 +2702,14 @@
 				dataFlowContext.processDataChunk((negative ? -(factor*i+shift): factor*i+shift));
 				if(alternateSign) negative = !negative;
 			}
-		}};
+		}});
 		
 		/**
 		 * Wigii NCD data flow activities library
 		 */
 		wigiiNcd.dfa = {};
 		
-		/**
+		ncddoc(function(){/**
 		 * An Array Buffer data flow activity
 		 *@param Object options the following configuring options are supported:
 		 * - unpair: Boolean. If true, indicates that the flow is a flow of pairs (key,value) represented as objects
@@ -2674,7 +2718,7 @@
 		 * - keyField: Defines the name of the field to be used as a key. If unpair and not set, then defaults to 'key'.
 		 * - valueField: If unpairing, then defines the name of the field to be used as a value, defaults to 'value'
 		 *@return Function a function compatible with data flow activities
-		 */
+		*/},
 		wigiiNcd.dfa.arrayBuffer = function(options) { var options = options || {}; return function(data,activityCtx,dataFlowContext) {
 			if(activityCtx.state==dataFlowContext.DFA_STARTSTREAM) {
 				if(options.unpair) {
@@ -2699,9 +2743,9 @@
 				else activityCtx.buffer.push(data);
 			}
 			else if(activityCtx.state==dataFlowContext.DFA_ENDSTREAM) dataFlowContext.writeResultToOuput(activityCtx.buffer,activityCtx);
-		}};
+		}});
 		
-		/**
+		ncddoc(function(){/**
 		 * A data flow activity which transforms a flow of points {x,y,weight,color} to an SVG path element.
 		 * x,y coordinates should already be in SVG coordinate system. If path and points are plotted, then everything is grouped into an SVG g element.
 		 *@param Object options the following configuring options are supported:
@@ -2722,7 +2766,7 @@
 		 * - cssClass: String. CSS class string
 		 * - outputPathString: Boolean. If true, only outputs path description (value of d attribute), skipping whole SVG construction. False by default.
 		 *@return Function a function compatible with data flow activities
-		 */
+		*/},
 		wigiiNcd.dfa.points2SVG = function(options) { var options = options || {}; return function(data,activityCtx,dataFlowContext) {
 			var svgTag;
 			if(activityCtx.state==dataFlowContext.DFA_STARTSTREAM) {
@@ -2916,16 +2960,16 @@
 					dataFlowContext.writeResultToOuput(svgBuilder.html(),activityCtx);
 				}
 			}
-		}};
+		}});
 		
-		/**
+		ncddoc(function(){/**
 		 * A data flow activity which translates and autosizes a flow of points {x,y} to have all coordinates contained in range coordMin..coordMax 
 		 * and compatible with screen coordinate system (y is flipped to grow towards bottom instead of top).
 		 *@param Object options the following configuring options are supported:
 		 * - coordMin: int. Min value allowed for any x or y coordinate of any point in the flow. Defaults to 0.
 		 * - coordMax: int. Max value allowed for any x or y coordinate of any point in the flow. Defaults to 1024.
 		 *@return Function a function compatible with data flow activities
-		 */
+		*/},
 		wigiiNcd.dfa.autoSizePoints = function(options) { var options = options || {}; return function(data,activityCtx,dataFlowContext) {
 			if(activityCtx.state==dataFlowContext.DFA_STARTSTREAM) {
 				if(options.coordMin===undefined) options.coordMin = 0;
@@ -2958,109 +3002,119 @@
 					dataFlowContext.writeResultToOuput(p,activityCtx);
 				}				
 			}
-		}};
+		}});
 		
 		// Service providing
 		
-		/**
+		ncddoc(function(){/**
 		 * Creates a new StringStack instance
-		 */
+		 */},
 		wigiiNcd.createStringStackInstance = function() {
 			return new wigiiNcd.StringStack();
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Creates a new HtmlEmitter object attached to the given DOM element.
 		 *@param jQuery|DOM.Element output the element in which to emit HTML code, defaults to body if not specified.
-		 */
+		*/},
 		wigiiNcd.getHtmlEmitter = function(output) {
 			return new wigiiNcd.HtmlEmitter(output);
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Creates an HtmlBuilder instance
 		 *@param wigiiNcd.HtmlEmitter optional HtmlEmitter instance that can be linked to html builder in which to emit the constructed html code.
-		 */
+		*/},
 		wigiiNcd.getHtmlBuilder = function(htmlEmitter) {			
 			return new wigiiNcd.HtmlBuilder(htmlEmitter);
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Creates an unbound Selection Sense
-		 */
+		*/},
 		wigiiNcd.createSelectionSense = function(onClick, options) {
 			return new wigiiNcd.SelectionSense(onClick, options);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates and binds a Selection Sense to a given anchor
-		 */
+		*/},
 		wigiiNcd.bindSelectionSense = function(anchor, onClick, options) {
 			return wigiiNcd.createSelectionSense(onClick, options).bind(anchor);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates an unbound Counting Sense
-		 */
+		*/},
 		wigiiNcd.createCountingSense = function(onClick, options) {
 			return new wigiiNcd.CountingSense(onClick, options);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates and binds a Counting Sense to a given anchor
-		 */
+		*/},
 		wigiiNcd.bindCountingSense = function(anchor, onClick, options) {
 			return wigiiNcd.createCountingSense(onClick, options).bind(anchor);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates an unbound Autocompletion Sense
-		 */
+		*/},
 		wigiiNcd.createAutoCompletionSense = function(propositionGenerator,options) {
 			return new wigiiNcd.AutocompletionSense(propositionGenerator,options);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates and binds an Autocompletion Sense to a given TxtInput or TxtArea
-		 */
+		*/},
 		wigiiNcd.bindAutoCompletionSense = function(txtInput,propositionGenerator,options) {
 			return wigiiNcd.createAutoCompletionSense(propositionGenerator,options).bind(txtInput);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Wraps a standard DOM input text, or text area to be compatible with NCD features
 		 *@return wigiiNcd.TextInputWrapper
-		 */
+		*/},
 		wigiiNcd.wrapTextInput = function(txtInput, cssClass) {
 			return new wigiiNcd.TextInputWrapper(txtInput, cssClass);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a new Wigii Graph instance
-		 */
+		*/},
 		wigiiNcd.createGraph = function() {
 			return new wigiiNcd.Graph();
-		};		
-		/**
+		});		
+		
+		ncddoc(function(){/**
 		 * Returns a JQueryService instance
-		 */
+		*/},
 		wigiiNcd.getJQueryService = function() {
 			if(!wigiiNcd['jQueryServiceInstance']) {
 				wigiiNcd.jQueryServiceInstance = new wigiiNcd.JQueryService();ncdprivate('jQueryServiceInstance');
 			}
 			return wigiiNcd.jQueryServiceInstance;
-		};			
+		});			
 		
 		// Functions
 		
-		/**
+		ncddoc(function(){/**
 		 * throws a ServiceException::NOT_IMPLEMENTED exception
-		 */
+		*/},
 		wigiiNcd.throwNotImplemented = function() {
 			throw new wigiiNcd.ServiceException("not implemented", wigiiNcd.errorCodes.NOT_IMPLEMENTED);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * throws a ServiceException 
-		 */
+		*/},
 		wigiiNcd.createServiceException = function(message,code,previous) {
 			return new wigiiNcd.ServiceException(message, code, previous);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * @return String Converts anything to a compatible Fx string
-		 */
+		*/},
 		wigiiNcd.obj2FxString = function(obj) {			
 			var objType = $.type(obj);
 			if(objType==="function") {
@@ -3073,10 +3127,11 @@
 			else if(objType==="object") return "JSON.parse('"+JSON.stringify(obj)+"')";
 			else if(obj===undefined) return '""';
 			else return '"'+obj.toString()+'"';
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * @return Object Converts an Fx string back to its object representation
-		 */
+		*/},
 		wigiiNcd.fxString2obj = function(str) {				
 			if(str) {
 				// initializes scope
@@ -3085,15 +3140,16 @@
 				var returnValue = eval(str);
 				return returnValue;
 			}
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Chains an update of object fields if value changed.
 		 * Allows to copy some field values from obj2 to obj1 if values are different. Can set a value on obj1 if changes exist.
 		 *@example Updates author and description in existingCode.info object if changes exist compared to srcCode.info object,
 		 * plus if some changes exist, then sets the existingCode.info.modificationDate field to now.
 		 * wigiiNcd.updateObjIfChanged(existingCode.info,srcCode.info).field('author').field('description').set('modificationDate',new Date());
 		 *@return chainable object
-		 */
+		*/},
 		wigiiNcd.updateObjIfChanged = function(obj1,obj2) {
 			if(!obj1 || !obj2) throw wigiiNcd.createServiceException("obj1 and obj2 cannot be null.",wigiiNcd.errorCodes.INVALID_ARGUMENT);
 			var updateChain = {
@@ -3119,10 +3175,11 @@
 			};
 			updateChain.hasChanges = function() {return updateChain.context.changes;};
 			return updateChain;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns a string representing a date in a Wigii compatible format (Y-m-d H:i:s).
-		 */
+		*/},
 		wigiiNcd.txtDate = function(timestamp) {
 			var d = ($.type(timestamp)== 'date'? timestamp: new Date(timestamp));
 			var returnValue = '';
@@ -3156,15 +3213,16 @@
 			else returnValue += v;
 			
 			return returnValue;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns a string representing a date in a French style (d.m.Y H:i:s).
 		 *@param Integer timestamp timestamp to convert to date string
 		 *@param String options a formating option string. One of : 
 		 * noSeconds: display date and time up to minutes, 
 		 * noTime: displays only date without time, 
 		 * noDate: displays only time without date.
-		 */
+		*/},
 		wigiiNcd.txtFrenchDate = function(timestamp, options) {			
 			var d = ($.type(timestamp)== 'date'? timestamp: new Date(timestamp));
 			var returnValue = '';
@@ -3204,20 +3262,44 @@
 			}
 			
 			return returnValue;
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Creates a new HtmlEmitter object attached to the given DOM element. Alias of getHtmlEmitter function.
 		 *@param jQuery|DOM.Element output the element in which to emit HTML code, defaults to body if not specified.
-		 */
+		*/},
 		wigiiNcd.html = function(output) {
 			return wigiiNcd.getHtmlEmitter(output);
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * @return String returns the Wigii NCD version number
-		 */
-		wigiiNcd.version = function() {return "2.11";};
+		*/},
+		wigiiNcd.version = function() {return "2.12";});
+		
+		ncddoc(function(){/**
+		 * Attaches a comment and some custom attributes to a given function.
+		 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+		 * and can be used as meta information further down in the code.
+		 * NCD attributes are not loaded by default. To load them wigiiNcdOptions.loadNcdAttributes should be true.
+		 *@param String|Function comment a comment describing the function, as a string or as a source code native comment wrapped into a function
+		 *@param Function|Object f the function to which to add the NCD attributes. 
+		 * Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+		 *@return Function returns f for chaining
+		*/},
+		wigiiNcd.comment = wigiiNcdAttr);
+		
+		ncddoc(function(){/**
+		 * Attaches a comment and some custom attributes to a given function.
+		 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+		 * and can be used as meta information further down in the code.
+		 * NCD attributes are not loaded by default. To load them wigiiNcdOptions.loadNcdAttributes should be true.
+		 *@param String|Function comment a comment describing the function, as a string or as a source code native comment wrapped into a function
+		 *@param Function|Object f the function to which to add the NCD attributes. 
+		 * Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+		 *@return Function returns f for chaining
+		*/},
+		wigiiNcd.attr = wigiiNcdAttr);
 	};	
 	// Default WigiiNCD instance
 	var wigiiNcdInstance = new WigiiNcd();
@@ -3813,6 +3895,17 @@
 		wigiiNcdEtpOptions.privateNcdEtpMembers[memberName] = true;
 	};
 
+	/**
+	 * Attaches a comment and some custom attributes to a given function.
+	 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+	 * and can be used as meta information further down in the code.
+	 * NCD attributes are not loaded by default. To load them wigiiNcdOptions.loadNcdAttributes should be true.
+	 *@param String|Function comment a comment describing the function, as a string or as a source code native comment wrapped into a function
+	 *@param Function|Object f the function to which to add the NCD attributes. 
+	 * Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+	 *@return Function returns f for chaining
+	 */
+	var ncddoc = wigiiNcd().comment;
 
 	// Wigii NCD ETP
 
@@ -3822,7 +3915,7 @@
 	var wigiiNcdEtp = {};
 	wigiiNcdEtp.instantiationTime = Date.now();ncdprivate('instantiationTime');
 	wigiiNcdEtp.ctxKey = 'WigiiNcdEtp_'+wigiiNcdEtp.instantiationTime;ncdprivate('ctxKey');
-	wigiiNcdEtp.version = function() {return "2.11";};
+	wigiiNcdEtp.version = function() {return "2.12";};
 	
 	// Execution environment
 
@@ -4469,7 +4562,19 @@
 		wigiiNcdEtpOptions.privateNcdEtpMembers[memberName] = true;
 	};
 
-
+	/**
+	 * Attaches a comment and some custom attributes to a given function.
+	 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+	 * and can be used as meta information further down in the code.
+	 * NCD attributes are not loaded by default. To load them wigiiNcdOptions.loadNcdAttributes should be true.
+	 *@param String|Function comment a comment describing the function, as a string or as a source code native comment wrapped into a function
+	 *@param Function|Object f the function to which to add the NCD attributes. 
+	 * Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+	 *@return Function returns f for chaining
+	 */
+	var ncddoc = wigiiNcd().comment;
+	var ncdcomment = wigiiNcd().comment;
+	
 	// Wigii NCD ETP FX 
 	
 	
@@ -4479,11 +4584,12 @@
 	 * Main HTML Emitter
 	 */
 	var html = wigiiNcdEtp.html;
-	
+		
+	var programme = ncdcomment(function(){
 	/**
 	 * Main Program as a list of Func Exp to execute
-	 */
-	var programme = function() {
+	 */}, 
+	 function() {
 		var args = Array.prototype.slice.call(arguments);
 		var newFxCtx = createFxContext();
 		var returnValue = undefined;
@@ -4529,13 +4635,13 @@
 			newFxCtx.html().end();
 		}
 		catch(exc) {newFxCtx.html().publishException(exc);}
-	};
+	});
 	
-	/**
+	ncddoc(function(){/**
 	 * Wigii NCD contextual runtime object
 	 *@param wncd.HtmlEmitter htmlEmitter underlying HtmlEmitter on which to plug a Wigii NCD runtime
 	 *@param Object options a set of options to configure the runtime. It supports the following attributes : nothing yet.
-	 */
+	*/},
 	wigiiNcdEtp.Runtime = function(htmlEmitter,options) {
 		var self = this;
 		self.className = 'Runtime';
@@ -4607,19 +4713,20 @@
 			wncd.program.context.html(self.context.currentDiv);
 		};
 		self.programme = self.program;
-	};
-	/**
+	});
+	
+	ncddoc(function(){/**
 	 * Creates a Wigii NCD contextual runtime object
 	 *@param wncd.HtmlEmitter htmlEmitter underlying HtmlEmitter on which to plug a Wigii NCD runtime
 	 *@param Object options some options to configure the Runtime.
 	 *@return wigiiNcdEtp.Runtime
-	 */
-	wigiiNcdEtp.createRuntime = function(htmlEmitter,options) { return new wigiiNcdEtp.Runtime(htmlEmitter,options);}	
+	*/},
+	wigiiNcdEtp.createRuntime = function(htmlEmitter,options) { return new wigiiNcdEtp.Runtime(htmlEmitter,options);});
 	
-	/**
+	ncddoc(function(){/**
 	 * JQuery NCD plugin binding a Wigii NCD runtime to a given anchor
 	 *@return wncd.Runtime
-	 */
+	*/},
 	wigiiNcd().getJQueryService().run = function(selection,options) {
 		var returnValue=undefined;
 		// checks we have only one element
@@ -4629,13 +4736,14 @@
 		}
 		else if(selection && selection.length>1) throw wncd.createServiceException('Wigii NCD run selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
 		return (!returnValue?{$:selection}:returnValue);
-	};
-	
+	});
+		
+		
+	var sousProgramme = ncdcomment(function(){
 	/**
 	 * Creates a JavaScript function ready to invoke a list of FuncExp
 	 *@return Function call the javascript function to invoke the list of FuncExp
-	 */
-	var sousProgramme = function() {
+	*/},function() {
 		var args = Array.prototype.slice.call(arguments);
 		var returnValue = function() {programme.apply(null,args);};
 		returnValue.toFxString = function() {
@@ -4648,14 +4756,16 @@
 			return fxs;
 		};
 		return returnValue;
-	};	
+	});	
 	
 	// FuncExp infrastructure
 
+	
+	var createFxContext = ncdcomment(function(){
 	/**
 	 * Creates a new Fx Context object
 	 */
-	var createFxContext = function() {
+	},function() {
 		var fxCtx = {argsI:0, isPaused:false, impl:{}};
 		fxCtx.html = function(html) {
 			if(html===undefined) {
@@ -4668,23 +4778,27 @@
 		}
 		fxCtx.html(programme.currentDiv());
 		return fxCtx;
-	};
+	});
 	
+	
+	var fxRunF = ncdcomment(function(){
 	/**
 	 * Runs a normal JavaScript function in the context of a Func Exp
 	 */
-	var fxRunF = function(f,fxCtx,args) {
+	},function(f,fxCtx,args) {
 		programme.context.fxCtx = fxCtx;
 		var returnValue = f.apply(null,args);
 		programme.context.fxCtx = undefined;
 		return returnValue;
-	};
+	});
 	
+	
+	var fx = ncdcomment(function(){
 	/**
 	 * Converts a javascript function call to a FuncExp
 	 *@return Function a FuncExp ready to be invoked
 	 */
-	var fx = function(f) {
+	},function(f) {
 		var args;
 		if(arguments.length > 1) args = Array.prototype.slice.call(arguments,1);
 		else args = [];
@@ -4698,14 +4812,16 @@
 			// calls wrapped function
 			return fxRunF(f,fxCtx,evaluatedArgs)
 		};
-	};
+	});
 	
+	
+	var fx_s = ncdcomment(function(){
 	/**
 	 * Converts a javascript function call to a serializable FuncExp
 	 *@param String symbol the FuncExp name
 	 *@return a FuncExp ready to be invoked or serialized
 	 */
-	var fx_s = function(symbol,f) {
+	},function(symbol,f) {
 		var args;
 		if(arguments.length > 2) args = Array.prototype.slice.call(arguments,2);
 		else args = [];
@@ -4729,8 +4845,10 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
+	
+	var dynImpl_fx_s = ncdcomment(function(){
 	/**
 	 * Converts a javascript function call to a serializable FuncExp for which implementation is dynamically chosen.
 	 *@param String symbol the FuncExp name
@@ -4738,7 +4856,7 @@
 	 *@example dynImpl_fx_s("out", function(fxCtx){ return fxCtx.html().out; }, str); invokes the out function on the contextual html emitter.
 	 *@return a FuncExp ready to be invoked or serialized
 	 */
-	var dynImpl_fx_s = function(symbol,implChooser) {
+	},function(symbol,implChooser) {
 		var args;
 		if(arguments.length > 2) args = Array.prototype.slice.call(arguments,2);
 		else args = [];
@@ -4764,13 +4882,15 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
+	
+	var ctlSeq = ncdcomment(function(){
 	/**
 	 * Builds a FuncExp as a sequence of FuncExp
 	 *@return Function a FuncExp ready to be invoked
 	 */
-	var ctlSeq = function() {
+	},function() {
 		var args = [];
 		var newFxCtx = createFxContext();
 		var seqBuilder = {
@@ -4839,13 +4959,15 @@
 			return returnValue;
 		}
 		else return seqBuilder;
-	};
+	});
 	
+	
+	var scripte = ncdcomment(function(){
 	/**
 	 * Builds a FuncExp which executes a script in JavaScript
 	 *@return Function a FuncExp ready to be invoked
 	 */
-	var scripte = function(f) { 
+	},function(f) { 
 		var returnValue = function(fxCtx){
 			return fxRunF(f,fxCtx,undefined);
 		};
@@ -4856,15 +4978,17 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
+	
+	var ctlGen = ncdcomment(function(){
 	/**
 	 * Generates a sequence of FuncExp using a span function and a generator
 	 *@param Integer|Function span number of generations or a control function which, given a step i=1..n and a context, returns true to continue generation, false to stop. Function signature is span(i,context): Boolean
 	 *@param Function generator a function which generates some FuncExp given a step i=1..n and a context. Function signature is generator(i,context): FuncExp
 	 *@param Object context stateful context used by generator for his work
 	 */
-	var ctlGen = function(span, generator, context) {
+	},function(span, generator, context) {
 		var newFxCtx = createFxContext();
 		newFxCtx.stepI=1;
 		newFxCtx.isSpanFunction = $.isFunction(span);
@@ -4928,7 +5052,7 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
 	// Source code and NCD components
 
@@ -4988,6 +5112,8 @@
 		return returnValue;
 	};
 	
+	
+	var codePublic = ncdcomment(function(){
 	/**
 	 * Fetches a piece of public code published into the given catalog.
 	 *@param String label Label of button used to invoke the code
@@ -4995,7 +5121,7 @@
 	 *@param String codeId unique ID identifying the piece of code
 	 *@return Object. Returns a Source Code object
 	 */
-	var codePublic = function(label, catalogueId, codeId, cssClass) {
+	},function(label, catalogueId, codeId, cssClass) {
 		var program = sousProgramme(
 			p(),out("Du code publique."),$p(),
 			p(),out("Définir le catalogue ID et le code ID pour le charger."),$p()
@@ -5012,8 +5138,10 @@
 			program: program,
 			info: srcCode.info
 		};
-	};
+	});
 	
+	
+	var codeSource = ncdcomment(function(){
 	/**
 	 * Creates or updates a source code object
 	 *@param String label Label of button used to invoke the code
@@ -5021,7 +5149,7 @@
 	 *@param Object info Optional Source code meta information object for publication 
 	 *@return Object. Returns a Source Code object
 	 */
-	var codeSource = function(label,program,info,cssClass) {
+	},function(label,program,info,cssClass) {
 		try {			
 			var returnValue = {
 				label:label,
@@ -5095,14 +5223,16 @@
 		}
 		catch(exc) {programme.html().publishException(exc);}
 		return returnValue;
-	};
+	});
 	
+	
+	var menu = ncdcomment(function(){
 	/**
 	 * Creates a menu which handles a list of active NCD plugins.
 	 * Each selected plugin should be invoked by using the codeSource or codePublic functions.
 	 *@example menu(codeSource("A",sousProgramme(p(),out("something"),$p())),codePublic("B","123","1234567"))
 	 */
-	var menu = function() {
+	},function() {
 		var timestamp = Date.now();
 		var args = Array.prototype.slice.call(arguments);
 		var divMenu = html.div('menu'+timestamp);
@@ -5125,14 +5255,16 @@
 			}, code.cssClass);
 		};
 		for(var i=0;i<args.length;i++) { codeButton(args[i]); }		
-	};
+	});
 
+	
+	var libSource = ncdcomment(function(){
 	/**
 	 * Loads and updates a library source code
 	 *@param Function program Library source code as an Fx program.
 	 *@param Object info Optional Source code meta information object for publication 
 	 */
-	var libSource = function(program,info) {
+	},function(program,info) {
 		// creates a code object
 		var code = codeSource(undefined,program,info);
 		// runs the library code
@@ -5140,13 +5272,15 @@
 			code.program();
 		}
 		catch(exc) {programme.html().publishException(exc);}
-	};
+	});
+	
+	var libPublic = ncdcomment(function(){
 	/**
 	 * Fetches a public library published into the given catalog.
 	 *@param String catalogId Catalog ID from which to fetch the source code
 	 *@param String codeId unique ID identifying the piece of code
 	 */
-	var libPublic = function(catalogueId, codeId) {
+	},function(catalogueId, codeId) {
 		try {
 			// fetches the code object in the given catalogue
 			var code = codePublic(undefined,catalogueId,codeId);
@@ -5154,9 +5288,9 @@
 			code.program();
 		}
 		catch(exc) {programme.html().publishException(exc);}
-	};
+	});
 	
-	/**
+	ncddoc(function(){/**
 	 * Code source editor component. Allows to edit and test some source code given as a function.
 	 *@param Function f the source code to edit given as an anonymous function without any arguments.
 	 *@param Object options a set of options to configure the behavior of the Source Code Editor component. It supports the following attributes :
@@ -5168,7 +5302,7 @@
 	 * - testBtnClass: String. Optional CSS class to attach to the Test button.
 	 * - afterTest: Function. Callback each time the code has been tested. The callback receives the CodeSourceEditor instance.
 	 * - textAreaClass: String. Optional CSS class to attach to the source code text area.
-	 */
+	*/},
 	wigiiNcdEtp.CodeSourceEditor = function(f,options) {
 		var self = this;
 		self.className = 'CodeSourceEditor';
@@ -5249,22 +5383,25 @@
 			self.impl.runCode(self.context.codeScript);
 			if(self.options.afterTest) self.options.afterTest(self);
 		}
-	};
-	/**
+	});
+	
+	ncddoc(function(){/**
 	 * Creates a CodeSourceEditor instance to edit and test the given function.
 	 *@param Function f some source code wrapped into an anonymous function without any parameters
 	 *@param Object options some options to configure the CodeSourceEditor.
 	 *@return wigiiNcdEtp.CodeSourceEditor 
-	 */
-	wigiiNcdEtp.createCodeSourceEditor = function(f,options) { return new wigiiNcdEtp.CodeSourceEditor(f,options);}
+	*/},
+	wigiiNcdEtp.createCodeSourceEditor = function(f,options) { return new wigiiNcdEtp.CodeSourceEditor(f,options);});
 	
+	
+	var exemple = ncdcomment(function(){
 	/**
 	 * Opens a CodeSourceEditor to allow the user to see and test a given piece of code
 	 *@param Function f a scope holding some code to be tested by the user
 	 *@param Object options some options to configure the CodeSourceEditor. See CodeSourceEditor constructor for more details on available options.
 	 *@return Function a FuncExp ready to be invoked
 	 */
-	var exemple = function(f,options) { 
+	},function(f,options) { 
 		var returnValue = function(fxCtx){
 			return wigiiNcdEtp.createCodeSourceEditor(f,options);	
 		};
@@ -5279,7 +5416,7 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
 	// Interaction
 
@@ -5306,6 +5443,8 @@
 		return returnValue;
 	};
 	
+	
+	var interrupt = ncdcomment(function(){
 	/**
 	 * Interrupts the current FuncExp flow and stores the context so that it can be resumed in future.
 	 *@param String fxCtxHolder key under which the fxCtx is stored. Defaults to 'interruption'
@@ -5315,7 +5454,7 @@
 	 * To identify the current interrupted flow, call interrupt("myFlow")
 	 * Then call: programme.context.myFlow.resume();
 	 */
-	var interrupt = function(fxCtxHolder,fxCtxStorage) {
+	},function(fxCtxHolder,fxCtxStorage) {
 		var returnValue = function(fxCtx){			
 			if(fxCtx) {
 				if(!fxCtxStorage) fxCtxStorage = programme.context;
@@ -5337,7 +5476,7 @@
 			return fxs;
 		};
 		return returnValue;
-	};	
+	});	
 	
 	var boutonDePause = function(label,onclick,cssClass) {
 		var returnValue = function(fxCtx){			
@@ -6745,7 +6884,7 @@ wncd.externals.Prism.languages.js = wncd.externals.Prism.languages.javascript;
   * Created by Camille Weber (camille@wigii.org), 15.11.2017
   */
  
-/**
+wncd.comment(function(){/**
  * Object doc component. Builds the documentation model of a given object and optionally renders it into a given HtmlEmitter
  *@param Object obj a javascript object for which to introspect the documentation model
  *@param Object options a set of options to configure the behavior of the ObjectDoc component. It supports the following attributes :
@@ -6813,7 +6952,7 @@ wncd.externals.Prism.languages.js = wncd.externals.Prism.languages.javascript;
  * 	 libs: Map. Map of libraries
  * 	 members: Map. Map of qualified classes, functions and variables.
  * }
- */
+ */},
 wncd.ObjectDoc = function(obj,options) {
 	var self = this;
 	self.className = 'ObjectDoc';
@@ -6844,6 +6983,7 @@ wncd.ObjectDoc = function(obj,options) {
 	self.options.privateValues.instantiationTime = true;
 	self.options.privateValues.className = true;
 	self.options.privateValues.$ = true;
+	self.options.privateValues.wncdAttr = true;
 	if(self.options.privateValues.context===undefined) self.options.privateValues.context = true;
 	if(self.options.privateValues.impl===undefined) self.options.privateValues.impl = true;
 	if(self.options.privateValues.options===undefined) self.options.privateValues.options = true;
@@ -6927,7 +7067,7 @@ wncd.ObjectDoc = function(obj,options) {
 			
 			// displays class src code
 			if(member.context.srcCode && member.modelType === 'Class') {				
-				memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,member.context.srcCode).$tag("div").emit();				
+				memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,member.context.srcCode,member.context.comment).$tag("div").emit();				
 			}
 			
 			// expands recursively until expandLevel, then only on click				
@@ -7133,6 +7273,7 @@ wncd.ObjectDoc = function(obj,options) {
 		var expandable = false;
 		var isObjectConstructor = false;
 		var classMemberComments = undefined;
+		var memberComment = undefined;
 		
 		if(objectType === 'function') {				
 			srcCode = wncd.obj2FxString(member.context.object);
@@ -7145,6 +7286,10 @@ wncd.ObjectDoc = function(obj,options) {
 			isObjectConstructor = /^function\s*\([^\(\)]*\)\s*\{\s*var\s*self\s*=\s*this;/.test(srcCode);
 			// extracts members comments
 			classMemberComments = self.impl.extractClassMemberComments(srcCode);
+			if(member.context.object.wncdAttr && member.context.object.wncdAttr.comment) {
+				memberComment = member.context.object.wncdAttr.comment;
+			}
+			
 			// runs constructor (safely)
 			if(isObjectConstructor) {					
 				var newObj = {};
@@ -7159,8 +7304,9 @@ wncd.ObjectDoc = function(obj,options) {
 				catch(exc) {wncd.program.context.html(currentDiv);}					
 				if(!newObj.className) newObj.className = member.name;
 				member.context.object = newObj;
+				expandable = (Object.keys(member.context.object).length > 0);
 			}
-			expandable = (Object.keys(member.context.object).length > 0);				
+			else expandable = (Object.keys(member.context.object).length > (memberComment?1:0));
 		}
 		else if(objectType === 'object' && member.context.object !== options.nullEmitter) {
 			expandable = (Object.keys(member.context.object).length > 0);
@@ -7186,7 +7332,8 @@ wncd.ObjectDoc = function(obj,options) {
 		}
 		member.context.expandable = expandable;
 		// Links associated comment to member
-		if(objModel.context.classMemberComments) member.context.comment = objModel.context.classMemberComments[member.name];
+		if(memberComment) member.context.comment = memberComment;		
+		else if(objModel.context.classMemberComments) member.context.comment = objModel.context.classMemberComments[member.name];		
 		
 		// blocks recursion for private values
 		if(options.privateValues[member.name]) member.context.expandable = false;
@@ -7264,20 +7411,20 @@ wncd.ObjectDoc = function(obj,options) {
 	
 	// Builds the object documentation model
 	self.buildDocModel(obj,self.options.namespace, self.options.className);
-};	
-/**
+});	
+wncd.comment(function(){/**
  * Creates an object documentation model on the given object
- */
+ */},
 wncd.createObjectDoc = function(obj,options) { 
 	return new wncd.ObjectDoc(obj,options);
-};	
+});	
 
-/**
+wncd.comment(function(){/**
  * Documentation browser which displays a tree view of the documentation, 
  * a search bar and a view with the detailed documentation and interactive examples
  * @param wncd.Desktop container the container in which to deploy the ObjectDocBrowser. Today supports only wncd.Desktop.
  * @param Object options a set of options to configure the desktop component. It supports the following attributes :
- */
+*/},
 wncd.ObjectDocBrowser = function(container, options) {
 	var self = this;
 	self.className = 'ObjectDocBrowser';
@@ -7515,9 +7662,9 @@ wncd.ObjectDocBrowser = function(container, options) {
 	if($.type(container)!=='object' || container.className != 'Desktop') throw wncd.createServiceException("container should be a non null instance of wncd.Desktop",wncd.errorCodes.INVALID_ARGUMENT);
 	self.options.obj = self; // passes the ObjectDocBrowser to the Desktop through the component object
 	container.registerComponent(self.ctxKey,self.options.renderSearchBar,self.options.renderBrowserPanel,self.options.renderFooterBar,self.options);
-};
+});
  
-/**
+wncd.comment(function(){/**
  * Builds a contextual menu and attaches it to a given anchor
  *@param jQuery|DOM.Element anchor the element to which attach the contextual menu
  *@param Array|Function compose an array of menu items or a function which composes the menu items.
@@ -7543,7 +7690,7 @@ wncd.ObjectDocBrowser = function(container, options) {
  * div.contextualMenu span.rightMenu, div.contextualMenu span.noMenu {
  *	color:#000099;
  *}
- */
+*/},
 wncd.ContextualMenu = function(anchor, compose, options) {
 	var self = this;
 	self.className = 'ContextualMenu';
@@ -7834,12 +7981,12 @@ wncd.ContextualMenu = function(anchor, compose, options) {
 	self.context.list.context.menu = self;
 	// registers toggle on click
 	anchor.click(self.toggle);
-};
+});
 
-/**
+wncd.comment(function(){/**
  * JQuery NCD plugin binding a contextual menu to a given anchor
  *@return wncd.ContextualMenu
- */
+*/},
 wncd.getJQueryService().menu = function(selection,options) {
 	var returnValue=undefined;
 	// checks we have only one element
@@ -7859,9 +8006,9 @@ wncd.getJQueryService().menu = function(selection,options) {
 	}
 	else if(selection && selection.length>1) throw wncd.createServiceException('Wigii NCD menu selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
 	return (!returnValue?{$:selection}:returnValue);
-};
+});
 
-/**
+wncd.comment(function(){/**
  * A desktop user interface which displays a user menu, a header bar, a workzone and a footer bar.
  * It accepts  to display desktop components which should display a header bar, a workzone and a footer bar.
  * It supports an activate component event and a close event. The activate event is fired when a component is brought to the screen,
@@ -7873,7 +8020,7 @@ wncd.getJQueryService().menu = function(selection,options) {
  * - logo: HTML img to display a logo
  * - height: height of the desktop in his container. Defaults to 100%
  * - width: width of the desktop in his container. Defaults to 100%
- */
+*/},
 wncd.Desktop = function(options) {
 	var self = this;
 	self.className = 'Desktop';
@@ -8128,15 +8275,15 @@ wncd.Desktop = function(options) {
 		self.options);			
 	// Activates the desktop
 	self.activate(self.ctxKey);
-};
+});
 wncd.createDesktop = function(options) {return new wncd.Desktop(options);}
 
 
-/**
+wncd.comment(function(){/**
  * A task list which remembers past tasks and proposes matching when typing
  * @param wncd.Desktop container the container in which to deploy the component. Today supports only wncd.Desktop.
  * @param Object options a set of options to configure the desktop component. It supports the following attributes :
- */
+*/},
 wncd.SelfLearningTaskList = function(container, options) {
 	var self = this;
 	self.className = 'SelfLearningTaskList';
@@ -8396,10 +8543,10 @@ wncd.SelfLearningTaskList = function(container, options) {
 	if($.type(container)!=='object' || container.className != 'Desktop') throw wncd.createServiceException("container should be a non null instance of wncd.Desktop",wncd.errorCodes.INVALID_ARGUMENT);
 	self.options.obj = self; // passes the SelfLearningTaskList to the Desktop through the component object
 	container.registerComponent(self.ctxKey,self.options.renderSearchBar,self.options.renderTaskList,self.options.renderFooterBar,self.options);
-};
+});
 wncd.createSelfLearningTaskList = function(container, options) {return new wncd.SelfLearningTaskList(container,options);};
 
-/**
+wncd.comment(function(){/**
  * A story board which implements Agile Kanban methodology
  * @param wncd.Desktop container the container in which to deploy the component. Supports wncd.Desktop or WigiiApi.WncdContainer.
  * @param Object options a set of options to configure the desktop component. It supports the following attributes :
@@ -8413,7 +8560,7 @@ wncd.createSelfLearningTaskList = function(container, options) {return new wncd.
  * - elementStatusField: String. Element field name which holds the story status. Defaults to "status".
  * - elementPositionField: String. Element field name which holds the story position. Defaults to "position".
  * - renderStory: Function. Renders the story into a column of the board, given a reference to the storyBoard, the HTML emitter for the story and a reference on the story object.
- */
+*/},
 wncd.AgileStoryBoard = function(container, options) {
 	var self = this;
 	self.className = 'AgileStoryBoard';
@@ -8893,5 +9040,5 @@ wncd.AgileStoryBoard = function(container, options) {
 		wncd.program.context.html($("#"+self.ctxKey+"_storyBoard").wncd('html'));
 		self.impl.renderStoryBoard(container);
 	}
-};
+});
 wncd.createAgileStoryBoard = function(container, options) {return new wncd.AgileStoryBoard(container,options);};

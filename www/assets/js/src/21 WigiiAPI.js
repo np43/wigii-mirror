@@ -34,7 +34,53 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
  * @param JQuery $ depends on JQuery 1.8.x
  */
 (function(window,$) {
+	// Configuration options
+	var wigiiApiOptions = undefined;
+	if(window.wigiiApi && window.wigiiApi.options) wigiiApiOptions = window.wigiiApi.options;
+	if(!wigiiApiOptions) wigiiApiOptions = {};
 	
+	/**
+	 * Attaches a comment and some custom attributes to a given function.
+	 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+	 * and can be used as meta information further down in the code.
+	 * NCD attributes are not loaded by default. To load them wigiiApiOptions.loadNcdAttributes should be true.
+	 *@param String|Function comment a comment describing the function, as a string or as a source code native comment wrapped into a function
+	 *@param Function|Object f the function to which to add the NCD attributes. 
+	 * Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+	 *@return Function returns f for chaining
+	 */
+	var wigiiNcdAttr = function(enable){var enabled=(enable==true); return function(comment,f) {
+		if(enabled && f) {
+			// extracts any list of pairs key,value
+			var args = undefined;
+			if(arguments.length > 2) {
+				args = Array.prototype.slice.call(arguments);
+				comment = args[0];
+				f = args[args.length-1];
+			}
+			// extracts source code comment from wrapping function
+			if($.isFunction(comment)) {
+				comment = comment.toString().match(/(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)/g);
+				if(comment) comment = comment[0];				
+			}
+			// stores attributes
+			var wncdAttr = f.wncdAttr || {};
+			if(comment) wncdAttr.comment = comment;
+			if(args && args.length>0) {
+				var i=0; var key,value;
+				while(i<args.length) {
+					key = args[i]; i++;
+					if(i<args.length) {
+						value = args[i]; i++;
+					}
+					if(key && value!==undefined) wncdAttr[key] = value;
+				}
+			}
+			f.wncdAttr = wncdAttr;			
+		}
+		return f;
+	}};
+	var ncddoc = wigiiNcdAttr(wigiiApiOptions.loadNcdAttributes);
 	
 	// FuncExp Libraries 
 	
@@ -3448,6 +3494,19 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			}
 			return wigiiApi.wncdContainerInstance;
 		};
+		/**
+		 * Creates a function that can be used to attach a comment and some custom attributes to a given function.
+		 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+		 * and can be used as meta information further down in the code.
+		 * The function has the following signature wncdAttr(comment,key1,val1,...,keyn,valn,f) where
+		 * - Arg(0) comment. A comment describing the function, as a string or as a source code native comment wrapped into a function
+		 * - Arg(1..n) keyI, valI: Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+		 * - Arg(last) f: Function|Object. The function to which to add the NCD attributes. 
+		 * The wncdAttr function returns f for chaining.
+		 *@param Boolean enable If true, the wncd attributes are actively loaded when the function is executed, else there are ignored. 
+		 *@return Function a function to attach comments and custom attributes to functions
+		 */
+		wigiiApi.getWncdAttrFx = function(enable) { return wigiiNcdAttr(enable);}
 		/**
 		 * Returns DataFlowService instance
 		 */

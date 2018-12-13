@@ -38,7 +38,19 @@
 		wigiiNcdEtpOptions.privateNcdEtpMembers[memberName] = true;
 	};
 
-
+	/**
+	 * Attaches a comment and some custom attributes to a given function.
+	 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+	 * and can be used as meta information further down in the code.
+	 * NCD attributes are not loaded by default. To load them wigiiNcdOptions.loadNcdAttributes should be true.
+	 *@param String|Function comment a comment describing the function, as a string or as a source code native comment wrapped into a function
+	 *@param Function|Object f the function to which to add the NCD attributes. 
+	 * Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+	 *@return Function returns f for chaining
+	 */
+	var ncddoc = wigiiNcd().comment;
+	var ncdcomment = wigiiNcd().comment;
+	
 	// Wigii NCD ETP FX 
 	
 	
@@ -48,11 +60,12 @@
 	 * Main HTML Emitter
 	 */
 	var html = wigiiNcdEtp.html;
-	
+		
+	var programme = ncdcomment(function(){
 	/**
 	 * Main Program as a list of Func Exp to execute
-	 */
-	var programme = function() {
+	 */}, 
+	 function() {
 		var args = Array.prototype.slice.call(arguments);
 		var newFxCtx = createFxContext();
 		var returnValue = undefined;
@@ -98,13 +111,13 @@
 			newFxCtx.html().end();
 		}
 		catch(exc) {newFxCtx.html().publishException(exc);}
-	};
+	});
 	
-	/**
+	ncddoc(function(){/**
 	 * Wigii NCD contextual runtime object
 	 *@param wncd.HtmlEmitter htmlEmitter underlying HtmlEmitter on which to plug a Wigii NCD runtime
 	 *@param Object options a set of options to configure the runtime. It supports the following attributes : nothing yet.
-	 */
+	*/},
 	wigiiNcdEtp.Runtime = function(htmlEmitter,options) {
 		var self = this;
 		self.className = 'Runtime';
@@ -176,19 +189,20 @@
 			wncd.program.context.html(self.context.currentDiv);
 		};
 		self.programme = self.program;
-	};
-	/**
+	});
+	
+	ncddoc(function(){/**
 	 * Creates a Wigii NCD contextual runtime object
 	 *@param wncd.HtmlEmitter htmlEmitter underlying HtmlEmitter on which to plug a Wigii NCD runtime
 	 *@param Object options some options to configure the Runtime.
 	 *@return wigiiNcdEtp.Runtime
-	 */
-	wigiiNcdEtp.createRuntime = function(htmlEmitter,options) { return new wigiiNcdEtp.Runtime(htmlEmitter,options);}	
+	*/},
+	wigiiNcdEtp.createRuntime = function(htmlEmitter,options) { return new wigiiNcdEtp.Runtime(htmlEmitter,options);});
 	
-	/**
+	ncddoc(function(){/**
 	 * JQuery NCD plugin binding a Wigii NCD runtime to a given anchor
 	 *@return wncd.Runtime
-	 */
+	*/},
 	wigiiNcd().getJQueryService().run = function(selection,options) {
 		var returnValue=undefined;
 		// checks we have only one element
@@ -198,13 +212,14 @@
 		}
 		else if(selection && selection.length>1) throw wncd.createServiceException('Wigii NCD run selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
 		return (!returnValue?{$:selection}:returnValue);
-	};
-	
+	});
+		
+		
+	var sousProgramme = ncdcomment(function(){
 	/**
 	 * Creates a JavaScript function ready to invoke a list of FuncExp
 	 *@return Function call the javascript function to invoke the list of FuncExp
-	 */
-	var sousProgramme = function() {
+	*/},function() {
 		var args = Array.prototype.slice.call(arguments);
 		var returnValue = function() {programme.apply(null,args);};
 		returnValue.toFxString = function() {
@@ -217,14 +232,16 @@
 			return fxs;
 		};
 		return returnValue;
-	};	
+	});	
 	
 	// FuncExp infrastructure
 
+	
+	var createFxContext = ncdcomment(function(){
 	/**
 	 * Creates a new Fx Context object
 	 */
-	var createFxContext = function() {
+	},function() {
 		var fxCtx = {argsI:0, isPaused:false, impl:{}};
 		fxCtx.html = function(html) {
 			if(html===undefined) {
@@ -237,23 +254,27 @@
 		}
 		fxCtx.html(programme.currentDiv());
 		return fxCtx;
-	};
+	});
 	
+	
+	var fxRunF = ncdcomment(function(){
 	/**
 	 * Runs a normal JavaScript function in the context of a Func Exp
 	 */
-	var fxRunF = function(f,fxCtx,args) {
+	},function(f,fxCtx,args) {
 		programme.context.fxCtx = fxCtx;
 		var returnValue = f.apply(null,args);
 		programme.context.fxCtx = undefined;
 		return returnValue;
-	};
+	});
 	
+	
+	var fx = ncdcomment(function(){
 	/**
 	 * Converts a javascript function call to a FuncExp
 	 *@return Function a FuncExp ready to be invoked
 	 */
-	var fx = function(f) {
+	},function(f) {
 		var args;
 		if(arguments.length > 1) args = Array.prototype.slice.call(arguments,1);
 		else args = [];
@@ -267,14 +288,16 @@
 			// calls wrapped function
 			return fxRunF(f,fxCtx,evaluatedArgs)
 		};
-	};
+	});
 	
+	
+	var fx_s = ncdcomment(function(){
 	/**
 	 * Converts a javascript function call to a serializable FuncExp
 	 *@param String symbol the FuncExp name
 	 *@return a FuncExp ready to be invoked or serialized
 	 */
-	var fx_s = function(symbol,f) {
+	},function(symbol,f) {
 		var args;
 		if(arguments.length > 2) args = Array.prototype.slice.call(arguments,2);
 		else args = [];
@@ -298,8 +321,10 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
+	
+	var dynImpl_fx_s = ncdcomment(function(){
 	/**
 	 * Converts a javascript function call to a serializable FuncExp for which implementation is dynamically chosen.
 	 *@param String symbol the FuncExp name
@@ -307,7 +332,7 @@
 	 *@example dynImpl_fx_s("out", function(fxCtx){ return fxCtx.html().out; }, str); invokes the out function on the contextual html emitter.
 	 *@return a FuncExp ready to be invoked or serialized
 	 */
-	var dynImpl_fx_s = function(symbol,implChooser) {
+	},function(symbol,implChooser) {
 		var args;
 		if(arguments.length > 2) args = Array.prototype.slice.call(arguments,2);
 		else args = [];
@@ -333,13 +358,15 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
+	
+	var ctlSeq = ncdcomment(function(){
 	/**
 	 * Builds a FuncExp as a sequence of FuncExp
 	 *@return Function a FuncExp ready to be invoked
 	 */
-	var ctlSeq = function() {
+	},function() {
 		var args = [];
 		var newFxCtx = createFxContext();
 		var seqBuilder = {
@@ -408,13 +435,15 @@
 			return returnValue;
 		}
 		else return seqBuilder;
-	};
+	});
 	
+	
+	var scripte = ncdcomment(function(){
 	/**
 	 * Builds a FuncExp which executes a script in JavaScript
 	 *@return Function a FuncExp ready to be invoked
 	 */
-	var scripte = function(f) { 
+	},function(f) { 
 		var returnValue = function(fxCtx){
 			return fxRunF(f,fxCtx,undefined);
 		};
@@ -425,15 +454,17 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
+	
+	var ctlGen = ncdcomment(function(){
 	/**
 	 * Generates a sequence of FuncExp using a span function and a generator
 	 *@param Integer|Function span number of generations or a control function which, given a step i=1..n and a context, returns true to continue generation, false to stop. Function signature is span(i,context): Boolean
 	 *@param Function generator a function which generates some FuncExp given a step i=1..n and a context. Function signature is generator(i,context): FuncExp
 	 *@param Object context stateful context used by generator for his work
 	 */
-	var ctlGen = function(span, generator, context) {
+	},function(span, generator, context) {
 		var newFxCtx = createFxContext();
 		newFxCtx.stepI=1;
 		newFxCtx.isSpanFunction = $.isFunction(span);
@@ -497,7 +528,7 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
 	// Source code and NCD components
 
@@ -557,6 +588,8 @@
 		return returnValue;
 	};
 	
+	
+	var codePublic = ncdcomment(function(){
 	/**
 	 * Fetches a piece of public code published into the given catalog.
 	 *@param String label Label of button used to invoke the code
@@ -564,7 +597,7 @@
 	 *@param String codeId unique ID identifying the piece of code
 	 *@return Object. Returns a Source Code object
 	 */
-	var codePublic = function(label, catalogueId, codeId, cssClass) {
+	},function(label, catalogueId, codeId, cssClass) {
 		var program = sousProgramme(
 			p(),out("Du code publique."),$p(),
 			p(),out("Définir le catalogue ID et le code ID pour le charger."),$p()
@@ -581,8 +614,10 @@
 			program: program,
 			info: srcCode.info
 		};
-	};
+	});
 	
+	
+	var codeSource = ncdcomment(function(){
 	/**
 	 * Creates or updates a source code object
 	 *@param String label Label of button used to invoke the code
@@ -590,7 +625,7 @@
 	 *@param Object info Optional Source code meta information object for publication 
 	 *@return Object. Returns a Source Code object
 	 */
-	var codeSource = function(label,program,info,cssClass) {
+	},function(label,program,info,cssClass) {
 		try {			
 			var returnValue = {
 				label:label,
@@ -664,14 +699,16 @@
 		}
 		catch(exc) {programme.html().publishException(exc);}
 		return returnValue;
-	};
+	});
 	
+	
+	var menu = ncdcomment(function(){
 	/**
 	 * Creates a menu which handles a list of active NCD plugins.
 	 * Each selected plugin should be invoked by using the codeSource or codePublic functions.
 	 *@example menu(codeSource("A",sousProgramme(p(),out("something"),$p())),codePublic("B","123","1234567"))
 	 */
-	var menu = function() {
+	},function() {
 		var timestamp = Date.now();
 		var args = Array.prototype.slice.call(arguments);
 		var divMenu = html.div('menu'+timestamp);
@@ -694,14 +731,16 @@
 			}, code.cssClass);
 		};
 		for(var i=0;i<args.length;i++) { codeButton(args[i]); }		
-	};
+	});
 
+	
+	var libSource = ncdcomment(function(){
 	/**
 	 * Loads and updates a library source code
 	 *@param Function program Library source code as an Fx program.
 	 *@param Object info Optional Source code meta information object for publication 
 	 */
-	var libSource = function(program,info) {
+	},function(program,info) {
 		// creates a code object
 		var code = codeSource(undefined,program,info);
 		// runs the library code
@@ -709,13 +748,15 @@
 			code.program();
 		}
 		catch(exc) {programme.html().publishException(exc);}
-	};
+	});
+	
+	var libPublic = ncdcomment(function(){
 	/**
 	 * Fetches a public library published into the given catalog.
 	 *@param String catalogId Catalog ID from which to fetch the source code
 	 *@param String codeId unique ID identifying the piece of code
 	 */
-	var libPublic = function(catalogueId, codeId) {
+	},function(catalogueId, codeId) {
 		try {
 			// fetches the code object in the given catalogue
 			var code = codePublic(undefined,catalogueId,codeId);
@@ -723,9 +764,9 @@
 			code.program();
 		}
 		catch(exc) {programme.html().publishException(exc);}
-	};
+	});
 	
-	/**
+	ncddoc(function(){/**
 	 * Code source editor component. Allows to edit and test some source code given as a function.
 	 *@param Function f the source code to edit given as an anonymous function without any arguments.
 	 *@param Object options a set of options to configure the behavior of the Source Code Editor component. It supports the following attributes :
@@ -737,7 +778,7 @@
 	 * - testBtnClass: String. Optional CSS class to attach to the Test button.
 	 * - afterTest: Function. Callback each time the code has been tested. The callback receives the CodeSourceEditor instance.
 	 * - textAreaClass: String. Optional CSS class to attach to the source code text area.
-	 */
+	*/},
 	wigiiNcdEtp.CodeSourceEditor = function(f,options) {
 		var self = this;
 		self.className = 'CodeSourceEditor';
@@ -818,22 +859,25 @@
 			self.impl.runCode(self.context.codeScript);
 			if(self.options.afterTest) self.options.afterTest(self);
 		}
-	};
-	/**
+	});
+	
+	ncddoc(function(){/**
 	 * Creates a CodeSourceEditor instance to edit and test the given function.
 	 *@param Function f some source code wrapped into an anonymous function without any parameters
 	 *@param Object options some options to configure the CodeSourceEditor.
 	 *@return wigiiNcdEtp.CodeSourceEditor 
-	 */
-	wigiiNcdEtp.createCodeSourceEditor = function(f,options) { return new wigiiNcdEtp.CodeSourceEditor(f,options);}
+	*/},
+	wigiiNcdEtp.createCodeSourceEditor = function(f,options) { return new wigiiNcdEtp.CodeSourceEditor(f,options);});
 	
+	
+	var exemple = ncdcomment(function(){
 	/**
 	 * Opens a CodeSourceEditor to allow the user to see and test a given piece of code
 	 *@param Function f a scope holding some code to be tested by the user
 	 *@param Object options some options to configure the CodeSourceEditor. See CodeSourceEditor constructor for more details on available options.
 	 *@return Function a FuncExp ready to be invoked
 	 */
-	var exemple = function(f,options) { 
+	},function(f,options) { 
 		var returnValue = function(fxCtx){
 			return wigiiNcdEtp.createCodeSourceEditor(f,options);	
 		};
@@ -848,7 +892,7 @@
 			return fxs;
 		};
 		return returnValue;
-	};
+	});
 	
 	// Interaction
 
@@ -875,6 +919,8 @@
 		return returnValue;
 	};
 	
+	
+	var interrupt = ncdcomment(function(){
 	/**
 	 * Interrupts the current FuncExp flow and stores the context so that it can be resumed in future.
 	 *@param String fxCtxHolder key under which the fxCtx is stored. Defaults to 'interruption'
@@ -884,7 +930,7 @@
 	 * To identify the current interrupted flow, call interrupt("myFlow")
 	 * Then call: programme.context.myFlow.resume();
 	 */
-	var interrupt = function(fxCtxHolder,fxCtxStorage) {
+	},function(fxCtxHolder,fxCtxStorage) {
 		var returnValue = function(fxCtx){			
 			if(fxCtx) {
 				if(!fxCtxStorage) fxCtxStorage = programme.context;
@@ -906,7 +952,7 @@
 			return fxs;
 		};
 		return returnValue;
-	};	
+	});	
 	
 	var boutonDePause = function(label,onclick,cssClass) {
 		var returnValue = function(fxCtx){			

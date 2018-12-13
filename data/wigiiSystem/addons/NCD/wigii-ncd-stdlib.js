@@ -25,7 +25,7 @@
   * Created by Camille Weber (camille@wigii.org), 15.11.2017
   */
  
-/**
+wncd.comment(function(){/**
  * Object doc component. Builds the documentation model of a given object and optionally renders it into a given HtmlEmitter
  *@param Object obj a javascript object for which to introspect the documentation model
  *@param Object options a set of options to configure the behavior of the ObjectDoc component. It supports the following attributes :
@@ -93,7 +93,7 @@
  * 	 libs: Map. Map of libraries
  * 	 members: Map. Map of qualified classes, functions and variables.
  * }
- */
+ */},
 wncd.ObjectDoc = function(obj,options) {
 	var self = this;
 	self.className = 'ObjectDoc';
@@ -124,6 +124,7 @@ wncd.ObjectDoc = function(obj,options) {
 	self.options.privateValues.instantiationTime = true;
 	self.options.privateValues.className = true;
 	self.options.privateValues.$ = true;
+	self.options.privateValues.wncdAttr = true;
 	if(self.options.privateValues.context===undefined) self.options.privateValues.context = true;
 	if(self.options.privateValues.impl===undefined) self.options.privateValues.impl = true;
 	if(self.options.privateValues.options===undefined) self.options.privateValues.options = true;
@@ -207,7 +208,7 @@ wncd.ObjectDoc = function(obj,options) {
 			
 			// displays class src code
 			if(member.context.srcCode && member.modelType === 'Class') {				
-				memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,member.context.srcCode).$tag("div").emit();				
+				memberDiv.htmlBuilder().tag("div","class","classSrc").insert(options.renderClassSrc,member.context.srcCode,member.context.comment).$tag("div").emit();				
 			}
 			
 			// expands recursively until expandLevel, then only on click				
@@ -413,6 +414,7 @@ wncd.ObjectDoc = function(obj,options) {
 		var expandable = false;
 		var isObjectConstructor = false;
 		var classMemberComments = undefined;
+		var memberComment = undefined;
 		
 		if(objectType === 'function') {				
 			srcCode = wncd.obj2FxString(member.context.object);
@@ -425,6 +427,10 @@ wncd.ObjectDoc = function(obj,options) {
 			isObjectConstructor = /^function\s*\([^\(\)]*\)\s*\{\s*var\s*self\s*=\s*this;/.test(srcCode);
 			// extracts members comments
 			classMemberComments = self.impl.extractClassMemberComments(srcCode);
+			if(member.context.object.wncdAttr && member.context.object.wncdAttr.comment) {
+				memberComment = member.context.object.wncdAttr.comment;
+			}
+			
 			// runs constructor (safely)
 			if(isObjectConstructor) {					
 				var newObj = {};
@@ -439,8 +445,9 @@ wncd.ObjectDoc = function(obj,options) {
 				catch(exc) {wncd.program.context.html(currentDiv);}					
 				if(!newObj.className) newObj.className = member.name;
 				member.context.object = newObj;
+				expandable = (Object.keys(member.context.object).length > 0);
 			}
-			expandable = (Object.keys(member.context.object).length > 0);				
+			else expandable = (Object.keys(member.context.object).length > (memberComment?1:0));
 		}
 		else if(objectType === 'object' && member.context.object !== options.nullEmitter) {
 			expandable = (Object.keys(member.context.object).length > 0);
@@ -466,7 +473,8 @@ wncd.ObjectDoc = function(obj,options) {
 		}
 		member.context.expandable = expandable;
 		// Links associated comment to member
-		if(objModel.context.classMemberComments) member.context.comment = objModel.context.classMemberComments[member.name];
+		if(memberComment) member.context.comment = memberComment;		
+		else if(objModel.context.classMemberComments) member.context.comment = objModel.context.classMemberComments[member.name];		
 		
 		// blocks recursion for private values
 		if(options.privateValues[member.name]) member.context.expandable = false;
@@ -544,20 +552,20 @@ wncd.ObjectDoc = function(obj,options) {
 	
 	// Builds the object documentation model
 	self.buildDocModel(obj,self.options.namespace, self.options.className);
-};	
-/**
+});	
+wncd.comment(function(){/**
  * Creates an object documentation model on the given object
- */
+ */},
 wncd.createObjectDoc = function(obj,options) { 
 	return new wncd.ObjectDoc(obj,options);
-};	
+});	
 
-/**
+wncd.comment(function(){/**
  * Documentation browser which displays a tree view of the documentation, 
  * a search bar and a view with the detailed documentation and interactive examples
  * @param wncd.Desktop container the container in which to deploy the ObjectDocBrowser. Today supports only wncd.Desktop.
  * @param Object options a set of options to configure the desktop component. It supports the following attributes :
- */
+*/},
 wncd.ObjectDocBrowser = function(container, options) {
 	var self = this;
 	self.className = 'ObjectDocBrowser';
@@ -795,9 +803,9 @@ wncd.ObjectDocBrowser = function(container, options) {
 	if($.type(container)!=='object' || container.className != 'Desktop') throw wncd.createServiceException("container should be a non null instance of wncd.Desktop",wncd.errorCodes.INVALID_ARGUMENT);
 	self.options.obj = self; // passes the ObjectDocBrowser to the Desktop through the component object
 	container.registerComponent(self.ctxKey,self.options.renderSearchBar,self.options.renderBrowserPanel,self.options.renderFooterBar,self.options);
-};
+});
  
-/**
+wncd.comment(function(){/**
  * Builds a contextual menu and attaches it to a given anchor
  *@param jQuery|DOM.Element anchor the element to which attach the contextual menu
  *@param Array|Function compose an array of menu items or a function which composes the menu items.
@@ -823,7 +831,7 @@ wncd.ObjectDocBrowser = function(container, options) {
  * div.contextualMenu span.rightMenu, div.contextualMenu span.noMenu {
  *	color:#000099;
  *}
- */
+*/},
 wncd.ContextualMenu = function(anchor, compose, options) {
 	var self = this;
 	self.className = 'ContextualMenu';
@@ -1114,12 +1122,12 @@ wncd.ContextualMenu = function(anchor, compose, options) {
 	self.context.list.context.menu = self;
 	// registers toggle on click
 	anchor.click(self.toggle);
-};
+});
 
-/**
+wncd.comment(function(){/**
  * JQuery NCD plugin binding a contextual menu to a given anchor
  *@return wncd.ContextualMenu
- */
+*/},
 wncd.getJQueryService().menu = function(selection,options) {
 	var returnValue=undefined;
 	// checks we have only one element
@@ -1139,9 +1147,9 @@ wncd.getJQueryService().menu = function(selection,options) {
 	}
 	else if(selection && selection.length>1) throw wncd.createServiceException('Wigii NCD menu selector can only be activated on a JQuery collection containing one element and not '+selection.length, wncd.errorCodes.INVALID_ARGUMENT);
 	return (!returnValue?{$:selection}:returnValue);
-};
+});
 
-/**
+wncd.comment(function(){/**
  * A desktop user interface which displays a user menu, a header bar, a workzone and a footer bar.
  * It accepts  to display desktop components which should display a header bar, a workzone and a footer bar.
  * It supports an activate component event and a close event. The activate event is fired when a component is brought to the screen,
@@ -1153,7 +1161,7 @@ wncd.getJQueryService().menu = function(selection,options) {
  * - logo: HTML img to display a logo
  * - height: height of the desktop in his container. Defaults to 100%
  * - width: width of the desktop in his container. Defaults to 100%
- */
+*/},
 wncd.Desktop = function(options) {
 	var self = this;
 	self.className = 'Desktop';
@@ -1408,15 +1416,15 @@ wncd.Desktop = function(options) {
 		self.options);			
 	// Activates the desktop
 	self.activate(self.ctxKey);
-};
+});
 wncd.createDesktop = function(options) {return new wncd.Desktop(options);}
 
 
-/**
+wncd.comment(function(){/**
  * A task list which remembers past tasks and proposes matching when typing
  * @param wncd.Desktop container the container in which to deploy the component. Today supports only wncd.Desktop.
  * @param Object options a set of options to configure the desktop component. It supports the following attributes :
- */
+*/},
 wncd.SelfLearningTaskList = function(container, options) {
 	var self = this;
 	self.className = 'SelfLearningTaskList';
@@ -1676,10 +1684,10 @@ wncd.SelfLearningTaskList = function(container, options) {
 	if($.type(container)!=='object' || container.className != 'Desktop') throw wncd.createServiceException("container should be a non null instance of wncd.Desktop",wncd.errorCodes.INVALID_ARGUMENT);
 	self.options.obj = self; // passes the SelfLearningTaskList to the Desktop through the component object
 	container.registerComponent(self.ctxKey,self.options.renderSearchBar,self.options.renderTaskList,self.options.renderFooterBar,self.options);
-};
+});
 wncd.createSelfLearningTaskList = function(container, options) {return new wncd.SelfLearningTaskList(container,options);};
 
-/**
+wncd.comment(function(){/**
  * A story board which implements Agile Kanban methodology
  * @param wncd.Desktop container the container in which to deploy the component. Supports wncd.Desktop or WigiiApi.WncdContainer.
  * @param Object options a set of options to configure the desktop component. It supports the following attributes :
@@ -1693,7 +1701,7 @@ wncd.createSelfLearningTaskList = function(container, options) {return new wncd.
  * - elementStatusField: String. Element field name which holds the story status. Defaults to "status".
  * - elementPositionField: String. Element field name which holds the story position. Defaults to "position".
  * - renderStory: Function. Renders the story into a column of the board, given a reference to the storyBoard, the HTML emitter for the story and a reference on the story object.
- */
+*/},
 wncd.AgileStoryBoard = function(container, options) {
 	var self = this;
 	self.className = 'AgileStoryBoard';
@@ -2173,5 +2181,5 @@ wncd.AgileStoryBoard = function(container, options) {
 		wncd.program.context.html($("#"+self.ctxKey+"_storyBoard").wncd('html'));
 		self.impl.renderStoryBoard(container);
 	}
-};
+});
 wncd.createAgileStoryBoard = function(container, options) {return new wncd.AgileStoryBoard(container,options);};

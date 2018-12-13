@@ -43,6 +43,17 @@
 		wigiiNcdEtpOptions.privateNcdEtpMembers[memberName] = true;
 	};
 
+	/**
+	 * Attaches a comment and some custom attributes to a given function.
+	 * The comment or the attributes are stored in the wncdAttr object attached to the function 
+	 * and can be used as meta information further down in the code.
+	 * NCD attributes are not loaded by default. To load them wigiiNcdOptions.loadNcdAttributes should be true.
+	 *@param String|Function comment a comment describing the function, as a string or as a source code native comment wrapped into a function
+	 *@param Function|Object f the function to which to add the NCD attributes. 
+	 * Between first argument comment and last argument f, as many pairs key,value as needed can be inserted. These pairs key:value will be added to the attached wncdAttr object.
+	 *@return Function returns f for chaining
+	 */
+	var ncddoc = wigiiNcd().comment;
 
 	// Wigii NCD ETP
 
@@ -52,7 +63,7 @@
 	var wigiiNcdEtp = {};
 	wigiiNcdEtp.instantiationTime = Date.now();ncdprivate('instantiationTime');
 	wigiiNcdEtp.ctxKey = 'WigiiNcdEtp_'+wigiiNcdEtp.instantiationTime;ncdprivate('ctxKey');
-	wigiiNcdEtp.version = function() {return "2.11";};
+	wigiiNcdEtp.version = function() {return "2.12";};
 	
 	// Execution environment
 
