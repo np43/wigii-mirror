@@ -24,7 +24,6 @@
 -->
 <!-- <LIBRAIRIES WIGII.ORG NCD LIBRARIES> -->
 <script src="https://resource.wigii.org/assets/js/wigii-core.js" type="text/javascript"></script>
-<script src="https://www.wigii.org/system/libs/wigii-api.js" type="text/javascript"></script>
 <link media="all" type="text/css" href="https://resource.wigii.org/assets/css/wigii-core.css" rel="stylesheet">
 <link media="all" type="text/css" href="https://resource.wigii.org/assets/css/theme.css.php" rel="stylesheet">
 <link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-core.min.css" rel="stylesheet"/>
@@ -65,6 +64,12 @@ div.headerBar > div.autocompletionsense {
 <div id="mainDiv"></div>
 <!-- NCD initialization -->
 <script type="text/javascript">
+window.wigiiApi = {options:{
+	/**
+	 * Loads comments from source code
+	 */
+	loadNcdAttributes:true
+}};
 window.wigiiNcd = {options:{
 	/**
 	 * Loads comments from source code
@@ -95,6 +100,7 @@ window.wigiiNcdEtp = {options:{
 }};
 </script>
 <!-- <LIBRAIRIES WIGII.ORG NCD ETP LIBRARIES> -->
+<script src="https://www.wigii.org/system/libs/wigii-api.js" type="text/javascript"></script>
 <script src="https://www.wigii.org/system/libs/wigii-ncd-core.js"></script>
 <!-- </LIBRAIRIES WIGII.ORG NCD ETP LIBRARIES> -->
 <!-- NCD program -->

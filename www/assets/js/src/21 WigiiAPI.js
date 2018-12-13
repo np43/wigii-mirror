@@ -29,7 +29,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 /**
  * Wigii JS client
  * Created by CWE on October 19 2015
- * 
+ * Modified by CWE on December 13 2018 to remove unused library WigiiStdFL and to add documentation tags on functions
  * @param Window window current browser window
  * @param JQuery $ depends on JQuery 1.8.x
  */
@@ -82,207 +82,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 	}};
 	var ncddoc = wigiiNcdAttr(wigiiApiOptions.loadNcdAttributes);
 	
-	// FuncExp Libraries 
-	
 	/**
-	 * Wigii Std FuncExp library
-	 * @see FuncExpVMStdFL and WigiiFL PHP classes
-	 */
-	var WigiiStdFL = function(api) {
-		
-		// Dependency injection
-		
-		/**
-		 * Reference to the WigiiAPI instance
-		 */
-		var wigiiApi = api || wigii();
-		var wigiiStdFL = this;		
-		
-		/**
-		 * The current evaluated FuncExp. (transcient value).
-		 */
-		wigiiStdFL.currentFx;
-		
-		// FuncExp Evaluation
-		
-		/**
-		 * Evaluates an argument in the context of FuncExps
-		 * @param Function arg the argument to evaluate
-		 * @return Any
-		 */
-		wigiiStdFL.evaluateArg = function(arg) {
-			if($.type(arg) === 'function') return arg();
-			else return arg;
-		};
-		/**
-		 * FuncExpEvalException class
-		 * @param String message the error message
-		 * @param Number code the error code
-		 * @param Object previous if defined, the previous exception in the chain if wrapping.
-		 */
-		wigiiStdFL.FuncExpEvalException = function(message,code,previous) {
-			var self = this;
-			self.name = 'FuncExpEvalException';
-			self.message = message;
-			self.code = code || wigiiApi.errorCodes.UNKNOWN_ERROR;
-			self.previousException = previous; 
-		};
-		/**
-		 * Creates a new instance of a FuncExpEvalException
-		 */
-		wigiiStdFL.createFuncExpEvalException = function(message,code,previous) {
-			return new wigiiStdFL.FuncExpEvalException(message,code,previous);
-		};
-		
-		// FuncExp Std library
-		
-		/*
-		 * Examples :
-		 * wigii().log(wigii().evalfx(function(){return this.ctlIf(false, "toto", "titi");}));
-		 * wigii().log(wigii().evalfx(wigii().fl.ctlIf(false, "toto", "titi")));
-		 * wigii().log(wigii().evalfx(function(){return this.ctlSeq("A","B",this.ctlIf(true,this.ctlIf(true,"OK","NO2"),"NO1"));}));
-		 * wigii().log(wigii().evalfx(function(){return this.gr(8);}));
-		 * 
-		 */
-		
-		/**
-		 * ctlIf FuncExp.
-		 * @see PHP FuncExpVMStdFL::ctlIf
-		 */
-		wigiiStdFL.ctlIf = function(condition, ifTrue, ifFalse) {var fl=wigiiStdFL; return function() {
-			if(fl.evaluateArg(condition)) return fl.evaluateArg(ifTrue);
-			else return fl.evaluateArg(ifFalse);
-		};};
-		/**
-		 * ctlSeq FuncExp.
-		 * @see PHP FuncExpVMStdFL::ctlSeq
-		 */
-		wigiiStdFL.ctlSeq = function() {var fl=wigiiStdFL,args=$.makeArray(arguments); return function() {
-			if(args) {
-				var returnValue = undefined;
-				for(var i=0;i<args.length;i++) {
-					returnValue = fl.evaluateArg(args[i]);
-				}
-				return returnValue;
-			}
-		};};
-		/**
-		 * logAnd FuncExp.
-		 * @see PHP FuncExpVMStdFL::logAnd
-		 */
-		wigiiStdFL.logAnd = function() {var fl=wigiiStdFL,args=$.makeArray(arguments); return function() {
-			if(!args || args.length < 2) throw fl.createFuncExpEvalException("For logical AND, the number of arguments should be at least 2", wigiiApi.errorCodes.INVALID_ARGUMENT);
-			for(var i=0;i<args.length;i++) {
-				if(!fl.evaluateArg(args[i])) return false;
-			}
-			return true;
-		};};
-		/**
-		 * logOr FuncExp.
-		 * @see PHP FuncExpVMStdFL::logOr
-		 */
-		wigiiStdFL.logOr = function() {var fl=wigiiStdFL,args=$.makeArray(arguments); return function() {
-			if(!args || args.length < 2) throw fl.createFuncExpEvalException("For logical OR, the number of arguments should be at least 2", wigiiApi.errorCodes.INVALID_ARGUMENT);
-			for(var i=0;i<args.length;i++) {
-				if(fl.evaluateArg(args[i])) return true;
-			}
-			return false;
-		};};
-		/**
-		 * logNot FuncExp.
-		 * @see PHP FuncExpVMStdFL::logNot
-		 */
-		wigiiStdFL.logNot = function(arg) {var fl=wigiiStdFL; return function() {
-			return !fl.evaluateArg(arg);
-		};};
-		/**
-		 * eq FuncExp.
-		 * @see PHP FuncExpVMStdFL::eq
-		 */
-		wigiiStdFL.eq = function() {var fl=wigiiStdFL,args=$.makeArray(arguments); return function() {
-			if(!args || args.length < 2) throw fl.createFuncExpEvalException("For equality, the number of arguments should be at least 2", wigiiApi.errorCodes.INVALID_ARGUMENT);
-			var first = true, firstVal = undefined;
-			for(var i=0;i<args.length;i++) {
-				if(first) {
-					firstVal = fl.evaluateArg(args[i]);
-					first = false;
-				}
-				else if(fl.evaluateArg(args[i]) != firstVal) return false;
-			}
-			return true;
-		};};
-		/**
-		 * sm FuncExp.
-		 * @see PHP FuncExpVMStdFL::sm
-		 */
-		wigiiStdFL.sm = function() {var fl=wigiiStdFL,args=$.makeArray(arguments); return function() {
-			if(!args || args.length < 2) throw fl.createFuncExpEvalException("For comparison, the number of arguments should be at least 2", wigiiApi.errorCodes.INVALID_ARGUMENT);
-			var first = true, firstVal = undefined;
-			for(var i=0;i<args.length;i++) {
-				if(first) {
-					firstVal = fl.evaluateArg(args[i]);
-					first = false;
-				}
-				else if(firstVal >= fl.evaluateArg(args[i])) return false;
-			}
-			return true;
-		};};
-		/**
-		 * gr FuncExp.
-		 * @see PHP FuncExpVMStdFL::gr
-		 */
-		wigiiStdFL.gr = function() {var fl=wigiiStdFL,args=$.makeArray(arguments); return function() {
-			if(!args || args.length < 2) throw fl.createFuncExpEvalException("For comparison, the number of arguments should be at least 2", wigiiApi.errorCodes.INVALID_ARGUMENT);
-			var first = true, firstVal = undefined;
-			for(var i=0;i<args.length;i++) {
-				if(first) {
-					firstVal = fl.evaluateArg(args[i]);
-					first = false;
-				}
-				else if(firstVal <= fl.evaluateArg(args[i])) return false;
-			}
-			return true;
-		};};
-		/**
-		 * smeq FuncExp.
-		 * @see PHP FuncExpVMStdFL::smeq
-		 */
-		wigiiStdFL.smeq = function() {var fl=wigiiStdFL,args=$.makeArray(arguments); return function() {
-			if(!args || args.length < 2) throw fl.createFuncExpEvalException("For comparison, the number of arguments should be at least 2", wigiiApi.errorCodes.INVALID_ARGUMENT);
-			var first = true, firstVal = undefined;
-			for(var i=0;i<args.length;i++) {
-				if(first) {
-					firstVal = fl.evaluateArg(args[i]);
-					first = false;
-				}
-				else if(firstVal > fl.evaluateArg(args[i])) return false;
-			}
-			return true;
-		};};
-		/**
-		 * greq FuncExp.
-		 * @see PHP FuncExpVMStdFL::greq
-		 */
-		wigiiStdFL.greq = function() {var fl=wigiiStdFL,args=$.makeArray(arguments); return function() {
-			if(!args || args.length < 2) throw fl.createFuncExpEvalException("For comparison, the number of arguments should be at least 2", wigiiApi.errorCodes.INVALID_ARGUMENT);
-			var first = true, firstVal = undefined;
-			for(var i=0;i<args.length;i++) {
-				if(first) {
-					firstVal = fl.evaluateArg(args[i]);
-					first = false;
-				}
-				else if(firstVal < fl.evaluateArg(args[i])) return false;
-			}
-			return true;
-		};};
-	};
-	
-	
-	
-	
-	
-	/*
-	 * WigiiAPI
+	 * Wigii JS API
 	 */
 	var WigiiApi = function() {
 		var wigiiApi = this;
@@ -393,25 +194,25 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		
 		// Exceptions
 		
-		/**
+		ncddoc(function(){/**
 		 * ServiceException class
 		 * @param String message the error message
 		 * @param Number code the error code
 		 * @param Object previous if defined, the previous exception in the chain if wrapping.
-		 */
+		*/},
 		wigiiApi.ServiceException = function(message,code,previous) {			
 			var self = this;
 			self.name = 'ServiceException';
 			self.message = message;
 			self.code = code || wigiiApi.errorCodes.UNKNOWN_ERROR;
 			self.previousException = previous; 
-		};
+		});
 		
 		// Classes
 		
-		/**
+		ncddoc(function(){/**
 		 * Debugger core technical service
-		 */
+		*/},
 		wigiiApi.DebugLogger = function(typeName) {
 			var self = this;
 			self.attachedClass = typeName;
@@ -424,11 +225,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			self.logBeginOperation = function(operation) {self.write("BEGIN "+operation);};
 			self.logEndOperation = function(operation) {self.write("END "+operation);};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Exception sink core technical service
-		 */
+		*/},
 		wigiiApi.ExceptionSink = function() {
 			var self = this;
 			self.publish = function(exception) {
@@ -461,10 +262,10 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				var errorMessage = "EXCEPTION "+name+"   code:"+code+"\n"+message;
 				try {wigiiApiConsole().error(errorMessage);}catch(e){alert(errorMessage+"\n\n(note: using browser alert because WigiiAPIConsole is not working)");}				
 			};
-		};
+		});
 				
 		
-		/**
+		ncddoc(function(){/**
 		 * Creates a popup window attached to the given anchor element
 		 * @param jQuery|DOM.Element anchor the element to which attach the popup window
 		 * @param Object options a map of configuration options for the popup window:
@@ -482,7 +283,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 *  closeable: boolean (if true, adds a small x button on top-right to hide the popup).
 		 *  removeOnClose: boolean. If true and closeable, then closing the popup will remove it from the DOM, else only closes the popup. Defaults to false.
 		 * }
-		 */
+		*/},
 		wigiiApi.PopUp = function(anchor,options) {
 			var self = this;
 			if(!anchor) anchor = $('body');
@@ -723,12 +524,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			}
 			// restores defaults mouseDown event on popupBody to allow scrolling
 			self.body().mousedown(function(event){event.stopPropagation();});
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Wigii Help Service
 		 * Shows some contextual help in popup windows or displays contextual messages according to current flow.
-		 */
+		*/},
 		wigiiApi.HelpService = function() {
 			var self = this;
 			self.className = 'HelpService';
@@ -1123,12 +924,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					});			
 				});
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Wigii Field helper.
 		 * A class which helps manage fields lifecycle.
-		 */
+		*/},
 		wigiiApi.FieldHelper = function() {
 			var self = this;
 			self.className = 'FieldHelper';
@@ -1580,12 +1381,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 			}
 			
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Wigii Form helper.
 		 * A class which helps manage form lifecycle.
-		 */
+		*/},
 		wigiiApi.FormHelper = function() {
 			var self = this;
 			self.className = 'FormHelper';
@@ -1985,13 +1786,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(self.context.helpPopup===popup) 
 					self.context.helpPopup=undefined;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Wigii Button helper.
 		 * A class which helps manage button lifecycle.
 		 * This helper works with any elements acting logically as a button.
-		 */
+		*/},
 		wigiiApi.ButtonHelper = function(btn,options) {
 			var self = this;
 			self.className = 'ButtonHelper';
@@ -2018,11 +1819,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					return self;
 				}
 			}
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * WNCD container instance
-		 */
+		*/},
 		wigiiApi.WncdContainer = function(wncd) {
 			var self = this;
 			self.className = 'WncdContainer';
@@ -2223,11 +2024,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}					
 				// else nothing to do.
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * HTML String builder
-		 */
+		*/},
 		wigiiApi.HtmlBuilder = function() {
 			var self = this;
 			self.className = 'HtmlBuilder';
@@ -2471,12 +2272,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				return self;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * A helper on array of strings
 		 * @param Array arr the array on which to perform some actions
-		 */
+		*/},
 		wigiiApi.ArrayHelper = function(arr) {
 			var self = this;
 			self.className = 'ArrayHelper';
@@ -2541,13 +2342,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			self.array = function() {
 				return self.arr;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * A helper on an array of rows. A row is an array of values or an object with field names
 		 * @param Array matrix the array on which to perform some actions
 		 * @param Array selectedRows an optional array with a subset of selected row indexes. If defined, then the matrix helper will act only on these selected rows.
-		 */
+		*/},
 		wigiiApi.MatrixHelper = function(matrix,selectedRows) {
 			var self = this;
 			self.className = 'MatrixHelper';
@@ -2672,15 +2473,15 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			self.clearAll = function() {
 				return new wigiiApi.MatrixHelper(self.matrix);
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * A constraint on a selected set of drop-downs.
 		 * The drop-downs can only show values which are compatible with the given matrix.
 		 * The matrix is a set of rows, each row is a vector giving one possible combination of values for the drop-downs.
 		 * The order of the selected drop-downs must match the order of the columns in the rows, 
 		 * or the drop-down field name must match a field name in the row.
-		 */
+		*/},
 		wigiiApi.DropDownConstraint = function(selector,matrix) {
 			var self = this;
 			self.className = 'DropDownConstraint';
@@ -2769,11 +2570,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				// first load
 				$(self.dropDowns[0]).trigger('change');
 			}
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * JQuery collection event handlers
-		 */
+		*/},
 		wigiiApi.JQueryService = function() {
 			var self = this;
 			self.className = 'JQueryService';
@@ -2963,11 +2764,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}								
 				return (!returnValue?{$:selection}:returnValue);
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * DataFlowService javascript implementation
-		 */
+		*/},
 		wigiiApi.DataFlowService = function() {
 			var self = this;			
 			self.className = 'DataFlowService';
@@ -3175,7 +2976,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					else return dataFlowActivity.impl.stepBuffer.shift();
 				}
 			};
-		};
+		});
 		
 		
 		
@@ -3184,9 +2985,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		
 		// Models
 		
-		/**
+		ncddoc(function(){/**
 		 * A Wigii FormEvent
-		 */
+		*/},
 		wigiiApi.FormEvent = function(eventName,formId,fieldId,fieldName) {
 			var self = this;
 			self.className = 'FormEvent';
@@ -3219,16 +3020,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(self.context) return JSON.stringify(self.context);
 				else return '';
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * A Wigii Field
 		 * 
 		 * @param String fieldName the name of the field
 		 * @param String dataType the Wigii DataType name of the field
 		 * @param String label a label for the end user (already translated)
 		 * @param Object attributes optional map of attributes
-		 */
+		*/},
 		wigiiApi.Field = function(fieldName,dataType,label,attributes) {
 			var self = this;
 			self.className = 'Field';
@@ -3253,11 +3054,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(value===undefined) return self.context.attributes[name];
 				else self.context.attributes[name] = value;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * A Wigii FieldList
-		 */
+		*/},
 		wigiiApi.FieldList = function() {
 			var self = this;
 			self.className = 'FieldList';
@@ -3326,11 +3127,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					callback(i,indexByName[indexByPos[i]]);
 				}
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Wigii Bag
-		 */
+		*/},
 		wigiiApi.WigiiBag = function() {
 			var self = this;
 			self.className = 'WigiiBag';
@@ -3371,13 +3172,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				if(!subFieldName) subFieldName = 'value';
 				fieldValue[subFieldName] = value;
 			};
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * A Wigii Record
 		 * @param FieldList fieldList optional predefined FieldList of the Record.
 		 * @param WigiiBag wigiiBag optional predefined WigiiBag of the Record.
-		 */
+		*/},
 		wigiiApi.Record = function(fieldList,wigiiBag) {
 			var self = this;
 			self.className = 'Record';
@@ -3430,71 +3231,78 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				self.wigiiBag().setValue(value,fieldName,subFieldName);
 				return self;
 			};
-		};
+		});
 		
 		// ServiceProvider
 		
-		/**
+		ncddoc(function(){/**
 		 * Lookups a service instance given a service name
 		 * returns undefined if not found
-		 */
+		*/},
 		wigiiApi.lookupService = function(serviceName) {
 			if(!serviceName) return;
 			var srvGetter = wigiiApi['get'+serviceName];
 			if($.type(srvGetter) === 'function') {
 				return srvGetter();
 			}
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns an instance of the debugger attached to the given class
-		 */
+		*/},
 		wigiiApi.getDebugLogger = function(typeName) {
 			return new wigiiApi.DebugLogger(typeName);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns the ExceptionSink instance attached to the API
-		 */
+		*/},
 		wigiiApi.getExceptionSink = function() {
 			if(!wigiiApi['exceptionSinkInstance']) {
 				wigiiApi.exceptionSinkInstance = new wigiiApi.ExceptionSink();
 			}
 			return wigiiApi.exceptionSinkInstance;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a new PopUp instance
-		 */
+		*/},
 		wigiiApi.createPopUpInstance = function(anchor,options) {
 			return new wigiiApi.PopUp(anchor,options);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns a HelpService instance
-		 */
+		*/},
 		wigiiApi.getHelpService = function() {
 			if(!wigiiApi['helpServiceInstance']) {
 				wigiiApi.helpServiceInstance = new wigiiApi.HelpService();
 			}
 			return wigiiApi.helpServiceInstance;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns a JQueryService instance
-		 */
+		*/},
 		wigiiApi.getJQueryService = function() {
 			if(!wigiiApi['jQueryServiceInstance']) {
 				wigiiApi.jQueryServiceInstance = new wigiiApi.JQueryService();
 			}
 			return wigiiApi.jQueryServiceInstance;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns a WncdContainer instance
 		 * @param Object wncd A Wigii NCD Lib instance (normally the defined wncd symbol)
-		 */
+		*/},
 		wigiiApi.getWncdContainer = function(wncd) {
 			if(!wigiiApi['wncdContainerInstance']) {
 				wigiiApi.wncdContainerInstance = new wigiiApi.WncdContainer(wncd);
 			}
 			return wigiiApi.wncdContainerInstance;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a function that can be used to attach a comment and some custom attributes to a given function.
 		 * The comment or the attributes are stored in the wncdAttr object attached to the function 
 		 * and can be used as meta information further down in the code.
@@ -3505,143 +3313,162 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * The wncdAttr function returns f for chaining.
 		 *@param Boolean enable If true, the wncd attributes are actively loaded when the function is executed, else there are ignored. 
 		 *@return Function a function to attach comments and custom attributes to functions
-		 */
-		wigiiApi.getWncdAttrFx = function(enable) { return wigiiNcdAttr(enable);}
-		/**
+		*/},
+		wigiiApi.getWncdAttrFx = function(enable) { return wigiiNcdAttr(enable);});
+		
+		ncddoc(function(){/**
 		 * Returns DataFlowService instance
-		 */
+		*/},
 		wigiiApi.getDataFlowService = function() {
 			if(!wigiiApi['dataflowServiceInstance']) {
 				wigiiApi.dataflowServiceInstance = new wigiiApi.DataFlowService();
 			}
 			return wigiiApi.dataflowServiceInstance;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates an HtmlBuilder instance
-		 */
+		*/},
 		wigiiApi.getHtmlBuilder = function() {			
 			return new wigiiApi.HtmlBuilder();
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a FieldHelper instance
-		 */
+		*/},
 		wigiiApi.getFieldHelper = function() {
 			return new wigiiApi.FieldHelper();
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a FormHelper instance
-		 */
+		*/},
 		wigiiApi.getFormHelper = function() {
 			return new wigiiApi.FormHelper();
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a ButtonHelper instance on a given button selector
-		 */
+		*/},
 		wigiiApi.createButtonHelper = function(btn,options) {
 			return new wigiiApi.ButtonHelper(btn,options);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates an ArrayHelper instance
-		 */
+		*/},
 		wigiiApi.getArrayHelper = function(arr) {
 			return new wigiiApi.ArrayHelper(arr);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a MatrixHelper instance
-		 */
+		*/},
 		wigiiApi.getMatrixHelper = function(matrix) {
 			return new wigiiApi.MatrixHelper(matrix);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a DropDownConstraint and binds it to some selected drop-downs
-		 */
+		*/},
 		wigiiApi.createDropDownConstraint = function(selector,matrix) {
 			return new wigiiApi.DropDownConstraint(selector,matrix);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a FormEvent instance
-		 */
+		*/},
 		wigiiApi.createFormEventInstance = function(eventName,formId,fieldId,fieldName) {
 			return new wigiiApi.FormEvent(eventName,formId,fieldId,fieldName);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a Field instance
-		 */
+		*/},
 		wigiiApi.createFieldInstance = function(fieldName,dataType,label,attributes) {
 			return new wigiiApi.Field(fieldName,dataType,label,attributes);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a FieldList instance
-		 */
+		*/},
 		wigiiApi.createFieldListInstance = function() {
 			return new wigiiApi.FieldList();
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a WigiiBag instance
-		 */
+		*/},
 		wigiiApi.createWigiiBagInstance = function() {
 			return new wigiiApi.WigiiBag();
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Creates a Record instance
-		 */
+		*/},
 		wigiiApi.createRecordInstance = function(fieldList,wigiiBag) {
 			return new wigiiApi.Record(fieldList,wigiiBag);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * @return wigiiApi.MatrixHelper
-		 */
+		*/},
 		wigiiApi.matrix = function(matrix,selectedRows) {
 			return new wigiiApi.MatrixHelper(matrix,selectedRows);
-		};		
+		});		
 		
 		// Wigii client
 					
-		/**
+		ncddoc(function(){/**
 		 * Logs a message in the console
 		 * @param String message the message to log.
-		 */
+		*/},
 		wigiiApi.log = function(message) {			
 			wigiiApiConsole().log("INFO WigiiApi : "+message);
 			return wigiiApi;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Clears the WigiiAPI log console
-		 */
+		*/},
 		wigiiApi.clearLog = function() {
 			wigiiApiConsole().clear();
 			return wigiiApi;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns WigiiApi DebugLogger instance
-		 */
+		*/},
 		wigiiApi.debugLogger = function() {
 			if(!wigiiApi['debugLoggerInstance']) {
 				wigiiApi.debugLoggerInstance = wigiiApi.getDebugLogger('WigiiApi');
 			}
 			return wigiiApi.debugLoggerInstance;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Builds a complete Wigii Update url given a sub-url.
 		 * @param String url a logical update url of the form idAnswer/WigiiNamespace/Module/action/parameter
 		 * @return String complete encoded url ready to be passed to an AJAX query.
-		 */
+		*/},
 		wigiiApi.buildUpdateUrl = function(url) {
 			return encodeURI(wigiiApi.SITE_ROOT +"Update/"+window.crtContextId+wigiiApi.EXEC_requestSeparator+url);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Builds a Wigii Update callback function which can be passed as a SUCCESS function to an AJAX query.
 		 * @param Object context a map of [idAnswer=>context object] to be passed to the parseUpdateResult function.
 		 * @return Function the callback function
-		 */
+		*/},
 		wigiiApi.buildUpdateCallback = function(context) {
 			return function(data,textStatus){wigiiApi.parseUpdateResult(data,textStatus,context);};
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Builds a Wigii url fragment by joining the keys and values given into the urlArgs object
 		 * @param Object|Array|String urlArgs or an object with some (key,value) pairs, or an array of values, or a single string.
 		 * @return String the built url fragment of the form key1=value1/key2=value2/... or value1/value2/value3
-		 */
+		*/},
 		wigiiApi.buildUrlFragment = function(urlArgs) {
 			var returnValue = '';
 			if($.isArray(urlArgs)) {
@@ -3659,13 +3486,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			else returnValue = urlArgs;
 			if(returnValue != '') returnValue = encodeURI(returnValue);
 			return returnValue;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Wigii Update protocol query answer parser
 		 * @param String html string received from server following Wigii Update protocol format
 		 * @param String textStatus JQuery AJAX text status
 		 * @param Object context the optional map [idAnswer=>context object] used to retrieve contextual data according to idAnswer.
-		 */
+		*/},
 		wigiiApi.parseUpdateResult = function(html,textStatus,context) {
 			//wigiiApi.debugLogger().logBeginOperation('parseUpdateResult');
 			// splits received html in several answers
@@ -3819,63 +3647,66 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			}
 			wigiiApi.clearKeepInCache();
 			//wigiiApi.debugLogger().logEndOperation('parseUpdateResult');
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Shows the details of the element
-		 */
+		*/},
 		wigiiApi.showElement = function(wigiiNamespaceUrl,moduleName,elementId,urlArgs) {
 			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
 			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/detail/'+elementId+urlArgs);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Print the details of the element
-		 */
+		*/},
 		wigiiApi.printElement = function(wigiiNamespaceUrl,moduleName,elementId) {
 			window.open(SITE_ROOT +"usecontext/"+crtContextId+"/__/"+wigiiNamespaceUrl+'/'+moduleName+'/element/print/'+elementId);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Print the details of the element from a template
-		 */
+		*/},
 		wigiiApi.printElementWithTemplate = function(wigiiNamespaceUrl,moduleName,elementId,template) {
 			if(template) template = "/"+template;
 			window.open(SITE_ROOT +"usecontext/"+crtContextId+"/__/"+wigiiNamespaceUrl+'/'+moduleName+'/element/template/'+elementId+template);
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Opens a Wigii Form to edit the element
-		 */
+		*/},
 		wigiiApi.editElement = function(wigiiNamespaceUrl,moduleName,elementId,urlArgs) {
 			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
 			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/edit/'+elementId+urlArgs);
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Opens a Wigii Form to add a new element
-		 */
+		*/},
 		wigiiApi.addElement = function(wigiiNamespaceUrl,moduleName,groupId,urlArgs) {
 			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
 			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/add/'+groupId+urlArgs);
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Opens a Wigii Form to copy a new element
-		 */
+		*/},
 		wigiiApi.copyElement = function(wigiiNamespaceUrl,moduleName,elementId,groupId,urlArgs) {
 			if(urlArgs) urlArgs = '/'+wigiiApi.buildUrlFragment(urlArgs);
 			update('elementDialog/'+wigiiNamespaceUrl+'/'+moduleName+'/element/copy/'+elementId+'/'+groupId+urlArgs);
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Returns a FormHelper instance centered on current opened Wigii element form
 		 * @return wigiiApi.FormHelper
-		 */
+		*/},
 		wigiiApi.form = function() {
 			var form = $('#elementDialog form');
 			if(form.length == 0) form = $('#detailElement_form');
 			return form.wigii('FormHelper');
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Calls asynchronously a FuncExp on server side through the Fx endpoint.
 		 *@param String fx the FuncExp string to be called on server side
 		 *@param Object options an optional bag of options. The following options are supported:
@@ -3887,7 +3718,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * - fxEndPoint: URL String. A url which points to a Wigii server Fx endpoint. If not defined calls wigii.SITE_ROOT/crtWigiiNamespace/crtModule/fx
 		 * - postData: Object|Array. Some optional data to be posted to the server with the Fx call. The data is serialized as JSON.
 		 * - postAsForm: Boolean. If true, the data is posted as an HTTP form, else posted as JSON.
-		 */
+		*/},
 		wigiiApi.callFx = function(fx,options) {
 			if(!fx) throw wigiiApi.createServiceException('fx cannot be null',wigiiApi.errorCodes.INVALID_ARGUMENT);
 			
@@ -3959,11 +3790,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			
 			// Fx Ajax call
 			$.ajax(ajaxOptions);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Default Fx error handler that can be plugged as an error callback into a jQuery ajax call.
 		 * This error handler publishes the Wigii exception that occured on server side.
-		 */
+		*/},
 		wigiiApi.defaultFxErrorHandler = function(xhr,textStatus) {
 			var context = undefined;
 			var exception = undefined;
@@ -4006,31 +3838,31 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			else if(textStatus != 'abort') exception = {code:xhr.status||wigiiApi.errorCodes.UNKNOWN_ERROR,message:xhr.responseText||"Ajax status: "+textStatus};
 			// shows exception as a centered popup
 			if(exception) wigiiApi.getHelpService().showFloatingHelp(undefined, undefined, wigiiApi.exception2html(exception,context), {localContent:true,position:"center",removeOnClose:true});
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Returns current selected language code
-		 */
+		*/},
 		wigiiApi.lang = function() {
 			return crtLang;
-		};
+		});
 		
 		// Functions
 		
-		/**
+		ncddoc(function(){/**
 		 * remove any ' , or spaces from a string and multiply it with 1.0 to cast it in a real number
 		 * @param value : string representing a number
 		 * @return float : a clean numercic value
-		 */
+		*/},
 		wigiiApi.str2float = function (value){
 			return 1.0*value.replace(/'/g,'').replace(/,/g,'').replace(/ /g,'');
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * format a numeric value with thousand separatos
 		 * @param numeric
 		 * @return string : a formated numeric value
-		 */
+		*/},
 		wigiiApi.txtNumeric = function (value){
 			value += '';
 		    var x = value.split('.');
@@ -4041,18 +3873,18 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		            x1 = x1.replace(rgx, '$1' + "'" + '$2');
 		    }
 		    return x1 + x2;
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * add double quote around the value
 		 * @param string
 		 * @return string
-		 */
+		*/},
 		wigiiApi.txtQuot = function (value){
 			return '"'+value+'"';
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Returns a label in the current language
 		 * @example Two syntaxes are possible:
 		 * wigii().txtDico("l01","Label in english","l02","Label en français");
@@ -4060,7 +3892,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * @example Natural Code Develoment :
 		 * var t = wigii().txtDico;
 		 * wigii().form().tool('copy').label(t("l01","Create an invoice","l02","Créer une facture"));
-		 */
+		*/},
 		wigiiApi.txtDico = function(lang,label) {
 			var dico = undefined;
 			if($.isPlainObject(lang)) dico = lang;
@@ -4080,24 +3912,24 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 			}
 			return dico[wigiiApi.lang()];
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * apply && between the the two args
 		 * this is usefull in configuration files as the character & is reserved
 		 * @param val1: mixed
 		 * @param val2: mixed
 		 * @return val1 && val2
-		 */
+		*/},
 		wigiiApi.logAnd = function (val1, val2){
 			return val1 && val2;
-		};
+		});
 
-		/** 
+		ncddoc(function(){/** 
 		 * ceil a value up to the number. IE: ceilTo(10.34, 0.05) returns 10.35
 		 * the third parameter is optional and allows to fixe the number of decimals returned 
 		 * this function is typically used for financial fields 
-		 */
+		*/},
 		wigiiApi.ceilTo = function (value, number, fixed) {
 			if (arguments.length<3) fixed = null;
 			//due to rounding errors in float calculation in javascript
@@ -4116,15 +3948,15 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			if (remain > 0) value = value - remain + number;
 			if(fixed) return value.toFixed(2);
 			return value;
-		};
+		});
 
-		/**
+		ncddoc(function(){/**
 		 * Generates a range of numbers, starting from one number, to another number, by a given step.
 		 * @param Number from start number, can be integer, float, positive, null or negative.
 		 * @param Number to stop number, can be integer, float, positive, null or negative.
 		 * @param Number step increment number, can be integer, float, positive or negative. Not null.
 		 * @param Function callback a callback function which receives the generated number		 
-		 */
+		*/},
 		wigiiApi.genRange = function(from,to,step,callback) {
 			if($.isFunction(callback)) {
 				if(!($.isNumeric(from) && $.isNumeric(to) && $.isNumeric(step))) throw wigiiApi.createServiceException('from, to and step should all be numbers',wigiiApi.errorCodes.INVALID_ARGUMENT);			
@@ -4142,9 +3974,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				else throw wigiiApi.createServiceException('step cannot be 0',wigiiApi.errorCodes.INVALID_ARGUMENT);
 			}
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Reads the data coming from the source and processes it through the selected flow activities
 		 *@param Function source a data flow source function. 
 		 * A data source function is a function which takes an open DataFlowContext in parameter and then calls processDataChunk as many times as needed.
@@ -4168,14 +4000,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 *@example wigii().sel(rangeGen(-10,10,2),[power(3),sum])
 		 *@see wigiiApi.DataFlowService method processDataSource
 		 *@return Any the data flow result
-		 */
-		wigiiApi.sel = function(source,activities) { return wigiiApi.getDataFlowService().processDataSource(source,activities); };
+		*/},
+		wigiiApi.sel = function(source,activities) { return wigiiApi.getDataFlowService().processDataSource(source,activities); });
 		
-		/**
+		ncddoc(function(){/**
 		 * Converts a date to a string in format YYYY-MM-DD
 		 * @param Date date the date instance to convert to string. If undefined takes current date.
 		 * @return String the date formatted as a String
-		 */
+		*/},
 		wigiiApi.day2string = function(date) {
 			if(!date) date = new Date();
 			var returnValue = '';
@@ -4192,12 +4024,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			else returnValue += "-"+c;
 			
 			return returnValue;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Converts a date to a string in format YYYY-MM-DD hh:mm
 		 * @param Date date the date instance to convert to string. If undefined takes current date.
 		 * @return String the date formatted as a String
-		 */
+		*/},
 		wigiiApi.minutes2string = function(date) {
 			if(!date) date = new Date();
 			var returnValue = wigiiApi.day2string(date);
@@ -4211,12 +4044,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			else returnValue += ":"+c;
 			
 			return returnValue;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Converts a date to a string in format YYYY-MM-DD hh:mm:ss
 		 * @param Date date the date instance to convert to string. If undefined takes current date.
 		 * @return String the date formatted as a String
-		 */
+		*/},
 		wigiiApi.seconds2string = function(date) {
 			if(!date) date = new Date();
 			var returnValue = wigiiApi.minutes2string(date);
@@ -4226,12 +4060,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			else returnValue += ":"+c;
 			
 			return returnValue;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Converts a date to a string in format YYYY-MM-DD hh:mm:ss,milliseconds
 		 * @param Date date the date instance to convert to string. If undefined takes current date.
 		 * @return String the date formatted as a String
-		 */
+		*/},
 		wigiiApi.milliseconds2string = function(date) {
 			if(!date) date = new Date();
 			var returnValue = wigiiApi.seconds2string(date);
@@ -4242,15 +4077,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			else returnValue += ","+c;
 			
 			return returnValue;
-		};		
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Returns a string representing a date in a French style (d.m.Y H:i:s).
 		 *@param Integer|String timestamp timestamp to convert to date string or Wigii date string.
 		 *@param String options a formating option string. One of : 
 		 * noSeconds: display date and time up to minutes, 
 		 * noTime: displays only date without time, 
 		 * noDate: displays only time without date.
-		 */
+		*/},
 		wigiiApi.txtFrenchDate = function(timestamp, options) {			
 			var d = ($.type(timestamp)== 'date'? timestamp: new Date(timestamp));
 			var returnValue = '';
@@ -4290,41 +4126,46 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			}
 			
 			return returnValue;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Serializes an XML Dom object to string
 		 * @param XMLDocument xmlDom an XML DOM document as created by calling jQuery.parseXML
 		 * @return String XML serialized
-		 */
+		*/},
 		wigiiApi.xml2string = function(xmlDom) {
 			return (typeof XMLSerializer!=="undefined") ? 
 					(new window.XMLSerializer()).serializeToString(xmlDom) : 
 					xmlDom.xml;
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * throws a ServiceException::NOT_IMPLEMENTED exception
-		 */
+		*/},
 		wigiiApi.throwNotImplemented = function() {
 			throw new wigiiApi.ServiceException("not implemented", wigiiApi.errorCodes.NOT_IMPLEMENTED);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * throws a ServiceException 
-		 */
+		*/},
 		wigiiApi.createServiceException = function(message,code,previous) {
 			return new wigiiApi.ServiceException(message, code, previous);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Publishes an exception that cannot be handled
-		 */
+		*/},
 		wigiiApi.publishException = function(exception) {
 			wigiiApi.getExceptionSink().publish(exception);
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Converts an exception to HTML code that can be displayed
 		 * @param Object|XML exception an exception object {name:string,code:int,message:string}
 		 * @param Object|XML context if defined, then information about server context in the form 
 		 * {request:string, wigiiNamespace:string, module:string, action:string, realUsername:string, username:string, principalNamespace:string, version:string}
-		 */
+		*/},
 		wigiiApi.exception2html = function(exception,context) {
 			var htmlb = wigiiApi.getHtmlBuilder();
 			// if exception is not a plain object, then assumes its some xml
@@ -4368,8 +4209,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				.putEndTag('div');
 			}			
 			return htmlb.html();
-		};
-		/**
+		});
+		
+		ncddoc(function(){/**
 		 * Calculates the left and top attributes of a box options according to some position options.
 		 * Uses window (viewport) coordinate system and not document coordinates.
 		 * @param jQuery.Event mouseEvent jQuery mouse event object (click, drag, etc.) 
@@ -4382,7 +4224,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 *  By default, preventCovering is false, meaning that the box is always visible but can potentially cover mouse event position.
 		 *  }
 		 * @return Object box options updated
-		 */
+		*/},
 		wigiiApi.positionBox = function(mouseEvent,boxOptions,positionOptions) {
 			if(!boxOptions) boxOptions = {};
 			var screenTop=undefined,screenLeft=undefined,boxTop=undefined,boxLeft=undefined;			
@@ -4453,9 +4295,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			boxOptions.left = Math.ceil(boxLeft);
 			boxOptions.top = Math.ceil(boxTop);
 			return boxOptions;
-		};
+		});
 		
-		/**
+		ncddoc(function(){/**
 		 * Fills a drop-down (html select element) from an array. All existing options are flushed.
 		 * @param JQuery selector JQuery selector on an existing select element
 		 * @param Array array array of objects or values to fill the drop-down with
@@ -4467,7 +4309,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * The function should return a scalar value used a the drop-down label.
 		 * @param Object options a bag of options to customize the rendering process
 		 * @return JQuery returns the updated select element
-		 */
+		*/},
 		wigiiApi.fillDropDownFromArray = function(selector,array,value,label,options) {
 			if(!selector) throw wigiiApi.createServiceException("selector cannot be empty", wigiiApi.errorCodes.INVALID_ARGUMENT);
 			var currentVal = selector.val();
@@ -4508,7 +4350,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			// if select2 drop-down, then triggers change to refresh the list
 			selector.val(newVal).trigger('change');
 			return selector;
-		};
+		});
 		
 		// Link with WigiiExecutor.js
 		
@@ -4525,63 +4367,6 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		wigiiApi.setJSCache = window.setJSCache;
 		wigiiApi.keepInCache = window.keepInCache;
 		wigiiApi.clearKeepInCache = window.clearKeepInCache;
-		
-		// FuncExp libraries and evaluation
-		
-		/**
-		 * Pointer to the current FuncExp Library. Defaults to an instance of WigiiStdFL
-		 */
-		wigiiApi.fl;
-		/**
-		 * Initializes the current FuncExp Library by loading an instance of WigiiStdFL 
-		 * and merging additional func exp libraries.
-		 * @param Array|Object array or list of additional FuncExp libraries to load.
-		 */
-		wigiiApi.initFL = function(libs) {
-			
-			// default FL
-			wigiiApi.fl = new WigiiStdFL(wigiiApi);
-			// merge additional FLs
-			for(var i=0;i<arguments.length;i++) {
-				var lib = arguments[i];
-				if($.isArray(lib)) {
-					for(var j=0;j<lib.length;j++) {
-						var lib2 = lib[j];
-						if($.type(lib2) === 'object') {
-							for(var fxName in lib2) {
-								this.fl[fxName] = lib2[fxName];
-							}
-						}
-					}
-				}
-				else if($.type(lib) === 'object') {
-					for(var fxName in lib) {
-						this.fl[fxName] = lib[fxName];
-					}
-				}				
-			}
-		};
-		/**
-		 * Evaluates the given FuncExp in the scope of the current FuncExp library
-		 * @param Function fx the func exp to evaluate.
-		 * @return Any
-		 */
-		wigiiApi.evalfx = function(fx) {
-			var returnValue = undefined;
-			try {
-				if($.type(fx) === 'function') {
-					if(!this.fl) this.initFL();
-					this.fl.currentFx = fx;
-					var res = this.fl.currentFx();
-					if($.type(res) === 'function') returnValue = res();
-					else returnValue = res;
-				}
-				else returnValue = fx;
-			}
-			catch(e) {this.publishException(e);}
-			return returnValue;
-		};
-		
 	}, 
 	/*
 	 * Default WigiiAPI instance
@@ -4645,7 +4430,6 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 	
 	// Bootstrap
 	window.wigii = wigiiFacade;
-	wigiiApiInstance.initFL();
 })(window,jQuery);
 
 
