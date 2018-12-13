@@ -7157,13 +7157,13 @@ wncd.ObjectDoc = function(obj,options) {
 	}
 	self.impl.extractClassMemberComments = function(classSrcCode) {
 		var returnValue = {};
-		var commentsRegExp = /(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)\s*([\w]+)[.]([\w.]+)\s*=/g;
-		var matches = undefined;
-		while((matches = commentsRegExp.exec(classSrcCode))!==null){
+		var commentsRegExp = /(\/\*\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)[}]?[,]?\s*([\w]+)[.]([\w.]+)\s*=/g;
+		var matches = undefined;		
+		while((matches = commentsRegExp.exec(classSrcCode))!==null){			
 			//group 1 is comment, group 5 is class name or 'self', group 6 is method name
 			returnValue[matches[6]] = matches[1];
 			returnValue.className = matches[5];
-		}
+		}		
 		return returnValue;
 	};
 	self.impl.createObjModel = function(namespace,className,name) {
