@@ -95,6 +95,7 @@ class WigiiCoreExecutor {
 		$cwd = str_replace(str_replace("../", "", IMPL_PATH)."libs", "", str_replace("\\", "/", dirname(__FILE__)));
 		if(file_exists($cwd."www")) chdir($cwd."www");
 		else if(file_exists($cwd."web/wigii")) chdir($cwd."web/wigii");
+		else if(file_exists($cwd."Web/wigii")) chdir($cwd."Web/wigii");
 		else if(file_exists($cwd."web")) chdir($cwd."web");
 		if($error !== NULL && ($error["type"]==E_ERROR || $error["type"]==E_PARSE || $error["type"]==E_USER_ERROR || $error["type"]==E_RECOVERABLE_ERROR)) {
 			$errorLabel=array(E_ERROR=>'Fatal Error',E_PARSE=>'Parse Error',E_USER_ERROR=>'User Error',E_RECOVERABLE_ERROR=>'Recoverable Error');
