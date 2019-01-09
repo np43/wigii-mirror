@@ -654,7 +654,11 @@ function float2time($timeAsFloat,$sep=":"){
 //return a float from a string in format HH:MM or HH:MM:SS, HH can be more than 24
 function time2float($timeAsString,$sep=":"){ 
 	list($h, $m, $s) = explode($sep,$timeAsString);
-	return $h+($m/60)+($s/3600);
+	if($h<0){
+		return $h-($m/60)-($s/3600);
+	} else {
+		return $h+($m/60)+($s/3600);
+	}
 }
 /**
  * Converts a FieldSelector FuncExp to a String
