@@ -101,6 +101,21 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 		return $this->sessionAS;
 	}
 
+	private $authoS;
+	public function setAuthorizationService($authorizationService)
+	{
+		$this->authoS = $authorizationService;
+	}
+	protected function getAuthorizationService()
+	{
+		// autowired
+		if(!isset($this->authoS))
+		{
+			$this->authoS = ServiceProvider::getAuthorizationService();
+		}
+		return $this->authoS;
+	}
+	
 	// ConfigControllerWithFuncExpVM implementation
 
 	public function processConfigurationNode($principal, $xmlConfig, $getWritableNode, $lp) {
@@ -118,11 +133,20 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 	protected function doProcessConfigurationNode($principal, $xmlConfig, $getWritableNode, $lp) {
 		$updatedXml = false;
 		if(!empty($this->attributeExpNodes)) {
+			$isPublicPrincipal = $this->getAuthorizationService()->isPublicPrincipal($principal);
 			$this->debugLogger()->logBeginOperation('doProcessConfigurationNode');
 			foreach($this->attributeExpNodes as $attributeExp) {
 				//$this->debugLogger()->write($attributeExp->asXml());
 				//if($this->debugLogger()->isEnabled()) fput($attributeExp->asXml());
 
+				//CWE 12.01.2019: if field is not in public and principal is public, skips attributeExp resolution
+				$fieldXml = dom_import_simplexml($attributeExp);
+				if($fieldXml) $fieldXml = $fieldXml->parentNode;
+				if($fieldXml) {
+					if(($isPublicPrincipal && $fieldXml->getAttribute("notInPublic")=="1")) continue;
+					if((!$isPublicPrincipal && $fieldXml->getAttribute("onlyInPublic")=="1")) continue;
+				}
+				
 				// gets func exp
 				$funcExp = (string)$attributeExp['funcExp'];
 				//gets session cache level
@@ -178,9 +202,7 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 				}
 				catch(Exception $e) {
 					$message="Configuration error";
-					if(!empty($lp) && $lp['moduleName']) $message.=" in module '".$lp['moduleName']."'";
-					$fieldXml = dom_import_simplexml($attributeExp);					
-					if($fieldXml) $fieldXml = $fieldXml->parentNode;
+					if(!empty($lp) && $lp['moduleName']) $message.=" in module '".$lp['moduleName']."'";					
 					if($fieldXml->nodeName) $message.=" field '".$fieldXml->nodeName."' : \n";
 					$message.=$e->getMessage().' ('.$e->getCode().')';
 					throw new ConfigServiceException($message,ConfigServiceException::CONFIGURATION_ERROR);
