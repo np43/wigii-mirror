@@ -36,4 +36,14 @@
 		</authorizedDirectSenders>
 	</Emailing>	
 	-->
+	
+	<!-- CWE 11.01.2019 : Declares a list of cross origin referers which are authorized to call some Wigii web actions -->
+	<!-- By default Wigii web actions are only authorized for site root itself, except for /public action authorized to anyone -->
+	<!-- 
+	<CrossOrigin>
+		<authorizedReferers>
+			<client1 hostUrl="company.wigii-safe.com" actions="fx"/>
+		</authorizedReferers>
+	</CrossOrigin>
+	-->
 </admin>

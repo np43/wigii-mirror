@@ -24,6 +24,7 @@
 /**
  * Created by LWR on 21 april 2010
  * Modified by Medair(CWE) on 01.09.2017 to authorize public principal to be groupCreator
+ * Modified by CWE on 11.01.2019 to manage cross origin referers
  */
 class AuthorizationServiceWebImpl extends AuthorizationServiceImpl {
 
@@ -130,6 +131,42 @@ class AuthorizationServiceWebImpl extends AuthorizationServiceImpl {
 		return parent::assertPrincipalAuthorized($principal, $serviceName, $methodName);
 	}
 	
+	/**
+	 * Asserts that a cross origin referer is authorized to call the given web action
+	 * @param Principal $principal current principal executing the request
+	 * @param String $referer url of the referer which initialized the request
+	 * @param String $action WigiiCoreExecutor action to be executed	 
+	 * @return Boolean true if cross origin call is authorized, else throws exception.
+	 * @throws AuthorizationServiceException::FORBIDDEN if referer url is not declared in the Admin_config.xml/CrossOrigin/authorizedReferers section 
+	 */
+	public function assertCrossOriginAuthorized($principal,$referer,$action) {
+		$returnValue = false;
+		$this->debugLogger()->logBeginOperation('assertCrossOriginAuthorized');
+		$referer= strtolower(trim($referer));
+		if(empty($referer)) throw new AuthorizationServiceException("Referer cannot be empty",AuthorizationServiceException::INVALID_ARGUMENT);
+		if(is_null($action)) throw new AuthenticationServiceException("Action cannot be null",AuthorizationServiceException::INVALID_ARGUMENT);
+		// 1. gets Admin/CrossOrigin XML activity
+		$crossOriginActivity = $this->getConfigService()->ma($principal,Module::ADMIN_MODULE,Activity::createInstance('CrossOrigin'));
+		if($crossOriginActivity) {
+			// 2. checks for referers matching the given hostUrl
+			$referers = $crossOriginActivity->xpath("authorizedReferers/*[@hostUrl='".$referer."']");			
+			if($referers!== false && !empty($referers)) {
+				// 3. checks if given action is authorized for cross origin calls
+				foreach($referers as $referer) {
+					// if action is contained in action list or no action list then authorizes cross origin call
+					$actions = (string)$referer['actions'];
+					if(!$actions || in_array($action, preg_split("/".ValueListArrayMapper::Natural_Separators."/", $actions))) {
+						$returnValue = true;
+						break;
+					}
+				}				
+			}
+		}
+		// if no mathing referer declaration, then throws AuthorizationException::FORBIDDEN
+		if(!$returnValue) throw new AuthorizationServiceException("Cross origin request is forbidden from ".$referer." for action ".$action,AuthorizationServiceException::FORBIDDEN);
+		$this->debugLogger()->logEndOperation('assertCrossOriginAuthorized');
+		return $returnValue;			
+	}
 }
 
 

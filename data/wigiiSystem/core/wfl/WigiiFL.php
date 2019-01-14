@@ -2080,7 +2080,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * FuncExp signature : <code>cfgAttrTags(field, groupLogExp, logExp)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) field: String|FieldSelector. The field of type Attributs or MultipleAttributs on which to manage values as tags.
-	 * - Arg(1) inGroupLogExp|Strings: LogExp|Atrings. Group log exp in which to search for element values or modulename (in this case takes lxInAllGroups of current namespace and module)
+	 * - Arg(1) inGroupLogExp|Strings: LogExp|Strings. Group log exp in which to search for element values or modulename (in this case takes lxInAllGroups of current namespace and module)
 	 * - Arg(2) logExp: LogExp. Optional logExp used to filter the matching elements
 	 * @example 
 	 * <tags type="MultipleAttributs" require="0" expand="1" chosen="1" allowNewValues="1" displayAsTag="1" isInLine="1">

@@ -92,11 +92,16 @@ class WigiiCoreExecutor {
 		$error = error_get_last();
 		//it seem that relative path after exit_handler is not working properly, therefore we might need to reset the working directory
 		//lookup on http://www.php.net/manual/en/function.register-shutdown-function.php and search for the keyword 'relative'
-		$cwd = str_replace(str_replace("../", "", IMPL_PATH)."libs", "", str_replace("\\", "/", dirname(__FILE__)));
-		if(file_exists($cwd."www")) chdir($cwd."www");
-		else if(file_exists($cwd."web/wigii")) chdir($cwd."web/wigii");
-		else if(file_exists($cwd."Web/wigii")) chdir($cwd."Web/wigii");
-		else if(file_exists($cwd."web")) chdir($cwd."web");
+		if(defined("wigiiSystem_WEBPATH") && file_exists(wigiiSystem_WEBPATH)) {
+			chdir(wigiiSystem_WEBPATH);
+		}
+		else {
+			$cwd = str_replace(str_replace("../", "", IMPL_PATH)."libs", "", str_replace("\\", "/", dirname(__FILE__)));		
+			if(file_exists($cwd."www")) chdir($cwd."www");		
+			else if(file_exists($cwd."web/wigii")) chdir($cwd."web/wigii");
+			else if(file_exists($cwd."Web/wigii")) chdir($cwd."Web/wigii");
+			else if(file_exists($cwd."web")) chdir($cwd."web");
+		}
 		if($error !== NULL && ($error["type"]==E_ERROR || $error["type"]==E_PARSE || $error["type"]==E_USER_ERROR || $error["type"]==E_RECOVERABLE_ERROR)) {
 			$errorLabel=array(E_ERROR=>'Fatal Error',E_PARSE=>'Parse Error',E_USER_ERROR=>'User Error',E_RECOVERABLE_ERROR=>'Recoverable Error');
 			$errorMessage=$errorLabel[$error["type"]].": ".$error["message"]." in ".$error["file"]." on line ".$error["line"];
@@ -4282,22 +4287,16 @@ invalidCompleteCache();
 			$exec = ServiceProvider :: getExecutionService();
 	
 			//starts the Execution service, and load the request
-			if (!$started)
-				$exec->start();
+			if (!$started) $exec->start();
 	
 			//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."execution service started"] = microtime(true);
 			$this->executionSink()->log("execution service started");
 	
-			//			if(!$started) eput("start");
-	
-			//			$started = false;
 			$openAnswer = false; //just a flag in case of exception thrown during answering. if this is the case we need to close the answer in the exception management
 	
 			$hasRelogedIn = false;
 			if (!$started) {
-				//				if(!$started) eput("try auto login");
 				if ($this->doAutoLoginIfNeeded()) {
-					//					if(!$started) eput("auto login succeed");
 					//after each login we need to clear the configuration context to reload everything
 					$this->clearWigiiContext();
 					$hasRelogedIn = true;
@@ -4319,50 +4318,41 @@ invalidCompleteCache();
 	
 			$this->executionSink()->publishStartOperation("processAndEnds", $p);
 	
-			$transS = ServiceProvider :: getTranslationService();
+			$transS = ServiceProvider::getTranslationService();
 			$sessAS = ServiceProvider::getSessionAdminService();
 	
 			//add request on Fragment only if no request is currently defined
 			// CWE 30.01.2015: pushed the fragment management on client side (recoded in header.php in javascript), no need to do it on server side anymore
-	
 			if(!$started && !$exec->getIsUpdating() && $exec->getRemainingRequests() == null){
 				//$exec->addRequestOnFragment();
 				$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
 				//$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/display/all");
-			}
+			}	
 	
-			/*
-			if ($exec->getRemainingRequests() == null) {
-			//				if(!$started) eput("no remaining request, add the default");
-			if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal()) {
-			$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/display/all");
-			//					if(!$started) eput("add request: /display/all");
-			} else {
-			if($hasRelogedIn){
-			$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
-			//						if(!$started) eput("add request: /start");
-			} else {
-			$roleId = $p->getValueInGeneralContext("lastRoleId");
-			// checks role validity
-			if($p->getRoleListener()->getUser($roleId)) {
-			$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/navigate/user/" . $roleId);
-			}
-			else $exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
-			}
-			}
-			}
-			*/
-	
+			//CWE 10.01.2019: detects if we have a cross origin request
+			$directAccess = empty($_SERVER['HTTP_REFERER']);
+			$crossOrigin = !$directAccess && (strpos(strtolower($_SERVER['HTTP_REFERER']), strtolower(SITE_ROOT))!==0);
+			
 			//we keep in memory the lastAction, just to be able to manage the sending of footer for downloads or JSON
 			$lastAction = null;
 			$lastParameters = null;
 			$configurationContextSupportsSubElements = ($this->getConfigurationContext() instanceof ConfigurationContextSubElementImpl);
 			$byPassedHeader=false;
 			while ($exec->loadNextRequest($this)) {
-				//				eput($exec->getCrtRequest());
 				//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."request ".$exec->getCrtAction()." loaded"] = microtime(true);
 				$this->executionSink()->log("request ".$exec->getCrtAction()." loaded");
-	
+
+				//CWE 10.01.2019: blocks any cross origin access
+				if(!$directAccess && $crossOrigin) {
+					// except for the actions
+					switch($exec->getCrtAction()) {
+						case "public":
+							break;
+						// and the trusted sites
+						default: ServiceProvider::getAuthorizationService()->assertCrossOriginAuthorized($p,$_SERVER['HTTP_REFERER'],$exec->getCrtAction());													
+					}
+				}
+				
 				// modified by CWE on February 4th 2014 to support sub elements
 				// injects current configuration key
 				if($configurationContextSupportsSubElements) $this->getConfigurationContext()->generateAndSetConfigContextKey($exec);
@@ -4383,13 +4373,14 @@ invalidCompleteCache();
 						//load the header
 						$SITE_TITLE = $this->getConfigurationContext()->getParameter($p, null, "siteTitle");
 						if ($exec->getIdAnswer()=="newDialog"){
-							$SITE_TITLE = ServiceProvider :: getTranslationService()->t($p, $exec->getCrtModule()->getModuleName()) . " : " . $SITE_TITLE;
+							$SITE_TITLE = $transS->t($p, $exec->getCrtModule()->getModuleName()) . " : " . $SITE_TITLE;
 						}
-						if ($exec->getCrtAction() == "display" && $exec->getCrtParameters(0) == "detachModule")
-							$SITE_TITLE = ServiceProvider :: getTranslationService()->t($p, $exec->getCrtModule()->getModuleName()) . " : " . $SITE_TITLE;
+						if ($exec->getCrtAction() == "display" && $exec->getCrtParameters(0) == "detachModule") {
+							$SITE_TITLE = $transS->t($p, $exec->getCrtModule()->getModuleName()) . " : " . $SITE_TITLE;
+						}
 						if ($exec->getIdAnswer()=="newDialog" || !$exec->getIsUpdating()){
-									include_once (IMPL_PATH . "templates/header.php");
-								}
+							include_once (IMPL_PATH . "templates/header.php");
+						}
 					}
 					else $byPassedHeader=true;
 					$started = true;
@@ -4413,12 +4404,10 @@ invalidCompleteCache();
 	
 				//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."request ".$exec->getCrtAction()." ended"] = microtime(true);
 				$this->executionSink()->log("request ".$exec->getCrtAction()." ended");
-	
 			}
 	
-			//load the footer
-			if (!$this->shouldByPassFooter($lastAction, $lastParameters) && !$exec->getIsUpdating())
-				include_once (IMPL_PATH . "templates/footer.php");
+			//loads the footer
+			if (!$this->shouldByPassFooter($lastAction, $lastParameters) && !$exec->getIsUpdating()) include_once (IMPL_PATH . "templates/footer.php");
 	
 		} catch (AuthenticationServiceException $ase) {
 			if ($ase->getCode() == AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL ||
@@ -4465,67 +4454,29 @@ invalidCompleteCache();
 						$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/display/all");
 					}
 				}
-				/*
-				if (!isset ($_SESSION["RemainingUpdates"])) $_SESSION["RemainingUpdates"] = array ();
-				$_SESSION["RemainingUpdates"][] = (!$exec->getIsUpdating() ? "mainDiv/" : "").$exec->getCrtRequest();
-				*/
-				//eput($exec->displayDebug());
-				//				$exec->addRequests('elementDialog/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl().'/'.$exec->getCrtModule()->getModuleUrl().'/display/login');
 				$this->executionSink()->publishEndOperationOnError("processAndEnds", $ase, $p);
 				return $this->processAndEnds(true);
 			}
 			//throw $ase;
-			if ($exec->getIsUpdating() && $openAnswer)
-				echo ExecutionServiceImpl :: answerRequestSeparator;
+			if ($exec->getIsUpdating() && $openAnswer) echo ExecutionServiceImpl :: answerRequestSeparator;
 			ExceptionSink :: publish($ase);
 			if ($this->shouldByPassFooter($lastAction,$lastParameters)) {
 				$this->executionSink()->publishEndOperationOnError("processAndEnds", $ase, $p);
 				throw $ase;
 			}
 		} catch (Exception $e) {
-			if ($exec->getIsUpdating() && $openAnswer)
-				echo ExecutionServiceImpl :: answerRequestSeparator;
+			if ($exec->getIsUpdating() && $openAnswer) echo ExecutionServiceImpl :: answerRequestSeparator;
 			ExceptionSink :: publish($e);
 			//if there is an exception and we shouldByPassHeaderAndFooter then we need
 			//to display it, other wise, we will never see it!
 			if ($this->shouldByPassFooter($lastAction,$lastParameters)) {
-				//				echo "Message:\n";
-				//				eput($e->getMessage());
-				//				echo "\nCode:\n";
-				//				eput($e->getCode());
 				$this->executionSink()->publishEndOperationOnError("processAndEnds", $e, $p);
 				throw $e;
 			}
 	
 		}
 	
-		//		//add the wigii version control update:
-		//		$updateMessage = "theSystemHasJustBeenUpgraded";
-		//		$updateMessageT = $transS->h($p, "theSystemHasJustBeenUpgraded");
-		//		if ($updateMessageT == $updateMessage) {
-		//			$updateMessage = "The Wigii system needs to upgrade. Please restart your browser.";
-		//		} else
-		//			$updateMessage = $updateMessageT;
-		//		$updateMessage = str_replace("//", '\/\/', $this->getIconForDialog("warning")).'<div style="float:right;width:220px;">'.$updateMessage."</div>";
-		//
-		//		$exec->addJsCode("
-		//f = $('#footerBar span:first a');
-		//if(f.length){
-		//	if(f.text() != 'f".VERSION_LABEL."'){
-		//		$('#confirmationDialog').html('$updateMessage');
-		//		$('#confirmationDialog').dialog('destroy').dialog({
-		//			buttons: {
-		//			'".$transS->h($p, "close")."': function(){ $(this).dialog('destroy'); self.close(); }
-		//			},
-		//			width:300,
-		//			closeOnEscape: false, stack:false, resizable:false, zIndex:9999
-		//		});
-		//		$('#confirmationDialog').prev().css('display','none');
-		//	}
-		//}
-		//");
-	
-		//add wigii username in footer
+		//add wigii username in footer and the wigii version control update
 		$exec->addJsCode("$('#pUsername').remove();$('#wigiiVersionLabel').after('<span id=\"pUsername\">".$p->getUsername()."</span>');");
 		if(defined('RELOAD_Message')&& RELOAD_Message){
 			$exec->addJsCode("" .
@@ -4600,10 +4551,7 @@ invalidCompleteCache();
 			default :
 				return false;
 		}
-	}
-	protected function shouldByPassAutoLogin($action) {
-		return false;
-	}
+	}	
 	
 	/**
 	* Return true if the current action requires a responsive HTML rendering
@@ -4632,9 +4580,8 @@ invalidCompleteCache();
 		$authS = ServiceProvider :: getAuthenticationService();
 		$exec = ServiceProvider :: getExecutionService();
 	
-		// try auto login using credentials cookie, except if shouldByPassAutoLogin
-		if($this->shouldByPassAutoLogin($exec->getCrtAction())) $returnValue = false;
-		else $returnValue = $authS->autoLogin();
+		// try auto login using credentials cookie
+		$returnValue = $authS->autoLogin();
 		//if still not logged in
 		if($authS->isMainPrincipalMinimal()){
 			//if unsuccessfull, remove the cookie

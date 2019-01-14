@@ -297,7 +297,7 @@ class EditUserFormExecutor extends FormExecutor {
 		} else {
 			//check passwordLife is an integer
 			if($userEditRec->getFieldValue($passwordLifeFieldName) && !is_numeric($userEditRec->getFieldValue($passwordLifeFieldName))){
-				$this->addErrorToField($transS->h($p, "invalidPasswardLife"), $passwordLifeFieldName);
+				$this->addErrorToField($transS->h($p, "invalidPasswordLife"), $passwordLifeFieldName);
 			} else {
 				$user->getDetail()->setPasswordLife($userEditRec->getFieldValue($passwordLifeFieldName));
 			}

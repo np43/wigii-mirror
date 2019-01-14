@@ -114,7 +114,7 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 		}
 
 		//check xml content if xml file:
-		if($info['extension']=="xml" && $rec->getFieldValue("moduleEditorConfigField")){
+		if(strtolower($info['extension'])=="xml" && $rec->getFieldValue("moduleEditorConfigField")){
 			libxml_use_internal_errors(true);
 			libxml_clear_errors();
 			$errors = array();
@@ -129,34 +129,8 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 				$this->addErrorToField($transS->h($p, "invalidXml").$errorsToDisplay, "moduleEditorConfigField");
 			}
 		}
-		//check php syntax if php file:
-		/*
-		if($info['extension']=="php" && $rec->getFieldValue("moduleEditorConfigField")){
-			$returnValue = null;
-			$errorLevel = error_reporting(0);
-			try {
-				$returnValue = eval(stripslashes(str_replace('<?php', '', $rec->getFieldValue("moduleEditorConfigField"))));
-			}
-			catch(Exception $e) {
-				// adds any catched exception
-				if($e instanceof ServiceException) $e = $e->getWigiiRootException();
-				$errorMessage = "Exception while evaluating php code (".$e->getCode().") ".$e->getMessage().'<br/>';
-				$errorMessage .= str_replace("\n", '<br/>', str_replace('\\', '/', (string)$e));
-				$this->addErrorToField($errorMessage, "moduleEditorConfigField");
-			}
-			error_reporting($errorLevel);
-			// add any php error
-			if($returnValue === false && ( $phpError = error_get_last() )) {
-				$errorMessage = "PHP error while parsing php code (".$phpError['type'].") on line ".$phpError['line'].": ".$phpError['message'];
-				$this->addErrorToField($errorMessage, "moduleEditorConfigField");
-			}
-			// add any output (prevent saving the file if the script generated some output)
-			elseif($returnValue !== null) {
-				$errorMessage = "PHP code returned some output. Cannot save the file. Output: <br/>".put($returnValue);
-				$this->addErrorToField($errorMessage, "moduleEditorConfigField");
-			}
-		}
-		*/
+		// CWE 09.01.2019: disables online edition of PHP code to prevent injection of non controlled code.
+		if(strtolower($info['extension'])=="php") $this->addErrorToField(str_replace('$fileType$',$info['extension'], $transS->h($p, "disabledFileType")), "moduleEditorConfigField");		
 	}
 
 	protected function actOnCheckedRecord($p, $exec) {
@@ -223,11 +197,12 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 			$rec->setFieldValue(basename($this->getFilename()), "moduleEditorFilenameField");
 		}
 		$rec->getWigiiBag()->setReadonly(!$this->isNew(), "moduleEditorFilenameField");
-
+		$isPHPCode = (substr(strtolower(trim($rec->getFieldValue("moduleEditorFilenameField"))),-4)=='.php');
+		
 		$this->getTrm()->displayRemainingForms();
 
 		$this->getTrm()->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog());
-
+	
 		$this->getWigiiExecutor()->openAsDialogForm3B(
 			$exec->getIdAnswer(), $this->getTotalWidth()+$this->getCorrectionWidth(),
 			' $("form input[name=\'action\']", this).val("save"); $("form", this).submit(); ', $transS->t($p, $rec->getActivity()->getActivityName()),
@@ -245,6 +220,12 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 				"$('#".$this->getFormId()."_moduleEditorConfigField_value_textarea').after('line: <span id=\"".$this->getFormId()."_moduleEditorConfigField_value_textarea_lineNumber\">1</span>');" .
 				"$('#".$this->getFormId()."_moduleEditorConfigField_value_textarea').keyup(function(){ getLineNumber($(this), $('#".$this->getFormId()."_moduleEditorConfigField_value_textarea_lineNumber')); }).mouseup(function(){ $(this).keyup(); });");
 
+		// CWE 09.01.2019: disables online edition of PHP code to prevent injection of non controlled code.
+		if($isPHPCode) {
+			$this->getTrm()->addJsCode("$('#".$this->getFormId()."_moduleEditorConfigField_value_textarea').attr('readonly','readonly');"
+			."$('#".$exec->getIdAnswer()."').parent().find('button.ok, button.intermediate').hide();"
+			); 
+		}
 
 		//the tabby plugin is already called as the config editor has the parameter noWrap=1
 	}

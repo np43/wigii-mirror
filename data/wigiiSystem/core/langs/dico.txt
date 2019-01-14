@@ -939,7 +939,7 @@ parseErrorInTextSearch:Invalid text search input. See below for technical detail
 password:Password:Mot de passe:::::::::
 passwordDate:Last change of password:Dernier changement de mot-de-passe:::::::::
 passwordLife:Password expires every (x days):Le mot-de-passe expire chaque (x jours):::::::::
-invalidPasswardLife:Invalid password life. Please enter an integer or the key word "reset":Expiration invalide. Veuillez entrer un nombre entier ou le mot clé "reset":::::::::
+invalidPasswordLife:Invalid password life. Please enter an integer or the key word "reset":Expiration invalide. Veuillez entrer un nombre entier ou le mot clé "reset":::::::::
 rolePasswordLife:Role expiration after (x days):Le rôle expire après (x jours):::::::::
 pdf:PDF:PDF:::::::::
 photo:Photo:Photo:::::::::
@@ -1344,6 +1344,7 @@ to:to:à:::::::::
 
 save:Save:Sauvegarder:::::::::
 saveAndClose:Save & Close:Sauvegarder & Fermer:::::::::
+invalidFilename:Invalid file name:Nom de fichier incorrect:::::::::
 
 Programmes_tab_help_SDN:IRS only can see this tab:Seul les IRS peuvent voir cet onglet:::::::::
 Transfer_tab_help_SDN:IRS only can see this tab:Seul les IRS peuvent voir cet onglet:::::::::
@@ -1723,7 +1724,8 @@ selectInList:-- select --:-- sélectionner --:
 
 finishElementBeforeAddingSubItems_prefix:Please finish the #element# before adding :Veuillez terminer #element# avant d'ajouter :::
 
-invalidXml:Invalid XML:XML invalide:
+invalidXml:Invalid XML:XML invalide:::::::::
+disabledFileType:$fileType$ files are protected. Use FTP to edit them.:Les fichiers $fileType$ sont protégés. Utilisez FTP pour les éditer.:::::::::
 
 filesVersionNotInSync:file version is not in sync with:a une version de fichier non synchronisée avec:::::::::
 cannotUploadOldVersion:An older version of the file cannot be uploaded. Current version is :Il n&apos;est pas possible de charger une ancienne version du fichier. La version actuelle est :::::::::
