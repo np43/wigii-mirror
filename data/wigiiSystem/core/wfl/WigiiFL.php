@@ -2274,6 +2274,86 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return $returnValue;
 	}
 	
+	/**
+	 * Lookups in the email of the current user logued in for for an existing value in a given drop-down which matches the email or where the email attributes matches the email. Returns the first possible match.
+	 * FuncExp signature : <code>getDropdownValueFromUserEmail(fieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: FieldSelector of the dropDown field. A Field from which to get the possible values as a drop-down.
+	 * @return String the current nearest value found in the drop down list
+	 */
+	public function getDropdownValueFromUserEmail($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The getDropdownValueFromUserEmail function takes at least one argument which is the field name', FuncExpEvalException::INVALID_ARGUMENT);
+		$dropdown=$this->evaluateFuncExp(fx('cfgFieldXml',$args[0]));
+		$principalEmail = $this->getPrincipal()->getValueInGeneralContext('email');
+		//if no email then return empty
+		if(!$principalEmail) return null;
+// 		fput($principalEmail);
+		$returnValue = null;
+		foreach($dropdown->attribute as $attribute_key => $attribute){
+			$val = (string)$attribute;
+			$label = (string)$attribute->label;
+			$email = (string)$attribute["email"];
+// 			fput($val);
+// 			fput($label);
+// 			fput($email);
+			if(
+				strpos($val,$principalEmail)!==false || 
+				strpos($label,$principalEmail)!==false || 
+				strpos($email,$principalEmail)!==false
+				){
+ 				$returnValue = $val; 
+				break;
+			}
+		}
+// 		fput($returnValue);
+		return $returnValue;
+	}
+	/**
+	 * Lookups in the the current username logued in for for an existing value in a given drop-down which matches the email or where the email attributes matches the email. Returns the first possible match.
+	 * FuncExp signature : <code>getDropdownValueFromUsername(fieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: FieldSelector of the dropDown field. A Field from which to get the possible values as a drop-down.
+	 * @return String the current nearest value found in the drop down list
+	 */
+	public function getDropdownValueFromUsername($args) {
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('The getDropdownValueFromUserEmail function takes at least one argument which is the field name', FuncExpEvalException::INVALID_ARGUMENT);
+		$dropdown=$this->evaluateFuncExp(fx('cfgFieldXml',$args[0]));
+		$username = $this->getPrincipal()->getRealUsername();
+		if(defined("EMAIL_postfix")){
+			$defaultEmailPostfix = EMAIL_postfix;
+		} else {
+			$defaultEmailPostfix = null;
+		}
+		$usernameDomain = $username.$defaultEmailPostfix;
+		//if no username then return empty
+		if(!$username) return null;
+		// 		fput($username);
+		$returnValue = null;
+		foreach($dropdown->attribute as $attribute_key => $attribute){
+			$val = (string)$attribute;
+			$label = (string)$attribute->label;
+			$email = (string)$attribute["email"];
+			// 			fput($val);
+			// 			fput($label);
+			// 			fput($email);
+			if(
+					strpos($val,$username)!==false ||
+					strpos($label,$username)!==false ||
+					strpos($email,$username)!==false ||
+					strpos($val,$usernameDomain)!==false ||
+					strpos($label,$usernameDomain)!==false ||
+					strpos($email,$usernameDomain)!==false
+					){
+						$returnValue = $val;
+						break;
+			}
+		}
+		// 		fput($returnValue);
+		return $returnValue;
+	}
+	
 	// WigiiBPLParameter builder
 	
 	/**
