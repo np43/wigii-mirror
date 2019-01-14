@@ -4342,11 +4342,14 @@ invalidCompleteCache();
 				//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."request ".$exec->getCrtAction()." loaded"] = microtime(true);
 				$this->executionSink()->log("request ".$exec->getCrtAction()." loaded");
 
-				//CWE 10.01.2019: blocks any cross origin access
-				if(!$directAccess && $crossOrigin) {
+				//CWE 14.01.2019: rollback. // CWE 10.01.2019: blocks any cross origin access
+				if(false && !$directAccess && $crossOrigin) {
 					// except for the actions
 					switch($exec->getCrtAction()) {
 						case "public":
+						case "www":
+						case "newSubscription":
+						case "start":
 							break;
 						// and the trusted sites
 						default: ServiceProvider::getAuthorizationService()->assertCrossOriginAuthorized($p,$_SERVER['HTTP_REFERER'],$exec->getCrtAction());													

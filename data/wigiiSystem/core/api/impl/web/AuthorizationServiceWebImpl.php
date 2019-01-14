@@ -65,6 +65,20 @@ class AuthorizationServiceWebImpl extends AuthorizationServiceImpl {
 		return $this->moduleAS;
 	}
 	
+	private $configS;
+	public function setConfigService($configService)
+	{
+		$this->configS = $configService;
+	}
+	protected function getConfigService()
+	{
+		// autowired
+		if(!isset($this->configS))
+		{
+			$this->configS = ServiceProvider::getConfigService();
+		}
+		return $this->configS;
+	}
 	
 	public function __construct()
 	{
