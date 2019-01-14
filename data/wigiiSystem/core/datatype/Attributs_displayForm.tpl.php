@@ -35,11 +35,7 @@ $fieldXml = $field->getXml();
 
 //defining width if existant
 if($parentWidth != null){
-	if($fieldXml["flex"]=="1"){
-		$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";  //select we don't need to make it smaller
-	} else {
-		$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";  //select we don't need to make it smaller
-	}
+	$valueWidth = " width: 100%; max-width:".($parentWidth)."px; ";  //select we don't need to make it smaller
 }
 
 //defining readOnly or disabled
@@ -403,7 +399,7 @@ if($readonly) $this->put(' disabled ');
 $this->put('class="');
 if($readonly) $this->put('removeDisableOnSubmit ');
 $chosen = (string)$fieldXml["chosen"]=="1";
-if($chosen) $this->put('chosen ');
+if($chosen) $this->put('flex ');
 $flex = (string)$fieldXml["flex"]=="1";
 if($flex) $this->put('flex ');
 $flex = $flex || $chosen;

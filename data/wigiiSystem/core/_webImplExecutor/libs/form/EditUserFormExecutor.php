@@ -285,21 +285,27 @@ class EditUserFormExecutor extends FormExecutor {
 		$user->getDetail()->setCanModifyOwnPassword($userEditRec->getFieldValue("canModifyOwnPassword"));
 		//if a life is setted and was not setted before and the passwordDate is null, then
 		//add today to the password date.
-		if($user->getDetail()->getPasswordLife() == null && $userEditRec->getFieldValue("$passwordLifeFieldName") != null && $user->getDetail()->getPasswordDate() == null){
+		if($user->getDetail()->getPasswordLife() == null && $userEditRec->getFieldValue($passwordLifeFieldName) != null && $user->getDetail()->getPasswordDate() == null){
 			$user->getDetail()->setPasswordDate(time());
 		}
 		//if the passwordLife == "reset" reset the passworDate to today
-		if($userEditRec->getFieldValue("$passwordLifeFieldName") === "reset"){
+		if(strtolower($userEditRec->getFieldValue($passwordLifeFieldName)) === "reset"){
 			$user->getDetail()->setPasswordDate(time());
+			$user->getDetail()->setPasswordLife(null);
 			// CWE 03.02.2016: on reset password, resets nb of failed logins
 			$user->getDetail()->setInfo_nbFailedLogin(0);
+		} else {
+			//check passwordLife is an integer
+			if($userEditRec->getFieldValue($passwordLifeFieldName) && !is_numeric($userEditRec->getFieldValue($passwordLifeFieldName))){
+				$this->addErrorToField($transS->h($p, "invalidPasswardLife"), $passwordLifeFieldName);
+			} else {
+				$user->getDetail()->setPasswordLife($userEditRec->getFieldValue($passwordLifeFieldName));
+			}
+			//from 12.10.2018, we accept negative passwordLife as being used to force the reset of password
+// 			if($user->getDetail()->getPasswordLife() <= 0){
+// 				$user->getDetail()->setPasswordLife(null);
+// 			}
 		}
-
-		$user->getDetail()->setPasswordLife($userEditRec->getFieldValue("$passwordLifeFieldName"));
-		//from 12.10.2018, we accept negative passwordLife as being used to force the reset of password
-// 		if($user->getDetail()->getPasswordLife() <= 0){
-// 			$user->getDetail()->setPasswordLife(null);
-// 		}
 
 		//the other password details are already changed if necessary in the setClearPassword
 		$user->getDetail()->setDescription($userEditRec->getFieldValue("description"));

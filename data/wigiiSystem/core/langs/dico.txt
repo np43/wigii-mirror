@@ -939,6 +939,7 @@ parseErrorInTextSearch:Invalid text search input. See below for technical detail
 password:Password:Mot de passe:::::::::
 passwordDate:Last change of password:Dernier changement de mot-de-passe:::::::::
 passwordLife:Password expires every (x days):Le mot-de-passe expire chaque (x jours):::::::::
+invalidPasswardLife:Invalid password life. Please enter an integer or the key word "reset":Expiration invalide. Veuillez entrer un nombre entier ou le mot clé "reset":::::::::
 rolePasswordLife:Role expiration after (x days):Le rôle expire après (x jours):::::::::
 pdf:PDF:PDF:::::::::
 photo:Photo:Photo:::::::::
