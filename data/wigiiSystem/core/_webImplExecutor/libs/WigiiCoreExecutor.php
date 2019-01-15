@@ -982,7 +982,9 @@ class WigiiCoreExecutor {
 	// HTML helpers
 	
 	
-	public function getHttpHeader() {
+	public function getHttpHeader($action) {
+		//CWE 15.01.2019 prevent cross origin iframes, except for newSubscription
+		if($action!="newSubscription") header("X-Frame-Options: SAMEORIGIN");
 		header("Content-Type: text/html; charset=UTF-8");
 	}
 	
@@ -4326,12 +4328,12 @@ invalidCompleteCache();
 			if(!$started && !$exec->getIsUpdating() && $exec->getRemainingRequests() == null){
 				//$exec->addRequestOnFragment();
 				$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
-				//$exec->addRequests(WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: EMPTY_MODULE_URL . "/display/all");
 			}	
 	
 			//CWE 10.01.2019: detects if we have a cross origin request
 			$directAccess = empty($_SERVER['HTTP_REFERER']);
 			$crossOrigin = !$directAccess && (strpos(strtolower($_SERVER['HTTP_REFERER']), strtolower(SITE_ROOT))!==0);
+			$doCrossOriginChecks = (!$started?count($exec->getRemainingRequests()):0); // counts number of external requests to check
 			
 			//we keep in memory the lastAction, just to be able to manage the sending of footer for downloads or JSON
 			$lastAction = null;
@@ -4342,17 +4344,30 @@ invalidCompleteCache();
 				//$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."request ".$exec->getCrtAction()." loaded"] = microtime(true);
 				$this->executionSink()->log("request ".$exec->getCrtAction()." loaded");
 
-				//CWE 14.01.2019: rollback. // CWE 10.01.2019: blocks any cross origin access
-				if(false && !$directAccess && $crossOrigin) {
+				// CWE 15.01.2019: blocks any direct or cross origin access
+				if($doCrossOriginChecks>0 && ($directAccess || $crossOrigin)) {
+					$doCrossOriginChecks--;
 					// except for the actions
 					switch($exec->getCrtAction()) {
 						case "public":
 						case "www":
+						case "download":
+						case "validateEmailFromCode":
+						case "unsubscribeEmailFromCode":
+						case "externalAccessRequest":
+						case "downloadFromExternalAccess":
+						case "externalAccess":
+						case "getXmlFeed":
 						case "newSubscription":
 						case "start":
 							break;
+						case "fx":
+							if($crossOrigin) ServiceProvider::getAuthorizationService()->assertCrossOriginAuthorized($p,$_SERVER['HTTP_REFERER'],$exec->getCrtAction());
+							break;
 						// and the trusted sites
-						default: ServiceProvider::getAuthorizationService()->assertCrossOriginAuthorized($p,$_SERVER['HTTP_REFERER'],$exec->getCrtAction());													
+						default: 
+							if($directAccess) throw new AuthorizationServiceException("Direct access request is forbidden for action ".$exec->getCrtAction(),AuthorizationServiceException::FORBIDDEN);
+							else ServiceProvider::getAuthorizationService()->assertCrossOriginAuthorized($p,$_SERVER['HTTP_REFERER'],$exec->getCrtAction());
 					}
 				}
 				
@@ -4372,7 +4387,7 @@ invalidCompleteCache();
 					//if this specific request needs to define his own specific header
 					if (!$this->shouldByPassHeader($exec->getCrtAction())) {
 						//send the header only at the first request
-						$this->getHttpHeader();
+						$this->getHttpHeader($exec->getCrtAction());
 						//load the header
 						$SITE_TITLE = $this->getConfigurationContext()->getParameter($p, null, "siteTitle");
 						if ($exec->getIdAnswer()=="newDialog"){
@@ -4513,7 +4528,6 @@ invalidCompleteCache();
 			case "CKEditor" :
 			case "exportAndDownload" :
 			case "getXmlFeed" :
-			case "downloadFromExternalAccess" :
 			case "downloadFromExternalAccess" :
 			case "getNextElementInList" :
 			case "getNextElementInBlog" :
@@ -6822,14 +6836,7 @@ onUpdateErrorCounter = 0;
 						$exec->addRequests("" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/download/" . $elementId . "/" . $fieldName . ($exec->getCrtParameters($i) ? "/" . $exec->getCrtParameters($i) : ""));
 					} catch (Exception $e) {
 						$this->displayNotFound();
-//						throw $e;
 						exit ();
-						//					//send the header only at the first request
-						//					header("Content-Type: text/html; charset=UTF-8");
-						//					//load the header
-						//					$SITE_TITLE = $this->getConfigurationContext()->getParameter($p, null, "siteTitle");
-						//					include_once(IMPL_PATH . "templates/header.php");
-						//					throw $e;
 					}
 				} else if($isICal){
 					try {

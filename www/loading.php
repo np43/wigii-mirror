@@ -21,10 +21,11 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 22 november 2011
- * LWR
+/**
+ * Created on 22 november 2011 by LWR
+ * Modified by CWE on 15.01.2019 to prevent cross origin iframes
  */
+header("X-Frame-Options: SAMEORIGIN");
 header("Content-Type: text/html; charset=UTF-8");
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">

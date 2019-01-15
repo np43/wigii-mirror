@@ -293,7 +293,9 @@ class ExecutionServiceImpl implements ExecutionService {
 		$this->crtFragment = null;
 		unset($this->crtFragment);
 	}
-	//fragment are url parameters after the #
+	/**
+	 * fragment are url parameters after the #
+	 */
 	public function addRequestOnFragment(){
 		if($this->isFragmentAvailable()){
 			if($this->crtFragment["module"]==Module::HOME_MODULE){

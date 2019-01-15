@@ -62,6 +62,8 @@ abstract class ExportFormExecutor extends FormExecutor {
 			header('Content-type: text');
 			//header('Content-Disposition: inline; filename="'.$fileName.'"');
 		}
+		//CWE 15.01.2019 prevent cross origin iframes
+		header("X-Frame-Options: SAMEORIGIN");
 	}
 
 	protected function doRenderForm($p, $exec){

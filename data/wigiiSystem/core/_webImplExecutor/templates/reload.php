@@ -25,7 +25,9 @@
  * Host entrance when no specific url, main door for robots.
  * Created on 23 juil. 09 LWR
  * Modified by CWE on 08.04.2016 to link forward to http://www.wigii-system.net
+ * Modified by CWE on 15.01.2019 to prevent cross origin iframes
  */
+header("X-Frame-Options: SAMEORIGIN");
 header("Content-Type: text/html; charset=UTF-8");
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">

@@ -3502,6 +3502,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			$fieldXml = $element->getFieldList()->getField($fieldName)->getXml();
 			$path = $element->getFieldValue($fieldName, 'path');
 			
+			//CWE 15.01.2019 prevent cross origin iframes
+			header("X-Frame-Options: SAMEORIGIN");
 			header("Content-Type: text/html; charset=UTF-8");
 			if($fieldXml["htmlArea"] == "1") {
 				echo $element->getFieldValue($fieldName, "textContent");
