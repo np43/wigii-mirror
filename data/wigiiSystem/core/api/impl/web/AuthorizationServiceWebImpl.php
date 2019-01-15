@@ -156,7 +156,7 @@ class AuthorizationServiceWebImpl extends AuthorizationServiceImpl {
 	public function assertCrossOriginAuthorized($principal,$referer,$action) {
 		$returnValue = false;
 		$this->debugLogger()->logBeginOperation('assertCrossOriginAuthorized');
-		$referer= strtolower(trim($referer));
+		$referer= parse_url(strtolower(trim($referer)),PHP_URL_HOST);
 		if(empty($referer)) throw new AuthorizationServiceException("Referer cannot be empty",AuthorizationServiceException::INVALID_ARGUMENT);
 		if(is_null($action)) throw new AuthenticationServiceException("Action cannot be null",AuthorizationServiceException::INVALID_ARGUMENT);
 		// 1. gets Admin/CrossOrigin XML activity
