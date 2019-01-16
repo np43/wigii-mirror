@@ -462,6 +462,12 @@ class ElementPListStdClassImpl extends ElementPGroupableSelectablePagedListImpl 
 	protected function fillElementDetail($elementP,$elementStdClass) {
 		$element = $elementP->getElement();
 		$elementStdClass->{'id'} = $element->getId();
+		$elementStdClass->{'sys_creationDate'} = $element->getSys_creationDate();
+		$elementStdClass->{'sys_creationUser'} = $element->getSys_creationUser();
+		$elementStdClass->{'sys_creationUsername'} = $element->getSys_creationUsername();
+		$elementStdClass->{'sys_date'} = $element->getSys_date();
+		$elementStdClass->{'sys_user'} = $element->getSys_user();
+		$elementStdClass->{'sys_username'} = $element->getSys_username();
 		if(!is_null($elementP->getRights())) $elementStdClass->{'pRights'} = $elementP->getRights()->getLetter();
 		$elementStdClass->{'state'} = $element->getStateAsInt();
 		$elementStdClass->{'enableState'} = $elementP->getEnableElementStateAsInt();

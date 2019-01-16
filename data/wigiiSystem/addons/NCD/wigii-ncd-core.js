@@ -8603,6 +8603,12 @@ wncd.AgileStoryBoard = function(container, options) {
 			story.status=element.status.value;
 			if(element.position) story.position=element.position.value;
 			else story.position = 0;
+			story.date=element.__element.sys_date;
+			story.creationDate=element.__element.sys_creationDate;
+			story.user=element.__element.sys_user;
+			story.username=element.__element.sys_username;
+			story.creationUser=element.__element.sys_creationUser;
+			story.creationUsername=element.__element.sys_creationUsername;
 		};
 	}
 	if(!self.options.renderStory) self.options.renderStory = function(storyBoard,storyHtml,story) {		
@@ -8610,7 +8616,8 @@ wncd.AgileStoryBoard = function(container, options) {
 		storyHtml
 		.out("&#9998;","storyEditButton")
 		.out("&#10006;","storyDeleteButton");
-		if(self.options.noOrdering!=true) {
+		//if status is done then do not allow change of position
+		if(self.options.noOrdering!=true && story.status!="5completer") {
 			storyHtml.out("&#11121;","storyMoveTopButton");
 			storyHtml.out("&#129093;","storyMoveUpButton");
 			//storyHtml.out("&#11014;","storyMoveUpButton");
@@ -8720,7 +8727,12 @@ wncd.AgileStoryBoard = function(container, options) {
 		self.context.stories.sort(function(a,b){
 			if(a.position===undefined) a.position=0;
 			if(b.position===undefined) b.position=0;
-			return a.position - b.position;
+			//if status is done then sort by date
+			if(a.status=="5completer"){
+				return b.date - a.date;
+			} else {
+				return a.position - b.position;
+			}
 		});
 		// Adds stories to board
 		for(var i=0;i<self.context.stories.length;i++) {
