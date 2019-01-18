@@ -1726,6 +1726,7 @@ finishElementBeforeAddingSubItems_prefix:Please finish the #element# before addi
 
 invalidXml:Invalid XML:XML invalide:::::::::
 disabledFileType:$fileType$ files are protected. Use FTP to edit them.:Les fichiers $fileType$ sont protégés. Utilisez FTP pour les éditer.:::::::::
+disabledActivity:"$activityName$" activity is protected. Use FTP to edit the configuration file and customize the activity.:L&apos;activité "$activityName$" est protégée. Utilisez FTP pour éditer le fichier de configuration et customizer l&apos;activité.:::::::::
 
 filesVersionNotInSync:file version is not in sync with:a une version de fichier non synchronisée avec:::::::::
 cannotUploadOldVersion:An older version of the file cannot be uploaded. Current version is :Il n&apos;est pas possible de charger une ancienne version du fichier. La version actuelle est :::::::::

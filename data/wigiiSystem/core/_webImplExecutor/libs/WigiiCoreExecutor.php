@@ -9088,6 +9088,7 @@ onUpdateErrorCounter = 0;
 						$fieldName = $exec->getCrtParameters(1);
 						$isThumbs = $exec->getCrtParameters(2) == "thumbs";
 						$isIntegrated = $exec->getCrtParameters(2) == "integrated";
+						$isIntegratedPurify = $exec->getCrtParameters(2) == "integratedPurify";
 						$isUnzipForViewing = $exec->getCrtParameters(2) == "unzipForViewing";
 						$isExportDownload = $exec->getCrtParameters(2) == "exportDownload";
 						$isPreviousVersion = $exec->getCrtParameters(2) == "previousVersion";
@@ -9149,8 +9150,7 @@ onUpdateErrorCounter = 0;
 							if($isExportDownload) $fileName = $element->getId()."-".$fieldName."-".stripAccents($fileName);
 							$path = $element->getFieldValue($fieldName, "path");
 							//if path is null, then put a dummy path to prevent the file_exist returning true because the folder of the filepath exists. this is in the case of Files with htmlArea=1
-							if ($fieldXml["htmlArea"] == "1")
-								$path = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+							if ($fieldXml["htmlArea"] == "1") $path = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 							$size = $element->getFieldValue($fieldName, "size");
 							$type = $element->getFieldValue($fieldName, "type");
 							$content = null;
@@ -9180,6 +9180,11 @@ onUpdateErrorCounter = 0;
 								$this->throwEvent()->downloadFileFromElement(PWithElementWithFieldname :: createInstance($p, $element, $fieldName));
 								if ($fieldXml["htmlArea"] == "1") {
 									$content = $element->getFieldValue($fieldName, "textContent");
+									$trm = $this->createTrm();
+									// CWE 16.01.2019, if isIntegratedPurify, then purifies html before displaying it
+									if($isIntegratedPurify) $content = $trm->doFormatForHtmlText($content);
+									// Wraps html content with html file header
+									$content = $trm->wrapHtmlFilesWithHeader($content, $filename);
 								} else {
 									$content = $element->getFieldValue($fieldName, "content");
 								}
@@ -9355,7 +9360,7 @@ onUpdateErrorCounter = 0;
 							header('Content-Length: ' . $size);
 						}
 						//for any text file display the content as is
-						if (!$isIntegrated && !$isThumbs) {
+						if (!$isIntegrated && !$isIntegratedPurify && !$isThumbs) {
 							header('Content-Disposition: attachment; filename="' . $fileName . '"');
 						}
 
@@ -9363,13 +9368,8 @@ onUpdateErrorCounter = 0;
 							//							fput("download file with addslashes: ".md5(addslashes($content)));
 							//							fput("download file as is: ".md5($content));
 							session_write_close();
-							if ($fieldXml["htmlArea"] == "1") {
-								$content = $this->createTrm()->wrapHtmlFilesWithHeader($content, $filename);
-								header('Content-Length: ' . strlen($content));
-								echo $content;
-							} else {
-								echo $content;
-							}
+							if ($fieldXml["htmlArea"] == "1") header('Content-Length: ' . strlen($content));
+							echo $content;							
 						} else {
 
 							//check if the file exist, and if not display a standard preview
@@ -9387,7 +9387,6 @@ onUpdateErrorCounter = 0;
 							}
 							session_write_close();
 							readfile($path);
-							//						virtual($path);
 						}
 						exit;
 				}

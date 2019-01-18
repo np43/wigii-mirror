@@ -24,6 +24,7 @@
 /**
  * Created by LWR on 16 april 2010 
  * Modified by Medair (LMA,CWE) in 2017 for maintenance purpose. See SVN log for details.
+ * Modified by CWE on 18.01.2019 to block online edition of unwanted files for security reasons
  */
 class ModuleConfigEditFormExecutor extends FormExecutor {
 
@@ -118,7 +119,7 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 			libxml_use_internal_errors(true);
 			libxml_clear_errors();
 			$errors = array();
-			simplexml_load_string(stripslashes($rec->getFieldValue("moduleEditorConfigField")));
+			$xmlConfig = simplexml_load_string(stripslashes($rec->getFieldValue("moduleEditorConfigField")));
 			$errors = libxml_get_errors();
 			libxml_use_internal_errors(false);
 			if($errors){
@@ -128,9 +129,15 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 				}
 				$this->addErrorToField($transS->h($p, "invalidXml").$errorsToDisplay, "moduleEditorConfigField");
 			}
+			// CWE 18.01.2019: blocks customization of login activity in cient config.xml to prevent injection of unwanted FuncExp on user login
+			if(!$this->hasError() && strcasecmp($info['basename'],"config.xml")==0){
+				if($xmlConfig->xpath("login")) $this->addErrorToField(str_replace('$activityName$',"login", $transS->h($p, "disabledActivity")), "moduleEditorConfigField");
+			}
 		}
 		// CWE 09.01.2019: disables online edition of PHP code to prevent injection of non controlled code.
 		if(strtolower($info['extension'])=="php") $this->addErrorToField(str_replace('$fileType$',$info['extension'], $transS->h($p, "disabledFileType")), "moduleEditorConfigField");		
+		// CWE 18.01.2019: disables online edition of client wide js code to prevent injection of non controlled code.
+		if(strcasecmp($info['basename'],CLIENT_NAME.".js")==0) $this->addErrorToField(str_replace('$fileType$',CLIENT_NAME.".js", $transS->h($p, "disabledFileType")), "moduleEditorConfigField");
 	}
 
 	protected function actOnCheckedRecord($p, $exec) {
@@ -198,6 +205,7 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 		}
 		$rec->getWigiiBag()->setReadonly(!$this->isNew(), "moduleEditorFilenameField");
 		$isPHPCode = (substr(strtolower(trim($rec->getFieldValue("moduleEditorFilenameField"))),-4)=='.php');
+		$isClientJs = (strcasecmp(trim($rec->getFieldValue("moduleEditorFilenameField")),CLIENT_NAME.".js")==0);
 		
 		$this->getTrm()->displayRemainingForms();
 
@@ -220,8 +228,8 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 				"$('#".$this->getFormId()."_moduleEditorConfigField_value_textarea').after('line: <span id=\"".$this->getFormId()."_moduleEditorConfigField_value_textarea_lineNumber\">1</span>');" .
 				"$('#".$this->getFormId()."_moduleEditorConfigField_value_textarea').keyup(function(){ getLineNumber($(this), $('#".$this->getFormId()."_moduleEditorConfigField_value_textarea_lineNumber')); }).mouseup(function(){ $(this).keyup(); });");
 
-		// CWE 09.01.2019: disables online edition of PHP code to prevent injection of non controlled code.
-		if($isPHPCode) {
+		// CWE 18.01.2019: disables online edition of PHP code or client wide js code to prevent injection of non controlled code.
+		if($isPHPCode || $isClientJs) {
 			$this->getTrm()->addJsCode("$('#".$this->getFormId()."_moduleEditorConfigField_value_textarea').attr('readonly','readonly');"
 			."$('#".$exec->getIdAnswer()."').parent().find('button.ok, button.intermediate').hide();"
 			); 

@@ -79,12 +79,13 @@ if($xmlFeed){
 					$name = (string)$file->name;
 					if($name){
 						$postFix = "";
+						// CWE 16.01.2019: forces display of html file without any active content (iframe or scripts): use integratedPurify keyword
 						if((string)$file->type==".htm" || (string)$file->type==".html" ){
-							$postFix = "/integrated";
+							$postFix = "/integratedPurify";
 						}
-						if((string)$file->type==".zip" || (string)$file->type==".ZIP"){
-							$postFix = "/unzipAndRead";
-						}
+						// CWE 16.01.2019: skip any file which is not html for security reasons.
+						else continue;
+						
 						$path = (string)$file->path;
 						if($path == null) $path = $xmlFeedPath."/download/".(string)$item->id."/".$file["name"];
 						$tabs[] = '<li><a href="'.$path.$postFix.'">'.$name.'</a></li>';

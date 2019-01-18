@@ -1285,7 +1285,7 @@ class TemplateRecordManager extends Model {
 		return $value;
 	}
 	/**
-	 *
+	 * Formats html content for display and if purify is true, then removes all active content like scripts and iframes.
 	 */
 	public function doFormatForHtmlText($value, $purify=true){
 		$purifier = TechnicalServiceProvider::getHTMLPurifier();
@@ -2173,7 +2173,6 @@ class TemplateRecordManager extends Model {
 							$src = SITE_ROOT.$ssrc;
 
 							if($type == ".pdf" || $type == ".csv" || $type == ".sql" || $type == ".config" || $type == ".xml" || $type == ".bat" || $type == ".dat" || $type == ".data" || $type == ".html" || $type == ".htm" || $type == ".svg" || $type == ".txt" || $type == ".jpg"  || $type == ".jpeg"  || $type == ".gif"  || $type == ".png"  || $type == ".bmp"){
-								//$textContent = '</div></div><div style="width:100%" class="field" >'.$this->doFormatForHtmlText($this->getRecord()->getFieldValue($fieldName, "textContent")).'</div><div><div>';
 								//display content
 								$previewClass = 'htmlPreview';
 								if($xml["htmlArea"]=="1"){
@@ -2209,9 +2208,6 @@ class TemplateRecordManager extends Model {
 				break;
 			case "Varchars":
 			case "Strings":
-// 				if($this->getRecord()!=null){
-// 					$xml = $this->getRecord()->getFieldList()->getField($fieldName)->getXml();
-// 				}
 				if($xml["isBirthDay"]){
 					return $this->doFormatForBirthDay($value, $doRegroupSimilarValue);
 				} else if($xml["colorPicker"]=="1"){
