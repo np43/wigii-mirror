@@ -20,7 +20,7 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-
+if(!defined("DISABLE_MODULE_EDITOR_PROTECTION")) define("DISABLE_MODULE_EDITOR_PROTECTION",false);
 /**
  * Created by LWR on 16 april 2010 
  * Modified by Medair (LMA,CWE) in 2017 for maintenance purpose. See SVN log for details.
@@ -130,14 +130,16 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 				$this->addErrorToField($transS->h($p, "invalidXml").$errorsToDisplay, "moduleEditorConfigField");
 			}
 			// CWE 18.01.2019: blocks customization of login activity in cient config.xml to prevent injection of unwanted FuncExp on user login
-			if(!$this->hasError() && strcasecmp($info['basename'],"config.xml")==0){
+			if(!DISABLE_MODULE_EDITOR_PROTECTION && !$this->hasError() && strcasecmp($info['basename'],"config.xml")==0){
 				if($xmlConfig->xpath("login")) $this->addErrorToField(str_replace('$activityName$',"login", $transS->h($p, "disabledActivity")), "moduleEditorConfigField");
 			}
 		}
-		// CWE 09.01.2019: disables online edition of PHP code to prevent injection of non controlled code.
-		if(strtolower($info['extension'])=="php") $this->addErrorToField(str_replace('$fileType$',$info['extension'], $transS->h($p, "disabledFileType")), "moduleEditorConfigField");		
-		// CWE 18.01.2019: disables online edition of client wide js code to prevent injection of non controlled code.
-		if(strcasecmp($info['basename'],CLIENT_NAME.".js")==0) $this->addErrorToField(str_replace('$fileType$',CLIENT_NAME.".js", $transS->h($p, "disabledFileType")), "moduleEditorConfigField");
+		if(!DISABLE_MODULE_EDITOR_PROTECTION) {
+			// CWE 09.01.2019: disables online edition of PHP code to prevent injection of non controlled code.
+			if(strtolower($info['extension'])=="php") $this->addErrorToField(str_replace('$fileType$',$info['extension'], $transS->h($p, "disabledFileType")), "moduleEditorConfigField");		
+			// CWE 18.01.2019: disables online edition of client wide js code to prevent injection of non controlled code.
+			if(strcasecmp($info['basename'],CLIENT_NAME.".js")==0) $this->addErrorToField(str_replace('$fileType$',CLIENT_NAME.".js", $transS->h($p, "disabledFileType")), "moduleEditorConfigField");
+		}
 	}
 
 	protected function actOnCheckedRecord($p, $exec) {
@@ -229,7 +231,7 @@ class ModuleConfigEditFormExecutor extends FormExecutor {
 				"$('#".$this->getFormId()."_moduleEditorConfigField_value_textarea').keyup(function(){ getLineNumber($(this), $('#".$this->getFormId()."_moduleEditorConfigField_value_textarea_lineNumber')); }).mouseup(function(){ $(this).keyup(); });");
 
 		// CWE 18.01.2019: disables online edition of PHP code or client wide js code to prevent injection of non controlled code.
-		if($isPHPCode || $isClientJs) {
+		if(!DISABLE_MODULE_EDITOR_PROTECTION && ($isPHPCode || $isClientJs)) {
 			$this->getTrm()->addJsCode("$('#".$this->getFormId()."_moduleEditorConfigField_value_textarea').attr('readonly','readonly');"
 			."$('#".$exec->getIdAnswer()."').parent().find('button.ok, button.intermediate').hide();"
 			); 

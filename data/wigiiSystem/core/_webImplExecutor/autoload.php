@@ -42,6 +42,8 @@ if(!defined("CLIENT_CONFIG_PATH")) define("CLIENT_CONFIG_PATH", wigiiSystem_PATH
 if(!defined("MANDATORY_ARG")) define("MANDATORY_ARG",null);
 // Medair (CWE) 18.09.2018: to specialize a function in a subclass by reducing the number of arguments, unused arguments can be tagged with the UNUSED_ARG symbol.
 if(!defined("UNUSED_ARG")) define("UNUSED_ARG",null);
+// CWE 18.01.2019 by default enables module editor protection. To disable it, define DISABLE_MODULE_EDITOR_PROTECTION=true in index.php
+if(!defined("DISABLE_MODULE_EDITOR_PROTECTION")) define("DISABLE_MODULE_EDITOR_PROTECTION",false);
 
 define("ACCENT_list", "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýýþÿ");
 define("Replace_ACCENT_list", "AAAAAAACEEEEIIIIDNOOOOOOUUUUYPBaaaaaaaceeeeiiiionoooooouuuuyypy");

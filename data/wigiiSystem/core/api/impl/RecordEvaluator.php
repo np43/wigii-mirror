@@ -29,6 +29,7 @@
  * Modified by Medair (CWE) on 28.11.2016 to protect against Cross Site Scripting
  * Modified by Medair (CWE) on 07.04.2017 to allow dynamic change of principal only by rootPrincipal
  * Modified by Medair (CWE) on 07.07.2017 to add field update helpers
+ * Modified by CWE on 18.01.2019 to check for authorization before calling Func Exp
  */
 class RecordEvaluator implements FuncExpEvaluator
 {
@@ -359,6 +360,8 @@ class RecordEvaluator implements FuncExpEvaluator
 				$fName = $funcExp->getName();
 				if(method_exists($this, $fName)) {
 					$this->currentFuncExp = $funcExp;
+					// CWE 18.01.2019: check for authorization before calling Func Exp
+					if(!$this->isFxCallAuthorized($funcExp)) throw new AuthorizationServiceException("FuncExp '$fName' is not allowed to be called in class ".get_class($this), AuthorizationServiceException::NOT_ALLOWED);
 					$returnVal = $this->$fName($funcExp->getArguments());
 					if($this->debugLogger()->isEnabled()) $this->debugLogger()->write($fName." returns ".(is_object($returnVal) ? get_class($returnVal) : $returnVal));
 					return $returnVal;
@@ -574,6 +577,16 @@ class RecordEvaluator implements FuncExpEvaluator
 		if($this->currentFuncExp instanceof FuncExp) return $this->currentFuncExp->isOriginPublic();
 	}
 
+	/**
+	 * Checks if it is authorized and safe to evaluate the current FuncExp in the current principal context.
+	 * The standard implementation authorizes any call, except if origin is public and principal is a public user and the evaluator is a custom class.
+	 * @param FuncExp $fx current FuncExp beeing evaluated
+	 * @return Boolean returns true if it is authorized and safe to evaluate the current FuncExp, else returns false.
+	 */
+	protected function isFxCallAuthorized($fx) {
+		if($this->isFxOriginPublic() && $this->getPrincipal()->isRealUserPublic() && ServiceProvider::isClientClassInstance($this)) return false;
+		return true;
+	}
 
 
 

@@ -25,6 +25,7 @@
  * Wigii service provider
  * Created by CWE on 2 juin 09
  * Changed by Medair(CWE) on 07.07.2017 to allow instanciating custom FuncExp libraries
+ * Changed by CWE on 18.01.2019 to record any client custom classes and count the number of instanciations
  */
 class ServiceProvider
 {
@@ -1065,6 +1066,11 @@ class ServiceProvider
 		// 2. no standard class and failed to instanciate custom class -> ServiceProviderException
 		throw new ServiceProviderException($custoExc->getMessage()." AND ".$stdExc->getMessage(), ServiceProviderException::INVALID_ARGUMENT);
 	}
+	
+	/**
+	 * List of client customized classes and statistics of number of created instances per class
+	 */
+	private $clientClasses = array();
 
 	/**
 	 * Creates an instance of a class located in Client config folder
@@ -1087,6 +1093,10 @@ class ServiceProvider
 				else throw new ServiceProviderException("file $classFilePath does not exist on disk", ServiceProviderException::INVALID_ARGUMENT);
 			}
 			$returnValue = new $className();
+			// CWE 18.01.2019: if client custom class has been successfully instanciated, then registers the custom class 
+			// and increments the statistics of the number of created instances
+			$this->clientClasses[$className] = intval($this->clientClasses[$className]) + 1;
+			
 			// sets any configuration
 			self::configureObject($returnValue);
 		}
@@ -1112,6 +1122,17 @@ class ServiceProvider
 	{
 		// checks general authorization
 		$this->getAuthorizationServiceInstance()->assertPrincipalAuthorized($principal, "ServiceProvider", "createClientClassInstance");
+	}
+	
+	/**
+	 * @return Boolean Returns true if a given object is an instance of a client customized class
+	 */
+	public static function isClientClassInstance($object) {
+		return ServiceProvider::getInstance()->doIsClientClassInstance($object);
+	}
+	protected function doIsClientClassInstance($object) {
+		if(!isset($object) || !is_object($object)) return false;
+		else return ($this->clientClasses[get_class($object)] > 0);
 	}
 }
 
