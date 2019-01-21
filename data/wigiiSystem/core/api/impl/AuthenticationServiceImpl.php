@@ -641,12 +641,10 @@ class AuthenticationServiceImpl implements AuthenticationService
 		//WARNING, the piece of code above will make that pop3 servers authentication unsuccsessfull
 		//if the server requires the @domain in the username and an Email_postfix is defined and the email is from this domain
 
-		if($isPublic){
-			// is the specified user name a public user name ?
-			if(! $this->isPublicUser($username, $client)) {
-				throw new AuthenticationServiceException('', AuthenticationServiceException::FORBIDDEN);
-			}
-		}
+		// CWE 21.01.2019 checks if the specified user name is a public user name
+		$isDeclaredPublic = $this->isPublicUser($username, $client);
+		// cannot login as public if not declared public
+		if($isPublic && !$isDeclaredPublic) throw new AuthenticationServiceException('public user is not declared', AuthenticationServiceException::FORBIDDEN);
 
 		// does the user exist in the database ?
 		$user = $this->findUserForClient($p, $username, ValueObject::createInstance($password), $postFix, $client);
@@ -686,8 +684,9 @@ class AuthenticationServiceImpl implements AuthenticationService
 
 		//authentication successful
 
+		// CWE 21.01.2019 marks as public user current user if declared as such
+		$user->setPublic($isDeclaredPublic);
 		//prepare a principal based on $user data.
-		$user->setPublic($isPublic);
 		$returnValue = $this->createPrincipalInstance($user);
 		$userd = $returnValue->getAttachedUser()->getDetail();
 
