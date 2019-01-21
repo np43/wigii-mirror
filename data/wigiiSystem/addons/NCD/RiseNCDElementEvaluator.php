@@ -63,6 +63,23 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 		return $this->rootPrincipal;
 	}
 	
+	/**
+	 * Checks if it is authorized and safe to evaluate the current FuncExp in the current principal context.
+	 * The standard implementation authorizes any call, except if origin is public and principal is a public user and the evaluator is a custom class.
+	 * @param FuncExp $fx current FuncExp beeing evaluated
+	 * @return Boolean returns true if it is authorized and safe to evaluate the current FuncExp, else returns false.
+	 */
+	protected function isFxCallAuthorized($fx) {
+		if(parent::isFxCallAuthorized($fx)) return true;
+		// authorizes some specific public functions
+		switch($fx->getName()) {
+			case "mf_getCode":
+			case "mf_jsonEncode":
+				return true;
+		}
+		return false;
+	}
+	
 	// Rise.wigii.org NCD Web Service
 	
 	/**
