@@ -3191,4 +3191,107 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	public function getRoundedTimeCeil5(){
 		return date("H:i",ceil(time()/300)*300);
 	}
+	
+	/**
+	 * Replace the value (email address or phone number) with a javascript code generating an html a tag with the value and a link (mailto or callto).
+	 * The code is meant to hide the value (email or number) from spam crawlers.
+	 * See the comments bellow for the source of the code and idea. Wigii.org slightly updated the code in order
+	 * to include the script tag within the span (easier to manage from ckeditor) and added the ability to use it
+	 * either for emails or phone numbers
+	 * http://www.maurits.vdschee.nl/php_hide_email/
+	 * License: Public domain.
+	 * The idea of javascript E-mail address obfuscation is not his. It seems that Tim Williams
+	 * came up with the idea first. Andrew Moulden improved it by adding a generated key.
+	 * Ross Killen wrote a PHP version that generates a different key every page load.
+	 * His implementation is much like that of Ross Killen, but I implemented a slightly
+	 * different encryption algorithm, minified and obfuscated the javascript and made
+	 * the script valid for javascript strict and XHTML 1.0 strict parsing.
+	 * Here bellow the original "license" lines from the authors
+	 * 	Email obfuscator script 2.1 by Tim Williams, University of Arizona
+	 * 	Random encryption key feature by Andrew Moulden, Site Engineering Ltd
+	 * 	PHP version coded by Ross Killen, Celtic Productions Ltd
+	 * 	This code is freeware provided these six comment lines remain intact
+	 * 	A wizard to generate this code is at http://www.jottings.com/obfuscator
+	 * 	The PHP code may be obtained from http://www.celticproductions.net
+	 *
+	 * @param string $value, an email or a phone number
+	 * @param string $type, optional, default is mailto. Can be callto for a callto link.
+	 * @return string
+	 */
+	protected function doObfuscateLinkTo($value,$type="mailto") {
+		$character_set = '+-.0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+		$key = str_shuffle($character_set); $cipher_text = ''; $id = 'e'.rand(1,999999999);
+		for ($i=0;$i<strlen($value);$i+=1) $cipher_text.= $key[strpos($character_set,$value[$i])];
+		$script = 'var a="'.$key.'";var b=a.split("").sort().join("");var c="'.$cipher_text.'";var d="";';
+		$script.= 'for(var e=0;e<c.length;e++)d+=b.charAt(a.indexOf(c.charAt(e)));';
+		$script.= 'document.getElementById("'.$id.'").innerHTML="<a href=\\"'.$type.':"+d+"\\">"+d+"</a>"';
+		$script = "eval(\"".str_replace(array("\\",'"'),array("\\\\",'\"'), $script)."\")";
+		$script = '<script type="text/javascript">/*<![CDATA[*/'.$script.'/*]]>*/</script>';
+		return '<span id="'.$id.'">[protected '.($type == "mailto" ? "email" : "number").']</span>'.$script;
+	}
+	/**
+	 * Wrap a web address with an html tag a (default with taget _blank)
+	 * @param string $address : a web adress (with or without the http(s)://
+	 * @param string $target : optional, default to "_blank"
+	 * @return string
+	 */
+	protected function doLinkToWebAddress($address, $target="_blank"){
+		$addressLabel = str_replace(array("https://","http://"),"",$address);
+		$address = strtolower($address);
+		$address = (substr($address, 0, 4) == "www." ? "http://" : "").$address;
+		return '<a target="'.$target.'" href="'.$address.'">'.$addressLabel.'</a>';
+	}
+	/**
+	 * Wrap a phone number with an html tag a.
+	 * WARNING, this function dosen't obfuscate the number, use obfuscateLinkTo($number,"tel") if you want so
+	 * @param string $number
+	 * @return string
+	 */
+	protected function doLinkToTel($number){
+		return '<a href="tel:'.str_replace(array(" ",".","/","-"),"",$number).'">'.$number.'</a>';
+	}
+	/**
+	 * Wrap an email adress with an html tag a.
+	 * WARNING, this function dosen't obfuscate the email, use obfuscateLinkTo($email) if you want so
+	 * @param string $email
+	 * @return string
+	 */
+	protected function doLinkToMailto($email){
+		return '<a href="mailto:'.$email.'">'.$email.'</a>';
+	}
+	/**
+	 * Obfuscate any emails from an html text
+	 * FuncExp signature: <code>obfuscateEmails($html)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) html: String | Array of string. An html string.
+	 * @return string | Array html code with obfuscated emails (contains scripts tags)
+	 */	
+	public function obfuscateEmails($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		if($nArgs < 1) throw new FuncExpEvalException('obfuscateEmails function takes at least one arguments which is a string', FuncExpEvalException::INVALID_ARGUMENT);
+		$html = $this->evaluateArg($args[0]);
+		$isAnArray = true;
+		if(!is_array($html)){
+			$html = array($html);
+			$isAnArray = false;
+		}
+		$returnValue = array();
+		foreach($html as $key=>$value){
+			//detection of emails
+			$emails = array();
+			preg_match_all('/[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+/', $value,$emails);
+			$emails = $emails[0];
+			foreach($emails as $email){
+				$obfuscatedEmail = $this->doObfuscateLinkTo($email);
+				$value = str_replace($email,$obfuscatedEmail,$value);
+			}
+			//fput($emails);
+			$returnValue[$key] = $value;
+		}
+		if(!$isAnArray){
+			$returnValue = array_pop($returnValue);
+		}
+		//fput($returnValue);
+		return $returnValue;
+	}
 }

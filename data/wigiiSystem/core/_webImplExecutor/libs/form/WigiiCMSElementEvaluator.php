@@ -760,7 +760,9 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 	public function cms_getArticleHtmlContent($article,$options) {
 		if(isset($article)) {
 			$language = $options->getValue('language');			
-			return $article->getFieldValue('contentHTML')[$language];
+			$returnValue = $article->getFieldValue('contentHTML')[$language];
+			if($returnValue) $returnValue = $this->evaluateFuncExp(fx('obfuscateEmails',$returnValue),$this);
+			return $returnValue;
 		}
 	}
 	/**
@@ -884,8 +886,10 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		// Retrieves intro info
 		$introContent = $intro->getFieldValue('contentIntro');
 		if(is_array($introContent)) $introContent = $introContent[$language];
+		if($introContent) $introContent= $this->evaluateFuncExp(fx('obfuscateEmails',$introContent),$this);
 		$enablePublicComments = $intro->getFieldValue('enablePublicComments');
 		$introComments = $intro->getFieldValue('introComments');
+		if($introComments) $introComments = $this->evaluateFuncExp(fx('obfuscateEmails',$introComments),$this);
 		// saves some options used into the js part
 		if($enablePublicComments) {
 			$options->setValue('enablePublicComments',true);
@@ -919,6 +923,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$transS = ServiceProvider::getTranslationService();
 		$principal = $this->getPrincipal();
 		$language = $options->getValue('language');
+		
+		if($footer) $footer = $this->evaluateFuncExp(fx('obfuscateEmails',$footer),$this);
 		
 		// Variables
 		$forceHeight = ($options->getValue("forceHeight") ? 'true' : 'false');
