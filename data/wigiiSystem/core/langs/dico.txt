@@ -1286,7 +1286,7 @@ hasRemovedThoseElementsFromGroup:has removed the following #elements# from #grou
 hasSettedThoseElementsInGroups:has defined the following #elements# with the #groups#:a défini #elements# suivants avec #groups#:::::::::
 thoseElementsWhereInGroups:#ThoseElements# where in #groups#:#ThoseElements# étaient dans #groups#:::::::::
 hasUpdatedFollowingElements:has updated the following #elements#:a mis-à-jour #elements# suivants:::::::::
-hasUpdatedFollowingElementsWithChanges:has updated the following #elements# with those changes:a mis-à-jour #elements# suivant avec ces changements:::::::::
+hasUpdatedFollowingElementsWithChanges:has updated the following #elements# with those changes:a mis-à-jour #elements# suivants avec ces changements:::::::::
 hasStateChangedFollowingElements:has changed the state of the following #elements#:a modifié le statut de #thoseElements#:::::::::
 hasDeletedThoseElements:has deleted the following #elements#:a effacé #elements# suivants:::::::::
 hasDeletedThoseElementsFromGroups:has deleted the following #elements# from #groups#\::a effacé #elements# suivants des #-groups#\::::::::::

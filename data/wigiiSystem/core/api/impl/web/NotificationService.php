@@ -26,6 +26,7 @@
  * Created on 20 nov. 09 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  * Modified by Medair (CWE) on 20.02.2018 to control notifications of sub-elements based on parent config.
+ * Modified by CWE on 28.01.2019 to translate wigii namespace name
  */
 class NotificationService implements MultiplexedEvent {
 
@@ -902,8 +903,14 @@ class NotificationService implements MultiplexedEvent {
 		return $result;
 	}
 	protected function getShortSubject($p, $eventName, $entityName, $module){
+		$transS = ServiceProvider::getTranslationService();
 		$wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace()->getWigiiNamespaceName();
-		return ($wigiiNamespace ? $wigiiNamespace.' - ' : "").$this->getTranslationService()->t($p, $module->getModuleName()).': ';
+		// CWE 28.01.2019 translates wigii namespace using homePageNamespaceLabel if defined
+		if($wigiiNamespace) {
+			$customLabel = $transS->t($p, "homePageNamespaceLabel_".str_replace(' ', '%20', $wigiiNamespace));
+			if($customLabel == "homePageNamespaceLabel_".str_replace(' ', '%20', $wigiiNamespace)) $customLabel = $wigiiNamespace;
+		}
+		return ($wigiiNamespace ? $customLabel.' - ' : "").$transS->t($p, $module->getModuleName()).': ';
 	}
 	public function getInitialSubject($p, $eventName, $entityName, $module, $rec, $gObj, $elementPList=null){
 		// fetches root element and aligns configuration
@@ -1305,6 +1312,7 @@ class NotificationService implements MultiplexedEvent {
 		return $result;
 	}
 	protected function getButtonAccess($p, $wigiiNamespace=null, $module=null){
+		$transS = ServiceProvider::getTranslationService();
 		if(!$wigiiNamespace) $wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace();
 		if(!$module){
 			if($rec->isSubElement()){
@@ -1313,9 +1321,14 @@ class NotificationService implements MultiplexedEvent {
 				$module = $rec->getModule();
 			}
 		}
+		// CWE 28.01.2019 translates wigii namespace using homePageNamespaceLabel if defined
+		if($wigiiNamespace && $wigiiNamespace->getWigiiNamespaceName()) {
+			$customLabel = $transS->t($p, "homePageNamespaceLabel_".$wigiiNamespace->getWigiiNamespaceUrl());
+			if($customLabel == "homePageNamespaceLabel_".$wigiiNamespace->getWigiiNamespaceUrl()) $customLabel = $wigiiNamespace->getWigiiNamespaceName();
+		}
 		$result = "";
 		$result .= '<a href="'.SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'" target="_blank" style="color:#000;text-decoration:none;">';
-		$result .= $this->getTranslationService()->t($p, "accessSystem")." ".($wigiiNamespace && $wigiiNamespace->getWigiiNamespaceName() ? $wigiiNamespace->getWigiiNamespaceName().' - ' : "").$this->getTranslationService()->t($p, $module->getModuleName());
+		$result .= $transS->t($p, "accessSystem")." ".($wigiiNamespace && $wigiiNamespace->getWigiiNamespaceName() ? $customLabel.' - ' : "").$transS->t($p, $module->getModuleName());
 		$result .= '</a>';
 		return $result;
 	}

@@ -7,6 +7,6 @@ otherWigiiNamespace::::::::::
 
 
 homePage_MyNamespace:<img src="Example/logo_wigii.gif" />:<img src="Example/logo_wigii.gif" />::::::::::
-
+homePageNamespaceLabel_MyNamespace:My special namespace title:Mon titre spécial pour le namespace::::::::
 homePage_MyNamespace_Contacts:My custom contact module name:Mon nom spécial de l'onglet contact::::
 

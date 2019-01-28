@@ -46,4 +46,13 @@
 		</authorizedReferers>
 	</CrossOrigin>
 	-->
+	
+	<!-- CWE 24.01.2019 : Declares a list of remote namespaces to be added to the navigation menu -->
+	<!-- 
+	<Navigation>
+	  	<namespace1 hostUrl="https://company.wigii-safe.com" namespaceUrl="Namespace1">
+	    	<label_l01>Namespace 1</label_l01><label_l02>Namespace 1</label_l02>
+	    </namespace1>
+	</Navigation>
+	-->
 </admin>

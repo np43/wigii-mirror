@@ -4751,22 +4751,35 @@ invalidCompleteCache();
 				$this->executionSink()->log("set browser to:" . $exec->getBrowserName() . " " . $exec->getBrowserVersion());
 				break;
 			case "changeLanguage" :
+				$configS = $this->getConfigurationContext();
 				$transS = ServiceProvider :: getTranslationService();
 				$transS->setLanguage($exec->getCrtParameters(0));
 				$p->setValueInGeneralContext("language", $exec->getCrtParameters(0));
-				$this->throwEvent()->switchLanguage(PWithUserWithLanguage :: createInstance($p, $p->getAttachedUser(), ServiceProvider :: getTranslationService()->getLanguage()));
-				//cancel all the caching
+				$this->throwEvent()->switchLanguage(PWithUserWithLanguage :: createInstance($p, $p->getAttachedUser(), $transS->getLanguage()));
+				
+				$currentModuleLabel = $transS->t($p, "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$exec->getCrtModule()->getModuleUrl());
+				if($currentModuleLabel == "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$exec->getCrtModule()->getModuleUrl()) $currentModuleLabel = $transS->t($p, $exec->getCrtModule()->getModuleUrl());
+				
+				$currentWigiiNamespaceLabel = $transS->t($p, "homePageNamespaceLabel_".$p->getWigiiNamespace()->getWigiiNamespaceUrl());
+				if($currentWigiiNamespaceLabel== "homePageNamespaceLabel_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()) $currentWigiiNamespaceLabel= $p->getWigiiNamespace()->getWigiiNamespaceName();
+				
+				//cancel all the caching and updates language and labels
 				$exec->addJsCode("invalidCompleteCache();
 crtLanguage = '" . $transS->getLanguage(true) . "';
 crtLang = '" . $transS->getLanguage() . "';
+crtWigiiNamespaceLabel = '" . $currentWigiiNamespaceLabel. "';
+crtModuleLabel = '" . $currentModuleLabel. "';
 ");
 				if($exec->getCrtModule()->getModuleName() == "" ||
 					$exec->getCrtModule()->getModuleName() == "null" ||
 					$exec->getCrtModule()->getModuleName() == Module :: EMPTY_MODULE_URL ||
 					$exec->getCrtModule()->getModuleName() == Module :: HOME_MODULE
 					){
+					$exec->addJsCode("setNavigationBarInHomeStateBsp(".$configS->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");");
 					$exec->addRequests("mainDiv/".WigiiNamespace :: EMPTY_NAMESPACE_URL . "/" . Module :: HOME_MODULE . "/start");
 				} else {
+					if($exec->getCrtModule()->isAdminModule()) $exec->addJsCode("setNavigationBarInAdminStateBsp();");
+					else $exec->addJsCode("setNavigationBarNotInHomeStateBsp(".$configS->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");");
 					$exec->addRequests("mainDiv/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/all");
 				}
 				//persist context in DB;
@@ -11977,18 +11990,21 @@ onUpdateErrorCounter = 0;
 				}
 
 				// JS to adjust GUI on client side
-					$currentModuleLabel = $transS->t($p, "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl());
-					if($currentModuleLabel == "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl()) $currentModuleLabel = $transS->t($p, $lastModule->getModuleUrl());
+				$currentModuleLabel = $transS->t($p, "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl());
+				if($currentModuleLabel == "homePage_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()."_".$lastModule->getModuleUrl()) $currentModuleLabel = $transS->t($p, $lastModule->getModuleUrl());
 
+				$currentWigiiNamespaceLabel = $transS->t($p, "homePageNamespaceLabel_".$p->getWigiiNamespace()->getWigiiNamespaceUrl());
+				if($currentWigiiNamespaceLabel== "homePageNamespaceLabel_".$p->getWigiiNamespace()->getWigiiNamespaceUrl()) $currentWigiiNamespaceLabel= $p->getWigiiNamespace()->getWigiiNamespaceName();
+								
 				$defaultWigiiNamespaceUrl = (string) $configS->getParameter($p, null, "defaultWigiiNamespace");				
-				if(!$defaultWigiiNamespaceUrl){
-					$defaultWigiiNamespaceUrl = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
-				}
-					$exec->addJsCode("
+				if(!$defaultWigiiNamespaceUrl) $defaultWigiiNamespaceUrl = $p->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+
+				$exec->addJsCode("
 closeStandardsDialogs();
 crtLanguage = '" . $transS->getLanguage(true) . "';
 crtLang = '" . $transS->getLanguage() . "';
 crtModuleLabel = '" . $currentModuleLabel . "';
+crtWigiiNamespaceLabel = '" . $currentWigiiNamespaceLabel. "';
 defaultWigiiNamespaceUrl = '" . $defaultWigiiNamespaceUrl . "';
 crtRoleId = '" . $roleId . "';
 crtWigiiNamespaceUrl = '" . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "';

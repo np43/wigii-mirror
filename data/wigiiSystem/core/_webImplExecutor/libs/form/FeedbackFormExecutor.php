@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 15 sept. 09
- * by LWR
+/**
+ * Created on 15 sept. 09 by LWR
+ * Modified by CWE on 28.01.2019 to translate wigii namespace name
  */
 class FeedbackFormExecutor extends FormExecutor {
 
@@ -61,10 +61,15 @@ class FeedbackFormExecutor extends FormExecutor {
 	}
 	protected function getButtonAccess($p, $exec){
 		$wigiiNamespace = $exec->getCrtWigiiNamespace();
+		// CWE 28.01.2019 translates wigii namespace using homePageNamespaceLabel if defined
+		if($wigiiNamespace->getWigiiNamespaceName()) {
+			$customLabel = $this->getTrm()->t("homePageNamespaceLabel_".$wigiiNamespace->getWigiiNamespaceUrl());
+			if($customLabel == "homePageNamespaceLabel_".$wigiiNamespace->getWigiiNamespaceUrl()) $customLabel = $wigiiNamespace->getWigiiNamespaceName();
+		}
 		$module = $exec->getCrtModule();
 		$result = "";
 		$result .= '<a href="'.SITE_ROOT."#".$wigiiNamespace->getWigiiNamespaceUrl()."/".$module->getModuleUrl().'" target="_blank" style="color:#000;text-decoration:none;">';
-		$result .= $this->getTrm()->t("accessSystem")." ".($wigiiNamespace->getWigiiNamespaceName() ? $wigiiNamespace->getWigiiNamespaceName().' - ' : "").$this->getTrm()->t($module->getModuleName());
+		$result .= $this->getTrm()->t("accessSystem")." ".($wigiiNamespace->getWigiiNamespaceName() ? $customLabel.' - ' : "").$this->getTrm()->t($module->getModuleName());
 		$result .= '</a>';
 		return $result;
 	}
@@ -286,10 +291,15 @@ class FeedbackFormExecutor extends FormExecutor {
 	protected function getFeedbackContext($p, $exec, $rec){
 		$transS = ServiceProvider::getTranslationService();
 		$wigiiNamespace = $exec->getCrtWigiiNamespace()->getWigiiNamespaceName();
+		// CWE 28.01.2019 translates wigii namespace using homePageNamespaceLabel if defined
+		if($wigiiNamespace) {
+			$customLabel = $transS->t($p, "homePageNamespaceLabel_".str_replace(' ', '%20', $wigiiNamespace));
+			if($customLabel == "homePageNamespaceLabel_".str_replace(' ', '%20', $wigiiNamespace)) $customLabel = $wigiiNamespace;
+		}
 		if($rec->getAttachedRecord() != null){
-			return $transS->t($p, "feedbackInTab")." ".($wigiiNamespace ? $wigiiNamespace." / " : '').$transS->t($p, $exec->getCrtModule()->getModuleName())." ".$transS->t($p, "feedbackAboutElement").$this->getRecord()->getAttachedRecord()->getId();
+			return $transS->t($p, "feedbackInTab")." ".($wigiiNamespace ? $customLabel." / " : '').$transS->t($p, $exec->getCrtModule()->getModuleName())." ".$transS->t($p, "feedbackAboutElement").$this->getRecord()->getAttachedRecord()->getId();
 		} else {
-			return $transS->t($p, "feedbackInTab")." ".($wigiiNamespace ? $wigiiNamespace." / " : '').$transS->t($p, $exec->getCrtModule()->getModuleName());
+			return $transS->t($p, "feedbackInTab")." ".($wigiiNamespace ? $customLabel." / " : '').$transS->t($p, $exec->getCrtModule()->getModuleName());
 		}
 	}
 	protected function getFeedbackTitle($p, $exec, $rec){

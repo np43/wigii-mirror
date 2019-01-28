@@ -21,14 +21,15 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/***
+/**
  * Created by LWR, on 21 September 2011
+ * Modified by CWE on 24.01.2019 to menu entries declared in the Admin_config/Navigation activity
  */
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 if(!isset($authS)) $authS = ServiceProvider::getAuthenticationService();
 if(!isset($p)) $p = $authS->getMainPrincipal();
-if(!isset($config)) $config = $this->getConfigurationContext();
+if(!isset($configS)) $configS = $this->getConfigurationContext();
 if(!isset($userAS)) $userAS = ServiceProvider::getUserAdminService();
 if(!isset($sessAS)) $sessAS = ServiceProvider::getSessionAdminService();
 
@@ -45,13 +46,13 @@ if($exec->getIdAnswer()!="workZone"){
 	} else {
 		$realUser = $p->getAttachedUser();
 	}
-	$defaultWigiiNamespace = (string)$config->getParameter($p, null, "defaultWigiiNamespace");
+	$defaultWigiiNamespace = (string)$configS->getParameter($p, null, "defaultWigiiNamespace");
 	if(!$defaultWigiiNamespace){
 		$defaultWigiiNamespace = $realUser->getWigiiNamespace()->getWigiiNamespaceUrl();
 	}
 	$defaultWigiiNamespace=str_replace('%20', ' ', $defaultWigiiNamespace);
 
-	$xmlFeedPath = (string)$config->getParameter($p, null, "tabsContentUrlForHomePage");
+	$xmlFeedPath = (string)$configS->getParameter($p, null, "tabsContentUrlForHomePage");
 	$xmlFeed = $xmlFeedPath;
 	if($xmlFeed){
 		$ch = curl_init();
@@ -94,7 +95,7 @@ if($exec->getIdAnswer()!="workZone"){
 
 	$roleList = $p->getRoleListener();
 
-	$homePageNbColumn = (string)$config->getParameter($p, null, "homePageNbColumn");
+	$homePageNbColumn = (string)$configS->getParameter($p, null, "homePageNbColumn");
 	if(!$homePageNbColumn) $homePageNbColumn = 6;
 	?><div class="homeContent SBB"><? //the home content is to allow having a scroll bar just for the icon list
 
@@ -122,7 +123,7 @@ if($exec->getIdAnswer()!="workZone"){
 		$haveAtLeastOneAccess = false;
 
 		//add default wigiiNamespace module
-		$crtWigiiNamespace = $defaultWigiiNamespace;
+		$crtWigiiNamespace = str_replace(' ', '%20', $defaultWigiiNamespace);
 		if($roleList->getDefaultWigiiNamespaceModules()){
 			if($transS->t($p, "defaultWigiiNamespace")!="defaultWigiiNamespace"){
 				?><div class="SBB grayFont subtitle"><?=$transS->t($p, "defaultWigiiNamespace");?></div><?
@@ -132,9 +133,8 @@ if($exec->getIdAnswer()!="workZone"){
 				}
 			}
 			?><ul id="homePageModuleMenu"><?
-				$moduleReorder = reorderTabBasedOnKeyPriority($roleList->getDefaultWigiiNamespaceModules(), (string)$config->getParameter($p, null, "prioritizeModuleInHomePage"));
+				$moduleReorder = reorderTabBasedOnKeyPriority($roleList->getDefaultWigiiNamespaceModules(), (string)$configS->getParameter($p, null, "prioritizeModuleInHomePage"),true);
 				foreach($moduleReorder as $module=>$roleId){
-					if(strpos($module, "[title]")===0) continue;
 					$haveAtLeastOneAccess =true;
 					$customImage = $transS->t($p, "homePage_".$module);
 					if($customImage == "homePage_".$module) $customImage = null;
@@ -146,31 +146,33 @@ if($exec->getIdAnswer()!="workZone"){
 						?>><?
 						$customLabel = $transS->t($p, "homePage_".$crtWigiiNamespace."_".$module);
 						if($customLabel == "homePage_".$crtWigiiNamespace."_".$module) echo $transS->t($p, $module);
-						else echo $customLabel; //." (".$transS->t($p, $module).")";
+						else echo $customLabel;
 						?></a><?
 					?></li><?
 				}
 				?><div class="clear"></div><?
 			?></ul><?
 		}
-		//add other wigiiNamespaces
-		if($roleList->getOtherWigiiNamespaces()){
+		// add other namespaces
+		$navigationActivity = $configS->ma($p,Module::ADMIN_MODULE,Activity::createInstance('Navigation'));
+		if($roleList->getOtherWigiiNamespaces() || $navigationActivity){
 			if($transS->t($p, "otherWigiiNamespace") != "otherWigiiNamespace"){ ?><div class="SBB grayFont subtitle"><?=$transS->t($p, "otherWigiiNamespace");?></div><? }
 			?><ul id="homePageWigiiNamespaceMenu"><?
-			$wigiiNamespaceReorder = reorderTabBasedOnKeyPriority($roleList->getOtherWigiiNamespaces(), (string)$config->getParameter($p, null, "prioritizeWigiiNamespaceInHomePage"), true);
-			foreach($wigiiNamespaceReorder as $crtWigiiNamespace=>$subMenu){
-				$crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
-				$customImage = $transS->t($p, "homePage_".$crtWigiiNamespace);
-				if($customImage == "homePage_".$crtWigiiNamespace) $customImage = null;
+			$wigiiNamespaceReorder = reorderTabBasedOnKeyPriority($roleList->getOtherWigiiNamespaces(), (string)$configS->getParameter($p, null, "prioritizeWigiiNamespaceInHomePage"), true);
+			foreach($wigiiNamespaceReorder as $crtWigiiNamespace=>$subMenu){								
 				if($subMenu){
-					$haveAtLeastOneAccess =true;
-					$moduleReorder = reorderTabBasedOnKeyPriority($subMenu, (string)$config->getParameter($p, null, "prioritizeModuleInHomePage"), true);
+					$customImage = $transS->t($p, "homePage_".$crtWigiiNamespace);
+					if($customImage == "homePage_".$crtWigiiNamespace) $customImage = null;
+					$customLabel = $transS->t($p, "homePageNamespaceLabel_".$crtWigiiNamespace);
+					if($customLabel == "homePageNamespaceLabel_".$crtWigiiNamespace) $customLabel = str_replace('%20',' ',$crtWigiiNamespace);
+					$haveAtLeastOneAccess=true;
+					$moduleReorder = reorderTabBasedOnKeyPriority($subMenu, (string)$configS->getParameter($p, null, "prioritizeModuleInHomePage"), true);
 					?><li class="H <?=($customImage ? "customImage" : "N");?>"><?
 						if($customImage){
 							echo $customImage;
 						}
 						?><a href="#<?=str_replace(' ', '%20', $crtWigiiNamespace);?>" onclick="return false;"<?
-						?>><? echo $crtWigiiNamespace;?><span></span></a><?
+						?>><? echo $customLabel;?><span></span></a><?
 						?><ul class="sub SBB" ><?
 						$tempModuleLength = count($moduleReorder);
 						foreach($moduleReorder as $module=>$roleId){
@@ -179,44 +181,64 @@ if($exec->getIdAnswer()!="workZone"){
 								?>><?
 								$customLabel = $transS->t($p, "homePage_".$crtWigiiNamespace."_".$module);
 								if($customLabel == "homePage_".$crtWigiiNamespace."_".$module) echo $transS->t($p, $module);
-								else echo $customLabel; //." (".$transS->t($p, $module).")";
+								else echo $customLabel;
 								?></a><?
 							?></li><?
 						}
 						?></ul><?
 					?></li><?
-				} else if(false){
-					?><li class="H customImage adminMenu" onclick="$('#userMenuAdmin a[href=\'#<?=str_replace(' ', '%20', $crtWigiiNamespace);?>/Admin\']:first').click(); return false;"><?
-						?><img src="images/icones/88x88/folderadd.png" /><?
-						?><a href="#<?=str_replace(' ', '%20', $crtWigiiNamespace);?>/Admin" onclick="return false;"<?
-						?>><? echo $crtWigiiNamespace;?><br /><i>(Click to startup by creating root folders in admin console)</i></a><?
-					?></li><?
 				}
+			}
+			// CWE 24.01.2019: includes remote namespaces declared in Admin_config/Navigation activity
+			if($navigationActivity) {
+				foreach($navigationActivity->children() as $remoteNamespace) {
+					$hostUrl = (string)$remoteNamespace['hostUrl'];
+					if(empty($hostUrl)) continue;
+					if(substr($hostUrl,-1)!='/') $hostUrl.='/';
+					$namespaceUrl = (string)$remoteNamespace['namespaceUrl'];
+					$remoteNamespaceName = !empty($namespaceUrl)?$namespaceUrl:$remoteNamespace->getName();
+					$haveAtLeastOneAccess=true;
+					
+					$customImage = $transS->t($p, "remotePage_".$remoteNamespaceName);
+					if($customImage == "remotePage_".$remoteNamespaceName) $customImage = null;
+					if(!$customImage && !$namespaceUrl) $customImage = '<img src="images/icones/88x88/cms.png" />';
+					
+					$customLabel = $transS->t($p,$remoteNamespaceName,$remoteNamespace);
+					if($customLabel == $remoteNamespaceName) $customLabel = $transS->t($p, "remotePageLabel_".$remoteNamespaceName);
+					if($customLabel == "remotePageLabel_".$remoteNamespaceName) $customLabel = str_replace('%20',' ',$remoteNamespaceName);
+					$haveAtLeastOneAccess=true;
+					?><li class="H <?=($customImage ? "customImage" : "N");?>"><?
+						if($customImage){
+							echo $customImage;
+						}
+						?><a href="<?=$hostUrl.(!empty($namespaceUrl)?'#'.str_replace(' ', '%20', $namespaceUrl):'');?>" onclick="return false;"<?
+						?>><? echo $customLabel;?><span></span></a><?
+						/* no sub-menu for now until SSO is active
+						?><ul class="sub SBB" ><?
+						$tempModuleLength = count($moduleReorder);
+						foreach($moduleReorder as $module=>$roleId){
+							?><li class="H sub"><?
+								?><a href="#<?=str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;?>" class="SBB"<?
+								?>><?
+								$customLabel = $transS->t($p, "homePage_".$crtWigiiNamespace."_".$module);
+								if($customLabel == "homePage_".$crtWigiiNamespace."_".$module) echo $transS->t($p, $module);
+								else echo $customLabel;
+								?></a><?
+							?></li><?
+						}
+						?></ul><?
+						*/
+					?></li><?					
+				}				
 			}
 			?><div class="clear"></div><?
 			?></ul><?
-		}
+		}		
 		if(!$haveAtLeastOneAccess){
 			?><div class="SBB ui-corner-all" style="font-size:large;padding:20px;"><?
 				?><p class="R"><?=$transS->t($p, "youDontHaveAnyAccess");?></p><p>&nbsp;</p><?
 				?><p style="">If you are administrator, please startup by opening the admin console.</p><p>&nbsp;</p><img src="<?=SITE_ROOT_forFileUrl."images/gui/help_openAdminConsole.jpg";?>" /><?
 			?></div><?
-
-			//from 27/11/2012, remove the auto-log out if no access but having some roles (cf. loginFormExecutor::actOnCheckedRecord)
-			if(false){
-				?><div class="SBB ui-corner-all" style="font-size:large;padding:20px;"><?
-					if(!$p->isWigiiNamespaceCreator() && !$p->getRootGroupCreator()){
-						?><p class="R"><?=$transS->t($p, "youDontHaveAnyAccess");?></p><?
-						?><p style="font-weight:bold;"><?=$transS->t($p, "logoutInProgress");?></p><?
-					} else {
-						?><p style="font-weight:bold;">To startup open admin console through the user menu. Then create root folders in the tabs you want to activate. Then logout / login to upgrade your new accesses.</p><?
-					}
-				?></div><?
-				if(!$p->isWigiiNamespaceCreator() && !$p->getRootGroupCreator()){
-					$exec->addJsCode($this->getJsCodeBeforeLogout($p)." logout(); "); //. " setTimeout(function(){ self.location = '" . str_replace("//", '\/\/', SITE_ROOT) . "'; }, 1500);");
-					$authS->logout();
-				}
-			}
 		}
 
 		//add introduction text
@@ -224,12 +246,11 @@ if($exec->getIdAnswer()!="workZone"){
 			?><div class="introduction"><?=$introduction;?></div><?
 		}
 
-
 	?></div><?
 
 	?></div><?
 
-    $exec->addJsCode("resize_homePage(); setListenerToHomePage('top'); setNavigationBarInHomeStateBsp(".$config->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable")."); ");
+    $exec->addJsCode("resize_homePage(); setListenerToHomePage('top'); setNavigationBarInHomeStateBsp(".$configS->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable")."); ");
 }
 
 

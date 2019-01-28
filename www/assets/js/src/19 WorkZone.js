@@ -2704,8 +2704,8 @@ function setNavigationBarNotInHomeStateBsp(displayFeedbackOnSystem){
 
 	var wigiiModule = crtModuleName;
 	var wigiiModuleLabel = crtModuleLabel;
-	var parentNamespace = null;
-	parentNamespace = crtWigiiNamespaceUrl;
+	var parentNamespace = crtWigiiNamespaceUrl || null;
+	var parentNamespaceLabel = crtWigiiNamespaceLabel || parentNamespace;
 	var parentEncode = parentNamespace.replace(/ /g, '-');
 
 	$('#navigationBarBsp .admin').hide(); //Hide admin toolsbar
@@ -2715,7 +2715,7 @@ function setNavigationBarNotInHomeStateBsp(displayFeedbackOnSystem){
     $("#navigationBarBsp .carret").show(); //Show the first carret
 
 
-	$('#navigationBarBsp #base-dropdown a:first').html(parentNamespace + ' <span class="caret"></span>'); //Show the namespace in place of the burger menu
+	$('#navigationBarBsp #base-dropdown a:first').html(parentNamespaceLabel + ' <span class="caret"></span>'); //Show the namespace in place of the burger menu
 
     //show the submenu
 	if($("nav #submenu-" + parentEncode + " a")){
@@ -2814,10 +2814,10 @@ function setListenerToHomePage(subMenuPosition){
 		//in IE7 href include the site root even if not define in the html of the home page
 		homePageClickRef = homePageClickRef.replace(SITE_ROOT, '');
 		if($(this).parent().hasClass("adminMenu")){
-			$("#userMenuAdmin a[href$='"+homePageClickRef+"']").click();
+			// deprecated 25.01.2018 $("#userMenuAdmin a[href$='"+homePageClickRef+"']").click();
 			/*BSP*/$("#base-dropdown a[href$='"+homePageClickRef+"']").click();
-		} else {
-            $("#navigateMenu a[href$='"+homePageClickRef+"']").click();
+		} else {					
+            // deprecated 25.01.2018 $("#navigateMenu a[href$='"+homePageClickRef+"']").click();
             /*BSP*/$("#base-dropdown a[href$='"+homePageClickRef+"']").click();
 		}
 		self.location = homePageClickRef;
@@ -2855,6 +2855,10 @@ function setListenerToHomePage(subMenuPosition){
 		.click(function(e){
 			if($('ul li:first a', this).length){
 				$('ul li:first a', this).click();
+			}
+			else if($('a:first', this).length) {				
+				if(!ctrlPressed) self.location = $('a:first', this).attr("href");
+				else $("#base-dropdown a[href$='"+$('a:first', this).attr("href")+"']").click();
 			}
 		})
 		.bind('contextmenu', function(e){$.cookie('wigii_anchor', $('a', this).attr('href'),  { path: '/' }); e.stopPropagation();})

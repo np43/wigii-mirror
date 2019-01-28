@@ -24,12 +24,13 @@
 /**
  * Wigii navigation bar and search bar
  * Created on 18.07.2017 by Medair (LMA)
+ * Modified by CWE on 24.01.2019 to menu entries declared in the Admin_config/Navigation activity
  */
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 if(!isset($authS)) $authS = ServiceProvider::getAuthenticationService();
 if(!isset($p)) $p = $authS->getMainPrincipal();
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
-if(!isset($config)) $config = $this->getConfigurationContext();
+if(!isset($configS)) $configS = $this->getConfigurationContext();
 if(!isset($sessAS)) $sessAS = ServiceProvider::getSessionAdminService();
 //if(!isset($moduleAS)) $moduleAS = ServiceProvider::getModuleAdminService();
 if(!isset($userAS)) $userAS = ServiceProvider::getUserAdminService();
@@ -60,45 +61,39 @@ if($roleList){
     $backUser = $roleList->getUser($backUserId);
 }
 
-$companyLogo = $config->getParameter($p, null, "companyLogo");
-$companyLogoMargins = $config->getParameter($p, null, "companyLogoMargin");
+$companyLogo = $configS->getParameter($p, null, "companyLogo");
+$companyLogoMargins = $configS->getParameter($p, null, "companyLogoMargin");
 $crtWigiiNamespace = $defaultWigiiNamespace;
 $menuItem = array();
-$crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
 
 if($roleList->getDefaultWigiiNamespaceModules()){
-    $moduleReorder = reorderTabBasedOnKeyPriority($roleList->getDefaultWigiiNamespaceModules(), (string)$config->getParameter($p, null, "prioritizeModuleInHomePage"), true);
+    $moduleReorder = reorderTabBasedOnKeyPriority($roleList->getDefaultWigiiNamespaceModules(), (string)$configS->getParameter($p, null, "prioritizeModuleInHomePage"), true);
     foreach($moduleReorder as $module=>$roleId){
         $customLabel = $transS->t($p, "homePage_".$crtWigiiNamespace."_".$module);
-        $other[$customLabel]['href'] = '#'.str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;
+        $other[$module]['href'] = '#'.str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;
         $onclick = $exec->getUpdateJsCode($p->getRealUser(), $roleId, $crtWigiiNamespace, $module, "NoAnswer", "userNavigate", "navigate/user/$roleId/'+crtRoleId+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true);
-        $other[$customLabel]['onclick'] = "if(!ctrlPressed) { $onclick }";
-        if($customLabel == "homePage_".$crtWigiiNamespace."_".$module) $other[$customLabel]['title'] = $transS->t($p, $module);
-        else $other[$customLabel]['title'] = $customLabel; //." (".$transS->t($p, $module).")";
+        $other[$module]['onclick'] = "if(!ctrlPressed) { $onclick }";
+        if($customLabel == "homePage_".$crtWigiiNamespace."_".$module) $other[$module]['title'] = $transS->t($p, $module);
+        else $other[$module]['title'] = $customLabel;
     }
 }
 
 
 if($roleList->getOtherWigiiNamespaces()){
-    $wigiiNamespaceReorder = reorderTabBasedOnKeyPriority($roleList->getOtherWigiiNamespaces(), (string)$config->getParameter($p, null, "prioritizeWigiiNamespaceInHomePage"), true);
+    $wigiiNamespaceReorder = reorderTabBasedOnKeyPriority($roleList->getOtherWigiiNamespaces(), (string)$configS->getParameter($p, null, "prioritizeWigiiNamespaceInHomePage"), true);
     foreach($wigiiNamespaceReorder as $crtWigiiNamespace=>$subMenu){
-        $crtWigiiNamespace=str_replace('%20',' ',$crtWigiiNamespace);
         if($subMenu){
-            $moduleReorder = reorderTabBasedOnKeyPriority($subMenu, (string)$config->getParameter($p, null, "prioritizeModuleInHomePage"), true);
-            if(count($moduleReorder)==1){
-                $roleId = reset($moduleReorder);
-                $module = key($moduleReorder);
-                $menuItem[$crtWigiiNamespace]['title'] = $crtWigiiNamespace;
-                $menuItem[$crtWigiiNamespace]['active'] = ($roleId == $p->getUserId() && $exec->getCrtModule()->getModuleName() == $module) ? true : false;
-                $menuItem[$crtWigiiNamespace]['href'] = '#'. str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;
-                $menuItem[$crtWigiiNamespace]['onclick'] = 'if(!ctrlPressed){ '. $exec->getUpdateJsCode($p->getRealUser(), $roleId, $crtWigiiNamespace, $module, "NoAnswer", "userNavigate", "navigate/user/$roleId/'+crtRoleId+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true). ' }';
-            } else {
-                $menuItem[$crtWigiiNamespace]['title'] = $crtWigiiNamespace;
-                $menuItem[$crtWigiiNamespace]['active'] = ($roleId == $p->getUserId() && $exec->getCrtModule()->getModuleName() == $module) ? true : false;
-                $menuItem[$crtWigiiNamespace]['href' ]= '#'. str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;
-                $menuItem[$crtWigiiNamespace]['onclick'] = 'if(!ctrlPressed){ '. $exec->getUpdateJsCode($p->getRealUser(), $roleId, $crtWigiiNamespace, $module, "NoAnswer", "userNavigate", "navigate/user/$roleId/'+crtRoleId+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true). ' }';
+            $moduleReorder = reorderTabBasedOnKeyPriority($subMenu, (string)$configS->getParameter($p, null, "prioritizeModuleInHomePage"), true);            
+            $roleId = reset($moduleReorder);
+            $module = key($moduleReorder);
+            $customLabel = $transS->t($p, "homePageNamespaceLabel_".$crtWigiiNamespace);
+            if($customLabel == "homePageNamespaceLabel_".$crtWigiiNamespace) $menuItem[$crtWigiiNamespace]['title'] = str_replace('%20',' ',$crtWigiiNamespace);
+            else $menuItem[$crtWigiiNamespace]['title'] = $customLabel;
+            $menuItem[$crtWigiiNamespace]['active'] = ($roleId == $p->getUserId() && $exec->getCrtModule()->getModuleName() == $module) ? true : false;
+            $menuItem[$crtWigiiNamespace]['href'] = '#'. str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;
+            $menuItem[$crtWigiiNamespace]['onclick'] = 'if(!ctrlPressed){ '. $exec->getUpdateJsCode($p->getRealUser(), $roleId, $crtWigiiNamespace, $module, "NoAnswer", "userNavigate", "navigate/user/$roleId/'+crtRoleId+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true). ' }';
+           if(count($moduleReorder)>1){            	
                 foreach($moduleReorder as $module=>$roleId){
-                    if(strpos($module, "[title]")===0) continue;
                     $customLabel = $transS->t($p, "homePage_".$crtWigiiNamespace."_".$module);
                     if($customLabel == "homePage_".$crtWigiiNamespace."_".$module) $menuItem[$crtWigiiNamespace]['subItem'][$customLabel]['title'] = $transS->t($p, $module);
                     else $menuItem[$crtWigiiNamespace]['subItem'][$customLabel]['title'] = $customLabel;
@@ -111,15 +106,29 @@ if($roleList->getOtherWigiiNamespaces()){
     }
 }
 
-if(!isset($configS)) $configS = $this->getConfigurationContext();
+// CWE 24.01.2019: includes remote namespaces declared in Admin_config/Navigation activity into the navigation menu
+$navigationActivity = $configS->ma($p,Module::ADMIN_MODULE,Activity::createInstance('Navigation'));
+if($navigationActivity) {
+	foreach($navigationActivity->children() as $remoteNamespace) {
+		$hostUrl = (string)$remoteNamespace['hostUrl'];
+		if(empty($hostUrl)) continue;
+		if(substr($hostUrl,-1)!='/') $hostUrl.='/';
+		$namespaceUrl = (string)$remoteNamespace['namespaceUrl'];
+		$remoteNamespaceMenu = array();
+		$remoteNamespaceMenu['title'] = $transS->t($p,(!empty($namespaceUrl)?$namespaceUrl:$remoteNamespace->getName()),$remoteNamespace);
+		$remoteNamespaceMenu['active'] = false;
+		$remoteNamespaceMenu['href'] = $hostUrl.(!empty($namespaceUrl)?'#'.str_replace(' ', '%20', $namespaceUrl):'');
+		$remoteNamespaceMenu['onclick'] = 'return true;'; 
+		$menuItem[$remoteNamespace->getName()] = $remoteNamespaceMenu;
+	}	
+}
+
 $companyColor = $configS->getParameter($p, null, "companyColor");
 $rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
 if(!$companyColor) $companyColor = "#3E4552";
 if(!$rCompanyColor) $rCompanyColor = "#fff";
 
-//var_dump($menuItem);
 //Split the username to show only intials
-
 if($p->isRealUserPublic()) {
     $username = $transS->t($p, $realUser->getUsername(), $authS->getPublicUserConfigForPrincipal($p));
 } else{
@@ -131,16 +140,6 @@ if($p->isRealUserPublic()) {
 	foreach($usernameParts as $part) {
 		$username .= strtoupper($part[0]); //take the first letter
 	}
-// 	$un = explode('.', $realUser->getUsername());
-//     if(!$un[1]){
-//         $un = explode('_', $realUser->getUsername());
-//         if(!$un[1]){
-//             $un = explode('-', $realUser->getUsername());
-//         }
-//     }
-//     $fl = strtoupper($un[0][0]);
-//     $ll = strtoupper($un[1][0]);
-//     $username = $fl. $ll;
 }
 ?>
 
@@ -267,8 +266,8 @@ if($p->isRealUserPublic()) {
                     <ul class="dropdown-menu">
                         <?php if($other): ?>
 
-                                    <?php foreach ($other as $item): ?>
-                                        <?php $title2Encode = str_replace(' ', '-', $item['title']) ?>
+                                    <?php foreach ($other as $k=>$item): ?>
+                                        <?php $title2Encode = str_replace(' ', '-', $k) ?>
                                         <li><a href="<?= $item['href'] ?>" id="submenu-<?= $title2Encode ?>" onclick="<?= $item['onclick'] ?>" class="toClick submenu" title="<?= $item['title'] ?>"><?= $item['title'] ?></a></li>
                                     <?php endforeach; ?>
 
@@ -279,17 +278,14 @@ if($p->isRealUserPublic()) {
                                 $onclick = each($v['subItem'])[1]['onclick'];
                             }else{
                                 $onclick = $v['onclick'];
-                            }
-
-                            //Encode the title
-                            $titleEncode = str_replace(' ', '-', $v['title']);
+                            }                           
                             ?>
-                            <li class="<?= ($menuItem[$v['title']]['subItem'])?'dropdown-submenu':'dropwithoutmenu' ?>" title="<?= $titleEncode ?>">
-                                <a tabindex="0" <?= ($menuItem[$v['title']]['subItem'])?'href="#"':'href="'. $v['href'].'" class="toClick"' ?> onclick="<?= ($menuItem[$v['title']]['subItem'])?'':$onclick ?>"><?= $v['title'] ?></a>
-                                <?php if($menuItem[$v['title']]['subItem']): ?>
+                            <li class="<?= ($menuItem[$k]['subItem'])?'dropdown-submenu':'dropwithoutmenu' ?>" title="<?= $v['title'] ?>">
+                                <a tabindex="0" <?= ($menuItem[$k]['subItem'])?'href="#"':'href="'. $v['href'].'" class="toClick"' ?> onclick="<?= ($menuItem[$k]['subItem'])?'':$onclick ?>"><?= $v['title'] ?></a>
+                                <?php if($menuItem[$k]['subItem']): ?>
                                     <ul class="dropdown-menu">
-                                        <?php foreach ($menuItem[$v['title']]['subItem'] as $item): ?>
-                                            <?php $title2Encode = str_replace(' ', '-', $item['title']) ?>
+                                        <?php foreach ($menuItem[$k]['subItem'] as $item): ?>
+                                            <?php $title2Encode = str_replace(' ', '-', $k) ?>
                                             <li><a href="<?= $item['href'] ?>" id="submenu-<?= $title2Encode ?>" onclick="<?= $item['onclick'] ?>" class="toClick submenu" title="<?= $item['title'] ?>"><?= $item['title'] ?></a></li>
                                         <?php endforeach; ?>
                                     </ul>
@@ -298,18 +294,18 @@ if($p->isRealUserPublic()) {
                         <?php endforeach; ?>
                     </ul>
                 </li>
-                <?php endif; ?>
+                <?php endif;?>
                 <li><a class="carret-submenu notHome with-submenu" style="display:none; color: <?= $rCompanyColor ?>;">></a></li>
                 <?php foreach ($menuItem as $k => $v): ?>
                     <?php
                         //Encode the title
-                        $titleEncode = str_replace(' ', '-', $v['title']);
+                        $titleEncode = str_replace(' ', '-', $k);
                         //Create the classname for menu
                         $className = 'submenu-'. $titleEncode;
                     ?>
                     <?php if(!empty($v['subItem'])): ?>
                     <li class="dropdown notHome with-submenu" id="<?= $className ?>" style="display: none">
-                        <a href="#" id="dropdown-subtitle-<?= $className ?>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" style="color: <?= $rCompanyColor ?>;" aria-expanded="false"><?= $label ?> <span class="caret"></span></a>
+                        <a href="#" id="dropdown-subtitle-<?= $className ?>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" style="color: <?= $rCompanyColor ?>;" aria-expanded="false"><?= $v['title'] ?> <span class="caret"></span></a>
                         <ul class="dropdown-menu">
                                 <?php foreach ($v['subItem'] as $item): ?>
                                     <li><a href="<?= $item['href'] ?>" onclick="<?= $item['onclick'] ?>" class="toClickSub 2ndmenu"><?= $item['title'] ?></a></li>
@@ -322,7 +318,7 @@ if($p->isRealUserPublic()) {
                     if($other):
                     ?>
                         <li class="dropdown notHome with-submenu" id="submenu-Other" style="display: none">
-                            <a href="#" id="dropdown-subtitle-<?= $className ?>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: <?= $rCompanyColor ?>;"><?= $label ?> <span class="caret"></span></a>
+                            <a href="#" id="dropdown-subtitle-<?= $className ?>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: <?= $rCompanyColor ?>;"><?= $v['title']?> <span class="caret"></span></a>
                             <ul class="dropdown-menu">
                                 <?php foreach ($other as $item): ?>
                                     <li><a href="<?= $item['href'] ?>" onclick="<?= $item['onclick'] ?>" class="toClickSub 2ndmenu"><?= $item['title'] ?></a></li>
@@ -377,6 +373,6 @@ if($exec->getCrtModule()->isAdminModule()){
     $exec->addJsCode("setNavigationBarInAdminStateBsp();");
 } else {
     //These functions are executed in navigate case (WigiiCoreExecutor)
-    //$exec->addJsCode("setNavigationBarNotInHomeStateBsp(".$config->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");");
+    //$exec->addJsCode("setNavigationBarNotInHomeStateBsp(".$configS->getParameter($p, $exec->getCrtModule(), "FeedbackOnSystem_enable").");");
 }
 ?>
