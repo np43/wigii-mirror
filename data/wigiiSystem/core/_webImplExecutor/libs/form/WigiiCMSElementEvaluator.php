@@ -411,6 +411,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 					$fileName = $parsedUrl;
 				}
 				$ext = strrpos($fileName,'.');
+				
 				// file identified
 				if($ext!==false) {
 					$fileExt = substr($fileName,$ext);
@@ -429,7 +430,6 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 					}
 					// else keeps complete folder path
 					else $folderPath .= $fileName.'/';
-					
 					$returnValue = $this->evaluateFuncExp(fx('cms_getContent',array($folderPath,$params)),$this);
 				}
 			}
@@ -567,6 +567,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$principal = $this->getPrincipal();
 		$this->executionSink()->publishStartOperation("cms_getContent", $principal);
 		try {
+			$transS = ServiceProvider::getTranslationService();
+			
 			// extracts parameters
 			if($nArgs<1) throw new FuncExpEvalException('cms_getContent takes at least one argument which is the logical URL of the content', FuncExpEvalException::INVALID_ARGUMENT);
 			$url = $this->evaluateArg($args[0]);
@@ -601,20 +603,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			if(!isset($siteMap)) throw new FuncExpEvalException("No content found at $url", FuncExpEvalException::NOT_FOUND);
 			
 			// gets languages
-			$transS = ServiceProvider::getTranslationService();
-			$languages = $siteMap->getFieldValue('supportedLanguage');
-			if(empty($languages)) $languages = $transS->getVisibleLanguage();
-			elseif(is_array($languages)) $languages = array_intersect_key($transS->getVisibleLanguage(), $languages);
-			else $languages = array($languages=>$languages);
-			$options->setValue('languages',$languages);
-			
-			// gets default language
-			$language = $options->getValue('language');
-			if(!isset($language)) {
-				$language = $siteMap->getFieldValue('defaultLanguage');
-				if(!isset($language)) $language='l01';
-				$options->setValue('language',$language);
-			}
+			$this->cms_initializeLanguageOptions($options, $siteMap);
 			
 			// gets page title and intro
 			$intro = $this->cms_getIntro($options);
@@ -779,7 +768,41 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 				return ' ';/* returns a non null HTML code string */
 			}
 		}
-	}	
+	}
+	
+	/**
+	 * Initializes the bag of options with the language found in the site map element or from url parameter
+	 * @param WigiiBPLParameter $options the bag of options for the current page
+	 * @param Element $siteMap the site map element
+	 * @return WigiiBPLParameter the updated bag of options
+	 */
+	protected function cms_initializeLanguageOptions($options,$siteMap) {
+		$transS = ServiceProvider::getTranslationService();
+		$languages = $siteMap->getFieldValue('supportedLanguage');
+		if(empty($languages)) $languages = $transS->getVisibleLanguage();
+		elseif(is_array($languages)) $languages = array_intersect_key($transS->getVisibleLanguage(), $languages);
+		else $languages = array($languages=>$languages);
+		$options->setValue('languages',$languages);
+		
+		//lookup on url parameter if language is setup
+		if($_GET["language"]){
+			if($languages[$_GET["language"]]){
+				$options->setValue('language',$_GET["language"]);
+			}
+		}
+		
+		// gets default language
+		$language = $options->getValue('language');
+		if(!isset($language)) {
+			$language = $siteMap->getFieldValue('defaultLanguage');
+			if(!isset($language)) $language='l01';
+			$options->setValue('language',$language);
+		}
+		return $options;
+	}
+	
+	
+	
 	/**
 	 * Initializes the bag of options with some key/value pairs found into the intro and site map elements
 	 * @param WigiiBPLParameter $options the bag of options for the current page
@@ -1501,6 +1524,27 @@ HTMLCSS;
 					else readfile($path);
 				}
 				else throw new FuncExpEvalException("No file found at $url", FuncExpEvalException::NOT_FOUND);
+			}
+			//if .article then fetch the html content of a published article containing the filename in it title 
+			elseif($fileExt == ".article"){
+				$options->setValue('groupId',$groupId);
+				// gets site map
+				$siteMap = $this->cms_getSiteMap($options);
+				if(!isset($siteMap)) throw new FuncExpEvalException("No content found at $url", FuncExpEvalException::NOT_FOUND);
+				// gets languages
+				$this->cms_initializeLanguageOptions($options, $siteMap);
+				
+				$language = $options->getValue('language');
+				$article = sel($principal,elementPList(lxInG(lxEq(fs('id'),$groupId)),
+						lf(fsl(fs('contentHTML')),
+								lxAnd(lxLike(fs('contentTitle', 'value'),"%".$fileName."%"),lxEq(fs('contentType'),'content'),lxIn(fs('status'),['published','testing'])),
+								null,1,1)),
+						dfasl(dfas("NullDFA")));
+				if($article){
+					header("Content-Type: text/html; charset=UTF-8");	
+					header('Cache-Control: private, max-age=0, no-cache');
+					echo $this->cms_getArticleHtmlContent($article->getDbEntity(), $options);
+				} else return null;
 			}
 			// if sitemap.fx then returns the list of accessible URLs
 			elseif($fileName == 'sitemap' && $fileExt == '.fx') {
