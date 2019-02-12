@@ -229,7 +229,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$xml = $this->createXmlElement($returnValue, 'prolog', $options);
 		$xml = $this->createXmlElement($xml, 'generator', $options);
 		$xml->setAttribute('name', 'WigiiMedidataFL');
-		$xml->setAttribute('copyright', 'Wigii.org 2018');
+		$xml->setAttribute('copyright', 'Wigii.org 2019');
 		$xml->setAttribute('version', '450');
 		// remark
 		$remark = substr(trim($this->evaluateFuncExp(fx('html2text',$customerOrder->getFieldValue('annexInfo')))),0,350);
@@ -360,25 +360,30 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 */
 	protected function createInvoice45Balance($invoiceTiersType,$customerOrder,$options) {
 		$legalEntity = $options->getValue('legalEntity');
-		$returnValue = $this->createXmlElement($invoiceTiersType, 'balance', $options);
-		$returnValue->setAttribute('currency', 'CHF');
-		$returnValue->setAttribute('amount', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
-		$returnValue->setAttribute('amount_due', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
-		$returnValue->setAttribute('amount_obligations', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
+		$returnValue = $this->createXmlElement($invoiceTiersType, 'balance', $options);		
 		// vat
 		$vat = $this->createXmlElement($returnValue, 'vat', $options);
 		$vat->setAttribute('vat_number', $this->assertNoSepNotNull($legalEntity, 'IDE'));
 		$vat->setAttribute('vat', $this->assertNumericNotNull($customerOrder, 'vatAmount'));
-		// vat 7.7
-		$xml = $this->appendXmlElement($vat, 'vat_rate', $options);
-		$xml->setAttribute('vat_rate', $this->assertNumericNotNull($legalEntity, 'VATvalue'));
-		$xml->setAttribute('amount', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
-		$xml->setAttribute('vat', $this->assertNumericNotNull($customerOrder, 'vatAmount'));
-		// vat 0
-		$xml = $this->appendXmlElement($vat, 'vat_rate', $options);
-		$xml->setAttribute('vat_rate', 0);
-		$xml->setAttribute('amount', 'XXXXcustomerOrder.vatAmount0');
-		$xml->setAttribute('vat', 0);		
+		// vat summary
+		$vatSummary = $this->assertNotNull($customerOrder, 'vatSummary');
+		$vatSummary = json_decode(stripslashes($vatSummary));
+		if(!$vatSummary) throw new WigiiMedidataException('vatSummary is not valid json. '.json_last_error_msg(),WigiiMedidataException::XML_VALIDATION_ERROR);
+		// creates vat entries per rate
+		$ttcAmount = 0.0;
+		foreach($vatSummary as $vatValue=>$vatObj) {
+			$xml = $this->appendXmlElement($vat, 'vat_rate', $options);
+			$xml->setAttribute('vat_rate', $vatValue);
+			$orderTTCAmount = $this->assertNumericNotNull($vatObj, 'orderTTCAmount');
+			$ttcAmount += $orderTTCAmount;
+			$xml->setAttribute('amount', $orderTTCAmount);
+			$xml->setAttribute('vat', $this->assertNumericNotNull($vatObj, 'vatAmount'));
+		}		
+		// sets balance attributes
+		$returnValue->setAttribute('currency', 'CHF');
+		$returnValue->setAttribute('amount', number_format($ttcAmount, 2, '.', ''));
+		$returnValue->setAttribute('amount_due', $this->assertNumericNotNull($customerOrder, 'dueAmount'));
+		$returnValue->setAttribute('amount_obligations', number_format($ttcAmount, 2, '.', ''));
 		return $returnValue;
 	}
 	
@@ -505,16 +510,18 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 				$service->setAttribute('code',$tariffNumber);				
 				$service->setAttribute('name',trim($designation));
 				$service->setAttribute('session','1');
-				$service->setAttribute('quantity',$this->assertNumericNotNull($catalogOrder, 'quantity'));
+				$quantity = $this->assertNumericNotNull($catalogOrder, 'quantity');
+				$service->setAttribute('quantity',$quantity);
 				$service->setAttribute('date_begin',$this->assertDateNotNull($catalogOrder, 'orderDate'));
 				$service->setAttribute('provider_id',$this->assertNoSepNotNull($legalEntity,'noGLN'));
 				$glnPrincipal = $this->assertNoSep($legalEntity,'noGLNResponsible');
 				if(empty($glnPrincipal)) $glnPrincipal = $this->assertNoSepNotNull($legalEntity,'noGLN');
 				$service->setAttribute('responsible_id',$glnPrincipal);
-				$service->setAttribute('unit',$this->assertNumericNotNull($catalogOrder, 'price'));
+				$amount = $this->assertNumericNotNull($catalogOrder, 'orderTTCTotal');
+				$service->setAttribute('unit',($quantity!=0?$amount/$quantity:$amount));
 				$service->setAttribute('unit_factor','1');
-				$service->setAttribute('amount',$this->assertNumericNotNull($catalogOrder, 'orderTotal'));
-				$service->setAttribute('vat_rate','7.7');
+				$service->setAttribute('amount',$amount);
+				$service->setAttribute('vat_rate',$this->assertNumeric($catalogOrder, 'vatValue'));
 				$service->setAttribute('obligation','1');				
 				if(!empty($remark)) $service->setAttribute('remark',$remark);
 				$service->setAttribute('service_attributes','0');
@@ -742,19 +749,21 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	protected function assertDateNotNull($element,$fieldName) {return $this->assertDate($element, $fieldName,false);}
 	/**
 	 * Asserts that a field value is a number and returns it
-	 * @param Element $element element from which to get the field value
+	 * @param Element|Scalar $element element from which to get the field value or scalar value to be tested directly
 	 * @param String $fieldName the field name
 	 * @param Boolean $allowNull optional flag allowing null numbers or not. Default to true.
 	 * @return Scalar element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertNumeric($element,$fieldName,$allowNull=true) {
-		$returnValue = $element->getFieldValue($fieldName);
+		if($element instanceof Record) $returnValue = $element->getFieldValue($fieldName);
+		elseif(is_object($element)) $returnValue = $element->{$fieldName}; 
+		else $returnValue = $element;
 		if(!is_numeric($returnValue)) {
 			if(!(empty($returnValue) && $allowNull)) throw new WigiiMedidataException("Field '$fieldName' is not a valid number",WigiiMedidataException::XML_VALIDATION_ERROR);
 		}		
 		return $returnValue;
-	}
+	}	
 	/**
 	 * Asserts that a field value is a non null number and returns it
 	 * @param Element $element element from which to get the field value
@@ -763,7 +772,6 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertNumericNotNull($element,$fieldName) {return $this->assertNumeric($element, $fieldName,false);}
-	
 	private $cantonCodeMapping = array(
 			'vaud'=>'VD',
 			'valais'=>'VS',

@@ -934,7 +934,9 @@ class RecordEvaluator implements FuncExpEvaluator
 	 */
 	public function minus($args) {
 		if($this->getNumberOfArgs($args)>0) {
-			return -($this->evaluateArg($args[0]));
+			$val = $this->evaluateArg($args[0]);
+			if(empty($val)) return 0;
+			else return -($val);
 		}
 		else return 0;
 	}
