@@ -117,7 +117,10 @@ class WigiiWebCMSFormExecutor extends WebServiceFormExecutor {
 		}
 		catch(Exception $e) {
 			if(isset($fxEval) && method_exists($fxEval, 'freeMemory')) $fxEval->freeMemory();
-			header($_SERVER["SERVER_PROTOCOL"]." 500 Internal Error"); 
+			// CWE 13.02.2019: forwards to client http code if in 400 range
+			if(400 < $e->getCode() && $e->getCode() < 500) header($_SERVER["SERVER_PROTOCOL"]." ".$e->getCode());
+			// else wraps it into a 500 error.
+			else header($_SERVER["SERVER_PROTOCOL"]." 500 Internal Error");
 			header("Access-Control-Allow-Origin: *");
 			header("Content-Type: text/xml; charset=UTF-8");			
 			echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e));
