@@ -117,13 +117,35 @@ class WigiiWebCMSFormExecutor extends WebServiceFormExecutor {
 		}
 		catch(Exception $e) {
 			if(isset($fxEval) && method_exists($fxEval, 'freeMemory')) $fxEval->freeMemory();
-			// CWE 13.02.2019: forwards to client http code if in 400 range
+			// CWE 13.02.2019 forwards to client http code if in 400 range
 			if(400 < $e->getCode() && $e->getCode() < 500) header($_SERVER["SERVER_PROTOCOL"]." ".$e->getCode());
 			// else wraps it into a 500 error.
 			else header($_SERVER["SERVER_PROTOCOL"]." 500 Internal Error");
-			header("Access-Control-Allow-Origin: *");
-			header("Content-Type: text/xml; charset=UTF-8");			
-			echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e));
+			// CWE 14.02.2019 if 404 page not found and config parameter publicUrl is defined, then redirects client to publicUrl.
+			$publicUrl = null;
+			if($e->getCode() == 404) $publicUrl = $this->getConfigService()->getParameter($p, $exec->getCrtModule(), 'publicUrl');
+			if(!empty($publicUrl)) {
+				header("Access-Control-Allow-Origin: *");
+				header("Content-Type: text/html; charset=UTF-8");
+				?><!DOCTYPE html>
+<HTML>
+<HEAD>
+<script type="text/javascript">
+self.location = "<?=$publicUrl?>";
+</script>
+</HEAD>
+<BODY>
+<h1>Page not found</h1>
+<p>Please go to <a href="<?=$publicUrl?>"><?=$publicUrl?></a></p>
+</BODY>
+</HTML><?
+			}
+			// else displays exception as xml
+			else {
+				header("Access-Control-Allow-Origin: *");
+				header("Content-Type: text/xml; charset=UTF-8");			
+				echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e));
+			}
 			// signals fatal error to monitoring system
 			ServiceProvider::getClientAdminService()->signalFatalError($e);
 		}		

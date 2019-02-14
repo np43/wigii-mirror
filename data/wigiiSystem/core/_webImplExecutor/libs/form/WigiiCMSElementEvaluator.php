@@ -33,6 +33,7 @@
  * Updated by Weber wwigii-system.net for Wigii.org on 22.01.2018 to support NCD based articles.
  * Updated by Wigii.org (Camille Weber) on 05.03.2018 to move it to standard Wigii distribution
  * Updated by Wigii.org (Lionel Weber) on 12.12.2018 to support HTMLCode based articles
+ * Updated by Wigii.org (Camille Weber) on 14.02.2019 to include on demand a Google site verification code in html header
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -633,7 +634,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			echo $this->cms_composeHeader($options,$css,$logo,$menu,$intro)."\n";
 			
 			$contentFsl = fsl(fs('contentType'),fs('contentTitle'),fs('contentHTML'),fs('contentNCD'));
-			//check if config manage contentHTMLCode, if not ignore
+			//checks if config manages contentHTMLCode, if not ignores
 			if($this->getFieldXml("contentHTMLCode")){
 				$contentFsl->addFieldSelectorInstance(fs('contentHTMLCode'));
 			}
@@ -818,6 +819,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$this->mapField2Option('metaDescription',$intro,$options);
 			$this->mapField2Option('metaKeywords',$intro,$options);
 			$this->mapField2Option('metaAuthor',$intro,$options);
+			$this->mapField2Option('googleSiteVerifCode',$intro,$options);
 			$this->mapField2Option('introBgColor',$intro,$options);
 			$this->mapField2Option('introBgAlpha',$intro,$options);
 			$this->mapField2Option(fs('imgIntroBG','url'),$intro,$options);			
@@ -1105,8 +1107,13 @@ JSPUBLICCOMMENTS;
 	 * @return Element found element with fields siteTitle and contentIntro filled or null if not found
 	 */
 	protected function cms_getIntro($options) {
+		// base intro fsl
+		$fslForFetch = fsl(fs('siteTitle'),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG','url'));
+		// appends some additional fields
+		if($this->getFieldXml('googleSiteVerifCode')) $fslForFetch->addFieldSelectorInstance(fs('googleSiteVerifCode'));
+		
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
-				lf(fsl(fs('siteTitle'),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG','url')),
+				lf($fslForFetch,
 						lxAnd(lxEq(fs('contentType'),'intro'),lxIn(fs('status'),['published','testing'])),
 						null,1,1)),
 				dfasl(dfas("NullDFA")));
@@ -1219,7 +1226,9 @@ JSPUBLICCOMMENTS;
 		if(isset($metaKeywords)) $metaKeywords = '<meta name="keywords" content="'.str_replace('"','',$metaKeywords).'"/>'."\n";
 		$metaAuthor = $options->getValue('metaAuthor');
 		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";		
-		$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
+		$googleSiteVerifCode= $options->getValue('googleSiteVerifCode');
+		if(!empty($googleSiteVerifCode)) $googleSiteVerifCode= '<meta name="google-site-verification" content="'.$googleSiteVerifCode.'"/>'."\n";
+		$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii-core.js"></script>';
 		$wigiiJS .= "<script type='text/javascript' >
 SITE_ROOT = '".SITE_ROOT."';
 CLIENT_NAME = '".CLIENT_NAME."';
@@ -1229,7 +1238,7 @@ EXEC_requestSeparator = '".ExecutionServiceImpl::requestSeparator."';
 EXEC_foundInJSCache = '".ExecutionServiceImpl::answerFoundInJSCache."';
 wigii().initContext();
 </script>";
-		//$wigiiCSS = '<link rel="stylesheet" href="'.SITE_ROOT_forFileUrl.'/assets/css/wigii_'.ASSET_REVISION_NUMBER.'.css" type="text/css" media="all" />';
+		//$wigiiCSS = '<link rel="stylesheet" href="https://resource.wigii.org/assets/css/wigii-core.css" type="text/css" media="all" />';
 		$wigiiCSS = '';/* not compatible yet with CMS */
 		$returnValue = <<<HTMLHEAD
 <!DOCTYPE html>
@@ -1260,7 +1269,7 @@ wigii().initContext();
 <head>
 <base href="$url" />
 $title
-$metaDescription $metaKeywords $metaAuthor
+$metaDescription $metaKeywords $metaAuthor $googleSiteVerifCode
 <meta name="generator" content="Wigii-system   http://www.wigii-system.net" />
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1715,7 +1724,10 @@ HTMLCSS;
 			case "ncd": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs("contentTitle"),fs("contentNCD"),fs('articleBgColor'),fs('articleBgAlpha'),fs('imgArticleBG'),fs('imgArticleBG','url')); break;
 			case "htmlCode": $returnValue = fsl(fs("choosePosition"),fs("contentPosition"),fs("contentNextId"),fs('contentType'),fs('contentTitle'),fs('contentHTMLCode')); break;
 			case "siteMap": $returnValue = fsl(fs("siteUrl"),fs("folderId"),fs("forceHeight"),fs("forceHeightFirst"),fs('marginWidth'),fs('logoTextColor'),fs('logoTextSize'),fs('menuBgColor'),fs('menuTextColor'),fs('menuTextHoverColor'),fs('titleTextColor'),fs('titleTextSize'),fs('publicCommentsBgColor'),fs('publicCommentsTextColor'),fs('footerBgColor'),fs('footerTextColor'),fs('linkTextColor'),fs('evenArticleBgColor'),fs('oddArticleBgColor'),fs("siteMap"),fs("supportedLanguage"),fs("defaultLanguage")); break;
-			case "intro": $returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); break;
+			case "intro": 
+				$returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); 
+				if($this->getFieldXml('googleSiteVerifCode')) $returnValue->addFieldSelectorInstance(fs('googleSiteVerifCode'));
+				break;
 			case "logo": $returnValue = fsl(fs("contentLogo")); break;
 			case "menu": $returnValue = fsl(fs("contentMenu")); break;
 			case "image": $returnValue = fsl(fs("contentImage"),fs("storeInWebClientFolder"),fs("fileUrl")); break;
@@ -1768,7 +1780,9 @@ HTMLCSS;
 		else $subFieldName = null;
 		
 		if(!isset($optionName)) $optionName = $fieldName;
-		$value = $element->getFieldValue($fieldName,$subFieldName);
+		// CWE 14.02.2019 if fieldName doesn't exist in the list, takes default value
+		if($element->getFieldList()->doesFieldExist($fieldName)) $value = $element->getFieldValue($fieldName,$subFieldName);
+		else $value = null;
 		// if value is null, then puts default value
 		if(!isset($value)) $options->setValue($optionName, $defaultValue);
 		// if value is array and field type is Varchars or Texts then gets the right language

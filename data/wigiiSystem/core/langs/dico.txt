@@ -1616,7 +1616,6 @@ pleaseSelectAtLeastOneGroup:Please select at least one #group#.:Veuillez sélect
 addJournalItem:<font style="font-size\:14px;font-weight\:bold;">+</font> <u>add...</u>:<font style="font-size\:14px;font-weight\:bold;">+</font> <u>ajouter...</u>::::::
 addJournalItemPostBackMessage:Bellow is your message, please copy it and try later:Ci-dessous est votre message. Veuillez le copier et essayer utlérieurement:
 externalAccessUsernameForJournal:external access:accès externe::::
-cmsPublicComments:Last comments:Derniers commentaires:::::::
 
 keepNotifiedButton:My notifications:Mes notifications:::::::
 keepNotifiedTitle:Keep notified:Restez notifié:::::::
@@ -1763,6 +1762,8 @@ boxFileOpen:Click <u>here</u> to open in Box using your account:Cliquez <u>ici</
 cmsAnchorTop:top:haut:::::::::
 cmsNoTitleAvailable:No title available in :Pas de titre traduit en :::::::::
 cmsNoContentAvailable:No content available in :Pas de contenu traduit en :::::::::
+cmsPublicComments:Last comments:Derniers commentaires:::::::
+cmsGoogleSiteVerifCodeHelp:Enter here the code given by Google in the Search Console to enable web site ownership verification and force regular re-indexation of web content.:Introduire ici le code donné dans la Search Console Google pour permettre la vérification de la propriété du site et forcer la ré-indexation régulière du contenu du site web.:::::::
 CMS:Web Content:Contenu Web:::::::::
 #anElementCMS#:a web content:un contenu web:::::::::
 #elementCMS#:web content:le contenu web:::::::::
