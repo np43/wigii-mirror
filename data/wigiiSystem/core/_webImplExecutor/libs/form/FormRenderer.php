@@ -476,10 +476,10 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 										$textAreaId = $this->getFormId()."_".$fieldName."_value_textarea";
 										//readonly is added in Blobs_displayForm on the textarea field.
 										if($fieldXml["protectExistingEntries"]=="1"){
-											$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
+											$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".($transS->getLanguage()=="l02" ? "fr" : "en")."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
 											$rm->put('&nbsp;&nbsp;&nbsp; (<span class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
 										} else {
-											$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".$transS->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
+											$rm->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '', '$fieldName', '".$this->getFormId()."__".$fieldName."', '".($transS->getLanguage()=="l02" ? "fr" : "en")."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$rm->getNewJournalItemString($p, $fieldXml["htmlArea"]==1, true)."', '".$rm->t("ok")."', '".$rm->t("cancel")."', '', '".$rm->getNewJournalContentStringCode()."');");
 											if($fieldXml["htmlArea"]=="1"){ //if htmlArea then make the editor editable
 												$rm->put('&nbsp;&nbsp;&nbsp; (<span onclick="CKEDITOR.instances[\''.$textAreaId.'\'].setReadOnly(false);" class="H addJournalItem">'.$rm->t("addJournalItem").'</span>)');
 											} else { //if none htmlArea enable the textarea after

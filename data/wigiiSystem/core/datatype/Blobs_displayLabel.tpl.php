@@ -55,7 +55,7 @@ if($fieldXml["isJournal"]=="1" && !$this->isForNotification() && !$this->isForPr
 		} else {
 			$actionUrl = "confirmationDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/addJournalItem/".$this->getRecord()->getId()."";
 		}
-		$this->getExecutionService()->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '".$this->getRecord()->getId()."', '$fieldName', '$fieldId', '".$this->getTranslationService()->getLanguage()."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$this->getNewJournalItemString($this->getP(), $fieldXml["htmlArea"]==1, true)."', '".$this->t("ok")."', '".$this->t("cancel")."', '".$actionUrl."', '".$this->getNewJournalContentStringCode()."');");
+		$this->getExecutionService()->addJsCode("setListenerToAddJournalItem('".$exec->getIdAnswer()."', '".$this->getRecord()->getId()."', '$fieldName', '$fieldId', '".($this->getTranslationService()->getLanguage()=="l02" ? "fr" : "en")."', ".($fieldXml["htmlArea"]==1 ? "true" : "false" ).", '".$this->getNewJournalItemString($this->getP(), $fieldXml["htmlArea"]==1, true)."', '".$this->t("ok")."', '".$this->t("cancel")."', '".$actionUrl."', '".$this->getNewJournalContentStringCode()."');");
 		$this->put('&nbsp;&nbsp;&nbsp; (<span class="H addJournalItem">'.$this->t("addJournalItem").'</span>)');
 	}
 }

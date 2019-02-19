@@ -2102,7 +2102,7 @@ class TemplateRecordManager extends Model {
 
 									//all the other need of translation and html email content is callback to the server on the click of the menu
 									//cf: getExternalAccessMenuContent
-									$this->getExecutionService()->addJsCode("setListenerToEmailExternalCode('".$this->getExecutionService()->getIdAnswer()."', '$emailManageButtonId','$proofKey','$proofStatus','$externalCode','$externalAccessEndDate','$options','".$this->getTranslationService()->getLanguage()."','".$this->getRecord()->getId()."','".$fieldName."','".$email."');");
+									$this->getExecutionService()->addJsCode("setListenerToEmailExternalCode('".$this->getExecutionService()->getIdAnswer()."', '$emailManageButtonId','$proofKey','$proofStatus','$externalCode','$externalAccessEndDate','$options','".($this->getTranslationService()->getLanguage()=="l02" ? "fr" : "en")."','".$this->getRecord()->getId()."','".$fieldName."','".$email."');");
 								}
 								return $image;
 							} else {
