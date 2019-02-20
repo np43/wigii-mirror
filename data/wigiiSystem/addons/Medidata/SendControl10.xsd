@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<xs:schema xmlns="http://www.medidata.ch/mpc/XSD" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.medidata.ch/mpc/XSD" elementFormDefault="qualified">
+	<xs:complexType name="DocumentType">
+		<xs:attribute name="SenderDocId" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:string"/>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="FileName" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:pattern value=".{1,256}[.][x][m][l]"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="DocAttr" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:NMTOKEN">
+					<xs:enumeration value="Tiers_Payant"/>
+					<xs:enumeration value="Tiers_Garant_Manuell"/>
+					<xs:enumeration value="Tiers_Garant_Direct"/>
+					<xs:enumeration value="direct"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="DocPrinted" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:boolean">
+					<xs:pattern value="true|false"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="DistType" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:int">
+					<xs:minInclusive value="0"/>
+					<xs:maxInclusive value="18"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="Subject" type="xs:string" use="optional" default="XmlDocument"/>
+		<xs:attribute name="DocSize" type="xs:long" use="required"/>
+		<xs:attribute name="PrintLanguage" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="D"/>
+					<xs:enumeration value="F"/>
+					<xs:enumeration value="I"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="TrustCenterEAN" use="optional">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:pattern value="\d{13}"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="IsPaperInvoice" use="optional">
+			<xs:simpleType>
+				<xs:restriction base="xs:boolean">
+					<xs:pattern value="true|false"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="SchemaID" type="xs:string" use="optional"/>
+	</xs:complexType>
+	<xs:element name="DocumentsToSend">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Document" type="DocumentType" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

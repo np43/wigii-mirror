@@ -117,7 +117,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue = $this->getXmlDoc($options);		
 		$this->createInvoice45Request($returnValue, $customerOrder, $options);
 		// validates generated xml
-		//$this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+		$this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
 		// returns as SimpleXmlElement
 		$returnValue = simplexml_import_dom($returnValue);
 		$this->debugLogger()->logEndOperation('genMedidataInvoiceRequest45');
@@ -159,8 +159,9 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$this->declareXmlNamespace($returnValue, 'xenc', 'http://www.w3.org/2001/04/xmlenc#');
 		$this->declareXmlNamespace($returnValue, 'ds', 'http://www.w3.org/2000/09/xmldsig#');
 		// invoice request attributes
-		$returnValue->setAttribute('language','fr');
-		$returnValue->setAttribute('modus','production');
+		$returnValue->setAttribute('language','fr');		
+		/* CWE 2019.02.19: not yet authorized to be put into production */$returnValue->setAttribute('modus','test');
+		//$returnValue->setAttribute('modus','production');
 		$returnValue->setAttribute('validation_status','0');
 		// invoice processing
 		$this->createInvoice45Processing($returnValue, $customerOrder, $options);
@@ -399,7 +400,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue = $this->createXmlElement($invoiceBody, 'esrQR', $options);
 		$returnValue->setAttribute('type', 'esrQR');
 		$returnValue->setAttribute('iban', $this->assertNoSepNotNull($legalEntity, 'IBAN'));
-		$returnValue->setAttribute('reference_number', $this->assertNotNull($customerOrder,'customerOrderNumber'));
+		$returnValue->setAttribute('reference_number', $this->evaluateFuncExp(fx('txtFormatSwissBvr',$this->assertNotNull($customerOrder,'customerOrderNumber'),false)));
 		// bank
 		$xml = $this->createXmlElement($returnValue, 'bank', $options);
 		$xml = $this->createXmlElement($xml, 'company', $options);

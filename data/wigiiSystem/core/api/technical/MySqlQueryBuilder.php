@@ -286,12 +286,13 @@ class MySqlQueryBuilder
 	}
 	private function implodeValues($values, $sqlType)
 	{
-		if(is_null($values) || (!is_array($values)&&!is_string($values)) || (($n = count($values))==0)) throw new MySqlFacadeException('values must be a no null array', MySqlFacadeException::INVALID_ARGUMENT);
+		if(empty($values) || !(is_array($values) || is_string($values))) throw new MySqlFacadeException('values must be a no null array', MySqlFacadeException::INVALID_ARGUMENT);
 		$i = 1;
 		$returnValues = '(';
 		if(is_string($values)){
 			$returnValues .= $values;
 		} else {
+		    $n = count($values);
 			foreach($values as $v)
 			{
 				$returnValues .= $this->formatValue($v, $sqlType);

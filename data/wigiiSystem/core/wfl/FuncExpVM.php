@@ -432,7 +432,7 @@ class FuncExpVM implements FuncExpEvaluator {
 			}
 			$i--;
 		} 
-		if(!found && $exceptionIfNotFound) throw new FuncExpEvalException("$key was not found", FuncExpEvalException::SYMBOL_NOT_FOUND);
+		if(!$found && $exceptionIfNotFound) throw new FuncExpEvalException("$key was not found", FuncExpEvalException::SYMBOL_NOT_FOUND);
 		return $returnValue;
 	}
 }

@@ -186,7 +186,7 @@ function isImage($mimeType){
 	}
 }
 
-include_once(IMPL_PATH . "libs/bmp.php");
+if(!function_exists('imagebmp')) include_once(IMPL_PATH . "libs/bmp.php");
 
 function cutImage($srcfile, $dstfile, $dstW=null, $dstH=null) {
 

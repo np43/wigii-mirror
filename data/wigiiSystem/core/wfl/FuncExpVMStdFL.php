@@ -2584,7 +2584,36 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    if($str!='' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid big positive integer number.", FuncExpEvalException::ASSERTION_FAILED);
 	    return $returnValue;
 	}
-	
+	/**
+	 * Formats a given number to be compatible with Swiss BVR and adds an ending control digit on the right side.
+	 * FuncExp signature : <code>txtFormatSwissBvr(refNumber,groupDigits)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) refNumber : String|Int. The BVR reference number without the ending control digit, as a string or an integer.
+	 * - Arg(1) groupDigits : Boolean. Optional, if true, then the reference number digits are grouped by 5 following the pattern 00 00000 00000 00000 00000 00000. 
+	 * By default grouping is not active and digits are concatenated without spaces, with missing leading zeros up to a length of 27 characters.
+	 * @return String the Swiss BVR referecenc number of 27 positions, with leading zeros and ending control digit.
+	 */
+	public function txtFormatSwissBvr($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatSwissBvr takes one argument which is the reference number to be converted to Swiss BVR format', FuncExpEvalException::INVALID_ARGUMENT);
+	    $refNumber = $this->evaluateFuncExp(fx('txtAcceptBigPosInt',$args[0],true,26));	    
+	    if($nArgs>1) $groupDigits = $this->evaluateArg($args[1]);
+	    else $groupDigits = false;
+	    // pads refNumber if leading 0 until 26 digits
+	    $refNumber = str_pad($refNumber,26,'0',STR_PAD_LEFT);
+	    // computes control digit according to Swiss BVR Modulo 10 algorithm
+	    $table = array(0, 9, 4, 6, 8, 2, 7, 1, 3, 5);
+	    $carry = 0;
+	    foreach(str_split($refNumber) as $d) {
+	        $carry = $table[($carry + intval($d)) % 10];
+	    }
+	    $carry = (10 - $carry) % 10;
+	    // appends control digit at the end of refNumber
+	    $refNumber .= $carry;
+	    // group digits by 5 following the pattern 00 00000 00000 00000 00000 00000
+	    if($groupDigits) $refNumber = substr($refNumber,0,2).' '.implode(' ',str_split(substr($refNumber,2),5));
+	    return $refNumber;
+	}	
 	/**
 	 * Creates an html open tag
 	 * FuncExp signature : <code>htmlStartTag(tagName,key1,value1,key2,value2,...)</code><br/>

@@ -80,4 +80,11 @@ class ExampleCliExecutor extends CliExecutor {
 	protected function md5($argc, $argv, $subArgIndex) {		
 		$this->executionSink()->log(md5($argv[$subArgIndex]));
 	}
+	
+	/**
+	 * Executes an FuncExp given its expression as a string
+	 */
+	protected function fx($argc, $argv, $subArgIndex) {
+	    $this->executionSink()->log(evalfx($this->getCurrentPrincipal(), $argv[$subArgIndex]));
+	}
 }
