@@ -1148,13 +1148,6 @@ class TemplateRecordManager extends Model {
 	//because we need to do the htmlArea after the show is done.
 	//the same for focus, and textareaElastic
 	public function addJsCodeAfterFormIsShown($formId){
-		//do the mapping from the translation service to the ckeditor
-		switch($this->getTranslationService()->getLanguage()){
-			case "l02" : $lang = "fr"; $scayt_lang = "fr_FR"; break;
-			case "l01" :
-			default:
-				$lang = "en"; $scayt_lang = "en_GB"; 
-		}
 		//enterMode : CKEDITOR.ENTER_P or ENTER_BR or ENTER_DIV
 		$ckTemplateFile = null;
 		$exec = $this->getExecutionService();
@@ -1181,7 +1174,7 @@ class TemplateRecordManager extends Model {
 		} else {
 			$ckTemplateFile = CLIENT_WEB_PATH.$ckTemplateFile;
 		}
-		$this->getExecutionService()->addJsCode("addJsCodeAfterFormIsShown('#$formId', '$lang', '$scayt_lang', '$templateFilter', '$ckTemplateFile');");
+		$this->getExecutionService()->addJsCode("addJsCodeAfterFormIsShown('#$formId', '".($this->getTranslationService()->getLanguage()=="l02" ? "fr" : "en")."', '$templateFilter', '$ckTemplateFile');");
 	}
 
 	/**

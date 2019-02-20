@@ -56,6 +56,14 @@ function getFullCKEditorToolbar(){
 		];
 }
 
+function getScayt_sLangFromLanguage(lang){
+	switch(lang){
+		case "en": return "en_GB";
+		case "fr": return "fr_FR";
+		default : return "en_GB";
+	}
+}
+
 function boxChooseFile(inputBoxFileId, inputFileId, inputNameId, inputPathId, SITE_ROOT_forFileUrl){
 	$(inputBoxFileId).click(function(){
 		// Clears all previous callbacks
@@ -337,6 +345,7 @@ function addJsCodeOnOnLineFileInput(textContentId, inputNameId, template, cancel
 		tempZIndex = $('#elementPreview').parent().css('zIndex')+1;
 		$('#elementPreview').find('textarea:first').ckeditor({
 			language : lang,
+			scayt_sLang : getScayt_sLangFromLanguage(lang),
 			templates : crtWigiiNamespaceUrl+",default",
 			templates_files : [templateFile],
 			baseFloatZIndex : tempZIndex,
@@ -495,7 +504,7 @@ function addJsCodeOnFileAudioRecording(formIdFielname, audioFieldname, audioReco
 	}
 }
 
-function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, templateFile){
+function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	//reset any jsFileContent
 	jsFileContentInForm = {};
 	$(formId+' textarea.htmlArea').each(function(){
@@ -543,7 +552,7 @@ function addJsCodeAfterFormIsShown(formId, lang, scayt_lang, templateFilter, tem
 
 		options = $.extend({
 				language : lang,
-				scayt_sLang: scayt_lang,
+				scayt_sLang : getScayt_sLangFromLanguage(lang),
 				templates : templateFilter,
 				templates_files : [templateFile],
 				baseFloatZIndex : tempZIndex,
@@ -993,6 +1002,7 @@ function setListenerToAddJournalItem(elementDialogId, recordId, fieldName, field
 			}
 			options = $.extend({
 				language : crtLanguage,
+				scayt_sLang : getScayt_sLangFromLanguage(crtLanguage),
 				baseFloatZIndex : $(this).closest('.ui-dialog').css('zIndex')+1,
 				toolbar : getBasicCKEditorToolbar(),
 				toolbarCanCollapse : true,
@@ -1223,6 +1233,7 @@ function setListenerToEmailExternalCode(
 			$(this).parent().find('.subject').show();
 			$(this).parent().find('.elastic').ckeditor({
 				language : crtLanguage,
+				scayt_sLang : getScayt_sLangFromLanguage(crtLanguage),
 				baseFloatZIndex : $(this).closest('.ui-dialog').css('zIndex')+1,
 				toolbar : getBasicCKEditorToolbar(),
 				toolbarCanCollapse : true,
