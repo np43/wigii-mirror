@@ -875,7 +875,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		//if the evaluateArg is numeric it could have 1000 separators
 		$arg1 = str_replace("'", "", $this->evaluateArg($args[1]));
 		if($arg1!=0){
-			return (str_replace("'", "", $this->evaluateArg($args[0]))/$arg1)*100;
+			return ((float)str_replace("'", "", $this->evaluateArg($args[0]))/(float)$arg1)*100;
 		}
 		else return null;
 	}

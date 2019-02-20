@@ -8,8 +8,9 @@ CKEDITOR.editorConfig = function( config ) {
 	// config.language = 'fr';
 	// config.uiColor = '#AADC6E';
 	
-	config.disableNativeSpellChecker = true;
-	config.scayt_autoStartup = true;
+	config.disableNativeSpellChecker = false;
+	config.scayt_autoStartup = false;
+	config.removePlugins = 'scayt';
 	
 	config.colorButton_colorsPerRow = 8;
 
