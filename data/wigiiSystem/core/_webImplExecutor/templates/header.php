@@ -170,7 +170,12 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/js/wigii_<?=ASSET_REVISION_NUMBER;?>.js"></script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>swfobject.js"></script>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.6.2/ckeditor.js"></script>
-<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.6.2/config.js"></script>
+<?php if(file_exists(CLIENT_WEB_PATH."CKEditor.config.js")){ ?>
+<script type="text/javascript">CKEDITOR.wigiiCustom=true;</script>
+<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKEditor.config.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script>
+<? } else { ?>
+<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.6.2/config.js?v=<?=ASSET_REVISION_NUMBER;?>"></script>
+<?php } ?>
 <script type="text/javascript" src="<?=SITE_ROOT_forFileUrl;?>assets/ckeditor4.6.2/adapters/jquery.js"></script>
 <?// Enables Box integration
 if(TechnicalServiceProvider::getBoxServiceFormExecutor()->isBoxEnabled()) {
@@ -268,9 +273,13 @@ if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".js")){
 ?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script><?
 }
 if(file_exists(CLIENT_WEB_PATH."CKTemplates.js.php")){
-?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js.php" ></script><?
+?>
+<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js.php?v=<?=ASSET_REVISION_NUMBER;?>" ></script>
+<?
 } else if(file_exists(CLIENT_WEB_PATH."CKTemplates.js")){
-?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js" ></script><?
+?>
+<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script>
+<?
 }
 if(file_exists(CLIENT_CONFIG_PATH.CLIENT_NAME.".js")){
 ?><script type="text/javascript">
