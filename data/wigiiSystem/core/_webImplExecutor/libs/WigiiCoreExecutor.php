@@ -351,6 +351,7 @@ class WigiiCoreExecutor {
 		elseif(is_string($parameter) && !empty($parameter)) return $parameter;
 		else {
 			if($parameter) return "1";
+			else if($parameter===null || $parameter==="") return "";
 			else return "0";
 		}
 	}
