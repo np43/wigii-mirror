@@ -161,6 +161,37 @@
 		});
 		
 		ncddoc(function(){/**
+		 * Creates and appends an img element to the given target using the svg node as a source
+		 *@param JQuery|String target jQuery target to which to append the created img element
+		 *@param JQuery|String svg jQuery selector on svg element or svg code as a string
+		 *@return JQuery jQuery selector on newly created img element
+		*/},
+		riseNcd.createImgFromSVG = function(target,svg) {			
+			// gets svg code as a string
+			var svgCode = $(svg);
+			if(svgCode.length>0) svgCode = svgCode[0].outerHTML;
+			else svgCode = svg;
+			// creates final img element to receive the png drawing from canvas
+			var img = document.createElement("img");			
+			// creates an img element to receive the svg drawing
+			var svgImg = document.createElement("img");			
+			svgImg.onload = function() {
+				// creates a canvas and dumps the svg image in it
+				var svgCanvas = document.createElement("canvas");
+				svgCanvas.height = svgImg.height;
+				svgCanvas.width = svgImg.width;			
+				svgCanvas.getContext("2d").drawImage(svgImg,0,0);
+				window.URL.revokeObjectURL(this.src);				
+				img.src = svgCanvas.toDataURL('image/png');				
+			};
+			// creates an svg blob, encodes it as an internal url and dumps it into the img element
+			svgImg.src = window.URL.createObjectURL(new window.Blob([svgCode],{type: 'image/svg+xml;charset=utf-8'}));
+			// appends img element to target			
+			$(target).append(img);
+			return $(img);
+		});
+		
+		ncddoc(function(){/**
 		 * Loads a visible object from the catalog and displays it into the given target div.
 		 *@param String catalogId Visible Object ID to load from rise.wigii.org Move Forward catalog.
 		 *@param JQuery targetDiv a JQuery selector on a div in which to display the loaded visible object
