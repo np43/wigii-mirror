@@ -1,5 +1,7 @@
+SET WIGII_PATH=C:\Users\weber\Documents\dev\php-src\Wigii_git
+
 SET /p V=Revision number: 
-cd C:\Users\Lionel\Documents\workspace\Wigii.org\trunk\www\assets\js\src
+cd %WIGII_PATH%\www\assets\js\src
 
 del ..\wigii_%v%.js
 copy NUL ..\wigii_%v%.js
