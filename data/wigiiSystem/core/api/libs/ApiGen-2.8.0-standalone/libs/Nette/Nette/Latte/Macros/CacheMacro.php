@@ -21,7 +21,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class CacheMacro extends Nette\Object implements Latte\IMacro
+class CacheMacro extends Nette\NetteObject implements Latte\IMacro
 {
 	/** @var bool */
 	private $used;

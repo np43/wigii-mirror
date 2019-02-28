@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Logger extends Nette\Object
+class Logger extends Nette\NetteObject
 {
 	const DEBUG = 'debug',
 		INFO = 'info',

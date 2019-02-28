@@ -22,7 +22,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class MacroSet extends Nette\Object implements Latte\IMacro
+class MacroSet extends Nette\NetteObject implements Latte\IMacro
 {
 	/** @var Latte\Compiler */
 	private $compiler;

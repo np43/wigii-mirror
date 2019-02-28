@@ -55,7 +55,7 @@ use Nette;
  *
  * @property-read Nette\Reflection\ClassType $reflection
  */
-abstract class Object
+abstract class NetteObject
 {
 
 	/**

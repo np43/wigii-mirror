@@ -21,7 +21,7 @@ use Nette;
  * @see http://firelogger.binaryage.com
  * @author     David Grudl
  */
-class FireLogger extends Nette\Object
+class FireLogger extends Nette\NetteObject
 {
 	const DEBUG = 'debug',
 		INFO = 'info',

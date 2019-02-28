@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-final class Rules extends Nette\Object implements \IteratorAggregate
+final class Rules extends Nette\NetteObject implements \IteratorAggregate
 {
 	/** @internal */
 	const VALIDATE_PREFIX = 'validate';

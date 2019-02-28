@@ -275,7 +275,7 @@ if($p->isRealUserPublic()) {
                         <?php foreach($menuItem as $k => $v): ?>
                             <?php
                             if($v['subItem']) {
-                                $onclick = each($v['subItem'])[1]['onclick'];
+                                $onclick = wigii_php_each($v['subItem'])[1]['onclick'];
                             }else{
                                 $onclick = $v['onclick'];
                             }                           

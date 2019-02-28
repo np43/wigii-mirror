@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Validators extends Nette\Object
+class Validators extends Nette\NetteObject
 {
 	protected static $validators = array(
 		'bool' => 'is_bool',

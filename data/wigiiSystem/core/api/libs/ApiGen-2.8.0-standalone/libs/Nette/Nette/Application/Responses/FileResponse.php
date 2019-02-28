@@ -24,7 +24,7 @@ use Nette;
  * @property-read string $name
  * @property-read string $contentType
  */
-class FileResponse extends Nette\Object implements Nette\Application\IResponse
+class FileResponse extends Nette\NetteObject implements Nette\Application\IResponse
 {
 	/** @var string */
 	private $file;

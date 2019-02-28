@@ -29,7 +29,7 @@ use Nette;
  * @method ClassType addTrait(string $trait)
  * @method ClassType addDocument(string $doc)
  */
-class ClassType extends Nette\Object
+class ClassType extends Nette\NetteObject
 {
 	/** @var string */
 	public $name;

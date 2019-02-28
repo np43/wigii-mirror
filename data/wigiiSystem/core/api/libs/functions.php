@@ -21,9 +21,35 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
+/**
  * Created on 21 juil. 09 by LWR
+ * Modified by CWE on 22.02.2019 to rewrite some deprecated PHP functions from PHP 7.2
  */
+
+/**
+ * Wigii rewriting of deprecated PHP 7.2 "each" function
+ * Return the current key and value pair from an array and advance the array cursor
+ *@param array $array The input array. 
+ *@return array the current key and value pair from the array $array. This pair is returned in a four-element array, with the keys 0, 1,key, and value. 
+ *Elements 0 and key contain the key name of the array element, and 1 and value contain the data. 
+ * If the internal pointer for the array points past the end of the array contents, each returns false. 
+ *@link http://www.php.net/manual/en/function.each.php 
+ */
+function wigii_php_each(&$array) {    
+    $key = key($array);
+    if($key===null) return false;
+    $value = current($array);
+    return array(0=>$key,'key'=>$key,1=>$value,'value'=>$value);
+}
+/**
+ * Wigii rewriting of warnable PHP 7.2 "count" function
+ * If value is null, then returns 0 without generating a warning, else returns PHP count value
+ *@link http://www.php.net/manual/en/function.count.php
+ */
+function wigii_php_count($array_or_countable,$mode = COUNT_NORMAL) {
+    if(empty($array_or_countable)) return 0;
+    else return count($array_or_countable,$mode);
+}
 
 //fonction avec tous les paramètres pour le put
 $private_put_objectDone = null;

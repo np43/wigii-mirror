@@ -24,7 +24,7 @@ use Nette,
  * @property   bool $debugMode
  * @property-write $tempDirectory
  */
-class Configurator extends Nette\Object
+class Configurator extends Nette\NetteObject
 {
 	/** config file sections */
 	const DEVELOPMENT = 'development',

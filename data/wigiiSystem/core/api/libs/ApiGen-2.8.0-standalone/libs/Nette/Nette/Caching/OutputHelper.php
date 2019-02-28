@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class OutputHelper extends Nette\Object
+class OutputHelper extends Nette\NetteObject
 {
 	/** @var array */
 	public $dependencies;

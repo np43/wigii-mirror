@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Annotation extends Nette\Object implements IAnnotation
+class Annotation extends Nette\NetteObject implements IAnnotation
 {
 
 	public function __construct(array $values)

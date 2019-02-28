@@ -23,7 +23,7 @@ use Nette;
  * @property-read array $controls
  * @property-read array $options
  */
-class ControlGroup extends Nette\Object
+class ControlGroup extends Nette\NetteObject
 {
 	/** @var \SplObjectStorage */
 	protected $controls;

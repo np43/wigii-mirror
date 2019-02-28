@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Tokenizer extends Nette\Object
+class Tokenizer extends Nette\NetteObject
 {
 	/** @var array */
 	public $tokens;

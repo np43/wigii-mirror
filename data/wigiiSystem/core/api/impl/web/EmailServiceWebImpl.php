@@ -439,7 +439,7 @@ WHERE $statusCd AND (E.sys_lockId IS NULL OR (E.sys_lockMicroTime + ".$this->get
 				//	 add all in bcc + split them
 
 				//1)
-				if((count($to)+count($cc)+count($bcc))<=$this->getMaxRecipientsPerEmail()){
+			    if((wigii_php_count($to)+wigii_php_count($cc)+wigii_php_count($bcc))<=$this->getMaxRecipientsPerEmail()){
 					$newEmail = $this->cloneEmailInstance($email);
 					if(!$to){
 						$to = (string)$this->getConfigService()->getParameter($principal, null, "emailNotificationFrom");

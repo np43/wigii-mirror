@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class SmtpMailer extends Nette\Object implements IMailer
+class SmtpMailer extends Nette\NetteObject implements IMailer
 {
 	/** @var resource */
 	private $connection;

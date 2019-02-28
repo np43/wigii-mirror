@@ -26,7 +26,7 @@ use Nette;
  * @method Property setVisibility(string $access)
  * @method Property addDocument(string $doc)
  */
-class Property extends Nette\Object
+class Property extends Nette\NetteObject
 {
 	/** @var string */
 	public $name;

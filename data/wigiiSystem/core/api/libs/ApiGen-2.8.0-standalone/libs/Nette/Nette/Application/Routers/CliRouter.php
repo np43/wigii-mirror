@@ -23,7 +23,7 @@ use Nette,
  *
  * @property-read array $defaults
  */
-class CliRouter extends Nette\Object implements Application\IRouter
+class CliRouter extends Nette\NetteObject implements Application\IRouter
 {
 	const PRESENTER_KEY = 'action';
 

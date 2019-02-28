@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class MySqlDriver extends Nette\Object implements Nette\Database\ISupplementalDriver
+class MySqlDriver extends Nette\NetteObject implements Nette\Database\ISupplementalDriver
 {
 	const ERROR_ACCESS_DENIED = 1045;
 	const ERROR_DUPLICATE_ENTRY = 1062;

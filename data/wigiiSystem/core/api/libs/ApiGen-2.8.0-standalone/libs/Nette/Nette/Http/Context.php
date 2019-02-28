@@ -24,7 +24,7 @@ use Nette;
  * @property-read IRequest $request
  * @property-read IResponse $response
  */
-class Context extends Nette\Object
+class Context extends Nette\NetteObject
 {
 	/** @var IRequest */
 	private $request;

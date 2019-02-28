@@ -21,7 +21,7 @@ use Nette;
  * @author     David Grudl
  * @internal
  */
-class NestedAccessor extends Nette\Object
+class NestedAccessor extends Nette\NetteObject
 {
 	/** @var array */
 	public $parameters;

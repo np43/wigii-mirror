@@ -22,7 +22,7 @@ use Nette,
  *
  * @author     Patrik Votoček
  */
-class ContainerPanel extends Nette\Object implements Nette\Diagnostics\IBarPanel
+class ContainerPanel extends Nette\NetteObject implements Nette\Diagnostics\IBarPanel
 {
 	/** @var Nette\DI\Container */
 	private $container;

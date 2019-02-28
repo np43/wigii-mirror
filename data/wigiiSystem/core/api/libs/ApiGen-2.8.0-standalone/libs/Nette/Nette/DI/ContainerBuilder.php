@@ -26,7 +26,7 @@ use Nette,
  * @property-read ServiceDefinition[] $definitions
  * @property-read array $dependencies
  */
-class ContainerBuilder extends Nette\Object
+class ContainerBuilder extends Nette\NetteObject
 {
 	const CREATED_SERVICE = 'self',
 		THIS_CONTAINER = 'container';

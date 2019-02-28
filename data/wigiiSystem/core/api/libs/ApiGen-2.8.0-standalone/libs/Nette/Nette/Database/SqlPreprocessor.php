@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class SqlPreprocessor extends Nette\Object
+class SqlPreprocessor extends Nette\NetteObject
 {
 	/** @var Connection */
 	private $connection;

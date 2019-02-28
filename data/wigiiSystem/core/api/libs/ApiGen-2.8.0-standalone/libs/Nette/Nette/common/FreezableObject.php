@@ -22,7 +22,7 @@ use Nette;
  *
  * @property-read bool $frozen
  */
-abstract class FreezableObject extends Object implements IFreezable
+abstract class FreezableObject extends NetteObject implements IFreezable
 {
 	/** @var bool */
 	private $frozen = FALSE;

@@ -21,7 +21,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class UserPanel extends Nette\Object implements Nette\Diagnostics\IBarPanel
+class UserPanel extends Nette\NetteObject implements Nette\Diagnostics\IBarPanel
 {
 	/** @var Nette\Security\User */
 	private $user;

@@ -23,7 +23,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class RoutingPanel extends Nette\Object implements Nette\Diagnostics\IBarPanel
+class RoutingPanel extends Nette\NetteObject implements Nette\Diagnostics\IBarPanel
 {
 	/** @var Nette\Application\IRouter */
 	private $router;

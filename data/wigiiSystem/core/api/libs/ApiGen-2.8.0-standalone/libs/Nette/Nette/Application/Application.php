@@ -25,7 +25,7 @@ use Nette;
  * @property-read IRouter $router
  * @property-read IPresenterFactory $presenterFactory
  */
-class Application extends Nette\Object
+class Application extends Nette\NetteObject
 {
 	/** @var int */
 	public static $maxLoop = 20;

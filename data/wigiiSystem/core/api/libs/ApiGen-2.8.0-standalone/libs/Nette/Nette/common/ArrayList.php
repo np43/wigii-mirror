@@ -22,7 +22,7 @@ use Nette;
  *
  * @property-read \ArrayIterator $iterator
  */
-class ArrayList extends Object implements \ArrayAccess, \Countable, \IteratorAggregate
+class ArrayList extends NetteObject implements \ArrayAccess, \Countable, \IteratorAggregate
 {
 	private $list = array();
 

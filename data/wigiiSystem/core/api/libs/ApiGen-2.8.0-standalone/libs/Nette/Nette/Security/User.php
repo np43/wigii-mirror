@@ -28,7 +28,7 @@ use Nette;
  * @property-read array $roles
  * @property   IAuthorizator $authorizator
  */
-class User extends Nette\Object
+class User extends Nette\NetteObject
 {
 	/**/ /** @deprecated */
 	const MANUAL = IUserStorage::MANUAL,

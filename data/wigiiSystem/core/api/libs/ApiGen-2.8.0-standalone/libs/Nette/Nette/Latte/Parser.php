@@ -21,7 +21,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class Parser extends Nette\Object
+class Parser extends Nette\NetteObject
 {
 	/** @internal regular expression for single & double quoted PHP string */
 	const RE_STRING = '\'(?:\\\\.|[^\'\\\\])*\'|"(?:\\\\.|[^"\\\\])*"';

@@ -24,7 +24,7 @@ use Nette,
  * @property-read array $defaults
  * @property-read int $flags
  */
-class SimpleRouter extends Nette\Object implements Application\IRouter
+class SimpleRouter extends Nette\NetteObject implements Application\IRouter
 {
 	const PRESENTER_KEY = 'presenter';
 	const MODULE_KEY = 'module';

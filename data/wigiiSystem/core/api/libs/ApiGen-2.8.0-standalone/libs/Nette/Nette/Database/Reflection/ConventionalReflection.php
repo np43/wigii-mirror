@@ -22,7 +22,7 @@ use Nette;
  * @author     Jan Skrasek
  * @property-write Nette\Database\Connection $connection
  */
-class ConventionalReflection extends Nette\Object implements Nette\Database\IReflection
+class ConventionalReflection extends Nette\NetteObject implements Nette\Database\IReflection
 {
 	/** @var string */
 	protected $primary;

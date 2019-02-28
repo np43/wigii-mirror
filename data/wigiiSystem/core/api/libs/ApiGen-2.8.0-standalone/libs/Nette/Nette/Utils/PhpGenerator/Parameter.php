@@ -26,7 +26,7 @@ use Nette;
  * @method Parameter setOptional(bool $on)
  * @method Parameter setDefaultValue(mixed $value)
  */
-class Parameter extends Nette\Object
+class Parameter extends Nette\NetteObject
 {
 	/** @var string */
 	public $name;

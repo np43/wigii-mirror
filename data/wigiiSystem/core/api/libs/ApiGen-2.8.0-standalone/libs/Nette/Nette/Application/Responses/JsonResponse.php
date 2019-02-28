@@ -23,7 +23,7 @@ use Nette;
  * @property-read array|\stdClass $payload
  * @property-read string $contentType
  */
-class JsonResponse extends Nette\Object implements Nette\Application\IResponse
+class JsonResponse extends Nette\NetteObject implements Nette\Application\IResponse
 {
 	/** @var array|\stdClass */
 	private $payload;

@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Token extends Nette\Object
+class Token extends Nette\NetteObject
 {
 	const TEXT = 'text',
 		MACRO_TAG = 'macroTag', // latte macro tag

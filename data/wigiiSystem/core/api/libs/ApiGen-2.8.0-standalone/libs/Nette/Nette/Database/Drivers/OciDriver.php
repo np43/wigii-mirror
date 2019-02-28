@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class OciDriver extends Nette\Object implements Nette\Database\ISupplementalDriver
+class OciDriver extends Nette\NetteObject implements Nette\Database\ISupplementalDriver
 {
 	/** @var Nette\Database\Connection */
 	private $connection;

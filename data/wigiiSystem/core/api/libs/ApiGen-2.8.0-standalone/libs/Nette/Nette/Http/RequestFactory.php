@@ -21,7 +21,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class RequestFactory extends Nette\Object
+class RequestFactory extends Nette\NetteObject
 {
 	/** @internal */
 	const NONCHARS = '#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]#u';
@@ -142,7 +142,7 @@ class RequestFactory extends Nette\Object
 		if ($gpc || $this->encoding) {
 			$utf = strcasecmp($this->encoding, 'UTF-8') === 0;
 			$list = array(& $query, & $post, & $cookies);
-			while (list($key, $val) = each($list)) {
+			while (list($key, $val) = wigii_php_each($list)) {
 				foreach ($val as $k => $v) {
 					unset($list[$key][$k]);
 
@@ -194,7 +194,7 @@ class RequestFactory extends Nette\Object
 			}
 		}
 
-		while (list(, $v) = each($list)) {
+		while (list(, $v) = wigii_php_each($list)) {
 			if (!isset($v['name'])) {
 				continue;
 

@@ -67,8 +67,8 @@ class LoggerReflectionUtils {
 	 */
 	public function setProperties($properties, $prefix) {
 		$len = strlen($prefix);
-		reset($properties);
-		while(list($key,) = each($properties)) {
+		reset($properties);		
+		while(list($key,) = wigii_php_each($properties)) {		
 			if(strpos($key, $prefix) === 0) {
 				if(strpos($key, '.', ($len + 1)) > 0) {
 					continue;

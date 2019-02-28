@@ -23,7 +23,7 @@ use Nette,
  * @author     Jakub Vrana
  * @author     Jan Skrasek
  */
-class SqlBuilder extends Nette\Object
+class SqlBuilder extends Nette\NetteObject
 {
 	/** @var Selection */
 	protected $selection;

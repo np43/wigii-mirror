@@ -23,7 +23,7 @@ use Nette,
  * @property-read array $config
  * @property-read Nette\DI\ContainerBuilder $containerBuilder
  */
-abstract class CompilerExtension extends Nette\Object
+abstract class CompilerExtension extends Nette\NetteObject
 {
 	/** @var Compiler */
 	protected $compiler;

@@ -22,7 +22,7 @@ use Nette;
  *
  * @property-read mixed $source
  */
-class TextResponse extends Nette\Object implements Nette\Application\IResponse
+class TextResponse extends Nette\NetteObject implements Nette\Application\IResponse
 {
 	/** @var mixed */
 	private $source;

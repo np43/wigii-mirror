@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-abstract class AutoLoader extends Nette\Object
+abstract class AutoLoader extends Nette\NetteObject
 {
 	/** @var array  list of registered loaders */
 	static private $loaders = array();

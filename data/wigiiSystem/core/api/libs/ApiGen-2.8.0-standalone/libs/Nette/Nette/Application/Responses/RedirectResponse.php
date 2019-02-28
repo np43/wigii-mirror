@@ -24,7 +24,7 @@ use Nette,
  * @property-read string $url
  * @property-read int $code
  */
-class RedirectResponse extends Nette\Object implements Nette\Application\IResponse
+class RedirectResponse extends Nette\NetteObject implements Nette\Application\IResponse
 {
 	/** @var string */
 	private $url;

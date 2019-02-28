@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Engine extends Nette\Object
+class Engine extends Nette\NetteObject
 {
 	/** @var Parser */
 	private $parser;

@@ -25,7 +25,7 @@ use Nette,
  * @property-read Nette\DI\ContainerBuilder $containerBuilder
  * @property-read array $config
  */
-class Compiler extends Nette\Object
+class Compiler extends Nette\NetteObject
 {
 	/** @var CompilerExtension[] */
 	private $extensions = array();

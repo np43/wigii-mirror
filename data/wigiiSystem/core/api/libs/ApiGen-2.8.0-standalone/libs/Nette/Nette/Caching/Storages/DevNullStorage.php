@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class DevNullStorage extends Nette\Object implements Nette\Caching\IStorage
+class DevNullStorage extends Nette\NetteObject implements Nette\Caching\IStorage
 {
 
 	/**

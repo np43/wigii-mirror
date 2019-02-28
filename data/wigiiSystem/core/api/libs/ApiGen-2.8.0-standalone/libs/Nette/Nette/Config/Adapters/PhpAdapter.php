@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class PhpAdapter extends Nette\Object implements Nette\Config\IAdapter
+class PhpAdapter extends Nette\NetteObject implements Nette\Config\IAdapter
 {
 
 	/**

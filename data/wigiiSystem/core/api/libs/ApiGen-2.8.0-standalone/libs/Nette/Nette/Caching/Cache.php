@@ -23,7 +23,7 @@ use Nette;
  * @property-read IStorage $storage
  * @property-read string $namespace
  */
-class Cache extends Nette\Object implements \ArrayAccess
+class Cache extends Nette\NetteObject implements \ArrayAccess
 {
 	/** dependency */
 	const PRIORITY = 'priority',

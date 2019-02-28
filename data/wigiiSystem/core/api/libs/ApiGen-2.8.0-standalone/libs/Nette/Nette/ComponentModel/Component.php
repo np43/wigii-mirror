@@ -25,7 +25,7 @@ use Nette;
  * @property-read string $name
  * @property-read IContainer|NULL $parent
  */
-abstract class Component extends Nette\Object implements IComponent
+abstract class Component extends Nette\NetteObject implements IComponent
 {
 	/** @var IContainer */
 	private $parent;

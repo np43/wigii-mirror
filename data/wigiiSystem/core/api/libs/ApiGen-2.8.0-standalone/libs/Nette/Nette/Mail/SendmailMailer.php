@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class SendmailMailer extends Nette\Object implements IMailer
+class SendmailMailer extends Nette\NetteObject implements IMailer
 {
 	/** @var string */
 	public $commandArgs;

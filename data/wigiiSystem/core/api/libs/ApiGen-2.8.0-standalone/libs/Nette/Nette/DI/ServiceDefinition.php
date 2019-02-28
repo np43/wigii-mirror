@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class ServiceDefinition extends Nette\Object
+class ServiceDefinition extends Nette\NetteObject
 {
 	/** @var string  class or interface name */
 	public $class;

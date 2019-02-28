@@ -28,7 +28,7 @@ use Nette;
  * @property-write $savePath
  * @property-write ISessionStorage $storage
  */
-class Session extends Nette\Object
+class Session extends Nette\NetteObject
 {
 	/** Default file lifetime is 3 hours */
 	const DEFAULT_FILE_LIFETIME = 10800;

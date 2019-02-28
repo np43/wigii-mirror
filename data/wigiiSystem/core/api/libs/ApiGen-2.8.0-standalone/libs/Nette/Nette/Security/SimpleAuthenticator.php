@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class SimpleAuthenticator extends Nette\Object implements IAuthenticator
+class SimpleAuthenticator extends Nette\NetteObject implements IAuthenticator
 {
 	/** @var array */
 	private $userlist;

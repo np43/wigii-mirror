@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class PgSqlDriver extends Nette\Object implements Nette\Database\ISupplementalDriver
+class PgSqlDriver extends Nette\NetteObject implements Nette\Database\ISupplementalDriver
 {
 	/** @var Nette\Database\Connection */
 	private $connection;

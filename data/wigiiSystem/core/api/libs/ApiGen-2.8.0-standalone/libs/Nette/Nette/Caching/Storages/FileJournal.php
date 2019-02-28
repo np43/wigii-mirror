@@ -21,7 +21,7 @@ use Nette,
  *
  * @author     Jakub Onderka
  */
-class FileJournal extends Nette\Object implements IJournal
+class FileJournal extends Nette\NetteObject implements IJournal
 {
 	/** Filename with journal */
 	const FILE = 'btfj.dat';

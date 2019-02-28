@@ -21,7 +21,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class Compiler extends Nette\Object
+class Compiler extends Nette\NetteObject
 {
 	/** @var string default content type */
 	public $defaultContentType = self::CONTENT_XHTML;

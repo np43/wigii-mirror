@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Neon extends Nette\Object
+class Neon extends Nette\NetteObject
 {
 	const BLOCK = 1;
 

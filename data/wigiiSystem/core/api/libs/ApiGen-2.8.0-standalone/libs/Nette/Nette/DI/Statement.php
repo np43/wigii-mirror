@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Statement extends Nette\Object
+class Statement extends Nette\NetteObject
 {
 	/** @var string  class|method|$property */
 	public $entity;

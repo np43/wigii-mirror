@@ -976,7 +976,7 @@ class ListContext extends ListFilter {
 				//if defined in the selectSearchBar config
 				case "Attributs":
 				case "MultipleAttributs":
-					continue;
+					continue 2;
 					break;
 				default:
 					$subs = $this->getSubFieldsForDataType($wigiiExecutor, $dataTypeName);

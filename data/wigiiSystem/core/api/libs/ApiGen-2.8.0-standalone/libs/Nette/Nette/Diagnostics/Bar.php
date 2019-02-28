@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class Bar extends Nette\Object
+class Bar extends Nette\NetteObject
 {
 	/** @var array */
 	private $panels = array();

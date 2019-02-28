@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class HtmlNode extends Nette\Object
+class HtmlNode extends Nette\NetteObject
 {
 	/** @var string */
 	public $name;

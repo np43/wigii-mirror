@@ -33,7 +33,7 @@ use Nette;
  * @property-read string $remoteAddress
  * @property-read string $remoteHost
  */
-class Request extends Nette\Object implements IRequest
+class Request extends Nette\NetteObject implements IRequest
 {
 	/** @var string */
 	private $method;

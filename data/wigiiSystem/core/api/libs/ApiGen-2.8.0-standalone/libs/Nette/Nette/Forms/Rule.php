@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-final class Rule extends Nette\Object
+final class Rule extends Nette\NetteObject
 {
 	/** type */
 	const CONDITION = 1;

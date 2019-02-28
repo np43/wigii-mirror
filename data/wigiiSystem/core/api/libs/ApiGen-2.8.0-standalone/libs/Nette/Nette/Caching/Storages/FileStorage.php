@@ -21,7 +21,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class FileStorage extends Nette\Object implements Nette\Caching\IStorage
+class FileStorage extends Nette\NetteObject implements Nette\Caching\IStorage
 {
 	/**
 	 * Atomic thread safe logic:

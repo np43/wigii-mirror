@@ -21,7 +21,7 @@ use Nette;
  * @author     Jan Skrasek
  * @property-write Nette\Database\Connection $connection
  */
-class DiscoveredReflection extends Nette\Object implements Nette\Database\IReflection
+class DiscoveredReflection extends Nette\NetteObject implements Nette\Database\IReflection
 {
 	/** @var Nette\Caching\Cache */
 	protected $cache;

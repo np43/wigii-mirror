@@ -22,7 +22,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class NeonAdapter extends Nette\Object implements Nette\Config\IAdapter
+class NeonAdapter extends Nette\NetteObject implements Nette\Config\IAdapter
 {
 	/** @internal */
 	const INHERITING_SEPARATOR = '<', // child < parent

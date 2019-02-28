@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class PhpWriter extends Nette\Object
+class PhpWriter extends Nette\NetteObject
 {
 	/** @var MacroTokenizer */
 	private $argsTokenizer;

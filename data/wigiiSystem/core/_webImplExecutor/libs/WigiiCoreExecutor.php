@@ -3837,7 +3837,7 @@ invalidCompleteCache();
 
 		$exec->addJsCode("" .
 			"allMultipleSelectionHaveWriteRights = " . ($listContext->allHaveWriteRights() ? "true" : "false") . ";" .
-			"multipleSelectionNb = ".count($listContext->getMultipleSelection()).";" .
+			"multipleSelectionNb = ".wigii_php_count($listContext->getMultipleSelection()).";" .
 			"multipleEnableElementState = ".$listContext->getMultipleEnableElementStateAsInt().";" .
 			"multipleElementState = ".$listContext->getMultipleElementStateAsInt(3).";" .
 			"multipleElementStateMedi = ".$listContext->getMultipleElementStateAsInt(2).";" .

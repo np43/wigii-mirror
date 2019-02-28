@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     David Grudl
  */
-class MemoryStorage extends Nette\Object implements Nette\Caching\IStorage
+class MemoryStorage extends Nette\NetteObject implements Nette\Caching\IStorage
 {
 	/** @var array */
 	private $data = array();

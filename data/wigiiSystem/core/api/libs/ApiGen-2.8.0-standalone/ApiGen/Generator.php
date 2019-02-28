@@ -20,7 +20,7 @@ use InvalidArgumentException, RuntimeException;
 /**
  * Generates a HTML API documentation.
  */
-class Generator extends Nette\Object
+class Generator extends Nette\NetteObject
 {
 	/**
 	 * Library name.

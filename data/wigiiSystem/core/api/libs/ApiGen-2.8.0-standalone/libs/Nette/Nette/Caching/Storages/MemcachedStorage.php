@@ -21,7 +21,7 @@ use Nette,
  *
  * @author     David Grudl
  */
-class MemcachedStorage extends Nette\Object implements Nette\Caching\IStorage
+class MemcachedStorage extends Nette\NetteObject implements Nette\Caching\IStorage
 {
 	/** @internal cache structure */
 	const META_CALLBACKS = 'callbacks',

@@ -23,7 +23,7 @@ use Nette,
  *
  * @property-read array $dependencies
  */
-class Loader extends Nette\Object
+class Loader extends Nette\NetteObject
 {
 	/** @internal */
 	const INCLUDES_KEY = 'includes';

@@ -29,7 +29,7 @@ use Nette;
  * @method Method setReturnReference(bool $on)
  * @method Method addDocument(string $doc)
  */
-class Method extends Nette\Object
+class Method extends Nette\NetteObject
 {
 	/** @var string */
 	public $name;

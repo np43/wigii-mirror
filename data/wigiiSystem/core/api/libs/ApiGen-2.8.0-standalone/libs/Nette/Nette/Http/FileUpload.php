@@ -31,7 +31,7 @@ use Nette;
  * @property-read array $imageSize
  * @property-read string $contents
  */
-class FileUpload extends Nette\Object
+class FileUpload extends Nette\NetteObject
 {
 	/** @var string */
 	private $name;

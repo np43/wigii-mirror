@@ -20,7 +20,7 @@ use Nette;
  *
  * @author     Jakub Vrana
  */
-class SqlLiteral extends Nette\Object
+class SqlLiteral extends Nette\NetteObject
 {
 	/** @var string */
 	private $value = '';

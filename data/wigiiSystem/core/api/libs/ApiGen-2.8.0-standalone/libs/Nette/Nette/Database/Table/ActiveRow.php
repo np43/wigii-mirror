@@ -21,7 +21,7 @@ use Nette;
  *
  * @author     Jakub Vrana
  */
-class ActiveRow extends Nette\Object implements \IteratorAggregate, \ArrayAccess
+class ActiveRow extends Nette\NetteObject implements \IteratorAggregate, \ArrayAccess
 {
 	/** @var Selection */
 	private $table;
