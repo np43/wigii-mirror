@@ -2019,6 +2019,22 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
+	 * Returns a default value if evaluated value is null
+	 * FuncExp signature : <code>ctlDefaultVal(val,defaultValue)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) val: Evaluates to the value to be returned if different from null
+	 * - Arg(1) defaultValue: Evaluates to the default value to be returned in case of null.
+	 * @return Any val or defaultValue
+	 */
+	public function ctlDefaultVal($args) {
+	    $nArgs=$this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new FuncExpEvalException('ctlDefaultVal takes two arguments which are the value and the default value', FuncExpEvalException::INVALID_ARGUMENT);
+	    $val = $this->evaluateArg($args[0]);
+	    if($val === null) return $this->evaluateArg($args[1]);
+	    else return $val;
+	}
+	
+	/**
 	 * Returns the min date of a series of dates
 	 * FuncExp signature : <code>ctlMinDate(date1, date2, ...)</code><br/>
 	 * Where arguments are :

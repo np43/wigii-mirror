@@ -48,7 +48,7 @@ interface CalculatedFieldSelectorMap extends ObjectList
 	/**
 	 * Gets FuncExp associated to a given FieldSelector stored into the map
 	 * @param FieldSelector $fieldSelector
-	 * @return FunExp the selected FuncExp or null if not found
+	 * @return FuncExp the selected FuncExp or null if not found
 	 */
 	public function getFuncExp($fieldSelector);
 	

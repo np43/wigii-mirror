@@ -57,6 +57,7 @@ define("TEMPLATE_PATH", IMPL_PATH . "templates/");
 define("DATATYPE_PATH", CORE_PATH . "datatype/");
 define("LANG_FOLDER", CORE_PATH . "langs/");
 define("CLIENT_CONFIG_PATH", wigiiSystem_PATH . "configs/" . CLIENT_NAME . "/");
+define("CLIENT_DATA_PATH", "../users/" . CLIENT_NAME . "/");
 
 /**
  * configuration part

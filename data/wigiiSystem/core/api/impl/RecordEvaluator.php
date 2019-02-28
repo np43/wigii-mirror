@@ -843,27 +843,20 @@ class RecordEvaluator implements FuncExpEvaluator
 	 */
 	public function doOnNotNull($args){
 		if($this->getNumberOfArgs($args) < 2) throw new RecordException("args should have at least 2 parameters");
-		$returnValue = ''; $i = 0; $allIsFilled = true;
+		$i = 0; $allIsFilled = true;
 		foreach($args as $v)
 		{
-			if($i == 0)
+			if($i > 0)
 			{
-				$returnValue = $this->evaluateArg($v);
-				$i++;
-			}
-			else
-			{
-				if($v == null || $this->evaluateArg($v) == null){
+				if($this->evaluateArg($v) == null){
 					$allIsFilled = false;
 					break;
-				}
-				$i++;
+				}				
 			}
+			$i++;
 		}
-		if(!$allIsFilled){
-			return null;
-		}
-		return $returnValue;
+		if(!$allIsFilled) return null;		
+		else return $this->evaluateArg($args[0]);
 	}
 
 	/**
@@ -1342,15 +1335,16 @@ class RecordEvaluator implements FuncExpEvaluator
 		else return true;
 	}
 	/**
-	 * Tries to evaluate given argument, catches any exception and displays message as an error attached to currrent field
+	 * Tries to evaluate given argument, catches any exception and displays message as an error attached to currrent field (or given field)
 	 * FuncExp signature : <code>ctlException2FieldError(calculatedValue)</code><br/>
 	 * Where arguments are :
-	 * - Arg(0) calculatedValue: Any. The calculated value to return after evaluation
+	 * - Arg(0) calculatedValue: Any. The calculated value to return after evaluation.
+	 * - Arg(1) fieldName: String|FieldSelector. Optional. The name of the field to which to add an error message. If not set, takes current field.
 	 * @return Any the calculated value or null if an error occured. Call FuncExp ctlCheckNoError to check if attached FormExecutor has some errors.
 	 */
 	public function ctlException2FieldError($args) {
 	    $nArgs = $this->getNumberOfArgs($args);
-	    if($nArgs < 1) throw new RecordException('ctlException2FieldError func exp takes one argument: the expression to evaluate and for which to catch any exceptions', RecordException::INVALID_ARGUMENT);
+	    if($nArgs < 1) throw new RecordException('ctlException2FieldError func exp takes at least one argument: the expression to evaluate and for which to catch any exceptions', RecordException::INVALID_ARGUMENT);
 	    $form = $this->getFormExecutor();
 	    if(isset($form)) {
 	        // evaluates expression
@@ -1359,7 +1353,12 @@ class RecordEvaluator implements FuncExpEvaluator
 	        catch(Exception $e) {
 	            // and displays message as Field error
 	            if($e instanceof ServiceException) $e = $e->getWigiiRootException();
-	            $form->addErrorToField($e->getMessage(), $this->getCurrentField()->getFieldName());
+	            if($nArgs>1) {
+	                if($args[1] instanceof FieldSelector) $fieldName = $args[1]->getFieldName();
+	                else $fieldName = $this->evaluateArg($args[1]);
+	            }
+	            else $fieldName = $this->getCurrentField()->getFieldName();
+	            $form->addErrorToField($e->getMessage(), $fieldName);
 	        }	        
 	    }
 	    // else if no attached FormExecutor then evaluates the expression "as-is"

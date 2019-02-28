@@ -3915,15 +3915,26 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		});
 		
 		ncddoc(function(){/**
-		 * apply && between the the two args
-		 * this is usefull in configuration files as the character & is reserved
-		 * @param val1: mixed
-		 * @param val2: mixed
-		 * @return val1 && val2
+		 * apply && between all the args
+		 * this is useful in configuration files as the character & is reserved
+		 * @param Any val1 left hand side
+		 * @param Any val2 right hand side
+		 * @param Any valI any other number of arguments to combine in the AND expression
+		 * @return val1 && val2 && valI ...
 		*/},
 		wigiiApi.logAnd = function (val1, val2){
-			return val1 && val2;
-		});
+			if(arguments.length>2) {
+				var returnValue = arguments[0];
+				if(returnValue) {
+					for(var i=1;i<arguments.length;i++) {
+						returnValue = returnValue && arguments[i];
+						if(!returnValue) break;
+					}
+				}
+				return returnValue;
+			}
+			else return val1 && val2;
+		});		
 
 		ncddoc(function(){/** 
 		 * ceil a value up to the number. IE: ceilTo(10.34, 0.05) returns 10.35

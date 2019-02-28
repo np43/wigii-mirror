@@ -84,7 +84,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 			dfas("ArrayBufferDFA")
 		));
 	}
-	
+		
 	// Wigii Medidata General Invoice Request 4.5
 	
 	/**
@@ -95,7 +95,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * - Arg(1) options: WigiiBPLParameter. An optional bag of options to configure the generation process.
 	 * @return SimpleXMLElement a SimpleXMLElement compatible with XML schema http://www.forum-datenaustausch.ch/invoice generalInvoiceRequest_450.xsd
 	 */
-	public function genMedidataInvoiceRequest45($args) {		
+	public function genMedidataInvoiceRequest45($args) {	    
 		$this->debugLogger()->logBeginOperation('genMedidataInvoiceRequest45');
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('genMedidataInvoiceRequest45 takes at least one parameter which should evaluate to an Element of type Wigii Company CustomerOrders', FuncExpEvalException::INVALID_ARGUMENT);
@@ -122,6 +122,212 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue = simplexml_import_dom($returnValue);
 		$this->debugLogger()->logEndOperation('genMedidataInvoiceRequest45');
 		return $returnValue;
+	}
+	
+	/**
+	 * Generates a Medidata invoice reminder request using a generated Medidata xml invoice file stored into a Wigii Company CustomerOrder element.<br/>
+	 * FuncExp signature : <code>genMedidataInvoiceReminder45(customerOrder,medidataInvoiceXml,reminderLevel,options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order to which is attached an XML Medidata General Invoice Request.
+	 * - Arg(1) medidataInvoiceXml: FieldSelector. Field of type File containing the generated Medidata invoice XML file
+	 * - Arg(2) reminderLevel: int. One of 1, 2 or 3.
+	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the generation process.
+	 * @return SimpleXMLElement a SimpleXMLElement for an invoice reminder request compatible with XML schema http://www.forum-datenaustausch.ch/invoice generalInvoiceRequest_450.xsd
+	 */
+	public function genMedidataInvoiceReminder45($args) {
+	    $this->debugLogger()->logBeginOperation('genMedidataInvoiceReminder45');
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 3) throw new FuncExpEvalException('genMedidataInvoiceReminder45 takes at least three parameters which first one should evaluate to an Element of type Wigii Company CustomerOrders, second be a FieldSelector pointing to a field of type Files containing a Medidata generated XML invoice file, and third parameter the reminder level 1,2 or 3', FuncExpEvalException::INVALID_ARGUMENT);
+	    $customerOrder = $this->evaluateArg($args[0]);
+	    // fetches element if needed
+	    if($customerOrder instanceof ElementPDataFlowConnector) $customerOrder = sel($this->getPrincipal(),$customerOrder,dfasl(dfas("NullDFA")));
+	    if($customerOrder instanceof ElementP) $customerOrder = $customerOrder->getElement();
+	    if(!($customerOrder instanceof Element)) throw new FuncExpEvalException('genMedidataInvoiceReminder45 takes a first parameter which should evaluate to an Element of type Wigii Company CustomerOrders', FuncExpEvalException::INVALID_ARGUMENT);
+	    // gets medidata XML invoice
+	    if($args[1] instanceof FieldSelector) $xmlFieldName = $args[1]->getFieldName();
+	    else {
+	        $xmlFieldName = $this->evaluateArg($args[1]);
+	        if($xmlFieldName instanceof FieldSelector) $xmlFieldName = $xmlFieldName->getFieldName();
+	    }
+	    $xmlField = $customerOrder->getFieldList()->getField($xmlFieldName);
+	    if(!($xmlField->getDataType() instanceof Files)) throw new FuncExpEvalException('genMedidataInvoiceReminder45 takes second parameter which should be a FieldSelector pointing to a field of type Files containing a Medidata generated XML invoice file', FuncExpEvalException::INVALID_ARGUMENT);
+	    // gets reminder level
+	    $reminderLevel = $this->evaluateArg($args[2]);
+	    if(!(1<=$reminderLevel && $reminderLevel<=3)) throw new FuncExpEvalException('reminder level should be 1, 2 or 3', FuncExpEvalException::INVALID_ARGUMENT);
+	    
+	    // reads bag of options
+	    if($nArgs>3) {
+	        $options = $this->evaluateArg($args[3]);
+	        if(!isset($options)) $options = wigiiBPLParam();
+	        elseif(!($options instanceof WigiiBPLParameter)) throw new FuncExpEvalException('options can only be an instance of WigiiBPLParameter',FuncExpEvalException::INVALID_ARGUMENT);
+	    }
+	    else $options = wigiiBPLParam();
+	    
+	    // initializes options
+	    $options->setValue('xmlSchema','generalInvoiceRequest_450.xsd');
+	    $options->setValue('namespaceURI','http://www.forum-datenaustausch.ch/invoice');
+	    $options->setValue('namespacePrefix','invoice');
+	    
+	    // loads invoice request as an xml document
+	    $returnValue = sel($this->getPrincipal(),elementFile2df($customerOrder, $xmlFieldName),dfasl(dfas("StringBufferDFA")));
+	    $returnValue = $this->loadXmlDoc($returnValue);	    	   
+	    // validates loaded xml
+	    $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+	    // goes to request
+	    $xml = $this->createXmlElement($returnValue, 'request', $options);
+	    // goes to payload
+	    $xml = $this->createXmlElement($xml, 'payload', $options);
+	    // checks that payload type is invoice
+	    if($xml->getAttribute('type') != 'invoice') throw new WigiiMedidataException('a reminder can only be created from an invoice and not from a payload of type "'.$xml->getAttribute('type').'"',WigiiMedidataException::XML_VALIDATION_ERROR);
+	    // sets payload type as reminder
+	    $xml->setAttribute('type','reminder');
+	    // inserts a payload/reminder node, before payload/body node 
+	    $xml = $this->insertXmlElement($xml, 'reminder', $this->createXmlElement($xml, 'body', $options), $options);
+	    $xml->setAttribute('request_timestamp', strtotime($this->assertNotNull($customerOrder, 'reminder'.$reminderLevel)));
+	    $xml->setAttribute('request_date', $this->assertDateNotNull($customerOrder, 'reminder'.$reminderLevel));
+	    $xml->setAttribute('request_id', 'R'.$reminderLevel.'-'.$this->assertNotNull($customerOrder,'customerOrderNumber'));	    
+	    $xml->setAttribute('reminder_level', $reminderLevel);
+	    $reminderText = '';
+	    switch($reminderLevel) {
+	        case 1: $reminderText .= 'Rappel'; break;
+	        case 2: $reminderText .= 'Deuxième rappel'; break;
+	        case 3: $reminderText .= 'Troisième rappel'; break;
+	    }
+	    $reminderText.= ' sur la facture n°'.$this->assertNotNull($customerOrder,'customerOrderNumber');
+	    $reminderText.= ' du '.Dates::formatDisplay($this->assertNotNull($customerOrder,'orderDate'),"dd.mm.yyyy",null);
+	    $reminderText.= ' échue le '.Dates::formatDisplay($this->assertNotNull($customerOrder,'paiementDueDate'),"dd.mm.yyyy",null);
+	    $xml->setAttribute('reminder_text', $reminderText);
+	    
+	    // validates generated xml
+	    $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+	    // returns as SimpleXmlElement
+	    $returnValue = simplexml_import_dom($returnValue);
+	    $this->debugLogger()->logEndOperation('genMedidataInvoiceReminder45');
+	    return $returnValue;	    
+	}
+	
+	/**
+	 * Generates a Medidata SendControl file using a generated Medidata xml file stored into a Wigii Company CustomerOrder element.<br/>
+	 * FuncExp signature : <code>genMedidataSendControl(customerOrder,medidataXml,options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order to which is attached an XML Medidata General Invoice Request.
+	 * - Arg(1) medidataXml: FieldSelector. Field of type File containing the generated Medidata XML file
+	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the generation process.
+	 * @return SimpleXMLElement a SimpleXMLElement compatible with XML schema http://www.medidata.ch/mpc/XSD SendControl10.xsd
+	 */
+	public function genMedidataSendControl($args) {
+	    $this->debugLogger()->logBeginOperation('genMedidataSendControl');
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new FuncExpEvalException('genMedidataSendControl takes at least two parameters which first one should evaluate to an Element of type Wigii Company CustomerOrders, and second be a FieldSelector pointing to a field of type Files containing a Medidata generated XML file', FuncExpEvalException::INVALID_ARGUMENT);
+	    $customerOrder = $this->evaluateArg($args[0]);
+	    // fetches element if needed
+	    if($customerOrder instanceof ElementPDataFlowConnector) $customerOrder = sel($this->getPrincipal(),$customerOrder,dfasl(dfas("NullDFA")));
+	    if($customerOrder instanceof ElementP) $customerOrder = $customerOrder->getElement();
+	    if(!($customerOrder instanceof Element)) throw new FuncExpEvalException('genMedidataSendControl takes a first parameter which should evaluate to an Element of type Wigii Company CustomerOrders', FuncExpEvalException::INVALID_ARGUMENT);
+	    // gets medidata XML invoice
+	    if($args[1] instanceof FieldSelector) $xmlFieldName = $args[1]->getFieldName();
+	    else {
+	        $xmlFieldName = $this->evaluateArg($args[1]);
+	        if($xmlFieldName instanceof FieldSelector) $xmlFieldName = $xmlFieldName->getFieldName();
+	    }
+	    $xmlField = $customerOrder->getFieldList()->getField($xmlFieldName);
+	    if(!($xmlField->getDataType() instanceof Files)) throw new FuncExpEvalException('genMedidataSendControl takes second parameter which should be a FieldSelector pointing to a field of type Files containing a Medidata generated XML file', FuncExpEvalException::INVALID_ARGUMENT);
+	    
+	    // reads bag of options
+	    if($nArgs>2) {
+	        $options = $this->evaluateArg($args[2]);
+	        if(!isset($options)) $options = wigiiBPLParam();
+	        elseif(!($options instanceof WigiiBPLParameter)) throw new FuncExpEvalException('options can only be an instance of WigiiBPLParameter',FuncExpEvalException::INVALID_ARGUMENT);
+	    }
+	    else $options = wigiiBPLParam();
+	    
+	    // initializes options
+	    if($options->getValue("DistType")===null) $options->setValue("DistType",0); // 0=courrier B, 1=courrier A.
+	    if($options->getValue("DocPrinted")===null) $options->setValue("DocPrinted","true"); // true=doc already printed, Medidta does not print it; false=doc not printed, Medidata should print and send a paper copy. 
+	    $options->setValue('xmlSchema','SendControl10.xsd');
+	    $options->setValue('namespaceURI','http://www.medidata.ch/mpc/XSD');
+	    $options->setValue('namespacePrefix','mpc');
+	    
+	    // generates send control file
+	    $returnValue = $this->getXmlDoc($options);	   
+	    $xml = $this->createXmlElement($returnValue, 'DocumentsToSend', $options);
+	    $this->initializeXmlRootElement($xml, $options);
+	    
+	    $xml = $this->createXmlElement($xml, 'Document', $options);	    
+	    $xml->setAttribute('DistType', $options->getValue("DistType"));
+	    $xml->setAttribute('DocAttr', 'Tiers_Payant');
+	    $xml->setAttribute('DocPrinted', $options->getValue("DocPrinted"));
+	    $xml->setAttribute('DocSize', $this->assertNotNull($customerOrder, $xmlFieldName,'size'));
+	    $xml->setAttribute('FileName', $this->assertNotNull($customerOrder, $xmlFieldName,'name').$this->assertNotNull($customerOrder, $xmlFieldName,'type'));
+	    $xml->setAttribute('PrintLanguage', 'F');
+	    $xml->setAttribute('SenderDocId', $this->assertNotNull($customerOrder, $xmlFieldName,'name'));
+	    if($customerOrder->getFieldValue('orderStatus')=='reminderSent') $xml->setAttribute('Subject', "Rappel sur facture no ".$this->assertNotNull($customerOrder, "customerOrderNumber"));
+	    else $xml->setAttribute('Subject', "Facture no ".$this->assertNotNull($customerOrder, "customerOrderNumber"));
+	    
+	    // validates generated xml
+	    $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+	    // returns as SimpleXmlElement
+	    $returnValue = simplexml_import_dom($returnValue);
+	    $this->debugLogger()->logEndOperation('genMedidataSendControl');
+	    return $returnValue;
+	}
+	
+	/**
+	 * Sends a generated invoice request to Medidata.
+	 * The Medidata xml invoice and send control file are put into the folder CLIENT_DATA_PATH/Medidata/send and are ready to be sent to MediportCommunicator by the WigiiMedidataFileWatcher batch 
+	 * FuncExp signature : <code>sendMedidataInvoiceRequest(customerOrder,medidataXml,medidataSendControl,options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order to which is attached an XML Medidata General Invoice Request.
+	 * - Arg(1) medidataXml: FieldSelector. Field of type File containing the generated Medidata XML file
+	 * - Arg(2) medidataSendControl: FieldSelector. Field of type File containing the generated Medidata send control XML file
+	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the sending process.
+	 * @return Boolean true if files are correctly sent, else throws an exception
+	 */
+	public function sendMedidataInvoiceRequest($args) {
+	    $this->assertFxOriginIsNotPublic();
+	    $this->debugLogger()->logBeginOperation('sendMedidataInvoiceRequest');
+	    $nArgs = $this->getNumberOfArgs($args);
+	    $returnValue=false;
+	    if($nArgs < 3) throw new FuncExpEvalException('sendMedidataInvoiceRequest takes at least three parameters which first one should evaluate to an Element of type Wigii Company CustomerOrders, and the two others are FieldSelectors pointing to fields of type Files containing a Medidata generated XML files (invoice and send control)', FuncExpEvalException::INVALID_ARGUMENT);
+	    $customerOrder = $this->evaluateArg($args[0]);
+	    // fetches element if needed
+	    if($customerOrder instanceof ElementPDataFlowConnector) $customerOrder = sel($this->getPrincipal(),$customerOrder,dfasl(dfas("NullDFA")));
+	    if($customerOrder instanceof ElementP) $customerOrder = $customerOrder->getElement();
+	    if(!($customerOrder instanceof Element)) throw new FuncExpEvalException('sendMedidataInvoiceRequest takes a first parameter which should evaluate to an Element of type Wigii Company CustomerOrders', FuncExpEvalException::INVALID_ARGUMENT);
+	    // gets medidata XML invoice
+	    if($args[1] instanceof FieldSelector) $invoiceFieldName = $args[1]->getFieldName();
+	    else {
+	        $invoiceFieldName = $this->evaluateArg($args[1]);
+	        if($invoiceFieldName instanceof FieldSelector) $invoiceFieldName = $invoiceFieldName->getFieldName();
+	    }
+	    $invoiceField = $customerOrder->getFieldList()->getField($invoiceFieldName);
+	    if(!($invoiceField->getDataType() instanceof Files)) throw new FuncExpEvalException('sendMedidataInvoiceRequest takes second parameter which should be a FieldSelector pointing to a field of type Files containing a Medidata generated invoice XML file', FuncExpEvalException::INVALID_ARGUMENT);
+	    
+	    // gets medidata XML send control
+	    if($args[2] instanceof FieldSelector) $sendControlFieldName = $args[2]->getFieldName();
+	    else {
+	        $sendControlFieldName = $this->evaluateArg($args[2]);
+	        if($sendControlFieldName instanceof FieldSelector) $sendControlFieldName = $sendControlFieldName->getFieldName();
+	    }
+	    $sendControlField = $customerOrder->getFieldList()->getField($sendControlFieldName);
+	    if(!($sendControlField->getDataType() instanceof Files)) throw new FuncExpEvalException('sendMedidataInvoiceRequest takes third parameter which should be a FieldSelector pointing to a field of type Files containing a Medidata generated send control XML file', FuncExpEvalException::INVALID_ARGUMENT);
+	    	    
+	    // Dumps the xml invoice to CLIENT_DATA_PATH/Medidata/send directory
+	    sel($this->getPrincipal(),elementFile2df($customerOrder, $invoiceFieldName),dfasl(
+	        dfas("FileOutputStreamDFA","setRootFolder",CLIENT_DATA_PATH,
+	           "setFileName","Medidata/send/".$customerOrder->getFieldValue($invoiceFieldName,"name").$customerOrder->getFieldValue($invoiceFieldName,"type")
+	        )
+	    ));
+	    
+	    // Dumps the xml send control file to CLIENT_DATA_PATH/Medidata/send directory
+	    sel($this->getPrincipal(),elementFile2df($customerOrder, $sendControlFieldName),dfasl(
+	        dfas("FileOutputStreamDFA","setRootFolder",CLIENT_DATA_PATH,
+	            "setFileName","Medidata/send/".$customerOrder->getFieldValue($sendControlFieldName,"name").$customerOrder->getFieldValue($sendControlFieldName,"type")
+	            )
+	        ));
+	    
+	    $this->debugLogger()->logEndOperation('sendMedidataInvoiceRequest');
+	    return $returnValue;
 	}
 	
 	/**
@@ -249,6 +455,10 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 				// uvg
 				$this->createInvoice45uvg($returnValue, $customerOrder, $options);
 				break;
+			case 'LAMAL':
+			    // kvg
+			    $this->createInvoice45kvg($returnValue, $customerOrder, $options);
+			    break;
 			// default node is not created.
 		}
 		// treatment
@@ -444,8 +654,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @param WigiiBPLParameter $options optional bag of options to configure the generation process
 	 * @return DOMElement the created invoice ivg node
 	 */
-	protected function createInvoice45uvg($invoiceBody,$customerOrder,$options) {
-		$legalEntity = $options->getValue('legalEntity');
+	protected function createInvoice45uvg($invoiceBody,$customerOrder,$options) {		
 		$patient = $options->getValue('customer');
 		$returnValue = $this->createXmlElement($invoiceBody, 'uvg', $options);
 		$returnValue->setAttribute('insured_id', $this->assertNotNull($customerOrder, 'caseNumber'));
@@ -453,6 +662,22 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue->setAttribute('case_date', $this->assertDateNotNull($customerOrder, 'caseDate'));
 		$returnValue->setAttribute('ssn', $this->assertNoSepNotNull($patient, 'noAVS'));
 		return $returnValue;
+	}
+	
+	/**
+	 * Creates an invoice request kvg (LAMAL) node
+	 * @param DOMElement $invoiceBody current invoice body node
+	 * @param Element $customerOrder element of type CustomerOrders sourcing the invoice creation
+	 * @param WigiiBPLParameter $options optional bag of options to configure the generation process
+	 * @return DOMElement the created invoice kvg node
+	 */
+	protected function createInvoice45kvg($invoiceBody,$customerOrder,$options) {	    
+	    $patient = $options->getValue('customer');
+	    $returnValue = $this->createXmlElement($invoiceBody, 'kvg', $options);
+	    $returnValue->setAttribute('insured_id', $this->assertNoSepNotNull($patient, 'noAVS'));
+	    $returnValue->setAttribute('case_id', $this->assertNotNull($customerOrder, 'caseNumber'));
+	    $returnValue->setAttribute('case_date', $this->assertDateNotNull($customerOrder, 'caseDate'));	   
+	    return $returnValue;
 	}
 	
 	/**
@@ -554,7 +779,22 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		}		
 		return $returnValue;
 	}
-	
+	/**
+	 * Loads an XML document from a given xml string
+	 * @param String $xmlString xml string to be parsed into an xml document
+	 * @return DOMDocument
+	 */
+	protected function loadXmlDoc($xmlString) {
+	    set_error_handler(function($errno, $errstr, $errfile, $errline, $errcontext){
+	        $e = new WigiiMedidataException("Invalid XML document: ".$errno." ".$errstr, WigiiMedidataException::XML_VALIDATION_ERROR);
+	        restore_error_handler();
+	        throw $e;
+	    });
+	    $returnValue = new DOMDocument();
+	    $returnValue->loadXML($xmlString);
+	    restore_error_handler();
+	    return $returnValue;
+	}
 	/**
 	 * Initializes XML root element with standard namespace declarations and other attributes based on given options
 	 * @param DOMElement $xmlRootNode XML root element
@@ -579,7 +819,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Creates or gets an XML Element givent its parent node, and name.
+	 * Creates or gets an XML Element given its parent node, and name.
 	 * @param DOMNode $parentNode existing XML node in which to create or find given element
 	 * @param String $name element tag name
 	 * @param WigiiBPLParameter $options a bag of options containing at least the namespaceURI and namespacePrefix
@@ -594,7 +834,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Creates and appends an XML Element givent its parent node, and name.
+	 * Creates and appends an XML Element given its parent node, and name.
 	 * @param DOMNode $parentNode existing XML node in which to create the element
 	 * @param String $name element tag name
 	 * @param WigiiBPLParameter $options a bag of options containing at least the namespaceURI and namespacePrefix
@@ -606,10 +846,23 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Creates or gets an XML Element givent its parent node, local name and namespace.
+	 * Gets or inserts an XML Element given its parent node, and name, before a given node.
+	 * @param DOMNode $parentNode existing XML node in which to create the element
+	 * @param String $name element tag name
+	 * @param DOMNode $beforeNode existing XML node before which to create the element
+	 * @param WigiiBPLParameter $options a bag of options containing at least the namespaceURI and namespacePrefix
+	 * @return DOMElement created xml element
+	 */
+	protected function insertXmlElement($parentNode,$name,$beforeNode,$options) {
+	    if(!isset($options)) $options = wigiiBPLParam();
+	    return $this->insertXmlElementByName($parentNode, $options->getValue('namespaceURI'), $options->getValue('namespacePrefix'), $name, $beforeNode);
+	}
+	
+	/**
+	 * Creates or gets an XML Element given its parent node, local name and namespace.
 	 * @param DOMDocument|DOMElement $parentNode existing XML node in which to create or find given element
 	 * @param String $namespaceURI xml namespace of the element
-	 * @param String $namespacePrefix actual namespace used prefi 
+	 * @param String $namespacePrefix actual namespace used prefix 
 	 * @param String $localName element tag name
 	 * @return DOMElement created or found xml element
 	 */
@@ -630,10 +883,10 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Creates and appends an XML Element givent its parent node, local name and namespace.
+	 * Creates and appends an XML Element given its parent node, local name and namespace.
 	 * @param DOMDocument|DOMElement $parentNode existing XML node in which to create the element
 	 * @param String $namespaceURI xml namespace of the element
-	 * @param String $namespacePrefix actual namespace used prefi
+	 * @param String $namespacePrefix actual namespace used prefix
 	 * @param String $localName element tag name
 	 * @return DOMElement created xml element
 	 */
@@ -646,6 +899,31 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$parentNode->appendChild($returnValue);
 		if($returnValue===false) throw new WigiiMedidataException("error creating xml element '$localName' attached to parent node ".$parentNode->getNodePath(), WigiiMedidataException::XML_VALIDATION_ERROR);
 		return $returnValue;
+	}
+	
+	/**
+	 * Inserts before a given node an XML Element given its parent node, local name and namespace. If element already exists, returns it.
+	 * @param DOMDocument|DOMElement $parentNode existing XML node in which to create or find given element
+	 * @param String $namespaceURI xml namespace of the element
+	 * @param String $namespacePrefix actual namespace used prefix
+	 * @param String $localName element tag name
+	 * @param DOMNode $beforeNode existing XML node before which to create the element
+	 * @return DOMElement created or found xml element
+	 */
+	protected function insertXmlElementByName($parentNode,$namespaceURI,$namespacePrefix,$localName,$beforeNode) {
+	    if(!isset($parentNode)) throw new FuncExpEvalException('parentNode cannot be null',FuncExpEvalException::INVALID_ARGUMENT);
+	    // first looks for any existing node having this name
+	    $returnValue = $parentNode->getElementsByTagNameNS($namespaceURI, $localName);
+	    if($returnValue->length>0) $returnValue = $returnValue->item(0);
+	    // if not found, creates a new child node
+	    else {
+	        if($namespaceURI) $returnValue = $this->getXmlDoc($parentNode)->createElementNS($namespaceURI,($namespacePrefix?$namespacePrefix.':':'').$localName);
+	        else $returnValue = $this->getXmlDoc($parentNode)->createElement($localName);
+	        // inserts child node into parent, before given node
+	        $returnValue = $parentNode->insertBefore($returnValue,$beforeNode);
+	    }
+	    if($returnValue===false) throw new WigiiMedidataException("error inserting xml element '$localName' attached to parent node ".$parentNode->getNodePath(), WigiiMedidataException::XML_VALIDATION_ERROR);
+	    return $returnValue;
 	}
 	
 	// Validation
@@ -761,7 +1039,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		elseif(is_object($element)) $returnValue = $element->{$fieldName}; 
 		else $returnValue = $element;
 		if(!is_numeric($returnValue)) {
-			if(!(empty($returnValue) && $allowNull)) throw new WigiiMedidataException("Field '$fieldName' is not a valid number",WigiiMedidataException::XML_VALIDATION_ERROR);
+			if(!(empty($returnValue) && $allowNull)) throw new WigiiMedidataException("Field '$fieldName' is not a valid number: '$returnValue'",WigiiMedidataException::XML_VALIDATION_ERROR);
 		}		
 		return $returnValue;
 	}	
