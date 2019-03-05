@@ -29,6 +29,18 @@
 class WigiiMedidataException extends ServiceException
 {			
 	const XML_VALIDATION_ERROR = 10200;
+	/**
+	 * Mediport Communicator is not installed on client machine
+	 */
+	const MPC_NOT_INSTALLED = 10201;
+	/**
+	 * WinSCP is not installed on client machine
+	 */
+	const WINSCP_NOT_INSTALLED = 10202;
+	/**
+	 * WinSCP communication error. See WinSCP log file for more details.
+	 */
+	const WINSCP_ERROR = 10203;
 	
 	public function __construct($message = "", $code = parent::UNKNOWN_ERROR, $previous=null) {
 		parent::__construct($message, $code, $previous);
