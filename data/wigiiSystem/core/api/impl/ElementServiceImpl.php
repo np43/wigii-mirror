@@ -26,6 +26,7 @@
  * Created by CWE on 2 juin 09
  * Modified by CWE on 9 février 2014 to add support of sub elements
  * Modified by Medair (CWE,LMA) on 06.12.2016 to optimize SQL query for getAllElementsInGroups
+ * Modified by Wigii.org (CWE) on 06.03.2019 to prevent parent folder injection in file path
  */
 class ElementServiceImpl implements ElementService
 {
@@ -8571,6 +8572,11 @@ class ElementSqlBuilderForMultipleElement extends ElementSqlBuilder
 		}
 		else $okForUpdate = true;
 
+		// CWE 06.03.2019 removes any parent folder injection in file path
+		if($subFieldName == 'path' && $dataType->getDataTypeName() === "Files") {
+		    $val = str_replace(array('../','..\\'), '', $val);
+		}
+		
 		if($okForUpdate)
 		{
 			//if multilanguage

@@ -25,6 +25,7 @@
  * Element Service base SQL builder
  * Created by CWE on 26 sept. 09
  * Changed by Medair (CWE,LMA) on 06.12.2016 to allow deeper inheritance
+ * Modified by Wigii.org (CWE) on 06.03.2019 to prevent parent folder injection in file path
  */
 class ElementSqlBuilder extends MySqlQueryBuilder implements FieldListVisitor, ElementDataTypeSubfieldVisitor, LogExpVisitor
 {
@@ -712,6 +713,12 @@ class ElementSqlBuilder extends MySqlQueryBuilder implements FieldListVisitor, E
 			if(is_array($val)) $val = $val[$lang];
 			$subFieldName .= "_".$lang;
 		}
+		
+		// CWE 06.03.2019 removes any parent folder injection in file path
+		if($subFieldName == 'path' && $dataType->getDataTypeName() === "Files") {
+		    $val = str_replace(array('../','..\\'), '', $val);
+		}
+		
 		// If first field then inserts field name
 		if($this->fieldCounter === 0)
 		{
@@ -732,6 +739,12 @@ class ElementSqlBuilder extends MySqlQueryBuilder implements FieldListVisitor, E
 			if(is_array($val)) $val = $val[$lang];
 			$subFieldName .= "_".$lang;
 		}
+		
+		// CWE 06.03.2019 removes any parent folder injection in file path
+		if($subFieldName == 'path' && $dataType->getDataTypeName() === "Files") {
+		    $val = str_replace(array('../','..\\'), '', $val);
+		}
+		
 		$this->insertValue($subFieldName, $this->preformatValue($val, $subFieldType, $sqlType), $sqlType);
 	}
 	protected function actOnSubfieldForUpdate($field, $dataType, $subFieldName, $subFieldType, $sqlType, $userSelectedSubField, $lang)
@@ -757,6 +770,11 @@ class ElementSqlBuilder extends MySqlQueryBuilder implements FieldListVisitor, E
 		}
 		else $okForUpdate = true;
 
+		// CWE 06.03.2019 removes any parent folder injection in file path
+		if($subFieldName == 'path' && $dataType->getDataTypeName() === "Files") {
+            $val = str_replace(array('../','..\\'), '', $val);
+		}
+		
 		if($okForUpdate)
 		{
 			//if multilanguage
