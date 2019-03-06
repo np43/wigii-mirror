@@ -181,6 +181,7 @@ class WigiiBagIndicatorEvaluatorImpl implements WigiiBag, IndicatorEvaluator {
 				}
 				break;
 			case Indicator::FUNC_COUNT_DISTINCT:
+				if($values==null) $result = null;
 				$result = array_fill_keys($values, 1);
 				unset($result[""]);
 				unset($result[null]);
