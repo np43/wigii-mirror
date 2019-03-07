@@ -25,6 +25,7 @@
  * Web Impl PHP general functions
  * Created on 24 juil. 09 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Wigii.org (CWE) on 06.03.2019 to resolve file system paths
  */
 
 /**
@@ -189,39 +190,8 @@ function isImage($mimeType){
 if(!function_exists('imagebmp')) include_once(IMPL_PATH . "libs/bmp.php");
 
 function cutImage($srcfile, $dstfile, $dstW=null, $dstH=null) {
-
-	//this is a try using the phpThumb library without success. It seem that this library use behind the same imagecreate functions, therefore we don't have better chance to generates thumbnails for big images
-//	global $PHPTHUMB_CONFIG;
-////	fput($PHPTHUMB_CONFIG);
-//	$phpThumb = new phpThumb();
-//	$srcfile = '../../../../../'.$srcfile;
-//	$dstfile = '../../../../../'.$dstfile;
-//	$phpThumb->setSourceFilename($srcfile);
-//	$phpThumb->RenderToFile($dstfile);
-//	if($dstW) $phpThumb->setParameter('w', $dstW);
-//	if($dstW) $phpThumb->setParameter('h', $dstH);
-//	if($dstW) $phpThumb->setParameter('sia', $dstfile);
-//	$message = "object is created";
-//	if ($phpThumb->GenerateThumbnail()) {
-//        $message= "Image rended successfully in $dstfile";
-////        if ($phpThumb->RenderToFile($dstfile)) {
-////            //image uploaded - you will probably need to put image info into a database at this point
-////            $message="Image rended successfully.";
-////        } else {
-////            //unable to write file to final destination directory - check folder permissions
-////            $message= "Error! Please try again (render).";
-////        }
-//    } else {
-//        //unable to generate the image
-//        $message= "Error! Please try again (generate, from: $srcfile to: $dstfile).";
-//    }
-//    fput($message);
-//	return true;
-
-	//fput("cutImage: ".$srcfile." -> ".$dstfile);
-	// prends la taille de l image source
+	// prends la taille de l'image source
 	$srcinfo = getimagesize($srcfile);
-//	fput("1");
 	$srcW = $srcinfo[0];
 	$srcH = $srcinfo[1];
 
@@ -229,19 +199,13 @@ function cutImage($srcfile, $dstfile, $dstW=null, $dstH=null) {
 	//avec des essais, j'ai réussi à passé un jpeg de 3500x2625 = 9187500
 	//avec 3600x2700 = 9720000 ça n'a pas marché
 	//4225x2812 = 11880700 ok pour 64M on peu laisser la valeur pour 48M
-//	fput($srcW * $srcH);
-//	fput(ini_get("memory_limit"));
 	if($srcW * $srcH > 9187500) return true;
-//	fput("2");
 
 	if($dstW==null) $dstW = $srcW/$srcH * $dstH;
 	if($dstH==null) $dstH = $srcH/$srcW * $dstW;
 
 	if($dstH > $srcH) $dstH = $srcH;
 	if($dstW > $srcW) $dstW = $srcW;
-
-//	eput($srcinfo);
-//	return;
 
 	// trouve le type de l'image
 	switch ($srcinfo[2]) {
@@ -263,8 +227,6 @@ function cutImage($srcfile, $dstfile, $dstW=null, $dstH=null) {
 
 	// cree les resources images
 	$dstimg = imagecreatetruecolor($dstW, $dstH);
-	//fput("3");
-
 	switch ($srctype) {
 		case "jpg" :
 			$srcimg = imagecreatefromjpeg($srcfile);
@@ -282,22 +244,14 @@ function cutImage($srcfile, $dstfile, $dstW=null, $dstH=null) {
 			//et pour utiliser le imagesavealpha, il faut désactiver l'alphablending
 			imagealphablending($dstimg, false);
 			imagesavealpha($dstimg, true);
-			//fput("3.1");
 			$trans_colour = imagecolortransparent($dstimg);
-			//$trans_colour = imagecolorallocate($dstimg, $trans_colour);
-			//fput("3.2");
-			//fput($dstimg." ".$trans_colour);
 			imagefill($dstimg, 0, 0, $trans_colour);
-			//fput("3.3");
 			$srcimg = imagecreatefrompng($srcfile);
-			//fput("3.4");
 			break;
 		case "bmp" :
 			$srcimg = imagecreatefrombmp($srcfile);
 			break;
 	}
-	//fput("4");
-
 
 	// image source plus etroite que image destination
 	if (($dstW / $dstH) > ($srcW / $srcH)) {
@@ -314,13 +268,6 @@ function cutImage($srcfile, $dstfile, $dstW=null, $dstH=null) {
 
 		imagecopyresampled($dstimg, $srcimg, 0, 0, $srcX, 0, $dstW, $dstH, $tmpW, $srcH);
 	}
-	//fput("5");
-
-
-//	$trans_colour = imagecolortransparent($srcimg);
-//	imagecolortransparent($dstimg, $trans_colour);
-//	imagefill($dstimg, 0, 0, $trans_colour);
-	//imagefill($dstimg, 0, 0, $trans_colour);
 
 	switch ($srctype) {
 		case "jpg" :
@@ -340,7 +287,31 @@ function cutImage($srcfile, $dstfile, $dstW=null, $dstH=null) {
 	chmod($dstfile, 0666);
 	umask($old);
 
-	//fput("6");
-
 	return true;
+}
+/**
+ * Resolves a Wigii file path on the server and returns a physical path from which the file can be read.
+ * Does not check for existence of the file on the disk.
+ * @param String $path the logical file path to resolve
+ * @return String a physical path on the server file system
+ */
+function resolveFilePath($path) {
+    // sanitizes file path
+    $path = str_replace(array('../','..\\'), '', $path);
+    // splits on protocol delimiter
+    $returnValue = explode("://", $path);
+    // switch based on file storage protocols
+    if(count($returnValue)>1) {
+        switch($returnValue[0]) {
+            case "file":
+                $returnValue = CLIENT_DATA_PATH.$returnValue[1];
+                break;
+            default:
+                throw new ServiceException('Unsupported file storage protocol: '.$returnValue[0], ServiceException::UNSUPPORTED_OPERATION);
+                break;
+        }
+    }
+    // else returns standard Wigii file path
+    else $returnValue = FILES_PATH.$path;    
+    return $returnValue;
 }

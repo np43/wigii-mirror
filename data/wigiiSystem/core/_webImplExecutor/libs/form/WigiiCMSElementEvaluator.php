@@ -94,7 +94,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		if($path && $this->getRecord()->getFieldValue($booleanFieldName)){
 			$filename = str_replace(["/","\\"],"",$this->getRecord()->getFieldValue($fileFieldName,"name").$this->getRecord()->getFieldValue($fileFieldName,"type"));
 			$filepath =  CLIENT_WEB_PATH."wcms/".$filename;
-			if(!copy(FILES_PATH.$path,$filepath)) throw new ServiceException("Error on copying ".$filePath." in the Client web folder:".$filepath, ServiceException::FORBIDDEN);
+			if(!copy(FILES_PATH.$path,$filepath)) throw new ServiceException("Error on copying ".$path." in the Client web folder:".$filepath, ServiceException::FORBIDDEN);
 			$returnValue = true;
 		}
 		return $returnValue;

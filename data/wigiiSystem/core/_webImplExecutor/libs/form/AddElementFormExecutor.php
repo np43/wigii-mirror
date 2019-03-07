@@ -129,14 +129,14 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 			$fsl->addFieldSelector($isKey->getName(), $subFieldname);
 			$lf->setFieldSelectorList($fsl);
 			$lf->setFieldSelectorLogExp(LogExp :: createEqualExp(FieldSelector :: createInstance($isKey->getName(), $subFieldname), $this->getRecord()->getFieldValue($isKey->getName(), $subFieldname)));
-			$elS->getAllElementsInGroup($p, $groupPList->getItemInList($this->getGroupIdInWhichToAdd($p, $exec)), $elPl, true, $lf);
+			$elS->getAllElementsInGroup($p, $groupPList->getItemInList($this->getGroupIdInWhichToAdd($p, $exec)), $elPl, ($isKey["isUniqueInGroup"]=="1"?false:true), $lf);
 			if($elPl->count()>0){				
 				//if the isKey field was found, then update the item
 				if($isKey["isKey"]=='1') {
 					$this->getRecord()->setId(key($elPl->getListIterator()));
 					parent::actOnCheckedRecord($p, $exec);
 				}
-				// else isUnique=1, then displays a duplicate error on the unique field
+				// else isUnique=1 or isUniqueInGroup=1, then displays a duplicate error on the unique field
 				else {
 					$this->addErrorToField($transS->h($p, "isUniqueError"), $isKey->getName());
 					$this->setState("check");

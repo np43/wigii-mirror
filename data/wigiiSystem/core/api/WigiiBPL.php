@@ -1359,7 +1359,6 @@ class WigiiBPL
 				$gpl = GroupListArrayImpl::createInstance ();
 				ServiceProvider::getGroupAdminService ()->getGroupsWithoutDetail ( $principal, $oldGids, $gpl );
 				$currentGroups = $configS->getGroupPList ( $principal, $exec->getCrtModule () )->getIds ();
-				$removeCurrentItemFromList = false;
 				foreach ( $gpl->getListIterator () as $group ) {
 					// notification here do not follow the skipNotification as it is a sharing notification and not an update notification
 					if($wigiiEventsSubscriber) $wigiiEventsSubscriber->unshareElement ( PWithElementWithGroup::createInstance ( $principal, $element, $group ) );
@@ -1926,7 +1925,6 @@ class WigiiBPL
 			}
 		}
 		catch(Exception $e) {
-			if($changedNamespace && isset($crtNamespace)) $principal->bindToWigiiNamespace($crtNamespace);
 			$this->executionSink()->publishEndOperationOnError("elementGetWigiiNamespaceArray", $e, $principal);
 			throw $e;
 		}
@@ -2105,7 +2103,182 @@ class WigiiBPL
 	    }
 	    $this->executionSink()->publishEndOperation("groupGetTrashbin", $principal);
 	    return $returnValue;
-	}	
+	}
+	
+	/**
+	 * Synchronizes the elements contained in a group with the files present in a physical folder on the file system
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the groupSyncElementsWithFileSystem business process needs the following parameters to run :
+	 * - group: int|Group|GroupP. Group (or group id) in which to synchronize the elements
+	 * - folderPath: String. Optional folder path on server where to look for the files to synchronize. 
+	 *   If not given, takes Group portal url field which should be of type file://xxx
+	 * - linkGroupToFolder: Boolean. Optional. If true, then group portal url is updated with folder path and group is persisted,  
+	 *   sub groups are created and linked to sub folders (sub content is not synchronized. To synchronize whole tree, set includeChildrenGroups=true) 
+	 *   If false, only elements are linked to files on file system. Defaults to false.
+	 * - includeChildrenGroups: Boolean. Optional. If true, then updates whole tree recursively. Defaults to false.
+	 * - fieldName: String. Field of type Files mapped to the file in the file system. 
+	 *   If not given, takes first field of type Files having attribute uniqueInGroup=1. 
+	 *   File name is used as a mapping key. If several elements match file name, then takes first match.
+	 * - noCalculation: Boolean. If true, then element calculated fields are not re-calculated. By default calculation is active.
+	 * - refreshGUI: Boolean. If true, then Wigii web user interface is asked to clear its group caches when sharing of element changes.
+	 *   If explicitely set to false, then nothing is sent to Wigii GUI. By default, GUI is refreshed.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error	 
+	 */
+	public function groupSyncElementsWithFileSystem($principal, $caller, $parameter, $executionSink=null) {
+	    $this->executionSink()->publishStartOperation("groupSyncElementsWithFileSystem", $principal);
+	    $returnValue = null;
+	    try {
+	        if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);	        
+	        
+	        $exec = ServiceProvider::getExecutionService();
+	        $groupAS = $this->getGroupAdminService();
+	        
+	        // extracts parameters
+	        
+	        $group = $parameter->getValue('group');
+	        if(!is_object($group)) $group = $this->getGroupAdminService()->getGroup($principal, $group);
+	        if($group instanceof GroupP) $group = $group->getDbEntity();
+	        if(!isset($group)) throw new WigiiBPLException('group cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        $linkGroupToFolder = $parameter->getValue('linkGroupToFolder');
+	        $includeChildrenGroups = $parameter->getValue('includeChildrenGroups');
+	        $persistGroupPortal=($linkGroupToFolder==true);
+	        $portalRec = $this->getWigiiExecutor()->createActivityRecordForForm($principal, Activity::createInstance("groupPortal"), $exec->getCrtModule());
+	        $portalRec->getWigiiBag()->importFromSerializedArray($group->getDetail()->getPortal(), $portalRec->getActivity());	        
+	        
+	        $fieldName = $parameter->getValue('fieldName');
+	        if(!$fieldName) {
+	            $fieldName = $this->getWigiiExecutor()->doesCrtModuleHasIsKeyField($principal, $group->getModule());
+	            if($fieldName) $fieldName = $fieldName->getName();
+	            else $fieldName = null;
+	        }
+	        if(!$fieldName) throw new WigiiBPLException('no field name is given, and no key or unique field is defined in configuration. Configure a field of type Files with isUniqueInGroup=1', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        $noCalculation = ($parameter->getValue('noCalculation')==true);
+	        $refreshGUI = $parameter->getValue('refreshGUI');
+	        if(is_null($refreshGUI)) $refreshGUI = true;
+	        
+	        $folderPath = $parameter->getValue('folderPath');
+	        if(empty($folderPath)) {
+	            // extracts folder path from group portal	            
+	            $folderPath = $portalRec->getFieldValue("url", "url");
+	            // evaluates any given FuncExp
+	            $folderPath = $this->evaluateConfigParameter($principal,$folderPath);
+	            $persistGroupPortal=false;
+	        }
+	        if(empty($folderPath)) throw new WigiiBPLException('no folderPath is given and group is not linked to a web address of type file://', WigiiBPLException::INVALID_ARGUMENT);
+	        // checks folderPath
+	        if(strpos($folderPath, 'file://')===false) $folderPath='file://'.$folderPath;
+	        // removes ending slash
+	        if(substr($folderPath, -1)=="/") $folderPath = substr($folderPath,0,-1);	        
+	        $physicalPath = resolveFilePath($folderPath);
+	        if(!file_exists($physicalPath)) throw new WigiiBPLException('folder path '.$folderPath.' does not point to any existing and valid folder on the server',WigiiBPLException::NOT_ALLOWED);
+	        // adds ending slash
+	        $folderPath.= '/';
+	        
+	        // persists folder path in group portal
+	        if($persistGroupPortal) {
+	            $portalRec->setFieldValue($folderPath, "url", "url");
+	            $group->getDetail()->setPortal($portalRec->getWigiiBag()->exportAsSerializedArray($portalRec->getActivity()));
+	            $groupAS->setPortal($principal, $group->getId(), $group->getDetail()->getPortal());
+	        }
+	        
+	        // lists all files contained in directory
+	        $files = scandir($physicalPath);
+	        // maps each file to an element and stores sub folders for later.
+	        if($files) {	            
+	            $ctx = (object)array("subFolders"=>array());
+	            $dfasl = dfasl(
+	                dfas("CallbackDFA","setProcessDataChunkCallback",function($data,$callbackDFA) use($ctx,$physicalPath,$folderPath) {
+	                    // skips . and .. directories
+	                    if($data=='.' || $data=='..') return;
+	                    $filename = $physicalPath."/".$data;
+	                    // stores sub directory for later usage
+	                    if(is_dir($filename)) $ctx->subFolders[] = $data;
+	                    // else extracts file extension and sub fields
+	                    else {
+    	                    $ext = explode(".", $data);    	                    
+    	                    if(count($ext) > 1){    	                        
+    	                        $ext = end($ext);
+    	                        $ext = ".".$ext;
+    	                    } else $ext = "";
+    	                    // builds file subfields
+    	                    $returnValue = array();
+    	                    $returnValue["type"] = strtolower($ext);
+    	                    $returnValue["size"] = filesize($filename);
+    	                    $returnValue["name"] = basename($data,$ext);
+    	                    $returnValue["date"] = date("Y-m-d H:i:s",filemtime($filename));
+    	                    if($ext!='') $returnValue["mime"] = typeMime($ext);
+    	                    $returnValue["path"] = $folderPath.$data;
+    	                    // pushes file subfields down in the flow
+    	                    $callbackDFA->writeResultToOutput((object)$returnValue);
+	                    }
+	                }),
+	                dfas("MapObject2ElementDFA","setGroupId",$group->getId(),"setElementSelectorMethod",function($data,$dataFlowContext) use($fieldName){
+	                    // selects element having same name (with extension)
+	                    return lxAnd(lxEq(fs($fieldName,'name'),$data->name),lxEq(fs($fieldName,'type'),$data->type));
+	                },
+	                "setObject2ElementMap",array(
+	                    "name"=>fs($fieldName,'name'),
+	                    "type"=>fs($fieldName,'type'),
+	                    "size"=>fs($fieldName,'size'),
+	                    "date"=>fs($fieldName,'date'),
+	                    "mime"=>fs($fieldName,'mime'),
+	                    "path"=>fs($fieldName,'path')
+	                ))
+	            );
+	            // Element recalculation
+	            if(!$noCalculation) $dfasl->addDataFlowActivitySelectorInstance(dfas('ElementRecalcDFA'));
+	            // Persist element in database
+	            $dfasl->addDataFlowActivitySelectorInstance(dfas('ElementDFA','setMode',1));
+	            // runs data flow
+	            sel($principal,array2df($files),$dfasl);
+	            // invalidates list view cache
+	            if($refreshGUI) $exec->invalidCache ( $principal, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $group->getId () );
+	            
+	            // creates sub groups based on sub folders
+	            if(!empty($ctx->subFolders) && ($linkGroupToFolder || $includeChildrenGroups)) {
+	                foreach($ctx->subFolders as $subFolder) {
+	                    // gets or creates group based on subFolder name
+	                    $subGroup = $groupAS->getOrCreateSubGroupByName($principal, $group->getId(), $subFolder);
+	                    $subGroup = $subGroup->getDbEntity();
+	                    // calls recursively groupSyncElementsWithFileSystem to populate all sub groups
+	                    if($includeChildrenGroups) {
+	                        $parameter->setValue('group', $subGroup);
+	                        $parameter->setValue('folderPath',$folderPath.$subFolder);
+	                        $parameter->setValue('linkGroupToFolder', true);
+	                        $parameter->setValue('refreshGUI', false);
+	                        $parameter->setValue('fieldName', $fieldName);
+	                        $this->groupSyncElementsWithFileSystem($principal, $this, $parameter,$executionSink);
+	                    }	                    
+	                    // else only persists folder path in group portal
+	                    else {
+    	                    $portalRec = $this->getWigiiExecutor()->createActivityRecordForForm($principal, Activity::createInstance("groupPortal"), $exec->getCrtModule());
+    	                    $portalRec->getWigiiBag()->importFromSerializedArray($subGroup->getDetail()->getPortal(), $portalRec->getActivity());
+    	                    $portalRec->setFieldValue($folderPath.$subFolder, "url", "url");
+    	                    $subGroup->getDetail()->setPortal($portalRec->getWigiiBag()->exportAsSerializedArray($portalRec->getActivity()));
+    	                    $groupAS->setPortal($principal, $subGroup->getId(), $subGroup->getDetail()->getPortal());
+    	                    // invalidates list view cache of sub group
+    	                    if($refreshGUI) $exec->invalidCache ( $principal, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $subGroup->getId () );
+	                    }
+	                }
+	                // refreshes group panel
+	                if($refreshGUI) {
+	                    $exec->addRequests("groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel");
+	                }
+	            }
+	        }
+	    }
+	    catch(Exception $e) {
+	        $this->executionSink()->publishEndOperationOnError("groupSyncElementsWithFileSystem", $e, $principal);
+	        throw $e;
+	    }
+	    $this->executionSink()->publishEndOperation("groupSyncElementsWithFileSystem", $principal);
+	    return $returnValue;
+	}
 	
 	/**
 	 * Fetches some posted data from HTTP POST request and builds an object based on the provided type
@@ -2138,7 +2311,7 @@ class WigiiBPL
 					$returnValue=$this->recordFetchFromPost($principal, $currentObject);
 					break;
 				case 'activity':
-					$configSelector=$parameter->getValue('configSelector');
+					//$configSelector=$parameter->getValue('configSelector');
 					WigiiBPLException::throwNotImplemented();
 					//$this->getWigiiExecutor()->createActivityRecordForForm($principal, $activity, $module)
 					break;
@@ -2382,7 +2555,7 @@ class WigiiBPL
 	 * @param Principal $p principal executing the request
 	 * @param FuncExp $fx the FuncExp instance to evaluate
 	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
-	 * @return Any FuncExp result
+	 * @return mixed FuncExp result
 	 */
 	public function evaluateFuncExp($principal,$fx,$rec=null) {
 	    return $this->getWigiiExecutor()->evaluateFuncExp($principal, ServiceProvider::getExecutionService(), $fx, $rec);
@@ -2393,7 +2566,7 @@ class WigiiBPL
 	 * @param Principal $p principal executing the request
 	 * @param String $parameter the configuration parameter to evaluate
 	 * @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
-	 * @return Any FuncExp result
+	 * @return mixed FuncExp result
 	 */
 	public function evaluateConfigParameter($p,$parameter,$rec=null) {
 	    return $this->getWigiiExecutor()->evaluateConfigParameter($p, ServiceProvider::getExecutionService(), $parameter, $rec);

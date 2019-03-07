@@ -177,7 +177,7 @@ class ElementPListRowsForInfoElementImpl extends ElementPListWebImplWithWigiiExe
 			$d = $disp[$fieldName.($subFieldName ? ".".$subFieldName : '')];
 			if($d){
 				if($subFieldName == "path"){
-					readfile(FILES_PATH.$value);
+				    readfile(resolveFilePath($value));
 				} else {
 					$this->addCell($value);
 				}

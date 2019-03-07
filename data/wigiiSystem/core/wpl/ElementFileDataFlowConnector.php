@@ -139,7 +139,7 @@ class ElementFileDataFlowConnector implements InputDataFlow
 			}
 			// else checks in FILES_PATH
 			else {
-				$filePath = FILES_PATH.$fileName;
+			    $filePath = resolveFilePath($fileName);
 				if(file_exists($filePath)) {
 					$this->content = fopen($filePath,'r');
 					if($this->content===false) {

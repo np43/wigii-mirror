@@ -2179,7 +2179,7 @@ class TemplateRecordManager extends Model {
 									$previewClass = 'imgPreview';
 								} else if($type == ".svg" || $type == ".txt"){
 									if($octet < 1024*1024){
-										$textContent = '</div></div><div style="width:100%" class="field" >'.file_get_contents(FILES_PATH.$path).'</div><div><div>';
+									    $textContent = '</div></div><div style="width:100%" class="field" >'.file_get_contents(resolveFilePath($path)).'</div><div><div>';
 									}
 								}
 								//add preview

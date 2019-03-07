@@ -766,10 +766,12 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 			// Detects Box files
 			$isBoxFile = $fileName && strstr($fileName, "box://");
 			$isOldBoxFile = $oldFileName && strstr($oldFileName, "box://");
+			// Detects client files
+			$isOldClientFile = $oldFileName && strstr($oldFileName, "file://");
 			
 			//if the deleteFile is checked then delete the oldFile + thumbnail
 			//this work only if oldRecord is defined
-			if($fileName == null && $oldRecord!=null && !$isOldBoxFile){
+			if($fileName == null && $oldRecord!=null && !$isOldBoxFile && !$isOldClientFile){
 				if (isImage($oldRecord->getFieldValue($fieldName, "mime"))) @unlink(FILES_PATH."tn_".$oldFileName);
 				if($oldFileName && $fieldXml["keepHistory"]>0){
 					$this->pushFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
@@ -785,7 +787,6 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 				$filePath = TEMPORARYUPLOADEDFILE_path.$fileName;
 		
 				if(!$storeFileInWigiiBag){
-					//						fput("move  $filePath in ".FILES_PATH.$fileName);
 					//move the tempFile into client folder
 					if(!rename($filePath, FILES_PATH.$fileName)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$filePath." in the Client folder:".FILES_PATH.$fileName, ServiceException::FORBIDDEN);
 		
@@ -804,12 +805,11 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 					}
 				}
 		
-				//					fput("delete old file $fieldName:".$oldFileName);
 				//delete old file if setted
 				if($oldFileName != null && !$isOldBoxFile && isImage($oldRecord->getFieldValue($fieldName, "mime"))){
 					@unlink(FILES_PATH."tn_".$oldFileName);
 				}
-				if($oldFileName != null && !$isOldBoxFile){
+				if($oldFileName != null && !$isOldBoxFile && !$isOldClientFile){
 					if($oldFileName && $fieldXml["keepHistory"]>0){
 						$this->pushFileToHistory($p, $exec, (string)$fieldXml["keepHistory"], $oldRecord, $fieldName);
 					} else {

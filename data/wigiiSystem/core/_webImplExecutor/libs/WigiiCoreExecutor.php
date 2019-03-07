@@ -1159,7 +1159,6 @@ class WigiiCoreExecutor {
 	protected function includeGroupPortal($crtGroupP, $p, $exec, $transS, $configS) {
 		$this->debugLogger()->logBeginOperation("group portal");
 		$url = null;
-		//we the group details		
 		//if detail = null, then do nothing
 		if($crtGroupP->getGroup()->getDetail()!=null){ 			
 			$portalRec = $this->createActivityRecordForForm($p, Activity::createInstance("groupPortal"), $exec->getCrtModule());
@@ -1167,7 +1166,13 @@ class WigiiCoreExecutor {
 			$url = $portalRec->getFieldValue("url", "url");
 			// evaluates any given FuncExp
 			$url = $this->evaluateConfigParameter($p,$exec,$url);
-			if(!empty($url)){
+			// CWE 06.03.2019 if url is of type file:// then synchronizes group content with folder path
+			if(strpos($url, 'file://')!==false) {
+			    ServiceProvider::getWigiiBPL()->groupSyncElementsWithFileSystem($p, $this, wigiiBPLParam("group",$crtGroupP,"linkGroupToFolder",true));
+			    // puts back url to null to still display list view
+			    $url=null;
+			}
+			else if(!empty($url)){
 					$cooKieName = $portalRec->getFieldValue("groupPortalCookieName");
 					if($portalRec->getFieldValue("groupPortalCookieIncludeRoles")){
 						$roleList = $p->getRoleListener()->getRolesPerWigiiNamespaceModule($exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl(), $exec->getCrtModule()->getModuleUrl());
@@ -3603,15 +3608,15 @@ invalidCompleteCache();
 		return $fileFields;
 	}
 	/**
-	* Checks if a module has a field tagged with isKey or isUnique
-	* Warning a module should not have several isKey or isUnique fields
+	* Checks if a module has a field tagged with isKey or isUnique or isUniqueInGroup
+	* Warning a module should not have several isKey or isUnique or isUniqueInGroup fields
 	* @return SimpleXMLElement|Boolean returns false if not, returns the first found field if yes
 	*/
 	public function doesCrtModuleHasIsKeyField($p, $module) {
 		$this->executionSink()->publishStartOperation("doesCrtModuleHasIsKeyField");
 
 		$configS = $this->getConfigurationContext();
-		$fields = $configS->mf($p, $module)->xpath("*[@isKey='1' or @isUnique='1']");
+		$fields = $configS->mf($p, $module)->xpath("*[@isKey='1' or @isUnique='1' or @isUniqueInGroup='1']");
 
 		$this->executionSink()->publishEndOperation("doesCrtModuleHasIsKeyField");
 
@@ -3619,7 +3624,7 @@ invalidCompleteCache();
 			return false;
 
 		if(count($fields)>1){
-			throw new ServiceException("isKey or isUnique fields cannot be defined multiple times in a configuration.", ServiceException::INVALID_ARGUMENT);
+			throw new ServiceException("isKey or isUnique or isUniqueInGroup fields cannot be defined multiple times in a configuration.", ServiceException::INVALID_ARGUMENT);
 		}
 		$field = $fields[0];
 		switch((string)$field['type']){
@@ -3628,7 +3633,7 @@ invalidCompleteCache();
 			case "Blobs":
 			case "Texts":
 			case "Varchars":
-				throw new ServiceException("isKey or isUnique field cannot be ".$field['type'].".", ServiceException::INVALID_ARGUMENT);
+				throw new ServiceException("isKey or isUnique or isUniqueInGroup field cannot be ".$field['type'].".", ServiceException::INVALID_ARGUMENT);
 				break;
 			default:
 				break;
@@ -3655,7 +3660,7 @@ invalidCompleteCache();
 			return $field;
 	}
 	public function getSubFieldnameForIsKeyField($isKeyXml){
-		switch($isKeyXml->type){
+	    switch((string)$isKeyXml['type']){
 			case "Files":
 				$subFieldName = "name";
 				break;
@@ -9054,7 +9059,7 @@ onUpdateErrorCounter = 0;
 						$size = $actRec->getFieldValue($fieldName, "size");
 						$path = $actRec->getFieldValue($fieldName, "path");
 						$content = $actRec->getFieldValue($fieldName, "content");
-						$path = FILES_PATH . $path;
+						$path = resolveFilePath($path);
 
 						header('Pragma: public');
 						header('Cache-Control: max-age=0');
@@ -9202,7 +9207,7 @@ onUpdateErrorCounter = 0;
 								} else {
 									$content = $element->getFieldValue($fieldName, "content");
 								}
-								$path = FILES_PATH . $path;
+								$path = resolveFilePath($path);
 							}
 
 							//					eput($content);
@@ -9257,7 +9262,7 @@ onUpdateErrorCounter = 0;
 												unlink(TEMPORARYUNZIPFORVIEWINGFILE_path.$file);
 											}
 										}
-										copy(FILES_PATH.$element->getFieldValue($fieldName, "path"), TEMPORARYUNZIPFORVIEWINGFILE_path . $publicFilename);
+										copy(resolveFilePath($element->getFieldValue($fieldName, "path")), TEMPORARYUNZIPFORVIEWINGFILE_path . $publicFilename);
 										$downloadPath = (HTTPS_ON ? "https" : "http")."://docs.google.com/gview?url=".$downloadPath."&embedded=true";
 										$beforeClose = "beforeClose: function(){ update('" . $exec->getCrtRequest() . "/delete/" . $publicFilename . "'); }";
 
@@ -9651,8 +9656,8 @@ onUpdateErrorCounter = 0;
 				$this->throwEvent()->selectGroup(PWithGroupPList::createInstance($p, $groupList));
 
 				$lc->setGroupPList($groupList, $withChildren);
-				//Medair (LMA, CWE) 28.03.2017
-					// Reset showOnlyDuplicates on folder navigation
+				// Medair (LMA, CWE) 28.03.2017
+				// Reset showOnlyDuplicates on folder navigation
 				$lc->setGroupByOnlyDuplicates(false);
 				$this->getConfigurationContext()->setGroupPList($p, $exec->getCrtModule(), $groupList, $withChildren);
 

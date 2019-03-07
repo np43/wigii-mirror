@@ -176,7 +176,7 @@ class EmailingFormExecutor extends FormExecutor {
 						//copy the file in the uploaded files (do not move it because we need to still send it after)
 						//the copy needs to have a unique name to prevent inserting double entry in the delete
 						$postfix = "_".substr(time(),-6);
-						if(!copy(TEMPORARYUPLOADEDFILE_path.$path, FILES_PATH."emailAttachement_".$path.$postfix)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$filePath." in the Client folder:".FILES_PATH.$fileName, ServiceException::FORBIDDEN);
+						if(!copy(TEMPORARYUPLOADEDFILE_path.$path, FILES_PATH."emailAttachement_".$path.$postfix)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$path." as an email attachement", ServiceException::FORBIDDEN);
 						//the attachement file are marked to be deleted after the email is successfully sent
 						$mail->createAttachment(
 							FILES_PATH."emailAttachement_".$path.$postfix, true,
@@ -187,7 +187,7 @@ class EmailingFormExecutor extends FormExecutor {
 							);
 					} else {
 						//move the file in the uploaded files (because the email are send in asynch)
-						if(!rename(TEMPORARYUPLOADEDFILE_path.$path, FILES_PATH."emailAttachement_".$path)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$filePath." in the Client folder:".FILES_PATH.$fileName, ServiceException::FORBIDDEN);
+					    if(!rename(TEMPORARYUPLOADEDFILE_path.$path, FILES_PATH."emailAttachement_".$path)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$path." as an email attachement", ServiceException::FORBIDDEN);
 						//the attachement file are marked to be deleted after the email is successfully sent
 						$mail->createAttachment(
 							FILES_PATH."emailAttachement_".$path, true,

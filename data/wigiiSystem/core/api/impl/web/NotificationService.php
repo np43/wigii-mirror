@@ -1138,7 +1138,7 @@ class NotificationService implements MultiplexedEvent {
 						if(strstr($path, "box://")) continue;
 						//do not delete the file after send, as it is a stored file
 						$mail->createAttachment(
-							FILES_PATH.$path, false,
+						    resolveFilePath($path), false,
 							WigiiEmailMime::TYPE_OCTETSTREAM,
 							WigiiEmailMime::DISPOSITION_ATTACHMENT,
 							WigiiEmailMime::ENCODING_BASE64,

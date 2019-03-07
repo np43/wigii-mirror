@@ -112,7 +112,7 @@ class ElementFileAdminService {
 	public function setFileData(Principal $principal, Element $element, $fieldName, $originalName,
 									   $filePath, $staging = false, $type=null) {
 
-		$fullPath = ($staging) ? TEMPORARYUPLOADEDFILE_path . $filePath : FILES_PATH . $filePath;
+        $fullPath = ($staging) ? TEMPORARYUPLOADEDFILE_path . $filePath : resolveFilePath($filePath);
 		if (!file_exists($fullPath)) throw new ElementFileAdminServiceException('No file found at ' . $fullPath,
 			ElementFileAdminServiceException::FILE_NOT_FOUND);
 		$size = filesize($fullPath);

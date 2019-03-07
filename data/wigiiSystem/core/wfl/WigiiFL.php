@@ -3509,7 +3509,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 				echo $element->getFieldValue($fieldName, "textContent");
 			}
 			elseif($path) {
-				$path = FILES_PATH.$path;
+			    $path = resolveFilePath($path);
 				if(!file_exists($path)) echo $element->getFieldValue($fieldName, "content");
 				else readfile($path);
 			}

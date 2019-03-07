@@ -241,7 +241,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 					//the player is after the download button
 					break;
 				case ".zip":
-					if(!doesZipHaveAnIndexFile(FILES_PATH.$path)) {
+				    if(!doesZipHaveAnIndexFile(resolveFilePath($path))) {
 						break;
 					}
 					if($isSmall){
@@ -366,7 +366,7 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 			$this->put('</div></div><div style="width:100%;" class="field" ><img style="vertical-align: bottom; max-width:100%;" class="field" src="'.$ssrc.'" /></div><div><div>');
 		} else if($type == ".svg" || $type == ".txt"){
 			if($this->getRecord()->getFieldValue($fieldName, "size") < 1024*1024){
-				$this->put('</div></div><div style="width:100%;overflow:hidden;" class="field" >'.file_get_contents(FILES_PATH.$path).'</div><div><div>');
+			    $this->put('</div></div><div style="width:100%;overflow:hidden;" class="field" >'.file_get_contents(resolveFilePath($path)).'</div><div><div>');
 			}
 		}
 	}
