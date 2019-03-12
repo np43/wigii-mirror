@@ -270,7 +270,15 @@ class WigiiBPL
 		return $returnValue;
 	}
 	
-	
+	private $authoSStamp;
+	public function setAuthorizationServiceStamp($stamp) {
+	    $this->authoSStamp = $stamp;
+	}
+	protected function consumeAuthorizationServiceStamp() {
+	    $returnValue = $this->authoSStamp;
+	    $this->authoSStamp=null;
+	    return $returnValue;
+	}
 	
 	
 	// Wigii Business Process Library
@@ -1412,7 +1420,9 @@ class WigiiBPL
 				if($element instanceof Element) $elementEvaluatorClassName = (string)$this->getConfigService()->getParameter($principal, $element->getModule(), "Element_evaluator");
 				if(empty($elementEvaluatorClassName)) $elementEvaluatorClassName = (string)$this->getConfigService()->getParameter($principal, $exec->getCrtModule(), "Element_evaluator");
 			}
-			$evaluator = ServiceProvider::getRecordEvaluator($principal, $elementEvaluatorClassName);
+			$evaluator = ServiceProvider::getRecordEvaluator($principal, $elementEvaluatorClassName);			
+			// injects current data flow context if defined
+			if(method_exists($evaluator, 'setDataFlowContext')) $evaluator->setDataFlowContext($parameter->getValue('dataFlowContext'));			
 			// evaluates calculated fields
 			$evaluator->evaluateRecord($principal, $element, $field);
 			
@@ -1761,6 +1771,47 @@ class WigiiBPL
 			throw $e;
 		}
 		$this->executionSink()->publishEndOperation("elementPersistFileFieldFromPost", $principal);
+	}
+	
+	/**
+	 * Inserts a new element into the database. No fields are saved, only the element is created and the ID is returned.
+	 * If element already exists, then nothing is done and current element ID is returned.
+	 * The element has a valid ElementInfo attached so that it can be further modified and the persisted using the ElementDFA data flow activitiy.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the elementInsert business process needs the following parameters to run :
+	 * - element: Element. The new element to be inserted into the database
+	 * - groupId: int. The group ID in which to add the element
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return int the new element ID
+	 */
+	public function elementInsert($principal, $caller, $parameter, $executionSink=null) {
+	    $this->executionSink()->publishStartOperation("elementInsert", $principal);
+	    $returnValue = null;
+	    try {
+	        if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        $element = $parameter->getValue('element');
+	        if(!isset($element)) throw new WigiiBPLException('element cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        if($element->isNew()) {
+    	        // inserts element in database
+	           $this->getElementService()->insertElement($principal, $element, $parameter->getValue('groupId'), fsl(fs_e('id')));
+	           // extracts element info and stamps it
+	           if($this->getAuthorizationService()->getStamp($this, "setAuthorizationServiceStamp")) {
+	               ElementP::createInstance($element)->computeElementInfo($principal, null, $this->consumeAuthorizationServiceStamp());
+	           }
+	        }
+	        $returnValue = $element->getId();
+	    }
+	    catch(Exception $e) {
+	        $this->executionSink()->publishEndOperationOnError("elementInsert", $e, $principal);
+	        throw $e;
+	    }
+	    $this->executionSink()->publishEndOperation("elementInsert", $principal);
+	    return $returnValue;
 	}
 	
 	/**
@@ -2593,6 +2644,54 @@ class WigiiBPL
 			if(is_object($parentGroup)) $group = $parentGroup;
 		}
 		return ConfigSelector::createInstanceForGroupConfig(lxEq(fs('id'),$group->getId()));
+	}
+	
+	private $groupConfigCache=null;
+	/**
+	 * Returns the group to be used as a config group, given a group as a point of reference.
+	 * Checks if there is a group config in the group hierarchy and returns the closest one.
+	 * If no group config is available, then returns the given group.
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param int|Group|GroupP $group group ID or group instance or GroupP instance for which to check if a configuration file is available.
+	 * @return Group
+	 */
+	public function getConfigGroupForGroup($principal, $group) {
+	    if(!isset($group)) throw new WigiiBPLException('group cannot be null, should be a valid group ID or a group instance', WigiiBPLException::INVALID_ARGUMENT);
+	    $returnValue=null;	    
+	    if(!is_object($group)) {
+	        $group = $this->getGroupAdminService()->getGroupWithoutDetail($principal, $group);
+	    }
+	    $group = $group->getDbEntity();
+	    if(!isset($this->groupConfigCache)) $this->groupConfigCache = array();
+	    $returnValue = $this->groupConfigCache[$group->getId()];
+	    if(!$returnValue) {
+    	    $returnValue = $this->isConfigGroupAvailableForGroup($principal, $group);
+    	    if(!$returnValue) $returnValue = $group;
+    	    $this->groupConfigCache[$group->getId()] = $returnValue;
+	    }
+	    return $returnValue;
+	}
+	
+	/**
+	 * Given a group, finds the closest group (in the hierarchy) having a configuration file.
+	 * If no group with config is found then returns null.
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param int|Group|GroupP $group group ID or group instance or GroupP instance for which to check if a configuration file is available.
+	 * @return Group returns found Group with configuration file or null if not found.
+	 */
+	public function isConfigGroupAvailableForGroup($principal, $group){
+	    if(!isset($group)) throw new WigiiBPLException('group cannot be null, should be a valid group ID or a group instance', WigiiBPLException::INVALID_ARGUMENT);
+	    $returnValue=null;
+	    if(!is_object($group)) {
+	        $group = $this->getGroupAdminService()->getGroupWithoutDetail($principal, $group);
+	    }
+	    $cc = $this->getConfigService();
+	    if($cc instanceof ConfigurationContextImpl) {
+	        $parentGroup = $cc->isConfigGroupAvailableForGroup($principal, $group);
+	        if(is_object($parentGroup)) $returnValue = $parentGroup;
+	    }
+	    else if($cc->doesGroupHasConfigFile($principal, $group)) $returnValue = $group;	    
+	    return (isset($returnValue)? $returnValue->getDbEntity():$returnValue);
 	}
 	
 	/**

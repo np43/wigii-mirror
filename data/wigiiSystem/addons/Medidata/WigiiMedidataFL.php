@@ -280,7 +280,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order to which is attached an XML Medidata General Invoice Request.
 	 * - Arg(1) medidataXml: FieldSelector. Field of type File containing the generated Medidata XML file
 	 * - Arg(2) medidataSendControl: FieldSelector. Field of type File containing the generated Medidata send control XML file
-	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the sending process.
+	 * - Arg(3) options: WigiiBPLParameter. An optional bag of options to configure the sending process.
 	 * @return Boolean true if files are correctly sent, else throws an exception
 	 */
 	public function sendMedidataInvoiceRequest($args) {
@@ -328,6 +328,164 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    
 	    $this->debugLogger()->logEndOperation('sendMedidataInvoiceRequest');
 	    return $returnValue;
+	}
+	
+	/**
+	 * Prints a received Medidata invoice response and extracts any attached documents.
+	 * FuncExp signature : <code>printMedidataInvoiceResponse(element, medidataResponseXml, options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) element: Element of module Filemanager. Given element to which is attached a Medidata received XML Invoice Response.
+	 * - Arg(1) medidataResponseXml: FieldSelector. Field of type File containing the received Medidata XML file
+	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the extraction process. It supports the following options:
+	 * - extractAttachementsTo: String. Field name prefix, which selects a set of fields of type Files in which to extract all attached documents. The set of fields should respect the Wigii Matrix naming convention and be numbered 1, 2, 3, ..., n.
+	 * - printTemplate: String. Name of the print template to use to print the Medidata Invoice Response as HTML. Defaults to medidataInvoiceResponse.
+	 * To activate the print template in the configuration you should:
+	 * 1. copy the MedidataPrintInvoiceResponse.php file delivered in the Wigii Medidata addon to the client configuration folder and customize it for the client namespace
+	 * 2. add the print activity with the template medidataInvoiceResponse in the Wigii Filemanager module
+	 * <Print>
+     *	<medidataInvoiceResponse path="clientNamespace_MedidataPrintInvoiceResponse.php" inClientFolder="1" />
+	 * </Print>  
+	 * @return Array an array with the html content of the printed invoice response and all the useful Files subfields. The FuncExp return value is compatible with a calculated field of type Files.
+ 	 * @example In a Wigii Filemanager module, add the following field to store the Medidata Invoice Response as a pretty HTML document and extract any attachements to a set of fields of type Files named mdtDoc1, mdtDoc2, etc. 
+	 * <mdtInvoiceResponse type="Files" readonly="1" clearOnCopy="1" enableForDownloading="1" funcExp='printMedidataInvoiceResponse(medidataXml,wigiiBPLParam("extractAttachementsTo","mdtDoc"))'><label_l01>Medidata response</label_l01><label_l02>Réponse Medidata</label_l02></mdtInvoiceResponse>
+	 */
+	public function printMedidataInvoiceResponse($args) {
+	    $this->assertFxOriginIsNotPublic();
+	    $this->debugLogger()->logBeginOperation('printMedidataInvoiceResponse');
+	    $nArgs = $this->getNumberOfArgs($args);
+	    $returnValue=null;
+	    if($nArgs < 2) throw new FuncExpEvalException('printMedidataInvoiceResponse takes at least two parameters which first one evaluates to current element and second is FieldSelector pointing to a field of type Files containing a Medidata received XML file (invoice response)', FuncExpEvalException::INVALID_ARGUMENT);
+	    // gets current element
+	    $element = $this->evaluateArg($args[0]);
+	    if($element instanceof ElementP) $element = $element->getElement();
+	    if(!($element instanceof Element)) throw new FuncExpEvalException('printMedidataInvoiceResponse takes a first parameter which should evaluate to an Element', FuncExpEvalException::INVALID_ARGUMENT);
+	    $fieldList = $element->getFieldList();
+	    // gets Medidata XML response
+	    if($args[1] instanceof FieldSelector) $xmlResponseFieldName = $args[1]->getFieldName();
+	    else {
+	        $xmlResponseFieldName = $this->evaluateArg($args[1]);
+	        if($xmlResponseFieldName instanceof FieldSelector) $xmlResponseFieldName = $xmlResponseFieldName->getFieldName();
+	    }
+	    $xmlResponseField = $fieldList->getField($xmlResponseFieldName);
+	    if(!($xmlResponseField->getDataType() instanceof Files)) throw new FuncExpEvalException('printMedidataInvoiceResponse takes second parameter which should be a FieldSelector pointing to a field of type Files containing a Medidata received XML file (invoice response)', FuncExpEvalException::INVALID_ARGUMENT);
+	    
+	    // reads bag of options
+	    if($nArgs>2) {
+	        $options = $this->evaluateArg($args[2]);
+	        if(!isset($options)) $options = wigiiBPLParam();
+	        elseif(!($options instanceof WigiiBPLParameter)) throw new FuncExpEvalException('options can only be an instance of WigiiBPLParameter',FuncExpEvalException::INVALID_ARGUMENT);
+	    }
+	    else $options = wigiiBPLParam();
+	    
+	    $printTemplate = $options->getValue('printTemplate');
+	    if(empty($printTemplate)) $printTemplate = 'medidataInvoiceResponse';
+	    
+	    $attachementFieldName = $options->getValue('extractAttachementsTo');
+	    $extractAttachements = !empty($attachementFieldName);  
+	    
+	    // extracts Medidata XML
+	    $options->setValue('xmlSchema','generalInvoiceResponse_450.xsd');
+	    $options->setValue('namespaceURI','http://www.forum-datenaustausch.ch/invoice');
+	    $options->setValue('namespacePrefix','invoice');
+	    $medidataXml = sel($this->getPrincipal(),elementFile2df($element, $xmlResponseFieldName),dfasl(dfas("StringBufferDFA")));
+	    $medidataXml = $this->loadXmlDoc($medidataXml);
+	    // validates loaded xml
+	    $this->assertXmlIsValid($medidataXml, $options->getValue('xmlSchema'));
+        // transforms it as SimpleXml
+        $medidataXml = simplexml_import_dom($medidataXml);
+        
+	    // extracts type of response (invoice or reminder)
+	    $responseType = (string)($medidataXml->xpath("/invoice:response/invoice:payload")[0]["type"]);
+	    // extracts message date (Wigii format)
+	    $messageDate = date('Y-m-d H:m:i', intval((string)($medidataXml->xpath("/invoice:response/invoice:payload")[0]["response_timestamp"])));	    
+	    // extracts customer order number
+	    $customerOrderNumber = (string)($medidataXml->xpath("/invoice:response/invoice:payload/invoice:invoice")[0]["request_id"]);
+	    // extracts type of message (pending, accepted, rejected)
+	    $messageXml = $medidataXml->xpath("/invoice:response/invoice:payload/invoice:body/invoice:pending");
+	    if(!$messageXml) $messageXml = $medidataXml->xpath("/invoice:response/invoice:payload/invoice:body/invoice:accepted");
+	    if(!$messageXml) $messageXml = $medidataXml->xpath("/invoice:response/invoice:payload/invoice:body/invoice:rejected");
+	    $messageXml = $messageXml[0];
+	    $messageType=$messageXml->getName();
+	    // extracts attachements
+	    if($extractAttachements) {
+	        $messageAttachements = $medidataXml->xpath("/invoice:response/invoice:payload/invoice:body/invoice:documents/invoice:document");
+	        if($messageAttachements) $nbAttachements = count($messageAttachements);
+	        else $nbAttachements = 0;
+	    }
+	    // builds message title    
+	    $messageTitle = Dates::formatDisplay($messageDate, "yyyy.mm.dd")." Réponse ".$messageType." à ".$responseType." no ".$customerOrderNumber;
+	    
+	    // intializes options for print
+	    $options->setValue('medidataXml',$medidataXml);
+	    $options->setValue('customerOrderNumber',$customerOrderNumber);
+	    $options->setValue('responseType',$responseType);
+	    $options->setValue('messageDate',$messageDate);
+	    $options->setValue('messageXml',$messageXml);
+	    $options->setValue('messageType',$messageType);
+	    $options->setValue('nbAttachements',$nbAttachements);
+	    if($nbAttachements>0) $options->setValue('messageAttachements',$messageAttachements);	    
+	    
+	    // prints invoice response as html
+	    $htmlContent = $this->evaluateFuncExp(fx('printElementWithTemplate',$element,$printTemplate,$options));
+	    
+	    // generates files subfields
+	    $returnValue = $this->evaluateFuncExp(fx('buildHtmlFileSubFieldsMap',$messageTitle,$htmlContent,$messageDate));
+	    
+	    // extracts attachements
+	    if($extractAttachements && $nbAttachements>0) {
+	        // if element is new, then first persists it to be able to save the attached files
+	        if($element->isNew()) {
+	           ServiceProvider::getWigiiBPL()->elementInsert($this->getPrincipal(), $this, wigiiBPLParam(
+                    'element', $element,
+                    'groupId', $this->evaluateFuncExp(fx('cfgCurrentGroup','id'))
+                ));	            
+	        }
+	        $i=1; 
+	        foreach($messageAttachements as $attachement) {
+	            // extract attachement and stores it into field no i
+	            $this->extractInvoiceResponse45Document($element, $attachementFieldName.$i, $attachement, $options);
+	            $i++;
+	        }
+	    }
+	    
+	    $this->debugLogger()->logEndOperation('printMedidataInvoiceResponse');
+	    return $returnValue;
+	}
+	
+	/**
+	 * Extracts a Medidata Invoice Response attached document and saves it to a field of type files of a given element 
+	 * @param Element $element an element to which save the attached document
+	 * @param String $fieldName field of type Files to which attach the document
+	 * @param SimpleXMLElement $documentXml generalInvoiceResponse_450 documentType XML node holding the attached document
+	 * @param WigiiBPLParameter $options optional bag of options to configure the extraction process
+	 */
+	private function extractInvoiceResponse45Document($element,$fieldName,$documentXml,$options) {
+	    $this->debugLogger()->logBeginOperation('extractInvoiceResponse45Document');
+	    $content = $documentXml->xpath("invoice:base64");
+	    if($content) $content = base64_decode((string)$content[0]);
+	    if($content) {
+	        $fileName = (string)$documentXml['filename'];
+	        if($fileName) {
+	            $ext = explode(".", $fileName);
+	            if(count($ext) > 1){
+	                $ext = end($ext);
+	                $ext = ".".$ext;
+	            } else $ext = "";
+	            $fileName = basename($fileName,$ext);
+	        }
+	        else $fileName=null;
+	        $mimeType = (string)$documentXml['mimeType'];
+	        if(!$mimeType) $mimeType=null;
+	        
+    	    // in generalInvoiceResponse_450 schema, typeMime is restricted to application/pdf|image/jpeg|image/png, therefore it is safe.
+    	    ServiceProvider::getDataFlowService()->processString($this->getPrincipal(), $content, dfasl(
+    	        dfas('ElementFileOutputStreamDFA','setElement',$element,'setFieldName',$fieldName,
+    	            'setPersistElement', true,
+    	            'setFileSubfields', array("name"=>$fileName,"type"=>$ext,"mime"=>$mimeType)
+    	            )
+    	        ));
+	    }
+	    $this->debugLogger()->logEndOperation('extractInvoiceResponse45Document');	  
 	}
 	
 	/**

@@ -536,7 +536,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 	protected function assertObjectAuthorizedToGetStamp($object) {
 		if(!isset($object) || !is_object($object)) throw new AuthorizationServiceException('object should be a non null object.', AuthorizationServiceException::INVALID_ARGUMENT);
 		// checks if object is authorized to get stamps.
-		if(!$this->isObjectAuthorizedToGetStamp($object)) throw new AuthorizationServiceException("class '$className' is not authorized to get AuthorizationServiceStamps.", AuthorizationServiceException::FORBIDDEN);		
+		if(!$this->isObjectAuthorizedToGetStamp($object)) throw new AuthorizationServiceException("class '".get_class($object)."' is not authorized to get AuthorizationServiceStamps.", AuthorizationServiceException::FORBIDDEN);		
 	}
 	/**
 	 * Checks if the given class is authorized to get stamps.
@@ -548,6 +548,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 		if(is_a($object,"ElementPDataFlowConnector")) return true;
 		if(is_a($object,"MapObject2ElementDFA")) return true;
 		if(is_a($object,"WigiiCoreExecutor")) return true;
+		if(is_a($object,"WigiiBPL")) return true;
 		return false;
 	}
 	

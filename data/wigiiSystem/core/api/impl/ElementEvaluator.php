@@ -668,35 +668,47 @@ class ElementEvaluator extends RecordEvaluator
 			elseif($flowContext == ElementEvaluator::ELEMENT_FLOW_DATAFLOW) {
 				$exec = ServiceProvider::getExecutionService();
 				$p = $this->getPrincipal();
-					
-				// gets all groups containing element
-				$groupPList = GroupPListArrayImpl::createInstance();
-				ServiceProvider::getElementService()->getAllGroupsContainingElement($p, $this->getElement(), $groupPList, lf(ServiceProvider::getGroupAdminService()->getFieldSelectorListForGroupWithoutDetail()));
-				// if more than one group, intersects with GroupBasedWigiiApiClient::getGroupList
-				if($groupPList->count() > 1) {
-					$returnValue = null;
-					$apiClient = $this->getDataFlowContext()->getAttribute('GroupBasedWigiiApiClient');
-					if(isset($apiClient)) {
-						$selectedGroups = $apiClient->getGroupList();
-						if(isset($selectedGroups) && !$selectedGroups->isEmpty()) {
-							$selectedGroups = $selectedGroups->getListIterator();
-							if(is_array($selectedGroups)) {
-								// retrieves hierarchy of groups below selected groups and intersects tree with groups containing element
-								$groupList = GroupListArrayImpl::createInstance();
-								$gAS->getSelectedGroupsWithChildrenWithoutDetail($p, lxIn(fs('id'),array_keys($selectedGroups)), $groupList, null,
-										lxIn(fs('id'), array_keys($groupPList->getListIterator()))
-								);
-								if($groupList->count() == 1) {
-									$returnValue = reset($groupList->getListIterator());
-								}
-							}
-						}
-					}
+				// if element is new, then checks group list of GroupBasedWigiiApiClient
+				if($this->getElement()->isNew()) {
+				    $returnValue = null;
+				    $apiClient = $this->getDataFlowContext()->getAttribute('GroupBasedWigiiApiClient');
+				    if(isset($apiClient)) {
+				        $selectedGroups = $apiClient->getGroupList();
+				        if(isset($selectedGroups) && $selectedGroups->count()==1) {
+				            $returnValue = reset($selectedGroups->getListIterator());
+				        }
+				    }
 				}
-				elseif(!$groupPList->isEmpty()) {
-					$returnValue = reset($groupPList->getListIterator());
+				else {
+    				// gets all groups containing element
+    				$groupPList = GroupPListArrayImpl::createInstance();
+    				ServiceProvider::getElementService()->getAllGroupsContainingElement($p, $this->getElement(), $groupPList, lf(ServiceProvider::getGroupAdminService()->getFieldSelectorListForGroupWithoutDetail()));
+    				// if more than one group, intersects with GroupBasedWigiiApiClient::getGroupList
+    				if($groupPList->count() > 1) {
+    					$returnValue = null;
+    					$apiClient = $this->getDataFlowContext()->getAttribute('GroupBasedWigiiApiClient');
+    					if(isset($apiClient)) {
+    						$selectedGroups = $apiClient->getGroupList();
+    						if(isset($selectedGroups) && !$selectedGroups->isEmpty()) {
+    							$selectedGroups = $selectedGroups->getListIterator();
+    							if(is_array($selectedGroups)) {
+    								// retrieves hierarchy of groups below selected groups and intersects tree with groups containing element
+    								$groupList = GroupListArrayImpl::createInstance();
+    								$gAS->getSelectedGroupsWithChildrenWithoutDetail($p, lxIn(fs('id'),array_keys($selectedGroups)), $groupList, null,
+    										lxIn(fs('id'), array_keys($groupPList->getListIterator()))
+    								);
+    								if($groupList->count() == 1) {
+    									$returnValue = reset($groupList->getListIterator());
+    								}
+    							}
+    						}
+    					}
+    				}
+    				elseif(!$groupPList->isEmpty()) {
+    					$returnValue = reset($groupPList->getListIterator());
+    				}
+    				else $returnValue = null;
 				}
-				else $returnValue = null;
 			}
 			else $returnValue = null;
 			

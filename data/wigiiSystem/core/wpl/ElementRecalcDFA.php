@@ -72,7 +72,8 @@ class ElementRecalcDFA implements DataFlowActivity
 		ServiceProvider::getWigiiBPL()->elementEvalCalcFields($dataFlowContext->getPrincipal(), $this, wigiiBPLParam(
 		    "element",$element,
 		    "fieldName",$this->fieldName,
-		    "fslForUpdate", $dataFlowContext->getAttribute('FieldSelectorList')
+		    "fslForUpdate", $dataFlowContext->getAttribute('FieldSelectorList'),
+		    "dataFlowContext", $dataFlowContext
 		));
 		// pushes data further down in the flow
 		$dataFlowContext->writeResultToOutput($data,$this);

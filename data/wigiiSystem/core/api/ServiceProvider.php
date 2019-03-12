@@ -857,6 +857,8 @@ class ServiceProvider
 	 */
 	protected function getGroupBasedWigiiApiClientInstance($principal, $groupLogExp) {
 		$returnValue = $this->getExclusiveAccessObjectInstance($this->getDefaultGroupBasedWigiiApiClientClass());
+		// injects principal
+		$returnValue->setPrincipal($principal);
 		// injects mandatory dependencies if necessary
 		if(!$returnValue->hasMandatoryDependencies()) {
 			$returnValue->setMandatoryDependencies($this->createElementServiceInstance(), TechnicalServiceProvider::createFuncExpBuilderInstance());

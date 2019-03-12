@@ -1016,6 +1016,7 @@ sys_user:Last update done by:Dernier changement fait par:::::::::
 historicOfObject:Additional information:Information additionnelle:::::::::
 table:Spreadsheet:Tableur:::::::::
 technicalProblem:Technical problem:Problème technique:::::::::
+errorNumber:Error no:Erreur no:::::::::
 text:Text:Texte:::::::::
 
 title:Title:Titre:::::::::

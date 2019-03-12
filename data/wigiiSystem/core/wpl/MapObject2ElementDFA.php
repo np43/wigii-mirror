@@ -97,7 +97,14 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 		{
 			$this->configS = ServiceProvider::getConfigService();
 		}
-		return $this->configS;
+		// CWE 12.03.2019 if data flow is running and group based wigii api client has been instanciated, then returns this config service
+		if($this->instanciatedApiClient && isset($this->dataFlowContext)) {
+		    $returnValue = $this->dataFlowContext->getAttribute('GroupBasedWigiiApiClient');
+		    if(isset($returnValue)) $returnValue = $returnValue->getConfigService();
+		    if(!isset($returnValue)) $returnValue = $this->configS;
+		    return $returnValue;
+		}
+		else return $this->configS;
 	}
 	
 	private $transS;	

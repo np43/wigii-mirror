@@ -48,6 +48,12 @@ class GroupListArrayImpl extends ObjectListArrayImpl implements GroupList
 		return $returnValue;
 	}
 	
+	private $mergeDuplicates=false;
+	public function setMergeDuplicates($bool) {
+	    $this->mergeDuplicates=$bool;
+	    return $this;
+	}
+	
 	public function reset()
 	{
 		parent::reset();
@@ -58,7 +64,7 @@ class GroupListArrayImpl extends ObjectListArrayImpl implements GroupList
 	{
 		if(!isset($group)) throw new ListException("group cannot be null", ListException::INVALID_ARGUMENT);
 		$key = $group->getId(); //$this->getKeyWithNameModuleWigiiNamespace($group->getId(), $group->getModule(), $group->getWigiiNamespace());
-		if(isset($this->objArray[$key])) throw new ListException("a group with same key $key has already been added", ListException::ALREADY_EXISTS);
+		if(isset($this->objArray[$key]) && !$this->mergeDuplicates) throw new ListException("a group with same key $key has already been added", ListException::ALREADY_EXISTS);
 		$this->objArray[$key] = $group;
 		$this->addGroupId($group);
 		return $this;

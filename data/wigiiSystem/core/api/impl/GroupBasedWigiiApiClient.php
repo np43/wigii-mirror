@@ -26,6 +26,7 @@
  * ConfigService always returns configuration based on the selected groups.
  * Created by CWE on 3 decembre 2013
  * Modified by CWE on 9 février 2014 to add support of sub elements
+ * Modified by CWE on 12.03.2019 to resolve group configuration lookup based on hierarchy of groups and not only current group
  */
 class GroupBasedWigiiApiClient {	
 	private $_debugLogger;
@@ -115,6 +116,14 @@ class GroupBasedWigiiApiClient {
 		return $this->gAS;
 	}
 	
+	private $principal;
+	public function setPrincipal($principal) {
+	    $this->principal = $principal;
+	}
+	protected function getPrincipal() {
+	    return $this->principal;
+	}
+	
 	// Navigation
 	
 	/**
@@ -178,6 +187,8 @@ class GroupBasedWigiiApiClient {
 			$this->gbwacConfigS = new GBWACConfigService();
 			// injects default config service if set
 			if(isset($this->configS)) $this->gbwacConfigS->setConfigService($this->configS);
+			// injects principal
+			$this->gbwacConfigS->setPrincipal($this->getPrincipal());
 		} 
 		if(!isset($this->subElementConfigS)) {
 			// autowired
@@ -235,17 +246,42 @@ class GBWACConfigService implements ConfigService {
 		}
 		return $this->configS;
 	}
+		
+	private $wigiiBPL;
+	public function setWigiiBPL($wigiiBPL)
+	{
+	    $this->wigiiBPL = $wigiiBPL;
+	}
+	protected function getWigiiBPL()
+	{
+	    // autowired
+	    if(!isset($this->wigiiBPL))
+	    {
+	        $this->wigiiBPL = ServiceProvider::getWigiiBPL();
+	    }
+	    return $this->wigiiBPL;
+	}
+	
+	private $principal;
+	public function setPrincipal($principal) {
+	    $this->principal = $principal;
+	}
+	protected function getPrincipal() {
+	    return $this->principal;
+	}
 	
 	private $groupList;
 	private $groupListModule;
 	private $firstGroup;
 	private $oneGroup;
+	private $groupConfigCache;
 	/**
 	 * Sets the GroupList to be used as a configuration context
 	 * @param GroupList $groupList
 	 */
 	public function setGroupList($groupList) {		
-		$this->groupList = $groupList;
+		$this->groupConfigCache=array();
+	    $this->groupList = $groupList;
 		// extracts group list module
 		$this->groupListModule = null;
 		$this->oneGroup = false; $this->firstGroup = null;
@@ -261,6 +297,10 @@ class GBWACConfigService implements ConfigService {
 				elseif($this->groupListModule !== $group->getModule()) throw new ConfigServiceException("module should be equal for all groups in groupList", ConfigServiceException::INVALID_ARGUMENT);
 				else $this->oneGroup = false;
 			}
+		}
+		// CWE 11.03.2019: if one group, then searches for closest group having configuration
+		if($this->oneGroup) {
+            $this->firstGroup = $this->getConfigGroupForGroup($this->getPrincipal(), $this->firstGroup);            
 		}
 	}
 	
@@ -305,7 +345,7 @@ class GBWACConfigService implements ConfigService {
 		return $this->getConfigService()->listModuleConfigFilesForWigiiNamespace($principal, $filenameRenderer);
 	}
 	public function getGroupParameter($principal, $group, $name){
-		return $this->getConfigService()->getGroupParameter($principal, $group, $name);
+		return $this->getConfigService()->getGroupParameter($principal, $this->getConfigGroupForGroup($principal, $group), $name);
 	}
 	public function getFields($principal, $module, $activity, $fieldList){
 		if($module === $this->groupListModule) {
@@ -314,18 +354,18 @@ class GBWACConfigService implements ConfigService {
 		}
 		else return $this->getConfigService()->getFields($principal, $module, $activity, $fieldList);
 	}
-	public function getGroupFields($principal, $group, $activity, $fieldList){
-		return $this->getConfigService()->getGroupFields($principal, $group, $activity, $fieldList);
+	public function getGroupFields($principal, $group, $activity, $fieldList){	    
+	    return $this->getConfigService()->getGroupFields($principal, $this->getConfigGroupForGroup($principal, $group), $activity, $fieldList);
 	}
-	public function getGroupsFields($principal, $groupList, $activity, $fieldList){
-		return $this->getConfigService()->getGroupsFields($principal, $groupList, $activity, $fieldList);
+	public function getGroupsFields($principal, $groupList, $activity, $fieldList){	    		
+	    return $this->getConfigService()->getGroupsFields($principal, $this->getConfigGroupForGroup($principal, $groupList), $activity, $fieldList);
 	}
 	public function getTemplatePath($principal, $module, $activity){
 		if($module === $this->groupListModule && $this->oneGroup) return $this->getConfigService()->getGroupTemplatePath($principal, $this->firstGroup, $activity);
 		else return $this->getConfigService()->getTemplatePath($principal, $module, $activity);
 	}
 	public function getGroupTemplatePath($principal, $group, $activity){
-		return $this->getConfigService()->getGroupTemplatePath($principal, $group, $activity);
+	    return $this->getConfigService()->getGroupTemplatePath($principal, $this->getConfigGroupForGroup($principal, $group), $activity);
 	}
 	public function m($principal, $module){
 		if($module === $this->groupListModule && $this->oneGroup) return $this->getConfigService()->g($principal, $this->firstGroup);
@@ -340,13 +380,13 @@ class GBWACConfigService implements ConfigService {
 		else return $this->getConfigService()->ma($principal, $module, $activity);
 	}
 	public function g($principal, $group){
-		return $this->getConfigService()->g($principal, $group);
+	    return $this->getConfigService()->g($principal, $this->getConfigGroupForGroup($principal, $group));
 	}
 	public function gf($principal, $group, $activity=null){
-		return $this->getConfigService()->gf($principal, $group, $activity);
+	    return $this->getConfigService()->gf($principal, $this->getConfigGroupForGroup($principal, $group), $activity);
 	}
 	public function ga($principal, $group, $activity){
-		return $this->getConfigService()->ga($principal, $group, $activity);
+	    return $this->getConfigService()->ga($principal, $this->getConfigGroupForGroup($principal, $group), $activity);
 	}
 	public function dt($datatypeName){
 		return $this->getConfigService()->dt($datatypeName);
@@ -356,5 +396,27 @@ class GBWACConfigService implements ConfigService {
 	}
 	public function getAdminConfigForClient($principal, $client){
 		return $this->getConfigService()->getAdminConfigForClient($principal, $client);
+	}
+	
+	// Cache management
+	
+	private function getConfigGroupForGroup($principal, $group) {
+	    if(!isset($this->groupConfigCache)) $this->groupConfigCache = array();
+	    // reduces group list to config group list
+	    if($group instanceof GroupList || $group instanceof GroupPList) {
+	        $returnValue = GroupListArrayImpl::createInstance()->setMergeDuplicates(true);
+	        foreach($group->getListIterator() as $g) {
+	            $returnValue->addGroup($this->getConfigGroupForGroup($principal, $g));
+	        }	        
+	    }
+	    // else resolves case of single group
+	    else {
+    	    $returnValue = $this->groupConfigCache[$group->getId()];
+    	    if(!isset($returnValue)) {
+    	        $returnValue = $this->getWigiiBPL()->getConfigGroupForGroup($principal, $group);
+    	        $this->groupConfigCache[$group->getId()] = $returnValue;
+    	    }
+	    }
+	    return $returnValue;
 	}
 }

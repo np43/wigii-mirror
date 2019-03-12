@@ -1361,7 +1361,22 @@ class RecordEvaluator implements FuncExpEvaluator
 	            $form->addErrorToField($e->getMessage(), $fieldName);
 	        }	        
 	    }
-	    // else if no attached FormExecutor then evaluates the expression "as-is"
+	    // CWE 11.03.2019 if no Form, but field is given and of type Blobs, then add exception as a comment
+	    elseif($nArgs>1) {
+	        // evaluates expression
+	        try { return $this->evaluateArg($args[0]); }
+	        // catches any exception
+	        catch(Exception $e) {
+	            // and adds exception message as an element comment
+	            if($e instanceof ServiceException) $e = $e->getWigiiRootException();
+	            $this->evaluateFuncExp(fx('ctlAddComment',$args[1],
+	                '<div class="fieldError" style="width: 100%;">'
+	                .$this->getTrm()->t("errorNumber").' '.$e->getCode().': '.$e->getMessage()
+	                .'</div>'
+	            ));
+	        }	    
+	    }
+	    // else evaluates the expression "as-is"
 	    else return $this->evaluateArg($args[0]);
 	}
 	
