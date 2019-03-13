@@ -77,7 +77,7 @@ class FeedbackFormExecutor extends FormExecutor {
 		$result = "";
 		$result .= '<div style="text-align:center;border-top:1px dotted #ccc;padding-top:10px;">';
 			$result .= '<span style="color:#000;background-color:#ecf3fe;border:1px solid #aac9ff;text-decoration:none;"><font style="font-size:16px;">&nbsp;</font>'.$this->getButtonAccess($p, $exec).'<font style="font-size:16px;">&nbsp;</font></span>';
-		$reuslt .= '</div>';
+		$result .= '</div>';
 		echo $result;
 	}
 

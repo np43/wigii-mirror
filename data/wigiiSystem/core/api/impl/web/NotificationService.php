@@ -1314,13 +1314,7 @@ class NotificationService implements MultiplexedEvent {
 	protected function getButtonAccess($p, $wigiiNamespace=null, $module=null){
 		$transS = ServiceProvider::getTranslationService();
 		if(!$wigiiNamespace) $wigiiNamespace = $this->getExecutionService()->getCrtWigiiNamespace();
-		if(!$module){
-			if($rec->isSubElement()){
-				$module = $this->getExecutionService()->getCrtModule(); //like this it works with subElement or not
-			} else {
-				$module = $rec->getModule();
-			}
-		}
+		if(!$module) $module = $this->getExecutionService()->getCrtModule();
 		// CWE 28.01.2019 translates wigii namespace using homePageNamespaceLabel if defined
 		if($wigiiNamespace && $wigiiNamespace->getWigiiNamespaceName()) {
 			$customLabel = $transS->t($p, "homePageNamespaceLabel_".$wigiiNamespace->getWigiiNamespaceUrl());
