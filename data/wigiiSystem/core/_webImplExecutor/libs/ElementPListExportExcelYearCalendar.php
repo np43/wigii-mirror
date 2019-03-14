@@ -222,7 +222,7 @@ class ElementPListExportExcelYearCalendar extends ElementPListExportExcel {
 
 				//weekDay
 				$s->getStyle($col.$weekDayLine)->applyFromArray($this->dayHeaderStyle);
-				$s->setCellValue($col.$weekDayLine, $transS->t($this->getP(), "dayOfWeek_".($d[wday] ? $d[wday] : 7)));
+				$s->setCellValue($col.$weekDayLine, $transS->t($this->getP(), "dayOfWeek_".($d["wday"] ? $d["wday"] : 7)));
 
 				//monthDay
 				$s->getStyle($col.$dayLine)->applyFromArray($this->dayStyle);
