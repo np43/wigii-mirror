@@ -1034,6 +1034,7 @@ $ncdProgramOutput
 <script src="https://www.wigii.org/system/libs/wigii-ncd-core.min.js"></script>
 $footer
 $js
+</div>
 </body>
 </html>
 PAGEFOOTER;
@@ -1335,7 +1336,7 @@ div.wigii-globalContainer>div.wigii-footer.wigii-cms.content
 								{ position:absolute; width:100%; font-size:small; padding-top:10px; padding-bottom:10px;border-bottom:none; }
 div.wigii-footer p 				{ margin:0px; padding:0px; }
 div.wigii-menu 					{ z-index:1;padding:10px 0px; position:fixed; width:100%; @media (max-height:600px) { padding-top:1px; padding-bottom:1px; } }
-div.wigii-menu #wigii-logo 		{ padding-left:-10px; margin-top:0px; float:left; }
+div.wigii-menu #wigii-logo 		{ margin-top:0px; float:left; }
 div.wigii-menu #wigii-logo p	{ margin:0px; }
 div.wigii-menu #wigii-logo span	{ font-size:22px; vertical-align:bottom; }
 div.wigii-menu #wigii-logo a:hover
