@@ -24,6 +24,7 @@
 /**
  * Created on 3 déc. 09 by LWR
  * Modified by Medair (AMA,CWE) in 2016.09 to integrate Box
+ * Modified by CWE on 20.03.2019 to integrate a Print button for html files
  */
 $exec = $this->getExecutionService();
 $idAnswer = $exec->getIdAnswer();
@@ -53,7 +54,6 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
  ******************/
 } else if($fieldXml["htmlArea"]=="1" &&
 	($fieldXml["displayContentInDetail"]=="1" && !$this->isForNotification())
-//	|| ($this->isForNotification() && $fieldXml["displayContentInNotification"]=="1")
 	){
 	$size = $this->formatValueFromRecord($fieldName, "size", $this->getRecord());
 
@@ -84,7 +84,6 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 		$this->put('<a class="H fileDownload" href="#" target="_self" onclick="longDownload('."'$src','$fieldId'".')">');
 		$this->put($name.$type.'('.$size.')');
 		$this->put('</a>');
-		//$exec->addJsCode("setListenerToDownloadFile('$fieldId', '".$field->getFieldName()."', '$src');");
 		//read button is not usefull if displayInContent is enable
 	} else {
 		//link button
@@ -107,8 +106,6 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 
 	$this->put('<div class="clear"></div><br />');
 
-//} else if((($this->isForPrint() || $this->isForNotification() || ($fieldXml["displayContentInNotification"]=="1" && $fieldXml["displayContentInDetail"]=="1")) && $fieldXml["htmlArea"]=="1")){
-//	$this->put($this->formatValueFromRecord($fieldName, "textContent", $this->getRecord()));
 } else {
 	$size = $this->formatValueFromRecord($fieldName, "size", $this->getRecord());
 	$date = $this->formatValueFromRecord($fieldName, "date", $this->getRecord());
@@ -146,7 +143,6 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	if($fieldXml["displayLabel"]=="1") $this->put('<font class="grayFont" >'.$this->t($fieldName, $field->getXml()).':</font><br />');
 	if(!$this->isForNotification()) $this->put('<a class="H fileDownload" style="white-space:normal;" href="#" target="_self">');
 	$this->put($name.$type);
-//	if($isSmall) $this->put('<span style="display:inline;" class="ui-icon ui-icon-arrowthickstop-1-s">&nbsp;&nbsp;</span>');
 	if(!$this->isForNotification()) $this->put('</a>');
 	if($fieldXml["displayPreviewOnly"]!="1"){
 		$this->put(' ');
@@ -174,7 +170,6 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 	//add the download button
 	if($fieldXml["noDownloadButton"]!="1" && !$this->isForNotification()){
 		//download button
-		//$this->put('<a href="'.$src.'" target="_self" style="text-decoration:none;"><div class="generalButton G ui-corner-all " style="margin-top:4px;"><img style="border:none; float:left;" src="'.SITE_ROOT_forFileUrl.'images/icones/sanscons/download.png" /><span style="float:left; margin-left:5px; ">'.$this->t("download").'</span></div></a>');
 		$this->put(' <a class="fdet fileDownload" href="#" target="_self">');
 		if($isSmall) $this->put('<img class="H" title="'.$this->h("detailDownloadButton").' ('.$size.')'.'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/actions/down.png" />');
 		else $this->put('<div class="H G SBIB"><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-download-22.png" /><span>'.$this->t("detailDownloadButton").' <font>('.$size.')</font></span></div>');
@@ -302,23 +297,19 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 					} else {
 						$this->put('<div class="mediaPreview htmlPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
 					}
+					// CWE 20.03.2019: for html files propose a print button
+					if(($type == ".html" || $type == ".htm") && $fieldXml["noPrintButton"]!="1") {
+					    if($isSmall){
+					        $this->put('<img class="htmlPreviewPrint H" title="'.$this->t("printDetails").'" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/16x16/devices/printer.png" />');
+					    } else {
+					        $this->put('<div class="mediaPreview htmlPreviewPrint H G SBIB" ><span class="glyphicon glyphicon-print" style="margin-left:3px;margin-right:5px;" aria-hidden="true"></span><span>'.$this->t("printDetails").'</span></div>');
+					    }
+					}
 					$exec->addJsCode("setListenerToPreviewFile('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
 	
-	//				if($fieldXml["forceDisplayContent"]=="1"){
-	//					$exec->addJsCode('previewFile(\''.$src.'\', \''.time().'\');');
-	//				}
 					if($fieldXml["forceDisplayContent"]=="1"){
 						$exec->addJsCode("$('#".$this->getDetailRenderer()->getDetailId()."_".$fieldName." .read').click()");
 					}
-					//$this->put('<div class="print" onclick="var w = window.open(\''.$src.'/integrated\'); setTimeout(function(){ w.print(); }, 3000);" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/actions/print.png" /><span>'.$this->t("").'</span></div>');
-	
-	//				$this->put('<div class="lockAndModify'.$field->getFieldName().' generalButton G ui-corner-all" style="margin-top:4px; margin-right:5px;" onclick="update(\'elementDialog/'.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/lockAndModify/".$elementId."/".$field->getFieldName().'\');" ><img style="margin-left:5px;vertical-align:middle;" src="'.SITE_ROOT_forFileUrl.'images/icones/sanscons/edit.png" /><span class="" style="margin-left:5px;margin-right:5px;">'.$this->t("lockAndModify").'</span></div>');
-	//				//if no modify rights then mask the lockAndModify button
-	//				$exec->addJsCode("
-	//if($('#elementDetail_toolbar .onlyWriteRights').length==0){
-	//	$('#elementDialog .elementDetail .field .value div.lockAndModify".$field->getFieldName()." ').hide();
-	//}
-	//");
 					break;
 				case ".jpg":
 				case ".jpeg":
@@ -331,7 +322,6 @@ if(false && $fieldXml["displayPreviewOnly"]=="1" && !$this->isForNotification())
 					} else {
 						$this->put('<div class="mediaPreview imgPreview H G SBIB" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/22x22/Icon-view-22.png" /><span>'.$this->t("detailViewButton").'</span></div>');
 					}
-					//$this->put('<div class="print" style="margin-top:4px; margin-right:5px;" onclick="var w = window.open(\''.$src.'/integrated\'); setTimeout(function(){ w.print(); }, 3000);" ><img src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/actions/print.png" /><span>'.$this->t("").'</span></div>');
 					$exec->addJsCode("setListenerToPreviewFile('$fieldId', '".$field->getFieldName()."', '$ssrc', '".time()."');");
 					break;
 			}

@@ -2629,7 +2629,43 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    // group digits by 5 following the pattern 00 00000 00000 00000 00000 00000
 	    if($groupDigits) $refNumber = substr($refNumber,0,2).' '.implode(' ',str_split(substr($refNumber,2),5));
 	    return $refNumber;
-	}	
+	}
+	/**
+	 * Formats a given number to be compatible with Swiss social security number.
+	 * FuncExp signature : <code>txtFormatSwissSsn(ssn)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) ssn : String|Int. The social security number as a string or an integer.
+	 * @return String the Swiss social security number of 13 positions, with leading 756.
+	 */
+	public function txtFormatSwissSsn($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatSwissSsn takes one argument which is the Swiss social security number to be formatted', FuncExpEvalException::INVALID_ARGUMENT);
+	    $ssn = $this->evaluateFuncExp(fx('txtAcceptBigPosInt',$args[0],true,13));
+	    // checks that ssn starts with 756
+	    if(strpos($ssn,'756')!==0) $ssn=null;
+	    // checks that lenght is 13
+	    if(strlen($ssn)<13) $ssn=null;
+	    // group digits by 4 following the pattern 756.xxxx.xxxx.xx
+	    else $ssn = substr($ssn,0,3).'.'.implode('.',str_split(substr($ssn,3),4));
+	    return $ssn;
+	}
+	/**
+	 * Checks a given string to be a valid Swiss social security number and formats it.
+	 * If not, throws an exception. Use txtFormatSwissSsn to have a silent version.
+	 * FuncExp signature : <code>txtAcceptSwissSsn(ssn)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) ssn : String|Int. The social security number as a string or an integer.
+	 * @return String the Swiss social security number of 13 positions, with leading 756.
+	 * @throws FuncExpEvalException::ASSERTION_FAILED if given string cannot be formatted as a valid swiss social security number.
+	 */
+	public function txtAcceptSwissSsn($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatSwissSsn takes one argument which is the Swiss social security number to be formatted', FuncExpEvalException::INVALID_ARGUMENT);
+	    $str = trim($this->evaluateArg($args[0]));
+	    $returnValue = $this->txtFormatSwissSsn(array($str));
+	    if($str!='' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid swiss social security number.", FuncExpEvalException::ASSERTION_FAILED);
+	    return $returnValue;
+	}
 	/**
 	 * Creates an html open tag
 	 * FuncExp signature : <code>htmlStartTag(tagName,key1,value1,key2,value2,...)</code><br/>
@@ -3051,7 +3087,26 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		else $str = '';
 		if(!empty($str)) return $prefix.$str;
 		else return '';
-	}	
+	}
+	
+	/**
+	 * Postpends a postfix to some content only if content is not null.
+	 * FuncExp signature: <code>postpend(str,postfix)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str: Evaluates to a string.
+	 * - Arg(1) postfix: Evaluates to a string.	 
+	 * @return String if(str is not empty) returns str.postfix else return ''
+	 */
+	public function postpend($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>0) $str = $this->evaluateArg($args[0]);
+	    else $str = '';
+	    if($nArgs>1) $postfix = $this->evaluateArg($args[1]);
+	    else $postfix = '';
+	    
+	    if(!empty($str)) return $str.$postfix;
+	    else return '';
+	}
 	
 	/**
 	 * Creates an array from a list of values represented as a string

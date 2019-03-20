@@ -338,6 +338,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * - Arg(1) medidataResponseXml: FieldSelector. Field of type File containing the received Medidata XML file
 	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the extraction process. It supports the following options:
 	 * - extractAttachementsTo: String. Field name prefix, which selects a set of fields of type Files in which to extract all attached documents. The set of fields should respect the Wigii Matrix naming convention and be numbered 1, 2, 3, ..., n.
+	 * - extractCustomerOrderNumberTo: String|FieldSelector. Field where to store the extracted customer order number.
 	 * - printTemplate: String. Name of the print template to use to print the Medidata Invoice Response as HTML. Defaults to medidataInvoiceResponse.
 	 * To activate the print template in the configuration you should:
 	 * 1. copy the MedidataPrintInvoiceResponse.php file delivered in the Wigii Medidata addon to the client configuration folder and customize it for the client namespace
@@ -347,7 +348,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * </Print>  
 	 * @return Array an array with the html content of the printed invoice response and all the useful Files subfields. The FuncExp return value is compatible with a calculated field of type Files.
  	 * @example In a Wigii Filemanager module, add the following field to store the Medidata Invoice Response as a pretty HTML document and extract any attachements to a set of fields of type Files named mdtDoc1, mdtDoc2, etc. 
-	 * <mdtInvoiceResponse type="Files" readonly="1" clearOnCopy="1" enableForDownloading="1" funcExp='printMedidataInvoiceResponse(medidataXml,wigiiBPLParam("extractAttachementsTo","mdtDoc"))'><label_l01>Medidata response</label_l01><label_l02>Réponse Medidata</label_l02></mdtInvoiceResponse>
+	 * <mdtInvoiceResponse type="Files" readonly="1" clearOnCopy="1" enableForDownloading="1" htmlArea="1" funcExp='printMedidataInvoiceResponse(medidataXml,wigiiBPLParam("extractAttachementsTo","mdtDoc"))'><label_l01>Medidata response</label_l01><label_l02>Réponse Medidata</label_l02></mdtInvoiceResponse>
 	 */
 	public function printMedidataInvoiceResponse($args) {
 	    $this->assertFxOriginIsNotPublic();
@@ -383,6 +384,12 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    $attachementFieldName = $options->getValue('extractAttachementsTo');
 	    $extractAttachements = !empty($attachementFieldName);  
 	    
+	    $customerOrderNumberFieldName = $options->getValue('extractCustomerOrderNumberTo');
+	    if($customerOrderNumberFieldName instanceof FieldSelector) $customerOrderNumberFieldName = $customerOrderNumberFieldName->getFieldName();
+	    
+	    $messageTypeFieldName = $options->getValue('extractMessageTypeTo');
+	    if($messageTypeFieldName instanceof FieldSelector) $messageTypeFieldName = $messageTypeFieldName->getFieldName();
+	    
 	    // extracts Medidata XML
 	    $options->setValue('xmlSchema','generalInvoiceResponse_450.xsd');
 	    $options->setValue('namespaceURI','http://www.forum-datenaustausch.ch/invoice');
@@ -395,35 +402,106 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
         $medidataXml = simplexml_import_dom($medidataXml);
         
 	    // extracts type of response (invoice or reminder)
-	    $responseType = (string)($medidataXml->xpath("/invoice:response/invoice:payload")[0]["type"]);
+	    $responseType = $this->getXmlValue($medidataXml, 'invoice', '/response/payload','type');
 	    // extracts message date (Wigii format)
-	    $messageDate = date('Y-m-d H:m:i', intval((string)($medidataXml->xpath("/invoice:response/invoice:payload")[0]["response_timestamp"])));	    
-	    // extracts customer order number
-	    $customerOrderNumber = (string)($medidataXml->xpath("/invoice:response/invoice:payload/invoice:invoice")[0]["request_id"]);
+	    $messageDate = date('Y-m-d H:m:i', intval($this->getXmlValue($medidataXml, 'invoice', '/response/payload','response_timestamp')));	    
+	    // extracts customer order number and stores it
+	    $customerOrderNumber = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/invoice','request_id');
+	    if($customerOrderNumberFieldName) $element->setFieldValue($customerOrderNumber, $customerOrderNumberFieldName);
+	    // extracts invoice date
+	    $invoiceDate = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/invoice','request_date');
+	    if($invoiceDate) $invoiceDate = strtotime($invoiceDate);
+	    if($invoiceDate) $invoiceDate = date('Y-m-d H:m:i',$invoiceDate);
+	    else $invoiceDate=null;
+	    // extracts reminder date
+	    if($responseType=='reminder') {
+	        $reminderDate = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/reminder','request_date');
+	        if($reminderDate) $reminderDate = strtotime($reminderDate);
+	        if($reminderDate) $reminderDate = date('Y-m-d H:m:i',$reminderDate);
+	        else $reminderDate=null;	        
+	    }
+	    // extracts reminder level
+	    if($responseType=='reminder') {
+	        $reminderLevel = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/reminder','reminder_level');	        
+	    }
 	    // extracts type of message (pending, accepted, rejected)
-	    $messageXml = $medidataXml->xpath("/invoice:response/invoice:payload/invoice:body/invoice:pending");
-	    if(!$messageXml) $messageXml = $medidataXml->xpath("/invoice:response/invoice:payload/invoice:body/invoice:accepted");
-	    if(!$messageXml) $messageXml = $medidataXml->xpath("/invoice:response/invoice:payload/invoice:body/invoice:rejected");
+	    $messageXml = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/pending');
+	    if(!$messageXml) $messageXml = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/accepted');
+	    if(!$messageXml) $messageXml = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/rejected');
 	    $messageXml = $messageXml[0];
 	    $messageType=$messageXml->getName();
+	    if($messageTypeFieldName) $element->setFieldValue($messageType, $messageTypeFieldName);
+	    // extracts message explanation
+	    $messageExplanation = (string)$this->getXmlValue($messageXml, 'invoice', './explanation');
+	   
+	    // extracts reimbursement request
+	    $reimbursementXml = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/accepted/reimbursement');
+	    if(isset($reimbursementXml)) {
+	        $reimbursementDueDate = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/accepted/reimbursement/balance','payment_period');
+	        if($reimbursementDueDate) {
+	            $reimbursementDueDate = (new DateTime($messageDate))->add(new DateInterval($reimbursementDueDate));
+	            $reimbursementDueDate = $reimbursementDueDate->format('Y-m-d');
+	        }
+	    }	    
+	    
+	    // extracts patient info
+	    $patientXml = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/patient');
+	    $patientGender = (string)$this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/patient','gender');
+	    $patientBirthDate = (string)$this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/patient','birthdate');	    
+	    if($patientBirthDate) $patientBirthDate = strtotime($patientBirthDate);
+	    if($patientBirthDate) $patientBirthDate = date('Y-m-d H:m:i',$patientBirthDate);
+	    else $patientBirthDate=null;
+	    $patientSSN = (string)$this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/patient','ssn');
+	    
 	    // extracts attachements
 	    if($extractAttachements) {
 	        $messageAttachements = $medidataXml->xpath("/invoice:response/invoice:payload/invoice:body/invoice:documents/invoice:document");
 	        if($messageAttachements) $nbAttachements = count($messageAttachements);
 	        else $nbAttachements = 0;
 	    }
-	    // builds message title    
-	    $messageTitle = Dates::formatDisplay($messageDate, "yyyy.mm.dd")." Réponse ".$messageType." à ".$responseType." no ".$customerOrderNumber;
+	    // builds message title
+	    $messageTitle = Dates::formatDisplay($messageDate, "yyyy.mm.dd", "hh:mm");
+	    if($messageType=='pending') {
+	        $messageTitle.= " Demande d'informations";
+	        if($responseType=='invoice') $messageTitle.=' sur facture no '.$customerOrderNumber;
+	        else $messageTitle.=' pour rappel sur facture no '.$customerOrderNumber;
+	    }
+	    // accepted or rejected
+	    else {
+	        if($responseType=='invoice') $messageTitle.=' Facture no '.$customerOrderNumber;
+	        else $messageTitle.=' Rappel sur facture no '.$customerOrderNumber;
+	        if($messageType=='accepted') {
+	            $messageTitle.=' accepté';
+	            if(isset($reimbursementXml)) $messageTitle.= ' sous conditions';
+	        }
+	        else $messageTitle.=' rejeté';
+	    }
 	    
 	    // intializes options for print
 	    $options->setValue('medidataXml',$medidataXml);
+	    $options->setValue('medidataFL',$this);
 	    $options->setValue('customerOrderNumber',$customerOrderNumber);
 	    $options->setValue('responseType',$responseType);
+	    $options->setValue('invoiceDate',$invoiceDate);
+	    $options->setValue('reminderDate',$reminderDate);
+	    $options->setValue('reminderLevel',$reminderLevel);
+	    $options->setValue('patientXml',$patientXml);
+	    $options->setValue('patientGender',$patientGender);
+	    $options->setValue('patientBirthDate',$patientBirthDate);
+	    $options->setValue('patientSSN',$patientSSN);
 	    $options->setValue('messageDate',$messageDate);
+	    $options->setValue('messageTitle',$messageTitle);
 	    $options->setValue('messageXml',$messageXml);
+	    $options->setValue('messageExplanation',$messageExplanation);
 	    $options->setValue('messageType',$messageType);
+	    if($messageType=='pending') $options->setValue('invoiceNotifications',$messageXml->xpath("./invoice:message"));
+	    if($messageType=='rejected') $options->setValue('invoiceErrors',$messageXml->xpath("./invoice:error"));
 	    $options->setValue('nbAttachements',$nbAttachements);
 	    if($nbAttachements>0) $options->setValue('messageAttachements',$messageAttachements);	    
+	    if(isset($reimbursementXml)) {
+	        $options->setValue('reimbursementXml',$reimbursementXml);
+	        $options->setValue('reimbursementDueDate',$reimbursementDueDate);
+	    }	    
 	    
 	    // prints invoice response as html
 	    $htmlContent = $this->evaluateFuncExp(fx('printElementWithTemplate',$element,$printTemplate,$options));
@@ -486,6 +564,468 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
     	        ));
 	    }
 	    $this->debugLogger()->logEndOperation('extractInvoiceResponse45Document');	  
+	}
+	
+	/**
+	 * Generates HTML code to print the insurance contact details given a received Medidata invoice xml response.
+	 * FuncExp signature : <code>printInsuranceContact(medidataResponseXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) medidataResponseXml: SimpleXMLElement. Medidata received XML Invoice Response.
+	 * @return String html code displaying the insurance contact details
+	 */
+	public function printInsuranceContact($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printInsuranceContact takes at least one parameter which is Medidata received XML message', FuncExpEvalException::INVALID_ARGUMENT);
+	        $medidataResponseXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $medidataResponseXml = $args;
+	    }	    
+	    // gets insurance details
+	    $insurance = $this->getXmlValue($medidataResponseXml, 'invoice', '/response/payload/body/contact/company');
+	    if(isset($insurance)) {
+	       $returnValue = array('<br/>');
+	       $returnValue[] = (string)$this->getXmlValue($insurance, 'invoice', './companyname');
+	       $returnValue[] = (string)$this->getXmlValue($insurance, 'invoice', './department');
+	       $returnValue[] = (string)$this->getXmlValue($insurance, 'invoice', './subaddressing');
+	       $returnValue[] = (string)$this->getXmlValue($insurance, 'invoice', './postal/pobox');
+	       $returnValue[] = (string)$this->getXmlValue($insurance, 'invoice', './postal/street');
+	       $returnValue[] = (string)$this->getXmlValue($insurance, 'invoice', './postal/zip').'&nbsp'.(string)$this->getXmlValue($insurance, 'invoice', './postal/city');
+	       $returnValue[] = "&nbsp;";
+	       $returnValue[] = "tél: ".(string)$this->getXmlValue($insurance, 'invoice', './telecom/phone');
+	       $returnValue[] = "fax: ".(string)$this->getXmlValue($insurance, 'invoice', './telecom/fax');
+	       $returnValue[] = "email: ".(string)$this->getXmlValue($insurance, 'invoice', './online/email');
+	       $returnValue[] = "web: ".(string)$this->getXmlValue($insurance, 'invoice', './online/url');
+	       return $this->evaluateFuncExp(fx('implode',$returnValue));
+	    }
+	}
+	
+	/**
+	 * Generates HTML code to print the insurance direct contact details given a received Medidata invoice xml response.
+	 * FuncExp signature : <code>printInsuranceDirectContact(medidataResponseXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) medidataResponseXml: SimpleXMLElement. Medidata received XML Invoice Response.
+	 * @return String html code displaying the insurance direct contact details
+	 */
+	public function printInsuranceDirectContact($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printInsuranceDirectContact takes at least one parameter which is Medidata received XML message', FuncExpEvalException::INVALID_ARGUMENT);
+	        $medidataResponseXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $medidataResponseXml = $args;
+	    }
+	    // gets insurance details
+	    $directContact = $this->getXmlValue($medidataResponseXml, 'invoice', '/response/payload/body/contact/employee');
+	    if(isset($directContact)) {
+	        $returnValue = array('<br/>');
+	        $returnValue[] = (string)$directContact['salutation'].' '.$directContact['title'].$this->getXmlValue($directContact, 'invoice', './givenname').' '.$this->getXmlValue($directContact, 'invoice', './familyname');
+	        $returnValue[] = "&nbsp;";
+	        $returnValue[] = "tél: ".(string)$this->getXmlValue($directContact, 'invoice', './telecom/phone');
+	        $returnValue[] = "fax: ".(string)$this->getXmlValue($directContact, 'invoice', './telecom/fax');
+	        $returnValue[] = "email: ".(string)$this->getXmlValue($directContact, 'invoice', './online/email');
+	        $returnValue[] = $this->prepend("web: ",(string)$this->getXmlValue($directContact, 'invoice', './online/url'));
+	        return $this->evaluateFuncExp(fx('implode',$returnValue));
+	    }
+	}
+	
+	/**
+	 * Generates HTML code to print the patient contact details given a received Medidata invoice xml response.
+	 * FuncExp signature : <code>printPatientContact(medidataResponseXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) medidataResponseXml: SimpleXMLElement. Medidata received XML Invoice Response.
+	 * @return String html code displaying the patient contact details
+	 */
+	public function printPatientContact($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printPatientContact takes at least one parameter which is Medidata received XML message', FuncExpEvalException::INVALID_ARGUMENT);
+	        $medidataResponseXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $medidataResponseXml = $args;
+	    }
+	    // gets patient details
+	    $patientContact = $this->getXmlValue($medidataResponseXml, 'invoice', '/response/payload/body/patient/person');
+	    if(isset($patientContact)) {
+	        $returnValue = array('<br/>');
+	        $returnValue[] = (string)$patientContact['salutation'].' '.$patientContact['title'].$this->getXmlValue($patientContact, 'invoice', './givenname').' '.$this->getXmlValue($patientContact, 'invoice', './familyname');
+	        $returnValue[] = (string)$this->getXmlValue($patientContact, 'invoice', './subaddressing');
+	        $returnValue[] = (string)$this->getXmlValue($patientContact, 'invoice', './postal/pobox');
+	        $returnValue[] = (string)$this->getXmlValue($patientContact, 'invoice', './postal/street');
+	        $returnValue[] = (string)$this->getXmlValue($patientContact, 'invoice', './postal/zip').'&nbsp'.(string)$this->getXmlValue($patientContact, 'invoice', './postal/city');
+	        $returnValue[] = "&nbsp;";
+	        $returnValue[] = $this->prepend("tél: ",(string)$this->getXmlValue($patientContact, 'invoice', './telecom/phone'));
+	        $returnValue[] = $this->prepend("fax: ",(string)$this->getXmlValue($patientContact, 'invoice', './telecom/fax'));
+	        $returnValue[] = $this->prepend("email: ",(string)$this->getXmlValue($patientContact, 'invoice', './online/email'));
+	        $returnValue[] = $this->prepend("web: ",(string)$this->getXmlValue($patientContact, 'invoice', './online/url'));
+	        return $this->evaluateFuncExp(fx('implode',$returnValue));
+	    }
+	}	
+	
+	/**
+	 * Generates HTML code to print the debitor address details given a Medidata invoice xml request.
+	 * FuncExp signature : <code>printDebitorAddress(medidataXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) medidataXml: SimpleXMLElement. Medidata XML Invoice request.
+	 * @return String html code displaying the debitor address details
+	 */
+	public function printDebitorAddress($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printDebitorAddress takes at least one parameter which is Medidata XML invoice request', FuncExpEvalException::INVALID_ARGUMENT);
+	        $medidataXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $medidataXml = $args;
+	    }
+	    // gets biller details
+	    $biller = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/tiers_payant/debitor/company');
+	    if(!isset($biller)) $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/tiers_garant/debitor/person');
+	    if(isset($biller)) {
+	        $returnValue = array('<br/>');
+	        if($biller->getName()=='person') $returnValue[] = (string)$biller['salutation'].' '.$biller['title'].$this->getXmlValue($biller, 'invoice', './givenname').' '.$this->getXmlValue($biller, 'invoice', './familyname');
+	        $returnValue[] = (string)$this->getXmlValue($biller, 'invoice', './companyname');
+	        $returnValue[] = (string)$this->getXmlValue($biller, 'invoice', './department');
+	        $returnValue[] = (string)$this->getXmlValue($biller, 'invoice', './subaddressing');
+	        $returnValue[] = (string)$this->getXmlValue($biller, 'invoice', './postal/pobox');
+	        $returnValue[] = (string)$this->getXmlValue($biller, 'invoice', './postal/street');
+	        $returnValue[] = (string)$this->getXmlValue($biller, 'invoice', './postal/zip').'&nbsp'.(string)$this->getXmlValue($biller, 'invoice', './postal/city');
+	        return $this->evaluateFuncExp(fx('implode',$returnValue));
+	    }
+	}
+	
+	/**
+	 * Generates HTML code to print the provider role details given a Medidata invoice xml request.
+	 * FuncExp signature : <code>printProviderRole(medidataXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) medidataXml: SimpleXMLElement. Medidata XML Invoice request.
+	 * @return String html code displaying the provider role details
+	 */
+	public function printProviderRole($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printProviderRole takes at least one parameter which is Medidata XML invoice request', FuncExpEvalException::INVALID_ARGUMENT);
+	        $medidataXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $medidataXml = $args;
+	    }
+        $returnValue = array(' ');
+        // role
+        $s = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body','role');
+        switch($s) {
+            case 'other': $s = 'Autre rôle';break;
+        }
+        $returnValue[] = $s;
+        // place
+        $s = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body','place');
+        switch($s) {
+            case 'company': $s = 'Société';break;
+        }
+        $returnValue[] = $s;
+        // title
+        $returnValue[] = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body','role_title');
+
+        return $this->evaluateFuncExp(fx('implode',$returnValue));
+	}
+	
+	/**
+	 * Generates HTML code to print the treatment reason details given a Medidata invoice xml request.
+	 * FuncExp signature : <code>printTreatmentReason(medidataXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) medidataXml: SimpleXMLElement. Medidata XML Invoice request.
+	 * @return String html code displaying the treatment reason details
+	 */
+	public function printTreatmentReason($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printTreatmentReason takes at least one parameter which is Medidata XML invoice request', FuncExpEvalException::INVALID_ARGUMENT);
+	        $medidataXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $medidataXml = $args;
+	    }
+	    $returnValue = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/treatment','reason');
+	    switch($returnValue) {
+	        case 'unknown': $returnValue = 'Inconnu';break;
+	    }
+	    return $returnValue;
+	}
+	
+	/**
+	 * Generates HTML code to print the requested reimbursement amount given a reimbursement xml node.
+	 * FuncExp signature : <code>printReimbursementAmount(reimbursementXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) reimbursementXml: SimpleXMLElement. Medidata Invoice Response, reimbursement xml node.
+	 * @return String html code displaying the reimbursement amount
+	 */
+	public function printReimbursementAmount($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printReimbursementAmount takes at least one parameter which is Medidata requested reimbursement XML node', FuncExpEvalException::INVALID_ARGUMENT);
+	        $reimbursementXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $reimbursementXml = $args;
+	    }
+        $returnValue = array(' ');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementXml, 'invoice', './balance','amount_due');
+        $currency = (string)$this->getXmlValue($reimbursementXml, 'invoice', './balance','currency');
+        $returnValue[] = $currency;
+        $vat = (string)$this->getXmlValue($reimbursementXml, 'invoice', './balance','vat');
+        if($vat!='') $returnValue[] = '(inclus TVA '.floatval($vat).($currency?' '.$currency:'').')';
+        return $this->evaluateFuncExp(fx('implode',$returnValue));
+	}
+	
+	/**
+	 * Generates HTML code to print the requested reimbursement paiement detailst given a reimbursement xml node.
+	 * FuncExp signature : <code>printReimbursementPaiementDetails(reimbursementXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) reimbursementXml: SimpleXMLElement. Medidata Invoice Response, reimbursement xml node.
+	 * @return String html code displaying the reimbursement paiement details
+	 */
+	public function printReimbursementPaiementDetails($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printReimbursementAmount takes at least one parameter which is Medidata requested reimbursement XML node', FuncExpEvalException::INVALID_ARGUMENT);
+	        $reimbursementXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $reimbursementXml = $args;
+	    }
+	    
+	    $account = $this->prepend('CCP: ', (string)$this->getXmlValue($reimbursementXml, 'invoice', './esr9','participant_number'));
+	    if(!isset($account)) $account = $this->prepend('IBAN: ', (string)$this->getXmlValue($reimbursementXml, 'invoice', './esrQR','iban'));
+	    if(!isset($account)) $account = $this->prepend('CCP: ', (string)$this->getXmlValue($reimbursementXml, 'invoice', './esrRed','post_account'));
+	    if(!isset($account)) $account = $this->prepend('IBAN: ', (string)$this->getXmlValue($reimbursementXml, 'invoice', './esrRed','iban'));
+	    
+	    $refNumber = (string)$this->getXmlValue($reimbursementXml, 'invoice', './esr9','reference_number');
+	    if(!isset($refNumber)) $refNumber = (string)$this->getXmlValue($reimbursementXml, 'invoice', './esrQR','reference_number');
+	    if(!isset($refNumber)) $refNumber = (string)$this->getXmlValue($reimbursementXml, 'invoice', './esrRed','reference_number');
+	    $refNumber = $this->prepend('No référence: ', $refNumber);
+	    
+	    $codingLine = (string)$this->getXmlValue($reimbursementXml, 'invoice', './esr9','coding_line');
+	    if(!isset($codingLine)) $codingLine = (string)$this->getXmlValue($reimbursementXml, 'invoice', './esrQR','customer_note');
+	    if(!isset($codingLine)) {
+	        $codingLine = (string)$this->getXmlValue($reimbursementXml, 'invoice', './esrRed','coding_line1').
+	        $this->prepend('<br/>',(string)$this->getXmlValue($reimbursementXml, 'invoice', './esrRed','coding_line2'));
+	    }
+	    $codingLine = $this->prepend('Coding: ', $codingLine);
+	    
+	    $reimbursementContact = $this->getXmlValue($reimbursementXml, 'invoice', './esr9');
+	    if(!isset($reimbursementContact)) $reimbursementContact = $this->getXmlValue($reimbursementXml, 'invoice', './esrQR');
+	    if(!isset($reimbursementContact)) $reimbursementContact = $this->getXmlValue($reimbursementXml, 'invoice', './esrRed');
+	    
+        $returnValue = array('<br/>');
+        $returnValue[] = $account;
+        $returnValue[] = $refNumber;
+        $returnValue[] = $codingLine;
+        $returnValue[] = "&nbsp;";
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './bank/company/companyname');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './bank/company/department');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './bank/company/subaddressing');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './bank/company/postal/pobox');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './bank/company/postal/street');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './bank/company/postal/zip').'&nbsp'.(string)$this->getXmlValue($reimbursementContact, 'invoice', './bank/company/postal/city');
+        $returnValue[] = "&nbsp;";
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './creditor/company/companyname');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './creditor/company/department');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './creditor/company/subaddressing');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './creditor/company/postal/pobox');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './creditor/company/postal/street');
+        $returnValue[] = (string)$this->getXmlValue($reimbursementContact, 'invoice', './creditor/company/postal/zip').'&nbsp'.(string)$this->getXmlValue($reimbursementContact, 'invoice', './creditor/company/postal/city');
+        return $this->evaluateFuncExp(fx('implode',$returnValue));
+	}
+	
+	/**
+	 * Generates HTML code to print the list of attached file names, given the list of attached documents.
+	 * FuncExp signature : <code>printAttachementList(messageAttachements)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) messageAttachements: Array. Array of Medidata Invoice Response document xml nodes attached to the received message and extracted by the printMedidataInvoiceResponse method
+	 * @return String html code displaying the list of attached file names
+	 */
+	public function printAttachementList($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs==1 && is_array($args[0])) $args = $args[0];
+	    $nArgs = $this->getNumberOfArgs($args);
+
+	    if($nArgs>0) {
+    	    $returnValue = array('<br/>');
+    	    for($i=0;$i<$nArgs;$i++) {
+    	        $document = $this->evaluateArg($args[$i]);
+    	        if(isset($document)) $returnValue[] = (string)$document["filename"];
+    	    }
+    	    return $this->evaluateFuncExp(fx('implode',$returnValue));
+	    }
+	}
+	
+	/**
+	 * Generates HTML code to print the list of participating GLNs, given the list of provided services.
+	 * FuncExp signature : <code>printGLNList(invoiceServices)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) invoiceServices: Array. Array of Medidata Invoice Request service xml nodes extracted by the printMedidataInvoiceRequest method
+	 * @return String html code displaying the list of participating GLNs
+	 */
+	public function printGLNList($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs==1 && is_array($args[0])) $args = $args[0];
+	    $nArgs = $this->getNumberOfArgs($args);
+	    
+	    if($nArgs>0) {
+	        $returnValue = '';
+	        $glns = array(); $nGlns=0;
+	        for($i=0;$i<$nArgs;$i++) {
+	            $service = $this->evaluateArg($args[$i]);
+	            if(isset($service)) {
+	                $gln = (string)$service["responsible_id"];
+	                // if gln is not already extracted, adds it to list
+	                if(!$glns[$gln]) {	                    
+	                    $glns[$gln] = $gln;
+	                    if($nGlns>0) $returnValue.= '<br/>';
+	                    $nGlns++;
+	                    $returnValue .= $nGlns.'/'.$gln;
+	                }
+	            }
+	        }
+	        return $returnValue;
+	    }
+	}
+	
+	/**
+	 * Prints a Medidata invoice request as a copy for the patient or for the insurance as a reimbursement claim
+	 * FuncExp signature : <code>printMedidataInvoiceResponse(customerOrder,medidataXml,options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order to which is attached an XML Medidata General Invoice Request.
+	 * - Arg(1) medidataXml: FieldSelector. Field of type File containing the generated Medidata XML file
+	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the extraction process. It supports the following options:
+	 * - customerCopy: Boolean. If true, print the invoice request as a customer copy, else prints it for the insurance as a reimbursement claim
+	 * - printTemplate: String. Name of the print template to use to print the Medidata Invoice Request as HTML. Defaults to medidataInvoiceRequest.
+	 * To activate the print template in the configuration you should:
+	 * 1. copy the MedidataPrintInvoiceRequest.php file delivered in the Wigii Medidata addon to the client configuration folder and customize it for the client namespace
+	 * 2. add the print activity with the template medidataInvoiceRequest in the Wigii module where the print document should be stored
+	 * <Print>
+	 *	<medidataInvoiceRequest path="clientNamespace_MedidataPrintInvoiceRequest.php" inClientFolder="1" />
+	 * </Print>
+	 * @return Array an array with the html content of the printed invoice request and all the useful Files subfields. The FuncExp return value is compatible with a calculated field of type Files.
+	 * @example In Wigii CustomerOrder module, add the following field to store the Medidata Invoice Request as a pretty HTML document
+	 * <mdtPrintCustomer type="Files" readonly="1" clearOnCopy="1" keepHistory="10" enableForDownloading="1" htmlArea="1" funcExp='printMedidataInvoiceRequest(__element.this,mdtInvoiceRequest,wigiiBPLParam("customerCopy",logTrue()))'><label_l01>Customer copy</label_l01><label_l02>Copie client</label_l02></mdtPrintCustomer>
+	 */
+	public function printMedidataInvoiceRequest($args) {
+	    $this->debugLogger()->logBeginOperation('printMedidataInvoiceRequest');
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new FuncExpEvalException('printMedidataInvoiceRequest takes at least two parameters which first one should evaluate to an Element of type Wigii Company CustomerOrders, and second be a FieldSelector pointing to a field of type Files containing a Medidata generated XML file', FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue=null;
+	    $customerOrder = $this->evaluateArg($args[0]);
+	    // fetches element if needed
+	    if($customerOrder instanceof ElementPDataFlowConnector) $customerOrder = sel($this->getPrincipal(),$customerOrder,dfasl(dfas("NullDFA")));
+	    if($customerOrder instanceof ElementP) $customerOrder = $customerOrder->getElement();
+	    if(!($customerOrder instanceof Element)) throw new FuncExpEvalException('printMedidataInvoiceRequest takes a first parameter which should evaluate to an Element of type Wigii Company CustomerOrders', FuncExpEvalException::INVALID_ARGUMENT);
+	    // gets medidata XML invoice
+	    if($args[1] instanceof FieldSelector) $xmlFieldName = $args[1]->getFieldName();
+	    else {
+	        $xmlFieldName = $this->evaluateArg($args[1]);
+	        if($xmlFieldName instanceof FieldSelector) $xmlFieldName = $xmlFieldName->getFieldName();
+	    }
+	    $xmlField = $customerOrder->getFieldList()->getField($xmlFieldName);
+	    if(!($xmlField->getDataType() instanceof Files)) throw new FuncExpEvalException('printMedidataInvoiceRequest takes second parameter which should be a FieldSelector pointing to a field of type Files containing a Medidata generated XML file', FuncExpEvalException::INVALID_ARGUMENT);
+	    
+	    // reads bag of options
+	    if($nArgs>2) {
+	        $options = $this->evaluateArg($args[2]);
+	        if(!isset($options)) $options = wigiiBPLParam();
+	        elseif(!($options instanceof WigiiBPLParameter)) throw new FuncExpEvalException('options can only be an instance of WigiiBPLParameter',FuncExpEvalException::INVALID_ARGUMENT);
+	    }
+	    else $options = wigiiBPLParam();
+	    
+	    $printTemplate = $options->getValue('printTemplate');
+	    if(empty($printTemplate)) $printTemplate = 'medidataInvoiceRequest';
+	    
+	    $customerCopy = $options->getValue('customerCopy');
+	    
+	    // initializes options
+	    $options->setValue('xmlSchema','generalInvoiceRequest_450.xsd');
+	    $options->setValue('namespaceURI','http://www.forum-datenaustausch.ch/invoice');
+	    $options->setValue('namespacePrefix','invoice');
+	    
+	    // extracts Medidata XML
+	    $medidataXml = sel($this->getPrincipal(),elementFile2df($customerOrder, $xmlFieldName),dfasl(dfas("StringBufferDFA")));
+	    $medidataXml = $this->loadXmlDoc($medidataXml);
+	    // validates loaded xml
+	    $this->assertXmlIsValid($medidataXml, $options->getValue('xmlSchema'));
+	    // transforms it as SimpleXml
+	    $medidataXml = simplexml_import_dom($medidataXml);
+	    
+	    // extracts invoice file name
+	    $invoiceFileName = $customerOrder->getFieldValue($xmlFieldName,'name').($customerCopy?'-client':'-assureur');
+	    // extracts invoice type (invoice or reminder)
+	    $invoiceType = $this->getXmlValue($medidataXml, 'invoice', '/request/payload','type');
+	    // extracts invoice tiers type (tiers_payant or tiers_garant)
+	    $invoiceTiersType = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/tiers_payant');
+	    if(!isset($invoiceTiersType)) $invoiceTiersType = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/tiers_garant');
+	    $invoiceTiersXml = $invoiceTiersType;
+	    $invoiceTiersType = $invoiceTiersType->getName();
+	    
+	    // extracts law type (LAI=ivg,LAA=uvg,LAMAL=kvg)
+	    $invoiceLawType =  $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/uvg');
+	    if(!isset($invoiceLawType)) $invoiceLawType =  $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/ivg');
+	    if(!isset($invoiceLawType)) $invoiceLawType =  $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/kvg');
+	    $invoiceCaseXml = $invoiceLawType;
+	    $invoiceLawType = $invoiceLawType->getName();
+	    switch($invoiceLawType) {
+	        case 'uvg': $invoiceLawType='LAA'; break;
+	        case 'ivg': $invoiceLawType='LAI'; break;
+	        case 'kvg': $invoiceLawType='LAMAL'; break;
+	    }
+	    
+	    // extract services
+	    $invoiceServices = $medidataXml->xpath("/invoice:request/invoice:payload/invoice:body/invoice:services/invoice:service");
+	    if($invoiceServices) $nbServices = count($invoiceServices);
+	    else $nbServices = 0;
+	    
+	    // generates invoice title
+	    if($invoiceTiersType=='tiers_payant') {
+	        $invoiceTitle = 'Facture TP';
+	        if($customerCopy) $invoiceTitle.='&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.'Copie pour le patient / client';
+	    }
+	    else {	        
+	        if($customerCopy) $invoiceTitle.='Facture TG'.'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.'Copie pour le patient / client';
+	        else $invoiceTitle = 'Justificatif de remboursement, Exemplaire pour l&apos;assureur';
+	    }
+	    
+	    // intializes options for print
+	    $options->setValue('medidataXml',$medidataXml);
+	    $options->setValue('medidataFL',$this);
+	    $options->setValue('invoiceTitle',$invoiceTitle);
+	    $options->setValue('invoiceType',$invoiceType);
+	    $options->setValue('invoiceFileName',$invoiceFileName);
+	    $options->setValue('invoiceTiersType',$invoiceTiersType);
+	    $options->setValue('invoiceTiersXml',$invoiceTiersXml);
+	    $options->setValue('invoiceLawType',$invoiceLawType);
+	    $options->setValue('invoiceCaseXml',$invoiceCaseXml);	    
+	    $options->setValue('nbServices',$nbServices);
+	    if($nbServices>0) $options->setValue('invoiceServices',$invoiceServices);
+	    
+	    // prints invoice request as html
+	    $htmlContent = $this->evaluateFuncExp(fx('printElementWithTemplate',$customerOrder,$printTemplate,$options));
+	    
+	    // generates files subfields
+	    $returnValue = $this->evaluateFuncExp(fx('buildHtmlFileSubFieldsMap',$invoiceFileName,$htmlContent));
+	    
+	    $this->debugLogger()->logEndOperation('printMedidataInvoiceRequest');
+	    return $returnValue;
 	}
 	
 	/**
@@ -1084,6 +1624,31 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    return $returnValue;
 	}
 	
+	/**
+	 * Returns a selected xml node or attribute value in a given xml tree, using an access path 
+	 * @param SimpleXMLElement $xmlDoc loaded xml tree
+	 * @param String $namespacePrefix optional xml namespace prefix to be used before selecting nodes 
+	 * @param String $path access path in the tree separated with slashes
+	 * @param String $attr optional xml attribute name from which to extract a value. If not given, returns the xml node.
+	 * @return SimpleXMLElement|String returns selected xml node or null if not found. Or returns selected attribute value or null if not found.
+	 * @example getXmlValue($xml,'invoice','/response/payload','type') will do an xpath query /invoice:response/invoice:payload and return value attribute 'type' 
+	 */
+	public function getXmlValue($xmlDoc,$namespacePrefix,$path,$attr=null) {
+	    if(!isset($xmlDoc)) throw new FuncExpEvalException('xml doc cannot be null');
+	    $returnValue = $xmlDoc;
+	    if($path && $path!='./' && $path != '.') {
+	        if($namespacePrefix) {
+	            $path = explode('/',$path);
+	            $path = implode('/'.$namespacePrefix.':',$path);
+	        }
+	        $returnValue = $xmlDoc->xpath($path);
+	        if($returnValue) $returnValue = $returnValue[0];
+	        else $returnValue=null;
+	    }
+	    if($attr && $returnValue) $returnValue = (string)$returnValue[$attr];
+	    return $returnValue;
+	}
+	
 	// Validation
 	
 	/**
@@ -1260,5 +1825,16 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 */
 	protected function formatValue($element, $fieldName) {
 		return html_entity_decode($this->getTrm()->formatValueFromFS(fs($fieldName), $element), ENT_COMPAT, "UTF-8");
-	}	
+	}
+	
+	/**
+	 * Prepends a prefix to a value only if value is not null
+	 * @param String $prefix prefix to prepend to value
+	 * @param String $value value
+	 * @return String if value is not null, then prefix.prepend else null
+	 */
+	protected function prepend($prefix,$value) {
+	    if($value!=null) return $prefix.$value;
+	    else return null;
+	}
 }

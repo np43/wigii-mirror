@@ -9108,6 +9108,7 @@ onUpdateErrorCounter = 0;
 						$isThumbs = $exec->getCrtParameters(2) == "thumbs";
 						$isIntegrated = $exec->getCrtParameters(2) == "integrated";
 						$isIntegratedPurify = $exec->getCrtParameters(2) == "integratedPurify";
+						$isPrint = $exec->getCrtParameters(2) == "print";
 						$isUnzipForViewing = $exec->getCrtParameters(2) == "unzipForViewing";
 						$isExportDownload = $exec->getCrtParameters(2) == "exportDownload";
 						$isPreviousVersion = $exec->getCrtParameters(2) == "previousVersion";
@@ -9203,7 +9204,8 @@ onUpdateErrorCounter = 0;
 									// CWE 16.01.2019, if isIntegratedPurify, then purifies html before displaying it
 									if($isIntegratedPurify) $content = $trm->doFormatForHtmlText($content);
 									// Wraps html content with html file header
-									$content = $trm->wrapHtmlFilesWithHeader($content, $filename);
+									// CWE 20.03.2019: if isPrint then launches auto print
+									$content = $trm->wrapHtmlFilesWithHeader($content, $filename, $isPrint);
 								} else {
 									$content = $element->getFieldValue($fieldName, "content");
 								}
@@ -9379,7 +9381,7 @@ onUpdateErrorCounter = 0;
 							header('Content-Length: ' . $size);
 						}
 						//for any text file display the content as is
-						if (!$isIntegrated && !$isIntegratedPurify && !$isThumbs) {
+						if (!$isIntegrated && !$isIntegratedPurify && !$isPrint && !$isThumbs) {
 							header('Content-Disposition: attachment; filename="' . $fileName . '"');
 						}
 

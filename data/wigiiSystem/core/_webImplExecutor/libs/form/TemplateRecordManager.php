@@ -1488,11 +1488,17 @@ class TemplateRecordManager extends Model {
 			return Times::formatDisplay($value, "hh:mm");
 		}
 	}
-	//fieldName is used to define a title to the page
-	public function wrapHtmlFilesWithHeader($content, $filename){
+	/**
+	 * Wraps html content with full html header
+	 * @param String $content html content
+	 * @param String $filename used to define a title to the page
+	 * @param boolean $autoPrint if true, then adds a js script to automatically launch printing of the page, default to false
+	 * @return string
+	 */
+	public function wrapHtmlFilesWithHeader($content, $filename, $autoPrint=false){
 		$returnValue = $this->preHtmlHeader($filename);
 		$returnValue .=  $content;
-		$returnValue .= $this->postHtmlHeader();
+		$returnValue .= $this->postHtmlHeader($autoPrint);
 		return $returnValue;
 	}
 	public function preHtmlHeader($filename){
@@ -1503,8 +1509,18 @@ class TemplateRecordManager extends Model {
 		$returnValue .=  '</head><style type="text/css">body { font-family:Arial; } p { margin:0px;} </style><body>';
 		return $returnValue;
 	}
-	public function postHtmlHeader(){
-		$returnValue =  "</body></html>";
+	/**
+	 * Closes html body
+	 * @param boolean $autoPrint if true, then adds a js script to automatically launch printing of the page, default to false
+	 * @return string
+	 */
+	public function postHtmlHeader($autoPrint=false){
+	    $returnValue = '';
+	    // CWE 20.03.2019: automatically opens browser print dialog box
+	    if($autoPrint) {
+	        $returnValue .= '<script>window.print();</script>';
+	    }	        
+		$returnValue .= "</body></html>";
 		return $returnValue;
 	}
 	public function doFormatForFileSize($value, $doRegroupSimilarValue = false){

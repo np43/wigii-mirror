@@ -94,7 +94,8 @@ class FuncExpVMContext
 					$visitedClasses[$className] = true;
 					$module = $this->modules[$className];
 					// if method found in module then stores association into functions array
-					if(isset($module) && method_exists($module, $funcName)) {
+					// CWE 18.03.2019: replaced usage of method_exists by is_callable to prevent name conflicts between existing FuncExps and protected or private methods.
+					if(isset($module) && is_callable(array($module, $funcName))) {
 						if(!isset($this->functions)) $this->functions = array();
 						$this->functions[$funcName] = $module;
 						return $module;

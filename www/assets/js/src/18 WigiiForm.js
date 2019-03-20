@@ -952,6 +952,11 @@ function setListenerToPreviewFile(fieldId, fieldName, src, time){
 		messageDownload(fieldId);
 		e.stopPropagation();
 	});
+	$('#'+fieldId+' .value .htmlPreviewPrint').click(function(e){
+		previewHtml(src, time,true);
+		messageDownload(fieldId);
+		e.stopPropagation();
+	});
 }
 function setListenerToUnzipForViewing(fieldId, fieldName, src, time){
 	$('#'+fieldId+' .value .htmlPreview').click(function(e){

@@ -3121,7 +3121,7 @@ function previewUnzipForViewing(fileSrc, previewTime){
 	update('elementPreview/'+fileSrc+'/unzipForViewing/');
 }
 
-function previewHtml(fileSrc, previewTime){
+function previewHtml(fileSrc, previewTime,autoPrint){
 	$.blockUI(
 		{
 			css: {
@@ -3131,7 +3131,7 @@ function previewHtml(fileSrc, previewTime){
 				width: '90%',
 				height:'90%'
 			},
-			message: '<div class=\'ui-corner-all\' style=\'position:absolute; top:3%px; left:101%; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;cursor:pointer; background-color:#fff;\' onclick=\'$.unblockUI();$("#fileDownloadingBar").hide();\' >X</div><iframe onload=\'$("#fileDownloadingBar").hide();\' style=\'height:100%;width:100%;\'src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+'/integrated?'+previewTime+'\' >Your browser does not support iframes.</iframe>'
+			message: '<div class=\'ui-corner-all\' style=\'position:absolute; top:3%px; left:101%; font-style:bold;font-size:10px;padding:5px 10px 5px 10px;cursor:pointer; background-color:#fff;\' onclick=\'$.unblockUI();$("#fileDownloadingBar").hide();\' >X</div><iframe onload=\'$("#fileDownloadingBar").hide();\' style=\'height:100%;width:100%;\'src=\''+SITE_ROOT +"useContext/"+crtContextId+EXEC_requestSeparator+ fileSrc.replace(SITE_ROOT, '')+(autoPrint?'/print?':'/integrated?')+previewTime+'\' >Your browser does not support iframes.</iframe>'
 		}
 	);
 	$('.blockOverlay').unbind('click').click($.unblockUI);

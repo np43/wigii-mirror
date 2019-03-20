@@ -839,7 +839,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 
 	/**
-	 * Returns evaluation of first arg if all other arguments evaluates to null, else returns null
+	 * Returns evaluation of first arg if all other arguments evaluates to not null, else returns null
 	 */
 	public function doOnNotNull($args){
 		if($this->getNumberOfArgs($args) < 2) throw new RecordException("args should have at least 2 parameters");
@@ -1694,14 +1694,34 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $val;
 	}
 	
+	/**
+	 * Updates the subfields of a given field using an array
+	 * FuncExp signature : <code>setSubFields(fieldName, subFields)</code><br/>
+	 * Where arguments are :
+	 * - fieldName : String. The name of the field for which to update subfield values
+	 * - subFields : Array. An array with the subfield values (key is subfield name and value is subfield value)	 
+	 */
+	public function setSubFields($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new RecordException('setSubFields takes two parameters, the first one is the field name to update, the second one is an array with the subfields to update', RecordException::INVALID_ARGUMENT);
+	    $fieldName = $this->evaluateArg($args[0]);
+	    $subFields = $this->evaluateArg($args[1]);
+	    $rec = $this->getRecord();
+	    if(is_array($subFields)) {
+	        foreach($subFields as $subFieldName=>$value) {
+	            $rec->setFieldValue($value, $fieldName,$subFieldName);	            
+	        }
+	    }
+	    else $rec->setFieldValue($subFields, $fieldName);
+	}
 	
 	/**
-	 * setFieldValue sets values to fields in existing record
+	 * sets values to fields in existing record
 	 * FuncExp signature : <code>setMultipleVal(field1, value1, field2, value2, etc.)</code><br/>
 	 * Where arguments are :
 	 * - field : FieldSelector or String : a valid field in the current record
 	 * - value : mixed : a valid value for the defined field for the current record
-	 * return integer (nb of field)
+	 *@return int nb of fields
 	 */
 	public function setMultipleVal($args){
 		//checks arguments
@@ -1710,6 +1730,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		$i = 0;
 		for($i=0; $i<$nArgs; $i=$i+2){
 			$fs= $args[$i];
+			if(!($fs instanceof FieldSelector)) $fs = fs($this->evaluateArg($fs));
 			$value = $this->evaluateArg($args[$i+1]);
 			$this->getRecord()->setFieldValue($value, $fs->getFieldName(), $fs->getSubFieldName());
 		}
