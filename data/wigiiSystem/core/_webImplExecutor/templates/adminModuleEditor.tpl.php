@@ -65,7 +65,7 @@ if(!isset($configS)) $configS = $this->getConfigurationContext();
 					case "moduleEditorZip":
 						$img = '<img src="'.SITE_ROOT_forFileUrl.'/images/icones/26px/zip.png"/> ';
 						$func = "download('$crtWigiiNamespace/$crtModule/download/$act/$workingModule');";
-						continue 2;
+						break;
 					case "moduleEditorCalc":
 						$img = '<img src="'.SITE_ROOT_forFileUrl.'/images/icones/tango/22x22/actions/document-properties.png" style="margin-top:4px;margin-right:2px;"/> ';
 						break;
