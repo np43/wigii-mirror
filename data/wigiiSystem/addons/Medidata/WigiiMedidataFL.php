@@ -15,7 +15,7 @@
  *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
  *  If not, see <http://www.gnu.org/licenses/>.
  *
- *  @copyright  Copyright (c) 2016  Wigii.org
+ *  @copyright  Copyright (c) 2019  Wigii.org
  *  @author     <http://www.wigii.org/system>      Wigii.org 
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
@@ -274,7 +274,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	
 	/**
 	 * Sends a generated invoice request to Medidata.
-	 * The Medidata xml invoice and send control file are put into the folder CLIENT_DATA_PATH/Medidata/send and are ready to be sent to MediportCommunicator by the WigiiMedidataFileWatcher batch 
+	 * The Medidata xml invoice and send control file are put into the folder CLIENT_DATA_PATH/Medidata/send and are ready to be sent to MediportCommunicator by the WigiiMedidataSync batch 
 	 * FuncExp signature : <code>sendMedidataInvoiceRequest(customerOrder,medidataXml,medidataSendControl,options)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order to which is attached an XML Medidata General Invoice Request.
@@ -700,6 +700,37 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	        return $this->evaluateFuncExp(fx('implode',$returnValue));
 	    }
 	}
+	
+	/**
+	 * Generates HTML code to print the invoice paiement conditions given a Medidata invoice xml request.
+	 * FuncExp signature : <code>printPaiementConditions(medidataXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) medidataXml: SimpleXMLElement. Medidata XML Invoice request.
+	 * @return String html code displaying the invoice paiement conditions
+	 */
+	public function printPaiementConditions($args) {
+	    // extracts arguments (in Fx mode or standard call mode)
+	    if(is_array($args)) {
+	        $nArgs = $this->getNumberOfArgs($args);
+	        if($nArgs < 1) throw new FuncExpEvalException('printDebitorAddress takes at least one parameter which is Medidata XML invoice request', FuncExpEvalException::INVALID_ARGUMENT);
+	        $medidataXml = $this->evaluateArg($args[0]);
+	    }
+	    else {
+	        $medidataXml = $args;
+	    }	    
+	    $paymentPeriod = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/tiers_payant','payment_period');
+	    if(!isset($paymentPeriod)) $paymentPeriod = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/tiers_garant','payment_period');
+	    if(isset($paymentPeriod)) {
+	        $paymentPeriod = new DateInterval($paymentPeriod);
+	        $invoiceDate = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/invoice','request_date');
+	        if(isset($invoiceDate)) {	            
+	            $dueDate = (new DateTime($invoiceDate))->add($paymentPeriod);
+	            $invoiceDate = new DateTime($invoiceDate);
+	            $paymentPeriod = $dueDate->diff($invoiceDate)->format('%a');
+	            if(intval($paymentPeriod)>0) return "Payable net à $paymentPeriod jours.";
+	        }
+	    }
+	}	
 	
 	/**
 	 * Generates HTML code to print the provider role details given a Medidata invoice xml request.
@@ -1178,7 +1209,11 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$insurance = $options->getValue('invoiceTo');
 		$patient = $options->getValue('customer');
 		$returnValue = $this->createXmlElement($invoiceBody, 'tiers_payant', $options);
-		$returnValue->setAttribute('payment_period', 'P60D');
+		// payment period
+		$orderDate = new DateTime($this->assertNotNull($customerOrder,'orderDate'));
+		$orderDueDate = new DateTime($this->assertNotNull($customerOrder,'paiementDueDate'));
+		$returnValue->setAttribute('payment_period', 'P'.$orderDueDate->diff($orderDate)->format('%a').'D');
+		
 		// biller
 		$xml = $this->createXmlElement($returnValue, 'biller', $options);
 		$xml->setAttribute('ean_party', $this->assertNoSepNotNull($legalEntity,'noGLN'));

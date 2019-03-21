@@ -2611,21 +2611,23 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 */
 	public function txtFormatSwissBvr($args) {
 	    $nArgs = $this->getNumberOfArgs($args);
-	    if($nArgs<1) throw new FuncExpEvalException('txtFormatSwissBvr takes one argument which is the reference number to be converted to Swiss BVR format', FuncExpEvalException::INVALID_ARGUMENT);
-	    $refNumber = $this->evaluateFuncExp(fx('txtAcceptBigPosInt',$args[0],true,26));	    
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatSwissBvr takes one argument which is the reference number to be converted to Swiss BVR format', FuncExpEvalException::INVALID_ARGUMENT);	   
+	    $refNumber = $this->evaluateFuncExp(fx('txtAcceptBigPosInt',$args[0],true,27));	    
 	    if($nArgs>1) $groupDigits = $this->evaluateArg($args[1]);
 	    else $groupDigits = false;
-	    // pads refNumber if leading 0 until 26 digits
-	    $refNumber = str_pad($refNumber,26,'0',STR_PAD_LEFT);
-	    // computes control digit according to Swiss BVR Modulo 10 algorithm
-	    $table = array(0, 9, 4, 6, 8, 2, 7, 1, 3, 5);
-	    $carry = 0;
-	    foreach(str_split($refNumber) as $d) {
-	        $carry = $table[($carry + intval($d)) % 10];
+	    //pads refNumber with leading 0 until 26 digits
+	    if(strlen($refNumber)<27) {
+    	    $refNumber = str_pad($refNumber,26,'0',STR_PAD_LEFT);
+    	    // computes control digit according to Swiss BVR Modulo 10 algorithm
+    	    $table = array(0, 9, 4, 6, 8, 2, 7, 1, 3, 5);
+    	    $carry = 0;
+    	    foreach(str_split($refNumber) as $d) {
+    	        $carry = $table[($carry + intval($d)) % 10];
+    	    }
+    	    $carry = (10 - $carry) % 10;
+    	    // appends control digit at the end of refNumber
+    	    $refNumber .= $carry;
 	    }
-	    $carry = (10 - $carry) % 10;
-	    // appends control digit at the end of refNumber
-	    $refNumber .= $carry;
 	    // group digits by 5 following the pattern 00 00000 00000 00000 00000 00000
 	    if($groupDigits) $refNumber = substr($refNumber,0,2).' '.implode(' ',str_split(substr($refNumber,2),5));
 	    return $refNumber;
@@ -2643,7 +2645,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    $ssn = $this->evaluateFuncExp(fx('txtAcceptBigPosInt',$args[0],true,13));
 	    // checks that ssn starts with 756
 	    if(strpos($ssn,'756')!==0) $ssn=null;
-	    // checks that lenght is 13
+	    // checks that length is 13
 	    if(strlen($ssn)<13) $ssn=null;
 	    // group digits by 4 following the pattern 756.xxxx.xxxx.xx
 	    else $ssn = substr($ssn,0,3).'.'.implode('.',str_split(substr($ssn,3),4));
@@ -2664,6 +2666,65 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    $str = trim($this->evaluateArg($args[0]));
 	    $returnValue = $this->txtFormatSwissSsn(array($str));
 	    if($str!='' && $returnValue == null) throw new FuncExpEvalException("'$str' is not a valid swiss social security number.", FuncExpEvalException::ASSERTION_FAILED);
+	    return $returnValue;
+	}
+	/**
+	 * Formats a given string to remove any separators.
+	 * FuncExp signature : <code>txtFormatNoSep(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string from which to remove any separators
+	 * @return String the compacted string.
+	 */
+	public function txtFormatNoSep($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatNoSep takes one argument which is the string to compact', FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue = $this->evaluateArg($args[0]);
+	    if(!empty($returnValue)) $returnValue = str_replace(array('.','-'), "", preg_replace("/".ValueListArrayMapper::Natural_Separators."/", "", $returnValue));
+	    return $returnValue;
+	}
+	/**
+	 * Formats a given string as an IBAN.
+	 * FuncExp signature : <code>txtFormatIBAN(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string to be formatted as an IBAN
+	 * @return String the IBAN
+	 */
+	public function txtFormatIBAN($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatIBAN takes one argument which is the string to format', FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue = $this->evaluateFuncExp(fx('txtFormatNoSep',$args[0]));
+	    if(!empty($returnValue)) $returnValue = implode(' ',str_split($returnValue,4));
+	    return $returnValue;
+	}
+	/**
+	 * Formats a given string as Swiss Entreprise ID
+	 * FuncExp signature : <code>txtFormatSwissIDE(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string to be formatted as a Swiss entreprise ID
+	 * @return String the IDE
+	 */
+	public function txtFormatSwissIDE($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatSwissIDE takes one argument which is the string to format', FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue = $this->evaluateFuncExp(fx('txtFormatNoSep',$args[0]));
+	    // checks that IDE starts with CHE
+	    if(strpos($returnValue,'CHE')!==0) $returnValue=null;
+	    // group digits by 3 following the pattern CHE-xxx.xxx.xxx
+	    if(!empty($returnValue)) $returnValue = substr($returnValue,0,3).'-'.implode('.',str_split(substr($returnValue,3),3));
+	    return $returnValue;
+	}
+	/**
+	 * Formats a given string as Swiss VAT number
+	 * FuncExp signature : <code>txtFormatSwissVATNumber(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str : String. The string to be formatted as a Swiss VAT number
+	 * @return String the formatted VAT number
+	 */
+	public function txtFormatSwissVATNumber($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('txtFormatSwissVATNumber takes one argument which is the string to format', FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue = $this->evaluateFuncExp(fx('txtFormatSwissIDE',$args[0]));	    
+	    if(!empty($returnValue)) $returnValue .= ' TVA';
 	    return $returnValue;
 	}
 	/**
