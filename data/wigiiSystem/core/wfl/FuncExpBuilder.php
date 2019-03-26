@@ -197,7 +197,7 @@ class FuncExpBuilder {
 	 * in a comma separated list as a normal function call.
 	 * example: $funcExpBuilder->evalfx($principal, $myFuncExp, 'module1', 'module2', 'module3') is equivalent
 	 * to $funcExpBuilder->evalfx($principal, $myFuncExp, array('module1', 'module2', 'module2'))
-	 * @return Any returns the value of the evaluated func exp.
+	 * @return mixed returns the value of the evaluated func exp.
 	 */
 	public function evalfx($principal, $funcExp, $modules=null) {
 		if(is_string($funcExp)) $funcExp = $this->str2fx($funcExp);		
@@ -241,7 +241,7 @@ class FuncExpBuilder {
 	 * Tries to convert any object to its FuncExp equivalent
 	 * Or the Object exposes a toFx() method, or the object can convert to a string, or it has a specific built in conversion mechanism,
 	 * or it is unsupported.
-	 * @param Any $obj
+	 * @param mixed $obj
 	 * @return Scalar|FuncExp a FuncExp able to create back the Object or its scalar equivalent
 	 */
 	public function object2fx($obj) {
@@ -282,7 +282,7 @@ class FuncExpBuilder {
 	 * Tries to convert any object to its FuncExp equivalent, and then down to a String
 	 * Or the Object exposes a toFx() method, or the object can convert to a string, or it has a specific built in conversion mechanism,
 	 * or it is unsupported.
-	 * @param Any $obj
+	 * @param mixed $obj
 	 * @return String a String representation of a FuncExp able to create back the Object or its scalar equivalent
 	 */
 	public function object2strfx($obj) {
@@ -1323,7 +1323,7 @@ class FuncExpBuilder {
 	
 	/**
 	 * Creates an StdClass instance which maps an 'attribute' node in the Wigii XML configuration file.
-	 * @param Scalar $value the value of the attribute
+	 * @param String|Number $value the value of the attribute
 	 * @param Array $attributes an array [key => value] which defines some xml attributes
 	 * @param String|Array $label the label of the attribute, or an array with the label translated in different languages.
 	 * The array is indexed with the Wigii installed languages (see TranslationService). For instance [l01 => label in English, l02 => label in French]
@@ -1415,7 +1415,7 @@ class FuncExpBuilder {
 	 * @param DataFlowActivitySelectorList $dataFlowActivitySelectorList the data flow description
 	 * @param FuncExpParameterMapping $fxpMapping an optional FuncExpParameterMapping instance used to instanciate any parameters 
 	 * that would be present in the arguments with a given value.
-	 * @return Any optionally returns some data if the last stage of the data flows writes some output. 
+	 * @return mixed optionally returns some data if the last stage of the data flows writes some output. 
 	 */
 	public function sel($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, $fxpMapping=null) {
 		$returnValue = $this->doSel($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, $fxpMapping);
@@ -1458,7 +1458,7 @@ class FuncExpBuilder {
 	 * @param DataFlowActivitySelectorList $dataFlowActivitySelectorList the data flow description
 	 * @param FuncExpParameterMapping $fxpMapping an optional FuncExpParameterMapping instance used to instanciate any parameters 
 	 * that would be present in the arguments with a given value.
-	 * @return Any optionally returns some data if the last stage of the data flows writes some output. 
+	 * @return mixed optionally returns some data if the last stage of the data flows writes some output. 
 	 */
 	protected function doSel($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, $fxpMapping=null) {
 		// instantiates the parameters if any mapping is given
@@ -1573,7 +1573,7 @@ class FuncExpBuilder {
 	 * Else returns the object as is.
 	 * @param stdClass|Array $obj the object from which to extract an attribute
 	 * @param string $attrName object attribute or 'value' if not defined
-	 * @return Any or null if attribute is not defined.
+	 * @return mixed or null if attribute is not defined.
 	 */
 	public function oVal($obj,$attrName=null) {
 		if($attrName===null) $attrName='value';

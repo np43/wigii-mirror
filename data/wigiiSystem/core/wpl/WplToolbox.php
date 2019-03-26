@@ -109,12 +109,12 @@ class WplToolbox
 
 	/**
 	 * Serializes a record into an xml string
-	 * @param $principal authenticated user performing the operation
-	 * @param $fieldList the FieldList of the Record
-	 * @param $wigiiBag the Wigii Bag containing the data to be serialized
-	 * @param $saveConfig if true, then saves into the xml string, the xml config of the fields
-	 * @param $fieldSelectorList a FieldSelectorList to filter the fields to be persisted. Can also filter subfields.
-	 * @param $recordId an optional id to be used to fetch the values in the wigii bag
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param FieldList $fieldList the FieldList of the Record
+	 * @param WigiiBag $wigiiBag the Wigii Bag containing the data to be serialized
+	 * @param Boolean $saveConfig if true, then saves into the xml string, the xml config of the fields
+	 * @param FieldSelectorList $fieldSelectorList a FieldSelectorList to filter the fields to be persisted. Can also filter subfields.
+	 * @param int $recordId an optional id to be used to fetch the values in the wigii bag
 	 */
 	public function record2xml($principal, $fieldList, $wigiiBag, $saveConfig=false, $fieldSelectorList=null, $recordId=null) {
 		$dfasl = $this->getRecord2xmlDFASL();

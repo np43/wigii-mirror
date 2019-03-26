@@ -77,7 +77,7 @@ class FuncExpVMServiceProvider
 	/**
 	 * Returns an instance of a FuncExp Iterator given the current value 
 	 * and the next instruction to be executed 
-	 * @param Any $currentValue the current FuncExp value
+	 * @param mixed $currentValue the current FuncExp value
 	 * @param FuncExp $nextFuncExp a FuncExp instance defining the next instruction
 	 * @param Boolean $forceToBeNext if true, then garanties that the given next instruction will be
 	 * the one effectively next evaluated by the Iterator. 
@@ -94,7 +94,7 @@ class FuncExpVMServiceProvider
 	
 	/**
 	 * Returns an instance of a FuncExp Iterator that matches a recursive call of the current executing FuncExp	
-	 * @param Any $currentValue the current FuncExp value
+	 * @param mixed $currentValue the current FuncExp value
 	 * @param Array $arguments an optional array of arguments to pass to the recursive call. 
 	 * If null, then keeps the current arguments which are set in the current func exp when doing the recursive call. 
 	 * To pass no arguments, pass an empty array.
@@ -134,7 +134,7 @@ class FuncExpVMServiceProvider
 	/**
 	 * Loads a list of classes in the current context of the VM
 	 * @param Array|String $modules an array of class names or one string
-	 * @return if only one class then returns the instance of the class, else returns null
+	 * @return Object if only one class then returns the instance of the class, else returns null
 	 * @throws AuthorizationServiceException if module class is located into the Client config folder and principal is a minimal principal.
 	 */
 	public function useModules($modules) {

@@ -448,7 +448,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * FuncExp signature : <code>ctlCurrentField(subFieldName)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) subFieldName: String. The dataType subfield name from which to retrieve the value. If null takes the predefined "value" subfield.
-	 * @return Any the field or subfield value
+	 * @return mixed the field or subfield value
 	 */
 	public function ctlCurrentField($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1300,7 +1300,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * - Arg(0) calculatedValue: Any. The calculated value to set to the field
 	 * - Arg(1) checkExp: Boolean. An expression which should evaluate to true if check is OK, else false. It can contain a FieldSelector pointing to current field, which will return the new calculated value.
 	 * - Arg(2) errorMessage: String. Evaluates to a String that will be displayed as an error message if checkExp returns false.
-	 * @return Any the calculated value to set to the field
+	 * @return mixed the calculated value to set to the field
 	 */
 	public function ctlCheck($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1340,7 +1340,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Where arguments are :
 	 * - Arg(0) calculatedValue: Any. The calculated value to return after evaluation.
 	 * - Arg(1) fieldName: String|FieldSelector. Optional. The name of the field to which to add an error message. If not set, takes current field.
-	 * @return Any the calculated value or null if an error occured. Call FuncExp ctlCheckNoError to check if attached FormExecutor has some errors.
+	 * @return mixed the calculated value or null if an error occured. Call FuncExp ctlCheckNoError to check if attached FormExecutor has some errors.
 	 */
 	public function ctlException2FieldError($args) {
 	    $nArgs = $this->getNumberOfArgs($args);
@@ -1665,7 +1665,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Last argument is the value to be set, all previous arguments should evaluate to field selectors.
 	 * Example: setVal(f1, f2.name, f3.city, "unknown")
 	 * will update field f1, subfields f2.name, f3.city with value "unknown"
-	 * @return Scalar the updated value
+	 * @return String|Number the updated value
 	 */
 	public function setVal($args) {
 		$n = $this->getNumberOfArgs($args);
@@ -1742,7 +1742,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Last argument is the value to be added, all previous arguments should evaluate to field selectors.
 	 * Example: addVal(f1, f2, f3, "codeX")
 	 * will add MultipleAttributs value "codeX" to fields f1, f2, f3 
-	 * @return Scalar the added MultipleAttributs value
+	 * @return String|Number the added MultipleAttributs value
 	 */
 	public function addVal($args) {
 	    $n = $this->getNumberOfArgs($args);
@@ -1781,7 +1781,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Example: prependVal(f1, f2, f3, "val", sep)
 	 * will prepend value "val", followed by the separator to fields f1, f2, f3
 	 * Separator is put only if both value and existing field value are not null.
-	 * @return Scalar the prepend value
+	 * @return String|Number the prepend value
 	 */
 	public function prependVal($args) {
 	    $n = $this->getNumberOfArgs($args);
@@ -1825,7 +1825,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Example: appendVal(f1, f2, f3, "val", sep)
 	 * will append value "val", followed by the separator to fields f1, f2, f3
 	 * Separator is put only if both value and existing field value are not null.
-	 * @return Scalar the append value
+	 * @return String|Number the append value
 	 */
 	public function appendVal($args) {
 	    $n = $this->getNumberOfArgs($args);

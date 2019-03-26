@@ -41,7 +41,7 @@ class RowListCallbackImpl implements RowList, WigiiExclusiveAccessObject
 	 * For behavior contract, see addRow method in RowList interface.
 	 * @param Closure|String $method a closure representing the code that should be executed or 
 	 * a string which is an object method name or a function name
-	 * @param Any $obj an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $obj an optional object instance which holds the method instance that should be executed.
 	 */
 	public static function createInstance($method, $obj=null) {
 		$returnValue = new self();
@@ -78,7 +78,7 @@ class RowListCallbackImpl implements RowList, WigiiExclusiveAccessObject
 	 * For behavior contract, see addRow method in RowList interface.
 	 * @param Closure|String $method a closure representing the code that should be executed or
 	 * a string which is an object method name or a function name
-	 * @param Any $obj an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $obj an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setAddRowCallback($method, $obj=null) {
 		$this->addRowCallback = CallableObject::createInstance($method, $obj);

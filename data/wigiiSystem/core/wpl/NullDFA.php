@@ -55,7 +55,7 @@ class NullDFA implements DataFlowActivity
 	 * Injects into the DataFlowContext a pair (key,value) on startOfStream.
 	 * Any existing value under this key is replaced.
 	 * @param String $key attribute key
-	 * @param Any $val attribute value
+	 * @param mixed $val attribute value
 	 */
 	public function setAttributeInContext($key,$val) {
 		if(!isset($key)) throw new DataFlowServiceException('key cannot be null', DataFlowServiceException::INVALID_ARGUMENT);

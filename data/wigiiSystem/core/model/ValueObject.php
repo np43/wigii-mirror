@@ -33,7 +33,7 @@ class ValueObject
 	
 	/**
 	 * Creates a ValueObject instance which does not support arrays
-	 * @param Any $value default value which should not be an array
+	 * @param mixed $value default value which should not be an array
 	 * @return ValueObject
 	 */
 	public static function createInstance($value=null) {

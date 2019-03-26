@@ -74,7 +74,7 @@ class DataFlowActivitySelector
 	/**
 	 * Returns the value of one given parameter
 	 * @param String $parameterName the parameter name for which to retrieve a value
-	 * @return Any the parameter value or null if not defined
+	 * @return mixed the parameter value or null if not defined
 	 */
 	public function getDataFlowActivityParameter($parameterName) {
 		if(is_null($parameterName)) throw new DataFlowServiceException("parameterName cannot be null", DataFlowServiceException::INVALID_ARGUMENT);

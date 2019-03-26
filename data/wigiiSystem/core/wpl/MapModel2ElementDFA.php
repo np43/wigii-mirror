@@ -115,7 +115,7 @@ class MapModel2ElementDFA implements DataFlowActivity
 	 * DataFlowContext and write output using the writeResultToOutput helper method.
 	 * @param Closure|String $method a closure representing the code that should be executed or
 	 * a string which is an object method name or a function name
-	 * @param Any $object an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setModel2ElementMappingMethod($method, $obj=null) {
 		$this->model2ElementMappingMethod = CallableObject::createInstance($method, $obj);

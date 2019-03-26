@@ -42,7 +42,7 @@ interface InputDataFlow
 	
 	/**
 	 * Called by the client to read the next available data chunk
-	 * @return Any a piece of data
+	 * @return mixed a piece of data
 	 * @throws DataFlowServiceException if no data is available to be read
 	 */
 	public function readDataChunk();

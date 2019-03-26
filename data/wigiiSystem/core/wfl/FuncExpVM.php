@@ -323,8 +323,8 @@ class FuncExpVM implements FuncExpEvaluator {
 	 * Stores a value in the current scope
 	 * Any value stored under the same key at this level of the stack is replaced,
 	 * any value stored under this key on a lower level of the stack are kept but occulted by this new value
-	 * @param Scalar $key the key of the value to be stored
-	 * @param Any $value the value to be stored (can be any object)
+	 * @param String|Number $key the key of the value to be stored
+	 * @param mixed $value the value to be stored (can be any object)
 	 */
 	public function setValueInScope($key, $value) {
 		$this->setObjectInScope($this->getScopeKeyForValue($key), $value);
@@ -335,7 +335,7 @@ class FuncExpVM implements FuncExpEvaluator {
 	 * By default, it walks through the whole stack searching for the key, from top to down,
 	 * and returns the first value found.
 	 * Except if the argument goThroughParents is false, then it searches only in the context on the top of the stack
-	 * @param Scalar $key the key for which to retrieve a value
+	 * @param String|Number $key the key for which to retrieve a value
 	 * @param Boolean $goThroughParents if true (default), then searches for the key through the whole stack else only on top of the stack
 	 */
 	public function getValueInScope($key, $goThroughParents=true) {
@@ -356,7 +356,7 @@ class FuncExpVM implements FuncExpEvaluator {
 	 * @param String $classKey the key under which the singleton was stored
 	 * for instance: the interface name or the class name if no interface.
 	 * @param Boolean $goThroughParents if true (default), then searches for the key through the whole stack else only on top of the stack
-	 * @return the singleton instance or null if not defined.
+	 * @return Object the singleton instance or null if not defined.
 	 */
 	public function getSingletonInScope($classKey, $goThroughParents=true) {
 		return $this->getObjectInScope($this->getScopeKeyForSingleton($classKey), $goThroughParents);
@@ -364,7 +364,7 @@ class FuncExpVM implements FuncExpEvaluator {
 	
 	/**
 	 * Returns a reference on the current evaluating FuncExp
-	 * @return FuncExp|FieldSelector|Any the return type depends of the object beeing evaluated, can be either a FuncExp or a FieldSelector or any object.
+	 * @return FuncExp|FieldSelector|mixed the return type depends of the object beeing evaluated, can be either a FuncExp or a FieldSelector or any object.
 	 */
 	public function getCurrentEvaluatingFuncExp() {
 		return $this->getObjectInScope($this->getScopeKeyForVMValue('currentFuncExp'), false);

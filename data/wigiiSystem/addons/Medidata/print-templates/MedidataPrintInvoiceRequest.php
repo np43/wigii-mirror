@@ -104,8 +104,8 @@ table.invoiceServices {
 	margin-top:1em;
 	margin-bottom:2em;	
 }
-table.invoiceServices td:nth-child(5),table.invoiceServices td:nth-child(7),table.invoiceServices td:last-child,
-table.invoiceServices th:nth-child(5),table.invoiceServices th:nth-child(7),table.invoiceServices th:last-child {
+table.invoiceServices td:nth-child(7),table.invoiceServices td:nth-child(8),table.invoiceServices td:nth-child(10),table.invoiceServices td:last-child,
+table.invoiceServices th:nth-child(7),table.invoiceServices th:nth-child(8),table.invoiceServices th:nth-child(10),table.invoiceServices th:last-child {
 	text-align:right;
 }
 table.invoiceServices td, table.invoiceServices th {
@@ -116,6 +116,11 @@ table.invoiceServices td:last-child, table.invoiceServices th:last-child {
 }
 table.invoiceServices td.designation {
 	font-weight:bold;
+	text-align:left;
+}
+table.invoiceServices td.remark {
+	font-weight:normal;
+	text-align:left;
 }
 /* VAT summary table */
 table.vatSummary {
@@ -134,7 +139,12 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
 </style>
 </head>
 <body>
-<h2 style="margin-bottom:20px;"><?=$options->getValue('invoiceTitle');?></h2>
+<div class="field patient" style="width:75%">
+	<div class="value" style="width:100%;font-weight:bold;font-size:30px;"><?=$options->getValue('invoiceTitle');?></div>
+</div>
+<div class="field patient" style="width:25%">
+	<div class="label" style="width:100%; text-align:right;padding-top:25px;">Release 4.5G/fr</div>
+</div>
 <div class="field noFieldset" style="width:100%;border:1px solid;"><div class="value fieldGroup" style="width:100%;padding:0">
 	<div class="field noFieldset" style="width:100%;">
     	<div class="label" style="width:100%;font-weight:bold;">Document</div>
@@ -142,7 +152,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
         	<div class="field noFieldset" style="width:50%;"><div class="value fieldGroup" style="width:100%;">
             	<div class="field patient">
                 	<div class="label">Identification</div>
-                	<div class="value"><?=$xmlVal($medidataXml,'/request/payload/invoice','request_timestamp').'&nbsp;&nbsp;'.date('m.d.Y H:i:s',$xmlVal($medidataXml,'/request/payload/invoice','request_timestamp'))?></div>
+                	<div class="value"><?=$xmlVal($medidataXml,'/request/payload/invoice','request_timestamp').'&nbsp;&#183;&nbsp;'.date('d.m.Y H:i:s',$xmlVal($medidataXml,'/request/payload/invoice','request_timestamp'))?></div>
                 </div>
             </div></div>
             <div class="field noFieldset" style="width:50%;"><div class="value fieldGroup" style="width:100%;">
@@ -157,11 +167,11 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
         <div class="value fieldGroup" style="width:100%;position:relative;margin-left:90px;margin-top:-40px;">
         	<div class="field noFieldset" style="width:50%;"><div class="value fieldGroup" style="width:100%;">
             	<div class="field patient">
-                	<div class="label">No GLN(B)</div>
+                	<div class="label">N° GLN(B)</div>
                 	<div class="value"><?=$xmlVal($tiersXml,'./biller','ean_party')?></div>
                 </div>
                 <div class="field patient">
-                	<div class="label">No RCC(B)</div>
+                	<div class="label">N° RCC(B)</div>
                 	<div class="value"><?=$xmlVal($tiersXml,'./biller','zsr')?></div>
                 </div>
             </div></div>
@@ -170,7 +180,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
                 	<div class="value"><?=$xmlVal($tiersXml,'./biller/company/companyname')?></div>
                 </div>
                 <div class="field patient">
-                	<div class="value"><?=$xmlVal($tiersXml,'./biller/company/postal/street').'&nbsp;&nbsp;&nbsp;'.$xmlVal($tiersXml,'./biller/company/postal/zip').' '.$xmlVal($tiersXml,'./biller/company/postal/city')?></div>
+                	<div class="value"><?=$xmlVal($tiersXml,'./biller/company/postal/street').'&nbsp;&#183;&nbsp;'.$xmlVal($tiersXml,'./biller/company/postal/zip').' '.$xmlVal($tiersXml,'./biller/company/postal/city')?></div>
                 </div>
             </div></div>
         </div>
@@ -180,11 +190,11 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
         <div class="value fieldGroup" style="width:100%;position:relative;margin-left:90px;margin-top:-40px;">
         	<div class="field noFieldset" style="width:50%;"><div class="value fieldGroup" style="width:100%;">
             	<div class="field patient">
-                	<div class="label">No GLN(P)</div>
+                	<div class="label">N° GLN(P)</div>
                 	<div class="value"><?=$xmlVal($tiersXml,'./provider','ean_party')?></div>
                 </div>
                 <div class="field patient">
-                	<div class="label"><?=($options->getValue('invoiceLawType')=='LAI'?'No NIF(P)':'No RCC(P)')?></div>
+                	<div class="label"><?=($options->getValue('invoiceLawType')=='LAI'?'N° NIF(P)':'N° RCC(P)')?></div>
                 	<div class="value"><?=($options->getValue('invoiceLawType')=='LAI'?$xmlVal($options->getValue('invoiceCaseXml'),'./','nif'):$xmlVal($tiersXml,'./provider','zsr'))?></div>
                 </div>
             </div></div>
@@ -193,7 +203,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
                 	<div class="value"><?=$xmlVal($tiersXml,'./provider/company/companyname')?></div>
                 </div>
                 <div class="field patient">
-                	<div class="value"><?=$xmlVal($tiersXml,'./provider/company/postal/street').'&nbsp;&nbsp;&nbsp;'.$xmlVal($tiersXml,'./provider/company/postal/zip').' '.$xmlVal($tiersXml,'./provider/company/postal/city')?></div>
+                	<div class="value"><?=$xmlVal($tiersXml,'./provider/company/postal/street').'&nbsp;&#183;&nbsp;'.$xmlVal($tiersXml,'./provider/company/postal/zip').' '.$xmlVal($tiersXml,'./provider/company/postal/city')?></div>
                 </div>
             </div></div>
         </div>
@@ -232,23 +242,23 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
             	<div class="value"><?=($xmlVal($tiersXml,'./patient','gender')=='male'?'M':'F')?></div>
             </div>
             <div class="field patient">
-            	<div class="label">Date cas</div>
+            	<div class="label"><?=$trm->evalfx(fx('ctlSwitch',$options->getValue('invoiceLawType'),'LAI','Date décision','LAA','Date de l&apos;accident','LAMal','Date cas'))?></div>
             	<div class="value"><?=$trm->doFormatForDate($xmlVal($options->getValue('invoiceCaseXml'),'./','case_date','date'))?></div>
             </div>
             <div class="field patient">
-            	<div class="label">No cas</div>
+            	<div class="label"><?=$trm->evalfx(fx('ctlSwitch',$options->getValue('invoiceLawType'),'LAI','N° décision','LAA','N° de sinistre','LAMal','N° cas'))?></div>
             	<div class="value"><?=$xmlVal($options->getValue('invoiceCaseXml'),'./','case_id')?></div>
             </div>
             <div class="field patient">
-            	<div class="label">No AVS</div>
+            	<div class="label">N° AVS</div>
             	<div class="value"><?=$xmlVal($tiersXml,'./patient','ssn','ssn')?></div>
             </div>
             <div class="field patient">
-            	<div class="label">No Cada</div>
+            	<div class="label">N° Cada</div>
             	<div class="value">&nbsp;</div>
             </div>
             <div class="field patient">
-            	<div class="label">No assuré</div>
+            	<div class="label">N° assuré</div>
             	<div class="value"><?=$xmlVal($tiersXml,'./patient','ssn','ssn')?></div>
             </div>
             <div class="field patient">
@@ -266,48 +276,56 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
             <div class="field patient">
             	<div class="label">Loi</div>
             	<div class="value"><?=$options->getValue('invoiceLawType')?></div>
-            </div>
-            <div class="field patient">
-            	<div class="label">No contrat</div>
-            	<div class="value">&nbsp;</div>
-            </div>
+            </div>            
             <div class="field patient">
             	<div class="label">Traitement</div>
             	<div class="value"><?=$trm->doFormatForDate($xmlVal($treatmentXml,'./','date_begin','date')).' - '.$trm->doFormatForDate($xmlVal($treatmentXml,'./','date_end','date'))?></div>
             </div>
             <div class="field patient">
-            	<div class="label">No/Nom entreprise</div>
+            	<div class="label">Type traitement</div>
+            	<div class="value"><?=($xmlVal($treatmentXml,'./','treatment')=='stationary'?'stationnaire':'ambulatoire')?></div>
+            </div>
+            <div class="field patient">
+            	<div class="label">Motif traitement</div>
+            	<div class="value"><?=$medidataFL->printTreatmentReason($medidataXml);?></div>
+            </div>
+            <div class="field patient">
+            	<div class="label">N° / Nom entreprise</div>
             	<div class="value">&nbsp;</div>
             </div>
             <div class="field patient">
-            	<div class="label">Rôle/Localité</div>
+            	<div class="label">Rôle/localité</div>
             	<div class="value"><?=$medidataFL->printProviderRole($medidataXml);?></div>
             </div>
         </div></div>
         <div class="field noFieldset" style="width:50%;"><div class="value fieldGroup" style="width:100%;">
         	<div class="field patient">
-            	<div class="label"><?=($xmlVal($tiersXml,'./debitor','ean_party')!=null?"No GLN":"&nbsp;")?></div>
+            	<div class="label"><?=($xmlVal($tiersXml,'./debitor','ean_party')!=null?"N° GLN":"&nbsp;")?></div>
             	<div class="value"><?=$xmlVal($tiersXml,'./debitor','ean_party')?></div>
             </div>
             <div class="field patient" style="margin-bottom:200px;">
             	<div class="value" style="width:100%;padding:40px 20px;"><?=$medidataFL->printDebitorAddress($medidataXml);?></div>
             </div>
             <div class="field patient">
-            	<div class="label">Date/No GaPrCh</div>
+            	<div class="label">Date/N° GaPrCh</div>
             	<div class="value">&nbsp;</div>
             </div>
             <div class="field patient">
-            	<div class="label">Date/No facture</div>
+            	<div class="label">Date/N° facture</div>
             	<div class="value"><?=$trm->doFormatForDate($xmlVal($medidataXml,'/request/payload/invoice','request_date','date')).' / '.$xmlVal($medidataXml,'/request/payload/invoice','request_id')?></div>
             </div>
             <div class="field patient">
-            	<div class="label">Date/No rappel</div>
+            	<div class="label">Date/N° rappel</div>
             	<div class="value"><?=($options->getValue('invoiceType')=='reminder'?$trm->doFormatForDate($xmlVal($medidataXml,'/request/payload/reminder','request_date','date')).' / '.$xmlVal($medidataXml,'/request/payload/reminder','request_id'):'&nbsp;')?></div>
             </div>
             <div class="field patient">
-            	<div class="label">Motif traitement</div>
-            	<div class="value"><?=$medidataFL->printTreatmentReason($medidataXml);?></div>
+            	<div class="label">&nbsp;</div>
+            	<div class="value">&nbsp;</div>
             </div>
+            <div class="field patient">
+            	<div class="label">&nbsp;</div>
+            	<div class="value">&nbsp;</div>
+            </div>             
         </div></div>    	
     </div>
 </div>
@@ -315,7 +333,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
 	<div class="label" style="width:100%;font-weight:bold;">Mandataire</div>
     <div class="value fieldGroup" style="width:50%;position:relative;margin-left:90px;margin-top:-30px;">
     	<div class="field patient">
-        	<div class="label">No GLN/No RCC</div>
+        	<div class="label">N° GLN/N° RCC</div>
         	<div class="value">/</div>
         </div>
     </div>
@@ -334,7 +352,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
     <div class="value fieldGroup" style="width:50%;position:relative;margin-left:90px;margin-top:-30px;">
     	<div class="field patient">
         	<div class="label">&nbsp;</div>
-        	<div class="value"><?=($options->getValue('nbServices')>0?$medidataFL->printGLNList($options->getValue('invoiceServices')):'&nbsp;')?></div>
+        	<div class="value"><?=($options->getValue('nbServices')>0?sel($p,array2df($options->getValue('glnIndex'))->setPair(true),dfasl(dfas('MapObject2ValueDFA','setObject2ValueFuncExp',fx('concat',fs('value'),'/',fs('key'))),dfas('StringBufferDFA','setChunkSeparator','&nbsp;'))):'&nbsp;')?></div>
         </div>
     </div>
 </div>
@@ -350,7 +368,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
 <?php if($options->getValue('nbServices')>0) { ?>
 <div class="invoiceServices"><table class="invoiceServices">
 <thead>
-	<tr><th>Date</th><th>Tarif</th><th>Code tarifaire</th><th>Quan.</th><th>Prix</th><th>VPt</th><th>TVA</th><th>Montant</th></tr>
+	<tr><th>Date</th><th>Tarif</th><th>Code</th><th>Code réf.</th><th>Sé</th><th>Cô</th><th>Quantité</th><th>Pt PM/Prix</th><th>f PM</th><th>VPt PM</th><th>Pt PT</th><th>f PT</th><th>VPt PT</th><th>E</th><th>R</th><th>P</th><th>M</th><th>Montant</th></tr>
 </thead>
 <tbody>
 <?php foreach($options->getValue('invoiceServices') as $invoiceService) { ?>
@@ -358,65 +376,67 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
     	<td><?=$trm->doFormatForDate($xmlVal($invoiceService,'./','date_begin','date'))?></td>
     	<td><?=$invoiceService["tariff_type"]?></td>
     	<td><?=$invoiceService["code"]?></td>
-    	<td><?=$invoiceService["quantity"]?></td>
+    	<td>&nbsp;</td>
+    	<td><?=$invoiceService["session"]?></td>
+    	<td>&nbsp;</td>
+    	<td><?=$xmlVal($invoiceService,'./','quantity','numeric')?></td>
     	<td><?=$invoiceService["unit"]?></td>
-    	<td><?=$invoiceService["unit_factor"]?></td>
-    	<td><?=$invoiceService["vat_rate"]?></td>
+    	<td>&nbsp;</td>
+    	<td><?=$xmlVal($invoiceService,'./','unit_factor','numeric')?></td>
+    	<td>&nbsp;</td>
+    	<td>&nbsp;</td>
+    	<td>&nbsp;</td>
+    	<td><?=$options->getValue('glnIndex')[(string)$invoiceService["provider_id"]]?></td>
+    	<td><?=$options->getValue('glnIndex')[(string)$invoiceService["responsible_id"]]?></td>
+    	<td><?=$invoiceService["obligation"]?></td>
+    	<td><?=$options->getValue('vatIndex')[(string)$invoiceService["vat_rate"]]?></td>
     	<td><?=$invoiceService["amount"]?></td>    	
 	</tr>
 	<tr>
     	<td>&nbsp;</td>
     	<td>&nbsp;</td>
-    	<td class="designation" colspan="5"><?=$invoiceService["name"]?></td>
-    	<td>&nbsp;</td>    	
+    	<td class="designation" colspan="16"><?=$invoiceService["name"]?></td>
 	</tr>
+	<?php if($invoiceService["remark"]!='') { ?><tr>
+    	<td>&nbsp;</td>
+    	<td>&nbsp;</td>
+    	<td class="remark" colspan="16"><?=$invoiceService["remark"]?></td>
+	</tr><?php } ?>
  <?php } ?>
 </tbody>
 </table></div>
 <?php } ?>
+<div class="field noFieldset" style="width:25%;"><div class="value fieldGroup" style="width:100%;">
+	<div class="field patient">    	
+    	<div class="value">&nbsp;</div>
+    </div>    
+</div></div>
 <div class="field noFieldset" style="width:25%;"><div class="value fieldGroup" style="width:100%;">
 <table class="vatSummary">
 <thead>
 	<tr><th>Code</th><th>Taux</th><th>Montant</th><th>TVA</th></tr>
 </thead>
 <tbody>
-<?php $n=0; foreach($tiersXml->xpath('./invoice:balance/invoice:vat/invoice:vat_rate') as $vatDetail) {?>
+<?php foreach($options->getValue('vatDetails') as $i => $vatDetail) {?>
 	<tr>
-    	<td><?=$n?></td>
+    	<td><?=$i?></td>
     	<td><?=$vatDetail["vat_rate"]?></td>
     	<td><?=$vatDetail["amount"]?></td>
     	<td><?=$vatDetail["vat"]?></td>
 	</tr>
- <?php $n++; } ?>
+ <?php } ?>
 </tbody>
 </table>
 </div></div>
 <div class="field noFieldset" style="width:25%;"><div class="value fieldGroup" style="width:100%;">
 	<div class="field patient">
-    	<div class="label">No TVA:</div>
+    	<div class="label">N° TVA:</div>
     	<div class="value"><?=$trm->evalfx(fx('txtFormatSwissVATNumber',$xmlVal($tiersXml,'./balance/vat','vat_number')))?></div>
     </div>
     <div class="field patient">
     	<div class="label">Monnaie:</div>
     	<div class="value"><?=$xmlVal($tiersXml,'./balance','currency')?></div>
-    </div>
-    <div class="field patient">
-    	<div class="label">IBAN:</div>
-    	<div class="value"><?=$trm->evalfx(fx('txtFormatIBAN',$xmlVal($medidataXml,'/request/payload/body/esrQR','iban')))?></div>
-    </div>
-    <div class="field patient">
-    	<div class="label">No référence:</div>
-    	<div class="value"><?=$trm->evalfx(fx('txtFormatSwissBvr',$xmlVal($tiersXml,'/request/payload/body/esrQR','reference_number'),true))?></div>
-    </div>
-    <div class="field patient">
-    	<div class="value" style="width:100%"><?=$medidataFL->printPaiementConditions($medidataXml)?></div>
-    </div>    
-</div></div>
-<div class="field noFieldset" style="width:25%;"><div class="value fieldGroup" style="width:100%;">
-	<div class="field patient">
-    	<div class="label">Acompte:</div>
-    	<div class="value"><?=$xmlVal($tiersXml,'./balance','amount_prepaid','numeric')?></div>
-    </div>    
+    </div>      
 </div></div>
 <div class="field noFieldset" style="width:25%;"><div class="value fieldGroup" style="width:100%;">
 	<div class="field patient">
@@ -436,5 +456,8 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
     	<div class="value"><?=$xmlVal($tiersXml,'./balance','amount_due','numeric')?></div>
     </div>
 </div></div>
+<div class="field patient" style="width:100%">
+	<div class="value" style="width:100%;text-align:right;font-weight:normal;font-size:12pt;font-family:ocr-b-std,sans-serif;letter-spacing:3px;"><?=$trm->evalfx(fx('txtFormatSwissBvrCodingLine',$xmlVal($tiersXml,'./balance','amount_due'),substr($xmlVal($medidataXml,'/request/payload/body/esrQR','iban'),-9),$xmlVal($tiersXml,'/request/payload/body/esrQR','reference_number')))?></div>
+</div>
 </body>
 </html><?php 

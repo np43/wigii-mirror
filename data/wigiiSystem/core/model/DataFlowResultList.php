@@ -29,8 +29,8 @@ interface DataFlowResultList extends ObjectList
 {
 	/**
 	 * Adds a new data flow result to the list
-	 * @param Any $result the data flow result
-	 * @param Scalar $key an optional key under which the result can be stored.
+	 * @param mixed $result the data flow result
+	 * @param String|Number $key an optional key under which the result can be stored.
 	 */
 	public function addDataFlowResult($result, $key=null);
 }

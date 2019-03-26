@@ -703,7 +703,7 @@ abstract class Record extends DbEntityInstance
 	}
 	/**
 	 * Prepends a value to a field
-	 * @param Scalar $value value to prepend to the field
+	 * @param String|Number $value value to prepend to the field
 	 * @param String $fieldName field name
 	 * @param String $sep optional separator that would be put between value and existing value if both are not null
 	 * @param String $subFieldName optional subfield name
@@ -716,7 +716,7 @@ abstract class Record extends DbEntityInstance
 	}
 	/**
 	 * Appends a value to a field
-	 * @param Scalar $value value to append to the field
+	 * @param String|Number $value value to append to the field
 	 * @param String $fieldName field name
 	 * @param String $sep optional separator that would be put between existing value and value if both are not null
 	 * @param String $subFieldName optional subfield name

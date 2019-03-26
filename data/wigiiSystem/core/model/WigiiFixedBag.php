@@ -32,7 +32,7 @@ interface WigiiFixedBag
 	 * @param Int $elementId the element id for which to retrieve the value
 	 * @param String $fieldName the field name for which to retrieve the value
 	 * @param String $subFieldName an optional subfield name. If null, defaults to the "value" subfield.
-	 * @return Any the value stored into the Wigii bag or null if no value defined for the given elementId, fieldname and subfieldname.
+	 * @return mixed the value stored into the Wigii bag or null if no value defined for the given elementId, fieldname and subfieldname.
 	 */
 	public function getValue($elementId, $fieldName, $subFieldName=null);
 

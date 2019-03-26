@@ -87,7 +87,7 @@ class CallbackFL extends FuncExpVMAbstractFL
 	 * - valarg1, ..., valargn: Any, the function arguments (already evaluated).
 	 * 
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
-	 * @return Any the return value of the callback is returned as the return value of this func exp.
+	 * @return mixed the return value of the callback is returned as the return value of this func exp.
 	 */
 	public function callbackFx($args) {
 		$this->assertFxOriginIsNotPublic();

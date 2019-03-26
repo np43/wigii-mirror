@@ -378,7 +378,7 @@ class CMSyncSubscriberListBatch extends WigiiBatch {
 	
 	/**
 	 * Saves the batch output into a new element stored into the given group
-	 * @param Any $batchOutput the batch output. A string or any object. If any object, then converts to json.
+	 * @param mixed $batchOutput the batch output. A string or any object. If any object, then converts to json.
 	 * @param String $batchName the batch name.
 	 * @param int|String $groupId the group id in which to store the element
 	 * @param Principal $principal the principal executing the batch

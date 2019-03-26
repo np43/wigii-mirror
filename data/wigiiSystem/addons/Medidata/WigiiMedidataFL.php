@@ -183,7 +183,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    $xml->setAttribute('type','reminder');
 	    // inserts a payload/reminder node, before payload/body node 
 	    $xml = $this->insertXmlElement($xml, 'reminder', $this->createXmlElement($xml, 'body', $options), $options);
-	    $xml->setAttribute('request_timestamp', strtotime($this->assertNotNull($customerOrder, 'reminder'.$reminderLevel)));
+	    $xml->setAttribute('request_timestamp', time());
 	    $xml->setAttribute('request_date', $this->assertDateNotNull($customerOrder, 'reminder'.$reminderLevel));
 	    $xml->setAttribute('request_id', 'R'.$reminderLevel.'-'.$this->assertNotNull($customerOrder,'customerOrderNumber'));	    
 	    $xml->setAttribute('reminder_level', $reminderLevel);
@@ -749,7 +749,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    else {
 	        $medidataXml = $args;
 	    }
-        $returnValue = array(' ');
+        $returnValue = array('&nbsp;&#183;&nbsp;');
         // role
         $s = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body','role');
         switch($s) {
@@ -900,40 +900,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
     	    }
     	    return $this->evaluateFuncExp(fx('implode',$returnValue));
 	    }
-	}
-	
-	/**
-	 * Generates HTML code to print the list of participating GLNs, given the list of provided services.
-	 * FuncExp signature : <code>printGLNList(invoiceServices)</code><br/>
-	 * Where arguments are :
-	 * - Arg(0) invoiceServices: Array. Array of Medidata Invoice Request service xml nodes extracted by the printMedidataInvoiceRequest method
-	 * @return String html code displaying the list of participating GLNs
-	 */
-	public function printGLNList($args) {
-	    // extracts arguments (in Fx mode or standard call mode)
-	    $nArgs = $this->getNumberOfArgs($args);
-	    if($nArgs==1 && is_array($args[0])) $args = $args[0];
-	    $nArgs = $this->getNumberOfArgs($args);
-	    
-	    if($nArgs>0) {
-	        $returnValue = '';
-	        $glns = array(); $nGlns=0;
-	        for($i=0;$i<$nArgs;$i++) {
-	            $service = $this->evaluateArg($args[$i]);
-	            if(isset($service)) {
-	                $gln = (string)$service["responsible_id"];
-	                // if gln is not already extracted, adds it to list
-	                if(!$glns[$gln]) {	                    
-	                    $glns[$gln] = $gln;
-	                    if($nGlns>0) $returnValue.= '<br/>';
-	                    $nGlns++;
-	                    $returnValue .= $nGlns.'/'.$gln;
-	                }
-	            }
-	        }
-	        return $returnValue;
-	    }
-	}
+	}	
 	
 	/**
 	 * Prints a Medidata invoice request as a copy for the patient or for the insurance as a reimbursement claim
@@ -1018,13 +985,40 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    switch($invoiceLawType) {
 	        case 'uvg': $invoiceLawType='LAA'; break;
 	        case 'ivg': $invoiceLawType='LAI'; break;
-	        case 'kvg': $invoiceLawType='LAMAL'; break;
+	        case 'kvg': $invoiceLawType='LAMal'; break;
 	    }
 	    
 	    // extract services
 	    $invoiceServices = $medidataXml->xpath("/invoice:request/invoice:payload/invoice:body/invoice:services/invoice:service");
 	    if($invoiceServices) $nbServices = count($invoiceServices);
 	    else $nbServices = 0;
+	    // extract GLN index
+	    if($nbServices>0) {
+	        $glnIndex = array(); $nGlns=0;
+	        foreach($invoiceServices as $service) {
+	            // extracts gln from provider
+	            $gln = (string)$service["provider_id"];
+	            // if gln is not already extracted, adds it to list
+	            if(!$glnIndex[$gln]) {
+	                $nGlns++;
+	                $glnIndex[$gln] = $nGlns;
+	            }
+                // extracts gln from responsible
+                $gln = (string)$service["responsible_id"];
+                // if gln is not already extracted, adds it to list
+                if(!$glnIndex[$gln]) {
+                    $nGlns++;
+                    $glnIndex[$gln] = $nGlns;
+                }                	               
+	        }	        
+	    }
+	    
+	    // extracts VAT summary and index
+	    $vatDetails = $invoiceTiersXml->xpath('./invoice:balance/invoice:vat/invoice:vat_rate');
+	    $vatIndex = array();
+	    foreach($vatDetails as $i => $vatDetail) {
+	        $vatIndex[(string)$vatDetail["vat_rate"]] = $i;
+	    }
 	    
 	    // generates invoice title
 	    if($invoiceTiersType=='tiers_payant') {
@@ -1032,8 +1026,8 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	        if($customerCopy) $invoiceTitle.='&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.'Copie pour le patient / client';
 	    }
 	    else {	        
-	        if($customerCopy) $invoiceTitle.='Facture TG'.'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.'Copie pour le patient / client';
-	        else $invoiceTitle = 'Justificatif de remboursement, Exemplaire pour l&apos;assureur';
+	        if($customerCopy) $invoiceTitle.='Facture du patient / client';
+	        else $invoiceTitle = 'Justificatif de remboursement';
 	    }
 	    
 	    // intializes options for print
@@ -1047,7 +1041,12 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    $options->setValue('invoiceLawType',$invoiceLawType);
 	    $options->setValue('invoiceCaseXml',$invoiceCaseXml);	    
 	    $options->setValue('nbServices',$nbServices);
-	    if($nbServices>0) $options->setValue('invoiceServices',$invoiceServices);
+	    if($nbServices>0) {
+	        $options->setValue('invoiceServices',$invoiceServices);
+	        $options->setValue('glnIndex',$glnIndex);
+	    }
+	    $options->setValue('vatDetails',$vatDetails);
+	    $options->setValue('vatIndex',$vatIndex);
 	    
 	    // prints invoice request as html
 	    $htmlContent = $this->evaluateFuncExp(fx('printElementWithTemplate',$customerOrder,$printTemplate,$options));
@@ -1141,7 +1140,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		$returnValue->setAttribute('storno', 0);
 		// invoice
 		$xml = $this->createXmlElement($returnValue, 'invoice', $options);		
-		$xml->setAttribute('request_timestamp', strtotime($this->assertNotNull($customerOrder, 'orderDate')));
+		$xml->setAttribute('request_timestamp', time());
 		$xml->setAttribute('request_date', $this->assertDateNotNull($customerOrder, 'orderDate'));
 		$xml->setAttribute('request_id', $this->assertNotNull($customerOrder,'customerOrderNumber'));
 		// body
@@ -1189,6 +1188,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 			    $this->createInvoice45kvg($returnValue, $customerOrder, $options);
 			    break;
 			// default node is not created.
+			// LAM (Assurance militaire) = MVG, LCA (Assurance complémentaire) = VVG
 		}
 		// treatment
 		$this->createInvoice45Treatment($returnValue, $customerOrder, $options);
@@ -1421,11 +1421,11 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @return DOMElement the created invoice treatment node
 	 */
 	protected function createInvoice45Treatment($invoiceBody,$customerOrder,$options) {
-		$patient = $options->getValue('customer');
+		$legalEntity = $options->getValue('legalEntity');
 		$returnValue = $this->createXmlElement($invoiceBody, 'treatment', $options);
 		$returnValue->setAttribute('date_begin', $this->assertDateNotNull($customerOrder, 'orderDate'));
 		$returnValue->setAttribute('date_end', $this->assertDateNotNull($customerOrder, 'orderDate'));
-		$returnValue->setAttribute('canton', $this->assertCanton($patient, 'address'));
+		$returnValue->setAttribute('canton', $this->assertCanton($legalEntity, 'entityAddress'));
 		$returnValue->setAttribute('reason', 'unknown');
 		return $returnValue;
 	}
@@ -1721,7 +1721,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
 	 * @param String $subfieldName optional subfield name
-	 * @return Scalar element field value
+	 * @return String|Number element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertNotNull($element,$fieldName,$subfieldName=null) {
@@ -1734,7 +1734,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
 	 * @param String $subfieldName optional subfield name
-	 * @return Scalar element field value
+	 * @return String|Number element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertNoSepNotNull($element,$fieldName,$subfieldName=null) {
@@ -1748,7 +1748,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
 	 * @param String $subfieldName optional subfield name
-	 * @return Scalar element field value
+	 * @return String|Number element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertNoSep($element,$fieldName,$subfieldName=null) {
@@ -1761,7 +1761,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
 	 * @param Boolean $allowNull optional flag allowing null dates or not. Default to true.
-	 * @return Scalar element field value as a formatted date 
+	 * @return String|Number element field value as a formatted date 
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertDate($element,$fieldName,$allowNull=true) {
@@ -1780,16 +1780,16 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * Asserts that a field value is a non null date and returns it
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
-	 * @return Scalar element field value as a formatted date
+	 * @return String|Number element field value as a formatted date
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertDateNotNull($element,$fieldName) {return $this->assertDate($element, $fieldName,false);}
 	/**
 	 * Asserts that a field value is a number and returns it
-	 * @param Element|Scalar $element element from which to get the field value or scalar value to be tested directly
+	 * @param Element|String|Number $element element from which to get the field value or scalar value to be tested directly
 	 * @param String $fieldName the field name
 	 * @param Boolean $allowNull optional flag allowing null numbers or not. Default to true.
-	 * @return Scalar element field value
+	 * @return String|Number element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertNumeric($element,$fieldName,$allowNull=true) {
@@ -1805,7 +1805,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * Asserts that a field value is a non null number and returns it
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
-	 * @return Scalar element field value
+	 * @return String|Number element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertNumericNotNull($element,$fieldName) {return $this->assertNumeric($element, $fieldName,false);}
@@ -1824,7 +1824,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
 	 * @param Boolean $allowNull optional flag allowing null values or not. Default to true.
-	 * @return Scalar element field value
+	 * @return String|Number element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertCanton($element,$fieldName,$allowNull=true) {
@@ -1849,7 +1849,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * Asserts that a field value is a non null canton code and returns it
 	 * @param Element $element element from which to get the field value
 	 * @param String $fieldName the field name
-	 * @return Scalar element field value
+	 * @return String|Number element field value
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertCantonNotNull($element,$fieldName) {return $this->assertCanton($element, $fieldName,false);}	

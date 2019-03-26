@@ -146,7 +146,7 @@ class DbTableDFA implements DataFlowActivity
 	 * the object should go further in the data flow. 
 	 * @param Closure|String $method a closure representing the code that should be executed or 
 	 * a string which is an object method name or a function name
-	 * @param Any $object an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setDecisionMethod($method, $object=null) {
 		$this->decisionMethod = CallableObject::createInstance($method, $obj); 

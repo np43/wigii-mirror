@@ -101,7 +101,7 @@ class GeometryCliFL extends FuncExpVMAbstractFL
 	/**
 	 * Returns the sequence ID given its title
 	 * (This function can also be called as a normal function, i.e. by passing directly the arguments instead of passing an array).
-	 * @return Scalar returns the ID or null if not found
+	 * @return String|Number returns the ID or null if not found
 	 */
 	public function sequenceIdFromTitle($args) {				
 		// funcExp call

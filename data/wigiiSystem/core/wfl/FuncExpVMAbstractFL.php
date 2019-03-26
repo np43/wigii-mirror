@@ -74,7 +74,7 @@ abstract class FuncExpVMAbstractFL
 	
 	/**
 	 * Returns the number of arguments stored in the args array
-	 * @param $args the args array, can be null
+	 * @param Array $args the args array, can be null
 	 */
 	protected function getNumberOfArgs($args) {
 		if(is_null($args)) return 0;
@@ -94,7 +94,7 @@ abstract class FuncExpVMAbstractFL
 	
 	/**
 	 * Evaluates a FuncExp and returns its value
-	 * @param $funcExp an instance of a FuncExp
+	 * @param FuncExp $funcExp an instance of a FuncExp
 	 */
 	protected function evaluateFuncExp($funcExp) {return $this->getFuncExpVM()->evaluateFuncExp($funcExp, $this);}
 	
@@ -104,7 +104,7 @@ abstract class FuncExpVMAbstractFL
 	 * then returns the given default value (null by default).
 	 * If you prefer to get an exception in that case, use the method 'evaluateArg' instead.
 	 * @param FieldSelector $fieldSelector the field selector to evaluate.
-	 * @param Any $defaultVal the default value that should be returned if the field selector doesn't point 
+	 * @param mixed $defaultVal the default value that should be returned if the field selector doesn't point 
 	 * to any declared variable or field in parent evaluator
 	 */
 	protected function evaluateFieldSelector($fieldSelector, $defaultVal=null) {
@@ -126,8 +126,8 @@ abstract class FuncExpVMAbstractFL
 	 * Stores a value in the current context (on top of the stack)
 	 * Any value stored under the same key at this level of the stack is replaced,
 	 * any value stored under this key on a lower level of the stack are kept but occulted by this new value
-	 * @param Scalar $key the key of the value to be stored
-	 * @param Any $value the value to be stored (can be any object)
+	 * @param String|Number $key the key of the value to be stored
+	 * @param mixed $value the value to be stored (can be any object)
 	 */
 	protected function setValueInContext($key, $value) {$this->getFuncExpVM()->setValueInScope($key, $value);}
 	
@@ -136,7 +136,7 @@ abstract class FuncExpVMAbstractFL
 	 * By default, it walks through the whole stack searching for the key, from top to down,
 	 * and returns the first value found.
 	 * Except if the argument goThroughParents is false, then it searches only in the context on the top of the stack
-	 * @param Scalar $key the key for which to retrieve a value
+	 * @param String|Number $key the key for which to retrieve a value
 	 * @param Boolean $goThroughParents if true (default), then searches for the key through the whole stack else only on top of the stack
 	 */
 	protected function getValueInContext($key, $goThroughParents=true) {return $this->getFuncExpVM()->getValueInScope($key, $goThroughParents);}
@@ -158,7 +158,7 @@ abstract class FuncExpVMAbstractFL
 	 * Returns the value of an attribute into a given WigiiGraphNode passed through a FuncExp call context
 	 * @param String $attrKey the attribute key
 	 * @param Array $funcExpArgs the func exp calling context. Should be an array of the form (wigiiGraphNode[, funcExpDFA])
-	 * @param Any $defaultValue a default value if the WigiiGraphNode is not defined.
+	 * @param mixed $defaultValue a default value if the WigiiGraphNode is not defined.
 	 */
 	protected function getWigiiGraphNodeAttribute($attrKey, $funcExpArgs, $defaultValue=null) {
 		$nArgs = $this->getNumberOfArgs($funcExpArgs);
@@ -289,8 +289,8 @@ abstract class FuncExpVMAbstractFL
 	 * - they are two objects and === return true,
 	 * - or if they are two arrays (doesn't check the array content),
 	 * - or if they are two scalars and == returns true.
-	 * @param FuncExp|FieldSelector|Any $pattern the pattern
-	 * @param FuncExp|FieldSelector|Any $subject the subject
+	 * @param FuncExp|FieldSelector|mixed $pattern the pattern
+	 * @param FuncExp|FieldSelector|mixed $subject the subject
 	 * @param FuncExpVMContext $matches the VM context in which to store the synchronized variables.
 	 * @return boolean returns true if the subject matches the pattern, else false.
 	 */

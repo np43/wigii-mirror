@@ -94,8 +94,8 @@ class FuncExpDFA implements DataFlowActivity
 	/**
 	 * Sets a value in DataFlow context. 
 	 * This map is used to store some state during the execution of the data flow.
-	 * @param Scalar $key the key under which to store data
-	 * @param Any $value the value stored as state
+	 * @param String|Number $key the key under which to store data
+	 * @param mixed $value the value stored as state
 	 */
 	public function setValueInContext($key, $value) {
 		if(!isset($this->context)) $this->context = array();
@@ -104,8 +104,8 @@ class FuncExpDFA implements DataFlowActivity
 	
 	/**
 	 * Gests a value stored in the DataFlow context.
-	 * @param Scalar $key the key for which to retrieve data
-	 * @return the data or null if not defined
+	 * @param String|Number $key the key for which to retrieve data
+	 * @return mixed the data or null if not defined
 	 */
 	public function getValueInContext($key) {
 		if(!isset($this->context)) return null;
@@ -146,7 +146,7 @@ class FuncExpDFA implements DataFlowActivity
 	
 	/**
 	 * Returns current DataFlow state
-	 * @return an integer, one of FUNCEXP_DFA_STARTING, FUNCEXP_DFA_RUNNING, 
+	 * @return int an integer, one of FUNCEXP_DFA_STARTING, FUNCEXP_DFA_RUNNING, 
 	 * FUNCEXP_DFA_ENDING, FUNCEXP_DFA_SINGLE_DATA 
 	 */
 	public function getState() {

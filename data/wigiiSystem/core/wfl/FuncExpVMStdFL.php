@@ -274,7 +274,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) dataFlowDumpable: evaluates to a DataFlowDumpable|InputDataFlow|ObjectList the objects to be selected and pushed into the data flow
 	 * - Arg(1) dfasl : evaluates to a DataFlowActivitySelectorList the data flow description
-	 * @return Any optionally returns some data if the last stage of the data flows writes some output.
+	 * @return mixed optionally returns some data if the last stage of the data flows writes some output.
 	 */
 	public function sel($args) {
 		$isOriginPublic = $this->isFxOriginPublic();
@@ -306,6 +306,10 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 4 || empty($args[2]) || !($args[2] instanceof FuncExp) || empty($args[3])) throw new FuncExpEvalException("the aggrEquiv func exp should have a third argument which is a FuncExp taking 2 arguments and a fourth argument which evaluates to a DataFlowActivitySelectorList", FuncExpEvalException::INVALID_ARGUMENT);
 		$classifier = $args[2];
+		$dfs = $this->getDataFlowService();
+		$data = $args[0];
+		$dfa = $args[1];
+		
 		if($dfa->isRunning() || $dfa->isEndStream()) {
 			$dfasl = $dfa->getValueInContext('dfasl');
 		}
@@ -317,10 +321,6 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 			}
 			if($dfa->isStartStream()) $dfa->setValueInContext('dfasl', $dfasl);
 		}
-
-		$dfs = $this->getDataFlowService();
-		$data = $args[0];
-		$dfa = $args[1];
 		switch($dfa->getState()) {
 			case FuncExpDFA::FUNCEXP_DFA_SINGLE_DATA:
 				if(isset($dfasl)) $dfs->processWholeData($this->getPrincipal(), $data, $dfasl);
@@ -375,7 +375,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * FuncExp signature is : $modifyInContext($data, $nextChunk). Modifies a chunk of data knowing the next coming chunk and returns the modified chunk,
 	 * or creates a new chunk of data knowing the original data and the next chunk to come and returns the new data.<br/>
 	 * The last value of the stream will call $modifyInContext($data, null) where $data is equal to the last value.
-	 * @return Any the next stage in the data flow will receive the modified chunks.
+	 * @return mixed the next stage in the data flow will receive the modified chunks.
 	 */
 	public function modifyInPair($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -666,7 +666,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) f: a func exp or a field selector. If the FuncExp generates another FuncExp then returns the result of the generated FuncExp.
 	 * - Arg(1..n) modules: An array of Module names or a comma separated list of Module names to load into the FuncExpVM before evaluating the FuncExp 
-	 * @return Any the result of the FuncExp
+	 * @return mixed the result of the FuncExp
 	 */
 	public function evalfx($args) {
 		$nArgs=$this->getNumberOfArgs($args);
@@ -739,7 +739,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) f: FuncExp. An instanciated FuncExp.
 	 * - Arg(1) args: Array. An array of arguments which will replace the existing arguments of the FuncExp (in same order).
-	 * @return Any the result of the FuncExp evaluation
+	 * @return mixed the result of the FuncExp evaluation
 	 */
 	public function fxRemap($args) {
 		return $this->evaluateFuncExp($this->fxReplaceArgs($args));
@@ -824,7 +824,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * FuncExp signature : <code>base64url2obj(str)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) str: A serialized Object using the obj2base64url function
-	 * @return Any the deserialized object
+	 * @return mixed the deserialized object
 	 */
 	public function base64url2obj($args) {
 		$isOriginPublic = $this->isFxOriginPublic();
@@ -890,7 +890,6 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		$nArgs = $this->getNumberOfArgs($args);
 		$returnValue = null;
 		if($nArgs > 0) {
-			$p = $this->getPrincipal();
 			for($i = 0; $i < $nArgs; $i++) {
 				if(!empty($args[$i])) {
 					if(!($args[$i] instanceof FuncExp)) throw new FuncExpEvalException("funcExp dfaslfx takes at least one argument which should be a non null instance of a FuncExp", FuncExpEvalException::INVALID_ARGUMENT);
@@ -1068,7 +1067,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * FuncExp signature is: <code>dfAttr(key)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) key: The key of the attribute in the data flow context for which to get the value.
-	 * @return Any the attribute value or null if not defined
+	 * @return mixed the attribute value or null if not defined
 	 * @throws FuncExpEvalException::INVALID_STATE if data flow context is not accessible
 	 */
 	public function dfAttr($args) {
@@ -1212,7 +1211,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * If obj is a StdClass, then getAttr(obj, key1, key2, key3, ...) is equivalent to calling obj->key1->key2->key3->...
 	 * If obj is an Array, then getAttr(obj, key1, key2, key3, ...) is equivalent to calling obj[key1][key2][key3][...]
 	 * If obj is any object, then getAttr(obj, key1, key2, key3, ...) is equivalent to calling obj->key1()->key2()->key3()->...()
-	 * @return Any returns the value accessed by this chain of accessors.
+	 * @return mixed returns the value accessed by this chain of accessors.
 	 */
 	public function getAttr($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1253,7 +1252,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) obj: stdClass|Array. Evaluates to the object from which to extract an attribute
 	 * - Arg(1) attrName: string. Object attribute name or 'value' if not defined
-	 *  @return Any or null if attribute is not defined.
+	 *  @return mixed or null if attribute is not defined.
 	 */
 	public function oVal($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1270,7 +1269,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * - Arg(2..n) argI: Any. Method arguments
 	 * 
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
-	 * @return Any the method return value
+	 * @return mixed the method return value
 	 */
 	public function oCall($args) {
 		$this->assertFxOriginIsNotPublic();
@@ -1665,7 +1664,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) condidition: FuncExp | FieldSelector | LogExp. The condition to test if evaluates to true. Can be a FuncExp or a FieldSelector or a LogExp on data stored into the underlying Record.
 	 * - Arg(1..n) actionI: If condition is true, then evaluates in sequence each action. Returns the result of the last action.
-	 * @return Any the result of the last action if condition is true, else null.
+	 * @return mixed the result of the last action if condition is true, else null.
 	 */
 	public function ctlCondSeq($args) {
 		$nArgs=$this->getNumberOfArgs($args);
@@ -1692,7 +1691,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) condidition: FuncExp | FieldSelector | LogExp. The condition to test if evaluates to true. Can be a FuncExp or a FieldSelector or a LogExp on data stored into the underlying Record.
 	 * - Arg(1..n) actionI: If condition is true, then evaluates in sequence each action. Returns the result of the last action.
-	 * @return Any the result of the last action if condition is true, else null.
+	 * @return mixed the result of the last action if condition is true, else null.
 	 */
 	public function ctlSeqIf($args) {
 		return $this->ctlCondSeq($args);
@@ -1701,7 +1700,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	/**
 	 * Ignore if error occurs in expression
 	 * FuncExp signature : <code>ctlIgnoreError(exp:FuncExp, valueOnError=null)</code><br/>
-	 * @return Any value of exp if no error else valueOnError
+	 * @return mixed value of exp if no error else valueOnError
 	 */
 	public function ctlIgnoreError($args){
 	    $nArgs = $this->getNumberOfArgs ( $args );
@@ -1741,7 +1740,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * If ruleI is a FuncExp, then data is evaluated and result is put into variable 'value'. Then ruleI is evaluated as a boolean.
 	 * Else data and ruleI are evaluated and compared using ==.
 	 * - Arg(i+1) resultI: Evaluates to the result that the function should return if ruleI fires.
-	 * @return Any the resultI of the ruleI which has fired or no return value if no rule has fired.
+	 * @return mixed the resultI of the ruleI which has fired or no return value if no rule has fired.
 	 */
 	public function ctlSwitch($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1789,7 +1788,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * If ruleI is a FuncExp, then data is evaluated and result is put into variable 'value'. Then ruleI is evaluated as a boolean.
 	 * Else data and ruleI are evaluated and compared using ==.
 	 * - Arg(i+1) resultI: Evaluates to the result that the function should return if ruleI fires.
-	 * @return Any the resultI of the ruleI which has fired or no return value if no rule has fired.
+	 * @return mixed the resultI of the ruleI which has fired or no return value if no rule has fired.
 	 */
 	public function ctlMatchOne($args) {
 		return $this->ctlSwitch($args);
@@ -1806,7 +1805,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * If ruleI is a FuncExp, then data is evaluated and result is put into variable 'value'. Then ruleI is evaluated as a boolean.
 	 * Else data and ruleI are evaluated and compared using ==.
 	 * - Arg(i+1) resultI: Evaluates to the result that the function should return if ruleI fires.
-	 * @return Any the resultI of all ruleI which have fired or no return value if no rule have fired.
+	 * @return mixed the resultI of all ruleI which have fired or no return value if no rule have fired.
 	 */
 	public function ctlMatchAll($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1854,7 +1853,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Elseif data is not a FuncExp and ruleI is a FuncExp, then data is put into variable 'value' and ruleI is evaluated as a boolean.
 	 * Else data and ruleI are evaluated and compared using ==.
 	 * - Arg(i+1) resultI: Evaluates to the result that the function should return if ruleI fires.
-	 * @return Any the resultI of the ruleI which has fired or no return value if no rule has fired.
+	 * @return mixed the resultI of the ruleI which has fired or no return value if no rule has fired.
 	 */
 	public function ctlMatchFx($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1918,7 +1917,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Elseif data is not a FuncExp and ruleI is a FuncExp, then data is put into variable 'value' and ruleI is evaluated as a boolean.
 	 * Else data and ruleI are evaluated and compared using ==.
 	 * - Arg(i+1) resultI: Evaluates to the result that the function should return if ruleI fires.
-	 * @return Any the resultI of all ruleI which have fired or no return value if no rule have fired.
+	 * @return mixed the resultI of all ruleI which have fired or no return value if no rule have fired.
 	 */
 	public function ctlMatchAllFx($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -1982,7 +1981,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 					ctlIf(logAnd(eq(logState,"Submitted"), eq(Review_Complete, "Approved")), "Approved"),
 					ctlIf(logAnd(eq(logState,"Approved"), eq(Form_Complete, "Finalized")), "Finalized")
 				)
-	 * @return Any returns the decision value or null if none.
+	 * @return mixed returns the decision value or null if none.
 	 */
 	public function ctlDecisionTree($args) {
 		$nArgs=$this->getNumberOfArgs($args);		
@@ -2004,7 +2003,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) val: Evaluates to the value to be returned
 	 * - Arg(1..n) filterI: Evaluates to the non-desired values.
-	 * @return Any if(val is equal to one of filterI) then returns null, else returns val.
+	 * @return mixed if(val is equal to one of filterI) then returns null, else returns val.
 	 */ 
 	public function ctlFilterVal($args) {
 		$nArgs=$this->getNumberOfArgs($args);
@@ -2024,7 +2023,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) val: Evaluates to the value to be returned if different from null
 	 * - Arg(1) defaultValue: Evaluates to the default value to be returned in case of null.
-	 * @return Any val or defaultValue
+	 * @return mixed val or defaultValue
 	 */
 	public function ctlDefaultVal($args) {
 	    $nArgs=$this->getNumberOfArgs($args);
@@ -2044,7 +2043,8 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return string the minimum date (yyyy-mm-dd hh:mm:ss)
 	 */
 	public function ctlMinDate($args){
-	    $nArgs = $this->getNumberOfArgs($args);	    
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('ctlMinDate takes at least one argument', FuncExpEvalException::INVALID_ARGUMENT);
 	    $result = array();
 	    foreach($args as $arg){
 	        $arg= $this->evaluateArg($arg);
@@ -2066,6 +2066,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 */
 	public function ctlMaxDate($args){
 	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('ctlMinDate takes at least one argument', FuncExpEvalException::INVALID_ARGUMENT);
 	    $result = array();
 	    foreach($args as $arg){
 	        $arg= $this->evaluateArg($arg);
@@ -2234,7 +2235,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	/**
 	 * Evaluates first argument, if true, then evaluates all next arguments in sequence,
 	 * and this as long as first argument evaluates to true
-	 * @return value of last evaluated arg
+	 * @return mixed value of last evaluated arg
 	 */
 	public function ctlWhile($args) {
 		$n = $this->getNumberOfArgs($args);
@@ -2631,6 +2632,54 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	    // group digits by 5 following the pattern 00 00000 00000 00000 00000 00000
 	    if($groupDigits) $refNumber = substr($refNumber,0,2).' '.implode(' ',str_split(substr($refNumber,2),5));
 	    return $refNumber;
+	}
+	/**
+	 * Builds and formats a Swiss BVR coding line, including amount, Participant 9 digit number, reference number and optional trust center code
+	 * FuncExp signature : <code>txtFormatSwissBvrCodingLine(amount,participantNumber,refNumber,trustCenter)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) amount : String|Double. The invoice due amount.
+	 * - Arg(1) participantNumber : String. The participant account number (normally a Swiss Post account number)
+	 * - Arg(2) refNumber : String|Int. The BVR reference number without the ending control digit, as a string or an integer.
+	 * - Arg(3) trustCenter : String|Int. Trust center code from 01-99. Defaults to 01.
+	 * @return String the Swiss BVR coding line of the form [trust center][amount]>[reference number]+ [participant number]>
+	 * @example calling txtFormatSwissBvrCodingLine("123.40","01-12345-8","123456") will produce
+	 */
+	public function txtFormatSwissBvrCodingLine($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<3) throw new FuncExpEvalException('txtFormatSwissBvr takes at least three arguments: the amount, the participant number and the reference number argument which is the reference number', FuncExpEvalException::INVALID_ARGUMENT);
+        
+	    // extracts trust center code
+	    if($nArgs>3) $trustCenter = str_pad($this->evaluateArg($args[3]),2,'0',STR_PAD_LEFT);
+	    else $trustCenter = '01';
+	    
+        // extracts amount
+        $amount = $this->evaluateArg($args[0]);
+	    $amount = floatval($amount);
+        $amount *= 100.0; // converts amount in cents
+        $amount = str_pad(number_format($amount,0,'',''),10,'0',STR_PAD_LEFT); // pads with leading 0 up to 10 digits
+        // computes control digit according to Swiss BVR Modulo 10 algorithm
+        $table = array(0, 9, 4, 6, 8, 2, 7, 1, 3, 5);
+        $carry = 0;
+        foreach(str_split($trustCenter.$amount) as $d) {
+            $carry = $table[($carry + intval($d)) % 10];
+        }
+        $carry = (10 - $carry) % 10;
+	    // appends control digit
+	    $amount.=$carry;
+	    
+	    // extracts participant number
+	    $partNum = $this->evaluateArg($args[1]);
+	    $participantNumber = $this->evaluateFuncExp(fx('txtAcceptBigPosInt',$partNum,true,9));
+	    // adds missing 0 if length is smaller than 9
+	    if(strlen($participantNumber)<9) {
+	        $partNum = explode('-',$partNum);
+	        if(count($partNum)!=3) throw new FuncExpEvalException('Invalid participant number', FuncExpEvalException::INVALID_ARGUMENT);
+	        $participantNumber = $partNum[0].str_pad($partNum[1],9-strLen($partNum[0])-strlen($partNum[2]),'0',STR_PAD_LEFT).$partNum[2];
+	    }
+	    // extracts reference number	    
+	    $refNumber = $this->evaluateFuncExp(fx('txtFormatSwissBvr',$args[2]));
+	    
+	    return $trustCenter.$amount.'>'.$refNumber.'+ '.$participantNumber.'>';
 	}
 	/**
 	 * Formats a given number to be compatible with Swiss social security number.
@@ -3113,6 +3162,56 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		if(!empty($returnValue)) return implode($s,$returnValue);
 		else return '';
 	}
+	
+	/**
+	 * Implodes a map (array of key values) given a key separator (separator used between key and value) and a value separator (separator used between two map rows)
+	 * FuncExp signature: <code>implodeMap(map, keySep, valueSep)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) map: Array. Map to implode key-value pairs
+	 * - Arg(1) keySep: String. Separator to be used between key and value, default to '='
+	 * - Arg(2) valueSep: String. Separator to be used between two (key-value) pairs, default to new line.
+	 * @return String the imploded map
+	 */
+	public function implodeMap($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException("implodeMap takes at least one paramters which shoule be a array to implode", FuncExpEvalException::INVALID_ARGUMENT);
+	    $map = $this->evaluateArg($args[0]);
+	    if($nArgs>1) $keySep = $this->evaluateArg($args[1]);
+	    else $keySep = '=';
+	    if($nArgs>1) $valueSep = $this->evaluateArg($args[2]);
+	    else $valueSep = "\n";	    
+	    if(is_array($map)) {
+	        $returnValue = '';
+	        foreach($map as $k=>$v) {
+	            if($returnValue) $returnValue .= $valueSep;
+	            $returnValue .= $k.$keySep.$v;
+	        }
+	    }
+	    else $returnValue = $map;
+	    return $returnValue;
+	    if($this->getNumberOfArgs($args) < 1) throw new FuncExpEvalException("args should have at least one value which is the separator", FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue = array(); $i = 0; $s = ", ";
+	    foreach($args as $v)
+	    {
+	        if($i == 0)
+	        {
+	            $s = $this->evaluateArg($v);
+	            $i++;
+	        }
+	        else
+	        {
+	            $tv = $this->evaluateArg($v);
+	            if($tv!=null){
+	                if(is_array($tv)) $returnValue = array_merge($returnValue, $tv);
+	                else $returnValue[] = $tv;
+	                $i++;
+	            }
+	        }
+	    }
+	    $returnValue = array_unique($returnValue,SORT_REGULAR);
+	    if(!empty($returnValue)) return implode($s,$returnValue);
+	    else return '';
+	}
 
 	/**
 	 * Concatenates the arguments, returns null if no arg
@@ -3336,6 +3435,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * @return Float a number of hours as a float
 	 */	
 	public function time2float($args){
+	    $nArgs = $this->getNumberOfArgs($args);
 		return time2float($this->evaluateArg ( $args [0] ),
 				($nArgs>1?$this->evaluateArg ($args [1]):":"));
 	}

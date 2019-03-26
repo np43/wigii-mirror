@@ -130,7 +130,7 @@ class WplXmlReaderDFA extends DataFlowActivityEventHandler implements WigiiXmlSa
 	private $outputEncoding = 'UTF-8';
 	/**
 	 * Sets the character encoding of the output strings
-	 * @param $encoding the encoding name, one of UTF-8, ISO-8859-1 or US-ASCII
+	 * @param String $encoding the encoding name, one of UTF-8, ISO-8859-1 or US-ASCII
 	 */
 	public function setOutputEncoding($encoding) {
 		$this->outputEncoding = $encoding;		

@@ -85,7 +85,7 @@ class FilterDuplicatesAndSortDFA implements DataFlowActivity
 	 * It can also return an object of the form {key: the object key, weight: the object weight in the distribution (default is 1)}
 	 * @param Closure|String $method a closure representing the code that should be executed or 
 	 * a string which is an object method name or a function name
-	 * @param Any $object an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setObjectSelectorMethod($method, $obj=null) {
 		$this->objectSelectorMethod = CallableObject::createInstance($method, $obj);
@@ -100,7 +100,7 @@ class FilterDuplicatesAndSortDFA implements DataFlowActivity
 	 * If this method is not set, then uses by default the logical key returned by the object selector method to do sorting.
 	 * @param Closure|String $method a closure representing the code that should be executed or
 	 * a string which is an object method name or a function name
-	 * @param Any $object an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setObjectSortByMethod($method, $obj=null) {
 		$this->objectSortByMethod = CallableObject::createInstance($method, $obj);
@@ -241,8 +241,8 @@ class FilterDuplicatesAndSortDFA implements DataFlowActivity
 	
 	/**
 	 * Builds a logical key on the current object that will be used to filter duplicates
-	 * @param Any $data the current object in the flow
-	 * @return scalar the object logical key
+	 * @param mixed $data the current object in the flow
+	 * @return String|Number the object logical key
 	 * This implementation only supports filtering a flow of values.
 	 * To filter objects, configure the setObjectSelectorMethod with a callback,
 	 * or redefine this function.

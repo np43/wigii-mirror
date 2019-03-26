@@ -61,7 +61,7 @@ class WplXmlWriterDFA implements DataFlowActivity
 	/**
 	 * Sets the WigiiXmlWriter data flow actitivity output filter
 	 * that will be used to write xml in the pipe
-	 * @param $wigiiXmlWriterDFAOF a WigiiXmlWriterDFAOF instance
+	 * @param WigiiXmlWriterDFAOF $wigiiXmlWriterDFAOF a WigiiXmlWriterDFAOF instance
 	 */
 	public function setWigiiXmlWriterDFAOF($wigiiXmlWriterDFAOF) {
 		$this->wigiiXmlWriterDFAOF = $wigiiXmlWriterDFAOF;
@@ -286,10 +286,10 @@ class WplXmlWriterDFA implements DataFlowActivity
 	
 	/**
 	 * Writes a field to XML
-	 * @param $wigiiXmlWriter the open WigiiXmlWriterDFAOF to use
-	 * @param $fieldWithSelectedSubfields an instance of model FieldWithSelectedSubfields wrapping the field to write
-	 * @param $wigiiBag the wigii bag where is stored the data
-	 * @param $recordId the record ID to fetch the data in the wigii bag
+	 * @param WigiiXmlWriterDFAOF $wigiiXmlWriter the open WigiiXmlWriterDFAOF to use
+	 * @param FieldWithSelectedSubfields $fieldWithSelectedSubfields an instance of model FieldWithSelectedSubfields wrapping the field to write
+	 * @param WigiiBag $wigiiBag the wigii bag where is stored the data
+	 * @param int $recordId the record ID to fetch the data in the wigii bag
 	 */
 	protected function writeField($wigiiXmlWriter, $fieldWithSelectedSubfields, $wigiiBag, $recordId) {
 		if(is_null($fieldWithSelectedSubfields)) throw new DataFlowServiceException("fieldWithSelectedSubfields cannot be null", DataFlowServiceException::INVALID_ARGUMENT);
@@ -328,13 +328,13 @@ class WplXmlWriterDFA implements DataFlowActivity
 	
 	/**
 	 * Writes a subfield to XML
-	 * @param $wigiiXmlWriter the open WigiiXmlWriterDFAOF to use
-	 * @param $field the Field containing this subfield
-	 * @param $subFieldName the subfield name
-	 * @param $value the subfield value to be written in XML
-	 * @param $subFieldType the subfield type (see DataType->xml->xpath(subfieldname))
-	 * @param $sqlType the subfield sql type (see DataType->xml->xpath(subfieldname))
-	 * @param $lang if set, the language attribute value
+	 * @param WigiiXmlWriterDFAOF $wigiiXmlWriter the open WigiiXmlWriterDFAOF to use
+	 * @param Field $field the Field containing this subfield
+	 * @param string $subFieldName the subfield name
+	 * @param String|Number $value the subfield value to be written in XML
+	 * @param string $subFieldType the subfield type (see DataType->xml->xpath(subfieldname))
+	 * @param string $sqlType the subfield sql type (see DataType->xml->xpath(subfieldname))
+	 * @param string $lang if set, the language attribute value
 	 */
 	protected function writeSubField($wigiiXmlWriter, $field, $subFieldName, $value, $subFieldType, $sqlType, $lang=null) {
 		$subFieldType = strtolower($subFieldType);

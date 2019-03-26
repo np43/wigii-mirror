@@ -1059,7 +1059,7 @@ function fx_fxcallback($method, $obj, $funcArgs=null) {
  * in a comma separated list as a normal function call.
  * example: evalfx($principal, $myFuncExp, 'module1', 'module2', 'module3') is equivalent
  * to evalfx($principal, $myFuncExp, array('module1', 'module2', 'module2'))
- * @return Any returns the value of the evaluated func exp.
+ * @return mixed returns the value of the evaluated func exp.
  */
 function evalfx($principal, $funcExp, $modules=null) {
 	$nArgs = func_num_args();
@@ -1620,7 +1620,7 @@ function arrayMatch($input,$pattern) {
  * Else returns the object as is.
  * @param stdClass|Array $obj the object from which to extract an attribute
  * @param string $attrName object attribute or 'value' if not defined
- * @return Any or null if attribute is not defined.
+ * @return mixed or null if attribute is not defined.
  */
 function oVal($obj,$attrName=null) {
 	return TechnicalServiceProvider::getFuncExpBuilder()->oVal($obj,$attrName);
@@ -1726,7 +1726,7 @@ function cfgField($name, $attributes=null, $label=null, $cfgAttributs=null) {
 
 /**
  * Creates an StdClass instance which maps an 'attribute' node in the Wigii XML configuration file.
- * @param Scalar $value the value of the attribute
+ * @param String|Number $value the value of the attribute
  * @param Array $attributes an array [key => value] which defines some xml attributes
  * @param String|Array $label the label of the attribute, or an array with the label translated in different languages.
  * The array is indexed with the Wigii installed languages (see TranslationService). For instance [l01 => label in English, l02 => label in French]
@@ -1766,7 +1766,7 @@ function wigiiBPLParam($args=null) {
  * @param DataFlowActivitySelectorList $dataFlowActivitySelectorList the data flow description
  * @param FuncExpParameterMapping $fxpMapping an optional FuncExpParameterMapping instance used to instanciate any parameters
  * that would be present in the arguments with a given value.
- * @return Any optionally returns some data if the last stage of the data flows writes some output.
+ * @return mixed optionally returns some data if the last stage of the data flows writes some output.
  */
 function sel($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, $fxpMapping=null) {
 	return TechnicalServiceProvider::getFuncExpBuilder()->sel($principal, $dataFlowDumpable, $dataFlowActivitySelectorList, $fxpMapping);

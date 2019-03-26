@@ -1767,7 +1767,7 @@ HTMLCSS;
 	 * and option name under which the value is stored, except if optionName is defined.
 	 * @param Element $element the element from which to fetch values
 	 * @param WigiiBPLParameter $options the bag of options to be filled
-	 * @param Any $defaultValue a default value if retrieved value is null
+	 * @param mixed $defaultValue a default value if retrieved value is null
 	 * @param String $optionName option name under which to store the option value. If not set, uses the fieldName.
 	 * @return WigiiBPLParameter the updated set of options
 	 */

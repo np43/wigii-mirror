@@ -57,7 +57,7 @@ class ElementDynAttrMutableValueImpl implements ElementDynamicAttribute
 	
 	/**
 	 * Returns the value stored in this dynamic attribute or null if not set.
-	 * @return Any any type of value (scalar or object) or null if not set.
+	 * @return mixed any type of value (scalar or object) or null if not set.
 	 * @throws RecordException if an error occurs while reading the value.
 	 */
 	public function getValue() {
@@ -66,7 +66,7 @@ class ElementDynAttrMutableValueImpl implements ElementDynamicAttribute
 	
 	/**
 	 * Sets the value of this dynamic attribute.
-	 * @param Any $val any type of value (scalar or object).
+	 * @param mixed $val any type of value (scalar or object).
 	 * @throws RecordException if an error occurs while setting the value or
 	 * RecordException::UNSUPPORTED_OPERATION if the value cannot be set because its a read only attribute.
 	 */
@@ -98,8 +98,8 @@ class ElementDynAttrMutableValueImpl implements ElementDynamicAttribute
 	 * This class is notified that a standard element attribute has changed.
 	 * This method is called only if the method listenToElementAttributeChange returns true.
 	 * @param String $name the name of the attribute
-	 * @param Any $oldValue the old value of the attribute
-	 * @param Any $newValue the new value of the attribute
+	 * @param mixed $oldValue the old value of the attribute
+	 * @param mixed $newValue the new value of the attribute
 	 */
 	public function elementSetAttribute($name, $oldValue, $newValue) {/* nothing to do */}
 }

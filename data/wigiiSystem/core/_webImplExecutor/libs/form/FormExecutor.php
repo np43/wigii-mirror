@@ -1248,7 +1248,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 	 * @param Principal $p principal executing the request
 	 * @param ExecutionService $exec current ExecutionService instance
 	 * @param FuncExp $fx the FuncExp instance to evaluate
-	 * @return Any FuncExp result
+	 * @return mixed FuncExp result
 	 */
 	public function evaluateFuncExp($p,$exec,$fx,$rec=null) {
 	    $fxEval = $this->getFuncExpEval($p, $exec, $rec);

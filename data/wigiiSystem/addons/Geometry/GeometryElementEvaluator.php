@@ -575,7 +575,7 @@ class GeometryElementEvaluator extends ReportingElementEvaluator
 	 * @param String $label the user friendly label given to this tag
 	 * @param FuncExp $rewriteExp the original func exp which generated the tag.
 	 * @param SimpleXMLElement $innerFieldsConfig the inner fields configuration to update if needed (sets readonly, unset func exp, etc)
-	 * @return Any the replacement value for this tag.
+	 * @return mixed the replacement value for this tag.
 	 */
 	protected function getTagReplacementValue($tagIndex, $label, $rewriteExp, $innerFieldsConfig) {
 		$fName = $rewriteExp->getName();

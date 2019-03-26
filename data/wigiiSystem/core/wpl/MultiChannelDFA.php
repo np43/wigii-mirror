@@ -66,7 +66,7 @@ class MultiChannelDFA extends ObjectDFAWithFuncExpVM
 	 * should return a scalar that will be used as a channel key.
 	 * @param FuncExp|FieldSelector|Closure|String $method a FuncExp or a FieldSelector returning the value of the channel key,
 	 * or a closure representing the code that should be executed or a string which is an object method name or a function name
-	 * @param Any $object an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setChannelSelectorMethod($method, $obj=null) {
 		if($method instanceof FuncExp || $method instanceof FieldSelector) {

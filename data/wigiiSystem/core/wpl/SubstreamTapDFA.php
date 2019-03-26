@@ -60,7 +60,7 @@ class SubstreamTapDFA implements DataFlowActivity
 	
 	/**
 	 * Sets the substream descriptor to be used for each substream
-	 * @param $substreamDescriptorDFASL an instance of a DataFlowActivitySelectorList class, 
+	 * @param DataFlowActivitySelectorList $substreamDescriptorDFASL an instance of a DataFlowActivitySelectorList class, 
 	 * describing the substream.
 	 */
 	public function setSubstreamDescriptor($substreamDescriptorDFASL) {

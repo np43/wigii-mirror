@@ -366,7 +366,7 @@ class ConfigServiceSubElementImpl implements ConfigService
 	/**
 	 * Selects the configuration of a sub element
 	 * @param Principal $principal authenticated user performing the operation
-	 * @param Scalar $subElementId the id of the sub element for which to select the configuration
+	 * @param String|Number $subElementId the id of the sub element for which to select the configuration
 	 * @throws ConfigServiceException if an error occurs or if subElementId is not a sub element.
 	 * Postconditions: the configuration service is centered on the configuration of this sub element.
 	 * -> getCurrentModule returns the module of the sub element

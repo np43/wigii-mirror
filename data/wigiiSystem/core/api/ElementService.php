@@ -558,7 +558,7 @@ interface ElementService
 	/**
 	 * Fills a LinkSelectorList with the path from the root element to the provided sub element
 	 * @param Principal $principal authenticated user performing the operation 
-	 * @param Scalar $subElementId the sub element id for which to retrieve the path
+	 * @param String|Number $subElementId the sub element id for which to retrieve the path
 	 * @param LinkSelectorList $linkSelectorList the LinkSelectorList instance to be filled with the path from root to sub element.
 	 * The list will be of the form :
 	 * linkSelectorList(linkSelector(rootElementId, moduleName, fieldName), linkSelector(subElement1Id, moduleName, fieldName), ...)
@@ -570,7 +570,7 @@ interface ElementService
 	/**
 	 * Fills a list with all the sub elements of an element for a given field of type Links/subitem and accessible by this user
 	 * @param Principal $principal authenticated user performing the operation
-	 * @param Scalar $masterElementId the master element id for which to fetch the sub elements
+	 * @param String|Number $masterElementId the master element id for which to fetch the sub elements
 	 * @param String $fieldName the field in the master element of type Links/subitem for which to fetch the sub elements
 	 * @param ListFilter $listFilter filter on the list; filters columns, does pagination and sorting
 	 * @param ElementPList $elementPList list of elements, associated to principal rights, to be filled
@@ -597,7 +597,7 @@ interface ElementService
 	 * Inserts a new element as a sub element of the given master element
 	 * If a wigii bag is linked to the element, then all its values are stored in the db	 
 	 * @param Principal $principal authenticated user performing the operation
-	 * @param Scalar $masterElementId the master element id for which to add the sub element
+	 * @param String|Number $masterElementId the master element id for which to add the sub element
 	 * @param String $fieldName the field in the master element of type Links/subitem for which to add the sub element
 	 * @param Element $element element object to save in the database as a sub element	 
 	 * @param FieldSelectorList $fieldSelectorList only selected fields will be inserted

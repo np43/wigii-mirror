@@ -138,7 +138,7 @@ class SubElementTreeInDepthVisitorDFA implements DataFlowActivity, TreeInDepthVi
 	 * See the interface TreeInDepthVisitor for behavior contract details.
 	 * @param Closure|String $method a closure representing the code that should be executed or
 	 * a string which is an object method name or a function name
-	 * @param Any $obj an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $obj an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setActOnTreeNodeCallback($method, $obj=null) {
 		$this->actOnTreeNodeCallback = CallableObject::createInstance($method, $obj);
@@ -161,7 +161,7 @@ class SubElementTreeInDepthVisitorDFA implements DataFlowActivity, TreeInDepthVi
 	 * See the interface TreeInDepthVisitor for behavior contract details.
 	 * @param Closure|String $method a closure representing the code that should be executed or
 	 * a string which is an object method name or a function name
-	 * @param Any $obj an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $obj an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setActAfterTreeNodeCallback($method, $obj=null) {
 		$this->actAfterTreeNodeCallback = CallableObject::createInstance($method, $obj);

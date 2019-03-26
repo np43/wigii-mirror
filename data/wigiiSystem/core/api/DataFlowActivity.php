@@ -59,7 +59,7 @@ interface DataFlowActivity
 	
 	/**
 	 * The DataFlowService passes a chunk of data to be processed in the current execution context	 
-	 * @param Any $data to be processed
+	 * @param mixed $data to be processed
 	 * @param DataFlowContext $dataFlowContext the current data flow executing context.
 	 * @throws DataFlowServiceException in case of error,
 	 * in particular INVALID_ARGUMENT code if data is invalid 
@@ -84,7 +84,7 @@ interface DataFlowActivity
 	 * The DataFlowService triggers this event to ask to process at once the whole bunch of data.
 	 * This method cannot be called if a stream is currently beeing executed.
 	 * Local instance variable are safe to use.
-	 * @param Any $data the data to be processed
+	 * @param mixed $data the data to be processed
 	 * @param DataFlowContext $dataFlowContext the current data flow executing context
 	 * @throws DataFlowServiceException in case of error
 	 */

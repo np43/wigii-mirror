@@ -29,7 +29,7 @@ interface FuncExpParameterMappingList extends ObjectList
 {
 	/**
 	 * Addds a FuncExpParameterMapping instance to the list.
-	 * @param Scalar $key an optional key under which the mapping should be stored,
+	 * @param String|Number $key an optional key under which the mapping should be stored,
 	 * if null, then automatic integer keys will be generated, starting from 0.
 	 */
 	public function addFxpMapping($fxpMapping, $key=null);

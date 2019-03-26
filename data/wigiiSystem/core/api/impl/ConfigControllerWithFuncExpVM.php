@@ -116,7 +116,7 @@ abstract class ConfigControllerWithFuncExpVM implements ConfigController
 	
 	/**
 	 * Evaluates a FuncExp.
-	 * @return Any returns the value of the evaluated FuncExp.
+	 * @return mixed returns the value of the evaluated FuncExp.
 	 */
 	protected function evaluateFuncExp($funcExp) {
 		return $this->vm->evaluateFuncExp($funcExp, $this);

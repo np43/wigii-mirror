@@ -24,6 +24,7 @@
 /**
  * Dumps an array into data flow
  * Created by CWE on 28 février 2014
+ * Modified by CWE on 25.03.2019 to allow pairing of key/values as StdClasses
  */
 class ArrayDataFlowConnector implements DataFlowDumpable
 {
@@ -35,11 +36,14 @@ class ArrayDataFlowConnector implements DataFlowDumpable
 	
 	public function reset() {
 		$this->freeMemory();	
-		$this->lockedForUse = true;				
+		$this->lockedForUse = true;
+		$this->pair = false;	
 	}	
 	public function freeMemory() {
 		unset($this->arr);		
-		$this->lockedForUse = false;	
+		$this->lockedForUse = false;
+		unset($this->keyField);
+		unset($this->valueField);
 	}
 		
 	public function isLockedForUse() {
@@ -70,15 +74,56 @@ class ArrayDataFlowConnector implements DataFlowDumpable
 		$this->arr = $arr;
 	}
 	
+	// Configuration
+	
+	private $pair;
+	/**
+	 * If true, indicates that the flow is a flow of pairs (key,value) represented as StdClass instances
+	 * The array keys and values are boxed and stored into a StdClass instance.
+	 */
+	public function setPair($bool) {
+	    $this->pair = $bool;
+	    return $this;
+	}
+	
+	private $keyField;
+	/**
+	 * Defines the name of the field to be used as a key
+	 * If pair and not set, then defaults to 'key'
+	 * @param String $name field name
+	 */
+	public function setKeyField($name) {
+	    $this->keyField = $name;
+	    return $this;
+	}
+	private $valueField;
+	/**
+	 * If pairing, then defines the name of the field to be used as a value, defaults to 'value'
+	 * @param String $name field name
+	 */
+	public function setValueField($name) {
+	    $this->valueField = $name;
+	    return $this;
+	}
+	
 	// DataFlowDumpable implementation
 	
 	public function dumpIntoDataFlow($dataFlowService, $dataFlowContext) {		
 		if(!empty($this->arr)) {
 			if(is_array($this->arr)) {
-				foreach($this->arr as $v) {
-					if($v instanceof DataFlowSelector) $this->dumpSubDataFlow($dataFlowService, $v, $dataFlowContext);
-					else $dataFlowService->processDataChunk($v, $dataFlowContext);
-				}
+			    if($this->pair) {			        
+			        if(!isset($this->keyField)) $this->keyField = 'key';
+			        if(!isset($this->valueField)) $this->valueField = 'value';
+			        foreach($this->arr as $k=>$v) {
+			            $dataFlowService->processDataChunk((object)array($this->keyField=>$k,$this->valueField=>$v), $dataFlowContext);
+			        }
+			    }
+			    else {
+    				foreach($this->arr as $v) {
+    					if($v instanceof DataFlowSelector) $this->dumpSubDataFlow($dataFlowService, $v, $dataFlowContext);
+    					else $dataFlowService->processDataChunk($v, $dataFlowContext);
+    				}
+			    }
 			}
 			elseif($this->arr instanceof DataFlowSelector) $this->dumpSubDataFlow($dataFlowService, $this->arr, $dataFlowContext);
 			else $dataFlowService->processDataChunk($this->arr, $dataFlowContext);

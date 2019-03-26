@@ -177,7 +177,7 @@ class FuncExpParameterHolder {
 	 * @param FuncExpParameter $fxParameter the FuncExpParameter instance to register
 	 * @param String|Closure $method the method name or a closure.
 	 * @param Object $obj the object instance which holds the method.
-	 * @param Scalar $key an optional additional key that should be passed as first argument to the setter method.
+	 * @param String|Number $key an optional additional key that should be passed as first argument to the setter method.
 	 */
 	public function registerParameter($fxParameter, $method, $obj=null, $key=null) {
 		if(!isset($fxParameter)) throw new FuncExpEvalException("fxParameter cannot be null", FuncExpEvalException::INVALID_ARGUMENT);

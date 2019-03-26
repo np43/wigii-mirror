@@ -963,7 +963,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(0) elementId: int. The element id to be deleted
 	 * 
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
-	 * @return elementId
+	 * @return int elementId
 	 */
 	public function deleteElement($args) {
 		$this->assertFxOriginIsNotPublic();
@@ -989,7 +989,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(2) cs: ConfigSelector. Optional configSelector.
 	 * 
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
-	 * @return elementId
+	 * @return int elementId
 	 */
 	public function updateElementFields($args) {
 		$this->assertFxOriginIsNotPublic();
@@ -1099,7 +1099,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 				"value"=>$email,
 				"proofKey" => $elS->getEmailValidationCode($p, $email),
 				"proofValue" => 0,
-				"externalCode" => $elS->getEmailExternalCode($p, null, null, $now, $value), //getEmailExternalCode use the id and the fieldname to complexify the md5, but there is no real value in it, so add random name
+		        "externalCode" => $elS->getEmailExternalCode($p, null, null, $now, $email), //getEmailExternalCode use the id and the fieldname to complexify the md5, but there is no real value in it, so add random name
 				"externalAccessLevel" => 0
 			);
 	}
@@ -1433,7 +1433,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * Where arguments are :
 	 * - Arg(0) element: Element|Record. An element or a record to be transformed into a value.
 	 * - Arg(1) fx: FuncExp|FieldSelector. A transformation FuncExp which returns a value based on the element. Or a FieldSelector returning a value of the element.
-	 * @return Any the result of the FuncExp
+	 * @return mixed the result of the FuncExp
 	 */
 	public function element2value($args) {
 	    $nArgs = $this->getNumberOfArgs($args);
@@ -2204,7 +2204,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    }
 	    //find the field in config
 	    $fl = FieldListArrayImpl::createInstance ( false, true );
-	    $configS->getFields ( $this->getPrincipal (), $exec->getCrtModule (), null, $fl );
+	    $p = $this->getPrincipal ();
+	    $configS->getFields ( $p, $exec->getCrtModule (), null, $fl );
 	    $field = $fl->getField ( $fs->getFieldName () );
 	    //define a nice label if not defined
 	    if($label == null){
@@ -2468,7 +2469,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(1) fieldName: String|FieldSelector. Evaluates to a String defining the field name for which to get the element value,
 	 * or can be directly a FieldSelector that can be used to select a value in the element.
 	 * - Arg(2) subfieldName: String. Optional argument which evaluates to a String defining the subfield name for which to get the element value.
-	 * @return Any the Element Field value.
+	 * @return mixed the Element Field value.
 	 */
 	public function getElementValue($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -2498,7 +2499,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * - Arg(0) element: Element|ElementP. Evaluates to an element.
 	 * - Arg(1) attrName: String|FieldSelector. Evaluates to a String defining the attribute name for which to get the value,
 	 * or can be directly an Element attribute FieldSelector that can be used to select the attribute.
-	 * @return Any the Element Attribute value.
+	 * @return mixed the Element Attribute value.
 	 */
 	public function getElementAttr($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -3459,6 +3460,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		if($nArgs<2) throw new FuncExpEvalException("sysReadFile takes at least two arguments which are the elementId and the fieldName", FuncExpEvalException::INVALID_ARGUMENT);
 		// Extracts arguments
 		$elementId = $this->evaluateArg($args[0]);
+		$fieldName=$args[1];
 		if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
 		else {
 			$fieldName = $this->evaluateArg($args[1]);

@@ -140,8 +140,8 @@ class ElementPListEvalContext
 	
 	/**
 	 * Returns the value of an attribute stored into the evaluation context given a key
-	 * @param Scalar $key the key under which the value is stored
-	 * @return Any returns the stored value or null if key is not defined.
+	 * @param String|Number $key the key under which the value is stored
+	 * @return mixed returns the stored value or null if key is not defined.
 	 */
 	public function getValueInContext($key) {
 		if(is_null($key)) throw new ElementServiceException("key cannot be null", ElementServiceException::INVALID_ARGUMENT);
@@ -151,8 +151,8 @@ class ElementPListEvalContext
 	
 	/**
 	 * Stores the value of an attribute into the evaluation context under a given key.
-	 * @param Scalar $key the attribute key
-	 * @param Any $val the attribute value. Accepts null. Any existing value under the given key is replaced.
+	 * @param String|Number $key the attribute key
+	 * @param mixed $val the attribute value. Accepts null. Any existing value under the given key is replaced.
 	 * @param Boolean $recyclable optional boolean. If true, then the method freeMemory (if exists) will be called on value, when the context is recycled,
 	 * else no clean up code is executed, relies only on the garbage collection.
 	 */
@@ -170,10 +170,10 @@ class ElementPListEvalContext
 	
 	/**
 	 * Returns an historized value given its key and ordinal.
-	 * @param Scalar $key the key under which the values are stored
+	 * @param String|Number $key the key under which the values are stored
 	 * @param int $ordinal the ordinal number for which we want the value.
 	 * Starts with 1 and should be smaller or equal to the actual ordinal.
-	 * @return Any returns the stored value or null if key is not defined.
+	 * @return mixed returns the stored value or null if key is not defined.
 	 */
 	public function getHistorizedValue($key, $ordinal) {
 		if(is_null($key)) throw new ElementServiceException("key cannot be null", ElementServiceException::INVALID_ARGUMENT);
@@ -186,7 +186,7 @@ class ElementPListEvalContext
 	
 	/**
 	 * Returns an iterator on the history of a key.
-	 * @param Scalar $key the key for which we want to retrieve the history.
+	 * @param String|Number $key the key for which we want to retrieve the history.
 	 * @param Boolean $desc defines the direction of the iteration. By default, desc is true, 
 	 * meaning the the iterator will go from the current ordinal down to 1,
 	 * if false, then the iterator will go from 1 up to the current ordinal.
@@ -202,8 +202,8 @@ class ElementPListEvalContext
 	
 	/**
 	 * Stores a value into the evaluation context under a given key and using the current ordinal
-	 * @param Scalar $key the key under which the values are stored
-	 * @param Any $value the attribute value. Accepts null. Any existing value under the given key is replaced.
+	 * @param String|Number $key the key under which the values are stored
+	 * @param mixed $value the attribute value. Accepts null. Any existing value under the given key is replaced.
 	 */
 	public function setHistorizedValue($key, $value) {
 		if(is_null($key)) throw new ElementServiceException("key cannot be null", ElementServiceException::INVALID_ARGUMENT);

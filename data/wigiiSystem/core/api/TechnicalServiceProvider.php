@@ -964,7 +964,7 @@ class TechnicalServiceProvider
 	/**
 	 * @param Closure|String $method a closure representing the code that should be executed or 
 	 * a string which is an object method name or a function name
-	 * @param Any $obj an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $obj an optional object instance which holds the method instance that should be executed.
 	 * @return RowListCallbackImpl
 	 */
 	public static function getRowlistCallback($method, $obj=null)

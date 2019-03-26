@@ -245,7 +245,7 @@ class TemplateRecordManager extends Model {
 	/**
 	 * Evaluates a FuncExp in the context of the Principal and Record attached to the TRM.
 	 * @param FuncExp|FieldSelector $fx the FuncExp to evaluate
-	 * @return Any the FuncExp result
+	 * @return mixed the FuncExp result
 	 */
 	public function evalfx($fx) {
 		$fxEval=$this->getFuncExpEvaluator($this->getP(), $this->getRecord());
@@ -263,7 +263,7 @@ class TemplateRecordManager extends Model {
     /**
      * Evaluates a Configuration Parameter which can be either a constant or a FuncExp.
      * @param String $parameter the configuration parameter to evaluate
-     * @return Any FuncExp result
+     * @return mixed FuncExp result
      */
     public function evaluateConfigParameter($parameter) {
         return $this->getFormExecutor()->getWigiiExecutor()->evaluateConfigParameter($this->getP(),$this->getExecutionService(),$parameter,$this->getRecord());

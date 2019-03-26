@@ -232,7 +232,7 @@ class ElementEvaluator extends RecordEvaluator
 	 * funcExp signature: eltAttr(attrName)
 	 * where arguments are:
 	 * - Arg(0) attrName: String|FieldSelector. The element attribute name for which to retrieve the value
-	 * @return Any the element attribute value or null if not defined
+	 * @return mixed the element attribute value or null if not defined
 	 */
 	public function eltAttr($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -985,7 +985,7 @@ class ElementEvaluator extends RecordEvaluator
 	 * will persist field f1, subfields f2.name, f3.city with value NULL
 	 *
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
-	 * @return Scalar the persisted value
+	 * @return String|Number the persisted value
 	 */
 	public function persistVal($args) {
 		$this->assertFxOriginIsNotPublic();

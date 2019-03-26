@@ -39,7 +39,7 @@ interface WigiiBag
 
 	/**
 	 * Sets an element field value in the wigii bag. Replaces the actual value if already exists in the bag.
-	 * @param Scalar $value the value stored into the field
+	 * @param String|Number $value the value stored into the field
 	 * @param Int $elementId the DB id of this element, can be null if it is a new element not stored yet in DB
 	 * @param String $dataTypeName the name of the Wigii DataType of the field beeing read
 	 * @param String $fieldName the name of the field beeing read

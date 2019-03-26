@@ -49,7 +49,7 @@ class ValueListCallbackImpl implements ValueList
 	 * - Arg(1) callbackCtx: ValueListCallbackImpl, a reference to this object that can be used to read or store an execution context during ValueList fill up.
 	 * @param Closure|String $method a closure representing the code that should be executed or
 	 * a string which is an object method name or a function name
-	 * @param Any $obj an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $obj an optional object instance which holds the method instance that should be executed.
 	 * @return ValueListCallbackImpl
 	 */
 	public static function createInstance($method, $obj=null)
@@ -71,7 +71,7 @@ class ValueListCallbackImpl implements ValueList
 	 * - Arg(1) callbackCtx: ValueListCallbackImpl, a reference to this object that can be used to read or store an execution context during ValueList fill up.
 	 * @param Closure|String $method a closure representing the code that should be executed or
 	 * a string which is an object method name or a function name
-	 * @param Any $obj an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $obj an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setAddValueCallback($method, $obj=null) {
 		$this->addValueCallback = CallableObject::createInstance($method, $obj);
@@ -91,8 +91,8 @@ class ValueListCallbackImpl implements ValueList
 	
 	/**
 	 * Sets a value in context. This map is used to store some state during the filling of the ValueList.
-	 * @param Scalar $key the key under which to store data
-	 * @param Any $value the value stored as state
+	 * @param String|Number $key the key under which to store data
+	 * @param mixed $value the value stored as state
 	 */
 	public function setValueInContext($key, $value) {
 		if(!isset($this->context)) $this->context = array();
@@ -101,7 +101,7 @@ class ValueListCallbackImpl implements ValueList
 	
 	/**
 	 * Gests a value stored in context.
-	 * @param Scalar $key the key for which to retrieve data
+	 * @param String|Number $key the key for which to retrieve data
 	 * @return the data or null if not defined
 	 */
 	public function getValueInContext($key) {

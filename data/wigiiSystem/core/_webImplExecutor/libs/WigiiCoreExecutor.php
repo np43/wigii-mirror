@@ -286,7 +286,7 @@ class WigiiCoreExecutor {
 	* @param ExecutionService $exec current ExecutionService instance
 	* @param FuncExp $fx the FuncExp instance to evaluate
 	* @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
-	* @return Any FuncExp result
+	* @return mixed FuncExp result
 	*/
 	public function evaluateFuncExp($p,$exec,$fx,$rec=null) {
 		$fxEval = $this->getFuncExpEvaluator($p, $exec, $rec);
@@ -308,7 +308,7 @@ class WigiiCoreExecutor {
 	* @param ExecutionService $exec current ExecutionService instance
 	* @param String $parameter the configuration parameter to evaluate
 	* @param Record $rec record for which to get an FuncExpEvaluator. If null, returns a custom ElementEvaluator depending of current module.
-	* @return Any FuncExp result
+	* @return mixed FuncExp result
 	*/
 	public function evaluateConfigParameter($p,$exec,$parameter,$rec=null) {
 		$parameter=(string)$parameter;

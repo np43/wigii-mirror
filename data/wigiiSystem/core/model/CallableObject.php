@@ -71,10 +71,10 @@ class CallableObject extends Model
 	 * Invokes a method given a method name, an optional object and some arguments
 	 * @param String|Closure $method the method name or function name or closure that should be invoked.
 	 * @param Object $obj if set, then should be the object instance which holds the method that should be invoked.
-	 * @param Any $args one or several arguments to pass to the method call as a comma separated list.
+	 * @param mixed $args one or several arguments to pass to the method call as a comma separated list.
 	 * Variable number of arguments is supported, that means that you can call CallableObject::invokeMethod($method, $obj, $arg1, $arg2, $arg3, ...)
 	 * If you need to pass the arguments as an array, you should use the method CallableObject::invokeMethodWithArgArray($method, $obj, $args)
-	 * @return Any returns the return value of the invoked function
+	 * @return mixed returns the return value of the invoked function
 	 */
 	public static function invokeMethod($method, $obj=null, $args=null) {
 		if(isset($args)) $argsArr = array($args);
@@ -92,9 +92,9 @@ class CallableObject extends Model
 	 * Invokes a method given a method name, an optional object and some arguments
 	 * @param String|Closure $method the method name or function name or closure that should be invoked.
 	 * @param Object $obj if set, then should be the object instance which holds the method that should be invoked.
-	 * @param Any $args an array of arguments, for example: array($arg1, $arg2, $arg3, ...)
+	 * @param mixed $args an array of arguments, for example: array($arg1, $arg2, $arg3, ...)
 	 * If you need to pass several arguments as a comma separated list, use the method CallableObject::invokeMethod($method, $obj, $arg1, $arg2, $arg3, ...) instead
-	 * @return Any returns the return value of the invoked function
+	 * @return mixed returns the return value of the invoked function
 	 */
 	public static function invokeMethodWithArgsArray($method, $obj=null, $args=null) {
 		if(!isset(self::$singleton)) self::$singleton = new self();
@@ -104,9 +104,9 @@ class CallableObject extends Model
 
 	/**
 	 * Invokes the method set into this callable object with a list of arguments
-	 * @param Any $args a comma separated list of arguments, for example $co->invokeMethod($arg1, $arg2, $arg3, ...);
+	 * @param mixed $args a comma separated list of arguments, for example $co->invokeMethod($arg1, $arg2, $arg3, ...);
 	 * If you need to pass the arguments as an array, use the 'invokeWithArgsArray' method.
-	 * @return Any returns the return value of the invoked method
+	 * @return mixed returns the return value of the invoked method
 	 */
 	public function invoke($args=null) {
 	    if(isset($args) || func_num_args() > 1) $argsArr = func_get_args();
@@ -131,7 +131,7 @@ class CallableObject extends Model
 	 * Invokes the method set into this callable object with some arguments given as an array
 	 * @param Array $args an array of arguments : array($arg1, $arg2, $arg3, ...)
 	 * If you need to pass the arguments as a comma separated list, use the 'invoke' method
-	 * @return Any returns the return value of the invoked method
+	 * @return mixed returns the return value of the invoked method
 	 */
 	public function invokeWithArgsArray($args=null) {
 		if(!isset($this->callable)) throw new ServiceException("no callable method has been set", ServiceException::CONFIGURATION_ERROR);

@@ -278,7 +278,7 @@ class DrawGraphGeometryDFA implements DataFlowActivity
 	/**
 	 * Converts any kind of data to a string representation.
 	 * This method is the last chance to convert data to string before it is written to the report.
-	 * @param Any $data
+	 * @param mixed $data
 	 * @return String
 	 */
 	protected function data2string($data) {

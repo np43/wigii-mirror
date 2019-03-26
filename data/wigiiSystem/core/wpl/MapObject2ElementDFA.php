@@ -192,7 +192,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	 * The method should return a LogExp instance that will be used to select the appropriate element.
 	 * @param Closure|String $method a closure representing the code that should be executed or 
 	 * a string which is an object method name or a function name
-	 * @param Any $object an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setElementSelectorMethod($method, $obj=null) {
 		$this->elementSelectorMethod = CallableObject::createInstance($method, $obj);
@@ -208,7 +208,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	 * DataFlowContext and write output using the writeResultToOutput helper method.
 	 * @param Closure|String $method a closure representing the code that should be executed or 
 	 * a string which is an object method name or a function name
-	 * @param Any $object an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setObject2ElementMappingMethod($method, $obj=null) {
 		$this->object2ElementMappingMethod = CallableObject::createInstance($method, $obj);
@@ -222,7 +222,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	 * @param String $fieldName the object field name for which to set a closure
 	 * @param Closure|String $method a closure representing the code that should be executed or 
 	 * a string which is an object method name or a function name
-	 * @param Any $object an optional object instance which holds the method instance that should be executed.
+	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setFieldMappingMethod($fieldName, $method, $obj=null) {
 		if(empty($fieldName)) throw new DataFlowServiceException("fieldName cannot be null", DataFlowServiceException::INVALID_ARGUMENT);
@@ -677,7 +677,7 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 	 * Precondition: the fieldselector has already been validated against the element configuration and
 	 * the value type (Array or Scalar) has already been validated against 'multiple-select' or 'multiLanguage' configuration attributes.
 	 * Some custom checks can still be added if needed.
-	 * @param Any $value object attribute value
+	 * @param mixed $value object attribute value
 	 * @param FieldSelector $fieldSelector the field selector describing which field should be updated in the element 
 	 * @param Element $element the element to update
 	 * @param Principal $principal the current principal doing the job

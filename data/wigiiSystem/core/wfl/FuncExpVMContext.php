@@ -64,7 +64,7 @@ class FuncExpVMContext
 	/**
 	 * Returns the module instance containing some code for the given function name
 	 * @param String $funcName the function name
-	 * @return an object having a public method called $funcName or null if not found
+	 * @return Object an object having a public method called $funcName or null if not found
 	 */
 	public function getModuleForFuncName($funcName) {
 		if(empty($funcName)) return null;
@@ -138,7 +138,7 @@ class FuncExpVMContext
 	/**
 	 * Returns the object stored with this variable or throws an exception if not found
 	 * @param FieldSelector $fieldSelector the variable selector, supports subfields
-	 * @return the object or expression stored in the variable
+	 * @return Object the object or expression stored in the variable
 	 * @throws FuncExpEvalException if variable is not declared in any scope
 	 */
 	public function getVariable($fieldSelector) {
@@ -175,7 +175,7 @@ class FuncExpVMContext
 	/**
 	 * Sets a variable given a field selector (supports subfield) and a value
 	 * @param FieldSelector $fieldSelector
-	 * @param Any $value
+	 * @param mixed $value
 	 */
 	public function setVariable($fieldSelector, $value) {
 		if(empty($fieldSelector)) return;

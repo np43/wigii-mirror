@@ -77,7 +77,7 @@ class FuncExpParameter extends Model {
 	 * or it can be a closure.
 	 * @param String|Closure $method the method name or a closure.
 	 * @param Object $obj the object instance which holds the method.
-	 * @param Scalar $key the key used as first argument in the indexed setter method
+	 * @param String|Number $key the key used as first argument in the indexed setter method
 	 * example: setValue($key, $funcExpParameter)
 	 */
 	public function registerIndexedSetterMethod($method, $obj=null, $key) {

@@ -30,7 +30,7 @@ interface DataFlowSelectorList extends ObjectList
 	/**
 	 * Adds a new data flow selector to the list
 	 * @param DataFlowSelector $dataFlowSelector the data flow selector
-	 * @param Scalar $key an optional key under which the data flow selector can be stored.
+	 * @param String|Number $key an optional key under which the data flow selector can be stored.
 	 */
 	public function addDataFlowSelector($dataFlowSelector, $key=null);
 }

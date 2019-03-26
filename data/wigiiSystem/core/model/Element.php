@@ -749,7 +749,7 @@ class Element extends Record implements SysInformation
 	/**
 	 * Gets the value of the ElementDynamicAttribute for the given name.
 	 * @param String $name the name of the dynamic attribute
-	 * @return Any returns the dynamic attribute value or null if not defined.
+	 * @return mixed returns the dynamic attribute value or null if not defined.
 	 */
 	public function getDynamicAttributeValue($name) {
 		$da = $this->getDynamicAttribute($name);
@@ -795,7 +795,7 @@ class Element extends Record implements SysInformation
 	/**
 	 * Sets the value of the ElementDynamicAttribute for the given name
 	 * @param String $name the name of the dynamic attribute
-	 * @param Any $value the value to set for the dynamic attribute
+	 * @param mixed $value the value to set for the dynamic attribute
 	 * @throws RecordException if no ElementDynamicAttribute has been defined for this name or
 	 * if the dynamic attribute is read only.
 	 */
@@ -811,8 +811,8 @@ class Element extends Record implements SysInformation
 	/**
 	 * Notifies element attribute changes to any ElementDynamicAttributes which are listening
 	 * @param String $name element attribute name as defined in the setAttribute method.
-	 * @param Any $oldValue the old element attribute value
-	 * @param Any $newValue the new element attribute value
+	 * @param mixed $oldValue the old element attribute value
+	 * @param mixed $newValue the new element attribute value
 	 */
 	protected function notifyElementAttributeChange($name, $oldValue, $newValue) {
 		if($this->hasElementAttributeListeners) {

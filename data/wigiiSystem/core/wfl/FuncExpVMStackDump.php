@@ -29,7 +29,7 @@ interface FuncExpVMStackDump extends ObjectList
 {
 	/**
 	 * Adds a stack entry to the dump
-	 * @param FuncExp|FieldSelector|Any $obj the stack entry. 
+	 * @param FuncExp|FieldSelector|mixed $obj the stack entry. 
 	 * Can be either a FuncExp, a FieldSelector or any objects
 	 */
 	public function addStackEntry($obj);

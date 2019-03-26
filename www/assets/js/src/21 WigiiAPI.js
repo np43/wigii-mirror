@@ -2362,7 +2362,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			/**
 			 * Selects rows matching a given value into a column and returns a MatrixHelper on the selection
 			 * @param String|int col col index or name on which to apply the filter
-			 * @param Scalar value value to filter on
+			 * @param String|Number value value to filter on
 			 * @example To filter more that one column at a time, just append (colI,valueI) pairs to the function arguments
 			 * wigii().matrix([{project:"P1",grant:"G1",sector:"WASH"},{project:"P2",grant:"G1",sector:"NUT"},{project:"P1",grant:"G2",sector:"GEN"}])
 			 * .filter("project","P1","sector","WASH").column("grant") = ["G1"]
@@ -2796,7 +2796,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 *	 }	
 			 * };
 			 *@example wigii().getDataFlowService().processDataSource(rangeGen(-10,10,2),[power(3),sum])
-			 *@return Any the data flow result
+			 *@return mixed the data flow result
 			 */
 			self.processDataSource = function(source,activities) {
 				var dfCtx = self.startStream(activities);
@@ -2814,7 +2814,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Processes a data chunk in the context of an open stream
-			 *@param Any data chunk of data to be processed.
+			 *@param mixed data chunk of data to be processed.
 			 * Must be compatible with the first step of the pipe of activities
 			 *@param wigiiApi.DataFlowService.DataFlowContext the reference to the current open stream
 			 */
@@ -2890,7 +2890,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				 * call if needed the next steps in the data flow chain.
 				 * This method can be called as many times a needed.
 				 * Each call results in one data chunk to be passed to the DataFlowService for further processing.
-				 * @param Any resultData some result data, can be any kind of object
+				 * @param mixed resultData some result data, can be any kind of object
 				 * @param wigiiApi.DataFlowService.DataFlowActivityContext the reference to the current executing dataflow activity
 				 */
 				self.writeResultToOuput = function(resultData,dataFlowActivityContext) {
@@ -3145,7 +3145,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * Returns the value of the field given its name and optional subFieldName
 			 * @param fieldName the name of the Field
 			 * @param subFieldName the name of the subfield. If undefined, assumes 'value' subField.
-			 * @return Scalar the field value or undefined if field has no value.
+			 * @return String|Number the field value or undefined if field has no value.
 			 */
 			self.getValue = function(fieldName,subFieldName) {
 				if(!fieldName) throw wigiiApi.createServiceException('fieldName cannot be null', wigiiApi.errorCodes.INVALID_ARGUMENT);				
@@ -3158,7 +3158,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			/**
 			 * Stores the value in the WigiiBag. Replaces any existing value for this fieldName and subFieldName
-			 * @param Scalar value the value to store in the WigiiBag
+			 * @param String|Number value the value to store in the WigiiBag
 			 * @param fieldName the name of the Field
 			 * @param subFieldName the name of the subField. If undefined, assumes 'value' subField.
 			 */
@@ -3215,14 +3215,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * Returns the value of the Field in the Record
 			 * @param String fieldName the name of the field
 			 * @param String subFieldName the name of the subfield. If undefined, assumes 'value' subfield.
-			 * @return Scalar the field value or undefined if field does not exist.
+			 * @return String|Number the field value or undefined if field does not exist.
 			 */
 			self.getFieldValue = function(fieldName,subFieldName) {
 				return self.wigiiBag().getValue(fieldName,subFieldName);
 			};
 			/**
 			 * Sets the value of a Field in the Record
-			 * @param Scalar value the field value to store into the Record
+			 * @param String|Number value the field value to store into the Record
 			 * @param String fieldName the name of the Field
 			 * @param subFieldName the name of the subfield. If undefined, assumes 'value' subfield.
 			 * @return Record for chaining
@@ -3917,9 +3917,9 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		ncddoc(function(){/**
 		 * apply && between all the args
 		 * this is useful in configuration files as the character & is reserved
-		 * @param Any val1 left hand side
-		 * @param Any val2 right hand side
-		 * @param Any valI any other number of arguments to combine in the AND expression
+		 * @param mixed val1 left hand side
+		 * @param mixed val2 right hand side
+		 * @param mixed valI any other number of arguments to combine in the AND expression
 		 * @return val1 && val2 && valI ...
 		*/},
 		wigiiApi.logAnd = function (val1, val2){
@@ -4010,7 +4010,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * };
 		 *@example wigii().sel(rangeGen(-10,10,2),[power(3),sum])
 		 *@see wigiiApi.DataFlowService method processDataSource
-		 *@return Any the data flow result
+		 *@return mixed the data flow result
 		*/},
 		wigiiApi.sel = function(source,activities) { return wigiiApi.getDataFlowService().processDataSource(source,activities); });
 		
@@ -4453,7 +4453,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 	 * JQuery Wigii plugin
 	 * @param String cmd selects a service or a command in the WigiiAPI which accepts a jQuery collection
 	 * @param Object options a map of configuration options to be passed to the called service.
-	 * @return JQuery|Any returns the service or command result if defined, or the JQuery collection if no specific result.
+	 * @return JQuery|mixed returns the service or command result if defined, or the JQuery collection if no specific result.
 	 */
 	$.fn.wigii = function(cmd, options) {
 		var wigiiApi = wigii();		

@@ -69,7 +69,7 @@ class Geometry2DFL extends FuncExpVMAbstractFL
 	 * - Arg(0) point : evaluates to a WigiiGraphNode representing a point.
 	 * - Arg(1) dfa : optional value, if set should evaluate to a FuncExpDFA. 
 	 * In that case, that means that the funcexp is called in a DataFlow context, else it is called individually.
-	 * @return Scalar the x coordinate of the given point or 0 if none is given.
+	 * @return String|Number the x coordinate of the given point or 0 if none is given.
 	 */
 	public function ptX($args) {return $this->getWigiiGraphNodeAttribute('ptX', $args, 0);}
 	
@@ -103,7 +103,7 @@ class Geometry2DFL extends FuncExpVMAbstractFL
 	 * - Arg(0) point : evaluates to a WigiiGraphNode representing a point.
 	 * - Arg(1) dfa : optional value, if set should evaluate to a FuncExpDFA. In that case, 
 	 * that means that ptY is called in a DataFlow context, else the function is called individually.
-	 * @return Scalar the y coordinate of the given point or 0 if none is given.
+	 * @return String|Number the y coordinate of the given point or 0 if none is given.
 	 */
 	public function ptY($args) {return $this->getWigiiGraphNodeAttribute('ptY', $args, 0);}
 	
@@ -137,7 +137,7 @@ class Geometry2DFL extends FuncExpVMAbstractFL
 	 * - Arg(0) point : evaluates to a WigiiGraphNode representing a point.
 	 * - Arg(1) dfa : optional value, if set should evaluate to a FuncExpDFA. In that case, 
 	 * that means that ptColor is called in a DataFlow context, else the function is called individually.
-	 * @return Scalar the color of the given point or null if none is given.
+	 * @return String|Number the color of the given point or null if none is given.
 	 */
 	public function ptColor($args) {return $this->getWigiiGraphNodeAttribute('ptColor', $args);}
 	
@@ -160,7 +160,7 @@ class Geometry2DFL extends FuncExpVMAbstractFL
 	 * - Arg(0) point : evaluates to a WigiiGraphNode representing a point.
 	 * - Arg(1) dfa : optional value, if set should evaluate to a FuncExpDFA. In that case, 
 	 * that means that ptWeight is called in a DataFlow context, else the function is called individually.
-	 * @return Scalar the weight of the given point or 0 if none is given.
+	 * @return String|Number the weight of the given point or 0 if none is given.
 	 */
 	public function ptWeight($args) {return $this->getWigiiGraphNodeAttribute('ptWeight', $args, 0);}
 	
@@ -183,7 +183,7 @@ class Geometry2DFL extends FuncExpVMAbstractFL
 	 * - Arg(0) point : evaluates to a WigiiGraphNode representing a point.
 	 * - Arg(1) dfa : optional value, if set should evaluate to a FuncExpDFA. In that case,
 	 * that means that ptOrdinal is called in a DataFlow context, else the function is called individually.
-	 * @return Scalar the ordinal of the given point or 0 if none is given.
+	 * @return String|Number the ordinal of the given point or 0 if none is given.
 	 */
 	public function ptOrdinal($args) {return $this->getWigiiGraphNodeAttribute('ordinal', $args, 0);}
 	

@@ -38,7 +38,7 @@ interface Matrix {
 	 * Sets the value of a cell in the matrix
 	 * @param String $rowId row selector
 	 * @param String $colId column selector
-	 * @param Any $val the value
+	 * @param mixed $val the value
 	 */
 	public function setValue($rowId, $colId, $val);
 	
@@ -115,14 +115,14 @@ interface Matrix {
 	/**
 	 * Adds a row definition in the matrix
 	 * @param String $rowId row selector
-	 * @param Any $header row header object
+	 * @param mixed $header row header object
 	 */
 	public function addRow($rowId, $header);
 
 	/**
 	 * Adds a column definition in the matrix
 	 * @param String $colId column selector
-	 * @param Any $header column header object
+	 * @param mixed $header column header object
 	 */
 	public function addCol($colId, $header);	
 }

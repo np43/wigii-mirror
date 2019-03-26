@@ -240,7 +240,7 @@ abstract class FieldSelectorLogExpAbstractEvaluator implements LogExpVisitor
 	/**
 	 * Executes the like pattern matching on a value
 	 * @param int $t function type to be used. One of 0=stripos, 1=preg_match, 2=comparison
-	 * @param Scalar $oVal object value
+	 * @param String|Number $oVal object value
 	 * @param String $pattern pattern for comparison
 	 */
 	private function doLikePatternMatchOnValue($t, $oVal, $pattern) {
