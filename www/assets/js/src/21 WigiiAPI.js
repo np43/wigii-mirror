@@ -1444,6 +1444,42 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			
 			/**
+			 * Returns if current element has the modify button active
+			 * @return Boolean
+			 */
+			self.elementIsEditable = function() {
+				var sel = $('#elementDialog div.T div.el_edit:visible');
+				if(sel.length>0){
+					if(!sel.attr('disabled')){
+						return true;
+					}
+				}
+				return false;
+			};
+			
+			/**
+			 * Returns the ID of the current group
+			 * @return String the current group ID
+			 */
+			self.currentGroupId = function() {
+				currentFolder = $('#groupPanel li.selected');
+				if(currentFolder.length>0) currentFolder = currentFolder.attr('id').split('_')[1];
+				else currentFolder = undefined;
+				return currentFolder;
+			}
+			
+			/**
+			 * Returns the ID of the current group if group can be written
+			 * @return String the current group ID
+			 */
+			self.writableCurrentGroupId = function() {
+				currentFolder = $('#groupPanel li.selected.write');
+				if(currentFolder.length>0) currentFolder = currentFolder.attr('id').split('_')[1];
+				else currentFolder = undefined;
+				return currentFolder;
+			}
+			
+			/**
 			 * Selects a field in the Wigii Form and returns a FieldHelper on it (or undefined if not found)
 			 * @param String fieldName the field selector
 			 * @return FieldHelper the FieldHelper instance attached to the selected field or undefined if not found

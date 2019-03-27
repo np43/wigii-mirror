@@ -136,8 +136,7 @@ if($exec->getIdAnswer()!="workZone"){
 				$moduleReorder = reorderTabBasedOnKeyPriority($roleList->getDefaultWigiiNamespaceModules(), (string)$configS->getParameter($p, null, "prioritizeModuleInHomePage"),true);
 				foreach($moduleReorder as $module=>$roleId){
 					$haveAtLeastOneAccess =true;
-					$customImage = $transS->t($p, "homePage_".$module);
-					if($customImage == "homePage_".$module) $customImage = null;
+					$customImage = $this->getHtmlImgForModule($p, $module);
 					?><li class="H <?=($customImage ? "customImage" : "M ".$module);?>"><?
 						if($customImage){
 							echo $customImage;
@@ -162,7 +161,7 @@ if($exec->getIdAnswer()!="workZone"){
 			foreach($wigiiNamespaceReorder as $crtWigiiNamespace=>$subMenu){								
 				if($subMenu){
 					$customImage = $transS->t($p, "homePage_".$crtWigiiNamespace);
-					if($customImage == "homePage_".$crtWigiiNamespace) $customImage = null;
+					if($customImage == "homePage_".$crtWigiiNamespace) $customImage = '<img src="images/icones/88x88/icongeneric88x88.png" />';
 					$customLabel = $transS->t($p, "homePageNamespaceLabel_".$crtWigiiNamespace);
 					if($customLabel == "homePageNamespaceLabel_".$crtWigiiNamespace) $customLabel = str_replace('%20',' ',$crtWigiiNamespace);
 					$haveAtLeastOneAccess=true;
@@ -176,7 +175,11 @@ if($exec->getIdAnswer()!="workZone"){
 						?><ul class="sub SBB" ><?
 						$tempModuleLength = count($moduleReorder);
 						foreach($moduleReorder as $module=>$roleId){
-							?><li class="H sub"><?
+							$customImage = $this->getHtmlImgForModule($p, $module);
+							?><li class="H sub <?=($customImage ? "customImage" : "M ".$module);?>"><?
+								if($customImage){
+									echo $customImage;
+								}
 								?><a href="#<?=str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;?>" class="SBB"<?
 								?>><?
 								$customLabel = $transS->t($p, "homePage_".$crtWigiiNamespace."_".$module);

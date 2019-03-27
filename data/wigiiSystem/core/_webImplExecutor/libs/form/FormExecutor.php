@@ -1060,6 +1060,18 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 	//factorisation of the piece of code doing the calculation in order to reuse it in children nodes
 	protected function calculateValue(&$allowedDynamicAttributes,$fxEval,$rec, &$resolvedValues, $name, $value){
 		$value = (string)$value;
+		//check if attribute name of funcExp is limited to inDetail or InForm
+		//do not intepreted InDetailExp if not in detail
+		if(strpos((string)$name,"InDetailExp")!==false && !($this instanceof DetailElementFormExecutor)){
+			$this->executionSink()->log($name." is not interpreted as FormExecutor is instanceof ".get_class($this));
+			return;
+		}
+		//do not intepreted InFormExp if not in edit
+		if(strpos((string)$name,"InFormExp")!==false && !($this instanceof EditElementFormExecutor)){
+			$this->executionSink()->log($name." is not interpreted as FormExecutor is instanceof ".get_class($this));
+			return;
+		}
+		
 		// checks that attribute is allowed to be dynamic
 		if(isset($allowedDynamicAttributes[$name])) {
 			// checks that value is not already resolved

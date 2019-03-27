@@ -223,6 +223,42 @@ div.field.jointV div.label{
 	padding-top:0px; padding-bottom:0px;
 	margin:0px;
 }
+div.field.jointV1 div.value{
+	min-height:0px;
+	margin:0px;
+	padding:1px 0px;
+}
+div.field.jointV1 div.label{ 
+	padding-top:1px; padding-bottom:1px;
+	margin:0px;
+}
+div.field.jointV2 div.value{
+	min-height:0px;
+	margin:0px;
+	padding:2px 0px;
+}
+div.field.jointV2 div.label{ 
+	padding-top:2px; padding-bottom:2px;
+	margin:0px;
+}
+div.field.jointV3 div.value{
+	min-height:0px;
+	margin:0px;
+	padding:3px 0px;
+}
+div.field.jointV3 div.label{ 
+	padding-top:3px; padding-bottom:3px;
+	margin:0px;
+}
+div.field.jointV4 div.value{
+	min-height:0px;
+	margin:0px;
+	padding:4px 0px;
+}
+div.field.jointV4 div.label{ 
+	padding-top:4px; padding-bottom:4px;
+	margin:0px;
+}
 div.field.jointH {
 	margin:0px;
 	padding:0px 0px;
@@ -325,7 +361,7 @@ a.H {
 }
 
 #ContainerHome #homePageWigiiNamespaceMenu ul.sub .H:hover {
-  background:		#<?=$odd;?>;
+  background-color:		#<?=$odd;?>;
 }
 
 /*

@@ -208,8 +208,21 @@ div.blockMsg {
 
 label {
 	display: inline;
+	font-weight:normal;
 }
 
 .navbar-default .navbar-nav>.open>a, .navbar-default .navbar-nav>.open>a:hover, .navbar-default .navbar-nav>.open>a:focus {
 	background-color: unset;
+}
+
+/* navigation menu */
+.dropdown-menu li img {
+	width:20px;
+	float:left;
+	margin-right:5px;
+	margin-top:2px;
+	margin-left:5px;
+}
+.dropdown-menu li a {
+	clear:none;
 }

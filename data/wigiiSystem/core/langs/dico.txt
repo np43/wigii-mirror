@@ -1794,3 +1794,22 @@ Scripts:Scripts:Scripts:::::::::
 #elementsScripts#:scripts:les script:::::::
 #ofElementScripts#:of the script:du script:::::::
 #ofElementsScripts#:of scripts:des scripts:::::::
+
+recurringElementIdCannotBeNull:An element id is mandatory for the recurring management.:Un élément id est obligatoire pour la gestion de la récurrence.:
+recurringGroupIdCannotBeNull:A group id is mandatory for the recurring management.:Un id de groupe est obligatoire pour la gestion de la récurrence.:
+recurringValueFieldCannotBeNull:A value field is mandatory for storing recurring details.:Un champ valeur est obligatoire pour stocker les détails de la récurrence.:
+elementCannotBeNull:Element must exist, it cannot be null.:L'élément doit exister, il ne peut pas être null.:
+recurringMustHaveOneTimeRangeOrDateField:A timeRange or Date field is needed to manage recurrence.:Un champ timeRange ou date est obligatoire pour gérer une récurrence.:
+recurringStartDateCannotBeEmpty:A start date is mandatory.:Une date de début est obligatoire.:
+recurringEndDateCannotBeEmpty:An end date is mandatory.:Une date de fin est obligatoire.:
+recurringEndDateMustBeAfterStartDate:The end date must be after the start date.:La date de fin doit être après la date de début.:
+recurringStepCanOnlyBeHigherThan1:The recurring step must be at least 1.:La récurrence doit au moins être de 1.:
+recurringWeekDaysCannotBeNull:At least a day must be selected.:Un jour au moins doit être sélectionné.:
+recurringYearlyDayIsNotValidForTheSelectedMonth:The day choosed is not a valid day for the selected month.:Le jour choisi n'est pas valide pour le mois choisi.:
+recurringUnitIsInvalid:Recurring unit is invalid.:L'unité de la récurrence est invalide.:
+recurringNbOfOccurenceReached:The maximum nb of recurrence is reached:Le nombre maximum d'occurence est atteinte:
+recurringDeletionAreYouSure:Are you sure to continue? The selected option is deleting some #-elements#.:Êtes-vous sûre de vouloir continuer? L'option choisie efface des #-elements#.:
+recurrenceStartDateIsUpdatedToCurrentDate:The <u>start date of the recurrence has been updated</u> to the date of the current #-element#:La <u>date de début de la récurrence a été mise à jour</u> à la date #ofElement# courant:
+recurrencePastOccurenceWillRemainAsIs:The past occurrence will remain unchanged. If you want to update past ocurence you must select the first #element# and edit the recurrence.:#Elements# passés resteront inchangés. Si vous souhaitez les modifier vous devez sélectionner le premier #-element# et éditer la récurrence.:
+recurrenceFutureOccurrenceWillBeDeletedAndRecreatedBasedOnTheNewDefinition:Futur #-elements# will be deleted and recreated based on the new recurrence patern.:#Elements# futurs seront effacés et recréés selon la nouvelle définition de la récurrence.:
+recurringStartDateCannotBeEarlierThanElementDate:Start date cannot be earlier than the date of current #element#.:La date de début ne peut pas être plus tôt que la date de #thisElement#.:

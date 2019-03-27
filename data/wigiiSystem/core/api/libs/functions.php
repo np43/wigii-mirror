@@ -1161,6 +1161,15 @@ function ls($ownerElementId, $fieldName, $rootConfigSelector=null) {return Techn
 function cs($wigiiNamespaceNameOrGroupExp, $moduleName=null) {return TechnicalServiceProvider::getFuncExpBuilder()->cs($wigiiNamespaceNameOrGroupExp, $moduleName);}
 
 /**
+ * Creates a ConfigSelector returning the closest group configuration of the given group in the hierarchy of groups.
+ * If no group configuration exists, then returns a ConfigSelector pointing on the given group.
+ * @param Principal $principal the current principal
+ * @param String $groupId the group ID from which to fetch a configuration group
+ * @return ConfigSelector a ConfigSelector instance
+ */
+function cs_g($principal, $groupId) {return ServiceProvider::getWigiiBPL()->buildConfigSelectorForGroup($principal, $groupId);}
+
+/**
  * Creates a CalculatedFieldSelector
  * @param String|FieldSelector $fieldName the fieldName or directly a FieldSelector instance.
  * @param FuncExp $funcExp the associated FuncExp

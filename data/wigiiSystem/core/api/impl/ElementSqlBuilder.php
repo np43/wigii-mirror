@@ -306,6 +306,7 @@ class ElementSqlBuilder extends MySqlQueryBuilder implements FieldListVisitor, E
 	public function setElement($element, $beforeInsertId=null)
 	{
 		$this->element = $element;
+		$this->beforeInsertId = $beforeInsertId;
 	}
 	protected function getBeforeInsertId()
 	{

@@ -27,8 +27,6 @@ div#ContainerHome {
 	margin-left:0px;
 	margin-right:0px;
 }
-
-
 #ContainerHome ul {
 	display:block;
 	list-style:none;
@@ -42,78 +40,28 @@ div#ContainerHome {
 	padding-top:95px;
 	margin:0px;
 	margin-right:10px;
-	width:100px;
+	width:auto;
 	height:40px;
 	background-color:transparent;
 	background-image: url('../../images/icones/88x88/icongeneric88x88.png'); 
 	background-repeat: no-repeat;
 	background-position: top center;
 }
-#ContainerHome li.M {
-	float:left;
-	list-style:none;
-	padding:0px;
-	padding-top:95px;
-	margin:0px;
-	margin-right:10px;
+#ContainerHome>ul>li {
 	width:100px;
-	height:40px;
-	background-color:transparent;
-	background-image: url('../../images/icones/88x88/iconList.png'); 
-	background-repeat: no-repeat;
-	background-position: top center;
 }
-
+#ContainerHome ul.sub li.sub.customImage>img {
+	width:20px;
+	float:left;
+	margin-right:5px;
+	margin-top:2px;
+}
 #ContainerHome li a {
 	color:#000;
 	text-decoration:none;
 	display:block;
 	text-align:center;
 }
-
-#ContainerHome li.Contacts {
-	background-image: url('../../images/icones/88x88/iconcontacts88x88.png'); 
-}
-#ContainerHome li.Filemanager {
-	background-image: url('../../images/icones/88x88/iconfiles88x88.png'); 
-}
-#ContainerHome li.Events {
-	background-image: url('../../images/icones/88x88/iconcalendar88x88.png'); 
-}
-#ContainerHome li.News{
-	background-image: url('../../images/icones/88x88/iconnews88x88.png'); 
-}
-#ContainerHome li.Musics{
-	background-image: url('../../images/icones/88x88/iconmusic88x88.png'); 
-}
-#ContainerHome li.Worship{
-	background-image: url('../../images/icones/88x88/iconmusic88x88.png'); 
-}
-#ContainerHome li.Help{
-	background-image: url('../../images/icones/88x88/iconhelp88x88.png'); 
-}
-#ContainerHome li.Programm{
-	background-image: url('../../images/icones/88x88/iconapproved88x88.png'); 
-}
-#ContainerHome li.Transfer{
-	background-image: url('../../images/icones/88x88/icontransfer88x88.png'); 
-}
-#ContainerHome li.Confidential{
-	background-image: url('../../images/icones/88x88/iconapproved88x88.png'); 
-}
-#ContainerHome li.Technical{
-	background-image: url('../../images/icones/88x88/book.png'); 
-}
-#ContainerHome li.Inventory{
-	background-image: url('../../images/icones/88x88/iconList.png'); 
-}
-#ContainerHome li.Subscriptions{
-	background-image: url('../../images/icones/88x88/iconsubsribe88x88.png'); 
-}
-#ContainerHome li.Tasks{
-	background-image: url('../../images/icones/88x88/iconmultipleselection88x88.png'); 
-}
-
 #ContainerHome li.customImage {
 	height:135px;
 	background:none;
@@ -127,7 +75,6 @@ div#ContainerHome {
 #ContainerHome li.customImage a {
 	margin-top:7px;
 }
-
 #ContainerHome ul.sub {
 	display:none;
 	position:absolute;
@@ -142,7 +89,8 @@ div#ContainerHome {
 	padding:0px 10px;
 	float:none;
 	list-style:none;
-	background:none;
+	/*background:none;*/
+	background-position:10px 2px;
 	height:auto;
 }
 #ContainerHome ul.sub li.sub a,

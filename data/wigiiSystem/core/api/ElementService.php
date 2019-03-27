@@ -380,6 +380,19 @@ interface ElementService
 	 * returns 1 if persisted, else 0
 	 */
 	public function insertElement($principal, $element, $groupId, $fieldSelectorList=null);
+	
+	/**
+	 * Inserts a copy of an element in the given group
+	 * If a wigii bag is linked to the element, then all its values are stored in the db
+	 * principal: authenticated user performing the operation
+	 * element: existing element object for which to save a copy in the database
+	 * groupId: db id of the group to which to add the element
+	 * fieldSelectorList : only selected fields will be inserted
+	 * throws ElementServiceException in case of error
+	 * postcondition: element copy is in the database and element id is not updated with database id
+	 * returns database id of new element if persisted, else 0
+	 */
+	public function insertElementCopy($principal, $element, $groupId, $fieldSelectorList=null);
 
 	/**
 	 * Updates an existing element in the database

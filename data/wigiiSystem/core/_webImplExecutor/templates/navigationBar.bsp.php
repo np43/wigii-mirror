@@ -65,7 +65,6 @@ $companyLogo = $configS->getParameter($p, null, "companyLogo");
 $companyLogoMargins = $configS->getParameter($p, null, "companyLogoMargin");
 $crtWigiiNamespace = $defaultWigiiNamespace;
 $menuItem = array();
-
 if($roleList->getDefaultWigiiNamespaceModules()){
     $moduleReorder = reorderTabBasedOnKeyPriority($roleList->getDefaultWigiiNamespaceModules(), (string)$configS->getParameter($p, null, "prioritizeModuleInHomePage"), true);
     foreach($moduleReorder as $module=>$roleId){
@@ -75,6 +74,9 @@ if($roleList->getDefaultWigiiNamespaceModules()){
         $other[$module]['onclick'] = "if(!ctrlPressed) { $onclick }";
         if($customLabel == "homePage_".$crtWigiiNamespace."_".$module) $other[$module]['title'] = $transS->t($p, $module);
         else $other[$module]['title'] = $customLabel;
+        $customImage = $this->getHtmlImgForModule($p, $module);
+        $other[$module]['image'] = $customImage;
+        
     }
 }
 
@@ -89,6 +91,9 @@ if($roleList->getOtherWigiiNamespaces()){
             $customLabel = $transS->t($p, "homePageNamespaceLabel_".$crtWigiiNamespace);
             if($customLabel == "homePageNamespaceLabel_".$crtWigiiNamespace) $menuItem[$crtWigiiNamespace]['title'] = str_replace('%20',' ',$crtWigiiNamespace);
             else $menuItem[$crtWigiiNamespace]['title'] = $customLabel;
+            $customImage = $transS->t($p, "homePage_".$crtWigiiNamespace);
+            if($customImage == "homePage_".$crtWigiiNamespace) $customImage = '<img src="images/icones/88x88/icongeneric88x88.png" />';
+            $menuItem[$crtWigiiNamespace]['image'] = $customImage;
             $menuItem[$crtWigiiNamespace]['active'] = ($roleId == $p->getUserId() && $exec->getCrtModule()->getModuleName() == $module) ? true : false;
             $menuItem[$crtWigiiNamespace]['href'] = '#'. str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;
             $menuItem[$crtWigiiNamespace]['onclick'] = 'if(!ctrlPressed){ '. $exec->getUpdateJsCode($p->getRealUser(), $roleId, $crtWigiiNamespace, $module, "NoAnswer", "userNavigate", "navigate/user/$roleId/'+crtRoleId+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true). ' }';
@@ -97,6 +102,8 @@ if($roleList->getOtherWigiiNamespaces()){
                     $customLabel = $transS->t($p, "homePage_".$crtWigiiNamespace."_".$module);
                     if($customLabel == "homePage_".$crtWigiiNamespace."_".$module) $menuItem[$crtWigiiNamespace]['subItem'][$customLabel]['title'] = $transS->t($p, $module);
                     else $menuItem[$crtWigiiNamespace]['subItem'][$customLabel]['title'] = $customLabel;
+                    $customImage = $this->getHtmlImgForModule($p, $module);
+                    $menuItem[$crtWigiiNamespace]['subItem'][$customLabel]['image'] = $customImage;
                     $menuItem[$crtWigiiNamespace]['subItem'][$customLabel]['active'] = ($roleId == $p->getUserId() && $exec->getCrtModule()->getModuleName() == $module ? true : false);
                     $menuItem[$crtWigiiNamespace]['subItem'][$customLabel]['href'] = '#'. str_replace(' ', '%20', $crtWigiiNamespace)."/".$module;
                     $menuItem[$crtWigiiNamespace]['subItem'][$customLabel]['onclick'] = 'if(!ctrlPressed){ '. $exec->getUpdateJsCode($p->getRealUser(), $roleId, $crtWigiiNamespace, $module, "NoAnswer", "userNavigate", "navigate/user/$roleId/'+crtRoleId+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true). ' }';
@@ -268,7 +275,7 @@ if($p->isRealUserPublic()) {
 
                                     <?php foreach ($other as $k=>$item): ?>
                                         <?php $title2Encode = str_replace(' ', '-', $k) ?>
-                                        <li><a href="<?= $item['href'] ?>" id="submenu-<?= $title2Encode ?>" onclick="<?= $item['onclick'] ?>" class="toClick submenu" title="<?= $item['title'] ?>"><?= $item['title'] ?></a></li>
+                                        <li><?php echo $item['image']; ?><a href="<?= $item['href'] ?>" id="submenu-<?= $title2Encode ?>" onclick="<?= $item['onclick'] ?>" class="toClick submenu" title="<?= $item['title'] ?>"><?= $item['title'] ?></a></li>
                                     <?php endforeach; ?>
 
                         <?php endif; ?>
@@ -286,7 +293,7 @@ if($p->isRealUserPublic()) {
                                     <ul class="dropdown-menu">
                                         <?php foreach ($menuItem[$k]['subItem'] as $item): ?>
                                             <?php $title2Encode = str_replace(' ', '-', $k) ?>
-                                            <li><a href="<?= $item['href'] ?>" id="submenu-<?= $title2Encode ?>" onclick="<?= $item['onclick'] ?>" class="toClick submenu" title="<?= $item['title'] ?>"><?= $item['title'] ?></a></li>
+                                            <li><?php echo $item['image']; ?><a href="<?= $item['href'] ?>" id="submenu-<?= $title2Encode ?>" onclick="<?= $item['onclick'] ?>" class="toClick submenu" title="<?= $item['title'] ?>"><?= $item['title'] ?></a></li>
                                         <?php endforeach; ?>
                                     </ul>
                                 <?php endif; ?>
@@ -308,7 +315,7 @@ if($p->isRealUserPublic()) {
                         <a href="#" id="dropdown-subtitle-<?= $className ?>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" style="color: <?= $rCompanyColor ?>;" aria-expanded="false"><?= $v['title'] ?> <span class="caret"></span></a>
                         <ul class="dropdown-menu">
                                 <?php foreach ($v['subItem'] as $item): ?>
-                                    <li><a href="<?= $item['href'] ?>" onclick="<?= $item['onclick'] ?>" class="toClickSub 2ndmenu"><?= $item['title'] ?></a></li>
+                                    <li><?php echo $item['image']; ?><a href="<?= $item['href'] ?>" onclick="<?= $item['onclick'] ?>" class="toClickSub 2ndmenu"><?= $item['title'] ?></a></li>
                                 <?php endforeach; ?>
                         </ul>
                     </li>
@@ -321,7 +328,7 @@ if($p->isRealUserPublic()) {
                             <a href="#" id="dropdown-subtitle-<?= $className ?>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: <?= $rCompanyColor ?>;"><?= $v['title']?> <span class="caret"></span></a>
                             <ul class="dropdown-menu">
                                 <?php foreach ($other as $item): ?>
-                                    <li><a href="<?= $item['href'] ?>" onclick="<?= $item['onclick'] ?>" class="toClickSub 2ndmenu"><?= $item['title'] ?></a></li>
+                                    <li><?php echo $item['image']; ?><a href="<?= $item['href'] ?>" onclick="<?= $item['onclick'] ?>" class="toClickSub 2ndmenu"><?= $item['title'] ?></a></li>
                                 <?php endforeach; ?>
                             </ul>
                         </li>

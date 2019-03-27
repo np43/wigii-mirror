@@ -45,6 +45,12 @@ div.clear{
 	padding:0px;
 	clear:both;
 }
+div.clearLeft{
+	clear:left;
+}
+div.clearRight{
+	clear:right;
+}
 
 .icon {
 	float:left;

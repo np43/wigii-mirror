@@ -588,8 +588,28 @@ class RecordEvaluator implements FuncExpEvaluator
 		return true;
 	}
 
-
-
+	/**
+	 * Return rootPrincipal if available in current instance else false.
+	 * @return Principal | Boolean
+	 */
+	protected function getRootPrincipalIfAvailable() {
+		if(method_exists($this, "getRootPrincipal")){
+			return $this->getRootPrincipal();
+		}
+		return false;
+	}
+	
+	/**
+	 * Asserts that getRootPrincipal method exist and rootPrincipal exist 
+	 * @throws RecordException with code UNSUPPORTED_OPERATION if rootPrincipal is not available
+	 * @return Principal
+	 */
+	protected function assertRootPrincipalIsAvailable() {
+		$returnValue = $this->getRootPrincipalIfAvailable();
+		if(!$returnValue){
+			throw new RecordException("RootPrincipal is not available in this RecordEvaluator instance.", RecordException::UNSUPPORTED_OPERATION);
+		}
+	}
 
 	// root FuncExp language (can be extended in subclasses)
 
@@ -3284,6 +3304,565 @@ class RecordEvaluator implements FuncExpEvaluator
 		}
 		return $versionSync;
 	}
+	
+	// Wigii Recurring activity management
+	
+	/**
+	 * Build the jsCode needed in the detail of an item on which we want to activate recurrence
+	 * FuncExp signature : <code>getJsCodeInDetailToManageRecurrence(options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) options: WigiiBPLParameter. The email
+	 * @return String js code
+	 */
+	public function recurringJsCodeInElementDetail($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		$i = 0;
+		if($nArgs>0) $options = $this->evaluateArg($args[0]);
+		if(!($options instanceof WigiiBPLParameter)) throw new FuncExpEvalException('The recurringJsCodeInElementDetail function takes one argument which is a wigiiBPLParam', FuncExpEvalException::INVALID_ARGUMENT);
+		
+		$elementId = $options->getValue("elementId");
+		if(!$elementId){
+			throw new RecordException('The recurringJsCodeInElementDetail function requries elementId to not be empty', RecordException::INVALID_ARGUMENT); 
+		}
+		$isRecurring = $options->getValue("isRecurring");
+		$startDate = $options->getValue("startDate");
+		if($startDate && !is_string($startDate)){
+			$startDate = $this->evaluateArg($startDate);
+		}
+		$isRecurringFieldName = $options->getValue("isRecurringField");
+		if($isRecurringFieldName instanceof FieldSelector) $isRecurringFieldName = $isRecurringFieldName->getFieldName();
+		$timeRangeFieldName= $options->getValue("timeRangeField");
+		if($timeRangeFieldName instanceof FieldSelector) $timeRangeFieldName = $timeRangeFieldName->getFieldName();
+		$keyFieldName= $options->getValue("keyField");
+		if($keyFieldName instanceof FieldSelector) $keyFieldName = $keyFieldName->getFieldName();
+		$valueFieldName = $options->getValue("valueField");
+		if($valueFieldName instanceof FieldSelector) $valueFieldName = $valueFieldName->getFieldName();
+		$summaryFieldName = $options->getValue("summaryField");
+		if($summaryFieldName instanceof FieldSelector) $summaryFieldName = $summaryFieldName->getFieldName();
+		
+		return "
+		(function(){
+			var f = wigii().form();
+			if(f.elementIsEditable()){
+				var manageRecurrence = function() {
+					if(!f.writableCurrentGroupId()){
+						console.log('please select a folder in which you can write');
+						jAlert(wigii().txtDico('l01','Please select first a folder in which you are able to write.','l02',\"Veuillez sélectionner d'abord un dossier dans lequel vous pouvez écrire.\"));
+					} else {
+						console.log('activity Recurring $isRecurring $startDate $isRecurringFieldName $timeRangeFieldName $keyFieldName $valueFieldName $summaryFieldName');
+						update('activityDialog/'+crtWigiiNamespaceUrl+'/Events/activity/Recurring/groupId='+f.writableCurrentGroupId()+'/elementId=".$elementId."/startDate=".$startDate."/isRecurring=".$isRecurring."/isRecurringFieldName=".$isRecurringFieldName."/timeRangeFieldName=".$timeRangeFieldName."/keyFieldName=".$keyFieldName."/valueFieldName=".$valueFieldName."/summaryFieldName=".$summaryFieldName."');
+					}
+				};
+				f.tool('manageRecurrence').label(wigii().getHtmlBuilder().putStartTag('span','class','glyphicon glyphicon-refresh').putEndTag('span').html()+wigii().txtDico('l01',' Recurrence','l02',' Récurrence')).click(manageRecurrence).$.css('font-weight','bold');
+			}
+		})();";
+	}
+	
+	/**
+	 * Load recurring activity data from valueField from the element
+	 * FuncExp signature : <code>recurringLoadFromValueField()</code><br/>
+	 * @return true
+	 */
+	public function recurringLoadFromValueField($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		$activity = $this->getRecord();
+		$p = $this->getPrincipal();
+		$transS = ServiceProvider::getTranslationService();
+		$elementId = $activity->getFieldValue("elementId");
+		$groupId = $activity->getFieldValue("groupId");
+		$valueFieldName = $activity->getFieldValue("valueFieldName");
+		
+		$errorMessage = "";
+		if(!$elementId){
+			$errorMessage .= $transS->t($p,"recurringElementIdCannotBeNull")."<br />";
+		}
+		if(!$groupId){
+			$errorMessage .= $transS->t($p,"recurringGroupIdCannotBeNull")."<br />";
+		}
+		if(!$valueFieldName){
+			$errorMessage .= $transS->t($p,"recurringValueFieldCannotBeNull")."<br />";
+		}
+		//fetch element from elementId and groupId
+		$elementP = sel($p,elementP($elementId,fsl(fs($valueFieldName)),cs_g($p,$groupId)),dfasl(dfas("NullDFA")));
+		if(!$elementP){
+			$errorMessage .= $transS->t($p,"elementCannotBeNull")." id:".$elementId." groupId: ".$groupId."<br />";
+		} else {
+			$element = $elementP->getElement();
+			$value = $element->getFieldValue($valueFieldName);
+		}
+		
+		if($errorMessage){
+			echo '<br /><font style="color:red;font-weight:bold;">'.$errorMessage.'</font><br /><br />';
+			return false;
+		} else { //fill recurence activity from value
+			$startDateFromActivity = $activity->getFieldValue("startDate");
+			$recurringValue = TechnicalServiceProvider::getWplToolbox()->xml2record($p,$value,$activity->getFieldList(),$activity->getWigiiBag());
+			$startDateFromRecurrence = substr($activity->getFieldValue("startDate"),0,10);
+			$endDateFromRecurrence = substr($activity->getFieldValue("endDate"),0,10);
+			//put in the activity the original start and end date in hidden fields in order to let
+			//the controller be able to go back to those value if for example the option stopRecurrence is selected
+			$activity->setFieldValue($startDateFromRecurrence,"recurrenceOriginalStartDate");
+			$activity->setFieldValue($endDateFromRecurrence,"recurrenceOriginalEndDate");
+			$messageBox = "";
+			$messageBox .= '<br />'.$transS->t($p,"recurrenceFutureOccurrenceWillBeDeletedAndRecreatedBasedOnTheNewDefinition");
+			//if date of element is in the future of the startDate of the current recurrence
+			if($startDateFromActivity> $startDateFromRecurrence){
+				//if updating a recurrence, then fix the startDate to the date of the current item
+				$activity->setFieldValue($startDateFromActivity, "startDate");
+				$messageBox .= 	'<font style="color:darkgreen;font-weight:bold;">'.$transS->t($p,"recurrenceStartDateIsUpdatedToCurrentDate")." : ".date("d.m.Y",strtotime($startDateFromRecurrence))." → ".date("d.m.Y",strtotime($startDateFromActivity)).'</font><br /><br />'.
+								$transS->t($p,"recurrencePastOccurenceWillRemainAsIs").
+								'<br /><br />';
+			}
+			$activity->setFieldValue($messageBox,"messageBox");
+		}
+		return true;
+	}
+	
+	/**
+	 * Manage the recurrence of an item
+	 * FuncExp signature : <code>recurringController()</code><br/>
+	 * @return true
+	 */
+	public function recurringController($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		//if($nArgs != 1) throw new FuncExpEvalException('The manageRecurrence function takes two argument which is the email value', FuncExpEvalException::INVALID_ARGUMENT);
+		$activity = $this->getRecord();
+		$p = $this->getPrincipal();
+		$elS = ServiceProvider::getElementService();
+		$exec = ServiceProvider::getExecutionService();
+		$transS = ServiceProvider::getTranslationService();
+		$elementId = $activity->getFieldValue("elementId");
+		$groupId = $activity->getFieldValue("groupId");
+		$timeRangeFieldName = $activity->getFieldValue("timeRangeFieldName");
+		$dateFieldName = $activity->getFieldValue("dateFieldName");
+		//keyFieldName allows to keep link between each recurrent item
+		//if not define then recurrent items are not linked
+		$keyFieldName = $activity->getFieldValue("keyFieldName");
+		$recurrentKey = null;
+		$valueFieldName = $activity->getFieldValue("valueFieldName");
+		$isRecurringFieldName = $activity->getFieldValue("isRecurringFieldName");
+		$isRecurring = $activity->getFieldValue("isRecurring");
+		
+		$stopRecurrence = $activity->getFieldValue("deleteRecurrence")=="stopRecurrence";
+		$deleteAllOccurence = $activity->getFieldValue("deleteRecurrence")=="deleteRecurrence";
+		
+		$errorMessage = "";
+		if(!$elementId){
+			$errorMessage .= $transS->t($p,"recurringElementIdCannotBeNull")."<br />";
+		}
+		if(!$groupId){
+			$errorMessage .= $transS->t($p,"recurringGroupIdCannotBeNull")."<br />";
+		}
+		if(!$timeRangeFieldName && !$dateFieldName){
+			$errorMessage .= $transS->t($p,"recurringMustHaveOneTimeRangeOrDateField")."<br />";
+		}
+		//fetch element from elementId and groupId
+		$elementP = sel($p,elementP($elementId,null,cs_g($p,$groupId)),dfasl(dfas("NullDFA")));
+		if(!$elementP){
+			$errorMessage .= $transS->t($p,"elementCannotBeNull")." id:".$elementId." groupId: ".$groupId."<br />";
+		} else {
+			$element = $elementP->getElement();
+			if($keyFieldName) {
+				$recurrentKey = $element->getFieldValue($keyFieldName);
+			}
+			if($timeRangeFieldName){
+				$elementDate = $element->getFieldValue($timeRangeFieldName,"begDate");
+			} else if($dateFieldName){
+				$elementDate= $element->getFieldValue($dateFieldName);
+			}
+			//ensure to only keep the date and remove any time format
+			$elementDate = substr($elementDate, 0, 10);
+// 			eput($elementId);
+// 			eput("<br />--");
+// 			eput($recurrentKey);
+// 			eput("<br />--");
+// 			eput($elementDate);
+// 			eput("<br />--");
+		}
+		//check dates
+		$startDate = $activity->getFieldValue("startDate");
+		if(!$startDate){
+			$errorMessage .= $transS->t($p,"recurringStartDateCannotBeEmpty")."<br />";
+		} else {
+			//ensure to only keep the date and remove any time format
+			$startDate = substr($startDate, 0, 10);
+		}
+		//if edit recurrence ensure that startDate >= element date
+		if(!$stopRecurrence && $isRecurring && $startDate<$elementDate){
+			$errorMessage .= $transS->t($p,"recurringStartDateCannotBeEarlierThanElementDate")."<br />";
+			eput($startDate);
+			eput($elementDate);
+		}
+		$endDate = $activity->getFieldValue("endDate");
+		if(!$endDate){
+			$errorMessage .= $transS->t($p,"recurringEndDateCannotBeEmpty")."<br />";
+		} else if($startDate && $startDate > $endDate){
+			$errorMessage .= $transS->t($p,"recurringEndDateMustBeAfterStartDate")."<br />";
+		}
+		
+		//if stopRecurrence then keep the original startDate of recurrence and change endDate to elementDate
+		if($stopRecurrence){
+			$endDate = $elementDate;
+			$activity->setFieldValue($endDate,"endDate");
+			$startDate = substr($activity->getFieldValue("recurrenceOriginalStartDate"),0,10);
+			$activity->setFieldValue($startDate,"startDate");
+			$activity->setFieldValue("","messageBox");
+		}
+		
+		//check recurrenceStep
+		$recurrenceStep= $activity->getFieldValue("recurrenceStep");
+		if(!$recurrenceStep || $recurrenceStep < 1){
+			$errorMessage .= $transS->t($p,"recurringStepCanOnlyBeHigherThan1")."<br />";
+		}
+		$recurrenceUnit= $activity->getFieldValue("recurrenceUnit");
+		
+		//initialise to startDate
+		$date = DateTime::createFromFormat("Y-m-d", $startDate);
+		//list of dates generated by the recurrence
+		$newDates = array();
+		$maxLoop = 10000; //prevent infinite loop
+		$maxOccurence = 5000; //prevent max nb of occurence, in some case it is the same than loop
+		$formatDateToReturn = "Y-m-d";
+		switch($recurrenceUnit){
+			case "day":
+				//nothing more to check, do the work
+				if (!$errorMessage){
+					$interval = new DateInterval('P'.$recurrenceStep.'D');
+					$i = 0;
+					$iOcc = 0;
+					while($date->format("Y-m-d")<=$endDate && $i < $maxLoop && $iOcc < $maxOccurence){
+						$i++;
+						$iOcc++;
+						$newDates[] = $date->format($formatDateToReturn);
+						$date->add($interval);
+					}
+				}
+				break;
+			case "week":
+				//check days of weeks are selected
+				$weekDays = $activity->getFieldValue("weekDays");
+				if(!$weekDays || !$weekDays[0]){
+					$errorMessage .= $transS->t($p,"recurringWeekDaysCannotBeNull")."<br />";
+				} elseif (!$errorMessage) {
+					//create an interval only if step is higher than 1
+					$interval = new DateInterval('P'.(($recurrenceStep-1)*7).'D');
+					$weekDayIndex = 0;
+					$weekNbOfSelectedDays = count($weekDays);
+					$i = 0;
+					$iOcc = 0;
+					while($date->format("Y-m-d")<=$endDate && $i < $maxLoop && $iOcc < $maxOccurence){
+						$i++;
+						if($date->format("l")==$weekDays[$weekDayIndex]){
+							$iOcc++;
+							$newDates[] = $date->format($formatDateToReturn);
+							$weekDayIndex++;
+							if($weekDayIndex == $weekNbOfSelectedDays){
+								$weekDayIndex = 0;
+								//if recurrence more than every week add empty weeks
+								if($recurrenceStep>1){
+									$date->add($interval);
+								}
+							}
+						}
+						$date->modify("next ".$weekDays[$weekDayIndex]);
+					}
+				}
+				break;
+			case "month":
+				$monthlyType= $activity->getFieldValue("monthlyType");
+				if (!$errorMessage) {
+					if($monthlyType=="the"){
+						$monthlyhowManieth = $activity->getFieldValue("monthlyhowManieth");
+						$monthlyhowManiethWeekDay = $activity->getFieldValue("monthlyhowManiethWeekDay");
+						switch($monthlyhowManieth){
+							case "first" : $monthlyhowManieth = 1; break;
+							case "second" : $monthlyhowManieth = 2; break;
+							case "third" : $monthlyhowManieth = 3; break;
+							case "fourth" : $monthlyhowManieth = 4; break;
+						}
+						$months = new DateInterval('P'.$recurrenceStep.'M');
+						$aWeek = new DateInterval('P7D');
+						/* deprecated as there are errors: if calculation using the standard php functions
+						$months = new DateInterval('P'.($recurrenceStep-1).'M');
+						//start from the day before startDate to ensure taking in account startDate if matching the first rule
+						$date->modify("yesterday");
+						$date->modify("$monthlyhowManieth $monthlyhowManiethWeekDay of next month");
+						*/
+						$i = 0;
+						$iOcc = 0;
+						while($date->format("Y-m-d")<=$endDate && $i < $maxLoop && $iOcc < $maxOccurence){
+							$i++;
+							/* deprecated as there are errors: if calculation using the standard php functions
+							 * there are some errors when calculating the current month: i.e. define startDate to 02.03.2019 and first monday, and it starts with 1st April 2019 instead of 4th of March 2019. But if startDate is 01.03.2019 then it works...
+							$newDates[] = $date->format("Y-m-d l");
+							//put back at the start of the month, and add the number of month:
+							if($recurrenceStep>1){
+								$date->modify("first day of ".$date->format("F"));
+								$date->add($months);
+							}
+							//add to the next x day of the month
+							$date->modify("$monthlyhowManieth $monthlyhowManiethWeekDay of next month");
+							*/
+							
+							// manual calculation of dates not using power of datetime.formats.relative.php
+							//eput("<br>".$date->format("Y-m-d l"));
+							//from now lookup next weekDay
+							if($date->format("l")!=$monthlyhowManiethWeekDay){
+								$date->modify("next ".$monthlyhowManiethWeekDay);
+							} else {
+								//if correct weekday, calculate the howmaniest weekday from start of month
+								$crtDayOfMonth = $date->format("j");
+								$lastDayOfMonth = DateTime::createFromFormat("m-Y-d", ($date->format("n")+1).$date->format("-Y-")."01")->sub(new DateInterval('P1D'))->format("j");
+								$howmaniest = floor(($crtDayOfMonth-1)/7)+1;
+								//eput("<br>".$howmaniest);
+								if(($monthlyhowManieth=="last" && $howmaniest>=4 && ($lastDayOfMonth-$crtDayOfMonth) < 7) ||
+										$monthlyhowManieth== $howmaniest){
+										$iOcc++;
+										$newDates[] = $date->format($formatDateToReturn);
+										//eput("<br>"."match!");
+										//add the nb of month from the start of the current month, 
+										//this is to prevent missing the first of the month in 
+										$date = DateTime::createFromFormat("Y-m-d", $date->format("Y-m")."-01")->add($months);
+								} else {
+									//add a week and recheck
+									$date->add($aWeek);
+								}
+							}
+							//
+						}
+					} else if($monthlyType=="day"){
+						$monthlyDay = $activity->getFieldValue("monthlyDay");
+						$months = new DateInterval('P'.$recurrenceStep.'M');
+						$startDay = $date->format("j");
+						$startMonth = $date->format("n");
+						$startYear = $date->format("Y");
+						if($startDay == $monthlyDay){
+							//do nothing, already good for the first one
+						} elseif($startDay < $monthlyDay) {
+							//move to the th of this month
+							$date = DateTime::createFromFormat("Y-n-j", $startYear."-".$startMonth."-".$monthlyDay);
+						} else {
+							//if th of this month already past, then go to next month
+							$date = DateTime::createFromFormat("Y-n-j", $startYear."-".($startMonth+1)."-".$monthlyDay);
+						}
+						$i = 0;
+						$iOcc = 0;
+						while($date->format("Y-m-d")<=$endDate && $i < $maxLoop && $iOcc < $maxOccurence){
+							$i++;
+							$iOcc++;
+							$newDates[] = $date->format($formatDateToReturn);
+							$newDay = $date->format("j");
+							$newMonth = $date->format("n");
+							$newYear = $date->format("Y");
+							//if neeDay is different than monthlyDay, it means month had less day, therefore add one month less
+							$date = DateTime::createFromFormat("Y-n-j", $newYear."-".($newDay==$monthlyDay ? $newMonth+$recurrenceStep : $newMonth+$recurrenceStep-1)."-".$monthlyDay);
+						}
+					}
+				}
+				break;
+			case "year":
+				$yearlyDay = $activity->getFieldValue("yearlyDay");
+				$yearlyMonth = $activity->getFieldValue("yearlyMonth");
+				if($yearlyMonth=="feb" && $yearlyDay>28 ||
+					($yearlyMonth=="apr" || $yearlyMonth=="jun" || $yearlyMonth=="sept" || $yearlyMonth=="nov") && $yearlyDay>30){
+					$errorMessage .= $transS->t($p,"recurringYearlyDayIsNotValidForTheSelectedMonth")."<br />";
+				} elseif (!$errorMessage){
+					$startDay = $date->format("j");
+					$startMonth = $date->format("M");
+					$startYear = $date->format("Y");
+					$dateThisYear = DateTime::createFromFormat("Y-M-j", $startYear."-".ucfirst($yearlyMonth)."-".$yearlyDay);
+					if($startDay == $yearlyDay && $startMonth==ucfirst($yearlyMonth)){
+						//do nothing, already good for the first one
+					} elseif($date->format("Y-m-d") < $dateThisYear->format("Y-m-d")) {
+						//move to the date of this year
+						$date = $dateThisYear;
+					} else {
+						//if date of this year already past, then go to next year
+						$date = DateTime::createFromFormat("Y-M-j", ($startYear+1)."-".ucfirst($yearlyMonth)."-".$yearlyDay);
+					}
+					$i = 0;
+					$iOcc = 0;
+					while($date->format("Y-m-d")<=$endDate && $i < $maxLoop && $iOcc < $maxOccurence){
+						$i++;
+						$iOcc++;
+						$newDates[] = $date->format($formatDateToReturn);
+						$newYear = $date->format("Y");
+						$date = DateTime::createFromFormat("Y-M-j", ($newYear+$recurrenceStep)."-".ucfirst($yearlyMonth)."-".$yearlyDay);
+					}
+				}
+				break;
+			default:
+				$errorMessage .= $transS->t($p,"recurringUnitIsInvalid")."<br />";
+		}
+		
+		if(count($newDates)>=$maxOccurence){
+			$errorMessage .= $transS->t($p,"recurringNbOfOccurenceReached")." > ".($maxOccurence-1)."<br />";
+		}
+		
+		if($activity->getFieldValue("deleteRecurrence") && $activity->getFieldValue("deleteRecurrence")!="none" && !$activity->getFieldValue("deleteRecurrenceCheck")){
+			$this->getFormExecutor()->addErrorToField($transS->t($p,"recurringDeletionAreYouSure"), "deleteRecurrence");
+			$activity->setFieldValue(true,"deleteRecurrenceCheck");
+		}
+		
+		if($errorMessage || $this->getFormExecutor()->hasError()){
+			if($errorMessage){
+				echo '<br /><font style="color:red;font-weight:bold;">'.$errorMessage.'</font><br />';
+				$this->getFormExecutor()->addStateError();
+			}
+			return false;
+		} else {
+			
+			//never keep the content of general fields
+			$activity->setFieldValue(null,"elementId");
+			$activity->setFieldValue(null,"groupId");
+			$activity->setFieldValue(null,"isRecurring");
+			$activity->setFieldValue(null,"timeRangeFieldName");
+			$activity->setFieldValue(null,"dateFieldName");
+			$activity->setFieldValue(null,"isRecurringFieldName");
+			$activity->setFieldValue(null,"keyFieldName");
+			$activity->setFieldValue(null,"valueFieldName");
+			$activity->setFieldValue(null,"summaryFieldName");
+			$activity->setFieldValue(null,"messageBox");
+			$activity->setFieldValue(null,"deleteRecurrence");
+			$activity->setFieldValue(null,"deleteRecurrenceCheck");
+			
+			//set recurring data in element
+			if(!$recurrentKey){
+				//define recurrentKey if undefined
+				$recurrentKey = md5($elementId.microtime().$_SERVER['REMOTE_ADDR']);
+			}
+			$fsl = array();
+			if($keyFieldName){
+				if($deleteAllOccurence){
+					$element->setFieldValue(null, $keyFieldName);
+				} else {
+					$element->setFieldValue($recurrentKey, $keyFieldName);
+				}
+				$fsl[] = fs($keyFieldName);
+			}
+			if($valueFieldName){
+				if($deleteAllOccurence){
+					$element->setFieldValue(null, $valueFieldName);
+				} else {
+					$recurringValue = TechnicalServiceProvider::getWplToolbox()->record2xml($p,$activity->getFieldList(),$activity->getWigiiBag());
+					$element->setFieldValue($recurringValue, $valueFieldName);
+				}
+				$fsl[] = fs($valueFieldName);
+			}
+			if($isRecurringFieldName){
+				if($deleteAllOccurence){
+					$element->setFieldValue(null, $isRecurringFieldName);
+				} else {
+					$element->setFieldValue(true, $isRecurringFieldName);
+				}
+				$fsl[] = fs($isRecurringFieldName);
+			}
+			//save element
+			if(!empty($fsl)){
+				$elS->updateElement($p,$element,fsl($fsl));
+			}
+			
+			/*
+			 * DELETE all ocurrence
+			 */
+			if($deleteAllOccurence){
+				//fetch all linked recurrent element if keyField is defined
+				$elementPList= ElementPAdvancedListArrayImpl::createInstance();
+				$elS->getSelectedElementsInGroups($p, lxInGR(lxEq(fs("id"),$groupId)), $elementPList,lf(NULL,lxAnd(lxEq(fs($keyFieldName), $recurrentKey),lxNotEq(fs_e("id"),$elementId))));
+				if($elementPList->count()>1){
+					$rootPrincipal = $this->getRootPrincipalIfAvailable();
+					if($rootPrincipal){
+						$elS->deleteMultipleElements($rootPrincipal, $p, $elementPList);
+					} else {
+						foreach($elementPList->getListIterator() as $elementP){
+							$elS->deleteElement($p, $elementP->getId());
+						}
+					}
+				}
+				
+			} else {
+			
+				//delete all future item
+				if($keyFieldName) {
+					$elementPList= ElementPAdvancedListArrayImpl::createInstance();
+					$elS->getSelectedElementsInGroups(
+							$p, 
+							lxInGR(lxEq(fs("id"),$groupId)), 
+							$elementPList,
+							lf(
+								NULL,
+								lxAnd(
+									lxGrEq(($timeRangeFieldName ? fs($timeRangeFieldName, "begDate") : fs($dateFieldName)),$elementDate),
+									lxEq(fs($keyFieldName), $recurrentKey),
+									lxNotEq(fs_e("id"),$elementId))
+								)
+							);
+					if($elementPList->count()>1){
+						$rootPrincipal = $this->getRootPrincipalIfAvailable();
+						if($rootPrincipal){
+							$elS->deleteMultipleElements($rootPrincipal, $p, $elementPList);
+						} else {
+							foreach($elementPList->getListIterator() as $elementP){
+								$elS->deleteElement($p, $elementP->getId());
+							}
+						}
+					}
+					
+				}
+				
+				
+				//create new recurrent items if not stopping recurrence
+				if(!$stopRecurrence){
+					if($timeRangeFieldName){
+						$timeRangeBegDate = strtotime($element->getFieldValue($timeRangeFieldName,"begDate"));
+						$timeRangeEndDate = strtotime($element->getFieldValue($timeRangeFieldName,"endDate"));
+						$timeDif = $timeRangeEndDate - $timeRangeBegDate;
+					}
+					foreach($newDates as $date){
+						//only create element if not on the actual date of the current element
+						if($date!=$elementDate){
+							if($timeRangeFieldName){
+								$element->setFieldValue($date,$timeRangeFieldName,"begDate");
+								$element->setFieldValue(date("Y-m-d",strtotime($date)+$timeDif),$timeRangeFieldName,"endDate");					
+							} elseif($dateFieldName){
+								$element->setFieldValue($date,$dateFieldName);
+							}
+							$elS->insertElementCopy($p, $element, $groupId);
+						}
+					}
+				} elseif($valueFieldName && $keyFieldName) {
+					//update recurrence pattern on "old" linked elements
+					//fetch all linked recurrent element if keyField is defined
+					$elementPList= ElementPAdvancedListArrayImpl::createInstance();
+					$elS->getSelectedElementsInGroups(
+							$p,
+							lxInGR(lxEq(fs("id"),$groupId)),
+							$elementPList,
+							lf(NULL,lxEq(fs($keyFieldName), $recurrentKey)));
+					$rootPrincipal = $this->getRootPrincipalIfAvailable();
+					foreach($elementPList->getListIterator() as $elementP){
+						$crtElement = $elementP->getElement();
+						$crtElement->setFieldValue($element->getFieldValue($valueFieldName),$valueFieldName);
+					}
+					if($rootPrincipal && $valueFieldName){
+						$elS->updateMultipleElement($rootPrincipal, $p, $elementPList, fsl(fs($valueFieldName)));
+					}
+				}
+			
+			}
+			//refresh the moduleView
+			$this->evaluateFuncExp(fx('ctlRefreshModuleView'));
+			//refresh the element
+			$exec = ServiceProvider::getExecutionService();
+			$exec->addRequests("elementDialog/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$element->getModule()->getModuleUrl()."/element/detail/".$elementId);
+			
+			//eput($newDates);
+			
+			//$this->getFormExecutor()->addStateError();
+		}
+		return true;
+	}
+	
 }
 /**
  * A LogExp evaluator on a matrix extracted from a Record

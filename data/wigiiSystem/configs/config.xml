@@ -100,6 +100,231 @@
 			<message type="Blobs" require="1" isInLine="1" htmlArea="1" fullToolbarHtmlArea="1" activateHtmlArea="1" template="" height="300" />
 		</fields>
 	</Emailing>
+	
+	<Recurring
+		labelWidth="220"
+		totalWidth="440"
+		executeResultExpOnStart="0"
+		resultExp='recurringController()'
+		keepModifyingExp=''
+		submitLabel='concat(txtDico(newMap("l01","Ok","l02","Ok")))'
+		><label_l01>Manage recurrence</label_l01><label_l02>Gérer la récurrence</label_l02>
+		<fields>
+			<isRecurring type="Booleans" defaultExp='fillElementFromUrl("1")' displayHidden="1"></isRecurring>
+			<elementId type="Strings" displayHidden="1"></elementId>
+			<groupId type="Strings" displayHidden="1" ></groupId>
+			<timeRangeFieldName type="Strings" displayHidden="1" ></timeRangeFieldName>
+			<dateFieldName type="Strings" displayHidden="1" ></dateFieldName>
+			<isRecurringFieldName type="Strings" displayHidden="1"></isRecurringFieldName>
+			<keyFieldName type="Strings" displayHidden="1"></keyFieldName>
+			<valueFieldName type="Strings" displayHidden="1"></valueFieldName>
+			<summaryFieldName type="Strings" displayHidden="1"></summaryFieldName>
+			<recurrenceOriginalStartDate type="Dates" displayHidden="1" />
+			<recurrenceOriginalEndDate type="Dates" displayHidden="1" />
+			<startDate type="Dates" expand="1" totalWidth="220" labelWidth="100" ><label_l01>From the</label_l01><label_l02>Depuis le</label_l02></startDate>
+			<endDate type="Dates" expand="1" totalWidth="220" labelWidth="100" defaultExp='ctlSeq(ctlIf(isRecurring,recurringLoadFromValueField()),ctlIgnoreReturnValue())'
+			jsCodeInForm="
+(function(){
+	/* default to one year on */
+	var f = $('#$$idForm$$').wigii('FormHelper');
+	var dq = wigii().txtQuot;
+	var onStartDateChange = function(){
+		if(!f.val('endDate')){
+			f.val('endDate', moment(f.val('startDate'),'DD.MM.YYYY').add('month','6').format('DD.MM.YYYY'));
+		} else if(moment(f.val('startDate'),'DD.MM.YYYY').unix()>moment(f.val('endDate'),'DD.MM.YYYY').unix()){
+			f.val('endDate','');
+		}
+	};
+	$('#$$idForm$$__startDate').change(onStartDateChange);
+	onStartDateChange();
+})();">
+			<label_l01>Until</label_l01><label_l02>Jusqu'au</label_l02></endDate>
+			<freetext class="clear" ></freetext>
+			<recurrenceStep type="Numerics" expand="1" noDecimals="1" noThousandSeparator="1" totalWidth="150" labelWidth="100" defaultExp="1"><label_l01>Every</label_l01><label_l02>Tou(te)s les</label_l02></recurrenceStep>
+			<recurrenceUnit type="Attributs" expand="1" noLabel="1" totalWidth="100"
+jsCodeInForm="
+(function(){
+	var f = $('#$$idForm$$').wigii('FormHelper');
+	var dq = wigii().txtQuot;
+	var onRecurrenceUnitChange = function(){
+		$('
+			#$$idForm$$__weekDays,
+			#$$idForm$$__monthlyType,
+			#$$idForm$$__monthlyDetailGroup,
+			#$$idForm$$__yearlyDay,
+			#$$idForm$$__yearlyMonth
+			').hide();
+		if(f.val('recurrenceUnit')=='week'){
+			$('
+			#$$idForm$$__weekDays
+			').show();
+		}
+		if(f.val('recurrenceUnit')=='month'){
+			$('
+			#$$idForm$$__monthlyType,
+			#$$idForm$$__monthlyDetailGroup
+			').show();
+		}
+		if(f.val('recurrenceUnit')=='year'){
+			$('
+			#$$idForm$$__yearlyDay,
+			#$$idForm$$__yearlyMonth
+			').show();
+		}
+		
+	};
+	$('#$$idForm$$__recurrenceUnit').change(onRecurrenceUnitChange);
+	onRecurrenceUnitChange();
+})();"
+			>
+				<label_l01>Recurrence unit</label_l01>
+				<label_l02>Unité de récurrence</label_l02>
+				<attribute>day<label_l01>day</label_l01><label_l02>jour</label_l02></attribute>
+				<attribute checked="1">week<label_l01>week</label_l01><label_l02>semaine</label_l02></attribute>
+				<attribute>month<label_l01>month</label_l01><label_l02>mois</label_l02></attribute>
+				<attribute>year<label_l01>year</label_l01><label_l02>année</label_l02></attribute>
+			</recurrenceUnit>
+			<freetext class="clear" ></freetext>
+			<weekDays type="MultipleAttributs" expand="1" useCheckboxes="1" useMultipleColumn="5" labelWidth="100" totalWidth="440">
+				<label_l01>Each</label_l01>
+				<label_l02>Chaque</label_l02>
+				<attribute>Monday<label_l01>Mon</label_l01><label_l02>lun</label_l02></attribute>
+				<attribute>Tuesday<label_l01>Tue</label_l01><label_l02>mar</label_l02></attribute>
+				<attribute>Wednesday<label_l01>Wed</label_l01><label_l02>mer</label_l02></attribute>
+				<attribute>Thursday<label_l01>Thu</label_l01><label_l02>jeu</label_l02></attribute>
+				<attribute>Friday<label_l01>Fri</label_l01><label_l02>ven</label_l02></attribute>
+				<attribute>Saturday<label_l01>Sat</label_l01><label_l02>sam</label_l02></attribute>
+				<attribute>Sunday<label_l01>Sun</label_l01><label_l02>dim</label_l02></attribute>
+			</weekDays>
+			<freetext class="clear" ></freetext>
+			<monthlyType type="Attributs" expand="1" class="jointV" useRadioButtons="1" noLabel="1" totalWidth="100">
+				<label_l01>Monthly type</label_l01>
+				<label_l02>Type mensuel</label_l02>
+				<attribute checked="1">the<label_l01>The</label_l01><label_l02>Le</label_l02></attribute>
+				<attribute>day<label_l01>Day</label_l01><label_l02>Jour</label_l02></attribute>
+			</monthlyType>
+			<monthlyDetailGroup groupStart="1" noLabel="1" noFieldset="1" totalWidth="200" />
+				<monthlyhowManieth type="Attributs" expand="1" class="jointV1" noLabel="1" totalWidth="100">
+					<label_l01>How-manieth</label_l01>
+					<label_l02>Combientième</label_l02>
+					<attribute>first<label_l01>first</label_l01><label_l02>premier</label_l02></attribute>
+					<attribute>second<label_l01>second</label_l01><label_l02>deuxième</label_l02></attribute>
+					<attribute>third<label_l01>third</label_l01><label_l02>troisième</label_l02></attribute>
+					<attribute>fourth<label_l01>fourth</label_l01><label_l02>quatrième</label_l02></attribute>
+					<attribute>last<label_l01>last</label_l01><label_l02>dernier</label_l02></attribute>
+				</monthlyhowManieth>
+				<monthlyhowManiethWeekDay type="Attributs" expand="1" class="jointV1" noLabel="1" totalWidth="100">
+					<label_l01>How-manieth day of month</label_l01>
+					<label_l02>Combientième jour du mois</label_l02>
+					<attribute>Monday<label_l01>Monday</label_l01><label_l02>lundi</label_l02></attribute>
+					<attribute>Tuesday<label_l01>Tuesday</label_l01><label_l02>mardi</label_l02></attribute>
+					<attribute>Wednesday<label_l01>Wednesday</label_l01><label_l02>mercredi</label_l02></attribute>
+					<attribute>Thursday<label_l01>Thursday</label_l01><label_l02>jeudi</label_l02></attribute>
+					<attribute>Friday<label_l01>Friday</label_l01><label_l02>vendredi</label_l02></attribute>
+					<attribute>Saturday<label_l01>Saturday</label_l01><label_l02>samedi</label_l02></attribute>
+					<attribute>Sunday<label_l01>Sunday</label_l01><label_l02>dimanche</label_l02></attribute>
+				</monthlyhowManiethWeekDay>
+				<freetext class="clear" ></freetext>
+				<monthlyDay type="Attributs" expand="1" class="jointV1" noLabel="1" totalWidth="60">
+					<label_l01>Day of month</label_l01>
+					<label_l02>Jour du mois</label_l02>
+					<attribute>1</attribute>
+					<attribute>2</attribute>
+					<attribute>3</attribute>
+					<attribute>4</attribute>
+					<attribute>5</attribute>
+					<attribute>6</attribute>
+					<attribute>7</attribute>
+					<attribute>8</attribute>
+					<attribute>9</attribute>
+					<attribute>10</attribute>
+					<attribute>11</attribute>
+					<attribute>12</attribute>
+					<attribute>13</attribute>
+					<attribute>14</attribute>
+					<attribute>15</attribute>
+					<attribute>16</attribute>
+					<attribute>17</attribute>
+					<attribute>18</attribute>
+					<attribute>19</attribute>
+					<attribute>20</attribute>
+					<attribute>21</attribute>
+					<attribute>22</attribute>
+					<attribute>23</attribute>
+					<attribute>24</attribute>
+					<attribute>25</attribute>
+					<attribute>26</attribute>
+					<attribute>27</attribute>
+					<attribute>28</attribute>
+					<attribute>29</attribute>
+					<attribute>30</attribute>
+					<attribute>31</attribute>
+				</monthlyDay>
+				<freetext needTranslation="1" totalWidth="100" class="jointV4"><label_l01>of month</label_l01><label_l02>du mois</label_l02></freetext>
+			<monthlyDetailGroup groupEnd="1" noLabel="1" noFieldset="1" />
+			<freetext class="clear" ></freetext>
+			<yearlyDay type="Attributs" expand="1" totalWidth="160" labelWidth="100">
+				<label_l01>The</label_l01>
+				<label_l02>Le</label_l02>
+				<attribute>1</attribute>
+				<attribute>2</attribute>
+				<attribute>3</attribute>
+				<attribute>4</attribute>
+				<attribute>5</attribute>
+				<attribute>6</attribute>
+				<attribute>7</attribute>
+				<attribute>8</attribute>
+				<attribute>9</attribute>
+				<attribute>10</attribute>
+				<attribute>11</attribute>
+				<attribute>12</attribute>
+				<attribute>13</attribute>
+				<attribute>14</attribute>
+				<attribute>15</attribute>
+				<attribute>16</attribute>
+				<attribute>17</attribute>
+				<attribute>18</attribute>
+				<attribute>19</attribute>
+				<attribute>20</attribute>
+				<attribute>21</attribute>
+				<attribute>22</attribute>
+				<attribute>23</attribute>
+				<attribute>24</attribute>
+				<attribute>25</attribute>
+				<attribute>26</attribute>
+				<attribute>27</attribute>
+				<attribute>28</attribute>
+				<attribute>29</attribute>
+				<attribute>30</attribute>
+				<attribute>31</attribute>
+			</yearlyDay>
+			<yearlyMonth type="Attributs" expand="1" noLabel="1" totalWidth="100">
+				<label_l01>of</label_l01>
+				<label_l02>de</label_l02>
+				<attribute>jan<label_l01>January</label_l01><label_l02>janvier</label_l02></attribute>
+				<attribute>feb<label_l01>February</label_l01><label_l02>février</label_l02></attribute>
+				<attribute>mar<label_l01>March</label_l01><label_l02>mars</label_l02></attribute>
+				<attribute>apr<label_l01>April</label_l01><label_l02>avril</label_l02></attribute>
+				<attribute>mai<label_l01>May</label_l01><label_l02>mai</label_l02></attribute>
+				<attribute>jun<label_l01>June</label_l01><label_l02>juin</label_l02></attribute>
+				<attribute>jui<label_l01>Juily</label_l01><label_l02>juillet</label_l02></attribute>
+				<attribute>aug<label_l01>August</label_l01><label_l02>août</label_l02></attribute>
+				<attribute>sep<label_l01>September</label_l01><label_l02>septembre</label_l02></attribute>
+				<attribute>oct<label_l01>October</label_l01><label_l02>octobre</label_l02></attribute>
+				<attribute>nov<label_l01>November</label_l01><label_l02>novembre</label_l02></attribute>
+				<attribute>dec<label_l01>December</label_l01><label_l02>décembre</label_l02></attribute>
+			</yearlyMonth>
+			<messageBox type="Blobs" htmlArea="1" onlyInForm="1" displayViewOnly="1" noLabel="1" />
+			<freetext class="clear HR" enableDynamicAttributes="1" hidden="logOr(logNot(isRecurring),isNull(keyFieldName))"></freetext>
+			<deleteRecurrence type="Attributs" labelWidth="260" enableDynamicAttributes="1" hidden="logOr(logNot(isRecurring),isNull(keyFieldName))" useRadioButtons="1" isInLine="1" displayAsLabel="1" expand="1">
+				<label_l01>Other actions</label_l01><label_l02>Autres actions</label_l02>
+				<attribute>none</attribute>
+				<attribute>stopRecurrence<label_l01>Stop the recurrence since #thisElement# and <u>delete future</u> items.</label_l01><label_l02>Stopper la récurrence depuis #thisElement# et <u>effacer les items futurs</u>.</label_l02></attribute>
+				<attribute>deleteRecurrence<label_l01>Remove the recurrence and <u>delete all</u> linked #-elements#.</label_l01><label_l02>Supprimer la récurrence et <u>effacer tous</u> les autres #-elements#.</label_l02></attribute>
+			</deleteRecurrence>
+			<deleteRecurrenceCheck type="Booleans" displayHidden="1" />
+		</fields>
+	</Recurring>
 
 	<exportMenu>
 		<fields>

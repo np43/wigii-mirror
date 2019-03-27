@@ -4671,6 +4671,132 @@ order by isParent DESC
 		$this->executionSink()->publishEndOperation("insertElement", $principal);
 		return $returnValue;
 	}
+	public function insertElementCopy($principal, $element, $groupId, $fieldSelectorList=null)
+	{
+		$this->executionSink()->publishStartOperation("insertElementCopy", $principal);
+		$eltQP = null;
+		try
+		{
+			if(is_null($element)) return 0;
+			if($element->isNew()) throw new ElementServiceException("can only insert a copy of an existing element, use insertElement to insert a new element", ElementServiceException::INVALID_ARGUMENT);
+			if(is_null($groupId)) throw new ElementServiceException("groupId cannot be null", ElementServiceException::INVALID_ARGUMENT);
+			
+			// reads group with principal rights
+			$gAS = $this->getGroupAdminServiceImpl();
+			$groupP = $gAS->getGroup($principal, $groupId, $gAS->getFieldSelectorListForGroupWithoutDetail());
+			
+			// checks authorization
+			$this->assertPrincipalAuthorizedForInsertElement($principal, $groupP);
+			
+			// validates element
+			$this->validateElementForInsert($principal, $element, $groupP);
+			
+			// computes effective field list
+			$eltQP = $this->getElementQueryPlanner(MySqlFacade::Q_INSERTONE, 0, $fieldSelectorList);
+			//SysInfo at field level requires to have element and principal
+			$eltQP->setElement($element);
+			$eltQP->setPrincipal($principal);
+			$cS = $this->getConfigService();
+			try {
+				// if ConfigService supports method unselectSubElementConfig
+				// then unselects any previous sub element config
+				if($this->subElementConfigSupport['unselectSubElementConfig']) $cS->unselectSubElementConfig($principal);
+				$cS->getGroupFields($principal, $groupP->getGroup(), null, $eltQP);
+			}
+			catch(ServiceException $se) {
+				// extracts wrapped exception
+				$seRoot = $se->getWigiiRootException();
+				// if operation has been canceled, retries once.
+				if($seRoot->getCode() == ServiceException::OPERATION_CANCELED) {
+					$eltQP->retryAfterCancel(MySqlFacade::Q_INSERTONE, 0, $fieldSelectorList);
+					$cS->getGroupFields($principal, $groupP->getGroup(), null, $eltQP);
+				}
+				else throw $se;
+			}
+			
+			// inserts element copy
+			$dbAS = $this->getDbAdminService();
+			$dbCS = $dbAS->getDbConnectionSettings($principal);
+			$mySqlF = $this->getMySqlFacade();
+			$returnValue = 0;
+			$beforeInsertId = $element->getId();
+			$element->setId(
+					$mySqlF->insertOne($principal,
+							$this->getSqlForInsertElement($principal, $element, true),
+							$dbCS)
+					);
+			try
+			{
+				//inserts element fields values
+				$n = $eltQP->getNumberOfQueries();
+				$strategy = $eltQP->getQueryStrategy();
+				// strategy DATATYPE -> insert multiple
+				if($strategy === ElementQueryPlanner::QSTRATEGY_DATATYPE) {
+					for($i = 0; $i < $n; $i++)
+					{
+						$mySqlF->insertMultiple($principal, $eltQP->getSql($i,
+								$this->getSqlBuilderForInsertElement($principal, $strategy, $element, $beforeInsertId)),
+								$dbCS);
+					}
+				}
+				// strategy FIELD -> insert one
+				elseif($strategy === ElementQueryPlanner::QSTRATEGY_FIELD) {
+					for($i = 0; $i < $n; $i++)
+					{
+						$mySqlF->insertOne($principal, $eltQP->getSql($i,
+								$this->getSqlBuilderForInsertElement($principal, $strategy, $element, $beforeInsertId)),
+								$dbCS);
+					}
+				}
+				else throw new ElementServiceException('unsupported query strategy', ElementServiceException::UNSUPPORTED_OPERATION);
+				$eltQP->freeMemory();
+				
+				// inserts Elements_Groups relation
+				$mySqlF->insertOne($principal,
+						$this->getSqlForInsertElementGroup($element->getId(), $groupId),
+						$dbCS);
+			}
+			// if insertion error, then deletes first created element and throws exception
+			catch(Exception $e)
+			{
+				// unlocks element
+				$this->unLock($principal, $element);
+				// deletes element
+				try
+				{
+					$dbAS->deleteRows($principal,
+							$this->getSqlTableNameForDeleteElement(),
+							$this->getSqlWhereClauseForDeleteElement($principal, $element, GroupListAdvancedImpl::createInstance()->addGroupP($groupP)),
+							$dbCS);
+				}
+				catch(Exception $e1){/* does nothing, it will be automatically deleted on next delete */}
+				$element->setId($beforeInsertId);
+				throw $e;
+			}
+			// unlocks element
+			$this->unLock($principal, $element);
+			$returnValue = $element->getId();
+			$element->setId($beforeInsertId);
+		}
+		catch (ElementServiceException $ese){
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("insertElementCopy", $ese, $principal);
+			throw $ese;
+		}
+		catch (AuthorizationServiceException $asE){
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("insertElementCopy", $asE, $principal);
+			throw $asE;
+		}
+		catch(Exception $e)
+		{
+			if(isset($eltQP)) $eltQP->freeMemory();
+			$this->executionSink()->publishEndOperationOnError("insertElementCopy", $e, $principal);
+			throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+		}
+		$this->executionSink()->publishEndOperation("insertElementCopy", $principal);
+		return $returnValue;
+	}
 	protected function assertPrincipalAuthorizedForInsertElement($principal, $groupP)
 	{
 		if(is_null($principal)) throw new ElementServiceException('principal can not be null', ElementServiceException::INVALID_ARGUMENT);

@@ -2099,7 +2099,57 @@ class WigiiCoreExecutor {
 			echo ExecutionServiceImpl :: answerParamSeparator;
 		}
 		$this->openAsMessage("confirmationDialog", 300, $transS->t($p, $dbEntityName . "NotAvailable").": #".$dbEntityId, $transS->t($p, $dbEntityName . "NotAvailableExplanation"), $jsCode);
-	}	
+	}
+	/**
+	 * returns html img tag with an image corresponding to a wigii module
+	 * @param Module|String $module a valid Wigii module or modulename
+	 * @return string
+	 */
+	public function getHtmlImgForModule($p, $module){
+		if($module instanceof Module){
+			$module= $module->getModuleName();
+		}
+		//try to translate
+		$customImage = ServiceProvider::getTranslationService()->t($p, "homePage_".$module);
+		//if no translation return standard image
+		//if new module return generic image
+		if($customImage == "homePage_".$module) {
+			switch($module){
+				case "Contacts": $customImage = '<img src="images/icones/88x88/iconcontacts88x88.png" />'; break;
+				case "Filemanager": $customImage = '<img src="images/icones/88x88/iconfiles88x88.png" />'; break;
+				case "Events": $customImage = '<img src="images/icones/88x88/iconcalendar88x88.png" />'; break;
+				case "Tasks": $customImage = '<img src="images/icones/88x88/iconmultipleselection88x88.png" />'; break;
+				case "CMS": $customImage = '<img src="images/icones/88x88/cms.png" />'; break;
+				case "Help": $customImage = '<img src="images/icones/88x88/iconhelp88x88.png" />'; break;
+				case "Portal": $customImage = '<img src="images/icones/88x88/portal.png" />'; break;
+				case "Projects": $customImage = '<img src="images/icones/88x88/projects.png" />'; break;
+				case "Scripts": $customImage = '<img src="images/icones/88x88/script.png" />'; break;
+				//Wigii.org standard modules
+				case "Activities": $customImage = '<img src="images/icones/88x88/iconsubsribe88x88.png" />'; break;
+				case "Catalog": $customImage = '<img src="images/icones/88x88/activities.png" />'; break;
+				case "CatalogOrders": $customImage = '<img src="images/icones/88x88/catalogOrders.png" />'; break;
+				case "CustomerOrders": $customImage = '<img src="images/icones/88x88/customerOrders.png" />'; break;
+				case "Encashments": $customImage = '<img src="images/icones/88x88/encashments.png" />'; break;
+				case "Equipments": $customImage = '<img src="images/icones/88x88/equipments.png" />'; break;
+				case "Espace": $customImage = '<img src="images/icones/88x88/espace.png" />'; break;
+				case "LegalEntities": $customImage = '<img src="images/icones/88x88/legalEntities.png" />'; break;
+				case "Plan": $customImage = '<img src="images/icones/88x88/plan.png" />'; break;
+				case "TimeAllocation": $customImage = '<img src="images/icones/88x88/timeAllocation.png" />'; break;
+				case "Journal": $customImage = '<img src="images/icones/88x88/journal.png" />'; break;
+				case "Subscriptions": $customImage = '<img src="images/icones/88x88/iconsubsribe88x88.png" />'; break;
+				//for backward compatibility
+				case "News": $customImage = '<img src="images/icones/88x88/iconnews88x88.png" />'; break;
+				case "Musics": $customImage = '<img src="images/icones/88x88/iconmusic88x88.png" />'; break;
+				case "Worship": $customImage = '<img src="images/icones/88x88/iconmusic88x88.png" />'; break;
+				case "Programm": $customImage = '<img src="images/icones/88x88/iconapproved88x88.png" />'; break;
+				case "Transfer": $customImage = '<img src="images/icones/88x88/icontransfer88x88.png" />'; break;
+				case "Confidential": $customImage = '<img src="images/icones/88x88/iconapproved88x88.png" />'; break;
+				case "Technical": $customImage = '<img src="images/icones/88x88/book.png" />'; break;
+				default : $customImage = '<img src="images/icones/88x88/iconList.png" />';
+			}
+		}
+		return $customImage;
+	}
 	
 	/**
 	* fetches the table of elements
