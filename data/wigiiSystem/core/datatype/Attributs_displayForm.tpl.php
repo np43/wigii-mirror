@@ -454,7 +454,9 @@ if(!empty($sameAsField)) {
 			if(!$flex && strlen($label)>64) {
 				$label = substr($label, 0, 61)."...";
 			}
-			$label = str_replace(" ", "&nbsp;", $label);
+			if(!$flex){
+				$label = str_replace(" ", "&nbsp;", $label);
+			}
 			$htmlOption = "'".'<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>'."'";
 			$this->addJsCode('$("#'.$inputId.'").append('.$htmlOption.')');
 		}
@@ -521,7 +523,9 @@ else {
 			if(!$flex && strlen($label)>64) {
 				$label = substr($label, 0, 61)."...";
 			}
-			$label = str_replace(" ", "&nbsp;", $label);
+			if(!$flex){
+				$label = str_replace(" ", "&nbsp;", $label);
+			}
 			$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.$selected.' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" title="'.$labelForTitle.'" >'.$label.'</option>');
 		}
 	}
@@ -543,7 +547,9 @@ else {
 			$label = $html2text->getText();
 			$label = trim($label);
 			$labelForTitle = $label;
-			$label = str_replace(" ", "&nbsp;", $label);
+			if(!$flex){
+				$label = str_replace(" ", "&nbsp;", $label);
+			}
 			$this->put('<option '.($attribute["disabled"]=="1" ? 'disabled="on"' : "").' selected="selected" '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>');
 			$valExistsInOption = true;
 		}
@@ -555,7 +561,9 @@ else {
 		if(!$flex && strlen($label)>64) {
 			$label = substr($label, 0, 61)."...";
 		}
-		$label = str_replace(" ", "&nbsp;", $label);
+		if(!$flex){
+			$label = str_replace(" ", "&nbsp;", $label);
+		}
 		$this->put('<option selected="selected" value="'.$val.'" title="'.$labelForTitle.'" >'.$label.'</option>');
 	}	
 	// CWE 25.02.2016: displays a deprecated message to user if an old value is present in field and does not exist in the drop down anymore.

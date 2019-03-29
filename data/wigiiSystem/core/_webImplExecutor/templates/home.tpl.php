@@ -137,7 +137,7 @@ if($exec->getIdAnswer()!="workZone"){
 				foreach($moduleReorder as $module=>$roleId){
 					$haveAtLeastOneAccess =true;
 					$customImage = $this->getHtmlImgForModule($p, $module);
-					?><li class="H <?=($customImage ? "customImage" : "M ".$module);?>"><?
+					?><li class="H M <?=($customImage ? "customImage " : "").$module;?>"><?
 						if($customImage){
 							echo $customImage;
 						}
@@ -166,7 +166,7 @@ if($exec->getIdAnswer()!="workZone"){
 					if($customLabel == "homePageNamespaceLabel_".$crtWigiiNamespace) $customLabel = str_replace('%20',' ',$crtWigiiNamespace);
 					$haveAtLeastOneAccess=true;
 					$moduleReorder = reorderTabBasedOnKeyPriority($subMenu, (string)$configS->getParameter($p, null, "prioritizeModuleInHomePage"), true);
-					?><li class="H <?=($customImage ? "customImage" : "N");?>"><?
+					?><li class="H N <?=($customImage ? "customImage" : "");?>"><?
 						if($customImage){
 							echo $customImage;
 						}
@@ -176,7 +176,7 @@ if($exec->getIdAnswer()!="workZone"){
 						$tempModuleLength = count($moduleReorder);
 						foreach($moduleReorder as $module=>$roleId){
 							$customImage = $this->getHtmlImgForModule($p, $module);
-							?><li class="H sub <?=($customImage ? "customImage" : "M ".$module);?>"><?
+							?><li class="H M sub <?=($customImage ? "customImage " : "").$module;?>"><?
 								if($customImage){
 									echo $customImage;
 								}
@@ -210,7 +210,7 @@ if($exec->getIdAnswer()!="workZone"){
 					if($customLabel == $remoteNamespaceName) $customLabel = $transS->t($p, "remotePageLabel_".$remoteNamespaceName);
 					if($customLabel == "remotePageLabel_".$remoteNamespaceName) $customLabel = str_replace('%20',' ',$remoteNamespaceName);
 					$haveAtLeastOneAccess=true;
-					?><li class="H <?=($customImage ? "customImage" : "N");?>"><?
+					?><li class="H N <?=($customImage ? "customImage" : "");?>"><?
 						if($customImage){
 							echo $customImage;
 						}

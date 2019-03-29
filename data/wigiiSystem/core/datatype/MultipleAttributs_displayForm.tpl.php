@@ -202,7 +202,9 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 					if(!$chosen && strlen($label)>64) {
 						$label = substr($label, 0, 61)."...";
 					}
-					$label = str_replace(" ", "&nbsp;", $label);
+					if(!$chosen){
+						$label = str_replace(" ", "&nbsp;", $label);
+					}
 					$htmlOption = "'".'<option selected="selected" value="'.$k.'" title="'.$labelForTitle.'" >'.$label.'</option>'."'";
 					$this->addJsCode('$("#'.$inputId.'").append('.$htmlOption.')');
 				}
@@ -291,7 +293,9 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 				if(!$chosen && strlen($label)>64) {
 					$label = substr($label, 0, 61)."...";
 				}
-				$label = str_replace(" ", "&nbsp;", $label);
+				if(!$chosen){
+					$label = str_replace(" ", "&nbsp;", $label);
+				}
 				$this->put('<option  '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" '.$selected.' title="'.$labelForTitle.'" >'.$label.'</option>');
 			}
 		}
@@ -314,7 +318,9 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 					if(!$chosen && strlen($label)>64) {
 						$label = substr($label, 0, 61)."...";
 					}
-					$label = str_replace(" ", "&nbsp;", $label);
+					if(!$chosen){
+						$label = str_replace(" ", "&nbsp;", $label);
+					}
 					$this->put('<option selected="selected" value="'.$k.'" title="'.$labelForTitle.'" >'.$label.'</option>');
 				}
 			}

@@ -1,6 +1,7 @@
 /******************************
 * JQUERY-UI
 ******************************/
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus, .ui-button:hover, .ui-button:focus { border:2px solid #ccc; }
 .ui-widget { font-family: Arial,sans-serif; font-size: small; }
 /* border color, background color, and color are redefined in theme.css */
 .ui-widget { border: 2px solid #f00; background: #f00; color: #f00; }
