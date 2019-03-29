@@ -9802,7 +9802,7 @@ onUpdateErrorCounter = 0;
 				if($currentGroupId && !empty($includeGroups)) {
 					$includeGroups[$currentGroupId] = $currentGroupId;
 				}
-
+				
 				if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") != "0") {
 					$excludeGroups = (string)$configS->getParameter($p, $exec->getCrtModule(), "Group_excludeGroupsOnSearch");
 					if(!empty($excludeGroups)) {
@@ -9845,6 +9845,9 @@ onUpdateErrorCounter = 0;
 						// limitFilterInGroup
 						$inGroupModuleXml = '<limitFilterInGroup type="MultipleAttributs" chosen="1" expand="1">';
 						$inGroupModuleXml .= '<attribute>0<label>' . $transS->t($p, "allGroups") . '</label></attribute>';
+						if($currentGroupId && $currentGroupId!=0){
+							$inGroupModuleXml .= '<attribute>'.$currentGroupId.'<label>' . $transS->t($p, "crtGroup") . '</label></attribute>';
+						}
 						//get all read group
 						$groupPTreeArrayImpl->reset();
 						$groupAS->getAllGroups($p, $exec->getCrtModule(), $groupPTreeArrayImpl, $groupAS->getListFilterForSelectGroupWithoutDetail());

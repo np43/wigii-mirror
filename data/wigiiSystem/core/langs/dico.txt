@@ -959,7 +959,8 @@ sendRefByEmail:Send a direct link to #thisElement# by email.:Envoyer un lien dir
 sendRefByEmailObject:Link to #anElement#:Lien vers #anElement#:::::::::
 sendRefByEmailText:Direct link to #element#\::Lien direct vers #element#\::::::::::
 rootGroup:Root #group#:#Group# racine:::::::::
-allGroups:All #groups#:Tous les #groups#:::::::::
+allGroups:All #groups#:Tous #groups#:::::::::
+crtGroup:Current #group#:#Group# courant::::::::
 shareElement:Share:Partager:::::::::
 shareElements:Organize:Organiser:::::::::
 transferElements:Share:Partager:::::::::
