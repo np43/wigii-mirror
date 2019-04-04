@@ -76,7 +76,7 @@ if($exec->getCrtAction()=="element"){
 <meta name="Copyright" content="Source Code: 2017 Wigii.org" />
 <meta name="License" content="GNU GPL 3.0" />
 <meta name="Generator" content="Wigii® software" />
-<meta name="Description" content="Wigii® is a web based system allowing management of any kind of data (contact, document, calendar, and any custom types). Find out documentation on http://www.wigii-system.net" />
+<meta name="Description" content="Wigii® is a web based software allowing management of any kind of data (contact, document, calendar, and any custom types). Find out documentation on http://www.wigii-system.net" />
 <?
 if(defined("PREVENT_INDEXING") && PREVENT_INDEXING){
 ?>
