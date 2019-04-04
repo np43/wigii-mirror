@@ -1,6 +1,6 @@
 @echo off
 REM
-REM This file is part of Wigii.
+REM This file is part of Wigii (R) software.
 REM Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
 REM 
 REM Wigii is free software: you can redistribute it and/or modify it 
@@ -52,5 +52,8 @@ echo. >> ..\wigii-ncd-core.css
 type "..\wigii-ncd-stdlib.css" >> ..\wigii-ncd-core.css
 
 java -jar yuicompressor-2.4.7.jar -o ..\wigii-ncd-core.min.css ..\wigii-ncd-core.css
+
+rem copy ..\wigii-ncd-core.js C:\Users\Camille\Documents\dev\php-src\Wigii_git\www\assets\js
+rem copy ..\wigii-ncd-stdlib.css C:\Users\Camille\Documents\dev\php-src\Wigii_git\www\assets\css
 
 pause

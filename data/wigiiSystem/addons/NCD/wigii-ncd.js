@@ -1,5 +1,5 @@
 /*!
- *  This file is part of Wigii.
+ *  This file is part of Wigii (R) software.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  
  *  Wigii is free software: you can redistribute it and/or modify it 
@@ -438,7 +438,7 @@
 			 *@param Function onClick the on click callback, compatible with JQuery onClick signature
 			 *@param String cssClass some classes to be added to the button
 			 *@param String id optional HTML ID
-			 *@param Any context an optional context to be passed to the click callback (as last parameter)
+			 *@param mixed context an optional context to be passed to the click callback (as last parameter)
 			 */
 			self.putButton = function(label, onClick, cssClass, id, context){
 				self.htmlTree.push(wigiiNcd.getHtmlBuilder().putStartTag('button','id',(id?id:''),'class',self.emittedClass()+(cssClass?' '+cssClass:'')).html());
@@ -1570,7 +1570,7 @@
 			
 			/**
 			 * Adds an item at the end of the list
-			 *@param Any item a piece of data of same nature as the other ones in the list and that can be rendered using the itemRenderer function
+			 *@param mixed item a piece of data of same nature as the other ones in the list and that can be rendered using the itemRenderer function
 			 *@return wncd.UnorderedList for chaining
 			 */
 			self.add = function(item) {
@@ -2599,7 +2599,7 @@
 		 * };
 		 *@example wigii().sel(rangeGen(-10,10,2),[power(3),sum])
 		 *@see WigiiApi.sel method
-		 *@return Any the data flow result
+		 *@return mixed the data flow result
 		*/},
 		wigiiNcd.sel = function(source,activities) { 
 			if(!window.wigii) throw wigiiNcd.createServiceException('wigii Api is not loaded, sel fonction is not supported.', wigiiNcd.errorCodes.UNSUPPORTED_OPERATION);
@@ -3333,7 +3333,7 @@
 	 * JQuery Wigii NCD plugin
 	 * @param String cmd selects a service or a command in the Wigii NCD library which accepts a jQuery collection
 	 * @param Object options a map of configuration options to be passed to the called service.
-	 * @return JQuery|Any returns the service or command result if defined, or the JQuery collection if no specific result.
+	 * @return JQuery|mixed returns the service or command result if defined, or the JQuery collection if no specific result.
 	 */
 	$.fn.wncd = function(cmd, options) {
 		var wncd = wigiiNcd();		

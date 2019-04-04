@@ -1,6 +1,6 @@
 <?php
 /**
- *  This file is part of Wigii.
+ *  This file is part of Wigii (R) software.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  
  *  Wigii is free software: you can redistribute it and/or modify it 
@@ -29,8 +29,7 @@
  */
 header("X-Frame-Options: SAMEORIGIN");
 header("Content-Type: text/html; charset=UTF-8");
-?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
+?><!DOCTYPE html>
 <HTML>
 <HEAD>
 <script type="text/javascript" >
@@ -96,7 +95,7 @@ self.location.reload();
 </script>
 </HEAD>
 <BODY>
-Wigii is a web based system allowing management of any kind of data (contact, document, calendar, and any custom types). Find out documentation on <a href="http://www.wigii-system.net">http://www.wigii-system.net</a>.
+Wigii® is a web based software allowing management of any kind of data (contact, document, calendar, and any custom types). Find out documentation on <a href="http://www.wigii-system.net">http://www.wigii-system.net</a>.
 </BODY>
 </HTML><?
 

@@ -1,6 +1,6 @@
 @echo off
 REM
-REM This file is part of Wigii.
+REM This file is part of Wigii (R) software.
 REM Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
 REM 
 REM Wigii is free software: you can redistribute it and/or modify it 

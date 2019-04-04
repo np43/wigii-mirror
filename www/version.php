@@ -1,6 +1,6 @@
 <?php
 /**
- *  This file is part of Wigii.
+ *  This file is part of Wigii (R) software.
  *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
  *  
  *  Wigii is free software: you can redistribute it and/or modify it 
@@ -27,7 +27,7 @@
  * and specific version type including customer name and revision number
  */
 define("VERSION_NUMBER", "4.714");
-define("REVISION_NUMBER", "G400");
-define("ASSET_REVISION_NUMBER", "G397"); // this token will be used to load wigii_...js and wigii_...css
+define("REVISION_NUMBER", "G403");
+define("ASSET_REVISION_NUMBER", "G403"); // this token will be used to load wigii_...js and wigii_...css
 define("VERSION_TYPE", ""); // use the version type to version the customer customization, for example 'MyCompany R1234'
 define("VERSION_LABEL", "Wigii ® software, v.".VERSION_NUMBER." ".REVISION_NUMBER." ".VERSION_TYPE." A-".ASSET_REVISION_NUMBER);

@@ -8,7 +8,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 '**
-'*  This file is part of Wigii.
+'*  This file is part of Wigii (R) software.
 '*  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
 '*
 '*  Wigii is free software: you can redistribute it and/or modify it
