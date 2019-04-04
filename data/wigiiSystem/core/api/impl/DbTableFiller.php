@@ -53,8 +53,8 @@ class DbTableFiller extends ElementPMapper implements RecordStructureFactory
 	// Object life cycle
 
 	/**
-	 * @param $dbTable DB table model of the table to be created or inserted
-	 * @param $createTable if true then does CREATE TABLE SELECT 
+	 * @param DbTable $dbTable DB table model of the table to be created or inserted
+	 * @param boolean $createTable if true then does CREATE TABLE SELECT 
 	 * 					   else does INSERT INTO TABLE SELECT 
 	 */
 	public static function createInstance($principal, $dbTable, $createTable=MANDATORY_ARG)
@@ -101,8 +101,8 @@ class DbTableFiller extends ElementPMapper implements RecordStructureFactory
 	
 	/**
 	 * Adds a temp table to the list of currently created temp tables
-	 * @param $tempTable the table model
-	 * @param $nbRows the number of rows contained in the temp table.
+	 * @param DbTable $tempTable the table model
+	 * @param int $nbRows the number of rows contained in the temp table.
 	 */
 	public function addTempTable($tempTable, $nbRows) {
 		$tempTableName = $tempTable->getTableNameWithDbName();

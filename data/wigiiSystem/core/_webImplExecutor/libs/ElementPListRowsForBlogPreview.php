@@ -308,12 +308,10 @@ class ElementPListRowsForBlogPreview implements ElementPList, DataFlowActivity {
 	}
 	
 	public function startOfStream($dataFlowContext) {
-		// checks ConfigService injection
-		if(!isset($this->configService)) {
-			$apiClient = $dataFlowContext->getAttribute('GroupBasedWigiiApiClient');
-			if(isset($apiClient)) $this->setConfigService($apiClient->getConfigService());
-			if(!isset($this->configService)) throw new DataFlowServiceException('ConfigService is not set, please inject one', DataFlowServiceException::CONFIGURATION_ERROR);
-		}
+	    $apiClient = $dataFlowContext->getAttribute('GroupBasedWigiiApiClient');
+	    if(isset($apiClient)) $this->setConfigService($apiClient->getConfigService());
+	    // checks ConfigService injection
+	    if(!isset($this->configService)) throw new DataFlowServiceException('ConfigService is not set, please inject one', DataFlowServiceException::CONFIGURATION_ERROR);
 		// checks Principal injection
 		if(!isset($this->p)) {
 			$this->setP($dataFlowContext->getPrincipal());			

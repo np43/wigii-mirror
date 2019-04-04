@@ -581,8 +581,8 @@ class DataFlowServiceImpl implements DataFlowService
 	
 	/**
 	 * Returns a recycled or new DataFlowContext
-	 * @param $principal authenticated user performing the operation
-	 * @param $dataFlowActivitySelectorList cannot be null or empty
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param DataFlowActivitySelectorList $dataFlowActivitySelectorList cannot be null or empty
 	 */
 	protected function getDataFlowContext($principal, $dataFlowActivitySelectorList) {
 		if(is_null($dataFlowActivitySelectorList) || $dataFlowActivitySelectorList->isEmpty())
@@ -820,8 +820,8 @@ class DataFlowServiceImpl implements DataFlowService
 
 	/**
 	 * Returns the next step ID in the chain of DataFlowActivities in this context
-	 * @param $stepId the current step ID
-	 * @param $dataFlowContext the current DataFlowContext
+	 * @param int $stepId the current step ID
+	 * @param DataFlowContext $dataFlowContext the current DataFlowContext
 	 */
 	protected function getNextStepId($stepId, $dataFlowContext) {
 		if(is_null($dataFlowContext)) throw new DataFlowServiceException("DataFlowContext cannot be null", DataFlowServiceException::INVALID_ARGUMENT);
@@ -833,7 +833,7 @@ class DataFlowServiceImpl implements DataFlowService
 
 	/**
 	 * Returns the first step ID in the chain of DataFlowActivities in this context
-	 * @param $dataFlowContext the current DataFlowContext
+	 * @param DataFlowContext $dataFlowContext the current DataFlowContext
 	 */
 	protected function getFirstStepId($dataFlowContext) {
 		return 0;
@@ -841,9 +841,9 @@ class DataFlowServiceImpl implements DataFlowService
 
 	/**
 	 * Returns the cached DataFlowActivity used for this current step
-	 * @param $stepId the current step ID
-	 * @param $contextId the current context ID
-	 * @return a DataFlowActivity instance or null if not defined
+	 * @param int $stepId the current step ID
+	 * @param int $contextId the current context ID
+	 * @return DataFlowActivity a DataFlowActivity instance or null if not defined
 	 */
 	protected function getOpenedDataFlowActivityForStep($stepId, $contextId) {
 		// retrieves the data flow
@@ -858,9 +858,9 @@ class DataFlowServiceImpl implements DataFlowService
 
 	/**
 	 * Caches the DataFlowActivity used for this current step
-	 * @param $stepId the current step ID
-	 * @param $contextId the current context ID
-	 * @param $dataFlowActivity the DataFlowActivity instance linked to this current step
+	 * @param int $stepId the current step ID
+	 * @param int $contextId the current context ID
+	 * @param DataFlowActivity $dataFlowActivity the DataFlowActivity instance linked to this current step
 	 */
 	protected function storeOpenedDataFlowActivityForStep($stepId, $contextId, $dataFlowActivity) {
 		// retrieves the data flow
@@ -951,9 +951,9 @@ class DataFlowServiceImpl implements DataFlowService
 	 * Resets the internal data source cache
 	 */
 	public function clearDataSourceCache() {
-	    $this->executionSink()->publishStartOperation('clearDataSourceCache', $principal);
+	    $this->executionSink()->publishStartOperation('clearDataSourceCache');
 	    $this->dataSourceCache = array();
-	    $this->executionSink()->publishEndOperation('clearDataSourceCache', $principal);
+	    $this->executionSink()->publishEndOperation('clearDataSourceCache');
 	}
 	
 	protected function cacheDataSource($principal, $cacheKey, $source, $freeMemoryOfSource=true, $wigiiEventsSubscriber=null) {

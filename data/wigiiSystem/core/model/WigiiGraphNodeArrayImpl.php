@@ -288,7 +288,7 @@ class WigiiGraphNodeArrayImpl extends Model implements WigiiGraphNode {
 			if(is_array($exceptTheseLinkNames)) {
 				$exceptTheseLinkNames = array_combine($exceptTheseLinkNames, $exceptTheseLinkNames);
 				$oldLinks = array_diff_key($this->links, $exceptTheseLinkNames);
-				$this->links = array_intersect_key($this->links, $exceptTheseKeys);
+				$this->links = array_intersect_key($this->links, $exceptTheseLinkNames);
 				if(isset($this->linkAttributes)) {
 					if(isset($l)) $oldLinkAttributes = array_diff_key($this->linkAttributes, $exceptTheseLinkNames);
 					$this->linkAttributes = array_intersect($this->linkAttributes, $exceptTheseLinkNames);

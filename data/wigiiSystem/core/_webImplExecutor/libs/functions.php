@@ -36,18 +36,24 @@
 class File{
 	public static function list_dirs($dir,$prefix=""){
 		$dir_dirs = File::scan_dir($dir);
+		$dirs=null;
 		foreach($dir_dirs as $d){
 			if(is_dir($dir . $d) && File::check_filter($d,"",$prefix) && $d != "." && $d != "..")
-				$dirs[] = $d;
+			    if(!isset($dirs)) $dirs=array();
+			    $dirs[] = $d;
 		}
 		return $dirs;
 	}
 
 	public static function list_files($dir,$ext_filter="",$prefix=""){
 		$dir_files = File::scan_dir($dir);
-		foreach($dir_files as $file){
-			if(is_file($dir . $file) && File::check_filter($file,$ext_filter,$prefix))
-				$files[] = $file;
+		$files=null;
+		if(!empty($dir_files)) {
+    		foreach($dir_files as $file){
+    			if(is_file($dir . $file) && File::check_filter($file,$ext_filter,$prefix))
+    			    if(!isset($files)) $files=array();
+    			    $files[] = $file;
+    		}
 		}
 		return $files;
 	}
@@ -56,11 +62,12 @@ class File{
 		$dh  = opendir($dir);
 		$files = null;
 		if($dh){ //if directory does not exist return null;
+		    $files=array();
 			while (false !== ($filename = readdir($dh))) {
-				$files[] = $filename;
+			    // CWE 02.04.2019: skips current and parent directories
+			    if($filename!='..' && $filename!='.') $files[] = $filename;
 			}
 		}
-
 		return $files;
 	}
 
@@ -68,6 +75,7 @@ class File{
 		if(is_string($ext_filter) && !empty($ext_filter))
 			$ext_filter = array($ext_filter);
 
+		$ext_check=false;
 		if(is_array($ext_filter)){
 			foreach($ext_filter as $ext){
 				$ext_length = (int) strlen($ext);

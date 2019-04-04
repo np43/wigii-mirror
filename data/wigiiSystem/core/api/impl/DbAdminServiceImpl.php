@@ -570,7 +570,7 @@ class DbAdminServiceImpl implements DbAdminService
 	
 	/**
 	 * Get the list of locked ids.
-	 * @param $dbEntity can be either DbEntity or ObjectList of DbEntity
+	 * @param DbEntity|ObjectList $dbEntity can be either DbEntity or ObjectList of DbEntity
 	 * If dbEntity is a list, then lock is checked on all objects.
 	 * returns array of ids of locked items
 	 */
@@ -638,7 +638,7 @@ class DbAdminServiceImpl implements DbAdminService
 	
 	/**
 	 * Locks the dbEntity/s
-	 * @param $dbEntity can be either DbEntity or ObjectList of DbEntity
+	 * @param DbEntity|ObjectList $dbEntity can be either DbEntity or ObjectList of DbEntity
 	 */
 	public function lock($principal, $tableName, $dbEntity, $transfer=false)
 	{
@@ -861,7 +861,7 @@ class DbAdminServiceImpl implements DbAdminService
 
 	/**
 	 * unLocks the dbEntity/s
-	 * @param $dbEntity can be either DbEntity or ObjectList of DbEntity
+	 * @param DbEntity|ObjectList $dbEntity can be either DbEntity or ObjectList of DbEntity
 	 */
 	public function unLock($principal, $tableName, $dbEntity)
 	{
@@ -1135,8 +1135,8 @@ class DbAdminServiceImpl implements DbAdminService
 		$sqlB->setTableForUpdate($this->getTempTablesIndexName());
 		if(isset($newLeaseTime)) {
 			if(!($newLeaseTime > 0)) throw new DbAdminServiceException('newLeaseTime should be a positive integer or equal to null', DbAdminServiceException::INVALID_ARGUMENT);
-			$sqlB->updateValue('leaseTime', $leaseTime, MySqlQueryBuilder::SQLTYPE_INT);
-			$sqlB->updateValue('expirationDate', time()+60*$leaseTime, MySqlQueryBuilder::SQLTYPE_DATETIME);
+			$sqlB->updateValue('leaseTime', $newLeaseTime, MySqlQueryBuilder::SQLTYPE_INT);
+			$sqlB->updateValue('expirationDate', time()+60*$newLeaseTime, MySqlQueryBuilder::SQLTYPE_DATETIME);
 		}
 		else {
 			$sqlB->updateValue('expirationDate', 'DATE_ADD(NOW(), INTERVAL leaseTime MINUTE)', MySqlQueryBuilder::SQLTYPE_SQLEXP);

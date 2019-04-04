@@ -54,6 +54,8 @@ $xmlVal = function($xml,$xpath,$attrName=null,$dataType="string") use($medidataX
 };
 $tiersXml = $options->getValue('invoiceTiersXml');
 $treatmentXml = $xmlVal($medidataXml,'/request/payload/body/treatment',null,'xml');
+$doctimestamp = $xmlVal($medidataXml,'/request/payload/invoice','request_timestamp');
+if($options->getValue('invoiceType')=='reminder') $doctimestamp = $xmlVal($medidataXml,'/request/payload/reminder','request_timestamp');
 
 ?><!DOCTYPE html>
 <html>
@@ -152,7 +154,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
         	<div class="field noFieldset" style="width:50%;"><div class="value fieldGroup" style="width:100%;">
             	<div class="field patient">
                 	<div class="label">Identification</div>
-                	<div class="value"><?=$xmlVal($medidataXml,'/request/payload/invoice','request_timestamp').'&nbsp;&#183;&nbsp;'.date('d.m.Y H:i:s',$xmlVal($medidataXml,'/request/payload/invoice','request_timestamp'))?></div>
+                	<div class="value"><?=$doctimestamp.'&nbsp;&#183;&nbsp;'.date('d.m.Y H:i:s',$doctimestamp)?></div>
                 </div>
             </div></div>
             <div class="field noFieldset" style="width:50%;"><div class="value fieldGroup" style="width:100%;">

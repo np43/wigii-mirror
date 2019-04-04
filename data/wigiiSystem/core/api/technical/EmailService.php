@@ -32,10 +32,10 @@ interface EmailService {
 	
 	/**
 	 * send the WigiiEmail
-	 * @param $p
-	 * @param $email : WigiiEmail
-	 * @param $mergeData = null, array(key:email->value:array(key:merge field->value:merge data))
-	 * @return nb of asynch emails to send
+	 * @param Principal $p
+	 * @param WigiiEmail $email : WigiiEmail
+	 * @param array $mergeData = null, array(key:email->value:array(key:merge field->value:merge data))
+	 * @return int nb of asynch emails to send
 	 */
 	public function send($p, $email, $mergeData=null);
 	

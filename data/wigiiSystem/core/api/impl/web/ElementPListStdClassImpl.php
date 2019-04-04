@@ -417,7 +417,7 @@ class ElementPListStdClassImpl extends ElementPGroupableSelectablePagedListImpl 
 	 *	      attributes: { any attributes defined in xml config file },
 	 *	      0..1 (if dataType is Attributs or MultipleAttributs) cfgAttributs: {
 	 *	        * value: {
-	 *	          value: Scalar, the value of the drop-down attribute,
+	 *	          value: String|Number, the value of the drop-down attribute,
 	 *	          label: String, a label for the end user (already translated),
 	 *	          attributes: { an optional map of attributes }
 	 *	        }

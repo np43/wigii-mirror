@@ -74,7 +74,9 @@ class SubElementSelector extends Model {
 	 * @return LinkSelectorList link selector list from root element to subelement.
 	 * Only the field name is defined in each LinkSelector objects.
 	 */
-	public function getConfigPath();
+	public function getConfigPath(){
+	    ServiceException::throwNotImplemented();
+	}
 	
 	/**
 	 * Sets the module of the selected subelement
@@ -126,7 +128,7 @@ class SubElementSelector extends Model {
 	 * Specifies a FieldSelectorList that should be used by the element lazy loader when fetching subelement
 	 * parents of the given module.
 	 * @param Module|String $module the module to which associate a FieldSelectorList
-	 * @param FielSelectorList $fieldSelectorList the field selector list specifying the fields that should be fetched for this module. 
+	 * @param FieldSelectorList $fieldSelectorList the field selector list specifying the fields that should be fetched for this module. 
 	 */
 	public function setFieldSelectorListByModule($module, $fieldSelectorList) {
 		if($module instanceof Module) $moduleName = $module->getModuleName();

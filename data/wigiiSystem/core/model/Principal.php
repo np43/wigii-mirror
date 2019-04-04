@@ -163,7 +163,7 @@ class Principal extends Model
 
 	/**
 	 * Creates a principal based on an array of attributes
-	 * @param $userDatas an array of attributes. Each attribute name should be equivalent to a setter without the prefix 'set'
+	 * @param array $userDatas an array of attributes. Each attribute name should be equivalent to a setter without the prefix 'set'
 	 */
 	public static function createInstanceFromArray($userDatas){
 		$p = self::createInstance();
@@ -806,7 +806,7 @@ class Principal extends Model
 	 * Changes the actual wigii namespace of this principal instance to a new one
 	 * This operation should be authorized by the call to AuthorizationService->assertPrincipalAuthorized(this, "Principal", "changeWigiiNamespace")
 	 * If the AuthorizationService accepts then, does the change else throws AuthorizationServiceException with FORBIDDEN code if not.
-	 * @param $newWigiiNamespace new Wigii namespace instance
+	 * @param WigiiNamespace $newWigiiNamespace new Wigii namespace instance
 	 */
 	public function changeWigiiNamespace($newWigiiNamespace) {
 		if($this->getWigiiNamespace() !== $newWigiiNamespace) {
@@ -819,7 +819,7 @@ class Principal extends Model
 	 * Adds a new module to the actual ModuleAccess list.
 	 * This operation should be authorized by the call to AuthorizationService->assertPrincipalAuthorized(this, "Principal", "addAccessToModule")
 	 * If the AuthorizationService accepts then, does the change else throws AuthorizationServiceException with FORBIDDEN code if not.
-	 * @param $module the module instance for which the principal should have access
+	 * @param Module $module the module instance for which the principal should have access
 	 */
 	public function addAccessToModule($module) {
 		if(is_null($this->username)) throw new ServiceException("no username defined, first define one", ServiceException::INVALID_STATE);

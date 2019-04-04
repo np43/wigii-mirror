@@ -394,7 +394,7 @@ WHERE $statusCd AND (E.sys_lockId IS NULL OR (E.sys_lockMicroTime + ".$this->get
 	 * @param $p
 	 * @param $email : WigiiEmail
 	 * @param $mergeData = null, array(key:email->value:array(key:merge field->value:merge data))
-	 * @return nb of asynch emails to send
+	 * @return int nb of asynch emails to send
 	 */
 	public function send($principal, $email, $mergeData=null){
 		$this->executionSink()->publishStartOperation("send", $principal);

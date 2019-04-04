@@ -475,7 +475,7 @@ abstract class Record extends DbEntityInstance
 	 * returns a translated label of the field with in () the result
 	 * of the redirection if it exist.
 	 * if no value is found returns false!
-	 * @param $attribute SimpleXml node on wihch the redirect attribut is set
+	 * @param SimpleXMLElement $attribute node on which the redirect attribut is set
 	 * this method can be used either on an attribut of a select, either on any
 	 * other field.
 	 */

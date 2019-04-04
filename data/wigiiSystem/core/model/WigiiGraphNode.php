@@ -51,8 +51,8 @@ interface WigiiGraphNode {
 	
 	/**
 	 * Characterizes this node with an attribute
-	 * @param $key the attribute key
-	 * @param $val the attribute value. Accepts null. Any existing value under the given key is replaced.
+	 * @param String $key the attribute key
+	 * @param mixed $val the attribute value. Accepts null. Any existing value under the given key is replaced.
 	 */
 	public function setAttribute($key, $val);
 	/**
@@ -81,7 +81,7 @@ interface WigiiGraphNode {
 	/**
 	 * Removes the given node attributes if defined
 	 * Ignores invalid keys.
-	 * @param $keys an array of keys or one single key
+	 * @param array $keys an array of keys or one single key
 	 */
 	public function removeAttributes($keys);
 	/**
@@ -93,7 +93,7 @@ interface WigiiGraphNode {
 	 * Links the node to another node under a given link name
 	 * If a link already exists under this name, the linked node is replaced
 	 * Also accepts null. In that case, the link is destroyed (with all its attributes).
-	 * @param $keepExistingAttributes optional parameter. 
+	 * @param boolean $keepExistingAttributes optional parameter. 
 	 * If true, then any existing link attributes under the given link name are preserved for the new linked node, else removes any link attributes.
 	 */
 	public function setLink($linkName, $wigiiGraphNode, $keepExistingAttributes=false);
@@ -126,63 +126,63 @@ interface WigiiGraphNode {
 	/**
 	 * Removes the given links if defined
 	 * Ignores invalid names.
-	 * @param $linkNames an array of link names or one single link name
+	 * @param array $linkNames an array of link names or one single link name
 	 */
 	public function removeLinks($linkNames);
 	/**
 	 * Removes all links, except the given array of link names if defined
-	 * @param $exceptTheseLinkNames an array of link names or one single link name
+	 * @param array $exceptTheseLinkNames an array of link names or one single link name
 	 */
 	public function removeAllLinks($exceptTheseLinkNames=null);
 	
 	/**
 	 * Characterizes the link with an attribute
-	 * @param $linkName the name of the link for which to set an attribute. The link must exist, else throws an InvalidArgument Exception
-	 * @param $attrKey the attribute key
-	 * @param $attrVal the attribute value. Accepts null. Any existing value under the given key is replaced.
+	 * @param String $linkName the name of the link for which to set an attribute. The link must exist, else throws an InvalidArgument Exception
+	 * @param String $attrKey the attribute key
+	 * @param mixed $attrVal the attribute value. Accepts null. Any existing value under the given key is replaced.
 	 */
 	public function setLinkAttribute($linkName, $attrKey, $attrVal);
 	/**
 	 * Sets the attributes for a given link as defined the given array. 
 	 * Uses the array key as attribute keys and the array values as attribute values.
 	 * The values are shallow copied from the given array.
-	 * @param $linkName the name of the link for which to set the attributes. The link must exist, else throws an InvalidArgument Exception.
+	 * @param String $linkName the name of the link for which to set the attributes. The link must exist, else throws an InvalidArgument Exception.
 	 */
 	public function setLinkAttributesFromArray($linkName, $attributes);
 	/**
 	 * Returns the value of an attribute for a given link or null if the attribute is not defined.
-	 * @param $linkName the name of the link for which to retrieve the attribute value. The link must exist, else throws an InvalidArgument Exception.
-	 * @param $attrKey the name of the key for which to retrieve the attribute value.
-	 * @return the attribute value or null if the key is not defined
+	 * @param String $linkName the name of the link for which to retrieve the attribute value. The link must exist, else throws an InvalidArgument Exception.
+	 * @param String $attrKey the name of the key for which to retrieve the attribute value.
+	 * @return mixed the attribute value or null if the key is not defined
 	 */
 	public function getLinkAttribute($linkName, $attrKey);
 	/**
 	 * Returns an iterator on the list of attributes attached to this link
 	 * The iterator is compatible with the foreach control structure : foreach(WigiiGraphNode->getLinkAttributeIterator($linkName) as $key=>$val){...}
-	 * @param $linkName the name of the link for which to retrieve the attribute values. The link must exist, else throws an InvalidArgument Exception.
+	 * @param String $linkName the name of the link for which to retrieve the attribute values. The link must exist, else throws an InvalidArgument Exception.
 	 */
 	public function getLinkAttributesIterator($linkName);
 	/**
 	 * Returns true if this link has some attributes defined (only counts the existence of keys, not the values)
-	 * @param $linkName the name of the link for which to checks the existence of attributes. The link must exist, else throws an InvalidArgument Exception.
+	 * @param String $linkName the name of the link for which to checks the existence of attributes. The link must exist, else throws an InvalidArgument Exception.
 	 */
 	public function hasLinkAttributes($linkName);
 	/**
 	 * Returns the number of attributes attached to this link. Only counts the existence of keys, not the values.
-	 * @param $linkName the name of the link for which to count the attributes. The link must exist, else throws an InvalidArgument Exception.
+	 * @param String $linkName the name of the link for which to count the attributes. The link must exist, else throws an InvalidArgument Exception.
 	 */
 	public function countLinkAttributes($linkName);
 	/**
 	 * Removes the given link attributes if defined
 	 * Ignores invalid keys.
-	 * @param $linkName the name of the link for which to remove the attributes. The link must exist, else throws an InvalidArgument Exception.
-	 * @param $keys an array of keys or one single key
+	 * @param String $linkName the name of the link for which to remove the attributes. The link must exist, else throws an InvalidArgument Exception.
+	 * @param array $keys an array of keys or one single key
 	 */
 	public function removeLinkAttributes($linkName, $keys);
 	/**
 	 * Removes all link attributes, except the given array of keys if defined
-	 * @param $linkName the name of the link for which to remove the attributes. The link must exist, else throws an InvalidArgument Exception.
-	 * @param $exceptTheseKeys an array of keys or one single key
+	 * @param String $linkName the name of the link for which to remove the attributes. The link must exist, else throws an InvalidArgument Exception.
+	 * @param array $exceptTheseKeys an array of keys or one single key
 	 */
 	public function removeAllLinkAttributes($linkName, $exceptTheseKeys=null);		
 }

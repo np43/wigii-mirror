@@ -340,7 +340,7 @@ class UserDetail extends Model
 	}
 
 	/**
-	 * @param $fullModuleAccess will be the moduleAccess used when wigiiNamespace creator or moduleEditor
+	 * @param array $fullModuleAccess will be the moduleAccess used when wigiiNamespace creator or moduleEditor
 	 * $intersectWithFullModuleAccess = false, if true the groupCreator etc are intersected with it. This should be done only from the SuperAdmin
 	 */
 	public function calculateAdminLevelRights($fullModuleAccess, $intersectWithFullModuleAccess=false){

@@ -276,8 +276,8 @@ class SubElementInMemoryList extends Model implements ObjectList
 	private $rootConfigSelector;
 	/**
 	 * 
-	 * @param unknown $parentElement
-	 * @param unknown $linkFieldName
+	 * @param Element $parentElement
+	 * @param String $linkFieldName
 	 * @param string $rootConfigSelector
 	 * @throws ListException
 	 */
@@ -364,7 +364,7 @@ class SubElementInMemoryList extends Model implements ObjectList
 	
 	/**
 	 * Processes the sub element list through the given set of DataFlowActivities
-	 * @return Any|SubElementInMemoryList returns the return value of the data flow or 
+	 * @return mixed|SubElementInMemoryList returns the return value of the data flow or 
 	 * the list itself if the data flow did not return anything. 
 	 */
 	public function process($dataFlowActivitySelectorList) {

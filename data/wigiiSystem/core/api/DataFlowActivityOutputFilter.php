@@ -47,7 +47,7 @@ interface DataFlowActivityOutputFilter
 	
 	/**
 	 * Injects a dependency on the DataFlow context to let the filter manage output
-	 * @param $dataFlowActivity a reference to parent DataFlowActivity
+	 * @param DataFlowActivity $dataFlowActivity a reference to parent DataFlowActivity
 	 */
 	public function setDataFlowContext($dataFlowContext, $dataFlowActivity);
 }

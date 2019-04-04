@@ -184,7 +184,7 @@ class MatrixRecordImpl extends Model implements Matrix {
 	 * @param String $rowId row selector
 	 * @param String $colId column selector
 	 * @param String $subFieldName Field subfield name for which to get the value. If not defined, assumes 'value' subfield.
-	 * @return Scalar|Array
+	 * @return String|Number|Array
 	 */
 	public function getValue($rowId, $colId, $subFieldName = null) {
 		$fieldName = $this->getFieldName($rowId, $coldId);
@@ -213,7 +213,7 @@ class MatrixRecordImpl extends Model implements Matrix {
 	 * Sets the value of a matrix cell stored in the underlying Record field.
 	 * @param String $rowId row selector
 	 * @param String $colId column selector
-	 * @param Scalar|Array $val value to be set
+	 * @param String|Number|Array $val value to be set
 	 * @param String $subFieldName Field subfield name for which to set the value. If not defined, assumes 'value' subfield.
 	 */
 	public function setValue($rowId, $colId, $val, $subFieldName = null) {
@@ -286,7 +286,7 @@ class MatrixRecordImpl extends Model implements Matrix {
 	
 	/**
 	 * @see Matrix::addRow()
-	 * @param $header always ignored in case of MatrixRecordImpl 
+	 * @param mixed $header always ignored in case of MatrixRecordImpl 
 	 */
 	public function addRow($rowId, $header=null) {
 		if(empty($rowId)) throw new ListException('rowId cannot be null', ListException::INVALID_ARGUMENT);
@@ -306,7 +306,7 @@ class MatrixRecordImpl extends Model implements Matrix {
 	}
 	/**
 	 * @see Matrix::addCol()
-	 * @param $header always ignored in case of MatrixRecordImpl
+	 * @param mixed $header always ignored in case of MatrixRecordImpl
 	 */
 	public function addCol($colId, $header=null) {
 		if(empty($colId)) throw new ListException('colId cannot be null', ListException::INVALID_ARGUMENT);

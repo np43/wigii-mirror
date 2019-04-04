@@ -108,7 +108,6 @@ class SameAsFieldConfigController implements ConfigController
 	 */
 	private function copyAttributes($source, $destination) {
 		$destination = dom_import_simplexml($destination);
-		if($beforeNode !== null) $beforeNode = dom_import_simplexml($beforeNode);
 		foreach($source->children() as $attribute) {
 			if($attribute->getName() == 'label') continue;
 			$attribute = dom_import_simplexml($attribute);

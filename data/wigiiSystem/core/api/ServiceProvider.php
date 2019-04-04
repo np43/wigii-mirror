@@ -141,8 +141,8 @@ class ServiceProvider
 	 * each created object of the given class.
 	 * Note that not all classes support this dynamic configuration pattern,
 	 * this depends of the implementation decision took in each createXXX method.
-	 * @param $className the class name for which to apply the configuration when objects are instanciated
-	 * @param $objectConfigurator an ObjectConfigurator instance which is used to configure the new created instance
+	 * @param string $className the class name for which to apply the configuration when objects are instanciated
+	 * @param ObjectConfigurator $objectConfigurator an ObjectConfigurator instance which is used to configure the new created instance
 	 */
 	public static function configureClass($className, $objectConfigurator) {
 		TechnicalServiceProvider::configureClass($className, $objectConfigurator);
@@ -153,7 +153,7 @@ class ServiceProvider
 	 * each created object of the given classes
 	 * Note that not all classes support this dynamic configuration pattern,
 	 * this depends of the implementation decision took in each createXXX method.
-	 * @param $classConfigurations an array with key=className, value=ObjectConfigurator instance
+	 * @param array $classConfigurations an array with key=className, value=ObjectConfigurator instance
 	 */
 	public static function configureClasses($classConfigurations) {
 		TechnicalServiceProvider::configureClasses($classConfigurations);
@@ -162,7 +162,7 @@ class ServiceProvider
 	/**
 	 * Configures a given object instance using 
 	 * the stored configuration if exists.
-	 * @param $obj any object
+	 * @param Object $obj any object
 	 */
 	public static function configureObject($obj) {
 		TechnicalServiceProvider::configureObject($obj);
@@ -1038,6 +1038,8 @@ class ServiceProvider
 	 * tries to apply any stored configuration
 	 */
 	protected function createWigiiObjectInstance($className) {
+	    // CWE 28.03.2019 sanitizes path in class name
+	    $className = str_replace(array('../','..\\'), '', $className);
 		wigii_autoload($className);
 		$returnValue = new $className();
 		// sets any configuration
@@ -1075,7 +1077,7 @@ class ServiceProvider
 	private $clientClasses = array();
 
 	/**
-	 * Creates an instance of a class located in Client config folder
+	 * Creates an instance of a class located in Client config folder or in configPack sub folder
 	 */
 	protected function createClientClassInstance($principal, $className)
 	{
@@ -1083,10 +1085,25 @@ class ServiceProvider
 		try
 		{
 			if(is_null($className) || ($className == '')) throw new ServiceProviderException("className cannot be null", ServiceProviderException::INVALID_ARGUMENT);
-			$this->assertPrincipalAuthorizedForCreateClientClassInstance($principal, $className);
+			// CWE 28.03.2019 sanitizes path in class name
+			$className = str_replace(array('../','..\\'), '', $className);
+			// CWE 28.03.2019 detects loading of a class located in a configPack folder
+			if(strpos($className,'configPack/')===0) {
+			    $sep = strrpos($className, '/');
+			    $configPackPath = substr($className,0,$sep+1);
+			    $className = substr($className,$sep+1);			    
+			}
+			else $configPackPath=null;
+			
+			$this->assertPrincipalAuthorizedForCreateClientClassInstance($principal, $className, $configPackPath);			
 			if(!class_exists($className, false))
 			{
-				$classFilePath = $this->getConfigServiceInstance()->getClientConfigFolderPath($principal).$className.".php";
+			    if($configPackPath) {
+			        $classFilePath = str_replace('configPack/',CONFIGPACK_PATH,$configPackPath).$className.".php";
+			    }
+			    else {
+			        $classFilePath = $this->getConfigServiceInstance()->getClientConfigFolderPath($principal).$className.".php";
+			    }
 				if(file_exists($classFilePath))
 				{
 					include_once ($classFilePath);
@@ -1120,7 +1137,7 @@ class ServiceProvider
 		$this->executionSink()->publishEndOperation("createClientClassInstance", $principal);
 		return $returnValue;
 	}
-	protected function assertPrincipalAuthorizedForCreateClientClassInstance($principal, $className)
+	protected function assertPrincipalAuthorizedForCreateClientClassInstance($principal, $className, $configPackPath=null)
 	{
 		// checks general authorization
 		$this->getAuthorizationServiceInstance()->assertPrincipalAuthorized($principal, "ServiceProvider", "createClientClassInstance");

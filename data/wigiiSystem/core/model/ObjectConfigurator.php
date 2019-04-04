@@ -36,7 +36,7 @@ class ObjectConfigurator extends Model
 
 	/**
 	 * Creates an instance of an ObjectConfigurator
-	 * @param $configValues optional array of configuration values passed at construction time
+	 * @param array $configValues optional array of configuration values passed at construction time
 	 */
 	public static function createInstance($configValues=null)
 	{
@@ -76,7 +76,7 @@ class ObjectConfigurator extends Model
 	
 	/**
 	 * Sets several configuration values
-	 * @param $configValues an array of config values (configKey, value)
+	 * @param array $configValues an array of config values (configKey, value)
 	 */
 	public function setConfigValues($configValues) {
 		if(!is_array($configValues)) throw new ServiceException("configValues should be an array", ServiceException::INVALID_ARGUMENT);

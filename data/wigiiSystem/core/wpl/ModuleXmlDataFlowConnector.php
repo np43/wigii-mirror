@@ -211,6 +211,6 @@ class ModuleXmlDataFlowConnector implements DataFlowDumpable
 	    // Parses the XML file
 	    $returnValue = simplexml_load_string($returnValue);
 	    if($returnValue) return $returnValue;
-	    else throw new DataFlowServiceException('Error while loading xml configuration file '.$fileName);
+	    else throw new DataFlowServiceException('Error while loading xml configuration file');
 	}
 }

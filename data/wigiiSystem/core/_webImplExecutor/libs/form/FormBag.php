@@ -554,11 +554,11 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 	/**
 	 * Sets an element field value in the wigii bag. Replaces the actual value if already exists in the bag.
 	 * Set isChanged for the field if the seted value is different than the existing one.
-	 * @param $elementId: is not taken in consideration
-	 * @param $dataTypeName: is not taken in consideration
-	 * @param $subFieldName: =null, the dataType subfield name. If null, then uses the predefined "value" subfield
-	 * @param $subFieldXml : = null, xml of subfield, if not null, then evaluation of the value is done based on the sqlType and dataType and reformat the value correctly
-	 * @return if the value has been changed
+	 * @param int $elementId: is not taken in consideration
+	 * @param string $dataTypeName: is not taken in consideration
+	 * @param string $subFieldName: =null, the dataType subfield name. If null, then uses the predefined "value" subfield
+	 * @param SimpleXMLElement $subFieldXml : = null, xml of subfield, if not null, then evaluation of the value is done based on the sqlType and dataType and reformat the value correctly
+	 * @return boolean if the value has been changed
 	 */
 	public function setValue($value, $elementId, $dataTypeName, $fieldName, $subFieldName=null, $subFieldXml=null){
 		if($subFieldName == null) $subFieldName = "value";

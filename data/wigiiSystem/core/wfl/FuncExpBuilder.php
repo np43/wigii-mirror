@@ -242,7 +242,7 @@ class FuncExpBuilder {
 	 * Or the Object exposes a toFx() method, or the object can convert to a string, or it has a specific built in conversion mechanism,
 	 * or it is unsupported.
 	 * @param mixed $obj
-	 * @return Scalar|FuncExp a FuncExp able to create back the Object or its scalar equivalent
+	 * @return String|Number|FuncExp a FuncExp able to create back the Object or its scalar equivalent
 	 */
 	public function object2fx($obj) {
 		$returnValue = null;
@@ -307,7 +307,7 @@ class FuncExpBuilder {
 			//$this->debugLogger()->write("FieldSelector cache key:".$key);
 			$returnValue = $this->fsCache[$key];
 			if(!isset($returnValue) 
-				|| $returnValue->getFieldName() != $fieldName || $returnValue->getSubFieldName() != $subfFieldName) {
+				|| $returnValue->getFieldName() != $fieldName || $returnValue->getSubFieldName() != $subFieldName) {
 				$returnValue = FieldSelector::createInstance($fieldName, $subFieldName);
 				if(isset($returnValue)) $this->fsCache[$key] = $returnValue;
 			}	
@@ -474,6 +474,53 @@ class FuncExpBuilder {
 		}
 		if($moduleName instanceof FuncExpParameter) $moduleName->registerSetterMethod('setModuleName', $returnValue);
 		return $returnValue;			
+	}
+	
+	// ConfigIncludeSelector builder
+	
+	/**
+	 * Creates a ConfigIncludeSelector instance given the config file path and an option node path and xml attribute
+	 * @param String $configFilePath the configuration file logical path, including file name
+	 * @param String $configNodePath optional, the xml path from root to the node to include
+	 * @param String|Array $xmlAttribute optional, the name of the xml attributes to include
+	 * @return ConfigIncludeSelector
+	 */
+	public function cis($configFilePath,$configNodePath=null,$xmlAttribute=null) {
+	    $returnValue = ConfigIncludeSelector::createInstance($configFilePath, $configNodePath, $xmlAttribute);
+	    if($configFilePath instanceof FuncExpParameter) $configFilePath->registerSetterMethod('setFilePath', $returnValue);
+	    if($configNodePath instanceof FuncExpParameter) $configNodePath->registerSetterMethod('setNodePath', $returnValue);
+	    if($xmlAttribute instanceof FuncExpParameter) $xmlAttribute->registerSetterMethod('setXmlAttr', $returnValue);
+	    return $returnValue;
+	}
+	
+	/**
+	 * Creates a ConfigIncludeSelectorList based on an array of ConfigIncludeSelectors
+	 * This function supports variable number of arguments, that means that
+	 * instead of providing an array with the arguments, you can pass the arguments
+	 * in a comma separated list as a normal function call.
+	 * example: $funcExpBuilder->cisl(cis1, cis2, cis3) is equivalent
+	 * to $funcExpBuilder->cisl(array(cis1, cis2, cis3))
+	 * @param Array $cisArr an array of ConfigIncludeSelector or one ConfigIncludeSelector
+	 */
+	public function cisl($cisArr) {
+	    $nArgs = func_num_args();
+	    if($nArgs > 1) {
+	        $returnValue = ConfigIncludeSelectorListArrayImpl::createInstance();
+	        for($i = 0; $i < $nArgs; $i++) {
+	            $returnValue->addConfigIncludeSelector(func_get_arg($i));
+	        }
+	    }
+	    else if(isset($cisArr)) {
+	        $returnValue = ConfigIncludeSelectorListArrayImpl::createInstance();
+	        if(!is_array($cisArr)) $returnValue->addConfigIncludeSelector($cisArr);
+	        else {
+	            foreach($cisArr as $cis) {
+	                $returnValue->addConfigIncludeSelector($cis);
+	            }
+	        }
+	    }
+	    else $returnValue = null;
+	    return $returnValue;
 	}
 	
 	// CalculatedFieldSelector builder
@@ -1346,7 +1393,7 @@ class FuncExpBuilder {
 	
 	/**
 	 * Creates a WigiiBPLParameter based on a list of pairs (key, value) or other WigiiBPLParameter instances.
-	 * @param $args a list of arguments of the form wigiiBPLParam(k1,v1,k2,v2,p1,k3,v3,p2,p3,...) where
+	 * @param mixed $args a list of arguments of the form wigiiBPLParam(k1,v1,k2,v2,p1,k3,v3,p2,p3,...) where
 	 * - ki,vi: pairs of (key, value) where key ki evaluates to a string and value to any value used as a parameter,
 	 * - pi: if pi evaluates to a WigiiBPLParameter instance, then adds its content
 	 * @return WigiiBPLParameter

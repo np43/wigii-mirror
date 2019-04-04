@@ -464,7 +464,7 @@ class Element extends Record implements SysInformation
 	 * 'approved', 'dismissed', 'archived', 'deprecated', 'hidden'.
 	 */
 	public static function stateName2int($state) {
-		if($val) {
+	    if($state) {
 			switch($state) {
 				case 'locked': return 1;
 				case 'blocked': return 2;
@@ -579,6 +579,7 @@ class Element extends Record implements SysInformation
 			case "element_pathFromRoot": return $this->getSubElementPathFromRoot(); break;
 			case "id_element_root": return $this->getElementRootId(); break;
 			case "element_info": return $this->getElementInfo(); break;
+			case "isNew": return $this->isNew(); break;
 			// not a standard attribute name (can be a dynamic attribute or not supported)
 			default: 
 				// returns dynamic attribute value if exists
@@ -885,7 +886,7 @@ class Element extends Record implements SysInformation
 	private $innerFieldsWigiiBag;
 	/**
 	 * Returns a specific wigii bag used to store inner fields values or null if key is not defined
-	 * @param $key the access key
+	 * @param string $key the access key
 	 */
 	public function getInnerFieldsWigiiBag($key) {
 		if(is_null($key) || !isset($this->innerFieldsWigiiBag)) return null;		
@@ -914,7 +915,7 @@ class Element extends Record implements SysInformation
 	
 	/**
 	 * Returns true if this element has this inner field else returns false
-	 * @param $fieldName the inner field name to look for
+	 * @param string $fieldName the inner field name to look for
 	 */
 	public function hasInnerField($fieldName) {
 		if(!isset($this->innerFieldsFieldList)) return false;

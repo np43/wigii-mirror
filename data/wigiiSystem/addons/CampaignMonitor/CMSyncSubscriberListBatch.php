@@ -408,7 +408,7 @@ class CMSyncSubscriberListBatch extends WigiiBatch {
 /**
  * Creates a DataFlow connector which selects all the active subscribers of a given list since a starting date
  * @param String $listId the CM subscriber list ID
- * @param String|timestamp $addedSince the starting subscription date in YYYY-MM-DD format or a timestamp
+ * @param String|int $addedSince the starting subscription date in YYYY-MM-DD format or a timestamp
  * @param String $sortingByField|FieldSortingKey the field by which the flow of subscribers should be sorted, should be one of email, name, date
  * If a FieldSortingKey is provided instead of a string, then the fieldname should be one of email, name or date
  * and the FieldSortingKey->isAscending property is taken instead of the provided $ascending argument. 
@@ -431,7 +431,7 @@ function cmActiveSubscribers($listId, $addedSince=null, $sortingByField=null, $a
 /**
  * Creates a DataFlow connector which selects all the unsubscribed subscribers of a given list since a starting date
  * @param String $listId the CM subscriber list ID
- * @param String|timestamp $unsubscribedSince the ending subscription date in YYYY-MM-DD format or a timestamp
+ * @param String|int $unsubscribedSince the ending subscription date in YYYY-MM-DD format or a timestamp
  * @param String $sortingByField|FieldSortingKey the field by which the flow of subscribers should be sorted, should be one of email, name, date
  * If a FieldSortingKey is provided instead of a string, then the fieldname should be one of email, name or date
  * and the FieldSortingKey->isAscending property is taken instead of the provided $ascending argument. 

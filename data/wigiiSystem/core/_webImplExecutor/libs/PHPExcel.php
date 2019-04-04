@@ -295,7 +295,7 @@ class PHPExcel
 	 * Get index for sheet
 	 *
 	 * @param PHPExcel_Worksheet $pSheet
-	 * @return Sheet index
+	 * @return mixed Sheet index
 	 * @throws Exception
 	 */
 	public function getIndex(PHPExcel_Worksheet $pSheet)
@@ -312,7 +312,7 @@ class PHPExcel
 	 *
 	 * @param string $sheetName Sheet name to modify index for
 	 * @param int $newIndex New index for the sheet
-	 * @return New sheet index
+	 * @return mixed New sheet index
 	 * @throws Exception
 	 */
     public function setIndexByName($sheetName, $newIndex)
@@ -717,6 +717,7 @@ class PHPExcel
 	{
     	// how many references are there to each cellXf ?
 		$countReferencesCellXf = array();
+		$map=array();
 		foreach ($this->_cellXfCollection as $index => $cellXf) {
 			$countReferencesCellXf[$index] = 0;
 		}

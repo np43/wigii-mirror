@@ -102,7 +102,7 @@ class ValueListCallbackImpl implements ValueList
 	/**
 	 * Gests a value stored in context.
 	 * @param String|Number $key the key for which to retrieve data
-	 * @return the data or null if not defined
+	 * @return mixed the data or null if not defined
 	 */
 	public function getValueInContext($key) {
 		if(!isset($this->context)) return null;

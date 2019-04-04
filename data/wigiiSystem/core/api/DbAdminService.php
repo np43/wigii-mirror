@@ -53,7 +53,7 @@ interface DbAdminService
 
 	/**
 	 * Get the list of locked ids.
-	 * @param $dbEntity can be either DbEntity or ObjectList of DbEntity
+	 * @param DbEntity|ObjectList $dbEntity can be either DbEntity or ObjectList of DbEntity
 	 * If dbEntity is a list, then lock is checked on all objects.
 	 * returns array of ids of locked items
 	 */
@@ -75,7 +75,7 @@ interface DbAdminService
 
 	/**
 	 * unLocks the dbEntity/s
-	 * @param $dbEntity can be either DbEntity or ObjectList of DbEntity
+	 * @param DbEntity|ObjectList $dbEntity can be either DbEntity or ObjectList of DbEntity
 	 */
 	public function unLock($principal, $tableName, $dbEntity);
 

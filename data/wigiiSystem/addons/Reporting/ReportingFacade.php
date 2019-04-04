@@ -57,12 +57,12 @@ interface ReportingFacade {
 	
 	/**
 	 * Executes a report and stores the created file into the given output field of type Files
-	 * @param $principal the current principal
-	 * @param $reportName the name of the report to be executed by the Reporting Engine
-	 * @param $reportDefinition a wigii element containing the report definition (parameters configuration and values, last report execution value)
-	 * @param $outputField the Field of type Files which should receive the report result
-	 * @param $format the output format name (in upper case letters), one of HTML, PDF, XLS, RTF, etc. Should throw an INVALID_ARGUMENT exception if format is not supported
-	 * @param $reportParams a FieldSelectorList containing the report parameters if any
+	 * @param Principal $principal the current principal
+	 * @param string $reportName the name of the report to be executed by the Reporting Engine
+	 * @param Record $reportDefinition a wigii element containing the report definition (parameters configuration and values, last report execution value)
+	 * @param mixed $outputField the Field of type Files which should receive the report result
+	 * @param string $format the output format name (in upper case letters), one of HTML, PDF, XLS, RTF, etc. Should throw an INVALID_ARGUMENT exception if format is not supported
+	 * @param FieldSelectorList $reportParams a FieldSelectorList containing the report parameters if any
 	 */
 	public function executeReport($principal, $reportName, $reportDefinition, $outputField, $format, $reportParams=null);
 	
@@ -73,8 +73,8 @@ interface ReportingFacade {
 	 * Callback to process a part of a multi-part report.
 	 * The facade should call DataFlowService::startStream with the given dataFlowActivitySelectorList
 	 * Then call DataFlowService::processDataChunk to consume the report part stream and then close the stream
-	 * @param $reportPartName the name of the report part to process (for instance, the name of an attached image)
-	 * @param $dataFlowActivitySelectorList the output stream descriptor where to send the report part.
+	 * @param string $reportPartName the name of the report part to process (for instance, the name of an attached image)
+	 * @param DataFlowActivitySelectorList $dataFlowActivitySelectorList the output stream descriptor where to send the report part.
 	 * The facade can add some additional configuration parameters to the dataFlowActivitySelectorList as needed
 	 */
 	public function processReportPart($reportPartName, $dataFlowActivitySelectorList);

@@ -322,7 +322,7 @@ class NotificationService implements MultiplexedEvent {
 	}
 
 	/**
-	 * @param $object could be $pWithElement or $pWithElementWithGroup depending on the eventName
+	 * @param mixed $object could be $pWithElement or $pWithElementWithGroup depending on the eventName
 	 */
 	public function event($eventName, $entityName, $module, $object){
 		$p = $this->getP($object);
@@ -1540,7 +1540,7 @@ class NotificationService implements MultiplexedEvent {
 		}
 	}
 	/**
-	 * @param $gObj can be Group, GroupList, depending on $eventName and entityName
+	 * @param mixed $gObj can be Group, GroupList, depending on $eventName and entityName
 	 */
 	protected function addRecipients($p, $eventName, $entityName, $mail, $rec, $gObj=null){
 		$mail->clearRecipients();

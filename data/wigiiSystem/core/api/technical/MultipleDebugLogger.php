@@ -42,7 +42,7 @@ class MultipleDebugLogger extends DebugLogger
 	
 	/**
 	 * Creates a new instance of this MultipleDebugLogger
-	 * @param $systemDebugLogger the default DebugLogger instance to be used. 
+	 * @param DebugLogger $systemDebugLogger the default DebugLogger instance to be used. 
 	 * This argument must point to a valid DebugLogger running instance. 
 	 */
 	public function __construct($systemDebugLogger)
@@ -73,7 +73,7 @@ class MultipleDebugLogger extends DebugLogger
 	/**
 	 * Adds a list of DebugLogger classes to be used.
 	 * If some classes are already setup as additional DebugLoggers, keeps the original instances.
-	 * @param $additionalDebugLoggerClasses an array of class names or one single class name string
+	 * @param array|string $additionalDebugLoggerClasses an array of class names or one single class name string
 	 * or an array of (key=class name, value=ObjectConfigurator). In that case, the ObjectConfigurator will be applied 
 	 * on each created instance.
 	 */
@@ -105,7 +105,7 @@ class MultipleDebugLogger extends DebugLogger
 	/**
 	 * Creates an instance of a DebugLogger given its className
 	 * By default, looks for a class on the classpath
-	 * @param $configurator optional ObjectConfigurator instance to configure created instance
+	 * @param ObjectConfigurator $configurator optional ObjectConfigurator instance to configure created instance
 	 */
 	protected function createDebugLoggerInstance($className, $configurator = null) {
 		wigii_autoload($className);
@@ -120,7 +120,7 @@ class MultipleDebugLogger extends DebugLogger
 	 * Removes a list of additional DebugLogger classes.
 	 * If some classes are not setup as additional DebugLoggers, there are ignored.
 	 * The system DebugLogger instance cannot be removed (ignored if defined in the list)
-	 * @param $debugLoggerClasses an array of class names or one single class name string
+	 * @param array|string $debugLoggerClasses an array of class names or one single class name string
 	 */
 	public function removeAdditionalDebugLoggers($debugLoggerClasses) {
 		if(empty($debugLoggerClasses)) return;

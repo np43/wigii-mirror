@@ -254,7 +254,7 @@ class ConfigServiceSubElementImpl implements ConfigService
 	/**
 	 * Returns the current selected sub element master id
 	 * or null if no sub element configuration has been selected
-	 * @return Scalar
+	 * @return String|Number
 	 */
 	public function getCurrentMasterElementId() {
 		if(isset($this->currentLinkSelector)) {
@@ -317,7 +317,7 @@ class ConfigServiceSubElementImpl implements ConfigService
 	/**
 	 * Selects the configuration of some sub elements given the master element
 	 * @param Principal $principal authenticated user performing the operation
-	 * @param Scalar|Element $masterElementId the id of the master element (or the master element itself) for which to retrieve sub elements configuration
+	 * @param String|Number|Element $masterElementId the id of the master element (or the master element itself) for which to retrieve sub elements configuration
 	 * @param String $fieldName the field name of the master element under which we want to retrieve the sub elements configuration
 	 * @throws ConfigServiceException if an error occurs.
 	 * Postconditions: the configuration service is centered on the configuration of these sub elements.

@@ -64,7 +64,7 @@ class WigiiXmlSaxParserDFA implements DataFlowActivityEventDispatcher
 	private $outputEncoding = 'UTF-8';
 	/**
 	 * Sets the character encoding of the output strings
-	 * @param $encoding the encoding name, one of UTF-8, ISO-8859-1 or US-ASCII
+	 * @param string $encoding the encoding name, one of UTF-8, ISO-8859-1 or US-ASCII
 	 */
 	public function setOutputEncoding($encoding) {
 		if(is_null($encoding) || $encoding == '') throw new DataFlowServiceException("invalid encoding. Should be UTF-8, ISO-8859-1 or US-ASCII", DataFlowServiceException::INVALID_ARGUMENT);

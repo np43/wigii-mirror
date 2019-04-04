@@ -156,7 +156,7 @@ class ElementPListEvalContext
 	 * @param Boolean $recyclable optional boolean. If true, then the method freeMemory (if exists) will be called on value, when the context is recycled,
 	 * else no clean up code is executed, relies only on the garbage collection.
 	 */
-	public function setValueInContext($key, $value, $recyclable=false) {
+	public function setValueInContext($key, $val, $recyclable=false) {
 		if(is_null($key)) throw new ElementServiceException("key cannot be null", ElementServiceException::INVALID_ARGUMENT);
 		if(!isset($this->valuesInContext)) $this->valuesInContext = array();		
 		$this->valuesInContext[$key] = $val;

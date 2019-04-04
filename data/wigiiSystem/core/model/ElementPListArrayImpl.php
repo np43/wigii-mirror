@@ -47,7 +47,7 @@ class ElementPListArrayImpl extends ObjectListArrayImpl implements ElementPList 
 	}
 
 	/**
-	 * @param $objArray if set prefill the content of this list with the current objectArray. WARNING this object array MUST be in the same format as if adding standard ElementP
+	 * @param array $objArray if set prefill the content of this list with the current objectArray. WARNING this object array MUST be in the same format as if adding standard ElementP
 	 */
 	public static function createInstance($objArray=null)
 	{

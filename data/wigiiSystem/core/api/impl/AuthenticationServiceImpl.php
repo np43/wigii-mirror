@@ -496,7 +496,7 @@ class AuthenticationServiceImpl implements AuthenticationService
 			$PHP_AUTH_PW = utf8_decode(stripslashes($password));
 			$PHP_AUTH_SERVER = $server;
 			$PHP_AUTH_USER = utf8_decode(stripslashes($username));
-
+            $errno=null;$errstr=null;
 			if($useSSL)
 			$fp = fsockopen("ssl://$PHP_AUTH_SERVER", 995, $errno, $errstr, 10);
 			else
@@ -586,9 +586,9 @@ class AuthenticationServiceImpl implements AuthenticationService
 
 	/**
 	 * This method is a factorisation to allow inheritance on this specific part
-	 * @param AuthenticationServicePrincipal $p 
+	 * @param Principal $p should be the AuthenticationService Principal 
 	 * @param String|ValueObject $password, is not used in this implementation
-	 * @param $postFix, is not used in this implementation
+	 * @param mixed $postFix, is not used in this implementation
 	 */
 	protected function findUserForClient($p, $username, $password, $postFix, $client){
 		return $this->getUserAdminService()->findUserForClient($p, $username, $client);
@@ -868,21 +868,21 @@ class AuthenticationServiceImpl implements AuthenticationService
 		}
 
 		if($isForbidden === true){
-			$this->debugLogger()->write("User $username is blacklisted.");
+			$this->debugLogger()->write("User $userName is blacklisted.");
 			return false;
 		}
 
 		if($isAuthorized === true){
-			$this->debugLogger()->write("User $username is in the authorized userlist.");
+			$this->debugLogger()->write("User $userName is in the authorized userlist.");
 			return true;
 		}
 
 		if($isAuthorized === false){
-			$this->debugLogger()->write("User $username is not in the defined authorized userlist.");
+			$this->debugLogger()->write("User $userName is not in the defined authorized userlist.");
 			return false;
 		}
 
-		$this->debugLogger()->write("Authorized userlist doesn't exist, and user $username is not blacklisted.");
+		$this->debugLogger()->write("Authorized userlist doesn't exist, and user $userName is not blacklisted.");
 		return true;
 
 	}

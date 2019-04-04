@@ -26,7 +26,7 @@
  * by LWR
  */
 
-class mockUserAdminServiceImpl implements UserAdminServiceImpl
+class mockUserAdminServiceImpl extends UserAdminServiceImpl
 {
 	private $_debugLogger;
 	private $_executionSink;

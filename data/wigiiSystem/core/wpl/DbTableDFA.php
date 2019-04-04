@@ -149,7 +149,7 @@ class DbTableDFA implements DataFlowActivity
 	 * @param mixed $object an optional object instance which holds the method instance that should be executed.
 	 */
 	public function setDecisionMethod($method, $object=null) {
-		$this->decisionMethod = CallableObject::createInstance($method, $obj); 
+	    $this->decisionMethod = CallableObject::createInstance($method, $object); 
 	}
 	
 	private $dbTableName;

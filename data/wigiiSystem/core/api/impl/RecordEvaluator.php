@@ -518,7 +518,7 @@ class RecordEvaluator implements FuncExpEvaluator
 
 	/**
 	 * Returns the number of arguments stored in the args array
-	 * @param $args the args array, can be null
+	 * @param array $args the args array, can be null
 	 */
 	protected function getNumberOfArgs($args) {
 		if(is_null($args)) return 0;
@@ -536,8 +536,8 @@ class RecordEvaluator implements FuncExpEvaluator
 	/**
 	 * This function proposes a default value if the field has no current value,
 	 * or if the funcExp has no argument as a calculated default value from config.
-	 * @param $funExpArgs the funcExp arg array
-	 * @param $defaultValue the proposed default value as ultimate choice
+	 * @param array $funExpArgs the funcExp arg array
+	 * @param mixed $defaultValue the proposed default value as ultimate choice
 	 */
 	protected function proposeDefaultValueIfNotSet($funExpArgs, $defaultValue) {
 		// 1. current field has already a value ?
@@ -556,7 +556,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	/**
 	 * This function keeps the current field value if set,
 	 * else evaluates the first funcExp argument if exists, else returns null.
-	 * @param $funExpArgs the funcExp arg array
+	 * @param array $funExpArgs the funcExp arg array
 	 */
 	protected function getCurrentValueOrEvaluateFirstArg($funcExpArgs) {
 		return $this->proposeDefaultValueIfNotSet($funExpArgs, null);
@@ -1252,7 +1252,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	/**
 	 * Evaluates first argument, if true, then evaluates all next arguments in sequence,
 	 * and this as long as first argument evaluates to true
-	 * @return value of last evaluated arg
+	 * @return mixed value of last evaluated arg
 	 */
 	public function ctlWhile($args) {
 		$n = $this->getNumberOfArgs($args);
@@ -1832,7 +1832,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	            if(!($fs instanceof FieldSelector)) throw new RecordException("argument $i does not evaluate to a FieldSelector", RecordException::INVALID_ARGUMENT);
 	        }
 	        $currentVal = $this->getFieldValue($fs);
-	        if(!empty($sep) && (!empty($val)||$value===0) && (!empty($currentVal)||$value===0)) $this->setFieldValue($fs, $val.$sep.$currentVal);
+	        if(!empty($sep) && (!empty($val)||$val===0) && (!empty($currentVal)||$val===0)) $this->setFieldValue($fs, $val.$sep.$currentVal);
 	        else $this->setFieldValue($fs, $val.$currentVal);
 	        
 	        if($isMultiple && !$fsl->containsFieldSelector($fs->getFieldName(), $fs->getSubFieldName())) $fsl->addFieldSelectorInstance($fs);
@@ -1889,7 +1889,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * FuncExp signature : <code>setFile(fieldName, content, subFieldName1, subFieldValue1, ...)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) fieldName: String|FieldSelector. The name of the field of type Files for which to set the content.
-	 * - Arg(1) content: Scalar|Array|StdClass|Element|ElementP|Record|WplObjectList|DataFlowSelector if content converts to a String then saves a text file, 
+	 * - Arg(1) content: String|Number|Array|StdClass|Element|ElementP|Record|WplObjectList|DataFlowSelector if content converts to a String then saves a text file, 
 	 * else object is serialized to xml (if compatible with the list of supported types).
 	 * - Arg(2,...) subFieldNameI,subFieldValueI: a list of Files subfield (name,date,username,user,type) and values to update File meta-data	
 	 */
@@ -2007,7 +2007,8 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Returns an array.
 	 */
 	public function newMap($args) {
-		if($this->getNumberOfArgs($args) < 2) throw new FuncExpEvalException("To create a map, there should be 2 arguments: the array of keys and the array of values", FuncExpEvalException::INVALID_ARGUMENT);
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new FuncExpEvalException("To create a map, there should be 2 arguments: the array of keys and the array of values", FuncExpEvalException::INVALID_ARGUMENT);
 		$key = $this->evaluateArg($args[0]);
 		$value = $this->evaluateArg($args[1]);
 		// if arg0 is array -> then array combine
@@ -2955,6 +2956,7 @@ class RecordEvaluator implements FuncExpEvaluator
 			throw $e;
 		}
 		$this->debugLogger()->logEndOperation('saveElementFieldsTo');
+		return $returnValue;
 	}
 	
 	/**
@@ -3115,9 +3117,6 @@ class RecordEvaluator implements FuncExpEvaluator
 				if(isset($executionSink)) {
 					$s = $executionSink->getString();
 					if(!empty($s)) $log .= $s."\n";
-				}
-				if(isset($e)) {
-					$log .= "\n".str_replace('\\', '/', (string)$e)."\n";
 				}
 				$log .= "duration: ".number_format($endTime-$startTime, 1, '.','')."s"."\n";
 				if($fxml["htmlArea"] == "1") {

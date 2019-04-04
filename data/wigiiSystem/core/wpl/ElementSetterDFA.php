@@ -410,7 +410,7 @@ class ElementSetterDFA extends ElementDFAWithFuncExpVM
 					if($this->areWigiiEventsEnabled) {									
 						if(isset($this->apiClient)) $groupList = $this->apiClient->getGroupList();			
 						else $groupList = null;
-						$wigiiEvent = PWithElementWithGroupPList::createInstance($principal, $element, $groupList);
+						$wigiiEvent = PWithElementWithGroupPList::createInstance($dataFlowContext->getPrincipal(), $element, $groupList);
 						$wigiiEvent->setLinkSelector($linkSelector);
 					}
 		

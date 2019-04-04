@@ -33,7 +33,7 @@ interface WigiiBag
 	 * @param String $dataTypeName the name of the Wigii DataType of the field beeing read
 	 * @param String $fieldName the name of the field beeing read
 	 * @param String $subFieldName the dataType subfield name. If null, then uses the predefined "value" subfield
-	 * @return Scalar
+	 * @return mixed
 	 */
 	public function getValue($elementId, $dataTypeName, $fieldName, $subFieldName=null);
 

@@ -383,7 +383,7 @@ class ModuleAdminServiceImpl implements ModuleAdminService
 	public function moduleArrayToString($modules)
 	{
 		if(is_null($modules)) return null;
-		if(!is_array($modules)) throw new ModuleAdminServiceException('module array is not an array', ModuleAdminException::INVALID_ARGUMENT);
+		if(!is_array($modules)) throw new ModuleAdminServiceException('module array is not an array', ModuleAdminServiceException::INVALID_ARGUMENT);
 		$keys = array_keys($modules);
 		sort($keys);
 		$returnValue = implode(';', $keys);

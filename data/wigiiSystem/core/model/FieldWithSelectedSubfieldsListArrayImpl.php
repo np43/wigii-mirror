@@ -30,7 +30,7 @@ class FieldWithSelectedSubfieldsListArrayImpl extends ObjectListArrayImpl implem
 	// Object lifecycle
 	
 	/**	
-	 * @param $fieldList if set, then calls method fillFromFieldList to fill the list
+	 * @param FieldList $fieldList if set, then calls method fillFromFieldList to fill the list
 	 */
 	public static function createInstance($fieldList=null, $fieldSelectorList=null) {
 		$returnValue = new self();

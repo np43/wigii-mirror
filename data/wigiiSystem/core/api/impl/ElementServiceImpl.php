@@ -655,27 +655,17 @@ class ElementServiceImpl implements ElementService
 			{
 				if($queryPaged)
 				{
-					// Medair (CWE,LMA) 06.12.2016 - SQL optimization for paged query
-					/*
-					 $nbRows = $mysqlF->selectPage($principal, $eltQP->getSql($i,
-					 $this->getSqlBuilderForGetAllElementsInGroup($principal, $strategy, $group, $pRightsFromDb, $includeChildrenGroups)),
-					 $dbCS, $offset, $pageSize,
-					 $elementPMapper);
-					 if($i === 0) {
-					 $listFilter->setTotalNumberOfObjects($nbRows);
-					 if($nbRows > 0) $elementPMapper->setTotalNumberOfElements($nbRows);
-					 }
-					 */
+					// Medair (CWE,LMA) 06.12.2016 - SQL optimization for paged query					
 					$sqlB = $this->getSqlBuilderForGetPagedElementsInGroups($principal, $strategy, $group, $pRightsFromDb, $includeChildrenGroups,$offset,$pageSize);
 					// gets paged (SQL LIMIT is included into generated SQL, no need to call selectPage)
 					$nbRows = $mysqlF->selectAll($principal, $eltQP->getSql($i,$sqlB),
 							$dbCS,
-							$elementPMapper);
+					    $wigiiBagFiller);
 					// fetches total number of rows
 					if($i===0) {
 						$totalNumberOfRows = $mysqlF->selectOneValue($principal, $sqlB->getSqlForCountElements(), $dbCS);
 						$listFilter->setTotalNumberOfObjects($totalNumberOfRows);
-						if($totalNumberOfRows > 0) $elementPMapper->setTotalNumberOfElements($totalNumberOfRows);
+						if($totalNumberOfRows > 0) $wigiiBagFiller->setTotalNumberOfElements($totalNumberOfRows);
 					}					
 				}
 				else
@@ -992,24 +982,17 @@ class ElementServiceImpl implements ElementService
 			{
 				if($queryPaged)
 				{
-					// Medair (CWE,LMA) 06.12.2016 - SQL optimization for paged query
-					/*
-					$nbRows = $mysqlF->selectPage($principal, $eltQP->getSql($i,
-							$this->getSqlBuilderForGetAllElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups)),
-							$dbCS, $offset, $pageSize,
-							$wigiiBagFiller);
-					if($i === 0) $listFilter->setTotalNumberOfObjects($nbRows);
-					*/ 
+					// Medair (CWE,LMA) 06.12.2016 - SQL optimization for paged query					
 					$sqlB = $this->getSqlBuilderForGetPagedElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $includeChildrenGroups,$offset,$pageSize);
 					// gets paged (SQL LIMIT is included into generated SQL, no need to call selectPage)
 					$nbRows = $mysqlF->selectAll($principal, $eltQP->getSql($i,$sqlB),
 							$dbCS,
-							$elementPMapper);
+					       $wigiiBagFiller);
 					// fetches total number of rows
 					if($i===0) {
 						$totalNumberOfRows = $mysqlF->selectOneValue($principal, $sqlB->getSqlForCountElements(), $dbCS);
 						$listFilter->setTotalNumberOfObjects($totalNumberOfRows);
-						if($totalNumberOfRows > 0) $elementPMapper->setTotalNumberOfElements($totalNumberOfRows);
+						if($totalNumberOfRows > 0) $wigiiBagFiller->setTotalNumberOfElements($totalNumberOfRows);
 					}					
 				}
 				else
@@ -2070,7 +2053,7 @@ class ElementServiceImpl implements ElementService
 		
 				// ElementQueryPlanner configuration
 				$reservedNumberOfJoins = $this->getReservedSqlJoinsForGetSelectedElementsInGroups($elementInGroupSqlB, $pRightsFromDb);
-				$sqlB = $this->getSqlBuilderForGetSelectedElementsInGroups($strategy, $elementInGroupSqlB, $principal, $groupList, $pRightsFromDb);
+				$sqlB = $this->getSqlBuilderForGetSelectedElementsInGroups(ElementQueryPlanner::QSTRATEGY_JOIN, $elementInGroupSqlB, $principal, $groupList, $pRightsFromDb);
 			}	
 			// computes effective field list
 			$eltQP = $this->getElementQueryPlanner(MySqlFacade::Q_SELECTALL, $reservedNumberOfJoins,
@@ -2984,7 +2967,7 @@ group by tmp1.id_group";
 
 	/**
 	 * getGroupsPathContainingElement
-	 * @return array[id_group]=array([id_group_parent]=>groupParentName,...,[id_group]=>[groupname]
+	 * @return array array[id_group]=array([id_group_parent]=>groupParentName,...,[id_group]=>[groupname]
 	 * id_group is the group id of the group containing elements (can be multiple)
 	 * if the wigiiNamespace of a group is different than the principal wigiiNamespace the groupname is prefixed with "wigiiNamespace : "
 	 */
@@ -6897,7 +6880,7 @@ $tableAlias.state_dismissedInfo
 
 	/**
 	 * @param dbRow an array straight from the DB
-	 * @return instanciated Element object
+	 * @return Element instanciated Element object
 	 */
 	public function createElementInstanceFromRow($principal, $dbRow, $colPrefix='', $fieldList = null, $wigiiBag = null)
 	{

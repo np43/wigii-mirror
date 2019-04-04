@@ -29,10 +29,10 @@ interface FuncExpEvaluator
 {
 	/**
 	 * Evaluates a FuncExp and returns its value
-	 * @param $funcExp an instance of a FuncExp,
+	 * @param FuncExp $funcExp an instance of a FuncExp,
 	 * or an instance of a FieldSelector for which to find the value, 
 	 * or any object for which to retrieve a value (by default returns the object)
-	 * @param $caller optionaly specifies which object is currently asking the evaluation of the FuncExp
+	 * @param Object $caller optionaly specifies which object is currently asking the evaluation of the FuncExp
 	 * (this is used to detect loops when delegating FuncExp evaluation to chains of evaluators)
 	 * Throws an exception in case of error.
 	 */

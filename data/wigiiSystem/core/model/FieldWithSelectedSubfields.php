@@ -49,7 +49,7 @@ class FieldWithSelectedSubfields extends Model {
 	
 	/**
 	 * Adds one specific subfield to the list of selected subfields
-	 * @param $subfieldName the subfield name
+	 * @param String $subfieldName the subfield name
 	 * @throws ServiceException INVALID_ARGUMENT if subfield name is invalid
 	 */
 	public function selectSubfield($subfieldName) {

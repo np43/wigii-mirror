@@ -65,6 +65,8 @@ class ShareElementFormExecutor extends FormExecutor {
 			'$("form", this).submit();', $transS->t($p, "shareElement"),
 			$transS->t($p, "ok"), $transS->t($p, "cancel"));
 	}
+    protected function doSpecificCheck($p, $exec) {/* nothing */}
+
 }
 
 

@@ -57,31 +57,31 @@ interface DataFlowActivitySelectorList extends ObjectList
 	/**
 	 * Returns the DataFlowActivitySelector instance stored at given index
 	 * Index starts at 0 and goes up to (count - 1)
-	 * @param $index the index from which to retrieve the DataFlowActivitySelector index
+	 * @param int $index the index from which to retrieve the DataFlowActivitySelector index
 	 * @throws ListException OUT_OF_BOUND if index is invalid
 	 */
 	public function getDataFlowActivitySelector($index);
 	
 	/**
 	 * Returns one or several DataFlowActivitySelector that are of the given class
-	 * @param $className the class name to select the DataFlowActivitySelectors
-	 * @return one instance of a DataFlowActivitySelector or an array of DataFlowActivitySelectors 
+	 * @param string $className the class name to select the DataFlowActivitySelectors
+	 * @return DataFlowActivitySelector|array one instance of a DataFlowActivitySelector or an array of DataFlowActivitySelectors 
 	 * or null if no one is of the given class
 	 */
 	public function getDataFlowActivitySelectorByClassName($className);
 	
 	/**
 	 * Sets a configuration parameter for all the DataFlowActivitySeletors which match the given class
-	 * @param $className the class name to select the DataFlowActivitySelectors
-	 * @param $parameterName the parameter name (see DataFlowActivitySelector, method setDataFlowActivityParameter)
-	 * @param $value the parameter value
+	 * @param string $className the class name to select the DataFlowActivitySelectors
+	 * @param string $parameterName the parameter name (see DataFlowActivitySelector, method setDataFlowActivityParameter)
+	 * @param mixed $value the parameter value
 	 */
 	public function setDataFlowActivityParameterForClass($className, $parameterName, $value);
 	
 	/**
 	 * Configures one or several DataFlowActivitySelector that are of the given class
-	 * @param $className the class name to select the DataFlowActivitySelectors
-	 * @param $configurator an ObjectConfigurator instance that will be used to set the configuration
+	 * @param string $className the class name to select the DataFlowActivitySelectors
+	 * @param ObjectConfigurator $configurator an ObjectConfigurator instance that will be used to set the configuration
 	 * parameters in each DataFlowActivitySelector
 	 */
 	public function configureDataFlowActivitySelectorByClassName($className, $configurator);

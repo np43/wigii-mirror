@@ -688,7 +688,7 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 	
 						$oldBoxId = $obj->{'context_info'}->{'conflicts'}->{'id'};
 	
-						$this->boxUploadFileVersionForField($p, wigiiBPLParam("element",$element,"fieldName",$fieldName, "mimeType", $parameter->getValue('mimeType'), "boxFolderId", $boxFolderId, "fileId", $oldBoxId));
+						$this->boxUploadFileVersionForField($principal, wigiiBPLParam("element",$element,"fieldName",$fieldName, "mimeType", $parameter->getValue('mimeType'), "boxFolderId", $boxFolderId, "fileId", $oldBoxId));
 	
 					}else{
 						throw $be;
@@ -991,7 +991,7 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 	/**
 	 * Function that returns an array with the id of the folder and the name of the folder
 	 * @param Principal $principal current principal
-	 * @param unknown $folderId : the id of the folder we want the name
+	 * @param int $folderId : the id of the folder we want the name
 	 * @throws BoxServiceException in case of error
 	 * @return Array [0=>folder ID, 1=>folder name]
 	 */
@@ -1010,7 +1010,7 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 				try {
 						
 					$returnValue[0] = $folderId;
-					$returnValue[1] = $this->getFolderName($folderId, $httpClient);
+					$returnValue[1] = $this->getFolderName($principal, $folderId, $httpClient);
 					$retry=false;
 					
 				}catch(BoxServiceException $be) {
@@ -1063,7 +1063,7 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 					$folderId = $obj->{'parent'}->{'id'};
 				
 					$returnValue[0] = $folderId;
-					$returnValue[1] = $this->getFolderName($folderId, $httpClient);
+					$returnValue[1] = $this->getFolderName($principal, $folderId, $httpClient);
 					
 					$retry = false;
 					
@@ -1093,12 +1093,13 @@ class BoxServiceFormExecutor extends WebServiceFormExecutor {
 	
 	/**
 	 * Return the folder's name give its ID
+	 * @param Principal $principal current principal
 	 * @param String $folderId the id of the folder we want the name
 	 * @param Guzzle\Http\Client $httpClient
 	 * @throws BoxServiceException in case of error
 	 * @return String then name of the folder
 	 */
-	public function getFolderName($folderId, $httpClient){
+	public function getFolderName($principal, $folderId, $httpClient){
 	
 		try{
 			$httpRequest = $this->getHttpRequestFolderInfo($httpClient, $folderId);

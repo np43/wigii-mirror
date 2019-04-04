@@ -430,7 +430,7 @@ class ElementEvaluator extends RecordEvaluator
 	 * - Arg(0) val: Evaluates to a number. This number will be added to the last calculated cumul.
 	 * - Arg(1) key: Optional scalar. The key under which is stored the history of the cumul. 
 	 * If not specified, then the key will be (fieldName(cumul)) where fieldName is equal to currently evaluated field.	 
-	 * @return Numeric returns val + cumul(getOrdinal()-1)
+	 * @return Number returns val + cumul(getOrdinal()-1)
 	 */
 	public function elementPListEvalCumul($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -458,7 +458,7 @@ class ElementEvaluator extends RecordEvaluator
 	 * - Arg(0) val: Evaluates to a number. The last evaluated value will be substracted to this new value to get the delta.
 	 * - Arg(1) key: Optional scalar. The key under which is stored the history of the delta. 
 	 * If not specified, then the key will be (fieldName(delta)) where fieldName is equal to currently evaluated field.	 
-	 * @return Numeric returns val - delta(getOrdinal()-1)
+	 * @return Number returns val - delta(getOrdinal()-1)
 	 */
 	public function elementPListEvalDelta($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -485,7 +485,7 @@ class ElementEvaluator extends RecordEvaluator
 	 * - Arg(0) val: Evaluates to a number. The last evaluated value will be substracted to this new value to get the delta and squared up.
 	 * - Arg(1) key: Optional scalar. The key under which is stored the history of the delta.
 	 * If not specified, then the key will be (fieldName(delta)) where fieldName is equal to currently evaluated field.
-	 * @return Numeric returns (val - delta(getOrdinal()-1))^2
+	 * @return Number returns (val - delta(getOrdinal()-1))^2
 	 */
 	public function elementPListEvalSquareDelta($args) {
 		$nArgs = $this->getNumberOfArgs($args);
@@ -578,7 +578,7 @@ class ElementEvaluator extends RecordEvaluator
 	/**
 	 * Returns the current selected sub element master id
 	 * or null if no sub element configuration has been selected
-	 * @return Scalar
+	 * @return Number|String
 	 */
 	public function cfgSubElementCurrentMasterId($args) {
 		$form = $this->getFormExecutor();
@@ -767,7 +767,7 @@ class ElementEvaluator extends RecordEvaluator
 		if(!isset($group)) {
 			if($silent) return null;
 			else {
-				if(!isset($flowContext)) $flowContext = $this->getCurrentFlowName();
+				$flowContext = $this->getCurrentFlowName();
 				throw new ServiceException("Not able to evaluate current group in flow '".$flowContext."'", ServiceException::INVALID_STATE);
 			}
 		}

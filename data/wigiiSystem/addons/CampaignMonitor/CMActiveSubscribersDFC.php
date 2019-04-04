@@ -112,7 +112,7 @@ class CMActiveSubscribersDFC implements DataFlowDumpable
 	private $startingDate;
 	/**
 	 * Sets the starting date from which to fetch subscribers
-	 * @param String|timestamp $date the starting date in YYYY-MM-DD format or a timestamp
+	 * @param String|int $date the starting date in YYYY-MM-DD format or a timestamp
 	 */
 	public function setAddedSince($date) {
 		if(is_int($date)) $this->startingDate = date('Y-m-d', $date);

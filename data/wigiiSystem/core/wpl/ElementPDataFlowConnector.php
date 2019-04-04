@@ -52,8 +52,8 @@ class ElementPDataFlowConnector implements DataFlowDumpable
 		$returnValue = new self();
 		$returnValue->reset();
 		$returnValue->setElementId($elementId);
-		if(isset($fieldSelectorList)) $this->setFieldSelectorList($fieldSelectorList);
-		if(isset($configSelector)) $returnValue->setConfigSelector($configSel);
+		if(isset($fieldSelectorList)) $returnValue->setFieldSelectorList($fieldSelectorList);
+		if(isset($configSelector)) $returnValue->setConfigSelector($configSelector);
 		return $returnValue;
 	}
 	

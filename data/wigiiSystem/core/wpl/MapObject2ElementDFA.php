@@ -579,16 +579,16 @@ class MapObject2ElementDFA implements DataFlowActivity, ElementPList
 						// if subfields then goes through sub array
 						if($valArr && $dt->hasSubfields()) {
 							$x = $dt->getXml(); 
-							foreach($val as $subFieldName => $subfFieldValue) {
+							foreach($val as $subFieldName => $subFieldValue) {
 								$dbFieldParams = $x->xpath($subFieldName);
 								// if matching subfield then trie to set value
 								if($dbFieldParams) {
 									$dbFieldParams = $dbFieldParams[0];
-									if(is_array($subfieldValue) && 
+									if(is_array($subFieldValue) && 
 										strtolower((string)$dbFieldParams['type']) != 'multiple-select' &&
 										((string)$dbFieldParams['multiLanguage']) != '1'
 									) throw new DataFlowServiceException("values as Array are only permitted for subfields of type 'multiple-select' or having 'multiLanguage' set to 1", DataFlowServiceException::DATA_FORMAT_ERROR);
-									else $this->setFieldValue($subfFieldValue, fs($attr, $subFieldName), $element, $principal);
+									else $this->setFieldValue($subFieldValue, fs($attr, $subFieldName), $element, $principal);
 								}
 							}
 						}

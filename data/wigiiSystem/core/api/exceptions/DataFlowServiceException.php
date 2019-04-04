@@ -40,7 +40,7 @@ class DataFlowServiceException extends ServiceException
 	private $dataFlowActivitySpecificErrorCode = null;
 	
 	/**
-	 * @param $dataFlowActivitySpecificErrorCode use this argument to pass a DataFlowActivity specific error code (for instance a PHP API error code, like XML_ERROR_SYNTAX, etc)	 
+	 * @param mixed $dataFlowActivitySpecificErrorCode use this argument to pass a DataFlowActivity specific error code (for instance a PHP API error code, like XML_ERROR_SYNTAX, etc)	 
 	 */
 	public function __construct($message = "", $code = parent::UNKNOWN_ERROR, $dataFlowActivitySpecificErrorCode = null, $previous=null) {
 		parent::__construct($message, $code, $previous);

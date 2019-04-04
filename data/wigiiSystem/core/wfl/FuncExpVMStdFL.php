@@ -295,7 +295,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * - Arg(0) data: the current data chunk in the running data flow
 	 * - Arg(1) dfa: a reference to the underlying FuncExpDFA instance
 	 * - Arg(2) classifier: a FuncExp used to determine the class of a chunk of data<br/>
-	 * FuncExp signature is : $classifier($a). Returns a Scalar (int or string) identifying the class.
+	 * FuncExp signature is : $classifier($a). Returns a String|Number (int or string) identifying the class.
 	 * If classifier returns null as a class, then the data chunk will be filtered (removed from any further processing)
 	 * - Arg(3) dataFlowActivitySelectorList: evaluates to a DataFlowActivitySelectorList that will be used
 	 * to start a DataFlow where equivalent objects will be processed.<br/>
@@ -1035,7 +1035,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Constructs a DataFlowSelectorList instance based on key indexed DataFlowSelectors<br/>
 	 * FuncExp signature is: <code>dfsMap(key1, dfs1, key2, dfs2, ...)</code><br/>
 	 * Where arguments are :
-	 * - Arg(0, 2, 4,..2*n) keyI: evaluates to a Scalar which is used as a key
+	 * - Arg(0, 2, 4,..2*n) keyI: evaluates to a String|Number which is used as a key
 	 * - Arg(1, 3, 5,..2*n+1) dfsI: evaluates to DataFlowSelector instances
 	 * @return DataFlowSelectorList a DataFlowSelectorList instance indexed with keys.
 	 */
@@ -1340,7 +1340,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Counts the number of equivalent classes. Ignores null values.<br/>
 	 * FuncExp signature is: <code>ctlCountEqClasses(val1, val2, ...)</code><br/>
 	 * Where arguments are :
-	 * - Arg(1..n) valI: Scalar. The values to classify in equivalent classes
+	 * - Arg(1..n) valI: String|Number. The values to classify in equivalent classes
 	 * @example 
 	 * Checks that all filled values are different from one another (ignores non filled values).
 	 * eq(ctlCountEqClasses(v1,v2,v3)), count(v1,v2,v3))
@@ -1390,6 +1390,15 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		if($nArgs<2) throw new RecordException('notNullAndNotEq takes two arguments for equality comparison', RecordException::INVALID_ARGUMENT);
 		if($this->evaluateFuncExp(fx('isNull',$args[0]))) return false;
 		else return $this->neq($args);
+	}
+	/**
+	 * Returns true if first argument is not null and equal to second
+	 */
+	public function notNullAndEq($args) {
+	    $nArgs=$this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new RecordException('notNullAndEq takes two arguments for equality comparison', RecordException::INVALID_ARGUMENT);
+	    if($this->evaluateFuncExp(fx('isNull',$args[0]))) return false;
+	    else return $this->eq($args);
 	}
 	
 

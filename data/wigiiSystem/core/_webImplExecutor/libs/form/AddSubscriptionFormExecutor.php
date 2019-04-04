@@ -166,6 +166,7 @@ class AddSubscriptionFormExecutor extends AddElementFormExecutor {
 			if($emailFieldXml["other3"]!=""){
 				$crtOther3 = $this->formatValueForMailMerge((string)$emailFieldXml["other3"]);
 			}
+			$mergeData = array($emailValue=>array());
 			$mergeData[$emailValue]['$label$'] = $crtLabel;
 			$mergeData[$emailValue]['$other1$']=$crtOther1;
 			$mergeData[$emailValue]['$other2$']=$crtOther2;

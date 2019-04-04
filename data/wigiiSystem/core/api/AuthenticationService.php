@@ -65,7 +65,7 @@ interface AuthenticationService
 
 	/**
 	 * Get the actual main principal of the service.
-	 * @return mainPrincipal
+	 * @return Principal mainPrincipal
 	 */
 	public function getMainPrincipal();
 

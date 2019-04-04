@@ -114,8 +114,8 @@ class TechnicalServiceProvider
 	 * each created object of the given class.
 	 * Note that not all classes support this dynamic configuration pattern,
 	 * this depends of the implementation decision took in each createXXX method.
-	 * @param $className the class name for which to apply the configuration when objects are instanciated
-	 * @param $objectConfigurator an ObjectConfigurator instance which is used to configure the new created instance
+	 * @param string $className the class name for which to apply the configuration when objects are instanciated
+	 * @param ObjectConfigurator $objectConfigurator an ObjectConfigurator instance which is used to configure the new created instance
 	 */
 	public static function configureClass($className, $objectConfigurator) {
 		self::getInstance()->doConfigureClass($className, $objectConfigurator);
@@ -131,7 +131,7 @@ class TechnicalServiceProvider
 	 * each created object of the given classes
 	 * Note that not all classes support this dynamic configuration pattern,
 	 * this depends of the implementation decision took in each createXXX method.
-	 * @param $classConfigurations an array with key=className, value=ObjectConfigurator instance
+	 * @param array $classConfigurations an array with key=className, value=ObjectConfigurator instance
 	 */
 	public static function configureClasses($classConfigurations) {
 		self::getInstance()->doConfigureClasses($classConfigurations);
@@ -146,7 +146,7 @@ class TechnicalServiceProvider
 	/**
 	 * Configures a given object instance using
 	 * the stored configuration if exists.
-	 * @param $obj any object
+	 * @param Object $obj any object
 	 */
 	public static function configureObject($obj) {
 		self::getInstance()->doConfigureObject($obj);
@@ -1161,7 +1161,7 @@ class TechnicalServiceProvider
 
 	/**
 	 * Informs the technical service provider to use additionals debug loggers
-	 * @param $additionalDebugLoggerClasses an array of class names or one single class name.
+	 * @param array $additionalDebugLoggerClasses an array of class names or one single class name.
 	 * Each class name should match a class of type DebugLogger.
 	 * It is also possible to pass an array of classNames with attached ObjectConfigurator instances :
 	 * an array where key=DebugLogger sub class name, value=ObjectConfigurator model
@@ -1210,7 +1210,7 @@ class TechnicalServiceProvider
 
 	/**
 	 * Informs the technical service provider to use additionals execution sinks
-	 * @param $additionalExecutionSinkClasses an array of class names or one single class name.
+	 * @param array $additionalExecutionSinkClasses an array of class names or one single class name.
 	 * Each class name should match a class of type ExecutionSink.
 	 * It is also possible to pass an array of classNames with attached ObjectConfigurator instances :
 	 * an array where key=ExecutionSink sub class name, value=ObjectConfigurator model
@@ -1258,7 +1258,7 @@ class TechnicalServiceProvider
 
 	/**
 	 * Informs the technical service provider to use additionals exception sinks
-	 * @param $additionalExceptionSinkClasses an array of class names or one single class name.
+	 * @param array $additionalExceptionSinkClasses an array of class names or one single class name.
 	 * Each class name should match a class of type ExceptionSink.
 	 * It is also possible to pass an array of classNames with attached ObjectConfigurator instances :
 	 * an array where key=ExceptionSink sub class name, value=ObjectConfigurator model

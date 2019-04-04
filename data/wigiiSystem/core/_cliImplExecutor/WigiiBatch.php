@@ -74,9 +74,9 @@ abstract class WigiiBatch {
 	/**
 	 * Runs the batch with the given arguments.
 	 * The batch can throw an exception in case of error.
-	 * @param $argc number of arguments on the whole command line
-	 * @param $argv array with all arguments
-	 * @param $subArgIndex index in argv array from which starts the batch specific arguments
+	 * @param int $argc number of arguments on the whole command line
+	 * @param array $argv array with all arguments
+	 * @param int $subArgIndex index in argv array from which starts the batch specific arguments
 	 */
 	public abstract function run($argc, $argv, $subArgIndex);	
 }

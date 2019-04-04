@@ -71,7 +71,7 @@ class ReportingElementEvaluator extends ElementEvaluator implements ReportingOut
 	private $defaultReportingFacadeClassName;
 	/**
 	 * Sets default ReportingFacade classname
-	 * @param $onlyIfUnset optional boolean, if true, then sets only if not set yet, else always sets the value. Defaults to false.
+	 * @param boolean $onlyIfUnset optional boolean, if true, then sets only if not set yet, else always sets the value. Defaults to false.
 	 */
 	public function setDefaultReportingFacadeClassName($className, $onlyIfUnset=false) {
 		$this->defaultReportingFacadeClassName = $className;	
@@ -201,7 +201,7 @@ class ReportingElementEvaluator extends ElementEvaluator implements ReportingOut
 	/**
 	 * Fills a FieldSelectorList with all report parameters
 	 * Any field in the element having an xml attribute reportParam="1" is considered as a report parameter
-	 * @return returns the number of parameters
+	 * @return int returns the number of parameters
 	 */
 	protected function extractReportParameters($fieldSelectorList) {
 		if(is_null($fieldSelectorList)) throw new ReportingException("fieldSelectorList cannot be null", ReportingException::INVALID_ARGUMENT);

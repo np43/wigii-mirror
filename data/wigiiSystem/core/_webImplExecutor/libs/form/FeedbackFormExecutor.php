@@ -56,7 +56,7 @@ class FeedbackFormExecutor extends FormExecutor {
 		$result = "";
 		$result .= '<div style="text-align:center;border-top:1px dotted #ccc;padding-top:10px;">';
 			$result .= '<span style="color:#000;background-color:#ecf3fe;border:1px solid #aac9ff;text-decoration:none;"><font style="font-size:16px;">&nbsp;</font>'.$this->getButtonViewElement($p, $exec, $rec).'<font style="font-size:16px;">&nbsp;</font></span>';
-		$reuslt .= '</div>';
+		$result .= '</div>';
 		echo $result;
 	}
 	protected function getButtonAccess($p, $exec){
@@ -237,7 +237,7 @@ class FeedbackFormExecutor extends FormExecutor {
 				$path = $rec->getFieldValue($field->getFieldName(), "path");
 				if($path != null){
 					//move the file in the uploaded files (because the email are send in asynch)
-					if(!rename(TEMPORARYUPLOADEDFILE_path.$path, FILES_PATH."feedbackAttachement_".$path)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$filePath." in the Client folder:".FILES_PATH.$fileName, ServiceException::FORBIDDEN);
+					if(!rename(TEMPORARYUPLOADEDFILE_path.$path, FILES_PATH."feedbackAttachement_".$path)) throw new ServiceException("Error on storing the temporaryUploadedFile ".$path." in the Client folder", ServiceException::FORBIDDEN);
 					//the attachement file are marked to be deleted after the email is successfully sent
 					$mail->createAttachment(
 						FILES_PATH."feedbackAttachement_".$path, true,

@@ -59,7 +59,8 @@ class EmailNotificationGroupFormExecutor extends FormExecutor {
 	protected function actOnCheckedRecord($p, $exec) {
 
 		$groupAS = ServiceProvider::getGroupAdminService();
-
+		$transS = ServiceProvider::getTranslationService();
+		
 		$rec = $this->getRecord();
 		$group = $this->getGroupP()->getGroup();
 
@@ -82,7 +83,6 @@ class EmailNotificationGroupFormExecutor extends FormExecutor {
 			echo "confirmationDialog";
 			echo ExecutionServiceImpl::answerParamSeparator;
 		}
-		if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 		$this->getWigiiExecutor()->operationSuccessfullMessage("confirmationDialog", 350, $transS->t($p, "operationDoneSuccessfully"), "", "done");
 
 		if($this->getActOnCheckedRecordRequest()!=null){

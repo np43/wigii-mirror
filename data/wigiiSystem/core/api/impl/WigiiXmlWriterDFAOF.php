@@ -128,7 +128,7 @@ class WigiiXmlWriterDFAOF implements DataFlowActivityOutputFilter
 	private $outputEncoding = 'UTF-8';
 	/**
 	 * Sets the character encoding of the output strings
-	 * @param $encoding the encoding name, one of UTF-8, ISO-8859-1 or US-ASCII
+	 * @param string $encoding the encoding name, one of UTF-8, ISO-8859-1 or US-ASCII
 	 */
 	public function setOutputEncoding($encoding) {
 		if(is_null($encoding) || $encoding == '') throw new DataFlowServiceException("invalid encoding. Should be UTF-8, ISO-8859-1 or US-ASCII", DataFlowServiceException::INVALID_ARGUMENT);
@@ -185,8 +185,8 @@ class WigiiXmlWriterDFAOF implements DataFlowActivityOutputFilter
 	 * Adds an attribute to the current start element tag
 	 * Precondition: this method works only if no content has been written (start element is still open)
 	 * This method can be called several times
-	 * @param $name attribute name (no checks is done if an attribute with same name already exists)
-	 * @param $value attribute value
+	 * @param string $name attribute name (no checks is done if an attribute with same name already exists)
+	 * @param mixed $value attribute value
 	 */
 	public function writeAttribute($name, $value) {
 		if(is_null($name) || $name=='') throw new DataFlowServiceException("attribute name cannot be null or empty", DataFlowServiceException::INVALID_ARGUMENT);
@@ -210,8 +210,8 @@ class WigiiXmlWriterDFAOF implements DataFlowActivityOutputFilter
 	 * Writes an array of attributes listed in a sequence
 	 * (att1Name, att1Val, att2Name, att2Val, etc)
 	 * throws DataFlowServiceException::INVALID_ARGUMENT if attributes are not matching pairs attName, attValue
-	 * @param $attributes an array of attributes in a sequence (passed by ref)
-	 * @param $startIndex the startIndex where to find the first attribute
+	 * @param array $attributes an array of attributes in a sequence (passed by ref)
+	 * @param int $startIndex the startIndex where to find the first attribute
 	 */
 	public function writeAttributeSequence(&$attributes, $startIndex=0) {
 		if(!is_array($attributes)) throw new DataFlowServiceException("attributes should be an array", DataFlowServiceException::INVALID_ARGUMENT);
@@ -368,7 +368,7 @@ class WigiiXmlWriterDFAOF implements DataFlowActivityOutputFilter
 	 * Writes some raw xml in the current open element
 	 * The xml string is not checked, could lead to an invalid xml document
 	 * This method can be called several time, as long as writeEndElement has not been called
-	 * @param $xml the xml string to be inserted as children of the current element
+	 * @param string $xml the xml string to be inserted as children of the current element
 	 */
 	public function writeXml($xml) {		
 		switch($this->state) {

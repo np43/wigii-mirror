@@ -31,7 +31,9 @@ if(!defined("IMPL_PATH")) define("IMPL_PATH", CORE_PATH . "_webImplExecutor/");
 if(!defined("TEMPLATE_PATH")) define("TEMPLATE_PATH", IMPL_PATH . "templates/");
 if(!defined("DATATYPE_PATH")) define("DATATYPE_PATH", CORE_PATH . "datatype/");
 if(!defined("LANG_FOLDER")) define("LANG_FOLDER", CORE_PATH . "langs/");
+if(!defined("CONFIGPACK_PATH")) define("CONFIGPACK_PATH", wigiiSystem_PATH . "configPack/");
 if(!defined("CLIENT_CONFIG_PATH")) define("CLIENT_CONFIG_PATH", wigiiSystem_PATH . "configs/" . CLIENT_NAME . "/");
+if(!defined("CLIENT_DATA_PATH")) define("CLIENT_DATA_PATH", "../users/" . CLIENT_NAME . "/");
 // Medair (CWE) 18.09.2018: in PHP 7, an inherited method should have same signature as parent, except for optional arguments.
 // In order to allow sub class to specialize method signature by adding mandatory arguments, the MANDATORY_ARG symbol has been defined.
 // for example: parent class defined method createInstance()
@@ -93,6 +95,9 @@ spl_autoload_register('wigii_autoload');
 * return: void
 */
 function wigii_autoload($class_name) {
+    // CWE 28.03.2019 sanitizes path in class name
+    $class_name = str_replace(array('../','..\\'), '', $class_name);
+    // lookup for class
 	if (!class_exists($class_name)) {
 		$ok = false;
 		if (!$ok) {

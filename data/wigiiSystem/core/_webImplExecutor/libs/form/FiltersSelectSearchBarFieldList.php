@@ -118,13 +118,13 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 					$elField["type"]!="TimeRanges" &&
 					$elField["type"]!="Dates"
 					){
-						throw new ServiceException("Wrong field: $elAttributName $elFieldName $subFieldName in SelectSearch activity (field: $fieldName). Only Attributs, MultipleAttributs, Dates, TimeRanges, Booleans, Files->date, Emails->externalAccessEndDate, Elements->sys_date, Elements->sys_creationDate are allowed.", ServiceException::INVALID_ARGUMENT);
+						throw new ServiceException("Wrong field: $elAttributName $elFieldName $elSubFieldName in SelectSearch activity (field: $fieldName). Only Attributs, MultipleAttributs, Dates, TimeRanges, Booleans, Files->date, Emails->externalAccessEndDate, Elements->sys_date, Elements->sys_creationDate are allowed.", ServiceException::INVALID_ARGUMENT);
 					}
 			} else if($elAttributName=="sys_date" || $elAttributName=="sys_creationDate"){
 				//element attribute
 
 			} else {
-				throw new ServiceException("Wrong field: $elAttributName $elFieldName $subFieldName in SelectSearch activity (field: $fieldName). Only Attributs, MultipleAttributs, Dates, TimeRanges, Booleans, Files->date, Emails->externalAccessEndDate, Elements->sys_date, Elements->sys_creationDate are allowed.", ServiceException::INVALID_ARGUMENT);
+				throw new ServiceException("Wrong field: $elAttributName $elFieldName $elSubFieldName in SelectSearch activity (field: $fieldName). Only Attributs, MultipleAttributs, Dates, TimeRanges, Booleans, Files->date, Emails->externalAccessEndDate, Elements->sys_date, Elements->sys_creationDate are allowed.", ServiceException::INVALID_ARGUMENT);
 			}
 
 			if(count($fieldXml->children()) > 0){

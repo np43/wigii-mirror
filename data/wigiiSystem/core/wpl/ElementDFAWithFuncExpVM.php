@@ -124,7 +124,6 @@ class ElementDFAWithFuncExpVM implements DataFlowActivity
 	private $vm;
 	public function processDataChunk($data, $dataFlowContext) {
 		if(is_null($data)) return;
-		$returnValue = null;
 		$eltEval = null; $this->vm = null;
 		$p = $dataFlowContext->getPrincipal();
 		try {

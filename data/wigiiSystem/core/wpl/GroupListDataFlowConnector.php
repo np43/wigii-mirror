@@ -57,8 +57,8 @@ class GroupListDataFlowConnector implements GroupList, DataFlowDumpable
 	public static function createInstance($groupLogExp, $asStdClass=false) {
 		$returnValue = new self();
 		$returnValue->reset();
-		if(isset($inGroupLogExp)) $returnValue->setInGroupLogExp($inGroupLogExp);
-		if(isset($listFilter)) $returnValue->setListFilter($listFilter);
+		if(isset($groupLogExp)) $returnValue->setGroupLogExp($groupLogExp);
+		$returnValue->setAsStdClass($asStdClass);
 		return $returnValue;
 	}
 	

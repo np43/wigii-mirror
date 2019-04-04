@@ -46,7 +46,7 @@ interface ExecutionService {
 
 	/**
 	 * process the url to make it array of requests, and add it to the remaingin request.
-	 * @return return the array of request which was defined in this url.
+	 * @return array return the array of request which was defined in this url.
 	 */
 	public function addRequests($url);
 

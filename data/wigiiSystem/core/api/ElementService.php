@@ -160,7 +160,7 @@ interface ElementService
 	 * @param InGroupLogExp inGroupLogExp: a logical expression composed of LogExpInGroup and LogExpNotInGroup
 	 * 				  expressing element in group belonging and group selection
 	 * @param ListFilter listFilter: filter on the list; filters columns, does pagination and sorting
-	 * @return the number of elements selected
+	 * @return int the number of elements selected
 	 * @throws ElementServiceException if an error occurs
 	 */
 	public function countSelectedElementsInGroups($principal, $inGroupLogExp, $listFilter=null);
@@ -184,7 +184,7 @@ interface ElementService
 	 * @param FieldSelector duplicateKey field selector specifying the element field on which to calculate duplicates
 	 * @param ValueList elementIds given ValueList to be filled with the found duplicated elements Ids
 	 * @param ListFilter listFilter: filter on the list; filters columns, does pagination and sorting
-	 * @return the number of duplicates found
+	 * @return int the number of duplicates found
 	 * @throws ElementServiceException if an error occurs
 	 */
 	public function findDuplicatesFromSelectedElementsInGroups($principal, $inGroupLogExp, $duplicateKey, $elementIds, $listFilter=null);
@@ -197,7 +197,7 @@ interface ElementService
 	 * @param ValueList elementIds given ValueList to be filled with the found duplicated elements Ids
 	 * @param Boolean includeChildrenGroups if true then includes also elements in children groups accessible by principal
 	 * @param ListFilter listFilter filter on the list; filters columns, does pagination and sorting
-	 * @return the number of duplicates found
+	 * @return int the number of duplicates found
 	 * @throws ElementServiceException if an error occurs
 	 */
 	public function findDuplicatesFromAllElementsInGroups($principal, $groupList, $duplicateKey, $elementIds, $includeChildrenGroups=true, $listFilter=null);	
@@ -228,7 +228,7 @@ interface ElementService
 	 * getGroupsPathContainingElement
 	 * principal: authenticated user performing the operation
 	 * elmentP / element: the element for which we want to retrieve groups
-	 * @return array[id_group]=array([id_group_parent]=>groupParentName,...,[id_group]=>[groupname]
+	 * @return array array[id_group]=array([id_group_parent]=>groupParentName,...,[id_group]=>[groupname]
 	 * id_group is the group id of the group containing elements (can be multiple) 
 	 * if the wigiiNamespace of a group is different than the principal wigiiNamespace the groupname is prefixed with "wigiiNamespace : "
 	 */
@@ -310,7 +310,7 @@ interface ElementService
 	 * Move element to provided group
 	 *@param Principal $principal authenticated user performing the operation
 	 *@param int $elementId element database id from which to retrieve the element to move
-	 *@param $groupIds a group id or and array of group ids to which the element is moved to
+	 *@param int $groupIds a group id or and array of group ids to which the element is moved to
 	 *@throws ElementServiceException if an error occurs
 	 *@returns total number of changes
 	 */
@@ -615,7 +615,7 @@ interface ElementService
 	 * @param Element $element element object to save in the database as a sub element	 
 	 * @param FieldSelectorList $fieldSelectorList only selected fields will be inserted
 	 * @throws ElementServiceException in case of error
-	 * @return 1 if persisted, else 0
+	 * @return int 1 if persisted, else 0
 	 * postcondition: element is in the database, element id is updated with database id and sub element info are filled (id_element_parent, linkName)	 
 	 */
 	public function insertSubElement($principal, $masterElementId, $fieldName, $element, $fieldSelectorList=null);

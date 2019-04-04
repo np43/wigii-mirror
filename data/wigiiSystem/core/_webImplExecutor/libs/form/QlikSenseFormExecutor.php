@@ -139,7 +139,6 @@ class QlikSenseFormExecutor extends WebServiceFormExecutor {
 			else throw new ServiceException('unsupported request', ServiceException::UNSUPPORTED_OPERATION);
 		}
 		catch(Exception $e) {
-			if(isset($fxEval) && method_exists($fxEval, 'freeMemory')) $fxEval->freeMemory();
 			header($_SERVER["SERVER_PROTOCOL"]." 500 Internal Error"); 
 			header("Access-Control-Allow-Origin: *");
 			header("Content-Type: text/xml; charset=UTF-8");			

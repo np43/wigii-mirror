@@ -586,7 +586,7 @@ class ClientAdminServiceImpl implements ClientAdminService
 						}
 					}
 				}
-				if(isset($pNamespace)) $principal->bindToWigiiNamespace($pWigiiNamespace);
+				if(isset($pWigiiNamespace)) $principal->bindToWigiiNamespace($pWigiiNamespace);
 			}			
 		}
 		catch (ClientAdminServiceException $casE) {

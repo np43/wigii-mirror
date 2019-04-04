@@ -31,8 +31,8 @@ class WigiiGraphService
 {
 	/**
 	 * Recursively walks through a tree. The tree is an array of arrays.
-	 * @param $arrayTree the tree (an array of arrays) passed by reference
-	 * @param $actOnTreeNode an optional string representing a callback function (or method) name 
+	 * @param array $arrayTree the tree (an array of arrays) passed by reference
+	 * @param string $actOnTreeNode an optional string representing a callback function (or method) name 
 	 * which will be called for each visited tree node which are not leaves. 
 	 * The function signature should be :
 	 * 		$actOnTreeNode($key, $depth, $numberOfChildren)
@@ -43,7 +43,7 @@ class WigiiGraphService
 	 *		The callback function returns a boolean, if true, then the walk goes deeper in the tree,
 	 *		else the visit stops at this level.
 	 * 
-	 * @param $actAfterTreeNode an optional string representing a callback function (or method) name 
+	 * @param string $actAfterTreeNode an optional string representing a callback function (or method) name 
 	 * which will be called for each visited tree node which are not leaves, after the children have been visited.
 	 * The callback order on a tree node is : actOnTreeNode, if(true) visit children, actAfterTreeNode  
 	 * The function signature should be :
@@ -55,7 +55,7 @@ class WigiiGraphService
 	 *		The callback function returns a boolean, if true, then the walk continues with peer nodes on same level,
 	 *		else the visit backtracks to parent node.
 	 *
-	 * @param $actOnTreeLeaf an optional string representing a callback function (or method) name 
+	 * @param string $actOnTreeLeaf an optional string representing a callback function (or method) name 
 	 * which will be called for each visited tree leaf (a node with no children node).
 	 * The function signature should be :
 	 * 		$actOnTreeLeaf($key, $value, $depth)
@@ -68,7 +68,7 @@ class WigiiGraphService
 	 *
 	 * Note that only leaves have values. Other nodes are storing sub arrays as the tree is an array of arrays.
 	 * 
-	 * @param $object an optional object instance which exposes the callback methods
+	 * @param Object $object an optional object instance which exposes the callback methods
 	 * 
 	 * returns true if whole tree has been visited, else false.
 	 * throws WigiiGraphServiceException in case of error.
@@ -165,15 +165,15 @@ class WigiiGraphService
 	
 	/**
 	 * Stores a node value into a tree. The tree is an array of arrays.
-	 * @param $arrayTree the tree (an array of arrays) passed by reference in which to set the value
-	 * @param $pathAndValue an array giving the path to the node and the value. The array should be of one dimension,
+	 * @param array $arrayTree the tree (an array of arrays) passed by reference in which to set the value
+	 * @param array $pathAndValue an array giving the path to the node and the value. The array should be of one dimension,
 	 * with numerical sorted keys, of the form [key1, key2, key3, ..., keyn, value] where :
 	 * key1, ..., keyn are the tree node keys of the path from the root to the node for which we want to set a value.
 	 * The last value of the array is the value to be stored in the node.
 	 * Example: if the path to the node in the tree, starting from root, is /a/b/c/d, then pass an array equal to array('a', 'b', 'c', 'd', value);
 	 * The value will be stored for node 'd'.
 	 * If the path does not exist or partially exist in the tree, then the missing nodes are created.
-	 * @param $operator a storage operator. Should be one of SUPDOP_SET, SUPDOP_CAT, SUPDOP_ADD, SUPDOP_DEL, SUPDOP_SET_IF_NULL.
+	 * @param mixed $operator a storage operator. Should be one of SUPDOP_SET, SUPDOP_CAT, SUPDOP_ADD, SUPDOP_DEL, SUPDOP_SET_IF_NULL.
 	 * case SUPDOP_SET:
 	 * 	If the node already exists, then its value is replaced.
 	 * 	If the value is an array of arrays, then the tree grows at the given node with a subtree.

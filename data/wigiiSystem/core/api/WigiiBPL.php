@@ -2172,6 +2172,8 @@ class WigiiBPL
 	 *   If not given, takes first field of type Files having attribute uniqueInGroup=1. 
 	 *   File name is used as a mapping key. If several elements match file name, then takes first match.
 	 * - noCalculation: Boolean. If true, then element calculated fields are not re-calculated. By default calculation is active.
+	 * - noDeletion: Boolean. If true, then existing elements linked to non-existing files are not deleted. 
+	 * By default, elements linked to non-existing files are deleted. Deletion protection can also be configured using an Element_beforeDeleteExp. 
 	 * - refreshGUI: Boolean. If true, then Wigii web user interface is asked to clear its group caches when sharing of element changes.
 	 *   If explicitely set to false, then nothing is sent to Wigii GUI. By default, GUI is refreshed.
 	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
@@ -2193,16 +2195,18 @@ class WigiiBPL
 	        if(!is_object($group)) $group = $this->getGroupAdminService()->getGroup($principal, $group);
 	        if($group instanceof GroupP) $group = $group->getDbEntity();
 	        if(!isset($group)) throw new WigiiBPLException('group cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+            $origNS = $principal->getWigiiNamespace();
+            $principal->bindToWigiiNamespace($group->getWigiiNamespace());
 	        
 	        $linkGroupToFolder = $parameter->getValue('linkGroupToFolder');
 	        $includeChildrenGroups = $parameter->getValue('includeChildrenGroups');
 	        $persistGroupPortal=($linkGroupToFolder==true);
-	        $portalRec = $this->getWigiiExecutor()->createActivityRecordForForm($principal, Activity::createInstance("groupPortal"), $exec->getCrtModule());
+	        $portalRec = $this->getWigiiExecutor()->createActivityRecordForForm($principal, Activity::createInstance("groupPortal"), $group->getModule());
 	        $portalRec->getWigiiBag()->importFromSerializedArray($group->getDetail()->getPortal(), $portalRec->getActivity());	        
 	        
 	        $fieldName = $parameter->getValue('fieldName');
-	        if(!$fieldName) {
-	            $fieldName = $this->getWigiiExecutor()->doesCrtModuleHasIsKeyField($principal, $group->getModule());
+	        if(!$fieldName) {	            
+	            $fieldName = $this->getWigiiExecutor()->doesCrtModuleHasIsKeyField($principal, $group);
 	            if($fieldName) $fieldName = $fieldName->getName();
 	            else $fieldName = null;
 	        }
@@ -2284,9 +2288,26 @@ class WigiiBPL
 	            // Element recalculation
 	            if(!$noCalculation) $dfasl->addDataFlowActivitySelectorInstance(dfas('ElementRecalcDFA'));
 	            // Persist element in database
-	            $dfasl->addDataFlowActivitySelectorInstance(dfas('ElementDFA','setMode',1));
+	            $dfasl->addDataFlowActivitySelectorInstance(dfas('ElementDFA','setMode',1,'setReloadElementAfterInsert',false));
+	            // Extracts processed element ids
+	            $dfasl->addDataFlowActivitySelectorInstance(dfas('MapElement2ValueDFA','setElement2ValueFuncExp',fs_e('id')));
+	            $dfasl->addDataFlowActivitySelectorInstance(dfas('ArrayBufferDFA'));
 	            // runs data flow
-	            sel($principal,array2df($files),$dfasl);
+	            $processedEltIds = sel($principal,array2df($files),$dfasl);	            
+	            // deletes element linked to non-existing files
+	            if(!$parameter->getValue('noDeletion')) {
+	                // selects all elements not yet processed and having a file in the linked folder
+	                sel($principal,elementPList(lxInG(lxEq(fs('id'),$group->getId())),
+	                    lf(fsl(fs_e('id'),fs($fieldName,'path')),lxAnd(lxNotIn(fs_e('id'), $processedEltIds), lxLike(fs($fieldName,'path'),$folderPath.'%')))),dfasl(
+	                   /* deletes element if linked file does not exist */
+	                   dfas('ElementDFA','setMode',ElementDFA::MODE_MIXED,'setIgnoreLockedElements',true,'setDecisionMethod',function($elementP,$dataFlowContext) use($fieldName){
+	                       $returnValue = ElementDFA::MODE_IGNORE;
+	                       $filePath = resolveFilePath($elementP->getDbEntity()->getFieldValue($fieldName,'path'));
+	                       if($filePath && !file_exists($filePath)) $returnValue = ElementDFA::MODE_DELETE;
+	                       return $returnValue;
+	                   })
+	                ));
+	            }
 	            // invalidates list view cache
 	            if($refreshGUI) $exec->invalidCache ( $principal, 'moduleView', 'groupSelectorPanel', "groupSelectorPanel/selectGroup/" . $group->getId () );
 	            
@@ -2322,9 +2343,11 @@ class WigiiBPL
 	                }
 	            }
 	        }
+	        $principal->bindToWigiiNamespace($origNS);
 	    }
 	    catch(Exception $e) {
 	        $this->executionSink()->publishEndOperationOnError("groupSyncElementsWithFileSystem", $e, $principal);
+	        $principal->bindToWigiiNamespace($origNS);
 	        throw $e;
 	    }
 	    $this->executionSink()->publishEndOperation("groupSyncElementsWithFileSystem", $principal);
@@ -2656,6 +2679,7 @@ class WigiiBPL
 	 * @return Group
 	 */
 	public function getConfigGroupForGroup($principal, $group) {
+	    $this->debugLogger()->logBeginOperation('getConfigGroupForGroup');
 	    if(!isset($group)) throw new WigiiBPLException('group cannot be null, should be a valid group ID or a group instance', WigiiBPLException::INVALID_ARGUMENT);
 	    $returnValue=null;	    
 	    if(!is_object($group)) {
@@ -2669,6 +2693,7 @@ class WigiiBPL
     	    if(!$returnValue) $returnValue = $group;
     	    $this->groupConfigCache[$group->getId()] = $returnValue;
 	    }
+	    $this->debugLogger()->logEndOperation('getConfigGroupForGroup');
 	    return $returnValue;
 	}
 	
@@ -2686,11 +2711,14 @@ class WigiiBPL
 	        $group = $this->getGroupAdminService()->getGroupWithoutDetail($principal, $group);
 	    }
 	    $cc = $this->getConfigService();
-	    if($cc instanceof ConfigurationContextImpl) {
+	    $origNS = $principal->getWigiiNamespace();
+	    $principal->bindToWigiiNamespace($group->getWigiiNamespace());
+	    if($cc->doesGroupHasConfigFile($principal, $group)) $returnValue = $group;
+	    else if($cc instanceof ConfigurationContextImpl) {
 	        $parentGroup = $cc->isConfigGroupAvailableForGroup($principal, $group);
 	        if(is_object($parentGroup)) $returnValue = $parentGroup;
 	    }
-	    else if($cc->doesGroupHasConfigFile($principal, $group)) $returnValue = $group;	    
+	    $principal->bindToWigiiNamespace($origNS);
 	    return (isset($returnValue)? $returnValue->getDbEntity():$returnValue);
 	}
 	

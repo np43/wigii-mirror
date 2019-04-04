@@ -250,13 +250,13 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		$this->currentEltNumber = ($lf->getDesiredPageNumber()-1)*$lf->getPageSize();
 		$principal = $dataFlowContext->getPrincipal();
 		
+		$apiClient = $this->injectedApiClient;
 		if($isSubitem) {
 		    // forbids direct access to subelements if origin is public (because a listFilterExp could apply on root element and we cannot know at this stage)
 		    if($dataFlowContext->isOriginPublic()) throw new DataFlowServiceException('Sub-elements cannot be accessed from public space',DataFlowServiceException::FORBIDDEN);
 		    
 			// sets configuration if defined
-			$configSel = $this->linkSelector->getRootConfigSelector();
-			$apiClient = $this->injectedApiClient;
+			$configSel = $this->linkSelector->getRootConfigSelector();			
 			if(isset($configSel)) {
 				// a wigiiNamespace has been specified --> adapts the Principal if needed
 				$confWigiiNamespace = $configSel->getWigiiNamespaceName();
@@ -267,7 +267,8 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 				// a groupLogExp has been specified --> creates a GroupBasedWigiiApiClient centered on theses groups
 				$groupExp = $configSel->getGroupLogExp();
 				if(isset($groupExp)) {
-					$apiClient = ServiceProvider::getGroupBasedWigiiApiClient($principal, $groupExp);
+					if(!isset($apiClient)) $apiClient = ServiceProvider::getGroupBasedWigiiApiClient($principal, $groupExp);
+					else $apiClient->selectGroups($principal, $groupExp);
 					$groupList = $apiClient->getGroupList();
 					// gets wigiiNamespace
 					$initialized = false; $firstWigiiNamespace = null;
@@ -303,16 +304,13 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		else {
 			if(isset($this->linkSelector)) $dataFlowContext->setAttribute('linkSelector', $this->linkSelector);
 			
+			if(!isset($apiClient)) $apiClient = ServiceProvider::getGroupBasedWigiiApiClient($principal, $this->inGroupLogExp);
+			elseif(isset($this->inGroupLogExp)) $apiClient->selectGroups($principal, $this->inGroupLogExp);
+			
 			// Medair(CWE) 13.03.2018 applies listFilterExp if data flow is called from public space
 			if($dataFlowContext->isOriginPublic()) {
-			    $apiClient = ServiceProvider::getGroupBasedWigiiApiClient($principal, $this->inGroupLogExp);
 			    $wbpl = ServiceProvider::getWigiiBPL();
 			    
-			    // if one group is selected, then centers on eventual group config
-			    if($apiClient->getGroupList()->count() == 1) {
-			        $gcs = $wbpl->buildConfigSelectorForGroup($principal, reset($apiClient->getGroupList()->getListIterator()));
-			        $apiClient->selectGroups($principal, $gcs->getGroupLogExp());
-			    }
 			    $listFilterExp=(string)$apiClient->getConfigService()->getParameter($principal,$apiClient->getModule(),'listFilterExp');
 			    if(!empty($listFilterExp)) {
 			        $listFilterExp = $wbpl->evaluateFuncExp($principal, str2fx($listFilterExp));
@@ -328,7 +326,10 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 			    }
 			}
 			
-			$n = $this->getElementService()->getSelectedElementsInGroups($principal, $this->inGroupLogExp, $this, $lf);
+			$this->dataFlowContext->setAttribute('GroupBasedWigiiApiClient', $apiClient, true);
+			$this->instanciatedApiClient = true;
+			
+			$n = $apiClient->getElementService()->getSelectedElementsInGroups($principal, $this->inGroupLogExp, $this, $lf);
 		}
 		
 		// updates user ListFilter with totalNumberOfObjects if set
@@ -348,7 +349,7 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 				$n += $apiClient->getElementService()->getSubElementsForField($principal, $this->linkSelector->getOwnerElementId(), $this->linkSelector->getFieldName(), $this, $lf);
 			} 	
 			else {
-				$n += $this->getElementService()->getSelectedElementsInGroups($principal, $this->inGroupLogExp, $this, $lf);
+			    $n += $apiClient->getElementService()->getSelectedElementsInGroups($principal, $this->inGroupLogExp, $this, $lf);
 			}
 			if($this->nElements == 0) break;					
 		}
@@ -387,8 +388,10 @@ class ElementPListDataFlowConnector implements ElementPList, DataFlowDumpable
 		if(!$this->instanciatedApiClient) {
 			$this->dataFlowContext->setAttribute('GroupBasedWigiiApiClient', ServiceProvider::getGroupBasedWigiiApiClient($this->dataFlowContext->getPrincipal(), $groupList), true);
 			$this->instanciatedApiClient = true;
-			$this->calculatedGroupList = $groupList;
-		} 
+		}
+		// else updates group list
+		else $this->dataFlowContext->getAttribute('GroupBasedWigiiApiClient')->setGroupList($groupList);
+		$this->calculatedGroupList = $groupList;
 	}
 	
 	public function getCalculatedGroupList() {

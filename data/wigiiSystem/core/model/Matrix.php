@@ -30,7 +30,7 @@ interface Matrix {
 	 * Gets value object from a cell in the matrix
 	 * @param String $rowId row selector
 	 * @param String $colId column selector
-	 * @return Any
+	 * @return mixed
 	 */
 	public function getValue($rowId, $colId);
 
@@ -87,14 +87,14 @@ interface Matrix {
 	/**
 	 * Gets row header object
 	 * @param String $rowId row selector
-	 * @return Any	 
+	 * @return mixed	 
 	 */
 	public function getRowHeader($rowId);
 	
 	/**
 	 * Gets col header object
 	 * @param String $colId column selector
-	 * @return Any
+	 * @return mixed
 	 */
 	public function getColHeader($colId);
 	

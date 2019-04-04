@@ -509,7 +509,7 @@ class MySqlFacade
 	 * @param DbConnectionSettings $cnxSettings a DbConnectionSettings object with everything needed to connect to the database
 	 * @param String readSep separator regExp used in preg_split when reading existing values in database
 	 * @param String writeSep separator to be used when adding new value to existing field
-	 * @return the number of records updated
+	 * @return int the number of records updated
 	 * @throws MySqlFacadeException in case of error
 	 */
 	public function updateField($principal, $fieldSelector, $tableName, $fsLogExp,
@@ -827,7 +827,7 @@ class MySqlFacade
 	 * Doesn't support any SELECT command.
 	 * @param DbConnectionSettings $cnxSettings the db connection settings to use.
 	 * @throws MySqlFacadeException in case of error.
-	 * @return the number of executed queries
+	 * @return int the number of executed queries
 	 */
 	public function execQueryList($principal, $queryList, $cnxSettings) {
 		$this->executionSink()->publishStartOperation("execQueryList", $principal);
@@ -877,9 +877,9 @@ class MySqlFacade
 	 * Replicates a whole DB table from one database to another one.
 	 * Precondition: The destination table should not exist.
 	 * Poscondition: The destination table is created and populated with original data.
-	 * @param $principal principal doing the replication
-	 * @param $dbTable contains the name of the table to replicate and the name of the destination database.
-	 * @param $cnxSettings the database connection needed to fetch the original table.
+	 * @param Principal $principal principal doing the replication
+	 * @param string $dbTable contains the name of the table to replicate and the name of the destination database.
+	 * @param DbConnectionSettings $cnxSettings the database connection needed to fetch the original table.
 	 * @throws MySqlFacadeException in case of error.
 	 */
 	public function replicateWholeDbTable($principal, $dbTable, $cnxSettings) {
@@ -908,10 +908,10 @@ class MySqlFacade
 	 * the biggest primary key in the destination database.
 	 * Precondition: The destination table should exist.
 	 * Postcondition: Selection of source records are inserted in the existing destination table.
-	 * @param $principal doing the replication
-	 * @param $dbTable contains the name of the table to replicate and the name of the destination database.
-	 * @param $primaryKeyColName the name of the primary key on which new records are selected
-	 * @param $cnxSettings the database connection needed to fetch the new records in source database.
+	 * @param Principal $principal doing the replication
+	 * @param string $dbTable contains the name of the table to replicate and the name of the destination database.
+	 * @param string $primaryKeyColName the name of the primary key on which new records are selected
+	 * @param DbConnectionSettings $cnxSettings the database connection needed to fetch the new records in source database.
 	 * @throws MySqlFacadeException in case of error,
 	 * in particular code 1146 'table does not exist' if destination table doesn't exist.
 	 */

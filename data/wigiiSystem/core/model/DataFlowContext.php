@@ -60,8 +60,8 @@ class DataFlowContext
 	 * call if needed the next steps in the data flow chain.
 	 * This method can be called as many times a needed.
 	 * Each call results in one data chunk to be passed to the DataFlowService for further processing.
-	 * @param $resultData some result data, can be any kind of object
-	 * @param $dataFlowActivity the reference to the current executing dataflow activity.
+	 * @param mixed $resultData some result data, can be any kind of object
+	 * @param DataFlowActivity $dataFlowActivity the reference to the current executing dataflow activity.
 	 * @throws DataFlowServiceException in case of error
 	 */
 	public function writeResultToOutput($resultData, $dataFlowActivity) {
@@ -162,7 +162,7 @@ class DataFlowContext
 	}
 	/**
 	 * Sets the principal attached to this DataFlowContext
-	 * @param unknown_type $principal
+	 * @param Principal $principal
 	 */
 	public function setPrincipal($principal) {
 		$this->principal = $principal;
@@ -197,9 +197,9 @@ class DataFlowContext
 
 	/**
 	 * Characterizes this dataflow context with an attribute
-	 * @param $key the attribute key
-	 * @param $val the attribute value. Accepts null. Any existing value under the given key is replaced.
-	 * @param $recyclable optional boolean. If true, then the method freeMemory (if exists) will be called on value, when the data flow is recycled,
+	 * @param String $key the attribute key
+	 * @param mixed $val the attribute value. Accepts null. Any existing value under the given key is replaced.
+	 * @param Boolean $recyclable optional boolean. If true, then the method freeMemory (if exists) will be called on value, when the data flow is recycled,
 	 * else no clean up code is executed, relies only on the garbage collection. Defaults to false.
 	 */
 	public function setAttribute($key, $val, $recyclable=false) {
@@ -260,7 +260,7 @@ class DataFlowContext
 	/**
 	 * Removes the given context attributes if defined
 	 * Ignores invalid keys.
-	 * @param $keys an array of keys or one single key
+	 * @param array $keys an array of keys or one single key
 	 */
 	public function removeAttributes($keys) {
 		if(empty($this->attributes)) return;

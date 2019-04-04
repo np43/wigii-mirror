@@ -422,6 +422,51 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		return ServiceProvider::getWigiiBPL()->buildConfigSelectorForGroup($this->getPrincipal(), $groupId);
 	}
 	
+	// ConfigIncludeSelector builder
+	
+	/**
+	 * Creates a ConfigIncludeSelector
+	 * See method 'cis' in FuncExpBuilder class.
+	 * FuncExp signature : <code>cis(configFilePath, configNodePath=null, xmlAttribute=null, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) configFilePath: String. The configuration file logical path, including file name
+	 * - Arg(1) configNodePath: String. Optional, the xml path from root to the node to include
+	 * - Arg(2..n) xmlAttribute: String|Array. Optional, the names of the xml attributes to include
+	 * @return ConfigIncludeSelector a ConfigIncludeSelector instance
+	 */
+	public function cis($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 1) throw new FuncExpEvalException('The cis function takes at least one argument the logical configuration file path to include', FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue = $this->getFuncExpBuilder()->cis($this->evaluateArg($args[0]),
+	        ($nArgs > 1 ? $this->evaluateArg($args[1]) : null),
+	        ($nArgs > 2 ? $this->evaluateArg($args[2]) : null));
+	    if($nArgs>3) {
+	        for($i=3;$i<$nArgs;$i++) {
+	            $returnValue->addXmlAttr($this->evaluateArg($args[$i]));
+	        }
+	    }
+	    return $returnValue;
+	}
+	
+	/**
+	 * Creates a ConfigIncludeSelectorList based on an array of ConfigIncludeSelectors
+	 * See method 'cisl' in FuncExpBuilder class.
+	 * FuncExp signature : <code>cisl(cis1, cis2, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0..n) cisI: ConfigIncludeSelector.
+	 * @return ConfigIncludeSelectorList a ConfigIncludeSelectorList instance
+	 */
+	public function cisl($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs > 0) {
+	        for($i = 0; $i < $nArgs; $i++) {
+	            $args[$i] = $this->evaluateArg($args[$i]);
+	        }
+	    }
+	    else $args = array();
+	    return $this->getFuncExpBuilder()->cisl($args);
+	}
+	
 	// CalculatedFieldSelector builder
 
 	/**
@@ -1139,25 +1184,35 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 				$cfsMap->setCalculatedFieldSelectorByFieldName($fieldName, $value);
 			}
 		}
-		$dataSource = null;
-		if($elementId==null){
-			$dataSource = newElement($groupId);
-		} else {
-			$dataSource = elementP($elementId,NULL,$this->evaluateFuncExp(fx("cs_g",$groupId)));
-		}
-		return ServiceProvider::getDataFlowService()->processDataSource(
-			$this->getPrincipal(),
-			$dataSource,
-			dfasl(
-				dfas("ElementSetterDFA","setCalculatedFieldSelectorMap",$cfsMap),
-				dfas("ElementRecalcDFA"),
-				dfas("ElementDFA","setMode","1"), //when persisting and more stages after, the element is reloaded and pushed further.
-				//dfas("NullDFA") //with this additional stage the retun value is the element
-				dfas("ElementUpdateSharingDFA","setOldGroupIds",fs_e("oldGids")) //update the autosharings
-			),
-			true,
-			($triggerNotification?TechnicalServiceProvider::getWigiiEventsDispatcher():false) //activate the notifications if $triggerNotification
-		);
+		// persist element process
+		$persistElement = function($elementId) use($groupId,$triggerNotification,$cfsMap) {
+    		$dataSource = null;
+    		if($elementId==null){
+    			$dataSource = newElement($groupId);
+    		} else {
+    			$dataSource = elementP($elementId,NULL,$this->evaluateFuncExp(fx("cs_g",$groupId)));
+    		}
+    		return ServiceProvider::getDataFlowService()->processDataSource(
+    			$this->getPrincipal(),
+    			$dataSource,
+    			dfasl(
+    				dfas("ElementSetterDFA","setCalculatedFieldSelectorMap",$cfsMap),
+    				dfas("ElementRecalcDFA"),
+    				dfas("ElementDFA","setMode","1"), //when persisting and more stages after, the element is reloaded and pushed further.
+    				//dfas("NullDFA") //with this additional stage the retun value is the element
+    				dfas("ElementUpdateSharingDFA","setOldGroupIds",fs_e("oldGids")) //update the autosharings
+    			),
+    			true,
+    			($triggerNotification?TechnicalServiceProvider::getWigiiEventsDispatcher():false) //activate the notifications if $triggerNotification
+    		);
+		};
+		//1. tries to persist element
+		$returnValue = $persistElement($elementId);
+		//2. if elementId exists and no element updated, tries to create a new one
+		if(!isset($returnValue) && isset($elementId)) $returnValue = $persistElement(null);
+		//3. if elementId and still no element, then throws exception
+		if(!isset($returnValue) && isset($elementId)) throw new FuncExpEvalException('element '.$elementId.' does not exist in database',FuncExpEvalException::NOT_FOUND);
+		return $returnValue;
 	}
 	
 	/**
@@ -1521,7 +1576,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * See method 'cfgAttribut' in FuncExpBuilder class.<br/>
 	 * FuncExp signature : <code>cfgAttribut(value, attributes=null, label=null)</code><br/>
 	 * Where arguments are :
-	 * - Arg(0) value: Scalar. The value of the attribute
+	 * - Arg(0) value: String|Number. The value of the attribute
 	 * - Arg(1) attributes: Array. An array [key => value] which defines some xml attributes.
 	 * - Arg(2) label: String|Array. The label of the attribute, or an array with the label translated in different languages.
 	 * The array is indexed with the Wigii installed languages (see TranslationService). For instance [l01 => label in English, l02 => label in French]
@@ -3005,6 +3060,39 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 */
 	public function ctlIsInPublic($args) {
 	    return $this->getAuthorizationService()->isPublicPrincipal($this->getPrincipal());
+	}
+	
+	/**
+	 * Synchronizes the elements contained in a group with the files present in a physical folder on the file system
+	 * FuncExp signature : <code>ctlSyncGroupElementsWithFileSystem(group,options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) group: int|Group|GroupP. Group (or group id) in which to synchronize the elements
+	 * - Arg(1) options: WigiiBPLParameter. An optional bag of parameters to configure the sync process like :
+	 * - folderPath: String. Optional folder path on server where to look for the files to synchronize. 
+	 *   If not given, takes Group portal url field which should be of type file://xxx
+	 * - linkGroupToFolder: Boolean. Optional. If true, then group portal url is updated with folder path and group is persisted,  
+	 *   sub groups are created and linked to sub folders (sub content is not synchronized. To synchronize whole tree, set includeChildrenGroups=true) 
+	 *   If false, only elements are linked to files on file system. Defaults to TRUE in FuncExp.
+	 * - includeChildrenGroups: Boolean. Optional. If true, then updates whole tree recursively. Defaults to TRUE in FuncExp.
+	 * - fieldName: String. Field of type Files mapped to the file in the file system. 
+	 *   If not given, takes first field of type Files having attribute uniqueInGroup=1. 
+	 *   File name is used as a mapping key. If several elements match file name, then takes first match.
+	 * - noCalculation: Boolean. If true, then element calculated fields are not re-calculated. By default calculation is active.
+	 * - refreshGUI: Boolean. If true, then Wigii web user interface is asked to clear its group caches when sharing of element changes.
+	 *   If explicitely set to false, then nothing is sent to Wigii GUI. By default, GUI is NOT refreshed by FuncExp call.
+	 *
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 */	
+	public function ctlSyncGroupElementsWithFileSystem($args) {
+	    $this->assertFxOriginIsNotPublic();
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>1) $options = $this->evaluateArg($args[1]);
+	    else $options = wigiiBPLParam();
+	    if($nArgs>0) $options->setValue('group', $this->evaluateArg($args[0]));
+	    if(!$options->getValue('refreshGUI')) $options->setValue('refreshGUI',false);
+	    if($options->getValue('linkGroupToFolder')!==false) $options->setValue('linkGroupToFolder',true);
+	    if($options->getValue('includeChildrenGroups')!==false) $options->setValue('includeChildrenGroups',true);
+	    return $this->getWigiiBPL()->groupSyncElementsWithFileSystem($this->getPrincipal(), $this, $options,$this->getFuncExpVMServiceProvider()->getExecutionSink());
 	}
 	
 	// System functions

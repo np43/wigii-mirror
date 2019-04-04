@@ -273,10 +273,10 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 	}
 	/**
 	 * Returns an array with some default config controllers.
-	 * @return Array in this implementation returns array('AttributeExpConfigController','SameAsFieldConfigController')
+	 * @return Array in this implementation returns array('IncludeConfigController','AttributeExpConfigController','SameAsFieldConfigController')
 	 */
 	protected function getDefaultConfigControllers() {
-		return array('AttributeExpConfigController','SameAsFieldConfigController');
+	    return array('IncludeConfigController','AttributeExpConfigController','SameAsFieldConfigController');
 	}
 	
 	// ConfigService interface re-implementation

@@ -42,7 +42,7 @@ class MultipleExecutionSink extends ExecutionSink
 	
 	/**
 	 * Creates a new instance of this MultipleExecutionSink
-	 * @param $systemExecutionSink the default ExecutionSink instance to be used. 
+	 * @param ExecutionSink $systemExecutionSink the default ExecutionSink instance to be used. 
 	 * This argument must point to a valid ExecutionSink running instance. 
 	 */
 	public function __construct($systemExecutionSink)
@@ -73,7 +73,7 @@ class MultipleExecutionSink extends ExecutionSink
 	/**
 	 * Adds a list of ExecutionSink classes to be used.
 	 * If some classes are already setup as additional ExecutionSinks, keeps the original instances.
-	 * @param $additionalExecutionSinkClasses an array of class names or one single class name string
+	 * @param array|string $additionalExecutionSinkClasses an array of class names or one single class name string
 	 * or an array of (key=class name, value=ObjectConfigurator). In that case, the ObjectConfigurator will be applied 
 	 * on each created instance.
 	 */
@@ -105,7 +105,7 @@ class MultipleExecutionSink extends ExecutionSink
 	/**
 	 * Creates an instance of a ExecutionSink given its className
 	 * By default, looks for a class on the classpath
-	 * @param $configurator optional ObjectConfigurator instance to configure created instance
+	 * @param ObjectConfigurator $configurator optional ObjectConfigurator instance to configure created instance
 	 */
 	protected function createExecutionSinkInstance($className, $configurator = null) {		
 		wigii_autoload($className);
@@ -120,7 +120,7 @@ class MultipleExecutionSink extends ExecutionSink
 	 * Removes a list of additional ExecutionSink classes.
 	 * If some classes are not setup as additional ExecutionSinks, there are ignored.
 	 * The system ExecutionSink instance cannot be removed (ignored if defined in the list)
-	 * @param $executionSinkClasses an array of class names or one single class name string
+	 * @param array|string $executionSinkClasses an array of class names or one single class name string
 	 */
 	public function removeAdditionalExecutionSinks($executionSinkClasses) {
 		if(empty($executionSinkClasses)) return;

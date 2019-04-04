@@ -674,7 +674,7 @@ class ConfigServiceCoreImpl implements ConfigService
 	/**
 	 * Interprets the path attribute from a template node in a configuration file
 	 * and returns a valid OS path.
-	 * @param SimpleXmlNode $template template node in module xml config
+	 * @param SimpleXMLElement $template template node in module xml config
 	 */
 	public function extractTemplatePathFromTemplate($template){
 		if(isset($this->wrapper)) return $this->wrapper->extractTemplatePathFromTemplate($template);
@@ -1172,6 +1172,8 @@ class ConfigServiceCoreImpl implements ConfigService
 		$sUsername = (is_null($username) || $username == '' ? '' : strtolower($this->alignFilepathChunkWithOSConstraint($username)));
 		$sGroupName = (is_null($groupName) || $groupName == '' ? '' : strtolower($this->alignFilepathChunkWithOSConstraint($groupName)));
 
+		$returnValue=array();
+		
 		if($sClientName == '')
 		{
 			// 7. configFolderPath/moduleName_config.xml

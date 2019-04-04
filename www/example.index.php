@@ -56,6 +56,7 @@ define("IMPL_PATH", CORE_PATH . "_webImplExecutor/");
 define("TEMPLATE_PATH", IMPL_PATH . "templates/");
 define("DATATYPE_PATH", CORE_PATH . "datatype/");
 define("LANG_FOLDER", CORE_PATH . "langs/");
+define("CONFIGPACK_PATH", wigiiSystem_PATH . "configPack/");
 define("CLIENT_CONFIG_PATH", wigiiSystem_PATH . "configs/" . CLIENT_NAME . "/");
 define("CLIENT_DATA_PATH", "../users/" . CLIENT_NAME . "/");
 

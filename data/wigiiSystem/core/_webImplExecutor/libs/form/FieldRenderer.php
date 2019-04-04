@@ -124,6 +124,7 @@ class FieldRenderer extends Model {
 		$rm->put('<div id="'.$idField.'_group" ');
 		$rm->put('class="value fieldGroup SBIB ui-corner-all'.($fieldXml["noFieldset"] =="1" ? ' noFieldset ' : '').'" ');
 
+        $padding='';
 // 		if((string)$fieldXml["totalWidth"]!=null){
 // 			$rm->put('style="'. $padding. ' width: 100%; max-width:'.(string)$fieldXml["totalWidth"].'px;"');
 // 		} else {

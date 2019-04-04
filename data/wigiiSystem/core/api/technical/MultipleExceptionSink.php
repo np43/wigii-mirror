@@ -42,7 +42,7 @@ class MultipleExceptionSink extends ExceptionSink
 	
 	/**
 	 * Creates a new instance of this MultipleExceptionSink
-	 * @param $systemExceptionSink the default ExceptionSink instance to be used. 
+	 * @param ExceptionSink $systemExceptionSink the default ExceptionSink instance to be used. 
 	 * This argument must point to a valid ExceptionSink running instance. 
 	 */
 	public function __construct($systemExceptionSink)
@@ -55,7 +55,7 @@ class MultipleExceptionSink extends ExceptionSink
 	/**
 	 * Adds a list of ExceptionSink classes to be used.
 	 * If some classes are already setup as additional ExceptionSinks, keeps the original instances.
-	 * @param $additionalExceptionSinkClasses an array of class names or one single class name string
+	 * @param array|string $additionalExceptionSinkClasses an array of class names or one single class name string
 	 * or an array of (key=class name, value=ObjectConfigurator). In that case, the ObjectConfigurator will be applied 
 	 * on each created instance.
 	 */
@@ -87,7 +87,7 @@ class MultipleExceptionSink extends ExceptionSink
 	/**
 	 * Creates an instance of a ExceptionSink given its className
 	 * By default, looks for a class on the classpath
-	 * @param $configurator optional ObjectConfigurator instance to configure created instance
+	 * @param ObjectConfigurator $configurator optional ObjectConfigurator instance to configure created instance
 	 */
 	protected function createExceptionSinkInstance($className, $configurator = null) {
 		$returnValue = new $className();
@@ -101,7 +101,7 @@ class MultipleExceptionSink extends ExceptionSink
 	 * Removes a list of additional ExceptionSink classes.
 	 * If some classes are not setup as additional ExceptionSinks, there are ignored.
 	 * The system ExceptionSink instance cannot be removed (ignored if defined in the list)
-	 * @param $exceptionSinkClasses an array of class names or one single class name string
+	 * @param array|string $exceptionSinkClasses an array of class names or one single class name string
 	 */
 	public function removeAdditionalExceptionSinks($exceptionSinkClasses) {
 		if(empty($exceptionSinkClasses)) return;

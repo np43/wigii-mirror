@@ -141,15 +141,15 @@ class WplToolbox
 
 	/**
 	 * Reads a serialized record from xml
-	 * @param $principal authenticated user performing the operation
-	 * @param $xml the xml string containing the record
-	 * @param $fieldList the FieldList of the record.
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param String $xml the xml string containing the record
+	 * @param FieldList $fieldList the FieldList of the record.
 	 * If the FieldList is empty and readConfig is true, then it is filled with the Fields config read from the xml
 	 * If the FieldList is not empty and readConfig is true, then Fields definition are replaced by the ones read from the xml
-	 * @param $wigiiBag the Wigii bag to be filled
-	 * @param $readConfig if true, then reads the fields config from the xml, raises an error if not found
-	 * @param $fieldSelectorList an optional FieldSelectorList to read only a selection of fields/subfields
-	 * @param $recordId an optional id to be used to store the values in the wigii bag
+	 * @param WigiiBag $wigiiBag the Wigii bag to be filled
+	 * @param Boolean $readConfig if true, then reads the fields config from the xml, raises an error if not found
+	 * @param FieldSelectorList $fieldSelectorList an optional FieldSelectorList to read only a selection of fields/subfields
+	 * @param int $recordId an optional id to be used to store the values in the wigii bag
 	 */
 	public function xml2record($principal, $xml, $fieldList, $wigiiBag, $readConfig=false, $fieldSelectorList=null, $recordId=null) {
 		$dfasl = $this->getXml2RecordDFASL();

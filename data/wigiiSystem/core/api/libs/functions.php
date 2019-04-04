@@ -214,16 +214,16 @@ function simplexml_appendChild($parent, $child, $beforenode=null){
  * Appends all the children of an existing parent, as children of another given parent.
  * @param SimpleXMLElement $parent the parent node to which to add the children
  * @param SimpleXMLElement $childrenParent the parent node from which to copy the children
- * @param SimpleXMLElement $beforenode if set, then the children will be inserted before this node.
+ * @param SimpleXMLElement $beforeNode if set, then the children will be inserted before this node.
  * @return SimpleXMLElement returns a pointer on the parent containing the new children.
  */
-function simplexml_appendChildren($parent, $childrenParent, $beforenode=null) {
+function simplexml_appendChildren($parent, $childrenParent, $beforeNode=null) {
 	$parent = dom_import_simplexml($parent);
 	if($beforeNode !== null) $beforeNode = dom_import_simplexml($beforeNode);
 	foreach($childrenParent->children() as $child) {
 		$child = dom_import_simplexml($child);
 		$child = $parent->ownerDocument->importNode($child, true);
-		if($beforenode === null) $parent->appendChild($child);
+		if($beforeNode === null) $parent->appendChild($child);
 		else $parent->insertBefore($child, $beforeNode);
 	}
 	return simplexml_import_dom($parent);
@@ -1471,7 +1471,7 @@ function dfas($className, $params=null) {
  * example: $funcExpBuilder->dfasl(dfas1, dfas2, dfas3) is equivalent
  * to $funcExpBuilder->dfasl(array(dfas1, dfas2, dfas3))
  * @param  DataFlowActivitySelector[]|DataFlowActivitySelector $dfasArr  array of DataFlowActivitySelectors or one DataFlowActivitySelector
- * @return DataFlowActivitySelectorListArray|null
+ * @return DataFlowActivitySelectorList|null
  */
 function dfasl($dfasArr) {
 	$nArgs = func_num_args();
@@ -1756,7 +1756,7 @@ function cfgAttributeExp($funcExp) {
 
 /**
  * Creates a WigiiBPLParameter based on a list of pairs (key, value) or other WigiiBPLParameter instances.
- * @param $args a list of arguments of the form wigiiBPLParam(k1,v1,k2,v2,p1,k3,v3,p2,p3,...) where
+ * @param mixed $args a list of arguments of the form wigiiBPLParam(k1,v1,k2,v2,p1,k3,v3,p2,p3,...) where
  * - ki,vi: pairs of (key, value) where key ki evaluates to a string and value to any value used as a parameter,
  * - pi: if pi evaluates to a WigiiBPLParameter instance, then adds its content
  * @return WigiiBPLParameter

@@ -63,9 +63,9 @@ class EditEventFormExecutor extends EditElementFormExecutor {
 		$fieldList = FormFieldList :: createInstance(null);
 		$config->getFields($p, $exec->getCrtModule(), null, $fieldList);
 		foreach ($fieldList->getListIterator() as $field) {
-			if ($field->isCalculated() && $field->shouldCalculateOnFetch() && ($fsl->containsField($field->getFieldName()) || ($originalListContext->getGroupByItemFieldSelector() != null && $originalListContext->getGroupByItemFieldSelector()->getFieldName() == $field->getFieldName()))) {
-				$field->getFuncExpDependencies($fsl);
-			}
+		    if ($field->isCalculated() && $field->shouldCalculateOnFetch() && $fsl->containsField($field->getFieldName())) {
+		        $field->getFuncExpDependencies($fsl);
+		    }
 		}
 
 		$element = $this->getRecord();

@@ -34,7 +34,7 @@ class DataFlowActivitySelector
 	
 	/**
 	 * Creates a instance of a DataFlowActivitySelector
-	 * @param $className the class name of the DataFlowActivity that should be executed
+	 * @param string $className the class name of the DataFlowActivity that should be executed
 	 */
 	public static function createInstance($className) {
 		$returnValue = new self();
@@ -55,9 +55,9 @@ class DataFlowActivitySelector
 	
 	/**
 	 * Defines a configuration parameter for the DataFlowActivity that will be executed
-	 * @param $parameterName the parameter name. It should match a method name on the DataFlowActivity class
+	 * @param string $parameterName the parameter name. It should match a method name on the DataFlowActivity class
 	 * for instance: 'setWigiiBag'. The DataFlowService will call $className->setWigiiBag
-	 * @param $value the value of the parameter.
+	 * @param mixed $value the value of the parameter.
 	 */
 	public function setDataFlowActivityParameter($parameterName, $value) {
 		if(is_null($parameterName)) throw new DataFlowServiceException("parameterName cannot be null", DataFlowServiceException::INVALID_ARGUMENT);

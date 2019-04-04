@@ -90,7 +90,7 @@ class DbQuery extends Model
 	 * else if ddl cmd then 1.
 	 */
 	public function getResult() {
-		return $result;
+	    return $this->result;
 	}
 }
 

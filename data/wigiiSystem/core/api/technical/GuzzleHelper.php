@@ -95,9 +95,9 @@ class GuzzleHelper
 	
 	/**
 	 * Wrapper arount the Guzzle\Http\Client send method
-	 * @param $httpClient the Guzzle http client
-	 * @param $httpRequest guzzle http request or an array of guzzle http requests
-	 * @return a guzzle http response or an array of guzzle http responses
+	 * @param mixed $httpClient the Guzzle http client
+	 * @param mixed $httpRequest guzzle http request or an array of guzzle http requests
+	 * @return mixed a guzzle http response or an array of guzzle http responses
 	 */
 	public function sendHttpRequest($principal, $httpClient, $httpRequests) {
 		$this->executionSink()->publishStartOperation("sendHttpRequest", $principal);		
@@ -116,10 +116,10 @@ class GuzzleHelper
 	
 	/**
 	 * Processes the http request as a stream and pushes the data chunks in the data flow
-	 * @param $principal the wigii principal
-	 * @param $httpRequest the guzzle http request to execute
-	 * @param $dataFlowActivitySelectorList the data flow where to push the data chunks
-	 * @param $bufferLimit the input buffer size when reading the http response 
+	 * @param Principal $principal the wigii principal
+	 * @param mixed $httpRequest the guzzle http request to execute
+	 * @param DataFlowActivitySelectorList $dataFlowActivitySelectorList the data flow where to push the data chunks
+	 * @param int $bufferLimit the input buffer size when reading the http response 
 	 * before sending to the dataflow, default to 2048 bytes
 	 */
 	public function processHttpRequest($principal, $httpRequest, $dataFlowActivitySelectorList, $bufferLimit=2048) {
@@ -149,10 +149,10 @@ class GuzzleHelper
 	
 	/**
 	 * Processes the http response body as a stream and pushes the data chunks in the data flow
-	 * @param $principal the wigii principal
-	 * @param $body the guzzle http response body to process
-	 * @param $dataFlowActivitySelectorList the data flow where to push the data chunks
-	 * @param $bufferLimit the input buffer size when reading the http response 
+	 * @param Principal $principal the wigii principal
+	 * @param mixed $body the guzzle http response body to process
+	 * @param DataFlowActivitySelectorList $dataFlowActivitySelectorList the data flow where to push the data chunks
+	 * @param int $bufferLimit the input buffer size when reading the http response 
 	 * before sending to the dataflow, default to 2048 bytes
 	 */
 	public function processHttpResponseBody($principal, $body, $dataFlowActivitySelectorList, $bufferLimit=2048) {

@@ -66,7 +66,7 @@ abstract class FieldSelectorLogExpAbstractEvaluator implements LogExpVisitor
 	
 	/**
 	 * @param FieldSelector $obj evaluates a FieldSelector and returns its value
-	 * @return Any
+	 * @return mixed
 	 */
 	abstract protected function getValue($obj);
 	

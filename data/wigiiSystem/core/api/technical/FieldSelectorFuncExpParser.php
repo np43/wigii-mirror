@@ -199,7 +199,7 @@ class FieldSelectorFuncExpParser
 	}
 	/**
 	 * Transforms a literal to a string compatible with the func exp syntax
-	 * @param scalar $lit
+	 * @param String|Number $lit
 	 */
 	protected function literal2fxstr($lit) {
 		$s = explode('"', $lit);

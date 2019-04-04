@@ -457,7 +457,7 @@ class UserAdminServiceImpl implements UserAdminService
 					// deletes user
 					try
 					{
-						$dbAS->deleteRows($principal,
+					    $this->getDbAdminService()->deleteRows($principal,
 							$this->getSqlTableNameForDeleteUser(),
 							$this->getSqlWhereClauseForDeleteUser($user),
 							$dbCS);
@@ -2997,7 +2997,7 @@ WHERE (
 
 	/**
 	 * @param dbRow an array straight from the DB
-	 * @return instanciated User object
+	 * @return User instanciated User object
 	 * @precondition: dbRow contains client
 	 * This implementation caches only created user without detail
 	 * to prevent the user of the API to modify the cached user.
@@ -3963,7 +3963,7 @@ SELECT $gCols
 	GR.canModify as RcanModify, GR.canWriteElement as RcanWriteElement, GR.canShareElement as RcanShareElement,
 	GP.canModify as PcanModify, GP.canWriteElement as PcanWriteElement, GP.canShareElement as PcanShareElement
 FROM (".
-		$this->getSqlForSelectAllGroupsR($userId, $groupIds, $propagation, $User_Groups_RightsAlias='UGR2', $Groups_GroupsAlias='GG2', $resultAlias='GR2')
+		$this->getSqlForSelectAllGroupsR($userId, $groupIds, $propagation, 'UGR2', 'GG2', 'GR2')
 		.") as GR
 INNER JOIN Groups as G on G.id_group = GR.id_group
 LEFT JOIN (".

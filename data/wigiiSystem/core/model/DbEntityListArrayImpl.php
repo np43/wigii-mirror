@@ -37,7 +37,7 @@ class DbEntityListArrayImpl implements DbEntityList
 		$returnValue->reset();
 		if($ids != null){
 			foreach($ids as $id){
-				$this->addDbEntity($this->createDbEntityInstance($id));
+			    $returnValue->addDbEntity($returnValue->createDbEntityInstance($id));
 			}
 		}
 		return $returnValue;

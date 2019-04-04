@@ -50,13 +50,13 @@ class ElementDataFlowConnector implements DataFlowDumpable
 		$returnValue = new self();
 		$returnValue->reset();
 		$returnValue->setGroupId($groupId);
-		if(isset($linkSelector)) $this->setLinkSelector($linkSelector);
+		if(isset($linkSelector)) $returnValue->setLinkSelector($linkSelector);
 		return $returnValue;
 	}
 	public static function createInstanceForNewSubElement($linkSelector) {
 		$returnValue = new self();
 		$returnValue->reset();
-		$this->setLinkSelector($linkSelector);
+		$returnValue->setLinkSelector($linkSelector);
 		return $returnValue;
 	}	
 	

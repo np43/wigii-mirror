@@ -29,7 +29,7 @@ interface DataFlowActivityEventDispatcher extends DataFlowActivity
 {	
 	/**
 	 * Defines the DataFlowActivity event handler to which to dispatch the events	 
-	 * @param $eventHandler a DataFlowActivity instance
+	 * @param DataFlowActivity $eventHandler a DataFlowActivity instance
 	 * CAUTION: the event handler instance should implement the events triggered by this dispatcher
 	 * No type check is done.
 	 */

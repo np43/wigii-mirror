@@ -1607,7 +1607,7 @@ order by G2.id_group_parent, G2.wigiiNamespace, G2.groupname";
 	/**
 	 * getGroupsPath from groupPList
 	 * groupPList / groupList / array list of groups / group ids we want to display the full path
-	 * @return array[id_group]=array([id_group_parent]=>groupParentName,...,[id_group]=>[groupname]
+	 * @return array array[id_group]=array([id_group_parent]=>groupParentName,...,[id_group]=>[groupname]
 	 * id_group represent each group id of the groupList 
 	 * if the wigiiNamespace of a group is different than the principal wigiiNamespace the groupname is prefixed with "wigiiNamespace : "
 	 */
@@ -2323,7 +2323,7 @@ order by isParent DESC
 
 		// builds sql
 		$returnValue = "select $uCols UR2.canModify, UR2.canWriteElement, UR2.canShareElement, case when (UU2.id_user_owner is null AND ".($principal->isWigiiNamespaceCreator()? "FALSE" : "TRUE")." AND ".($principal->isReadAllUsersInWigiiNamespace() ? " U2.wigiiNamespace <> '".$principal->getWigiiNamespace()->getWigiiNamespaceName()."'" : "TRUE").") then 0 else 1 end as isOwner from (".
-			$this->getSqlForSelectAllUsersR($groupId, $propagation, $User_Groups_RightsAlias='UGR', $Groups_GroupsAlias='GG', $resultAlias='UR')
+			$this->getSqlForSelectAllUsersR($groupId, $propagation, 'UGR', 'GG', 'UR')
 			.") as UR2 inner join Users as U2 on U2.id_user = UR2.id_user left join Users_Users as UU2 on UU2.id_user = U2.id_user and UU2.id_user_owner = $principalId"
 			.$whereClause.$orderByClause;
 		return $returnValue;
@@ -2685,7 +2685,7 @@ order by isParent DESC
 			throw new GroupAdminServiceException('',GroupAdminServiceException::WRAPPING, $e);
 		}
 		$this->executionSink()->publishEndOperation("moveGroup", $principal);
-		return $returnValue;
+		return $newGroup;
 	}
 	protected function assertPrincipalAuthorizedForMoveGroup($principal)
 	{
@@ -3216,7 +3216,7 @@ order by isParent DESC
 
 	/**
 	 * @param dbRow an array straight from the DB
-	 * @return instanciated Group object
+	 * @return Group instanciated Group object
 	 * @precondition: dbRow contains client
 	 */
 	public function createGroupInstanceFromRow($principal, $dbRow, $withDetail=true)
@@ -3754,8 +3754,8 @@ where $select_Groups_whereClause ";
 		if(empty($groupName)) throw new GroupAdminServiceException('groupName cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
 		$nsAS = $this->getWigiiNamespaceAdminService();
 		$mAS = $this->getModuleAdminService();
-		if(is_string($module)) $module = $mas->getModule($p, $module);
-		if(is_string($wigiiNamespace)) $wigiiNamespace = $nsAS->getWigiiNamespace($p, $wigiiNamespace);
+		if(is_string($module)) $module = $mAS->getModule($principal, $module);
+		if(is_string($wigiiNamespace)) $wigiiNamespace = $nsAS->getWigiiNamespace($principal, $wigiiNamespace);
 		
 		// 1. fetch group in db
 		$groupPList = GroupPListArrayImpl::createInstance();

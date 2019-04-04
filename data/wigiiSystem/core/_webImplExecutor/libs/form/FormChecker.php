@@ -558,6 +558,7 @@ class FormChecker implements FieldListVisitor {
 
         //Check if the minDate or maxDate is respected in the field date
         if($dataTypeName=="Dates" && ($fieldParams['minDate'] || $fieldParams['maxDate'])){
+            $d=$m=$y=null;
             $value = $recBag->getValue($ff->getRecord()->getId(), $dataTypeName, $fieldName, "value");
             $minDate = $fieldParams['minDate'];
             $maxDate = $fieldParams['maxDate'];

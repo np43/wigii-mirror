@@ -115,7 +115,7 @@ class JasperReportsFacade implements ReportingFacade {
 	private $jasperServerUrl;
 	/**
 	 * Sets url where is deployed Jasper Report server
-	 * @param $host a valid url
+	 * @param string $host a valid url
 	 */
 	public function setJasperServerUrl($url) {
 		$this->jasperServerUrl = $url;
@@ -133,7 +133,7 @@ class JasperReportsFacade implements ReportingFacade {
 	private $jasperServerRootPath;
 	/**
 	 * Sets jasper server root path on host
-	 * @param $relativeUri a relative url after host, example /jasperserver
+	 * @param string $relativeUri a relative url after host, example /jasperserver
 	 */
 	public function setJasperServerRootPath($relativeUri) {
 		$this->jasperServerRootPath = $relativeUri;
@@ -151,7 +151,7 @@ class JasperReportsFacade implements ReportingFacade {
 	private $jasperUserFacadeMethodMapping;
 	/**
 	 * Sets which jasper user should be used for each JasperReportsFacade method
-	 * @param $mapping an array where key=JasperReportsFacade method name, value=JasperReport server user name
+	 * @param array $mapping an array where key=JasperReportsFacade method name, value=JasperReport server user name
 	 * example: key=executeReport value=joeuser
 	 */
 	public function setJasperUserFacadeMethodMapping($mapping) {
@@ -160,7 +160,7 @@ class JasperReportsFacade implements ReportingFacade {
 	}	
 	/**	
 	 * Gets the mapping between facade methods and jasper users
-	 * @param $methodName if given, then returns the associated jasper user name
+	 * @param string $methodName if given, then returns the associated jasper user name
 	 * els returns the whole mapping array
 	 * Defaults to predefined jasper users
 	 */
@@ -176,7 +176,7 @@ class JasperReportsFacade implements ReportingFacade {
 	/**
 	 * Sets the password to be used for each JasperReport server user that should be used
 	 * by this facade
-	 * @param $credentials an array where key=JasperReport user name, value=password
+	 * @param array $credentials an array where key=JasperReport user name, value=password
 	 * example key=joeuser, value=joeuser
 	 */
 	public function setJasperUserCredentials($credentials) {
@@ -185,7 +185,7 @@ class JasperReportsFacade implements ReportingFacade {
 	}
 	/**
 	 * Returns the credentials associated to the jasper users
-	 * @param $jasperUserName if given, then returns the credentials associated to this jasper user,
+	 * @param string $jasperUserName if given, then returns the credentials associated to this jasper user,
 	 * else returns the array with the credentials of all users.
 	 * Defaults to predefined jasper users and passwords
 	 */
@@ -200,7 +200,7 @@ class JasperReportsFacade implements ReportingFacade {
 	private $httpResponseBufferSize;
 	/**	
 	 * Sets the http response buffer size in bytes
-	 * @param $bytes size of the buffer
+	 * @param int $bytes size of the buffer
 	 */
 	public function setHttpResponseBufferSize($bytes) {
 		if($bytes < 0) throw new ReportingException("buffer size should be a positive integer", ReportingException::INVALID_ARGUMENT);
@@ -351,9 +351,9 @@ class JasperReportsFacade implements ReportingFacade {
 	
 	/**
 	 * Returns an instance of Guzzle\Http\Client to be used for the given facade method
-	 * @param $principal the current principal wanting to use this http client
-	 * @param $methodName the facade method name that is currently executed
-	 * @param $replaceCache if true, then ignores cached http client and reconnects. 
+	 * @param Principal $principal the current principal wanting to use this http client
+	 * @param string $methodName the facade method name that is currently executed
+	 * @param boolean $replaceCache if true, then ignores cached http client and reconnects. 
 	 * New created http client is stored in cache.
 	 */
 	protected function getHttpClientForMethod($principal, $methodName, $replaceCache=false) {
@@ -366,9 +366,9 @@ class JasperReportsFacade implements ReportingFacade {
 	
 	/**
 	 * Returns an instance of Guzzle\Http\Client to be used for the given jasper user name
-	 * @param $principal the current principal wanting to use this http client
-	 * @param $jasperUserName a JasperReport server valid username, for instance joeuser
-	 * @param $replaceCache if true, then ignores cached http client and reconnects. 
+	 * @param Principal $principal the current principal wanting to use this http client
+	 * @param string $jasperUserName a JasperReport server valid username, for instance joeuser
+	 * @param boolean $replaceCache if true, then ignores cached http client and reconnects. 
 	 * New created http client is stored in cache.
 	 */
 	protected function getHttpClientForJasperUser($principal, $jasperUserName, $replaceCache=false) {		
@@ -417,9 +417,9 @@ class JasperReportsFacade implements ReportingFacade {
 	
 	/**
 	 * Creates a cookie jar and fills it with the cookies attached to this jasper user
-	 * @param $principal the wigii principal behind all this
-	 * @param $jasperUserName the jasper user for which we want the jasper session cookies	 
-	 * @return a Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar instance with the cookies 
+	 * @param Principal $principal the wigii principal behind all this
+	 * @param string $jasperUserName the jasper user for which we want the jasper session cookies	 
+	 * @return mixed a Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar instance with the cookies 
 	 * or empty if no cookies where found
 	 */
 	protected function createCookieJarForJasperUser($principal, $jasperUserName) {
@@ -437,9 +437,9 @@ class JasperReportsFacade implements ReportingFacade {
 	
 	/**
 	 * Serializes the cookie jar in the principal general context for reuse.
-	 * @param $principal the wigii principal
-	 * @param $jasperUserName the jasper user name for which the cookies belong
-	 * @param $cookieJar an instance of Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar
+	 * @param Principal $principal the wigii principal
+	 * @param string $jasperUserName the jasper user name for which the cookies belong
+	 * @param mixed $cookieJar an instance of Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar
 	 * to serialize in principal session 
 	 */
 	protected function storeCookieJarForJasperUserInSession($principal, $jasperUserName, $cookieJar) {
@@ -459,9 +459,9 @@ class JasperReportsFacade implements ReportingFacade {
 	/**
 	 * Returns the XML body to be used as a command to run the report
 	 * (uses the REST Report Service) 
-	 * @param $reportUri the relative uri of the report to run
-	 * @param $reportDefinition a wigii element containing the report definition and parameters
-	 * @param $reportParams a fieldselector list with the report parameters
+	 * @param string $reportUri the relative uri of the report to run
+	 * @param Record $reportDefinition a wigii element containing the report definition and parameters
+	 * @param FieldSelectorList $reportParams a fieldselector list with the report parameters
 	 */
 	protected function getXmlCmdStringForExecuteReport($reportUri, $reportDefinition, $reportParams=null) {
 		$returnValue = "<?xml version='1.0' standalone='yes'?>".'<resourceDescriptor name="" wsType="reportUnit" uriString="'.$reportUri.'" isNew="false"><label></label>';
@@ -486,8 +486,8 @@ class JasperReportsFacade implements ReportingFacade {
 	
 	/**
 	 * Returns a Guzzle http request object to be used to run the report
-	 * @param $httpClient the Guzzle http client to use 
-	 * @param $executeReportXmlCmd the xml cmd body to be sent to JasperReport
+	 * @param mixed $httpClient the Guzzle http client to use 
+	 * @param mixed $executeReportXmlCmd the xml cmd body to be sent to JasperReport
 	 */
 	protected function getHttpRequestForExecuteReport($httpClient, $reportUri, $format, $executeReportXmlCmd) {
 		return $httpClient->put($this->getJasperServerRootPath().'/rest/report'.$reportUri, null, $executeReportXmlCmd,
@@ -496,9 +496,9 @@ class JasperReportsFacade implements ReportingFacade {
 	
 	/**
 	 * Returns a Guzzle http request object to be used to log into jasper
-	 * @param $httpClient the guzzle http client to use
-	 * @param $userName the jasper username
-	 * @param $password the jasper user password
+	 * @param mixed $httpClient the guzzle http client to use
+	 * @param string $userName the jasper username
+	 * @param string $password the jasper user password
 	 */
 	protected function getHttpRequestForLogin($httpClient, $userName, $password) {
 		return $httpClient->get($this->getJasperServerRootPath().'/rest/login', null, 
@@ -507,9 +507,9 @@ class JasperReportsFacade implements ReportingFacade {
 	
 	/**
 	 * Returns a Guzzle http request object to be used to fetch a report part file once executed
-	 * @param $httpClient the guzzle http client to use
-	 * @param $reportId the generated report ID
-	 * @param $partName the file name of the report part as specified in the report execution summary
+	 * @param mixed $httpClient the guzzle http client to use
+	 * @param mixed $reportId the generated report ID
+	 * @param mixed $partName the file name of the report part as specified in the report execution summary
 	 */
 	protected function getHttpRequestForGetReportPart($httpClient, $reportId, $partName) {
 		return $httpClient->get($this->getJasperServerRootPath().'/rest/report/'.$reportId, null, 
@@ -519,9 +519,9 @@ class JasperReportsFacade implements ReportingFacade {
 	/**
 	 * Processes the http request that fetches a single report
 	 * and sends the content to the given data flow.
-	 * @param $principal the wigii principal behind this
-	 * @param $httpRequest the guzzle http request used to fetch a single report
-	 * @param $dfasl the DataFlowActivitySelectorList describing the DataFlow where to send the content
+	 * @param Principal $principal the wigii principal behind this
+	 * @param mixed $httpRequest the guzzle http request used to fetch a single report
+	 * @param DataFlowActivitySelectorList $dfasl the DataFlowActivitySelectorList describing the DataFlow where to send the content
 	 */
 	protected function processHttpRequestForSingleReport($principal, $httpRequest, $dfasl) {
 		return $this->getGuzzleHelper()->processHttpRequest($principal, $httpRequest, $dfasl, $this->getHttpResponseBufferSize());
@@ -530,9 +530,9 @@ class JasperReportsFacade implements ReportingFacade {
 	/**
 	 * Processes the http response of the request that fetched a report part
 	 * and sends the content to the given data flow.
-	 * @param $principal the wigii principal behind all this
-	 * @param $httpResponse the Guzzle http response
-	 * @param $dfasl a DataFlowActivitySelectorList describing the data flow where to send the content
+	 * @param Principal $principal the wigii principal behind all this
+	 * @param mixed $httpResponse the Guzzle http response
+	 * @param DataFlowActivitySelectorList $dfasl a DataFlowActivitySelectorList describing the data flow where to send the content
 	 */
 	protected function processHttpResponseForReportPart($principal, $httpResponse, $dfasl) {
 		return $this->getGuzzleHelper()->processHttpResponseBody($principal, $httpResponse->getBody(), $dfasl, $this->getHttpResponseBufferSize());

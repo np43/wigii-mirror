@@ -300,7 +300,7 @@ class TemplateRecordManager extends Model {
 	 * if parameters are not passed, then the value of those parameter are not changed
 	 * @param isForNotification = null, if null, then the current value remains
 	 * @param isOutputEnabled = null, if null, then the current value remains
-	 * @return this, to allow chaining
+	 * @return TemplateRecordManager this, to allow chaining
 	 */
 	public function reset($record=null, $isForNotification = null, $isForPrint=null, $isForExternalAccess=null, $isForListView=null, $isForPreviewList=null, $isOutputEnabled = null){
 		if($record !== null) $this->setRecord($record);
@@ -440,7 +440,7 @@ class TemplateRecordManager extends Model {
 	 * @param FieldSortingKeyList $fskl
 	 * @param int $limit
 	 */
-	public function displayElementPListPreview($p, $width, $element, $linkName, $fsl, $fskl, $limit) {
+	public function displayElementPListPreview($p, $width, $element, $linkName, $fsl, $fskl, $limit) {		
 		//if element is not yet an element, no links are defined
 		if(!$element || !$element->getId()) return;
 
@@ -457,8 +457,10 @@ class TemplateRecordManager extends Model {
 				$query = (string)$fieldXml['source'];
 				break;
 			default: /*no preview supported*/ return;
-		}
-
+		}		
+		
+		$this->debugLogger()->logBeginOperation('displayElementPListPreview');
+		
 		$trmIsForPreviewList = $this->isForPreviewList();
 		$trmRecord = $this->getRecord();
 		$this->setForPreviewList(true);
@@ -553,22 +555,22 @@ class TemplateRecordManager extends Model {
 					// else propagates exception
 					else throw $se;
 				}
+				// if no rows, then displays an empty table
 				if(!$nb) {
-					// if no rows, then displays an empty table
-					$elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
-					$elementPList->setElementIsReadonly($elementIsReadonly);
+					// CWE 01.04.2019: centers config service on selected groups				
 					if($querySource instanceof ElementPListDataFlowConnector) {
-						$groupList = $querySource->getCalculatedGroupList();
-						if(isset($groupList) && !$groupList->isEmpty()) {
-							$g = reset($querySource->getCalculatedGroupList()->getListIterator());
-							$elementPList->setModule($g->getModule());
-						}						
+						$apiClient = ServiceProvider::getGroupBasedWigiiApiClient($p, $querySource->getCalculatedGroupList());
+						$elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $apiClient->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+						$elementPList->setModule($apiClient->getModule());
 					}
+					// else creates a standard elementPList
+					else $elementPList = ElementPListRowsForPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+					$elementPList->setElementIsReadonly($elementIsReadonly);
 					$elementPList->actOnBeforeAddElementP($p);
 					$elementPList->actOnFinishAddElementP($p, ($listFilter->isPaged() ? ($listFilter->getTotalNumberOfObjects() > 0 ? $listFilter->getTotalNumberOfObjects():0) : ($nb > 0? $nb:0)), ($nb > 0? $nb:0), $listFilter->getPageSize(), $width);
 				}		
 				if(method_exists($querySource, 'freeMemory')) $querySource->freeMemory();		
-				if($adaptiveWigiiNamespace) $p->setAdaptiveWigiiNamespace(false);
+				if(!$adaptiveWigiiNamespace) $p->setAdaptiveWigiiNamespace(false);
 				$p->bindToWigiiNamespace($currentNamespace);
 			}
 		}
@@ -593,6 +595,7 @@ class TemplateRecordManager extends Model {
 
 		$this->setForPreviewList($trmIsForPreviewList);
 		$this->setRecord($trmRecord);
+		$this->debugLogger()->logEndOperation('displayElementPListPreview');
 	}
 
     /**
@@ -605,7 +608,7 @@ class TemplateRecordManager extends Model {
      * @param FieldSortingKeyList $fskl
      * @param int $limit
      */
-    public function displayElementPListBlogPreview($p, $width, $element, $linkName, $fsl, $fskl, $limit) {
+    public function displayElementPListBlogPreview($p, $width, $element, $linkName, $fsl, $fskl, $limit) {        
         //if element is not yet an element, no links are defined
         if(!$element || !$element->getId()) return;
 
@@ -624,6 +627,8 @@ class TemplateRecordManager extends Model {
             default: /*no preview supported*/ return;
         }
 
+        $this->debugLogger()->logBeginOperation('displayElementPListBlogPreview');
+        
         $trmIsForPreviewList = $this->isForPreviewList();
         $trmRecord = $this->getRecord();
         $this->setForPreviewList(true);
@@ -718,22 +723,22 @@ class TemplateRecordManager extends Model {
                     // else propagates exception
                     else throw $se;
                 }
+                // if no rows, then displays an empty table
                 if(!$nb) {
-                    // if no rows, then displays an empty table
-                    $elementPList = ElementPListRowsForBlogPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
-                    $elementPList->setElementIsReadonly($elementIsReadonly);
+                    // CWE 01.04.2019: centers config service on selected groups
                     if($querySource instanceof ElementPListDataFlowConnector) {
-                        $groupList = $querySource->getCalculatedGroupList();
-                        if(isset($groupList) && !$groupList->isEmpty()) {
-                            $g = reset($querySource->getCalculatedGroupList()->getListIterator());
-                            $elementPList->setModule($g->getModule());
-                        }
+                        $apiClient = ServiceProvider::getGroupBasedWigiiApiClient($p, $querySource->getCalculatedGroupList());
+                        $elementPList = ElementPListRowsForBlogPreview::createInstance($this, $p, $this->getExecutionService(), $apiClient->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+                        $elementPList->setModule($apiClient->getModule());
                     }
+                    // else creates a standard elementPList
+                    else $elementPList = ElementPListRowsForBlogPreview::createInstance($this, $p, $this->getExecutionService(), $this->getConfigService(), $fsl, $element->getId(), $linkName, $elementIsBlocked, $previewListId, $linkType);
+                    $elementPList->setElementIsReadonly($elementIsReadonly);
                     $elementPList->actOnBeforeAddElementP($p);
                     $elementPList->actOnFinishAddElementP($p, ($listFilter->isPaged() ? ($listFilter->getTotalNumberOfObjects() > 0 ? $listFilter->getTotalNumberOfObjects():0) : ($nb > 0? $nb:0)), ($nb > 0? $nb:0), $listFilter->getPageSize(), $width);
-                }
+                }                
                 if(method_exists($querySource, 'freeMemory')) $querySource->freeMemory();
-                if($adaptiveWigiiNamespace) $p->setAdaptiveWigiiNamespace(false);
+                if(!$adaptiveWigiiNamespace) $p->setAdaptiveWigiiNamespace(false);
                 $p->bindToWigiiNamespace($currentNamespace);
             }
         }
@@ -758,6 +763,7 @@ class TemplateRecordManager extends Model {
 
         $this->setForPreviewList($trmIsForPreviewList);
         $this->setRecord($trmRecord);
+        $this->debugLogger()->logEndOperation('displayElementPListBlogPreview');
     }
 
 	/**
@@ -855,7 +861,6 @@ class TemplateRecordManager extends Model {
 	 * 	- Last updated on: sys_date
 	 * 	- Created by: sys_creationUsername
 	 * 	- Created on: sys_creationDate
-	 * @param $sysInformationObject must implement interface SysInformation
 	 */
 	public function getAdditionalInformation($fieldName){
 		$returnValue = "";
@@ -2395,6 +2400,7 @@ class TemplateRecordManager extends Model {
 	public function getValidationEmailHtml($introductionText, $proofKey, $forMailto=false){
 		$newLine = "&nbsp;</p><p>";
 		$preNewLine = "<p>";
+		$body='';
 		if($forMailto) {
 			$newLine = "%0D%0A";
 			$preNewLine = "";
@@ -2436,6 +2442,7 @@ class TemplateRecordManager extends Model {
 	public function getExternalAccessViewEmailHtml($introductionText, $externalCode, $proofKey=null, $proofStatus=null, $forMailto=false){
 		$newLine = "&nbsp;</p><p>";
 		$preNewLine = "<p>";
+		$body='';
 		if($forMailto) {
 			$newLine = "%0D%0A";
 			$preNewLine = "";
@@ -2476,6 +2483,7 @@ class TemplateRecordManager extends Model {
 	public function getExternalAccessEditEmailHtml($introductionText, $externalCode, $proofKey=null, $proofStatus=null, $forMailto=false){
 		$newLine = "&nbsp;</p><p>";
 		$prevNewLine = "<p>";
+		$body='';
 		if($forMailto) {
 			$newLine = "%0D%0A";
 			$prevNewLine = "";
@@ -2526,7 +2534,7 @@ class TemplateRecordManager extends Model {
     /**
      * Giving an array with key/value pairs, return the position of a given key
      * @param Array $array
-     * @param scalar $key
+     * @param String|Number $key
      * @return int The position in the array starting from 0, -1 if key is not found
      */
     protected function findKeyIndexInArray($array, $key){

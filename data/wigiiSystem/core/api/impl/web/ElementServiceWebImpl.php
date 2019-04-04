@@ -432,7 +432,7 @@ class ElementServiceWebImpl extends ElementServiceImpl
 
 	/**
 	 * enables write access to this element from a public url containing the externalCode
-	 * @return 40 hexdecimal char reprensenting the external code
+	 * @return string 40 hexadecimal char reprensenting the external code
 	 */
 	public function setExternalAccessForEdit($principal, $elementId, $fieldName, $externalAccessEndDate=null, $configGroup=null){
 		$this->executionSink()->publishStartOperation("setExternalAccessForEdit", $principal);
@@ -560,7 +560,7 @@ class ElementServiceWebImpl extends ElementServiceImpl
 
 	/**
 	 * enables write access to those elements from a public url containing the externalCode
-	 * @return 40 hexdecimal char reprensenting the external code
+	 * @return string 40 hexadecimal char reprensenting the external code
 	 */
 	public function setMultipleExternalAccessForEdit($principal, $elementIds, $fieldName, $externalAccessEndDate=null, $configGroupList=null){
 		$this->executionSink()->publishStartOperation("setMultipleExternalAccessForEdit", $principal);
@@ -723,7 +723,7 @@ class ElementServiceWebImpl extends ElementServiceImpl
 	}
 
 	/**
-	 * @return 40 hexdecimal char representing the external code (the code is unique per elementId / field / value)
+	 * @return string 40 hexadecimal char representing the external code (the code is unique per elementId / field / value)
 	 */
 	public function getEmailExternalCode($principal, $idElement, $fieldName, $value){
 		//this logic is defined as well in: getSqlForFillEmptyEmailValidationAndExternalCode

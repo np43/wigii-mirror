@@ -44,7 +44,7 @@ abstract class DataFlowActivityEventHandler implements DataFlowActivity
 	/**
 	 * Sets the attached DataFlowActivityEventDispatcher used to trigger events
 	 * which will be consumed back here.
-	 * @param $dfaEventDispatcher a DataFlowActivityEventDispatcher instance
+	 * @param DataFlowActivityEventDispatcher $dfaEventDispatcher a DataFlowActivityEventDispatcher instance
 	 */
 	public function setEventDispatcher($dfaEventDispatcher) {
 		$this->dfaEventDispatcher = $dfaEventDispatcher;
@@ -54,7 +54,7 @@ abstract class DataFlowActivityEventHandler implements DataFlowActivity
 	
 	/**
 	 * Returns the attached DataFlowActivityEventDispatcher used to trigger events
-	 * @param $dataFlowContext the current data flow context in which this activity is executing
+	 * @param DataFlowContext $dataFlowContext the current data flow context in which this activity is executing
 	 */
 	protected function getEventDispatcher($dataFlowContext) {
 		return $this->dfaEventDispatcher;	

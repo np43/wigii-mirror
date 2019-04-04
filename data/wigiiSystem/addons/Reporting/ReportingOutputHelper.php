@@ -29,23 +29,23 @@ interface ReportingOutputHelper {
 	/**
 	 * Returns a DataFlowActivitySelectorList describing the output stream where to send the report
 	 * Precondition: the report should be a single file.	 
-	 * @param $principal the current principal
-	 * @param $reportName the name of the report, that will be part of the final file name stored into wigii
-	 * @param $mime the mime type of the report (for instance application/pdf)
-	 * @param $type the file extension with the dot (for instance .pdf)	
+	 * @param Principal $principal the current principal
+	 * @param string $reportName the name of the report, that will be part of the final file name stored into wigii
+	 * @param string $mime the mime type of the report (for instance application/pdf)
+	 * @param string $type the file extension with the dot (for instance .pdf)	
 	 * type and mime cannot be both null, at least one should be defined, and if both are defined, then they should match together
-	 * @param $configurator an oject configurator which can add optional arguments such as size (the file size in byte), setInputEncoding (the encoding of the input file)
-	 * @return The ReportFacade should call DataFlowService::startStream with the returned DataFlowActivitySelectorList
+	 * @param ObjectConfigurator $configurator an oject configurator which can add optional arguments such as size (the file size in byte), setInputEncoding (the encoding of the input file)
+	 * @return DataFlowActivitySelectorList The ReportFacade should call DataFlowService::startStream with the returned DataFlowActivitySelectorList
 	 */
 	public function getDFASLForSingleReport($principal, $reportName, $mime, $type, $configurator=null);
 	
 	/**
 	 * Returns a DataFlowActivitySelectorList describing the output stream where to send the different part names composing the multipart report
 	 * Precondition: the report should be composed of several files.
-	 * @param $principal the current principal
-	 * @param $reportName the name of the report, that will be part of the final zip name stored into wigii
-	 * @param $reportFacade an instance of the ReportFacade that will provide each part of the report
-	 * @return The ReportFacade should call DataFlowService::startStream with the returned DataFlowActivitySelectorList
+	 * @param Principal $principal the current principal
+	 * @param string $reportName the name of the report, that will be part of the final zip name stored into wigii
+	 * @param ReportingFacade $reportFacade an instance of the ReportFacade that will provide each part of the report
+	 * @return DataFLowA$ The ReportFacade should call DataFlowService::startStream with the returned DataFlowActivitySelectorList
 	 * Postcondition: the callback method processReportPart on the ReportingFacade will be called for each part
 	 */
 	public function getDFASLForMultipartReport($principal, $reportName, $reportFacade);

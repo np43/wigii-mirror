@@ -107,7 +107,7 @@ class EditUserFormExecutor extends FormExecutor {
 		try{
 			//$username = $userEditRec->getFieldValue("$usernameFieldName");			
 			if($user->isRole()){
-				$usernames[0] = $userEditRec->getFieldValue("$usernameFieldName");
+				$usernames = array($userEditRec->getFieldValue("$usernameFieldName"));
 			} else {
 				$usernames = preg_split("/".ValueListArrayMapper::Natural_Separators."/", $userEditRec->getFieldValue("$usernameFieldName"));
 			}

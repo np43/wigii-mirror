@@ -85,6 +85,23 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		));
 	}
 		
+	/**
+	 * Gets the list of Medidata Invoice response statuses for a drop-down<br/>
+	 * FuncExp signature : <code>getMedidataInvoiceResponseStatuses()</code><br/>
+	 * @return SimpleXMLElement compatible with Wigii Attributs field configuration syntax
+	 */
+	public function getMedidataInvoiceResponseStatuses($args) {
+	    $returnValue = <<<MDTINVOICERESPSTATUS
+<attributes>
+    <attribute>insuranceAccepted<label_l01>Accepted by insur.</label_l01><label_l02>Accepté par l&apos;ass.</label_l02></attribute>
+    <attribute>insuranceReimburse<label_l01>Reimburs. claimed</label_l01><label_l02>Rembours. demandé</label_l02></attribute>
+    <attribute>insuranceRejected<label_l01>Rejected</label_l01><label_l02>Refusé</label_l02></attribute>	
+    <attribute>insurancePending<label_l01>Missing info</label_l01><label_l02>Info manquante</label_l02></attribute>
+</attributes>
+MDTINVOICERESPSTATUS;
+	    return $returnValue;
+	}
+	
 	// Wigii Medidata General Invoice Request 4.5
 	
 	/**
@@ -92,7 +109,10 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * FuncExp signature : <code>genMedidataInvoiceRequest45(customerOrder,options)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order for which to generate the Medidata General Invoice Request as XML.
-	 * - Arg(1) options: WigiiBPLParameter. An optional bag of options to configure the generation process.
+	 * - Arg(1) options: WigiiBPLParameter. An optional bag of options to configure the generation process. It supports the following options:
+	 * - payloadAction: String. Optional, one of 'modify', 'copy' or 'cancel'. 
+	 * If modify then sends a new version of invoice request. If copy, then sends a new copy of invoice request. If cancel, sends a 'storno' of current request.
+	 * - previousVersion: FieldSelector. Field of type File containing the previously generated Medidata invoice XML file in case of request copy or cancel.
 	 * @return SimpleXMLElement a SimpleXMLElement compatible with XML schema http://www.forum-datenaustausch.ch/invoice generalInvoiceRequest_450.xsd
 	 */
 	public function genMedidataInvoiceRequest45($args) {	    
@@ -113,11 +133,28 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		else $options = wigiiBPLParam();
 		$this->initializeInvoice45Options($customerOrder, $options);
 		
+		// copies or cancels existing request
+		if($options->getValue('payloadAction') == 'copy' || $options->getValue('payloadAction') == 'cancel') {
+		    // loads invoice request as an xml document
+		    $returnValue = sel($this->getPrincipal(),elementFile2df($customerOrder, $options->getValue('previousVersion')),dfasl(dfas("StringBufferDFA")));
+		    $returnValue = $this->loadXmlDoc($returnValue);
+		    // validates loaded xml
+		    $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+		    // goes to request
+		    $xml = $this->createXmlElement($returnValue, 'request', $options);
+		    // goes to payload
+		    $xml = $this->createXmlElement($xml, 'payload', $options);
+		    // sets storno or copy flags
+		    $xml->setAttribute('copy', ($options->getValue('payloadAction') == 'copy'?'1':'0'));
+		    $xml->setAttribute('storno', ($options->getValue('payloadAction') == 'cancel'?'1':'0'));
+		}		
 		// generates invoice request
-		$returnValue = $this->getXmlDoc($options);		
-		$this->createInvoice45Request($returnValue, $customerOrder, $options);
-		// validates generated xml
-		$this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+		else {
+    		$returnValue = $this->getXmlDoc($options);		
+    		$this->createInvoice45Request($returnValue, $customerOrder, $options);
+    		// validates generated xml
+    		$this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+		}		
 		// returns as SimpleXmlElement
 		$returnValue = simplexml_import_dom($returnValue);
 		$this->debugLogger()->logEndOperation('genMedidataInvoiceRequest45');
@@ -131,7 +168,10 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order to which is attached an XML Medidata General Invoice Request.
 	 * - Arg(1) medidataInvoiceXml: FieldSelector. Field of type File containing the generated Medidata invoice XML file
 	 * - Arg(2) reminderLevel: int. One of 1, 2 or 3.
-	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the generation process.
+	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the generation process. It supports the following options:
+	 * - payloadAction: String. Optional, one of 'modify', 'copy' or 'cancel'. 
+	 * If modify then sends a new version of reminder request. If copy, then sends a new copy of reminder request. If cancel, sends a 'storno' of current request.
+	 * - previousVersion: FieldSelector. Field of type File containing the previously generated Medidata reminder XML file in case of request copy or cancel.
 	 * @return SimpleXMLElement a SimpleXMLElement for an invoice reminder request compatible with XML schema http://www.forum-datenaustausch.ch/invoice generalInvoiceRequest_450.xsd
 	 */
 	public function genMedidataInvoiceReminder45($args) {
@@ -167,39 +207,60 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    $options->setValue('xmlSchema','generalInvoiceRequest_450.xsd');
 	    $options->setValue('namespaceURI','http://www.forum-datenaustausch.ch/invoice');
 	    $options->setValue('namespacePrefix','invoice');
-	    
-	    // loads invoice request as an xml document
-	    $returnValue = sel($this->getPrincipal(),elementFile2df($customerOrder, $xmlFieldName),dfasl(dfas("StringBufferDFA")));
-	    $returnValue = $this->loadXmlDoc($returnValue);	    	   
-	    // validates loaded xml
-	    $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
-	    // goes to request
-	    $xml = $this->createXmlElement($returnValue, 'request', $options);
-	    // goes to payload
-	    $xml = $this->createXmlElement($xml, 'payload', $options);
-	    // checks that payload type is invoice
-	    if($xml->getAttribute('type') != 'invoice') throw new WigiiMedidataException('a reminder can only be created from an invoice and not from a payload of type "'.$xml->getAttribute('type').'"',WigiiMedidataException::XML_VALIDATION_ERROR);
-	    // sets payload type as reminder
-	    $xml->setAttribute('type','reminder');
-	    // inserts a payload/reminder node, before payload/body node 
-	    $xml = $this->insertXmlElement($xml, 'reminder', $this->createXmlElement($xml, 'body', $options), $options);
-	    $xml->setAttribute('request_timestamp', time());
-	    $xml->setAttribute('request_date', $this->assertDateNotNull($customerOrder, 'reminder'.$reminderLevel));
-	    $xml->setAttribute('request_id', 'R'.$reminderLevel.'-'.$this->assertNotNull($customerOrder,'customerOrderNumber'));	    
-	    $xml->setAttribute('reminder_level', $reminderLevel);
-	    $reminderText = '';
-	    switch($reminderLevel) {
-	        case 1: $reminderText .= 'Rappel'; break;
-	        case 2: $reminderText .= 'Deuxième rappel'; break;
-	        case 3: $reminderText .= 'Troisième rappel'; break;
+	    	    
+	    // copies or cancels existing request
+	    if($options->getValue('payloadAction') == 'copy' || $options->getValue('payloadAction') == 'cancel') {
+	        // loads invoice request as an xml document
+	        $returnValue = sel($this->getPrincipal(),elementFile2df($customerOrder, $options->getValue('previousVersion')),dfasl(dfas("StringBufferDFA")));
+	        $returnValue = $this->loadXmlDoc($returnValue);
+	        // validates loaded xml
+	        $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+	        // goes to request
+	        $xml = $this->createXmlElement($returnValue, 'request', $options);
+	        // goes to payload
+	        $xml = $this->createXmlElement($xml, 'payload', $options);
+	        // sets storno or copy flags
+	        $xml->setAttribute('copy', ($options->getValue('payloadAction') == 'copy'?'1':'0'));
+	        $xml->setAttribute('storno', ($options->getValue('payloadAction') == 'cancel'?'1':'0'));
 	    }
-	    $reminderText.= ' sur la facture n°'.$this->assertNotNull($customerOrder,'customerOrderNumber');
-	    $reminderText.= ' du '.Dates::formatDisplay($this->assertNotNull($customerOrder,'orderDate'),"dd.mm.yyyy",null);
-	    $reminderText.= ' échue le '.Dates::formatDisplay($this->assertNotNull($customerOrder,'paiementDueDate'),"dd.mm.yyyy",null);
-	    $xml->setAttribute('reminder_text', $reminderText);
-	    
-	    // validates generated xml
-	    $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+	    // else generates invoice reminder request
+	    else {
+    	    // loads invoice request as an xml document
+    	    $returnValue = sel($this->getPrincipal(),elementFile2df($customerOrder, $xmlFieldName),dfasl(dfas("StringBufferDFA")));
+    	    $returnValue = $this->loadXmlDoc($returnValue);	    	   
+    	    // validates loaded xml
+    	    $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+    	    // goes to request
+    	    $xml = $this->createXmlElement($returnValue, 'request', $options);
+    	    // goes to payload
+    	    $xml = $this->createXmlElement($xml, 'payload', $options);
+    	    // checks that payload type is invoice
+    	    if($xml->getAttribute('type') != 'invoice') throw new WigiiMedidataException('a reminder can only be created from an invoice and not from a payload of type "'.$xml->getAttribute('type').'"',WigiiMedidataException::XML_VALIDATION_ERROR);
+    	    // sets payload type as reminder
+    	    $xml->setAttribute('type','reminder');
+    	    // resets storno and copy to 0
+    	    $xml->setAttribute('copy', 0);
+    	    $xml->setAttribute('storno', 0);
+    	    // inserts a payload/reminder node, before payload/body node 
+    	    $xml = $this->insertXmlElement($xml, 'reminder', $this->createXmlElement($xml, 'body', $options), $options);
+    	    $xml->setAttribute('request_timestamp', time());
+    	    $xml->setAttribute('request_date', $this->assertDateNotNull($customerOrder, 'reminder'.$reminderLevel));
+    	    $xml->setAttribute('request_id', 'R'.$reminderLevel.'-'.$this->assertNotNull($customerOrder,'customerOrderNumber'));	    
+    	    $xml->setAttribute('reminder_level', $reminderLevel);
+    	    $reminderText = '';
+    	    switch($reminderLevel) {
+    	        case 1: $reminderText .= 'Rappel'; break;
+    	        case 2: $reminderText .= 'Deuxième rappel'; break;
+    	        case 3: $reminderText .= 'Troisième rappel'; break;
+    	    }
+    	    $reminderText.= ' sur la facture n°'.$this->assertNotNull($customerOrder,'customerOrderNumber');
+    	    $reminderText.= ' du '.Dates::formatDisplay($this->assertNotNull($customerOrder,'orderDate'),"dd.mm.yyyy",null);
+    	    $reminderText.= ' échue le '.Dates::formatDisplay($this->assertNotNull($customerOrder,'paiementDueDate'),"dd.mm.yyyy",null);
+    	    $xml->setAttribute('reminder_text', $reminderText);
+    	    
+    	    // validates generated xml
+    	    $this->assertXmlIsValid($returnValue, $options->getValue('xmlSchema'));
+	    }
 	    // returns as SimpleXmlElement
 	    $returnValue = simplexml_import_dom($returnValue);
 	    $this->debugLogger()->logEndOperation('genMedidataInvoiceReminder45');
@@ -337,8 +398,11 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	 * - Arg(0) element: Element of module Filemanager. Given element to which is attached a Medidata received XML Invoice Response.
 	 * - Arg(1) medidataResponseXml: FieldSelector. Field of type File containing the received Medidata XML file
 	 * - Arg(2) options: WigiiBPLParameter. An optional bag of options to configure the extraction process. It supports the following options:
+	 * - extractMessageStatusTo: String|FieldSelector. Field of type Attributs where to store Medidata invoice response message status. 
+	 *   The list of attributes shoule be compatible with the list provided by the FuncExp getMedidataInvoiceResponseStatuses  
 	 * - extractAttachementsTo: String. Field name prefix, which selects a set of fields of type Files in which to extract all attached documents. The set of fields should respect the Wigii Matrix naming convention and be numbered 1, 2, 3, ..., n.
 	 * - extractCustomerOrderNumberTo: String|FieldSelector. Field where to store the extracted customer order number.
+	 * - updateCustomerOrderIn: LogExp. Group LogExp selecting where to find the linked customer order to update based on the received Medidata response. The customer order gets updated with a dynamic element attribute "callFromMedidataInvoiceResponse" containing this element.
 	 * - printTemplate: String. Name of the print template to use to print the Medidata Invoice Response as HTML. Defaults to medidataInvoiceResponse.
 	 * To activate the print template in the configuration you should:
 	 * 1. copy the MedidataPrintInvoiceResponse.php file delivered in the Wigii Medidata addon to the client configuration folder and customize it for the client namespace
@@ -387,8 +451,8 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    $customerOrderNumberFieldName = $options->getValue('extractCustomerOrderNumberTo');
 	    if($customerOrderNumberFieldName instanceof FieldSelector) $customerOrderNumberFieldName = $customerOrderNumberFieldName->getFieldName();
 	    
-	    $messageTypeFieldName = $options->getValue('extractMessageTypeTo');
-	    if($messageTypeFieldName instanceof FieldSelector) $messageTypeFieldName = $messageTypeFieldName->getFieldName();
+	    $messageStatusFieldName = $options->getValue('extractMessageStatusTo');
+	    if($messageStatusFieldName instanceof FieldSelector) $messageStatusFieldName = $messageStatusFieldName->getFieldName();
 	    
 	    // extracts Medidata XML
 	    $options->setValue('xmlSchema','generalInvoiceResponse_450.xsd');
@@ -429,8 +493,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    if(!$messageXml) $messageXml = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/accepted');
 	    if(!$messageXml) $messageXml = $this->getXmlValue($medidataXml, 'invoice', '/response/payload/body/rejected');
 	    $messageXml = $messageXml[0];
-	    $messageType=$messageXml->getName();
-	    if($messageTypeFieldName) $element->setFieldValue($messageType, $messageTypeFieldName);
+	    $messageType=$messageXml->getName();	    
 	    // extracts message explanation
 	    $messageExplanation = (string)$this->getXmlValue($messageXml, 'invoice', './explanation');
 	   
@@ -459,6 +522,17 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	        if($messageAttachements) $nbAttachements = count($messageAttachements);
 	        else $nbAttachements = 0;
 	    }
+	    
+	    // extracts message status
+	    if($messageStatusFieldName) {
+	        $messageStatus = null;
+	        if($messageType=='accepted' && isset($reimbursementXml)) $messageStatus = 'insuranceReimburse';
+	        elseif($messageType=='accepted') $messageStatus = 'insuranceAccepted';
+	        elseif($messageType=='pending') $messageStatus = 'insurancePending';
+	        elseif($messageType=='rejected') $messageStatus = 'insuranceRejected';
+	        $element->setFieldValue($messageStatus, $messageStatusFieldName);
+	    }
+	    
 	    // builds message title
 	    $messageTitle = Dates::formatDisplay($messageDate, "yyyy.mm.dd", "hh:mm");
 	    if($messageType=='pending') {
@@ -474,7 +548,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	            $messageTitle.=' accepté';
 	            if(isset($reimbursementXml)) $messageTitle.= ' sous conditions';
 	        }
-	        else $messageTitle.=' rejeté';
+	        else $messageTitle.=' refusé';
 	    }
 	    
 	    // intializes options for print
@@ -494,6 +568,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    $options->setValue('messageXml',$messageXml);
 	    $options->setValue('messageExplanation',$messageExplanation);
 	    $options->setValue('messageType',$messageType);
+	    $options->setValue('messageStatus',$messageStatus);
 	    if($messageType=='pending') $options->setValue('invoiceNotifications',$messageXml->xpath("./invoice:message"));
 	    if($messageType=='rejected') $options->setValue('invoiceErrors',$messageXml->xpath("./invoice:error"));
 	    $options->setValue('nbAttachements',$nbAttachements);
@@ -524,6 +599,12 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	            $this->extractInvoiceResponse45Document($element, $attachementFieldName.$i, $attachement, $options);
 	            $i++;
 	        }
+	    }
+	    
+	    // updates linked customer order
+	    $updateCustomerOrderLx = $options->getValue('updateCustomerOrderIn');
+	    if(isset($updateCustomerOrderLx) && $customerOrderNumber) {
+	        $this->evaluateFuncExp(fx('updateElementFields',lxEq(fs('customerOrderNumber'),$customerOrderNumber),array('__element.callFromMedidataInvoiceResponse'=>$element),cs($updateCustomerOrderLx)));
 	    }
 	    
 	    $this->debugLogger()->logEndOperation('printMedidataInvoiceResponse');
@@ -1021,13 +1102,27 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 	    }
 	    
 	    // generates invoice title
-	    if($invoiceTiersType=='tiers_payant') {
-	        $invoiceTitle = 'Facture TP';
+	    if($invoiceTiersType=='tiers_payant') {	        
+	        if($invoiceType=='reminder') {
+	            $reminderLevel = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/reminder','reminder_level');
+	            $invoiceTitle = $reminderLevel.'. Rappel';
+	        }
+	        else $invoiceTitle = 'Facture TP';
 	        if($customerCopy) $invoiceTitle.='&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.'Copie pour le patient / client';
 	    }
 	    else {	        
 	        if($customerCopy) $invoiceTitle.='Facture du patient / client';
+	        elseif($invoiceType=='reminder') {
+	            $reminderLevel = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/reminder','reminder_level');
+	            $invoiceTitle = $reminderLevel.'. Rappel';
+	        }
 	        else $invoiceTitle = 'Justificatif de remboursement';
+	    }
+	    if(intval($this->getXmlValue($medidataXml, 'invoice', '/request/payload','copy'))>0) {
+	        $invoiceTitle = 'Copie: '.$invoiceTitle;
+	    }
+	    elseif(intval($this->getXmlValue($medidataXml, 'invoice', '/request/payload','storno'))>0) {
+	        $invoiceTitle = 'Storno: '.$invoiceTitle;
 	    }
 	    
 	    // intializes options for print

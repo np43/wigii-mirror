@@ -3624,23 +3624,7 @@ invalidCompleteCache();
 		if (!is_array($emailFields) || $emailFields == null)
 			return false;
 		return $emailFields;
-	}
-	//deprecated on 3.04.2012, no more use of this method. To know fields in which we could delete some files on disk
-	//we use directly xpath("*[@type='Files'] | [@type='Blobs' and @htmlArea='1'] | [@type='Texts' and @htmlArea='1']")
-//	//return false if not, return array of fileFields if yes
-//	protected function doesCrtModuleHasFiles($module) {
-//		$this->executionSink()->publishStartOperation("doesCrtModuleHasFiles");
-//
-//		$configS = $this->getConfigurationContext();
-//		$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
-//		$fileFields = $configS->mf($p, $module)->xpath("*[@type='Files']");
-//
-//		$this->executionSink()->publishEndOperation("doesCrtModuleHasFiles");
-//
-//		if (!is_array($fileFields) || $fileFields == null)
-//			return false;
-//		return $fileFields;
-//	}
+	}	
 	/**
 	* return false if not, return array of fileFields if yes
 	*/
@@ -3658,15 +3642,18 @@ invalidCompleteCache();
 		return $fileFields;
 	}
 	/**
-	* Checks if a module has a field tagged with isKey or isUnique or isUniqueInGroup
+	* Checks if a module (or a group) has a field tagged with isKey or isUnique or isUniqueInGroup
 	* Warning a module should not have several isKey or isUnique or isUniqueInGroup fields
+	* @param Module|Group $module module or group to check
 	* @return SimpleXMLElement|Boolean returns false if not, returns the first found field if yes
 	*/
 	public function doesCrtModuleHasIsKeyField($p, $module) {
 		$this->executionSink()->publishStartOperation("doesCrtModuleHasIsKeyField");
 
 		$configS = $this->getConfigurationContext();
-		$fields = $configS->mf($p, $module)->xpath("*[@isKey='1' or @isUnique='1' or @isUniqueInGroup='1']");
+		if($module instanceof Group) $fields = $configS->gf($p, $module);
+		else $fields = $configS->mf($p, $module);
+		$fields = $fields->xpath("*[@isKey='1' or @isUnique='1' or @isUniqueInGroup='1']");
 
 		$this->executionSink()->publishEndOperation("doesCrtModuleHasIsKeyField");
 
@@ -9802,7 +9789,7 @@ onUpdateErrorCounter = 0;
 				if($currentGroupId && !empty($includeGroups)) {
 					$includeGroups[$currentGroupId] = $currentGroupId;
 				}
-				
+
 				if($configS->getParameter($p, $exec->getCrtModule(), "Group_selectAllGroupsOnSearch") != "0") {
 					$excludeGroups = (string)$configS->getParameter($p, $exec->getCrtModule(), "Group_excludeGroupsOnSearch");
 					if(!empty($excludeGroups)) {

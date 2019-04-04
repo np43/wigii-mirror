@@ -112,7 +112,7 @@ interface ClientAdminService
 	 * If 1=MarkDeletedFieldsAsDeprecated, then module fields that do not exist anymore in the xml source are marked as 'Deprecated';
 	 * If 2=DeleteNonExistingFields, then module fields that do not exist anymore in the xml source are deleted.
 	 * @param Boolean $markNewFieldsAsImportant if true then newly inserted fields in the module are marked as 'Important1' else no special markup.
-	 * @return the number of configuration files which where synchronized
+	 * @return int the number of configuration files which where synchronized
 	 * @throws ClientAdminServiceException if an error occurs
 	 */
 	public function syncCfgFields($principal, $groupId, $fileName=null,

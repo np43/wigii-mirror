@@ -726,6 +726,8 @@ class WplXmlReaderDFAFieldsSM extends WplXmlReaderDFASM {
 	 */
 	protected function fillWigiiBag($wigiiBag, $recordId, $field, $subFieldName, $value, $subFieldType, $lang)
 	{
+		$fieldName = $field->getFieldName();
+		$dataTypeName = $field->getDataType()->getDataTypeName();
 		// if multiple-select, creates array
 		if(strtolower($subFieldType) === "multiple-select" && isset($value))
 		{

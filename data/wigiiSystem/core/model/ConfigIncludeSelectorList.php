@@ -22,31 +22,14 @@
  */
 
 /**
- * An XML SAX parser events definition
- * Created by CWE on 7 juin 2013
+ * A list of ConfigIncludeSelector
+ * Created by CWE on 29.03.2019
  */
-interface WigiiXmlSaxEvents
-{	
+interface ConfigIncludeSelectorList extends ObjectList
+{
 	/**
-	 * SAX parser Start Element event handler	 
-	 * @param WigiiXmlSaxParserDFA $parser a reference to the WigiiXmlSaxParserDFA
-	 * @param string $name the name of the starting element
-	 * @param array $attribs an associative array containing the xml attributes of the elements (key, value pairs)
+	 * Adds a configIncludeSelector to the list
+	 * @param ConfigIncludeSelector $configIncludeSelector	 
 	 */
-	public function actOnStartElement($parser, $name, $attribs);
-	
-	/**
-	 * SAX parser End Element event handler
- 	 * @param WigiiXmlSaxParserDFA $parser a reference to the WigiiXmlSaxParserDFA
-	 * @param string $name the name of the ending element	 
-	 */
-	public function actOnEndElement($parser, $name);
-	
-	/**
-	 * SAX parser Char Data event handler	 
- 	 * @param WigiiXmlSaxParserDFA $parser a reference to the WigiiXmlSaxParserDFA
-	 * @param string $data a string containing a portion of the element value (xml text).
-	 * This event can be triggered several times in order to retrieve all the xml text	 
-	 */
-	public function actOnCharData($parser, $data);
+    public function addConfigIncludeSelector($configIncludeSelector);	
 }
