@@ -2123,7 +2123,7 @@ class WigiiCoreExecutor {
 				case "Help": $customImage = '<img src="images/icones/88x88/iconhelp88x88.png" />'; break;
 				case "Portal": $customImage = '<img src="images/icones/88x88/portal.png" />'; break;
 				case "Projects": $customImage = '<img src="images/icones/88x88/projects.png" />'; break;
-				case "Scripts": $customImage = '<img src="images/icones/88x88/script.png" />'; break;
+				case "Scripts": $customImage = '<img src="images/icones/88x88/scripts.png" />'; break;
 				//Wigii.org standard modules
 				case "Activities": $customImage = '<img src="images/icones/88x88/iconsubsribe88x88.png" />'; break;
 				case "Catalog": $customImage = '<img src="images/icones/88x88/activities.png" />'; break;
