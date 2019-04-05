@@ -3822,7 +3822,9 @@ class RecordEvaluator implements FuncExpEvaluator
 						if($date!=$elementDate){
 							if($timeRangeFieldName){
 								$element->setFieldValue($date,$timeRangeFieldName,"begDate");
-								$element->setFieldValue(date("Y-m-d",strtotime($date)+$timeDif),$timeRangeFieldName,"endDate");					
+								if($timeRangeEndDate) {
+									$element->setFieldValue(date("Y-m-d",strtotime($date)+$timeDif),$timeRangeFieldName,"endDate");					
+								}
 							} elseif($dateFieldName){
 								$element->setFieldValue($date,$dateFieldName);
 							}
