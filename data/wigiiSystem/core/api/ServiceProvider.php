@@ -613,6 +613,8 @@ class ServiceProvider
 		if(!isset($this->executionService))
 		{
 			$this->executionService = $this->createExecutionServiceInstance();
+			// adds system principals
+			$this->executionService->addSystemPrincipal($this->getSystemPrincipals());
 		}
 		return $this->executionService;
 	}

@@ -24,6 +24,7 @@
 /**
  * ExecutionService implementation which supports the Wigii communication protocol
  * Created on 21 juil. 09 by LWR
+ * Modified by CWE on 08.04.2019 to bind root system Principal to request Wigii namespace by default. 
  */
 class ExecutionServiceImpl implements ExecutionService {
 
@@ -127,7 +128,41 @@ class ExecutionServiceImpl implements ExecutionService {
 		return $this->sessionAS;
 	}
 
-
+	// System principal management
+	
+	/**
+	 * Adds a system principal or a list of system principals to the ExecutionServiceImp
+	 */
+	public function addSystemPrincipal($systemPrincipal)
+	{
+	    if(is_null($systemPrincipal)) return;
+	    $this->getSystemPrincipals()->unionPrincipalList($systemPrincipal);
+	    $this->debugLogger()->write("received ".$systemPrincipal->count()." system principals.");
+	}
+	private $systemPrincipals;
+	/**
+	 * Returns the list of actual system principals owned by the WigiiBPL
+	 */
+	protected function getSystemPrincipals()
+	{
+	    //autowired
+	    if(!isset($this->systemPrincipals))
+	    {
+	        $this->systemPrincipals = PrincipalListArrayImpl::createInstance();
+	    }
+	    return $this->systemPrincipals;
+	}
+	/**
+	 * Gets the root principal
+	 */
+	protected function getRootPrincipal()
+	{
+	    $returnValue = ServiceProvider::getAuthorizationService()->findRootPrincipal($this->getSystemPrincipals());
+	    if(is_null($returnValue)) throw new AuthorizationServiceException("root principal has not been initialized by Service Provider", AuthorizationServiceException::FORBIDDEN);
+	    return $returnValue;
+	}
+	
+	
 	// attributs get/set
 
 	public function getIsUpdating(){
@@ -407,7 +442,11 @@ class ExecutionServiceImpl implements ExecutionService {
 			// CWE 02.11.2018: doesn't set adaptive wigii namespace, but on calculated roles, automatically binds to crt namespace.
 			$p->setAdaptiveWigiiNamespace(false);
 			if($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->bindToWigiiNamespace($this->getCrtWigiiNamespace());
-			
+			// CWE 08.04.2019: always binds rootPrincipal to current WigiiNamespace by default
+			$rootP = $this->getRootPrincipal();
+			if(isset($rootP) && $rootP->getWigiiNamespace()===$this->getWigiiNamespaceAdminService()->getEmptyWigiiNamespaceForDefaultClient()) {
+			    $rootP->changeWigiiNamespace($this->getCrtWigiiNamespace());
+			}
 			if($this->executionSink()->isEnabled()) $this->executionSink()->log("\n".str_repeat("-",100)."\n".str_repeat("-",100)."\n"."Request: ".$this->getCrtRequest()." loaded."."\n".str_repeat("-",100)."\n".str_repeat("-",100));
 
 			return true;

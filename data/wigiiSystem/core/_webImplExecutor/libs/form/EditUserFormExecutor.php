@@ -357,7 +357,6 @@ class EditUserFormExecutor extends FormExecutor {
 				$addModule = ServiceProvider::getModuleAdminService()->formatModuleArray($p, $userEditRec->getFieldValue('addModuleAccess'));
 				foreach ($addModule as $module){
 					if(!$this->doesModuleHasConfigFile($p, $module, null)){
-						$path = $configS->getModuleConfigFilename($p, $module, null);
 						$templateFilePath = $this->getModuleConfigTemplateFilename($p);
 						if(file_exists($templateFilePath)){
 							$this->createModuleFile($p, $module, $templateFilePath, $configS->getClientConfigFolderPath($p));
