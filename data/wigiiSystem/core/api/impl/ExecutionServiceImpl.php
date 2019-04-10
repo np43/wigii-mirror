@@ -443,8 +443,8 @@ class ExecutionServiceImpl implements ExecutionService {
 			$p->setAdaptiveWigiiNamespace(false);
 			if($p->isPlayingRole() && $p->getAttachedUser()->isCalculatedRole()) $p->bindToWigiiNamespace($this->getCrtWigiiNamespace());
 			// CWE 08.04.2019: always binds rootPrincipal to current WigiiNamespace by default
-			$rootP = $this->getRootPrincipal();
-			if(isset($rootP) && $rootP->getWigiiNamespace()===$this->getWigiiNamespaceAdminService()->getEmptyWigiiNamespaceForDefaultClient()) {
+			$rootP = $this->getRootPrincipal();			
+			if(isset($rootP) && (is_null($rootP->getWigiiNamespace()) || !is_null($rootP->getWigiiNamespace()) && $rootP->getWigiiNamespace()->getWigiiNamespaceName()==WigiiNamespace::EMPTY_NAMESPACE_NAME)) {
 			    $rootP->changeWigiiNamespace($this->getCrtWigiiNamespace());
 			}
 			if($this->executionSink()->isEnabled()) $this->executionSink()->log("\n".str_repeat("-",100)."\n".str_repeat("-",100)."\n"."Request: ".$this->getCrtRequest()." loaded."."\n".str_repeat("-",100)."\n".str_repeat("-",100));

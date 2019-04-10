@@ -112,6 +112,8 @@ abstract class ConfigControllerWithFuncExpVM implements ConfigController
 	 */
 	abstract protected function doProcessConfigurationNode($principal, $xmlConfig, $getWritableNode, $lp);
 	
+	public function enabledForLoadingOnlyParameters() {return false;}
+	
 	// FuncExp VM helpers
 	
 	/**

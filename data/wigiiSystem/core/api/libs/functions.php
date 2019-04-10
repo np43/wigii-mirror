@@ -213,14 +213,16 @@ function simplexml_appendChild($parent, $child, $beforenode=null){
 /**
  * Appends all the children of an existing parent, as children of another given parent.
  * @param SimpleXMLElement $parent the parent node to which to add the children
- * @param SimpleXMLElement $childrenParent the parent node from which to copy the children
+ * @param SimpleXMLElement|Array $childrenParent the parent node from which to copy the children, or an array of elements to take as children
  * @param SimpleXMLElement $beforeNode if set, then the children will be inserted before this node.
  * @return SimpleXMLElement returns a pointer on the parent containing the new children.
  */
 function simplexml_appendChildren($parent, $childrenParent, $beforeNode=null) {
 	$parent = dom_import_simplexml($parent);
 	if($beforeNode !== null) $beforeNode = dom_import_simplexml($beforeNode);
-	foreach($childrenParent->children() as $child) {
+	if(is_array($childrenParent)) $children = $childrenParent;
+	else $children = $childrenParent->children();
+	foreach($children as $child) {
 		$child = dom_import_simplexml($child);
 		$child = $parent->ownerDocument->importNode($child, true);
 		if($beforeNode === null) $parent->appendChild($child);
@@ -237,7 +239,7 @@ function simplexml_appendChildren($parent, $childrenParent, $beforeNode=null) {
  */
 function simplexml_replaceNode($node1, $node2) {
 	$node1 = dom_import_simplexml($node1);
-	if($node1 instanceof DOMDocument || $node1->parentNode === null) return simplexml_load_string($node2->asXML());
+	if($node1->ownerDocument->documentElement === $node1) return simplexml_load_string($node2->asXML());
 	$nextSibling = $node1->nextSibling;
 	$parent = $node1->parentNode;
 	$node2 = dom_import_simplexml($node2);
@@ -251,7 +253,7 @@ function simplexml_replaceNode($node1, $node2) {
  * Replaces an existing node1 in an xml tree by the children of another node2 at the same place.
  * If node1 is the root element, then throws ServiceException::INVALID_ARGUMENT.
  * @param SimpleXMLElement $node1 the existing node to replace
- * @param SimpleXMLElement $node2ChildrenParent the replacement node from which to take children
+ * @param SimpleXMLElement|Array $node2ChildrenParent the replacement node from which to take children, or an array of elements to take as children
  * @return SimpleXMLElement returns a pointer on the parent containing the new children.
  */
 function simplexml_replaceNodeWithChildren($node1, $node2ChildrenParent) {
@@ -259,7 +261,9 @@ function simplexml_replaceNodeWithChildren($node1, $node2ChildrenParent) {
 	if($node1 instanceof DOMDocument || $node1->parentNode === null) throw new ServiceException('cannot replace a root element with several children', ServiceException::INVALID_ARGUMENT);
 	$nextSibling = $node1->nextSibling;
 	$parent = $node1->parentNode;
-	foreach($node2ChildrenParent->children() as $child) {
+	if(is_array($node2ChildrenParent)) $children = $node2ChildrenParent;
+	else $children = $node2ChildrenParent->children();
+	foreach($children as $child) {
 		$child = dom_import_simplexml($child);
 		$child = $parent->ownerDocument->importNode($child, true);
 		if($nextSibling === null) $parent->appendChild($child);

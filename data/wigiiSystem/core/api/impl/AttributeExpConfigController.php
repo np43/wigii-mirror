@@ -137,7 +137,6 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 			$this->debugLogger()->logBeginOperation('doProcessConfigurationNode');
 			foreach($this->attributeExpNodes as $attributeExp) {
 				//$this->debugLogger()->write($attributeExp->asXml());
-				//if($this->debugLogger()->isEnabled()) fput($attributeExp->asXml());
 
 				//CWE 12.01.2019: if field is not in public and principal is public, skips attributeExp resolution
 				$fieldXml = dom_import_simplexml($attributeExp);
@@ -217,7 +216,6 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 				}
 			}
 			$this->debugLogger()->logEndOperation('doProcessConfigurationNode');
-			//if($this->debugLogger()->isEnabled()) fput('endOperation doProcessConfigurationNode');
 		}
 		return $updatedXml;
 	}

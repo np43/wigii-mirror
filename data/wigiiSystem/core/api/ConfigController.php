@@ -26,6 +26,7 @@
  * Instances of this type are intended to interact with Wigii configuration files and modify them on the fly.
  * The life cycle of theses objects are managed by the ConfigServiceImpl.
  * Created by CWE on 27 february 2014
+ * Modified by CWE on 10.04.2019 to add method enabledForLoadingOnlyParameters
  */
 interface ConfigController extends WigiiExclusiveAccessObject
 {	
@@ -44,4 +45,9 @@ interface ConfigController extends WigiiExclusiveAccessObject
 	 * @return boolean returns true if node has been updated, else false.
 	 */
 	public function processConfigurationNode($principal, $xmlConfig, $getWritableNode, $lp);
+	
+	/**
+	 * @return boolean indicates if this ConfigController should be executed when ConfigService is loading only parameters section. Defaults to false.
+	 */
+	public function enabledForLoadingOnlyParameters();
 }

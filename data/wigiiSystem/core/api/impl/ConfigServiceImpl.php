@@ -553,7 +553,7 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 		if(isset($this->analyzedXmlLps)) $alreadyAnalyzed = ($this->analyzedXmlLps[$lpParamAndXml] == true);
 		else $alreadyAnalyzed = false;
 		
-		if(!$coreCS->isLoadingOnlyParameters() && ($returnValue || !$alreadyAnalyzed) && isset($this->configControllers)) {			
+		if(($returnValue || !$alreadyAnalyzed) && isset($this->configControllers)) {			
 			// gets loaded xml
 			$this->debugLogger()->write('gets loaded xml');
 			$xml = $coreCS->getLoadedXml($lpParamAndXml);			
@@ -568,13 +568,19 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 				$modifiedXml = false;			
 				foreach($this->configControllers as $ctlClass) {
 					// gets controller
-					$ctl = ServiceProvider::getExclusiveAccessObject($ctlClass);					
+					$ctl = ServiceProvider::getExclusiveAccessObject($ctlClass);
+					// CWE 09.04.2019: if loading only parameters, then processes xml only with compatible controllers
+					if($coreCS->isLoadingOnlyParameters() && !$ctl->enabledForLoadingOnlyParameters()) continue;
 					// processes the xml
 					try {
 						if($ctl->processConfigurationNode($principal, $xml->getReadableXml(), $getWritableNodeCallback, $lpArray)) {
 							// if xml has been modified, then updates the readable xml based on the last modifications.
 							$xml->updateReadableXml();
 							$modifiedXml = true;
+							// CWE 08.04.2019: stores intermediate modified xml in cache to allow further controllers to beneficiate from already modified xml
+							if(!$coreCS->isLoadingOnlyParameters()) {
+							    $coreCS->loadAll($lpParamAndXml, $lpField, $xml->getReadableXml(), false);
+							}
 						}
 						$ctl->freeMemory();
 					}
@@ -589,13 +595,20 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 					$readableXml = $xml->getReadableXml();
 					// dumps XML config if enabled
 					if($this->getDumpConfig()) $this->dumpConfig($readableXml, wigiiBPLParam('client',$sClientName,'wigiiNamespace',$sWigiiNamespaceName,'module',$sModuleName,'group',$sGroupName,'lpField',$lpField, 'principal',$principal));
+					// CWE 09.04.2019: loads parameters based on modified xml
+					$coreCS->loadXml($lpParamAndXml, $readableXml);
+					$coreCS->loadParameters($lpParamAndXml, $readableXml);
 					// loads all Objects
-					$this->loadAll($lpParamAndXml, $lpField, $readableXml, false);
+					if(!$coreCS->isLoadingOnlyParameters()) {
+					    $this->loadAll($lpParamAndXml, $lpField, $readableXml, false);
+					}
 				}
 				$xml->freeMemory();	
 				// remembers the fact that this lookup path has been analyzed
-				if(!isset($this->analyzedXmlLps)) $this->analyzedXmlLps = array();
-				$this->analyzedXmlLps[$lpParamAndXml] = true;			
+				if(!$coreCS->isLoadingOnlyParameters()) {
+				    if(!isset($this->analyzedXmlLps)) $this->analyzedXmlLps = array();
+				    $this->analyzedXmlLps[$lpParamAndXml] = true;				    
+				}
 			}
 		}
 		//$this->debugLogger()->logEndOperation("loadConfig");

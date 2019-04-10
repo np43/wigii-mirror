@@ -3693,7 +3693,7 @@ class ConfigServiceCoreImpl implements ConfigService
 	{
 		$this->debugLogger()->write("lookupXml cacheXmlLookupPath for $lookupPath with $successfullLookupPath");
 		$this->xmlLookupCache[$lookupPath] = $successfullLookupPath;
-		// stores field lookup cacke in navigation session
+		// stores field lookup cache in navigation session
 		if($this->isSessionCacheEnabled() && $this->isSharedCacheEnabled()) {
 			$this->getSessionAdminService()->storeData($this, 'xmlLookupCache', $this->xmlLookupCache, true);
 		}
@@ -3843,8 +3843,8 @@ class ConfigServiceCoreImpl implements ConfigService
 		// prepares contextual info
 		$contextInfo="<!-- ConfigService XML dump ".date('Y-m-d h:i:s')."\n";
 		$contextInfo.='request: '.$exec->getCrtRequest()."\n";
-		$contextInfo.='wigiiNamespace: '.$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."\n";
-		$contextInfo.='module: '.$exec->getCrtModule()->getModuleUrl()."\n";
+		$contextInfo.='wigiiNamespace: '.($exec->getCrtWigiiNamespace()?$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl():'')."\n";
+		$contextInfo.='module: '.($exec->getCrtModule()?$exec->getCrtModule()->getModuleUrl():'')."\n";
 		$contextInfo.='action: '.$exec->getCrtAction()."\n";
 		$contextInfo.='principalNamespace: '.$p->getWigiiNamespace()->getWigiiNamespaceUrl()."\n";
 		$contextInfo.='configLP: '.$info->getValue('lpField')."\n";
@@ -4476,7 +4476,8 @@ class ConfigServiceCoreImpl implements ConfigService
 			}			
 			
 			if(isset($xml)) {
-				if(!isset($this->parametersSessionCache['('.$lookupPath.')'])) {
+				// CWE 09.04.2019: if xml is defined, then always updates cache with fresh xml
+			    /*if(!isset($this->parametersSessionCache['('.$lookupPath.')'])) {*/
 					foreach($xml->attributes() as $k => $v) {
 						$this->parametersSessionCache['('.$k.$lookupPath.')'] = (string)$v;
 					}
@@ -4488,7 +4489,7 @@ class ConfigServiceCoreImpl implements ConfigService
 					// updates the session
 					$this->getSessionAdminService()->storeData($this, "parametersSessionCache", $this->parametersSessionCache, $this->isSharedCacheEnabled());
 					$this->debugLogger()->write("stores the parameters of lp $lookupPath into the session");
-				}
+				/*}*/
 			}
 			else {
 				if(!isset($this->parametersSessionCache['('.$lookupPath.')'])) {					
@@ -4620,12 +4621,12 @@ class ConfigServiceCoreImpl implements ConfigService
 		$returnValue->setDataTypeName($dataTypeName);
 		return $returnValue;
 	}
-	private function loadXml($lookupPath, $xmlConfig)
+	protected function loadXml($lookupPath, $xmlConfig)
 	{
 		$this->xml[$lookupPath] = $xmlConfig;
 		$this->debugLogger()->write('stores xml config in '.$lookupPath);		
 	}
-	private function loadParameters($lookupPath, $xmlConfig)
+	protected function loadParameters($lookupPath, $xmlConfig)
 	{
 		$x = $xmlConfig->xpath('parameters');
 		if($x)

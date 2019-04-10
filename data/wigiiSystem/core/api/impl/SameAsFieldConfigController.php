@@ -116,4 +116,6 @@ class SameAsFieldConfigController implements ConfigController
 		}
 		return simplexml_import_dom($destination);
 	}
+	
+	public function enabledForLoadingOnlyParameters() {return false;}
 }
