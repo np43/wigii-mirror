@@ -20,16 +20,11 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-// version G99
 // DB settings
 define ("DB_HOST", "localhost");
 define ("DB_USER", "wgi");
 define ("DB_PWD" , "mywgi-pass");
 define ("DB_NAME", "wigii_example");
-//define ("DB_HOST", "localhost");
-//define ("DB_USER", ".........");
-//define ("DB_PWD" , ".........");
-//define ("DB_NAME", ".........");
 
 //define ("REDIRECT_ALL_EMAILS_TO", "info@xxx.xx");
 // Medair 22.07.2016: if defined then disables Box integration in whole client (useful for testing and dev environments)

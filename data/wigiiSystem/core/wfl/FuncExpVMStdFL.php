@@ -264,6 +264,70 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 		}
 		else return null;
 	}
+	
+	/**
+	 * Generates a password
+	 * FuncExp signature : <code>genPassword(length)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) length: int. Password length, default to 12 characters.
+	 * @return String generated password composed of letters, digits and ponctuation characters
+	 */
+	public function genPassword($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>0) $length = $this->evaluateArg($args[0]);
+	    else $length=12;
+	    $returnValue = array();
+	    $randomSet = array(
+	        array('-',':','#','!'),
+	        array('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+	        array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'),
+	        array('0','1','2','3','4','5','6','7','8','9')
+	    );
+	    
+	    $oneSymbol=false;
+	    for($i=0;$i<$length;$i++) {
+	        $charType = rand(0,100);
+	        // first character is always a char
+	        if($i==0) {
+	            $symbolTreshold=-1;
+	            $digitTreshold=100;
+	        }
+	        // else 20% symbol, 30% digit, rest chars
+	        else {
+	            $symbolTreshold=20;
+	            $digitTreshold=70;
+	        }
+	        // selects char type based on some weights
+	        $lowerCaseTreshold = $symbolTreshold+($digitTreshold-$symbolTreshold)/2;
+	        if(0<=$charType && $charType<=$symbolTreshold) $charType=0;
+	        elseif($symbolTreshold+1<=$charType && $charType<=$lowerCaseTreshold) $charType=1;
+	        elseif($lowerCaseTreshold+1<=$charType && $charType<=$digitTreshold) $charType=2;
+	        elseif($digitTreshold+1<=$charType && $charType<=100) $charType=3;
+	        else $charType=2;
+	        
+	        if($i>0) {
+    	       // if char type is not a symbol, then move treshold up
+    	       if($charType!=0) $symbolTreshold+=5; 
+	           // else moves treshold down
+    	       else {
+    	           $symbolTreshold-=5;
+    	           $oneSymbol=true;
+    	       }
+	        }	        
+	        // select random char in selected set
+	        $char = rand(0,count($randomSet[$charType])-1);
+	        $char = $randomSet[$charType][$char];
+	        $returnValue[] = $char;
+	    }
+	    // if no symbol, then adds one randomly
+	    if(!$oneSymbol) {
+	        $char = rand(0,count($randomSet[0])-1);
+	        $char = $randomSet[0][$char];
+	        $returnValue[rand(1,count($returnValue)-1)] = $char;
+	    }
+	    
+	    return implode('',$returnValue);
+	}
 
 	// Selectors
 

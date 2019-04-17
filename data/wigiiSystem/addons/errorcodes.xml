@@ -4,5 +4,6 @@
 		<ReportingException from="10000" to="10099"/>		
 		<GeometryException from="10100" to="10199"/>
 		<WigiiMedidataException from="10200" to="10299"/>
+		<ConfigManager from="10300" to="10399"/>
 	</exceptions>
 </errorcodes>

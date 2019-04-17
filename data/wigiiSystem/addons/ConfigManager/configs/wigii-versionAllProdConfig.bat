@@ -21,14 +21,33 @@ REM @link       <http://www.wigii-system.net>      <https://github.com/wigii/wig
 REM @license    <http://www.gnu.org/licenses/>     GNU General Public License
 REM
 
+REM
+REM This script downloads Wigii clients config folder from all wigii servers and commits the files to svn.
+REM Created by CWE on 16.04.2019
+REM 
+
+set RETURNVALUE=0
 SET PREVIOUS_PATH=%CD%
 cd %~dp0
-if "%WIGII_PHP_ENV%"=="" (set WIGII_PHP_ENV=C:\wamp\bin\php\php7.3.1)
-SET WIGII_CLI_PHP_ENGINE=%WIGII_PHP_ENV%\php.exe
-IF NOT exist %WIGII_CLI_PHP_ENGINE% (echo Wigii ERREUR: %WIGII_CLI_PHP_ENGINE% has not been found & set RETURNVALUE=404 & goto end)
+echo Changes code page to UTF-8
+chcp 65001
 
-if "%1"=="-shell" (%WIGII_CLI_PHP_ENGINE% -c .\php.ini -f main.php -- %*) else (%WIGII_CLI_PHP_ENGINE% -c .\php.ini -f main.php -- %* > out.log 2> err.log)
-set RETURNVALUE=%ERRORLEVEL%
+if "%WIGII_LEGALENTITY%"=="" (echo Wigii ERREUR: WIGII_LEGALENTITY is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+if not exist %WIGII_LEGALENTITY%-client-host.bat (echo Wigii ERREUR: %WIGII_LEGALENTITY%-client-host.bat has not been found & set RETURNVALUE=404 & goto end)
+rem loops through each pair WIGII_CLIENT = WIGII_HOST
+Setlocal enableDelayedExpansion
+for /F "tokens=3,5 delims=_= " %%a in ('findstr /C:"%WIGII_LEGALENTITY%_" %WIGII_LEGALENTITY%-client-host.bat') do (
+	set WIGII_CLIENT=%%a
+	set WIGII_HOST=%%b
+	echo Versioning production configs for !WIGII_HOST! client !WIGII_CLIENT!
+	call !WIGII_HOST!-versionProdConfig.bat !WIGII_CLIENT!
+)
+endlocal
+
+echo Done. All production configs downloaded and stored into SVN.
+goto end
+
 :end
+REM clears all variables and exits with return value
 cd %PREVIOUS_PATH%
 exit /b %RETURNVALUE%

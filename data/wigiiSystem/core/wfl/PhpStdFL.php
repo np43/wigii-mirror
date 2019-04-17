@@ -351,4 +351,10 @@ class PhpStdFL extends FuncExpVMAbstractFL
 	public function is_numeric($args){
 		return is_numeric($this->evaluateArg($args[0]));
 	}
+	/**
+	 * is_numeric. See http://www.php.net/ucfirst
+	 */
+	public function ucfirst($args){
+	    return ucfirst($this->evaluateArg($args[0]));
+	}
 }

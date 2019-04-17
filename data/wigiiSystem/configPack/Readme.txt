@@ -1,1 +1,1 @@
-Wigii configuration pack root folder
+Wigii configuration packs root folder

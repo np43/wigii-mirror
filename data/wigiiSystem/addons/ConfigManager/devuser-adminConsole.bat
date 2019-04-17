@@ -21,14 +21,11 @@ REM @link       <http://www.wigii-system.net>      <https://github.com/wigii/wig
 REM @license    <http://www.gnu.org/licenses/>     GNU General Public License
 REM
 
-SET PREVIOUS_PATH=%CD%
-cd %~dp0
-if "%WIGII_PHP_ENV%"=="" (set WIGII_PHP_ENV=C:\wamp\bin\php\php7.3.1)
-SET WIGII_CLI_PHP_ENGINE=%WIGII_PHP_ENV%\php.exe
-IF NOT exist %WIGII_CLI_PHP_ENGINE% (echo Wigii ERREUR: %WIGII_CLI_PHP_ENGINE% has not been found & set RETURNVALUE=404 & goto end)
-
-if "%1"=="-shell" (%WIGII_CLI_PHP_ENGINE% -c .\php.ini -f main.php -- %*) else (%WIGII_CLI_PHP_ENGINE% -c .\php.ini -f main.php -- %* > out.log 2> err.log)
-set RETURNVALUE=%ERRORLEVEL%
-:end
-cd %PREVIOUS_PATH%
-exit /b %RETURNVALUE%
+REM
+REM Wigii Admin console
+REM Created by CWE on 15.04.2019
+REM 
+for /f "tokens=1 delims=-" %%a in ("%~n0") do (set WIGII_DEVELOPER=%%a)
+if exist %~dp0%WIGII_DEVELOPER%-setup.bat (call %~dp0%WIGII_DEVELOPER%-setup.bat)
+if exist %~dp0..\%WIGII_DEVELOPER%-setup.bat (call %~dp0..\%WIGII_DEVELOPER%-setup.bat)
+call cmd

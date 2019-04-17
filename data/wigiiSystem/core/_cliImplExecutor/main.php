@@ -30,12 +30,21 @@ $DEBUG_EXECUTION_ENABLED= true;
 
 // Looks for client name: option -c clientName
 // ( argv[0] is the name of the script )
-define ("MAIN_USAGE", "Usage [-noTrace] -c ClientName [-u UserName -p Password | -uRootPrincipal] commandName subArguments");
+define ("MAIN_USAGE", "Usage [-shell | -noTrace] -c ClientName|NoClient [-u UserName -p Password | -uRootPrincipal] commandName subArguments");
 for($i = 0; $i < $argc; $i++) {
     if($argv[$i] == '-c') {
-        define ("CLIENT_NAME", $argv[$i+1] );
+        // CWE 14.04.2019: supports working with no client
+        if($argv[$i+1]=='NoClient') {
+            define("NO_CLIENT",true);
+            define ("CLIENT_NAME", ""); // empty client has name empty.
+        }
+        else define ("CLIENT_NAME", $argv[$i+1]);
     }
     elseif($argv[$i] == '-noTrace') {
+        $DEBUG_EXECUTION_ENABLED = false;
+    }
+    // CWE 14.04.2019: integrates with OS shell
+    elseif($argv[$i] == '-shell') {
         $DEBUG_EXECUTION_ENABLED = false;
     }
 }
@@ -43,7 +52,7 @@ define("DEBUG_EXECUTION_ENABLED", $DEBUG_EXECUTION_ENABLED);
 
 if(!defined("CLIENT_NAME")) {
 	echo "Undefined client name. ".MAIN_USAGE;
-	return false;
+	exit(1004); // ServiceException::INVALID_ARGUMENT
 } 
 
 define("wigiiSystem_PATH", "../../");
@@ -52,29 +61,36 @@ define("IMPL_PATH", CORE_PATH . "_webImplExecutor/");
 define("TEMPLATE_PATH", IMPL_PATH . "templates/");
 define("DATATYPE_PATH", CORE_PATH . "datatype/");
 define("LANG_FOLDER", CORE_PATH . "langs/");
-define("CLIENT_CONFIG_PATH", wigiiSystem_PATH . "configs/" . CLIENT_NAME . "/");
+if(!defined("NO_CLIENT")) define("CLIENT_CONFIG_PATH", wigiiSystem_PATH . "configs/" . CLIENT_NAME . "/");
 define("ADDONS_PATH", wigiiSystem_PATH . "addons/");
 // Medair (CWE) 25.08.2017 added access to :
 // temporary uploaded files zone (to enable batch file upload)
 define("TEMPORARYUPLOADEDFILE_path",  wigiiSystem_PATH."tempUploadedFiles/");
 // and client files to enable data manipulation
-define("FILES_PATH", wigiiSystem_PATH."../../users/" . CLIENT_NAME . "/data/uploadedFiles/");
+if(!defined("NO_CLIENT")) define("FILES_PATH", wigiiSystem_PATH."../../users/" . CLIENT_NAME . "/data/uploadedFiles/");
 
-//load the paths
+//load the class paths
 include (IMPL_PATH . "autoload.php");
 
+
+// CWE 14.04.2019 if no client, then starts standard implementation
+if(defined("NO_CLIENT")) {
+    $cliExecutor = CliExecutor::start();
+}
 /**
- * Command Line excutor start the API
+ * Command Line executor starts the API
  * client implementation START
  */
-//start the CLIENT implementation
-include_once (CLIENT_CONFIG_PATH . "start_cli.php");
-//add the CLIENT configuration
-if(file_exists(CLIENT_CONFIG_PATH . "config_cli.php")) {
-	include_once (CLIENT_CONFIG_PATH . "config_cli.php");
-}
 else {
-	include_once (CLIENT_CONFIG_PATH . "config.php");	
+    //starts the CLIENT implementation
+    include_once (CLIENT_CONFIG_PATH . "start_cli.php");
+    //adds the CLIENT configuration
+    if(file_exists(CLIENT_CONFIG_PATH . "config_cli.php")) {
+    	include_once (CLIENT_CONFIG_PATH . "config_cli.php");
+    }
+    else {
+    	include_once (CLIENT_CONFIG_PATH . "config.php");	
+    }
 }
 
 /**

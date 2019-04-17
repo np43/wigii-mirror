@@ -25,10 +25,6 @@ define ("DB_HOST", "localhost");
 define ("DB_USER", "wgi");
 define ("DB_PWD" , "mywgi-pass");
 define ("DB_NAME", "wigii_example");
-//define ("DB_HOST", "localhost");
-//define ("DB_USER", ".........");
-//define ("DB_PWD" , ".........");
-//define ("DB_NAME", ".........");
 
 //define ("REDIRECT_ALL_EMAILS_TO", "info@xxx.xx");
 

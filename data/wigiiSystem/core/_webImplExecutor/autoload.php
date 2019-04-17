@@ -226,22 +226,12 @@ function wigii_autoload($class_name) {
 			if (!$ok) {
 				$filename = ADDONS_PATH."Reporting/$class_name.php";
 				$ok = file_exists($filename);
-			}
-			// addon: SFTP
-			if (!$ok) {
-				$filename = ADDONS_PATH."SFTP/$class_name.php";
-				$ok = file_exists($filename);
-			}
+			}			
 			// addon: CampaignMonitor
 			if (!$ok) {
 				$filename = ADDONS_PATH."CampaignMonitor/$class_name.php";
 				$ok = file_exists($filename);
-			}
-			// addon: Cresus
-			if (!$ok) {
-				$filename = ADDONS_PATH."Cresus/$class_name.php";
-				$ok = file_exists($filename);
-			}
+			}			
 			// addon: Excel
 			if (!$ok) {
 				$filename = ADDONS_PATH."Excel/$class_name.php";
@@ -255,6 +245,11 @@ function wigii_autoload($class_name) {
 			// addon: Medidata
 			if (!$ok) {
 				$filename = ADDONS_PATH."Medidata/$class_name.php";
+				$ok = file_exists($filename);
+			}
+			// addon: ConfigManager
+			if (!$ok) {
+				$filename = ADDONS_PATH."ConfigManager/$class_name.php";
 				$ok = file_exists($filename);
 			}
 		}

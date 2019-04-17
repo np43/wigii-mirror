@@ -20,8 +20,6 @@
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
-// Config version G144
-
 //******************
 /* CONFIG FILE */
 //******************

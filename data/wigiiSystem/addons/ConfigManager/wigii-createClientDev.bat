@@ -21,14 +21,17 @@ REM @link       <http://www.wigii-system.net>      <https://github.com/wigii/wig
 REM @license    <http://www.gnu.org/licenses/>     GNU General Public License
 REM
 
-SET PREVIOUS_PATH=%CD%
-cd %~dp0
-if "%WIGII_PHP_ENV%"=="" (set WIGII_PHP_ENV=C:\wamp\bin\php\php7.3.1)
-SET WIGII_CLI_PHP_ENGINE=%WIGII_PHP_ENV%\php.exe
-IF NOT exist %WIGII_CLI_PHP_ENGINE% (echo Wigii ERREUR: %WIGII_CLI_PHP_ENGINE% has not been found & set RETURNVALUE=404 & goto end)
-
-if "%1"=="-shell" (%WIGII_CLI_PHP_ENGINE% -c .\php.ini -f main.php -- %*) else (%WIGII_CLI_PHP_ENGINE% -c .\php.ini -f main.php -- %* > out.log 2> err.log)
-set RETURNVALUE=%ERRORLEVEL%
+REM
+REM Creates a new client in dev environment
+REM Created by CWE on 16.04.2019
+REM
+set RETURNVALUE=0
+echo Changes code page to UTF-8
+chcp 65001
+if "%WIGII_CLI%"=="" (echo Wigii ERREUR: Wigii dev CLI is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+call %WIGII_CLI%\wigii_createClient.bat %*
+SET RETURNVALUE=%ERRORLEVEL%
+goto end
 :end
-cd %PREVIOUS_PATH%
+REM clears all variables and exits with return value
 exit /b %RETURNVALUE%

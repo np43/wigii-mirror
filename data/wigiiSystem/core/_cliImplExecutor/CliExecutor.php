@@ -25,6 +25,7 @@
  * This class is the main service which will link the CLI and the API.
  * It interprets the semantic of the command line interpreter.
  * Created on 19 march 2013 by CWE
+ * Modified by CWE on 17.04.2019 to integrate OS shell and allow calling FuncExps from command line
  */
 class CliExecutor {	
 	// singleton implementation
@@ -221,6 +222,11 @@ class CliExecutor {
 				        /* ignores. Already interpreted in main.php */
 				        $i++;
 				    }
+				    // -shell option
+				    elseif($argv[$i] == '-shell') {
+				        /* ignores. Already interpreted in main.php */
+				        $i++;
+				    }
 				}
 				
 				// reads client name
@@ -270,7 +276,7 @@ class CliExecutor {
 		{
 			$this->executionSink()->publishEndOperationOnError("processAndEnds", $e);
 			ExceptionSink::publish($e);
-			return;
+			exit(intval($e->getCode()));
 		}
 		$this->executionSink()->publishEndOperation("processAndEnds");				
 	}
@@ -292,6 +298,22 @@ class CliExecutor {
 			$this->executionSink()->publishEndOperation($commandName);				
 		}
 		else throw new ServiceException("Command $commandName is not supported.", ServiceException::UNSUPPORTED_OPERATION); 			
+	}
+	/**
+	 * Puts out a string
+	 * @param String $str
+	 */
+	protected function put($str) {
+	    if($this->executionSink()->isEnabled()) $this->executionSink()->log($str);
+	    else echo $str;
+	}
+	/**
+	 * Puts out a string followed by a new line
+	 * @param String $str
+	 */
+	protected function putLine($str) {
+	    if($this->executionSink()->isEnabled()) $this->executionSink()->log("\n".$str); // if log file, then puts new line before string
+	    else echo $str."\n";
 	}
 	
 	// CLI commands
@@ -343,5 +365,25 @@ class CliExecutor {
                 ));
             }	        
 	    }
+	}
+	
+	/**
+	 * Computes md5 hash from a given string
+	 */
+	protected function md5($argc, $argv, $subArgIndex) {
+	    $this->put(md5($argv[$subArgIndex]));
+	}
+	
+	/**
+	 * Executes an FuncExp given its expression as a string
+	 */
+	protected function fx($argc, $argv, $subArgIndex) {
+	    $fxStr = $argv[$subArgIndex];
+	    // replaces any single quotes by double quotes
+	    $fxStr = str_replace("'", '"', $fxStr);
+	    // tries to parse fx string
+	    $fx = str2fx($fxStr);
+	    // evaluates fx string and displays result
+	    $this->put(evalfx($this->getCurrentPrincipal(), $fx));
 	}
 }

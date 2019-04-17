@@ -1,0 +1,1 @@
+Wigii DevOps scripts addon to manage creation, refresh, delete, merge of client configuration code and databases.
