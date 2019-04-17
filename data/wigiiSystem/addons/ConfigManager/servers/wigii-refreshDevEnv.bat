@@ -65,7 +65,7 @@ echo Setups %WIGII_HOST%-prod folder structure
 set WIGII_TARGET=%~dp0%WIGII_HOST%-prod
 rmdir %WIGII_TARGET% /s /q
 mkdir %WIGII_TARGET%
-call %WIGII_HOST%-setup.bat %WIGII_TARGET%
+call %~dp0%WIGII_HOST%-setup.bat %WIGII_TARGET%
 if "%WIGII_TARGET_WEB%"=="" (echo Wigii ERREUR: WIGII_TARGET_WEB is not defined. & set RETURNVALUE=1009 & goto end)
 if "%WIGII_TARGET_ENV%"=="" (echo Wigii ERREUR: WIGII_TARGET_ENV is not defined. & set RETURNVALUE=1009 & goto end)
 mkdir %WIGII_TARGET_WEB%
