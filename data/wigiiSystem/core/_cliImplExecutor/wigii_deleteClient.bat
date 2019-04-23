@@ -34,13 +34,13 @@ echo Changes code page to UTF-8
 chcp 65001
 
 set WIGII_CLIENT=%1
-if "%WIGII_CLIENT%"=="" (echo Wigii ERREUR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1004 & goto end)
+if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1004 & goto end)
 
 set WIGII_ENV=..\..\..\..
 set WIGII_WWW=%WIGII_ENV%\www\
-if not exist %WIGII_WWW% (echo Wigii ERREUR: www folder has not been found & set RETURNVALUE=404 & goto end)
+if not exist %WIGII_WWW% (echo Wigii ERROR: www folder has not been found & set RETURNVALUE=404 & goto end)
 set WIGII_USERS=%WIGII_ENV%\users\
-if not exist %WIGII_USERS% (echo Wigii ERREUR: users folder has not been found & set RETURNVALUE=404 & goto end)
+if not exist %WIGII_USERS% (echo Wigii ERROR: users folder has not been found & set RETURNVALUE=404 & goto end)
 
 rem retrieves Wigii DB name from start.php
 for /F "tokens=3 delims=,) " %%a in ('findstr DB_NAME %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start.php') do (set WIGII_DB=%%~a)
@@ -48,7 +48,7 @@ if "%WIGII_DB%"=="" (set WIGII_DB=wigii_%WIGII_CLIENT%)
 
 if "%WIGII_MYSQL_ENV%"=="" (set WIGII_MYSQL_ENV=C:\wamp\bin\mysql\mysql5.7.24)
 set MYSQL=%WIGII_MYSQL_ENV%\bin\mysql.exe
-if not exist %MYSQL% (echo Wigii ERREUR: %MYSQL% does not exist & set RETURNVALUE=404 & goto end)
+if not exist %MYSQL% (echo Wigii ERROR: %MYSQL% does not exist & set RETURNVALUE=404 & goto end)
 if "%WIGII_MYSQL_ROOTPWD%"=="" (echo Wigii MySql root password is not set. Assumes empty string. If not, please set WIGII_MYSQL_ROOTPWD environment variable.)
 
 :deleteUsers

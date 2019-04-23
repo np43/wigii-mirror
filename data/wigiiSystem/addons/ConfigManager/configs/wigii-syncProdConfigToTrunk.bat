@@ -34,20 +34,20 @@ cd %~dp0
 echo Changes code page to UTF-8
 chcp 65001
 
-if "%WIGII_CLIENT%"=="" (echo Wigii ERREUR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
-if "%WIGII_HOST%"=="" (echo Wigii ERREUR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
+if "%WIGII_HOST%"=="" (echo Wigii ERROR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
 if "%LOCAL_CONFIGS%"=="" (set LOCAL_CONFIGS=%~dp0)
 IF %LOCAL_CONFIGS:~-1%==\ SET LOCAL_CONFIGS=%LOCAL_CONFIGS:~0,-1%
 
 rem checks installation of WinMerge
 if exist "%ProgramFiles%\WinMerge\WinMergeU.exe" (set WINMERGE="%ProgramFiles%\WinMerge\WinMergeU.exe") else (
 if exist "%ProgramFiles(x86)%\WinMerge\WinMergeU.exe" (set WINMERGE="%ProgramFiles(x86)%\WinMerge\WinMergeU.exe") else (
-	echo Wigii ERREUR: WinMerge is not installed & set RETURNVALUE=404 & goto end
+	echo Wigii ERROR: WinMerge is not installed & set RETURNVALUE=404 & goto end
 ))
 
 rem asserts working folder does not commit to GitHub Wigii
 for /f "tokens=1 delims=" %%a in ('svn info %LOCAL_CONFIGS%\%WIGII_CLIENT%-prod ^| find /C "https://github.com/wigii/wigii"') do (
-	if %%a GTR 0 (echo Wigii ERREUR: Cannot commit %WIGII_CLIENT% information to GitHub/Wigii & set RETURNVALUE=405 & goto end)
+	if %%a GTR 0 (echo Wigii ERROR: Cannot commit %WIGII_CLIENT% information to GitHub/Wigii & set RETURNVALUE=405 & goto end)
 )
 
 :svnUpdateTrunkConfig

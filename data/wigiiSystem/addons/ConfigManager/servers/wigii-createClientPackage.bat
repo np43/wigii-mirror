@@ -35,27 +35,27 @@ chcp 65001
 
 set WIGII_CLIENT=%1
 if "%2"=="-noData" (set WIGII_OPTION_NODATA=1) else (set WIGII_OPTION_NODATA=0)
-if "%WIGII_CLIENT%"=="" (echo Wigii ERREUR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1004 & goto end)
-if "%WIGII_HOST%"=="" (echo Wigii ERREUR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1004 & goto end)
+if "%WIGII_HOST%"=="" (echo Wigii ERROR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
 
-if "%WIGII_ENV%"=="" (echo Wigii ERREUR: WIGII_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+if "%WIGII_ENV%"=="" (echo Wigii ERROR: WIGII_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
 IF %WIGII_ENV:~-1%==\ SET WIGII_ENV=%WIGII_ENV:~0,-1%
 
 set WIGII_WWW=%WIGII_ENV%\www\
-if not exist %WIGII_WWW% (echo Wigii ERREUR: www folder has not been found & set RETURNVALUE=404 & goto end)
+if not exist %WIGII_WWW% (echo Wigii ERROR: www folder has not been found & set RETURNVALUE=404 & goto end)
 set WIGII_USERS=%WIGII_ENV%\users\
-if not exist %WIGII_USERS% (echo Wigii ERREUR: users folder has not been found & set RETURNVALUE=404 & goto end)
+if not exist %WIGII_USERS% (echo Wigii ERROR: users folder has not been found & set RETURNVALUE=404 & goto end)
 
 rem retrieves Wigii DB name from start.php
 for /F "tokens=3 delims=,) " %%a in ('findstr DB_NAME %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start.php') do (set WIGII_DB=%%~a)
 if "%WIGII_DB%"=="" (set WIGII_DB=wigii_%WIGII_CLIENT%)
 
 rem checks installation of mysql tools
-if "%WIGII_MYSQL_ENV%"=="" (echo Wigii ERREUR: WIGII_MYSQL_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+if "%WIGII_MYSQL_ENV%"=="" (echo Wigii ERROR: WIGII_MYSQL_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
 set MYSQL=%WIGII_MYSQL_ENV%\bin\mysql.exe
-if not exist %MYSQL% (echo Wigii ERREUR: %MYSQL% does not exist & set RETURNVALUE=404 & goto end)
+if not exist %MYSQL% (echo Wigii ERROR: %MYSQL% does not exist & set RETURNVALUE=404 & goto end)
 set MYSQL_DUMP=%WIGII_MYSQL_ENV%\bin\mysqldump.exe
-if not exist %MYSQL_DUMP% (echo Wigii ERREUR: %MYSQL_DUMP% does not exist & set RETURNVALUE=404 & goto end)
+if not exist %MYSQL_DUMP% (echo Wigii ERROR: %MYSQL_DUMP% does not exist & set RETURNVALUE=404 & goto end)
 if "%WIGII_MYSQL_ROOTPWD%"=="" (echo Wigii MySql root password is not set. Assumes empty string. If not, please set WIGII_MYSQL_ROOTPWD environment variable.)
 
 rem checks installation of 7-Zip
@@ -72,8 +72,8 @@ set WIGII_TARGET=%~dp0%WIGII_HOST%-prod
 rmdir %WIGII_TARGET% /s /q
 mkdir %WIGII_TARGET%
 call %WIGII_HOST%-setup.bat %WIGII_TARGET%
-if "%WIGII_TARGET_WEB%"=="" (echo Wigii ERREUR: WIGII_TARGET_WEB is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_TARGET_ENV%"=="" (echo Wigii ERREUR: WIGII_TARGET_ENV is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_TARGET_WEB%"=="" (echo Wigii ERROR: WIGII_TARGET_WEB is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_TARGET_ENV%"=="" (echo Wigii ERROR: WIGII_TARGET_ENV is not defined. & set RETURNVALUE=1009 & goto end)
 mkdir %WIGII_TARGET_WEB%
 mkdir %WIGII_TARGET_ENV%
 

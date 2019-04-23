@@ -48,21 +48,30 @@ for /F "delims=" %%a in ('wigii_cli.bat -shell -c NoClient fx "%WIGII_FX%"') do 
 
 set WIGII_ENV=..\..\..\..
 set WIGII_WWW=%WIGII_ENV%\www\
-if not exist %WIGII_WWW% (echo Wigii ERREUR: www folder has not been found & set RETURNVALUE=404 & goto end)
+if not exist %WIGII_WWW% (echo Wigii ERROR: www folder has not been found & set RETURNVALUE=404 & goto end)
 set WIGII_USERS=%WIGII_ENV%\users\
-if not exist %WIGII_USERS% (echo Wigii ERREUR: users folder has not been found & set RETURNVALUE=404 & goto end)
+if not exist %WIGII_USERS% (echo Wigii ERROR: users folder has not been found & set RETURNVALUE=404 & goto end)
 
 if "%WIGII_MYSQL_ENV%"=="" (set WIGII_MYSQL_ENV=C:\wamp\bin\mysql\mysql5.7.24)
 set MYSQL=%WIGII_MYSQL_ENV%\bin\mysql.exe
-if not exist %MYSQL% (echo Wigii ERREUR: %MYSQL% does not exist & set RETURNVALUE=404 & goto end)
+if not exist %MYSQL% (echo Wigii ERROR: %MYSQL% does not exist & set RETURNVALUE=404 & goto end)
 if "%WIGII_MYSQL_ROOTPWD%"=="" (echo Wigii MySql root password is not set. Assumes empty string. If not, please set WIGII_MYSQL_ROOTPWD environment variable.)
 set WIGII_CREATEDBSQL="%WIGII_ENV%\Readme\Wigii4.6 table structure.sql"
 for /F "tokens=* delims=" %%a in (%WIGII_CREATEDBSQL%) do (set WIGII_CREATEDBSQL=%%~fa)
-if not exist "%WIGII_CREATEDBSQL%" (echo Wigii ERREUR: File "%WIGII_CREATEDBSQL%" does not exist & set RETURNVALUE=1009 & goto end)
+if not exist "%WIGII_CREATEDBSQL%" (echo Wigii ERROR: File "%WIGII_CREATEDBSQL%" does not exist & set RETURNVALUE=1009 & goto end)
+SET MYSQL_CMD=%MYSQL% --user=root --password=%WIGII_MYSQL_ROOTPWD% -e 
+for /f "tokens=1-3 delims=. " %%a in ('date /T') do (set MYSQL_CMDFILE=%WIGII_DB%_%%c%%b%%a.sql)
+for /f "tokens=1-3 delims=. " %%a in ('date /T') do (set MYSQL_OUTFILE=%WIGII_DB%_%%c%%b%%a.txt)
+rem asserts MySql variable lower_case_table_names is set to 2 (keep table case, but ignore case on lookup)
+%MYSQL_CMD% "charset utf8mb4;set names utf8mb4;show variables like '%%lower_case_table_names%%'" > %MYSQL_OUTFILE%
+if %ERRORLEVEL% neq 0 goto mySqlError
+for /F "tokens=2 delims=	" %%a in ('findstr /C:"lower_case_table_names" %MYSQL_OUTFILE%') do (
+	if %%a LSS 2 (echo Wigii ERROR: MySql lower_case_table_names variable is %%a instead of 2. & echo Please set lower_case_table_names=2 in my.ini file. & set RETURNVALUE=1009 & goto end)
+)
 
 :createUsers
 rem Creates users folder for new client
-if exist %WIGII_USERS%%WIGII_CLIENT% (echo Wigii ERREUR: users\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
+if exist %WIGII_USERS%%WIGII_CLIENT% (echo Wigii ERROR: users\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
 echo Creates users\%WIGII_CLIENT% folder
 mkdir %WIGII_USERS%%WIGII_CLIENT%
 mkdir %WIGII_USERS%%WIGII_CLIENT%\data
@@ -70,7 +79,7 @@ mkdir %WIGII_USERS%%WIGII_CLIENT%\data\uploadedFiles
 
 :createWww
 rem Creates www folder for new client
-if exist %WIGII_WWW%%WIGII_CLIENT% (echo Wigii ERREUR: www\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
+if exist %WIGII_WWW%%WIGII_CLIENT% (echo Wigii ERROR: www\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
 echo Creates www\%WIGII_CLIENT% folder
 mkdir %WIGII_WWW%%WIGII_CLIENT%
 echo Copies www\Example files to www\%WIGII_CLIENT%
@@ -80,7 +89,7 @@ ren %WIGII_WWW%%WIGII_CLIENT%\Example.css %WIGII_CLIENT%.css
 
 :createConfigs
 rem Creates config folder for new client
-if exist %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT% (echo Wigii ERREUR: configs\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
+if exist %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT% (echo Wigii ERROR: configs\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
 echo Creates configs\%WIGII_CLIENT% folder
 mkdir %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%
 echo Copies configs\Example files to configs\%WIGII_CLIENT%
@@ -89,7 +98,7 @@ ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\dico_Example.txt dico_%W
 
 :createApi
 rem Creates api folder for new client
-if exist %WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT% (echo Wigii ERREUR: api\impl\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
+if exist %WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT% (echo Wigii ERROR: api\impl\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
 echo Creates api\impl\%WIGII_CLIENT% folder
 mkdir %WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT%
 echo Copies api\impl\Example files to api\impl\%WIGII_CLIENT%
@@ -143,9 +152,8 @@ rem prepares ExampleCliExecutor.php
 ))>%WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT%\%WIGII_CLIENT_LABEL%CliExecutor.php
 
 :createDb
-for /f "tokens=1-3 delims=. " %%a in ('date /T') do (set MYSQL_CMDFILE=%WIGII_DB%_%%c%%b%%a.sql)
-SET MYSQL_CMD=%MYSQL% --user=root --password=%WIGII_MYSQL_ROOTPWD% -e 
 echo Creates %WIGII_DB% database
+SET MYSQL_CMD=%MYSQL% --user=root --password=%WIGII_MYSQL_ROOTPWD% -e 
 %MYSQL_CMD% "charset utf8mb4;set names utf8mb4;CREATE DATABASE `%WIGII_DB%` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 if %ERRORLEVEL% neq 0 goto mySqlError
 :createDbTables
@@ -282,7 +290,9 @@ set WIGII_WWW=
 set WIGII_USERS=
 SET WIGII_FX=
 set MYSQL_CMD=
-if not "%MYSQL_CMDFILE%"=="" del /Q %MYSQL_CMDFILE%
+if exist %MYSQL_CMDFILE% del /Q %MYSQL_CMDFILE%
 SET MYSQL_CMDFILE=
+if exist %MYSQL_OUTFILE% del /Q %MYSQL_OUTFILE%
+SET MYSQL_OUTFILE=
 cd %PREVIOUS_PATH%
 exit /b %RETURNVALUE%

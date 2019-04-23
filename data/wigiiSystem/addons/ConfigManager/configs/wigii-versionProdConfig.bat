@@ -37,25 +37,25 @@ set RETURNVALUE=0
 echo Changes code page to UTF-8
 chcp 65001
 
-if "%WIGII_CLIENT%"=="" (echo Wigii ERREUR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
-if "%WIGII_SERVER%"=="" (echo Wigii ERREUR: WIGII_SERVER is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_CERTIFICATE%"=="" (echo Wigii ERREUR: WIGII_CERTIFICATE is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_USER%"=="" (echo Wigii ERREUR: WIGII_USER is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_PWD%"=="" (echo Wigii ERREUR: WIGII_PWD is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
+if "%WIGII_SERVER%"=="" (echo Wigii ERROR: WIGII_SERVER is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CERTIFICATE%"=="" (echo Wigii ERROR: WIGII_CERTIFICATE is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_USER%"=="" (echo Wigii ERROR: WIGII_USER is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_PWD%"=="" (echo Wigii ERROR: WIGII_PWD is not defined. & set RETURNVALUE=1009 & goto end)
 if "%LOCAL_CONFIGS%"=="" (set LOCAL_CONFIGS=%~dp0)
 IF %LOCAL_CONFIGS:~-1%==\ SET LOCAL_CONFIGS=%LOCAL_CONFIGS:~0,-1%
 
 rem checks Wigii client is set
-if "%WIGII_CLIENT%"=="" (echo Wigii ERREUR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
 rem checks installation of WinSCP
 if exist "%ProgramFiles%\WinSCP\WinSCP.exe" (set WINSCP="%ProgramFiles%\WinSCP\WinSCP.exe") else (
 if exist "%ProgramFiles(x86)%\WinSCP\WinSCP.exe" (set WINSCP="%ProgramFiles(x86)%\WinSCP\WinSCP.exe") else (
-	echo Wigii ERREUR: WinScp is not installed & set RETURNVALUE=404 & goto end
+	echo Wigii ERROR: WinScp is not installed & set RETURNVALUE=404 & goto end
 ))
 
 rem asserts working folder does not commit to GitHub Wigii
 for /f "tokens=1 delims=" %%a in ('svn info %LOCAL_CONFIGS% ^| find /C "https://github.com/wigii/wigii"') do (
-	if %%a GTR 0 (echo Wigii ERREUR: Cannot commit %WIGII_CLIENT% information to GitHub/Wigii & set RETURNVALUE=405 & goto end)
+	if %%a GTR 0 (echo Wigii ERROR: Cannot commit %WIGII_CLIENT% information to GitHub/Wigii & set RETURNVALUE=405 & goto end)
 )
 
 rem creates Wigii client config prod folder

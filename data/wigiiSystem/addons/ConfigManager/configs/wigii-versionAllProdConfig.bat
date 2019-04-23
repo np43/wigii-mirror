@@ -32,8 +32,8 @@ cd %~dp0
 echo Changes code page to UTF-8
 chcp 65001
 
-if "%WIGII_LEGALENTITY%"=="" (echo Wigii ERREUR: WIGII_LEGALENTITY is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
-if not exist %WIGII_LEGALENTITY%-client-host.bat (echo Wigii ERREUR: %WIGII_LEGALENTITY%-client-host.bat has not been found & set RETURNVALUE=404 & goto end)
+if "%WIGII_LEGALENTITY%"=="" (echo Wigii ERROR: WIGII_LEGALENTITY is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+if not exist %WIGII_LEGALENTITY%-client-host.bat (echo Wigii ERROR: %WIGII_LEGALENTITY%-client-host.bat has not been found & set RETURNVALUE=404 & goto end)
 rem loops through each pair WIGII_CLIENT = WIGII_HOST
 Setlocal enableDelayedExpansion
 for /F "tokens=3,5 delims=_= " %%a in ('findstr /C:"%WIGII_LEGALENTITY%_" %WIGII_LEGALENTITY%-client-host.bat') do (

@@ -34,5 +34,8 @@ set WIGII_MYSQL_ENV=C:\wamp\bin\mysql\mysql5.7.24
 set WIGII_MYSQL_ROOTPWD=xxxx
 
 set WIGII_ADMIN_HOME=%~dp0
+IF %WIGII_ADMIN_HOME:~-1%==\ SET WIGII_ADMIN_HOME=%WIGII_ADMIN_HOME:~0,-1%
 set WIGII_CLI=%WIGII_ENV%\data\wigiiSystem\core\_cliImplExecutor
 for /f "tokens=1 delims=-" %%a in ("%~n0") do (set WIGII_DEVELOPER=%%a)
+rem loads server passwords
+if exist %WIGII_ADMIN_HOME%\%WIGII_LEGALENTITY%-passwords.bat (call %WIGII_ADMIN_HOME%\%WIGII_LEGALENTITY%-passwords.bat)

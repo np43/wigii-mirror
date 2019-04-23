@@ -32,18 +32,18 @@ set RETURNVALUE=0
 echo Changes code page to UTF-8
 chcp 65001
 
-if "%WIGII_CLIENT%"=="" (echo Wigii ERREUR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
-if "%WIGII_HOST%"=="" (echo Wigii ERREUR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
+if "%WIGII_HOST%"=="" (echo Wigii ERROR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
 
-if "%WIGII_ADMIN_HOME%"=="" (echo Wigii ERREUR: WIGII_ADMIN_HOME is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+if "%WIGII_ADMIN_HOME%"=="" (echo Wigii ERROR: WIGII_ADMIN_HOME is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
 IF %WIGII_ADMIN_HOME:~-1%==\ SET WIGII_ADMIN_HOME=%WIGII_ADMIN_HOME:~0,-1%
-if "%WIGII_ENV%"=="" (echo Wigii ERREUR: WIGII_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+if "%WIGII_ENV%"=="" (echo Wigii ERROR: WIGII_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
 IF %WIGII_ENV:~-1%==\ SET WIGII_ENV=%WIGII_ENV:~0,-1%
 
 rem checks installation of mysql tools
-if "%WIGII_MYSQL_ENV%"=="" (echo Wigii ERREUR: WIGII_MYSQL_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+if "%WIGII_MYSQL_ENV%"=="" (echo Wigii ERROR: WIGII_MYSQL_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
 set MYSQL=%WIGII_MYSQL_ENV%\bin\mysql.exe
-if not exist %MYSQL% (echo Wigii ERREUR: %MYSQL% does not exist & set RETURNVALUE=404 & goto end)
+if not exist %MYSQL% (echo Wigii ERROR: %MYSQL% does not exist & set RETURNVALUE=404 & goto end)
 if "%WIGII_MYSQL_ROOTPWD%"=="" (echo Wigii MySql root password is not set. Assumes empty string. If not, please set WIGII_MYSQL_ROOTPWD environment variable.)
 
 :getClientProdConfig
@@ -56,18 +56,18 @@ echo Get latest production database for %WIGII_CLIENT%
 call %WIGII_ADMIN_HOME%\db-dump\%WIGII_HOST%-getDb.bat %WIGII_CLIENT%
 if %ERRORLEVEL% neq 0 (RETURNVALUE=%ERRORLEVEL% & goto end)
 set WIGII_DB_DUMP=%WIGII_DB%
-if "%WIGII_DB_DUMP%"=="" (echo Wigii ERREUR: No db dump downloaded from production for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end)
+if "%WIGII_DB_DUMP%"=="" (echo Wigii ERROR: No db dump downloaded from production for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end)
 
 :prepareProdConfig
 rem checks that dev environment exists for client
-if not exist %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT% (echo Wigii ERREUR: no development environment found for %WIGII_CLIENT%. Run wigii_createClient %WIGII_CLIENT% to create one and then retry & set RETURNVALUE=1009 & goto end)
+if not exist %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT% (echo Wigii ERROR: no development environment found for %WIGII_CLIENT%. Run wigii_createClient %WIGII_CLIENT% to create one and then retry & set RETURNVALUE=1009 & goto end)
 echo Setups %WIGII_HOST%-prod folder structure
 set WIGII_TARGET=%~dp0%WIGII_HOST%-prod
 rmdir %WIGII_TARGET% /s /q
 mkdir %WIGII_TARGET%
 call %~dp0%WIGII_HOST%-setup.bat %WIGII_TARGET%
-if "%WIGII_TARGET_WEB%"=="" (echo Wigii ERREUR: WIGII_TARGET_WEB is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_TARGET_ENV%"=="" (echo Wigii ERREUR: WIGII_TARGET_ENV is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_TARGET_WEB%"=="" (echo Wigii ERROR: WIGII_TARGET_WEB is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_TARGET_ENV%"=="" (echo Wigii ERROR: WIGII_TARGET_ENV is not defined. & set RETURNVALUE=1009 & goto end)
 mkdir %WIGII_TARGET_WEB%
 mkdir %WIGII_TARGET_ENV%
 
@@ -79,8 +79,8 @@ ren %WIGII_TARGET_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start_cli.php sta
 
 :importsDb
 rem checks that db dump exists before imports
-if "%WIGII_DB_DUMP%"=="" (echo Wigii ERREUR: no db dump to import for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end)
-if not exist %WIGII_ADMIN_HOME%\db-dump\%WIGII_HOST%-prod\%WIGII_DB_DUMP% (echo Wigii ERREUR: no db dump to import for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end)
+if "%WIGII_DB_DUMP%"=="" (echo Wigii ERROR: no db dump to import for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end)
+if not exist %WIGII_ADMIN_HOME%\db-dump\%WIGII_HOST%-prod\%WIGII_DB_DUMP% (echo Wigii ERROR: no db dump to import for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end)
 rem retrieves Wigii DB name from start.php
 for /F "tokens=3 delims=,) " %%a in ('findstr DB_NAME %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start.php') do (set WIGII_DB=%%~a)
 if "%WIGII_DB%"=="" (set WIGII_DB=wigii_%WIGII_CLIENT%)

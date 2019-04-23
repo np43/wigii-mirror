@@ -28,7 +28,7 @@ REM
 set RETURNVALUE=0
 echo Changes code page to UTF-8
 chcp 65001
-if "%WIGII_CLI%"=="" (echo Wigii ERREUR: Wigii dev CLI is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CLI%"=="" (echo Wigii ERROR: Wigii dev CLI is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
 cd %WIGII_CLI%
 call cmd
 SET RETURNVALUE=%ERRORLEVEL%

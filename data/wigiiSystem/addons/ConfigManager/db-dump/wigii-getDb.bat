@@ -39,12 +39,12 @@ set RETURNVALUE=0
 echo Changes code page to UTF-8
 chcp 65001
 
-if "%WIGII_CLIENT%"=="" (echo Wigii ERREUR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
-if "%WIGII_HOST%"=="" (echo Wigii ERREUR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_SERVER%"=="" (echo Wigii ERREUR: WIGII_SERVER is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_CERTIFICATE%"=="" (echo Wigii ERREUR: WIGII_CERTIFICATE is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_USER%"=="" (echo Wigii ERREUR: WIGII_USER is not defined. & set RETURNVALUE=1009 & goto end)
-if "%WIGII_PWD%"=="" (echo Wigii ERREUR: WIGII_PWD is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
+if "%WIGII_HOST%"=="" (echo Wigii ERROR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_SERVER%"=="" (echo Wigii ERROR: WIGII_SERVER is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_CERTIFICATE%"=="" (echo Wigii ERROR: WIGII_CERTIFICATE is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_USER%"=="" (echo Wigii ERROR: WIGII_USER is not defined. & set RETURNVALUE=1009 & goto end)
+if "%WIGII_PWD%"=="" (echo Wigii ERROR: WIGII_PWD is not defined. & set RETURNVALUE=1009 & goto end)
 if "%LOCAL_DBDUMP%"=="" (set LOCAL_DBDUMP=%~dp0)
 if "%WIGII_DBDUMP%"=="" (set WIGII_DBDUMP=wigii/db-dump & echo WIGII_DBDUMP is not defined. Sets it to %WIGII_DBDUMP%)
 IF %LOCAL_DBDUMP:~-1%==\ SET LOCAL_DBDUMP=%LOCAL_DBDUMP:~0,-1%
@@ -52,11 +52,11 @@ IF %LOCAL_DBDUMP:~-1%==\ SET LOCAL_DBDUMP=%LOCAL_DBDUMP:~0,-1%
 rem checks installation of WinSCP
 if exist "%ProgramFiles%\WinSCP\WinSCP.exe" (set WINSCP="%ProgramFiles%\WinSCP\WinSCP.exe") else (
 if exist "%ProgramFiles(x86)%\WinSCP\WinSCP.exe" (set WINSCP="%ProgramFiles(x86)%\WinSCP\WinSCP.exe") else (
-	echo Wigii ERREUR: WinScp is not installed & set RETURNVALUE=404 & goto end
+	echo Wigii ERROR: WinScp is not installed & set RETURNVALUE=404 & goto end
 ))
 rem checks presence of plink.exe
 set PLINK=%LOCAL_DBDUMP%\..\plink.exe
-if not exist %PLINK% (echo Wigii ERREUR: plink.exe has not been found & set RETURNVALUE=404 & goto end)
+if not exist %PLINK% (echo Wigii ERROR: plink.exe has not been found & set RETURNVALUE=404 & goto end)
 
 rem prepares Wigii server connexion string
 set WIGII_CONNEXION=open ftps://%WIGII_USER%:%WIGII_PWD%@%WIGII_SERVER% -explicit -certificate="%WIGII_CERTIFICATE%"
@@ -80,7 +80,7 @@ if "%TAIL%"=="" (goto endExtractFileNameFromPath)
 set WIGII_DB=%TAIL%
 goto extractFileNameFromPath
 :endExtractFileNameFromPath
-if "%WIGII_DB%"=="" (echo Wigii ERREUR: No database dump for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end) else (echo %WIGII_DB%)
+if "%WIGII_DB%"=="" (echo Wigii ERROR: No database dump for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end) else (echo %WIGII_DB%)
 rem downloads lates database dump
 echo Downloads dump to %LOCAL_DBDUMP%\%WIGII_HOST%-prod
 %WINSCP_CMD% ^
