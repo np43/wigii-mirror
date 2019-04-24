@@ -56,6 +56,15 @@ rem prepares Wigii server connexion string
 set WIGII_CONNEXION=open ftps://%WIGII_USER%:%WIGII_PWD%@%WIGII_SERVER% -explicit -certificate="%WIGII_CERTIFICATE%"
 set WINSCP_CMD=%WINSCP% /log=%MPCDATA%\wigii\winscp.log /loglevel=0 /logsize=5*2M /command
 
+rem auto updates script with latest version
+%WINSCP_CMD% ^
+ "%WIGII_CONNEXION%" ^
+ "lcd %MPCDATA%/wigii" ^
+ "cd %WIGII_MEDIDATA%/bin" ^
+ "get -neweronly -transfer=ascii %~nx0" ^
+ "close" ^
+ "exit"
+ 
 rem checks if Wigii Medidata/mirror folder exists, if not creates it
 %WINSCP_CMD% ^
  "%WIGII_CONNEXION%" ^
@@ -151,4 +160,5 @@ set WIGII_MEDIDATA=
 set WIGII_CONNEXION=
 set WINSCP=
 set WINSCP_CMD=
+if %RETURNVALUE% GTR 0 (echo Wigii ERREUR: code %RETURNVALUE% & echo Pour de l'assistance, contactez help@wigii-system.com & pause)
 exit /b %RETURNVALUE%
