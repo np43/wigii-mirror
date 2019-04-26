@@ -26,6 +26,8 @@ REM Wigii Admin console
 REM Created by CWE on 15.04.2019
 REM 
 for /f "tokens=1 delims=-" %%a in ("%~n0") do (set WIGII_DEVELOPER=%%a)
-if exist %~dp0%WIGII_DEVELOPER%-setup.bat (call %~dp0%WIGII_DEVELOPER%-setup.bat)
-if exist %~dp0..\%WIGII_DEVELOPER%-setup.bat (call %~dp0..\%WIGII_DEVELOPER%-setup.bat)
+if exist %~dp0%WIGII_DEVELOPER%-setup.bat (call %~dp0%WIGII_DEVELOPER%-setup.bat) else (
+if exist %~dp0..\%WIGII_DEVELOPER%-setup.bat (call %~dp0..\%WIGII_DEVELOPER%-setup.bat) else (
+if exist %~dp0..\..\%WIGII_DEVELOPER%-setup.bat (call %~dp0..\..\%WIGII_DEVELOPER%-setup.bat)
+))
 call cmd

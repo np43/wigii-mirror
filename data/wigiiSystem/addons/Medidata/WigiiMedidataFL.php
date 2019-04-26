@@ -113,6 +113,7 @@ MDTINVOICERESPSTATUS;
 	 * - payloadAction: String. Optional, one of 'modify', 'copy' or 'cancel'. 
 	 * If modify then sends a new version of invoice request. If copy, then sends a new copy of invoice request. If cancel, sends a 'storno' of current request.
 	 * - previousVersion: FieldSelector. Field of type File containing the previously generated Medidata invoice XML file in case of request copy or cancel.
+	 * - modusTest: Boolean. If true, then request modus is test, else modus is production. Default to production.
 	 * @return SimpleXMLElement a SimpleXMLElement compatible with XML schema http://www.forum-datenaustausch.ch/invoice generalInvoiceRequest_450.xsd
 	 */
 	public function genMedidataInvoiceRequest45($args) {	    
@@ -1188,9 +1189,9 @@ MDTINVOICERESPSTATUS;
 		$this->declareXmlNamespace($returnValue, 'xenc', 'http://www.w3.org/2001/04/xmlenc#');
 		$this->declareXmlNamespace($returnValue, 'ds', 'http://www.w3.org/2000/09/xmldsig#');
 		// invoice request attributes
-		$returnValue->setAttribute('language','fr');		
-		/* CWE 2019.02.19: not yet authorized to be put into production */$returnValue->setAttribute('modus','test');
-		//$returnValue->setAttribute('modus','production');
+		$returnValue->setAttribute('language','fr');
+		if($options->getValue('modusTest')) $returnValue->setAttribute('modus','test');
+		else $returnValue->setAttribute('modus','production');
 		$returnValue->setAttribute('validation_status','0');
 		// invoice processing
 		$this->createInvoice45Processing($returnValue, $customerOrder, $options);

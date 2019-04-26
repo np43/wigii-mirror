@@ -274,6 +274,7 @@ if %RETURNVALUE% GTR 0 (
 	echo ________________________________________________
 	echo New client %WIGII_CLIENT% successfully created.
 	echo Do not forget to adapt the .htaccess and index.php files to declare %WIGII_CLIENT% url.
+	echo Do not forget to add a %WIGII_CLIENT% alias to your Apache server pointing on the Wigii www folder.
 	echo Do not forget to adapt the data\wigiiSystem\configs\%WIGII_CLIENT%\start.php with the Wigii DB user and password.
 	echo Then connect to Wigii web interface with %WIGII_SUPERADMIN% / %WIGII_SUPERADMIN_PWD%
 )

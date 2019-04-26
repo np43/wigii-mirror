@@ -32,9 +32,7 @@ cd %~dp0
 echo Changes code page to UTF-8
 chcp 65001
 
-rem CWE 17.04.2019 always forces deployement to preprod until test phase is over.
-rem if "%1"=="-preprod" (set WIGII_OPTION_PROD=0) else (set WIGII_OPTION_PROD=1)
-set WIGII_OPTION_PROD=0
+if "%1"=="-preprod" (set WIGII_OPTION_PROD=0) else (set WIGII_OPTION_PROD=1)
 if "%WIGII_HOST%"=="" (echo Wigii ERROR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
 if "%WIGII_SERVER%"=="" (echo Wigii ERROR: WIGII_SERVER is not defined. & set RETURNVALUE=1009 & goto end)
 if "%WIGII_CERTIFICATE%"=="" (echo Wigii ERROR: WIGII_CERTIFICATE is not defined. & set RETURNVALUE=1009 & goto end)

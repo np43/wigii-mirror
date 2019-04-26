@@ -69,6 +69,15 @@ if exist %WIGII_TARGET_ENV%\www (
 )
 :endPrepareWigiiPackage
 
+:prepareConfigPackPackage
+rem prepares a configPack package if svn export contains a configPack folder
+if not exist svn-export\configPack goto endPrepareConfigPackPackage
+echo Prepares configPack package based on configPack svn export
+if not exist %WIGII_TARGET_ENV%\data\wigiiSystem\configPack mkdir %WIGII_TARGET_ENV%\data\wigiiSystem\configPack
+rem copies all folders to wigii configPack target
+xcopy svn-export\configPack\* %WIGII_TARGET_ENV%\data\wigiiSystem\configPack /e /s
+:endPrepareConfigPackPackage
+
 :zipSVNExport
 echo Backups svn export into wigii_%TIMESTAMP%-svn.zip
 %P7ZIP% a -tzip wigii_%TIMESTAMP%-svn.zip .\svn-export\*
