@@ -375,6 +375,21 @@ class CliExecutor {
 	}
 	
 	/**
+	 * Encodes a given string to a Base 64 string compatible with URL constraints
+	 */
+	protected function base64url_encode($argc, $argv, $subArgIndex) {
+	    $this->put(base64url_encode($argv[$subArgIndex]));
+	}
+	
+	/**
+	 * Decodes a given Base 64 url string
+	 */
+	protected function base64url_decode($argc, $argv, $subArgIndex) {
+	    $this->put(base64url_decode($argv[$subArgIndex]));
+	}
+	
+	
+	/**
 	 * Executes an FuncExp given its expression as a string
 	 */
 	protected function fx($argc, $argv, $subArgIndex) {

@@ -635,7 +635,7 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 	protected function riseNcd_dataConfig() {
 		if(!isset($this->dataConfig)) {
 			$this->dataConfig = array();
-			$this->dataConfig['moveForwardCatalogLx'] = lxEq(fs('id'),130);
+			$this->dataConfig['moveForwardCatalogLx'] = lxIn(fs('id'),array(157,130));
 			$this->dataConfig = (object)$this->dataConfig;
 		}
 		return $this->dataConfig;
