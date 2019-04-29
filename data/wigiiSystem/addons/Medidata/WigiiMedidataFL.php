@@ -1469,7 +1469,7 @@ MDTINVOICERESPSTATUS;
 		$legalEntity = $options->getValue('legalEntity');
 		$patient = $options->getValue('customer');
 		$returnValue = $this->createXmlElement($invoiceBody, 'ivg', $options);
-		$returnValue->setAttribute('case_id', $this->assertNotNull($customerOrder, 'caseNumber'));
+		$returnValue->setAttribute('case_id', $this->assertNoSepNotNull($customerOrder, 'caseNumber'));
 		$returnValue->setAttribute('case_date', $this->assertDateNotNull($customerOrder, 'caseDate'));
 		$returnValue->setAttribute('ssn', $this->assertNoSepNotNull($patient, 'noAVS'));
 		$returnValue->setAttribute('nif', $this->assertNoSepNotNull($legalEntity,'noNIF'));
