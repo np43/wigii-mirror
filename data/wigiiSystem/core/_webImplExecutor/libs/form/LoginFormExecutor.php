@@ -249,7 +249,7 @@ class LoginFormExecutor extends FormExecutor {
 
 			//allow both way to write hideIntroductionTextAndGlobalEmailonLoginPage and hideIntroductionTextAndGlobalEmailOnLoginPage
 			if($configS->getParameter($p, null, "hideIntroductionTextAndGlobalEmailonLoginPage")!="1"){
-				$exec->addJsCode("$('#login_form').css('float','left').after('<div style=\"float:left;margin:6px 10px 20px 0px;\">".$this->getTrm()->h('wigiiLoginIntroductionText')."<a href=\"mailto:".$globalContactEmail."\">".$globalContactEmail."</a></div>');");
+				$exec->addJsCode("$('#login_form').css('float','left').after('<div style=\"float:left;margin:6px 10px 20px 0px;\">".$this->getTrm()->h('wigiiLoginIntroductionText')."<a href=\"mailto:".$globalContactEmail."\" style=\color:".$rCompanyColor.";\">".$globalContactEmail."</a></div>');");
 			}
 			$this->getTrm()->put('<div class="clear"></div>');
 		}
