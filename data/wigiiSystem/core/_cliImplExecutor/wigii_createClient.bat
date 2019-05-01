@@ -69,6 +69,33 @@ for /F "tokens=2 delims=	" %%a in ('findstr /C:"lower_case_table_names" %MYSQL_O
 	if %%a LSS 2 (echo Wigii ERROR: MySql lower_case_table_names variable is %%a instead of 2. & echo Please set lower_case_table_names=2 in my.ini file. & set RETURNVALUE=1009 & goto end)
 )
 
+:setupNewClientPack
+rem check if a new client pack folder is provided, else uses Wigii Example as a new client base
+if "%WIGII_NEWCLIENT_PACK%"=="" goto setupNewClientExample
+if not exist %WIGII_NEWCLIENT_PACK% (echo Wigii ERROR: new client pack %WIGII_NEWCLIENT_PACK% does not exist & set RETURNVALUE=404 & goto end)
+IF %WIGII_NEWCLIENT_PACK:~-1%==\ SET WIGII_NEWCLIENT_PACK=%WIGII_NEWCLIENT_PACK:~0,-1%
+for /D %%a in (%WIGII_NEWCLIENT_PACK%) do (set WIGII_NEWCLIENT=%%~na)
+set WIGII_FX=ucfirst('%WIGII_NEWCLIENT%')
+for /F "delims=" %%a in ('wigii_cli.bat -shell -c NoClient fx "%WIGII_FX%"') do (set WIGII_NEWCLIENT_LABEL=%%a)
+set WIGII_NEWCLIENT_CONFIGS=%WIGII_NEWCLIENT_PACK%\configs
+if not exist %WIGII_NEWCLIENT_CONFIGS% (echo Wigii ERROR: new client pack configs folder does not exist & set RETURNVALUE=404 & goto end)
+set WIGII_NEWCLIENT_IMPL=%WIGII_NEWCLIENT_PACK%\impl
+if not exist %WIGII_NEWCLIENT_IMPL% (echo Wigii ERROR: new client pack impl folder does not exist & set RETURNVALUE=404 & goto end)
+set WIGII_NEWCLIENT_WWW=%WIGII_NEWCLIENT_PACK%\www
+if not exist %WIGII_NEWCLIENT_WWW% (echo Wigii ERROR: new client pack www folder does not exist & set RETURNVALUE=404 & goto end)
+goto endSetupNewClient
+:setupNewClientExample
+rem takes Wigii Example as default new client pack
+set WIGII_NEWCLIENT_PACK=
+set WIGII_NEWCLIENT=Example
+set WIGII_FX=ucfirst('%WIGII_NEWCLIENT%')
+for /F "delims=" %%a in ('wigii_cli.bat -shell -c NoClient fx "%WIGII_FX%"') do (set WIGII_NEWCLIENT_LABEL=%%a)
+set WIGII_NEWCLIENT_CONFIGS=%WIGII_ENV%\data\wigiiSystem\configs\Example
+set WIGII_NEWCLIENT_IMPL=%WIGII_ENV%\data\wigiiSystem\core\api\impl\Example
+set WIGII_NEWCLIENT_WWW=%WIGII_WWW%Example
+:endSetupNewClient
+echo Creates new client "%WIGII_CLIENT%" using new client pack "%WIGII_NEWCLIENT%"
+
 :createUsers
 rem Creates users folder for new client
 if exist %WIGII_USERS%%WIGII_CLIENT% (echo Wigii ERROR: users\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
@@ -82,70 +109,73 @@ rem Creates www folder for new client
 if exist %WIGII_WWW%%WIGII_CLIENT% (echo Wigii ERROR: www\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
 echo Creates www\%WIGII_CLIENT% folder
 mkdir %WIGII_WWW%%WIGII_CLIENT%
-echo Copies www\Example files to www\%WIGII_CLIENT%
-xcopy %WIGII_WWW%Example\* %WIGII_WWW%%WIGII_CLIENT% /e /s
-ren %WIGII_WWW%%WIGII_CLIENT%\Example.js %WIGII_CLIENT%.js
-ren %WIGII_WWW%%WIGII_CLIENT%\Example.css %WIGII_CLIENT%.css
+echo Copies www\%WIGII_NEWCLIENT% files to www\%WIGII_CLIENT%
+xcopy %WIGII_NEWCLIENT_WWW%\* %WIGII_WWW%%WIGII_CLIENT% /e /s
+ren %WIGII_WWW%%WIGII_CLIENT%\%WIGII_NEWCLIENT%.js %WIGII_CLIENT%.js
+ren %WIGII_WWW%%WIGII_CLIENT%\%WIGII_NEWCLIENT%.css %WIGII_CLIENT%.css
 
 :createConfigs
 rem Creates config folder for new client
 if exist %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT% (echo Wigii ERROR: configs\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
 echo Creates configs\%WIGII_CLIENT% folder
 mkdir %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%
-echo Copies configs\Example files to configs\%WIGII_CLIENT%
-xcopy %WIGII_ENV%\data\wigiiSystem\configs\Example\* %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT% /e /s
-ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\dico_Example.txt dico_%WIGII_CLIENT%.txt
+echo Copies configs\%WIGII_NEWCLIENT% files to configs\%WIGII_CLIENT%
+xcopy %WIGII_NEWCLIENT_CONFIGS%\* %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT% /e /s
+ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\dico_%WIGII_NEWCLIENT%.txt dico_%WIGII_CLIENT%.txt
+rem renames client js and css if present
+if exist %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\%WIGII_NEWCLIENT%.js  ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\%WIGII_NEWCLIENT%.js %WIGII_CLIENT%.js
+if exist %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\%WIGII_NEWCLIENT%.css  ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\%WIGII_NEWCLIENT%.css %WIGII_CLIENT%.css
 
 :createApi
 rem Creates api folder for new client
 if exist %WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT% (echo Wigii ERROR: api\impl\%WIGII_CLIENT% folder already exists & set RETURNVALUE=405 & goto end)
 echo Creates api\impl\%WIGII_CLIENT% folder
 mkdir %WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT%
-echo Copies api\impl\Example files to api\impl\%WIGII_CLIENT%
+echo Copies api\impl\%WIGII_NEWCLIENT% files to api\impl\%WIGII_CLIENT%
 rem prepares ServiceProviderExampleImpl.php
-(for /f "delims= eol=" %%a in (%WIGII_ENV%\data\wigiiSystem\core\api\impl\Example\ServiceProviderExampleImpl.php) do (	
+(for /f "delims= eol=" %%a in (%WIGII_NEWCLIENT_IMPL%\ServiceProvider%WIGII_NEWCLIENT_LABEL%Impl.php) do (	
 	set ln=%%a
 	Setlocal enableDelayedExpansion
 	set emptyLn=!ln:	=!
 	if not "!emptyLn!"=="" set emptyLn=!emptyLn: =!
 	if not "!emptyLn!"=="" (
-		set ln=!ln:Example=%WIGII_CLIENT_LABEL%!
+		set ln=!ln:%WIGII_NEWCLIENT_LABEL%=%WIGII_CLIENT_LABEL%!
 		if not "!ln!"=="" echo !ln!
 	)
 	endlocal
 ))>%WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT%\ServiceProvider%WIGII_CLIENT_LABEL%Impl.php
 rem prepares ServiceProviderCliExampleImpl.php
-(for /f "delims= eol=" %%a in (%WIGII_ENV%\data\wigiiSystem\core\api\impl\Example\ServiceProviderCliExampleImpl.php) do (	
+(for /f "delims= eol=" %%a in (%WIGII_NEWCLIENT_IMPL%\ServiceProviderCli%WIGII_NEWCLIENT_LABEL%Impl.php) do (	
 	set ln=%%a
 	Setlocal enableDelayedExpansion
 	set emptyLn=!ln:	=!
 	if not "!emptyLn!"=="" set emptyLn=!emptyLn: =!
 	if not "!emptyLn!"=="" (
-		set ln=!ln:Example=%WIGII_CLIENT_LABEL%!
+		set ln=!ln:%WIGII_NEWCLIENT_LABEL%=%WIGII_CLIENT_LABEL%!
 		if not "!ln!"=="" echo !ln!
 	)
 	endlocal
 ))>%WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT%\ServiceProviderCli%WIGII_CLIENT_LABEL%Impl.php
 rem prepares ExampleWigiiExecutor.php
-(for /f "delims= eol=" %%a in (%WIGII_ENV%\data\wigiiSystem\core\api\impl\Example\ExampleWigiiExecutor.php) do (	
+(for /f "delims= eol=" %%a in (%WIGII_NEWCLIENT_IMPL%\%WIGII_NEWCLIENT_LABEL%WigiiExecutor.php) do (	
 	set ln=%%a
 	Setlocal enableDelayedExpansion
 	set emptyLn=!ln:	=!
 	if not "!emptyLn!"=="" set emptyLn=!emptyLn: =!
 	if not "!emptyLn!"=="" (
-		set ln=!ln:Example=%WIGII_CLIENT_LABEL%!
+		set ln=!ln:%WIGII_NEWCLIENT_LABEL%=%WIGII_CLIENT_LABEL%!
 		if not "!ln!"=="" echo !ln!
 	)
 	endlocal
 ))>%WIGII_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT%\%WIGII_CLIENT_LABEL%WigiiExecutor.php
 rem prepares ExampleCliExecutor.php
-(for /f "delims= eol=" %%a in (%WIGII_ENV%\data\wigiiSystem\core\api\impl\Example\ExampleCliExecutor.php) do (	
+(for /f "delims= eol=" %%a in (%WIGII_NEWCLIENT_IMPL%\%WIGII_NEWCLIENT_LABEL%CliExecutor.php) do (	
 	set ln=%%a
 	Setlocal enableDelayedExpansion
 	set emptyLn=!ln:	=!
 	if not "!emptyLn!"=="" set emptyLn=!emptyLn: =!
 	if not "!emptyLn!"=="" (
-		set ln=!ln:Example=%WIGII_CLIENT_LABEL%!
+		set ln=!ln:%WIGII_NEWCLIENT_LABEL%=%WIGII_CLIENT_LABEL%!
 		if not "!ln!"=="" echo !ln!
 	)
 	endlocal
@@ -215,7 +245,7 @@ ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start.php start-temp.php
 	if not "!emptyLn!"=="" set emptyLn=!emptyLn: =!
 	if not "!emptyLn!"=="" (
 		rem Changes WigiiExecutor class name
-		set ln=!ln:Example=%WIGII_CLIENT_LABEL%!
+		set ln=!ln:%WIGII_NEWCLIENT_LABEL%=%WIGII_CLIENT_LABEL%!
 		rem replaces DB_HOST by localhost
 		set tempLn=!ln:DB_HOST=!
 		if not "!tempLn!"=="!ln!" (set "ln=define ("DB_HOST", "localhost");")
@@ -249,7 +279,7 @@ ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start_cli.php start_cli-
 	if not "!emptyLn!"=="" set emptyLn=!emptyLn: =!
 	if not "!emptyLn!"=="" (
 		rem Changes WigiiExecutor class name
-		set ln=!ln:Example=%WIGII_CLIENT_LABEL%!
+		set ln=!ln:%WIGII_NEWCLIENT_LABEL%=%WIGII_CLIENT_LABEL%!
 		rem replaces DB_HOST by localhost
 		set tempLn=!ln:DB_HOST=!
 		if not "!tempLn!"=="!ln!" (set "ln=define ("DB_HOST", "localhost");")
@@ -270,6 +300,26 @@ ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start_cli.php start_cli-
 	endlocal
 ))>%WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start_cli.php
 del /Q %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start_cli-temp.php
+
+echo Initializes config.xml
+ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\config.xml config-temp.xml
+(for /f "delims= eol=" %%a in (%WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\config-temp.xml) do (	
+	set ln=%%a
+	Setlocal enableDelayedExpansion
+	set emptyLn=!ln:	=!
+	if not "!emptyLn!"=="" set emptyLn=!emptyLn: =!
+	if not "!emptyLn!"=="" (
+		rem initializes siteTitle
+		set tempLn=!ln:siteTitle=!
+		if not "!tempLn!"=="!ln!" (set ln=!ln:%WIGII_NEWCLIENT%=%WIGII_CLIENT%!)
+		rem initializes companyLogo
+		set tempLn=!ln:companyLogo=!
+		if not "!tempLn!"=="!ln!" (set ln=!ln:%WIGII_NEWCLIENT%=%WIGII_CLIENT%!)
+		if not "!ln!"=="" echo !ln!
+	)
+	endlocal
+))>%WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\config.xml
+del /Q %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\config-temp.xml
 
 goto end
 :mySqlError
@@ -298,6 +348,12 @@ set WIGII_SUPERADMIN_PWD=
 set WIGII_ENV=
 set WIGII_WWW=
 set WIGII_USERS=
+set WIGII_NEWCLIENT_PACK=
+set WIGII_NEWCLIENT=
+set WIGII_NEWCLIENT_LABEL=
+set WIGII_NEWCLIENT_CONFIGS=
+set WIGII_NEWCLIENT_IMPL=
+set WIGII_NEWCLIENT_WWW=
 SET WIGII_FX=
 set MYSQL_CMD=
 if exist %MYSQL_CMDFILE% del /Q %MYSQL_CMDFILE%

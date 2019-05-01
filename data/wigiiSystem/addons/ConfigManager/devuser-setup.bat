@@ -26,6 +26,7 @@ REM Setups Wigii environment variables
 REM Created by CWE on 15.04.2019
 REM 
 set WIGII_LEGALENTITY=YourOrganisation
+set WIGII_DEFAULT_NEWCLIENT_PACK=WigiiOrg\company\newClient
 set WIGII_ENV=C:\Users\xxxx\Documents\dev\php-src\Wigii_git
 set WIGII_DB_USER=wgi
 set WIGII_DB_PWD=mywgi-pass
@@ -40,3 +41,5 @@ set WIGII_CLI=%WIGII_ENV%\data\wigiiSystem\core\_cliImplExecutor
 for /f "tokens=1 delims=-" %%a in ("%~n0") do (set WIGII_DEVELOPER=%%a)
 rem loads server passwords
 if exist %WIGII_ADMIN_HOME%\%WIGII_LEGALENTITY%-passwords.bat (call %WIGII_ADMIN_HOME%\%WIGII_LEGALENTITY%-passwords.bat)
+rem sets new client pack
+if not "%WIGII_DEFAULT_NEWCLIENT_PACK%"=="" set WIGII_NEWCLIENT_PACK=%WIGII_ADMIN_HOME%\configPack\%WIGII_DEFAULT_NEWCLIENT_PACK%
