@@ -55,6 +55,8 @@ class ServiceProviderExampleImpl extends ServiceProviderWebImpl
 		}
 	}
 	
+	/* customized service provider */
+	
 	/**
 	 * default as UserAdminServiceExampleImpl
 	 */
@@ -62,8 +64,4 @@ class ServiceProviderExampleImpl extends ServiceProviderWebImpl
 	//{
 	//	return new UserAdminServiceExampleImpl();
 	//}
-
-
 }
-
-

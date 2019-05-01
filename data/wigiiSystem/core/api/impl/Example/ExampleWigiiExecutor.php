@@ -22,8 +22,8 @@
  */
 
 /*
- * Created on 24 November 2011
- * by LWR
+ * Created on 24 November 2011 by LWR
+ * Modified by CWE on 30.04.2019 to include DevEnvBanner on localhost
  */
 
 /**
@@ -81,7 +81,9 @@ class ExampleWigiiExecutor extends WigiiExecutor
 		parent::executeAction($exec);
 	}
 	
-	
+	protected function includeTemplateCompanyBanner($p, $exec){
+		if($_SERVER['HTTP_HOST']=='localhost' && file_exists(CLIENT_WEB_PATH . "DevEnvBanner.php")) include(CLIENT_WEB_PATH . "DevEnvBanner.php");
+	}
 }
 
 

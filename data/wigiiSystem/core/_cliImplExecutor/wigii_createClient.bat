@@ -228,6 +228,12 @@ ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start.php start-temp.php
 		rem replaces DB_NAME by WIGII_DB
 		set tempLn=!ln:DB_NAME=!
 		if not "!tempLn!"=="!ln!" (set "ln=define ("DB_NAME", "%WIGII_DB%");")
+		rem WIGII_REDIRECT_EMAIL is defined then activates email redirection
+		set tempLn=!ln:REDIRECT_ALL_EMAILS_TO=!
+		if not "!tempLn!"=="!ln!" (if not "%WIGII_REDIRECT_EMAIL%"=="" (set "ln=define ("REDIRECT_ALL_EMAILS_TO", "%WIGII_REDIRECT_EMAIL%");"))
+		rem disables box integration by default.
+		set tempLn=!ln:DISABLE_BOX_INTEGRATION=!
+		if not "!tempLn!"=="!ln!" (set "ln=define ("DISABLE_BOX_INTEGRATION", true);")
 		if not "!ln!"=="" echo !ln!
 	)
 	endlocal
@@ -256,6 +262,9 @@ ren %WIGII_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start_cli.php start_cli-
 		rem replaces DB_NAME by WIGII_DB
 		set tempLn=!ln:DB_NAME=!
 		if not "!tempLn!"=="!ln!" (set "ln=define ("DB_NAME", "%WIGII_DB%");")
+		rem WIGII_REDIRECT_EMAIL is defined then activates email redirection
+		set tempLn=!ln:REDIRECT_ALL_EMAILS_TO=!
+		if not "!tempLn!"=="!ln!" (if not "%WIGII_REDIRECT_EMAIL%"=="" (set "ln=define ("REDIRECT_ALL_EMAILS_TO", "%WIGII_REDIRECT_EMAIL%");"))
 		if not "!ln!"=="" echo !ln!
 	)
 	endlocal
