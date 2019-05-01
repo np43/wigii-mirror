@@ -29,6 +29,7 @@ set WIGII_LEGALENTITY=YourOrganisation
 set WIGII_ENV=C:\Users\xxxx\Documents\dev\php-src\Wigii_git
 set WIGII_DB_USER=wgi
 set WIGII_DB_PWD=mywgi-pass
+set WIGII_REDIRECT_EMAIL=xxx@xxx.xxx
 set WIGII_PHP_ENV=C:\wamp\bin\php\php7.3.1
 set WIGII_MYSQL_ENV=C:\wamp\bin\mysql\mysql5.7.24
 set WIGII_MYSQL_ROOTPWD=xxxx

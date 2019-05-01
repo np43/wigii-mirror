@@ -142,6 +142,12 @@ if not exist %WIGII_TARGET_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%\start-de
 		rem replaces DB_NAME by WIGII_DB
 		set tempLn=!ln:DB_NAME=!
 		if not "!tempLn!"=="!ln!" (set "ln=define ("DB_NAME", "%WIGII_DB%");")
+		rem deactivates email redirection
+		set tempLn=!ln:REDIRECT_ALL_EMAILS_TO=!
+		if not "!tempLn!"=="!ln!" (set "ln=//!ln!")
+		rem enables again box integration
+		set tempLn=!ln:DISABLE_BOX_INTEGRATION=!
+		if not "!tempLn!"=="!ln!" (set "ln=//!ln!")
 		if not "!ln!"=="" echo !ln!
 	)
 	endlocal
@@ -168,6 +174,9 @@ echo Prepares start_cli.php
 		rem replaces DB_NAME by WIGII_DB
 		set tempLn=!ln:DB_NAME=!
 		if not "!tempLn!"=="!ln!" (set "ln=define ("DB_NAME", "%WIGII_DB%");")
+		rem deactivates email redirection
+		set tempLn=!ln:REDIRECT_ALL_EMAILS_TO=!
+		if not "!tempLn!"=="!ln!" (set "ln=//!ln!")
 		if not "!ln!"=="" echo !ln!
 	)
 	endlocal

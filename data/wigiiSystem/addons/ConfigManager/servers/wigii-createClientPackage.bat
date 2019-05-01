@@ -84,6 +84,8 @@ if "%WIGII_OPTION_NODATA%"=="1" (rmdir %WIGII_TARGET_ENV%\users\%WIGII_CLIENT% /
 echo Copies www\%WIGII_CLIENT% folder
 mkdir %WIGII_TARGET_WEB%\%WIGII_CLIENT%
 xcopy %WIGII_WWW%%WIGII_CLIENT%\* %WIGII_TARGET_WEB%\%WIGII_CLIENT% /e /s
+rem deletes DevEnvBanner if exists
+if exist %WIGII_TARGET_WEB%\%WIGII_CLIENT%\DevEnvBanner.php del /Q %WIGII_TARGET_WEB%\%WIGII_CLIENT%\DevEnvBanner.php
 
 echo Copies configs\%WIGII_CLIENT% folder
 mkdir %WIGII_TARGET_ENV%\data\wigiiSystem\configs\%WIGII_CLIENT%
