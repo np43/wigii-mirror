@@ -74,6 +74,7 @@ echo Download %WIGII_CLIENT% config files
 %WINSCP_CMD% ^
  "%WIGII_CONNEXION%" ^
  "synchronize local -delete -transfer=binary -nopermissions %LOCAL_CONFIGS%\%WIGII_CLIENT%-prod %WIGII_CLIENT%" ^
+ "get -transfer=binary %WIGII_CLIENT%/* %LOCAL_CONFIGS%\%WIGII_CLIENT%-prod\" ^
  "close" ^
  "exit"
 if %ERRORLEVEL% neq 0 goto winScpError

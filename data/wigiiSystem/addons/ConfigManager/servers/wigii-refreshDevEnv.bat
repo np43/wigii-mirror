@@ -43,6 +43,8 @@ if "%WIGII_ENV%"=="" (echo Wigii ERROR: WIGII_ENV is not defined. Call %~nx0 fro
 IF %WIGII_ENV:~-1%==\ SET WIGII_ENV=%WIGII_ENV:~0,-1%
 set WIGII_WWW=%WIGII_ENV%\www
 if not exist %WIGII_WWW% (echo Wigii ERROR: www folder has not been found & set RETURNVALUE=404 & goto end)
+set WIGII_USERS=%WIGII_ENV%\users
+if not exist %WIGII_USERS% (echo Wigii ERROR: users folder has not been found & set RETURNVALUE=404 & goto end)
 
 rem checks installation of mysql tools
 if "%WIGII_MYSQL_ENV%"=="" (echo Wigii ERROR: WIGII_MYSQL_ENV is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
@@ -118,6 +120,17 @@ mkdir %WIGII_TARGET_WEB%\%WIGII_CLIENT%
  "exit"
 if %ERRORLEVEL% neq 0 goto winScpError
 
+:getClientProdUserAddonFolders
+echo Downloads %WIGII_CLIENT% user addon folders
+mkdir %WIGII_TARGET_ENV%\users\%WIGII_CLIENT%
+%WINSCP_CMD% ^
+ "%WIGII_CONNEXION%" ^
+ "lcd %WIGII_TARGET_ENV%\users\%WIGII_CLIENT%" ^
+ "get -transfer=binary -filemask=*/|*.?*;*/data/uploadedFiles/*;*/data/uploadedFiles/*/ %WIGII_HOST_ENV%/users/%WIGII_CLIENT%/* .\" ^
+  "close" ^
+ "exit"
+if %ERRORLEVEL% neq 0 goto winScpError
+
 :importsDb
 rem checks that db dump exists before imports
 if "%WIGII_DB_DUMP%"=="" (echo Wigii ERROR: no db dump to import for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end)
@@ -153,6 +166,10 @@ copy /Y %WIGII_TARGET_ENV%\data\wigiiSystem\core\api\impl\%WIGII_CLIENT%\*.* %WI
 echo Refreshes dev www\%WIGII_CLIENT%
 copy /Y %WIGII_TARGET_WEB%\%WIGII_CLIENT%\*.* %WIGII_WWW%\%WIGII_CLIENT%
 
+:refreshDevUser
+echo Refreshes dev user
+xcopy %WIGII_TARGET_ENV%\users\%WIGII_CLIENT%\* %WIGII_USERS%\%WIGII_CLIENT% /e /s
+
 echo Done. Dev env %WIGII_CLIENT% refreshed from production.
 goto end
 :mySqlError
@@ -181,6 +198,7 @@ set WIGII_HOST=
 set WIGII_HOST_WEB=
 set WIGII_HOST_ENV=
 set WIGII_WWW=
+set WIGII_USERS=
 set WIGII_TARGET=
 set WIGII_TARGET_WEB=
 set WIGII_TARGET_ENV=
