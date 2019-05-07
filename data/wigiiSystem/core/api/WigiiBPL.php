@@ -2646,6 +2646,42 @@ class WigiiBPL
 	    return $this->getWigiiExecutor()->evaluateConfigParameter($p, ServiceProvider::getExecutionService(), $parameter, $rec);
 	}
 	
+	/**
+	 * Generates a complete module xml configuration which uses (by inclusion) the fields defined in a given configuration file.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter A WigiiBPLParameter instance with the following parameters :
+	 * - xmlFile: String. The name of an existing Wigii configuration file to load.
+	 * - moduleName: String. The name of the module to use.
+	 * - moduleConfigTemplate: String. The name of the module configuration template to use as a base. Defaults to config_moduleTemplate.xml
+	 * - outputAsString: Boolean. If true, module xml configuration is returned as string, else it is returned as a SimpleXmlElement. Defaults to true.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return String|SimpleXMLElement
+	 */
+	public function useConfig($principal, $caller, $parameter, $executionSink=null) {
+	    $this->executionSink()->publishStartOperation("useConfig", $principal);
+	    $returnValue = null;
+	    try {
+	        if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        $returnValue = sel($principal, moduleXml2df($parameter->getValue('xmlFile')),dfasl(
+                dfas("ReduceCfgFieldForIncludeDFA"),
+                dfas("CfgField2ModuleXmlDFA",
+                    "setModuleConfigTemplateFilename",$parameter->getValue('moduleConfigTemplate'),
+                    "setModuleName",$parameter->getValue('moduleName'),
+                    "setOutputAsString",$parameter->getValue('outputAsString')!==false)
+            ));
+	    }
+	    catch(Exception $e) {
+	        $this->executionSink()->publishEndOperationOnError("useConfig", $e, $principal);
+	        throw $e;
+	    }
+	    $this->executionSink()->publishEndOperation("useConfig", $principal);
+	    return $returnValue;
+	}
+	
 	// Object builders
 	
 	/**

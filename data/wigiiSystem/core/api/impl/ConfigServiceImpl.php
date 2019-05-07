@@ -569,6 +569,8 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 				foreach($this->configControllers as $ctlClass) {
 					// gets controller
 					$ctl = ServiceProvider::getExclusiveAccessObject($ctlClass);
+					// injects ConfigService reference if asked by controller
+					if(method_exists($ctl, 'setConfigService')) $ctl->setConfigService($this);
 					// CWE 09.04.2019: if loading only parameters, then processes xml only with compatible controllers
 					if($coreCS->isLoadingOnlyParameters() && !$ctl->enabledForLoadingOnlyParameters()) continue;
 					// processes the xml

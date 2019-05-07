@@ -51,6 +51,7 @@ class ConfigIncludeSelector extends Model
 	 */
 	public function setFilePath($filePath) {
 	    $this->configFilePath = $filePath;
+	    return $this;
 	}
 	
 	/**
@@ -64,6 +65,7 @@ class ConfigIncludeSelector extends Model
      */	
 	public function setNodePath($nodePath) {
 	    $this->configNodePath = $nodePath;
+	    return $this;
 	}
 	
 	/**
@@ -78,6 +80,7 @@ class ConfigIncludeSelector extends Model
 	public function setXmlAttr($xmlAttributes) {
 	    $this->xmlAttributes = null;
 	    $this->addXmlAttr($xmlAttributes);
+	    return $this;
 	}
 	/**
 	 * @param Array|String $xmlAttribute adds one or several xml attributes
@@ -92,5 +95,19 @@ class ConfigIncludeSelector extends Model
 	        }
 	        else $this->xmlAttributes[$xmlAttribute] = $xmlAttribute;
 	    }
+	    return $this;
 	}	
+	
+	/**
+	 * Converts this ConfigIncludeSelector to its FuncExp equivalent
+	 * @return FuncExp
+	 */
+	public function toFx() {
+	    $args = array();
+	    if(isset($this->configFilePath)) $args[] = $this->configFilePath;
+	    if(isset($this->configNodePath)) $args[] = $this->configNodePath;
+	    if(!empty($this->xmlAttributes)) $args[] = $this->xmlAttributes;
+	    $returnValue = fx('cis', $args);
+	    return $returnValue;
+	}
 }

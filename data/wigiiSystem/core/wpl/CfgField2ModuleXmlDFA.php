@@ -26,6 +26,7 @@
  * This DataFlowActivity cannot be called from public space (i.e. caller is located outside of the Wigii instance) 
  * Created by Medair.org (CWE) on 10.08.2017
  * Modified by Medair (CWE) on 10.04.2018 to enable updating xml attributes or labels into an existing Wigii configuration file
+ * Modified by CWE on 06.05.2019 to allow fetching xml template files from config pack
  */
 class CfgField2ModuleXmlDFA implements DataFlowActivity
 {	
@@ -118,7 +119,7 @@ class CfgField2ModuleXmlDFA implements DataFlowActivity
 	}
 	
 	/**
-	 * Declares an activity to added to the XML configuration file.
+	 * Declares an activity to be added to the XML configuration file.
 	 * By default, already supports listView, blogView, sortBy, groupBy and selectSearchBar
 	 */
 	public function addSupportedActivity($activityName) {
@@ -290,13 +291,23 @@ class CfgField2ModuleXmlDFA implements DataFlowActivity
 	    // Checks for presence of module configuration template in client folder
 	    else {
     	    $configS = $this->getConfigService();
-    	    $file = $configS->getClientConfigFolderPath($principal).$moduleConfigTemplateFilename;
-    	    if(!file_exists($file)){
-    	        $file = $configS->getConfigFolderPath($principal).$moduleConfigTemplateFilename;
-    	    }
-    	    if(!file_exists($file)) throw new DataFlowServiceException("Module configuration template $moduleConfigTemplateFilename does not exist.");
+    	    // sanitizes path in fileName
+    	    $moduleConfigTemplateFilename = str_replace(array('../','..\\'), '', $moduleConfigTemplateFilename);
+    	    // CWE 06.05.2019: allows to read from configPack path
+    	    if(strpos($moduleConfigTemplateFilename,'configPack/')===0) {
+    	        $sep = strrpos($moduleConfigTemplateFilename, '/');
+    	        $configPackPath = substr($moduleConfigTemplateFilename,0,$sep+1);
+    	        $file = substr($moduleConfigTemplateFilename,$sep+1);
+    	        $file = str_replace('configPack/',CONFIGPACK_PATH,$configPackPath).$file;
+    	    } else {
+    	        $file = $configS->getClientConfigFolderPath($principal).$moduleConfigTemplateFilename;
+    	        if(!file_exists($file)){
+    	            $file = $configS->getConfigFolderPath($principal).$moduleConfigTemplateFilename;
+    	        }
+    	    }    	    
+    	    if(!file_exists($file)) throw new DataFlowServiceException("Module configuration template $moduleConfigTemplateFilename does not exist.", DataFlowServiceException::NOT_FOUND);
     	    
-    	    $isStandardTemplate = ($moduleConfigTemplateFilename == 'config_moduleTemplate.xml');
+    	    $isStandardTemplate = (str_endsWith($moduleConfigTemplateFilename, '_moduleTemplate.xml'));
     	    
     	    // Loads xml file
     	    $xmlString = file_get_contents($file);
@@ -305,13 +316,14 @@ class CfgField2ModuleXmlDFA implements DataFlowActivity
     	        if(!isset($this->moduleName)) throw new DataFlowServiceException('A module name should be provided when generating a configuration file based on the standard template');
         	    $xmlString = str_replace('<moduleName>','<'.$this->moduleName.'>', $xmlString);
         	    $xmlString = str_replace('</moduleName>','</'.$this->moduleName.'>', $xmlString);
+        	    $xmlString = str_replace('_moduleName_config','_'.$this->moduleName.'_config', $xmlString);
     	    }
 	    }
 	    
 	    // Parses the XML file
 	    $returnValue = simplexml_load_string($xmlString);
 	    if($returnValue) return $returnValue;
-	    else throw new DataFlowServiceException('Error while loading xml configuration template '.$moduleConfigTemplateFilename);
+	    else throw new DataFlowServiceException('Error while loading xml configuration template '.$moduleConfigTemplateFilename, DataFlowServiceException::SYNTAX_ERROR);
 	}
 	
 	/**	

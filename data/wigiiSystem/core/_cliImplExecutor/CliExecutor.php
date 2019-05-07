@@ -135,7 +135,7 @@ class CliExecutor {
 			$this->clientAS = ServiceProvider::getClientAdminService();
 		}
 		return $this->clientAS;
-	}
+	}		
 	
 	private $principal;
 	/**
@@ -165,6 +165,7 @@ class CliExecutor {
 	public function getCurrentClient() {
 		return $this->client;
 	}
+	
 	//functional
 
 	/**
@@ -400,5 +401,43 @@ class CliExecutor {
 	    $fx = str2fx($fxStr);
 	    // evaluates fx string and displays result
 	    $this->put(evalfx($this->getCurrentPrincipal(), $fx));
+	}
+	
+	protected function useConfigPackModule($argc, $argv, $subArgIndex) {
+	    // gets config file path
+	    if($subArgIndex >= $argc) throw new ServiceException('config file path is missing. Usage is useConfigPackModule configFilePath', ServiceException::INVALID_ARGUMENT);
+	    else {
+	        $configFilePath = $argv[$subArgIndex++];
+	        $principal = $this->getCurrentPrincipal();
+	        // sanitizes path in fileName
+	        $configFilePath = str_replace(array('../','..\\'), '', $configFilePath);
+	        // Read from configPack path and extract xml configuration file name
+	        if(strpos($configFilePath,'configPack/')===0) {
+	            $sep = strrpos($configFilePath, '/');
+	            $configPackPath = substr($configFilePath,0,$sep+1);
+	            $file = substr($configFilePath,$sep+1);
+	        } else throw new ServiceException('can only read config pack modules', ServiceException::INVALID_ARGUMENT);
+	        // extracts module name
+	        if(!file_exists(str_replace('configPack/',CONFIGPACK_PATH,$configPackPath).$file) || strpos($file,'_config.xml')===false) throw new ServiceException($configFilePath.' is not a valid config pack module xml configuration file', ServiceException::INVALID_ARGUMENT);
+	        $moduleName = explode('_', $file);
+	        $moduleName = $moduleName[array_search('config.xml',$moduleName)-1];
+	        // lookups for client config template
+	        $configTemplate = 'newClient/configs/client_moduleTemplate.xml';
+	        if(file_exists(str_replace('configPack/',CONFIGPACK_PATH,$configPackPath).$configTemplate)) $configTemplate = $configPackPath.$configTemplate;
+	        // else lookups for module config template
+	        else {
+	            $configTemplate = 'newClient/configs/config_moduleTemplate.xml';
+	            if(file_exists(str_replace('configPack/',CONFIGPACK_PATH,$configPackPath).$configTemplate)) $configTemplate = $configPackPath.$configTemplate;
+	            // else takes standard config module template.
+	            else $configTemplate=null;
+	        }
+	        // generates module xml configuration file based on usage of given config pack module
+	        $this->put(ServiceProvider::getWigiiBPL()->useConfig($principal, $this, wigiiBPLParam(
+	            'xmlFile',$configFilePath,
+	            'moduleName', $moduleName,
+	            'moduleConfigTemplate', $configTemplate,
+	            'outputAsString', true
+	        )));
+	    }
 	}
 }

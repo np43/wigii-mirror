@@ -124,7 +124,7 @@ class CfgField2XmlDFA implements DataFlowActivity
 				simplexml_appendChild($this->rootNode, $data);
 			}
 			else {
-				if($this->outputAsString) $dataFlowContext->writeResultToOutput($data->asXML(), $this);
+			    if($this->outputAsString) $dataFlowContext->writeResultToOutput($this->prettyPrintXml($data), $this);
 				else $dataFlowContext->writeResultToOutput($data, $this);
 			}
 		}
@@ -132,7 +132,7 @@ class CfgField2XmlDFA implements DataFlowActivity
 	}
 	public function endOfStream($dataFlowContext) {
 		if($this->groupInput) {
-			if($this->outputAsString) $dataFlowContext->writeResultToOutput($this->rootNode->asXml(), $this);
+			if($this->outputAsString) $dataFlowContext->writeResultToOutput($this->prettyPrintXml($this->rootNode), $this);
 			else $dataFlowContext->writeResultToOutput($this->rootNode, $this);
 		}
 	}
@@ -145,4 +145,24 @@ class CfgField2XmlDFA implements DataFlowActivity
 		$this->processDataChunk($data, $dataFlowContext);
 		$this->endOfStream($dataFlowContext);
 	}	
+	
+	// Utilities
+	
+	/**
+	 * Pretty prints xml
+	 * @param SimpleXMLElement $xml xml element to print
+	 * @return String xml tree well formatted
+	 */
+	protected function prettyPrintXml($xml) {
+	    $domElt = dom_import_simplexml($xml);
+	    $dom = $domElt->ownerDocument;
+	    // pretty prints xml node
+	    $dom->preserveWhiteSpace = false;
+	    $dom->formatOutput = true;
+	    $returnValue = $dom->saveXML($domElt);
+	    // Puts all FuncExp into single quotes, then call html_entity_decode.
+	    // A FuncExp is a string having parenthesis and no quotes inside.
+	    $returnValue = html_entity_decode(preg_replace('/="([^"\']+[(][^"\']*[)][^"\']*)"/', '=\'$1\'', $returnValue),ENT_QUOTES);
+	    return $returnValue;
+	}
 }

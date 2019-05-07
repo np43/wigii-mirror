@@ -86,6 +86,18 @@ class IncludeConfigController extends ConfigControllerWithFuncExpVM {
         return $this->sessionAS;
     }
     
+    private $configS;
+    public function setConfigService($configService) {
+        $this->configS = $configService;
+    }
+    protected function getConfigService() {
+        // autowired
+        if(!isset($this->configS)){
+            $this->configS = ServiceProvider::getConfigService();
+        }
+        return $this->configS;
+    }
+    
     // ConfigControllerWithFuncExpVM implementation
     
     public function processConfigurationNode($principal, $xmlConfig, $getWritableNode, $lp) {
@@ -255,7 +267,10 @@ class IncludeConfigController extends ConfigControllerWithFuncExpVM {
                 $configPackPath = substr($configFile,0,$sep+1);
                 $configFile = substr($configFile,$sep+1);
             }
-            else $configPackPath=null;
+            // else include is done from client config folder
+            else {
+                $configPackPath=$this->getConfigService()->getClientConfigFolderPath($principal);
+            }
             // appends .xml if not present
             if(strpos($configFile,'.xml')===false) $configFile.='.xml';
             // checks authorization before loading file

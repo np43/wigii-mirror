@@ -25,6 +25,7 @@
  * A connector which dumps the fields of a Wigii xml configuration file into a flow of cfgField stdClass instances
  * This DataFlow connector cannot be called from public space (i.e. caller is located outside of the Wigii instance)
  * Created by Medair (CWE) on 04.04.2018
+ * Modified by CWE on 06.05.2019 to allow fetching xml files from config pack
  */
 class ModuleXmlDataFlowConnector implements DataFlowDumpable
 {
@@ -139,7 +140,11 @@ class ModuleXmlDataFlowConnector implements DataFlowDumpable
 		if($this->xmlFile instanceof ElementFileDataFlowConnector) {
 		    $moduleXml = $this->readXmlConfigFile($principal,$this->xmlFile);
 		}
-		else $moduleXml = $this->readWigiiConfigFile($principal,$this->xmlFile);
+		else {
+		    $moduleXml = $this->readWigiiConfigFile($principal,$this->xmlFile);
+		    // injects origin of wigii configuration file into data flow context
+		    $dataFlowContext->setAttribute('ConfigIncludeSelector', ConfigIncludeSelector::createInstance(str_replace('.xml','',$this->xmlFile),'fields/*'));
+		}
 		// Dumps module fields into data flow
 		if(isset($moduleXml) && $moduleXml->fields) {		    
 		    $fsl = null; $cfgFieldEval=null;
@@ -192,12 +197,20 @@ class ModuleXmlDataFlowConnector implements DataFlowDumpable
 	 * @return SimpleXMLElement the loaded Wigii configuration file as XML
 	 */
 	protected function readWigiiConfigFile($principal,$fileName) {
-	    $returnValue = $this->getConfigService()->getClientConfigFolderPath($principal).$fileName;	    
-	    if(!file_exists($returnValue)) throw new DataFlowServiceException("Module configuration file $fileName does not exist.");
+	    // sanitizes path in fileName
+	    $fileName = str_replace(array('../','..\\'), '', $fileName);
+	    // CWE 06.05.2019: allows to read from configPack path
+	    if(strpos($fileName,'configPack/')===0) {
+	        $sep = strrpos($fileName, '/');
+	        $configPackPath = substr($fileName,0,$sep+1);
+	        $returnValue = substr($fileName,$sep+1);
+	        $returnValue = str_replace('configPack/',CONFIGPACK_PATH,$configPackPath).$returnValue;
+	    } else $returnValue = $this->getConfigService()->getClientConfigFolderPath($principal).$fileName;	    
+	    if(!file_exists($returnValue)) throw new DataFlowServiceException("Module configuration file $fileName does not exist.", DataFlowServiceException::NOT_FOUND);
 	    // Parses the XML file
 	    $returnValue = simplexml_load_file($returnValue);
 	    if($returnValue) return $returnValue;
-	    else throw new DataFlowServiceException('Error while loading xml configuration file '.$fileName);
+	    else throw new DataFlowServiceException('Error while loading xml configuration file '.$fileName, DataFlowServiceException::SYNTAX_ERROR);
 	}
 	
 	/**

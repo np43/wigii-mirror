@@ -120,7 +120,15 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 		$groupAS = ServiceProvider::getGroupAdminService();
 		$rec = $this->getRecord();
 		$user = $this->getUser($p);
-		$configPrefix = $rec->getFieldValue("moduleEditorNewNamespaceConfigPrefixToUse");
+		$configPrefix = $rec->getFieldValue("moduleEditorNewNamespaceConfigPrefixToUse");		
+		// sanitizes path in prefix
+		$configPrefix = str_replace(array('../','..\\'), '', $configPrefix);
+		// CWE 06.05.2019: allows to copy from configPack path
+		if(strpos($configPrefix,'configPack/')===0) {
+		    $sep = strrpos($configPrefix, '/');
+		    $configPackPath = substr($configPrefix,0,$sep+1);
+		    $configPrefix = substr($configPrefix,$sep+1);
+		} else $configPackPath = null;
 		
 		//create user if not existing
 		$userId = $userAS->doesUsernameExist($p, $user->getUsername());
@@ -203,9 +211,13 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 				$groupAS->removeUser($p, $group->getId(), $p->getUserId());
 				$groupAS->removeUser($p, $trash->getId(), $p->getUserId());
 				//copy general config to namespace config
-				$generalConfigFile = $configS->getModuleConfigFilename($p, $module, null);
+				$generalConfigFile = $configS->getModuleConfigFilename($p, $module, null);				
+				// interprets config prefix
 				if($configPrefix){
-					$newGeneralConfigFile = str_replace($module->getModuleName()."_config.xml",$configPrefix.$module->getModuleName()."_config.xml",$generalConfigFile);
+				    // CWE 06.05.2019: allows to copy from configPack path
+				    if($configPackPath) $newGeneralConfigFile= str_replace('configPack/',CONFIGPACK_PATH,$configPackPath).$configPrefix.$module->getModuleName()."_config.xml";
+				    // else copies from client config folder
+				    else $newGeneralConfigFile = str_replace($module->getModuleName()."_config.xml",$configPrefix.$module->getModuleName()."_config.xml",$generalConfigFile);
 					if(file_exists($newGeneralConfigFile)) $generalConfigFile = $newGeneralConfigFile;
 				}
 				$generalConfig = simplexml_load_file($generalConfigFile);

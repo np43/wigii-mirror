@@ -497,6 +497,19 @@ function str_searchFilter($string) {
 	str_spaceSplit($string, $tab);
 	return $tab;
 }
+function str_startsWith($haystack, $needle)
+{
+    $length = strlen($needle);
+    return (substr($haystack, 0, $length) === $needle);
+}
+function str_endsWith($haystack, $needle)
+{
+    $length = strlen($needle);
+    if ($length == 0) {
+        return true;
+    }   
+    return (substr($haystack, -$length) === $needle);
+}
 
 function deleteDirectory($dir, $ignoreWarning=false) {
  if (!file_exists($dir)) return true;
@@ -1589,6 +1602,17 @@ function dimension2df($selector, $attrLogExp = null, $sortOrder = 3, $namespace=
 }
 
 /**
+ * Dumps the fields of a Wigii xml configuration file as cfgField stdClass instances into a DataFlow
+ * cfgField StdClasses are of the form {name, attributes, label, cfgAttributs}. See cfgField FuncExp for more details.
+ * @param String|ElementFileDataFlowConnector $xmlFile The name of an existing Wigii configuration file to load or an already open connector to an xml file attached to current element
+ * @param ListFilter $listFilter An optional ListFilter instance to filter the fields to extract based on some attribute values
+ * @return ModuleXmlDataFlowConnector returns a ModuleXmlDataFlowConnector instance that can be used as a DataFlow source.
+ */
+function moduleXml2df($xmlFile, $listFilter=null) {
+    return TechnicalServiceProvider::getFuncExpBuilder()->moduleXml2df($xmlFile, $listFilter);
+}
+
+/**
  * A connector which dumps the content of an Element field of type Files into a data flow.
  * The content is pushed chunk by chunk. Default chunk size is 512ko.
  * See class ElementFileDataFlowConnector for more details.
@@ -1600,6 +1624,7 @@ function dimension2df($selector, $attrLogExp = null, $sortOrder = 3, $namespace=
 function elementFile2df($element, $fieldName, $chunkSize=null) {
     return TechnicalServiceProvider::getFuncExpBuilder()->elementFile2df($element, $fieldName, $chunkSize);
 }
+
 
 /**
  * Matches an input array with a pattern and binds any given ValueObject on both sides.
