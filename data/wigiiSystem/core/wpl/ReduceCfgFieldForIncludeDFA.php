@@ -75,8 +75,8 @@ class ReduceCfgFieldForIncludeDFA implements DataFlowActivity
 	    }
 	}
 	public function processDataChunk($data, $dataFlowContext) {
-	    // ignores group start or end
-	    if($data->attributes && ($data->attributes['groupStart']=='1' || $data->attributes['groupEnd']=='1')) $returnValue = $data;
+	    // ignores group start or end, freetext
+	    if($data->attributes && ($data->attributes['groupStart']=='1' || $data->attributes['groupEnd']=='1' || !isset($data->attributes['type']))) $returnValue = $data;
 	    // else reduces field to include expression
 	    else {
 	        $this->configIncludeSelector->setNodePath('fields/'.$data->name);

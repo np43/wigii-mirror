@@ -4,7 +4,8 @@
 	  deletedSubElementsLinkNamePrefix: if defined, then sub elements will not be deleted when deleting them from the GUI, but link name will be prefixed with the defined value 
 	  -->
 	<parameters deletedSubElementsLinkNamePrefix="__deleted_"
-		Field_dynamicAttributeList="require,
+		Field_dynamicAttributeList="height,
+			require,
 			expand,
 			readonly,
 			disabled,

@@ -211,7 +211,7 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 				$groupAS->removeUser($p, $group->getId(), $p->getUserId());
 				$groupAS->removeUser($p, $trash->getId(), $p->getUserId());
 				//copy general config to namespace config
-				$generalConfigFile = $configS->getModuleConfigFilename($p, $module, null);				
+				$generalConfigFile = $configS->getModuleConfigFilename($p, $module, null);
 				// interprets config prefix
 				if($configPrefix){
 				    // CWE 06.05.2019: allows to copy from configPack path
@@ -220,7 +220,12 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 				    else $newGeneralConfigFile = str_replace($module->getModuleName()."_config.xml",$configPrefix.$module->getModuleName()."_config.xml",$generalConfigFile);
 					if(file_exists($newGeneralConfigFile)) $generalConfigFile = $newGeneralConfigFile;
 				}
-				$generalConfig = simplexml_load_file($generalConfigFile);
+				$generalConfig = @simplexml_load_file($generalConfigFile);
+				if($generalConfig===false) {
+				    $xmlError = libxml_get_last_error();
+				    $this->addErrorToField('Error loading xml configuration file '.$generalConfigFile."\n".$xmlError->message.', line '.$xmlError->line, 'moduleEditorNewNamespaceTabs');
+				    break;
+				}
 				if($generalConfig->parameters){
 					if(!$generalConfig->parameters["trashBinGroup"]) $generalConfig->parameters->addAttribute("trashBinGroup", $trash->getId());
 					else $generalConfig->parameters["trashBinGroup"] = $trash->getId();
@@ -258,9 +263,11 @@ class ModuleEditorNewNamespaceFormExecutor extends FormExecutor {
 		
 
 		//important to clear the cancel stack
-		$exec->addJsCode("actOnCloseDialog('".$exec->getIdAnswer()."');");
-		$this->getWigiiExecutor()->openAsMessage($exec->getIdAnswer(),500, $transS->t($p, "operationDoneSuccessfully"), '<div style="overflow:auto;max-height:300px;">'."Please find bellow the list of the modules added to the namespace:<br/>".put($moduleAccess)."<br /><br />Find bellow the list of configuration files used during the creation process:<br />".put($configFileSummary).'</div>', null, "Ok", null, null, "done");
-		//$this->getWigiiExecutor()->operationSuccessfullMessage($exec->getIdAnswer(), 350, $transS->t($p, "operationDoneSuccessfully").put($moduleAccess), "", "done");
+		if(!$this->hasError()) {
+		  $exec->addJsCode("actOnCloseDialog('".$exec->getIdAnswer()."');");
+		  $this->getWigiiExecutor()->openAsMessage($exec->getIdAnswer(),500, $transS->t($p, "operationDoneSuccessfully"), '<div style="overflow:auto;max-height:300px;">'."Please find bellow the list of the modules added to the namespace:<br/>".put($moduleAccess)."<br /><br />Find bellow the list of configuration files used during the creation process:<br />".put($configFileSummary).'</div>', null, "Ok", null, null, "done");
+    		//$this->getWigiiExecutor()->operationSuccessfullMessage($exec->getIdAnswer(), 350, $transS->t($p, "operationDoneSuccessfully").put($moduleAccess), "", "done");
+		}
 	}
 
 
