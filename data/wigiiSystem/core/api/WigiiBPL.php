@@ -2625,6 +2625,62 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Converts given HTML content to pdf format
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter A WigiiBPLParameter instance with the following parameters :
+	 * - htmlContent: String. HTML content to be converted to pdf.
+	 * Optional parameters:
+	 * - pageOrientation: String. One of portrait or landscape. Defaults to portrait.
+	 * - pageSize: String. A standard page size name, like A4. Defaults to A4. 
+	 * - asEmailAttachement: Boolean. If true, outputs the pdf document as a base64 mime multi-part email attachment (RFC 2045)
+	 * - fileName: String. pdf file name to be used when attached to emails.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return String raw pdf byte stream to be saved as a file or sent further.
+	 */
+	public function html2pdf($principal, $caller, $parameter, $executionSink=null) {
+	    $this->executionSink()->publishStartOperation("html2pdf", $principal);
+	    $returnValue = null;
+	    $tcpdf = null;
+	    try {
+	        if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        // extracts parameters
+	        $htmlContent = $parameter->getValue('htmlContent');
+	        $pageOrientation = $parameter->getValue('pageOrientation');
+	        switch($pageOrientation) {
+	            case 'portrait': $pageOrientation = 'P'; break;
+	            case 'landscape': $pageOrientation = 'L'; break;	   
+	            default: $pageOrientation = 'P';
+	        }
+	        $pageSize = $parameter->getValue('pageSize');
+	        if(!isset($pageSize)) $pageSize = 'A4';
+	        $fileName = $parameter->getValue('fileName');
+	        if(!isset($fileName)) $fileName = date('YmdHis');
+	        
+	        // creates tcpdf object instance
+	        $tcpdf = TechnicalServiceProvider::getTCPDF($pageOrientation,$pageSize);
+	        
+	        // generates pdf from html
+	        $tcpdf->AddPage();
+	        $tcpdf->writeHTML($htmlContent);
+	        
+	        // gets output and frees tcpdf object
+	        $returnValue = $tcpdf->Output($fileName,($parameter->getValue('asEmailAttachement')?'E':'S'));
+	        if(isset($tcpdf)) $tcpdf->_destroy(true);	        
+	    }
+	    catch(Exception $e) {
+	        $this->executionSink()->publishEndOperationOnError("html2pdf", $e, $principal);
+	        if(isset($tcpdf)) $tcpdf->_destroy(true);
+	        throw $e;
+	    }	    
+	    $this->executionSink()->publishEndOperation("html2pdf", $principal);
+	    return $returnValue;
+	}
+	
+	/**
 	 * Evaluates a FuncExp in the context of the given Record.
 	 * @param Principal $p principal executing the request
 	 * @param FuncExp $fx the FuncExp instance to evaluate

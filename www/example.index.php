@@ -49,7 +49,7 @@ define("LOG_PATH", "../log/"); //stores the log when sys console is enabled
 define("TMP_PATH", "../tmp/"); //stores the session files, this is defined in the .htaccess
 
 define("wigiiSystem_PATH", "../data/wigiiSystem/");
-define("wigiiSystem_WEBPATH", __DIR__);
+define("wigiiSystem_WEBPATH", __DIR__."/");
 define("TEMPORARYUPLOADEDFILE_path",  wigiiSystem_PATH."tempUploadedFiles/");
 define("CORE_PATH", wigiiSystem_PATH . "core/");
 define("IMPL_PATH", CORE_PATH . "_webImplExecutor/");

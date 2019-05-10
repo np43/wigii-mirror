@@ -98,7 +98,7 @@ function wigii_autoload($class_name) {
     // CWE 28.03.2019 sanitizes path in class name
     $class_name = str_replace(array('../','..\\'), '', $class_name);
     // lookup for class
-	if (!class_exists($class_name)) {
+	if (!class_exists($class_name, false)) {
 		$ok = false;
 		if (!$ok) {
 			$filename = DATATYPE_PATH.$class_name.".php";

@@ -27,8 +27,13 @@
 
 
 /** Require FPDF library */
+/* deprecated by Wigii.org (CWE) on 10.05.2019
 $k_path_url = dirname(__FILE__) . '/PDF';
 require_once PHPEXCEL_ROOT . 'PHPExcel/Shared/PDF/tcpdf.php';
+
+Replaced by new version of TCPDF located in CORE_PATH/api/libs/TCPDF */
+if(!defined('K_PATH_URL')) define ('K_PATH_URL', SITE_ROOT);
+require_once(CORE_PATH."api/libs/TCPDF/tcpdf.php");
 
 /**
  * PHPExcel_Writer_PDF

@@ -1905,7 +1905,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		$field = $this->getRecord()->getFieldList()->getField($fieldName);
 		if(!($field->getDataType() instanceof Files)) throw new RecordException("field '$fieldName' should be of datatype Files", RecordException::INVALID_ARGUMENT);
 		
-		// Extracts files subfields
+		// Extracts file subfields
 		if($nArgs>2) {
 			$k=$this->evaluateArg($args[2]);
 			if(is_array($k)) $fileSubfields=$k;
@@ -1925,8 +1925,9 @@ class RecordEvaluator implements FuncExpEvaluator
 					}
 				}
 			}
-			else $fileSubfields=null;
+			else $fileSubfields=array();
 		}
+		else $fileSubfields=array();
 		// generates content
 		$p=$this->getPrincipal();
 		$content = $this->evaluateArg($args[1]);
@@ -1981,7 +1982,94 @@ class RecordEvaluator implements FuncExpEvaluator
 				)
 			));
 		}
-	}	
+	}
+	
+	/**
+	 * Generates a pdf document from some html content and attaches it to a field of type Files
+	 * FuncExp signature : <code>setPdfFileFromHtml(fieldName, htmlContent, subFieldName1, subFieldValue1, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: String|FieldSelector. The name of the field of type Files to which attach the document.
+	 * - Arg(1) htmlContent: String|Array html content of the document or an array containing the required subfields of an html file (typically got by calling buildHtmlFileSubFieldsMap FuncExp)
+	 * - Arg(2,...) subFieldNameI,subFieldValueI: a list of Files subfield (name,date,username,user) and values to update File meta-data
+	 */
+	public function setPdfFileFromHtml($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new RecordException("setPdfFileFromHtml function takes at least two arguments: field name and htmlContent", RecordException::INVALID_ARGUMENT);
+	    
+	    // Extracts fieldname
+	    $fieldName = $args[0];
+	    if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+	    else $fieldName = $this->evaluateArg($fieldName);
+	    if(empty($fieldName)) throw new RecordException('fieldName cannot be null', RecordException::INVALID_ARGUMENT);
+	    $field = $this->getRecord()->getFieldList()->getField($fieldName);
+	    if(!($field->getDataType() instanceof Files)) throw new RecordException("field '$fieldName' should be of datatype Files", RecordException::INVALID_ARGUMENT);
+	    
+	    // generates content
+	    $p=$this->getPrincipal();
+	    $content = $this->evaluateArg($args[1]);
+	    // if content is a DataFlowSelector then executes it
+	    if($content instanceof DataFlowSelector) {
+	        $content = ServiceProvider::getDataFlowService()->processDataFlowSelector($p, $content);
+	    }
+	    // if content result is an array, then assumes it is an html file subfields definition
+	    if(is_array($content)) {
+	        $fileSubfields = $content;
+	        // extracts html content
+	        $content = $fileSubfields['textContent'];
+	        unset($fileSubfields['textContent']);	        
+	    }
+	    else $fileSubfields=array();
+	    
+	    // Merges with given file subfields
+	    if($nArgs>2) {
+	        $k=$this->evaluateArg($args[2]);
+	        if(is_array($k)) $fileSubfields = array_merge($fileSubfields,$k);
+	        elseif($nArgs>3) {
+	            $i=3;
+	            while($i<$nArgs) {
+	                // evaluates value
+	                $v=$this->evaluateArg($args[$i]);
+	                $i++;
+	                // stores key/value in array
+	                $fileSubfields[$k]=$v;
+	                // evalues next key
+	                if($i<$nArgs) {
+	                    $k=$this->evaluateArg($args[$i]);
+	                    $i++;
+	                }
+	            }
+	        }
+	    }
+	    
+	    // Forces pdf type
+	    unset($fileSubfields['textContent']);
+	    unset($fileSubfields['mime']);
+	    $fileSubfields['type']='.pdf';
+	    
+	    // converts html to pdf
+	    $content = ServiceProvider::getWigiiBPL()->html2pdf($p, $this, wigiiBPLParam('htmlContent',$content,'fileName',$fileSubfields['name'].'.pdf'));
+	    
+	    // if content is not empty, then saves it as a File
+	    if(isset($content)) {
+	        // element should be persisted straight away if current flow is element-data-flow or element-multiple-edit or unspecified
+	        // in other cases file is only saved into temporary location and element updated into memory.
+	        switch($this->getCurrentFlowName()) {
+	            case ElementEvaluator::ELEMENT_FLOW_DATAFLOW:
+	            case ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EDIT:
+	            case ElementEvaluator::ELEMENT_FLOW_UNSPECIFIED:
+	                $persistElement=true;
+	                break;
+	            default: $persistElement=false;
+	        }
+	        // saves the file content into the element
+	        ServiceProvider::getDataFlowService()->processString($p, $content, dfasl(
+	            dfas('ElementFileOutputStreamDFA','setElement',$this->getRecord(),'setFieldName',$fieldName,
+	                'setPersistElement', $persistElement,
+	                'setFileSubfields', $fileSubfields
+	                )
+	            ));
+	    }
+	}
 
 	/**
 	 * Creates an array containing all the evaluated arguments

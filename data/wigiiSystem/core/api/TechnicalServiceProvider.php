@@ -869,6 +869,58 @@ class TechnicalServiceProvider
 		return new HTMLPurifier($config);
 	}
 
+	/**
+	 * Gets a TCPDF object instance to dynamically generate some pdf
+	 * @see TCPDF project (http://www.tcpdf.org)
+     * @param string $orientation Page orientation. P=Portrai, L=Landscap, empty string=automatic. Defaults to Portrait.
+	 * @param string $format The format used for pages, defaults to A4.
+	 * @return TCPDF 
+	 */
+	public static function getTCPDF($orientation='P',$format='A4') {
+	    return self::getInstance()->createTCPDFInstance($orientation,$format);
+	}
+	/**
+	 * defaults as singlecall object
+	 */
+	protected function createTCPDFInstance($orientation,$format) {
+	    // loads TCPDF class if not already done
+	    if(!class_exists('TCPDF',false)) {
+	       // defines needed constants
+	        if(!defined('K_TCPDF_EXTERNAL_CONFIG')) define ('K_TCPDF_EXTERNAL_CONFIG', true);
+	        // Installation path.
+	        if(!defined('K_PATH_MAIN')) define ('K_PATH_MAIN', realpath(CORE_PATH."api/libs/TCPDF").'/');
+	        // URL path to tcpdf installation folder. Forces SITE_ROOT, we do not want to expose it publicly.
+	        if(!defined('K_PATH_URL')) define ('K_PATH_URL', SITE_ROOT);
+	        // Path for PDF fonts.
+	        if(!defined('K_PATH_FONTS')) define ('K_PATH_FONTS', K_PATH_MAIN.'fonts/');
+	        // Default images directory. Setup SITE_ROOT to allow urls down to client subfolders or main wigii images.
+	        if(!defined('K_PATH_IMAGES')) define ('K_PATH_IMAGES', wigiiSystem_WEBPATH);
+	        // Cache directory for temporary files (full path).
+	        if(!defined('K_PATH_CACHE')) define ('K_PATH_CACHE', realpath(TEMPORARYUPLOADEDFILE_path));
+	        // Generic name for a blank image. Uses Wigii spacer.gif	        
+	        if(!defined('K_BLANK_IMAGE')) define ('K_BLANK_IMAGE', 'images/spacer.gif');
+	        // Height of cell respect font height.
+	        if(!defined('K_CELL_HEIGHT_RATIO')) define('K_CELL_HEIGHT_RATIO', 1.25);
+	        // Title magnification respect main font size.
+	        if(!defined('K_TITLE_MAGNIFICATION')) define('K_TITLE_MAGNIFICATION', 1.3);
+	        // Reduction factor for small font.
+	        if(!defined('K_SMALL_RATIO')) define('K_SMALL_RATIO', 2/3);
+	        // Set to true to enable the special procedure used to avoid the overlappind of symbols on Thai language.
+	        if(!defined('K_THAI_TOPCHARS')) define('K_THAI_TOPCHARS', false);
+	        // If true allows to call TCPDF methods using HTML syntax
+	        // IMPORTANT: For security reason, disable this feature if you are printing user HTML content.
+	        if(!defined('K_TCPDF_CALLS_IN_HTML')) define('K_TCPDF_CALLS_IN_HTML', false);
+	        // If true and PHP version is greater than 5, then the Error() method throw new exception instead of terminating the execution.
+	        if(!defined('K_TCPDF_THROW_EXCEPTION_ERROR')) define('K_TCPDF_THROW_EXCEPTION_ERROR', true);
+	        
+	        // includes TCPDF class definition
+	        include_once(CORE_PATH."api/libs/TCPDF/tcpdf.php");
+	    }
+	    // creates a single call instance
+	    //$orientation='P', $unit='mm', $format='A4', $unicode=true, $encoding='UTF-8', $diskcache=false, $pdfa=false
+	    return new TCPDF($orientation,'mm',$format,true,'UTF-8',false,false);
+	}
+	
 	private $funcExpBuilder;
 
 	public static function getFuncExpBuilder()
