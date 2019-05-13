@@ -77,7 +77,7 @@ class ExportCSVFormExecutor extends ExportFormExecutor {
 		$exportLC->setConfigGroupList($configGroupPList);
 
 		if($this->getRecord()->getFieldValue("csvFormat")=="csvFormated"){
-			$elementPList = ElementPListExportCSVPretty::createInstance($this->getWigiiExecutor(), $exportLC);
+			$elementPList = ElementPListExportCSVPretty::createInstanceForP($this->getWigiiExecutor(), $exportLC, $p);
 			//$exportLC->setFieldSelectorList(null);
 		} else {
 			//prepare fieldSelector with all fields + content for integrated files:

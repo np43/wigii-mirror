@@ -70,7 +70,7 @@ class ExportExcelFormExecutor extends ExportFormExecutor {
 			$exportLC->matchFetchCriteria($elementListLC);
 		}
 
-		$elementPList = ElementPListExportExcel::createInstance($this->getWigiiExecutor(), $exportLC);
+		$elementPList = ElementPListExportExcel::createInstanceForP($this->getWigiiExecutor(), $exportLC, $p);
 		$elementPList->setNoGrouping();
 		$elementPList->setLCTemp($tempExportLC);
 		$elementPList->setLocalLinks($this->getRecord()->getFieldValue("localLinks"));

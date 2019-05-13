@@ -24,10 +24,13 @@
 /**
  * Created on 6 oct. 09 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Wigii.org (CWE) 13.05.2019 to allow creating an instance for a specific principal
  */
 
 abstract class ElementPListWebImplWithWigiiExecutor implements ElementPList {
 
+    // Dependency injection
+    
 	private $listContext;
 	protected function getListContext(){ return $this->listContext; }
 	protected function setListContext($listContext){ $this->listContext = $listContext; }
@@ -56,7 +59,43 @@ abstract class ElementPListWebImplWithWigiiExecutor implements ElementPList {
 		return $this->elementPolicyEvaluator;
 	}
 	
+	private $p;
+	/**
+	 * Sets principal to use with this instance of ElementPList
+	 * @param Principal $p
+	 */
+	public function setP($p){$this->p = $p;}
+	/**
+	 * Gets principal to be used with this instance of ElementPList
+	 * Defaults to main principal
+	 * @return Principal
+	 */
+	protected function getP(){ 
+	    // autowired
+	    if(!isset($this->p)) {
+	        $this->p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+	    }
+	    return $this->p; 
+	}
+	
+	// Object life cycle
+	
 	abstract static function createInstance($wigiiExecutor, $listContext);
+	/**
+	 * Creates an instance for a specific principal
+	 * @param WigiiExecutor $wigiiExecutor
+	 * @param ListContext $listContext
+	 * @param Principal $p
+	 */
+	public static function createInstanceForP($wigiiExecutor, $listContext,$p) {
+	    $returnValue = self::createInstance($wigiiExecutor, $listContext);
+	    $returnValue->setP($p);
+	    return $returnValue;
+	}
+	
+	
+	// ElementPList implementation
+	
 	
 	/**
 	 * Returns an iterator on this list

@@ -24,6 +24,7 @@
 /**
  * Created on 6 oct. 09 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by Wigii.org (CWE) 13.05.2019 to allow creating an instance for a specific principal
  */
 
 class ElementPListExportCSVPretty extends ElementPListWebImplWithWigiiExecutor implements ElementDataTypeSubfieldVisitor {
@@ -46,14 +47,16 @@ class ElementPListExportCSVPretty extends ElementPListWebImplWithWigiiExecutor i
 	}
 	
 	public static function createInstance($wigiiExecutor, $listContext){
+	    return self::createInstanceForP($wigiiExecutor, $listContext, null);
+	}
+	public static function createInstanceForP($wigiiExecutor, $listContext, $p){
 		$elPl = new self();
+		$elPl->setP($p);
 		$transS = ServiceProvider::getTranslationService();
 		$configS = $wigiiExecutor->getConfigurationContext();
-		$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
-		$exec = ServiceProvider::getExecutionService();
+		$p = $elPl->getP();
 		$fsl = FieldSelectorListForActivity::createInstance();
 		$fsl->setSelectedLanguages(array($transS->getLanguage()=>$transS->getLanguage()));
-//		$configS->getFields($p, $exec->getCrtModule(), Activity::createInstance("excelExport"), $fsl);
 		$fieldList = FormFieldList::createInstance(null);
 		$configS->getGroupsFields($p, $listContext->getConfigGroupList(), null, $fieldList);
 		foreach($fieldList->getListIterator() as $field){
@@ -206,7 +209,7 @@ class ElementPListExportCSVPretty extends ElementPListWebImplWithWigiiExecutor i
 		
 		//le premier élément que l'on ajoute, on créé les headers
 		if($this->first){
-			$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+		    $p = $this->getP();
 			$transS = ServiceProvider::getTranslationService();
 			
 			$this->firstCell = true;

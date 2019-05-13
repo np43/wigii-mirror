@@ -324,7 +324,7 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 //			fput($label);
 //			fput($element->getFieldList()->getField($fMap["label"])->getXml()->asXML());
 //			fput($element->getFieldList()->getField($fMap["label"])->getXml()->xpath('attribute[(text()="'.$label.'")]'));
-//			$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+//			$p = $this->getP();
 //			$exec = ServiceProvider::getExecutionService();
 //			fput($exec->getCrtModule());
 //			fput($this->getWigiiExecutor()->getConfigurationContext()->getCrtConfigGroupId($p, $exec));

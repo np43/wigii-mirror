@@ -81,16 +81,19 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 		$this->isLocalLink = $isLocalLink;
 	}
 	public function isLocalLink(){ return $this->isLocalLink; }
-	public static function createInstance($wigiiExecutor, $listContext){
+	public static function createInstance($wigiiExecutor, $listContext) {
+	    return self::createInstanceForP($wigiiExecutor, $listContext, null);
+	}
+	public static function createInstanceForP($wigiiExecutor, $listContext,$p){
 		$elPl = new self();
+		$elPl->setP($p);
 		//update the list context with a fieldSelector matching the export activity:
 		$transS = ServiceProvider::getTranslationService();
 		$configS = $wigiiExecutor->getConfigurationContext();
-		$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+		$p = $elPl->getP();
 		$exec = ServiceProvider::getExecutionService();
 		$fsl = FieldSelectorListForActivity::createInstance();
 		$fsl->setSelectedLanguages(array($transS->getLanguage()=>$transS->getLanguage()));
-//		$configS->getFields($p, $exec->getCrtModule(), Activity::createInstance("excelExport"), $fsl);
 		$fieldList = FormFieldList::createInstance(null);
 		$configS->getFields($p, $exec->getCrtModule(), null, $fieldList);
 		foreach($fieldList->getListIterator() as $field){
@@ -421,7 +424,7 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 
 		$elS = ServiceProvider::getElementService();
 		$configS = $this->getWigiiExecutor()->getConfigurationContext();
-		$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+		$p = $this->getP();
 		$transS = ServiceProvider::getTranslationService();
 
 		$element = $elementP->getElement();
@@ -860,7 +863,7 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 	public function actOnTreeNode($object, $depth, $numberOfChildren){
 		$configS = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
 		$transS = ServiceProvider::getTranslationService();
-		$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+		$p = $this->getP();
 		$ite = $this->getGroupPList()->getGroupIds();
 //		fput($object->getDbEntity()->getGroupname()." depth:".$depth." depth offset:".$this->depthOffset);
 		if($ite[$object->getId()] != null){

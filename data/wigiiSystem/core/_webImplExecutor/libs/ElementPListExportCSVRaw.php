@@ -135,8 +135,8 @@ class ElementPListExportCSVRaw extends ElementPListWebImplWithWigiiExecutor impl
 
 		//le premier élément que l'on ajoute, on créé les headers
 		if($this->first){
-			$p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
-			$transS = ServiceProvider::getTranslationService();
+		    //$p = $this->getP();
+			//$transS = ServiceProvider::getTranslationService();
 
 			$this->firstCell = true;
 			foreach($element->getFieldList()->getListIterator() as $field){

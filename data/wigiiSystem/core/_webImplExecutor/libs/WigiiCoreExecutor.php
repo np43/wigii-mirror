@@ -374,18 +374,18 @@ class WigiiCoreExecutor {
 		$elS = ServiceProvider :: getElementService();
 		switch ($action) {
 			case "PDF" :
-				$ell = ElementPListExportExcel :: createInstance($this, $listContext);
+				$ell = ElementPListExportExcel :: createInstanceForP($this, $listContext, $p);
 				$ell->setFactory("PDF");
 				$ell->setLCTemp($lcTemp);
 				$ell->setAllOnOnePage(true);
 				return $ell;
 			case "Excel" :
-				$ell = ElementPListExportExcel :: createInstance($this, $listContext);
+				$ell = ElementPListExportExcel :: createInstanceForP($this, $listContext, $p);
 				$ell->setLCTemp($lcTemp);
 				//factory is autoset
 				return $ell;
 			case "CSVPretty" :
-				$ell = ElementPListExportCSVPretty :: createInstance($this, $listContext);
+				$ell = ElementPListExportCSVPretty :: createInstanceForP($this, $listContext, $p);
 				$ell->setSeparator($separator);
 				$ell->setEncoding($encoding);
 				return $ell;
