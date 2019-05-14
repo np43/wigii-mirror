@@ -8423,7 +8423,7 @@ wncd.SelfLearningTaskList = function(container, options) {
 	 *@param Function eventHandler a function with signature eventHandler(task, action) where action is one of 'completed' or 'aborted'
 	 */
 	self.onTaskEnd = function(eventHandler) {
-		if(!$.isFunction(eventHandler)) throw wigiiNcd.createServiceException('task end event handler should be a function', wigiiNcd.errorCodes.INVALID_ARGUMENT);
+		if(!$.isFunction(eventHandler)) throw wncd.createServiceException('task end event handler should be a function', wncd.errorCodes.INVALID_ARGUMENT);
 		self.onTaskEndSubscribers.push(eventHandler);
 	};
 	self.onTaskEndSubscribers = [];
@@ -8432,7 +8432,7 @@ wncd.SelfLearningTaskList = function(container, options) {
 	 *@param Function eventHandler a function with signature eventHandler(task, action) where action is one of 'run', 'pause', or 'resume'
 	 */
 	self.onTaskControl = function(eventHandler) {
-		if(!$.isFunction(eventHandler)) throw wigiiNcd.createServiceException('task end event handler should be a function', wigiiNcd.errorCodes.INVALID_ARGUMENT);
+		if(!$.isFunction(eventHandler)) throw wncd.createServiceException('task end event handler should be a function', wncd.errorCodes.INVALID_ARGUMENT);
 		self.onTaskControlSubscribers.push(eventHandler);
 	};
 	self.onTaskControlSubscribers = [];
@@ -9054,3 +9054,206 @@ wncd.AgileStoryBoard = function(container, options) {
 	}
 });
 wncd.createAgileStoryBoard = function(container, options) {return new wncd.AgileStoryBoard(container,options);};
+
+
+wncd.comment(function(){/**
+ * User Interface event recorder
+ *@param Object options a set of options to configure the behavior of the UIRecorder component. It supports the following attributes :
+ * - interactionRules: Array. An array of interaction rules to pilot the ui recorder.
+ * - noBuffering: Boolean. If true, UI records are not buffered into the UIRecorder. 
+ * In that case you should register a UIRecord event handler to listen to the user interaction flow. 
+ * By default, buffering is active. Use reset method to clear the buffer at a given point in time.
+ * 
+ * UI Recorder Object model:
+ *
+ * InteractionRule {
+ *	 selector: String. JQuery selector on sensitive elements.
+ *	 uiObject: String|Object. UI object descriptor, or a name, or a plain object.
+ *	 eventType: String|Array. One or several events to capture.
+ * }
+ *
+ * UIRecord {
+ *	 timestamp: Integer. Event timestamp (ms)
+ *	 eventName: String. Dom Event type (click, change, input, ...)
+ *	 domId: String. Dom element ID if defined
+ *	 domElt: String. Dom element tag name
+ *	 cssClass: String. List of classes attached to element
+ *	 selector: String. JQuery selector string used to fetch the collection containing the element
+ *	 index: Integer. Index of element in JQuery selected collection
+ *	 uiObject: String|Object. UI object descriptor as defined in the fired interaction rule.
+ *	 inputValue: String. Input field value if defined.
+ *	 rightClick: Boolean. True if mouse right button has been clicked
+ *	 key: String. Keyboard value if defined
+ *	 shiftKey: Boolean. True if shift key has been pressed
+ *	 ctrlKey: Boolean. True if ctrl key has been pressed
+ *	 altKey: Boolean. True if alt key has been pressed
+ *	 metaKey: Boolean. True if meta key has been pressed
+ * }
+ */},
+wncd.UIRecorder = function(options) {
+	var self = this;
+	self.className = 'UIRecorder';
+	self.instantiationTime = Date.now();
+	self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
+	self.options = options || {};
+	self.context = {uiRecords: []};
+	self.impl = {};
+	
+	// Interaction Rule object
+	
+	self.impl.createInteractiveRule = function(selector,uiObject,eventType) {
+		return {selector:selector,uiObject:uiObject,eventType:eventType};
+	};
+	
+	/**
+	 * Gets or sets the array of InteractionRules to be used with the UI recorder
+	 */
+	self.interactionRules = function(arr) {
+		if(arr===undefined) return self.options.interactionRules;
+		else {
+			self.options.interactionRules = arr;
+			return self;
+		}
+	};
+	/**
+	 * Builds an array of InteractionRules using the 'r' symbol as a rule constructor.
+	 *@example wncd.createUIRecorder().setupInteractionRules(function(r){ return [
+	 *	r(".H","link","click"),
+	 *	r("button, .ui-buttons","button","click"),
+	 *	r(":text","textInput","input"),
+	 *	r(":input","input","change")
+	 *];});
+	 */
+	self.setupInteractionRules = function(scratchPad) {
+		var r = self.impl.createInteractiveRule;
+		self.interactionRules(scratchPad(r));
+		return self;
+	};
+	
+	
+	// Defines default options
+
+	if(!self.options.interactionRules) self.setupInteractionRules(function(r){ return [
+		r(".H","link","click"),
+		r("button, .ui-buttons","button","click"),
+		r(":text","textInput","input"),
+		r(":input","input","change")
+	];});
+	
+	
+	// Methods
+	
+	/**
+	 * Starts UI events recording
+	 */
+	self.start = function() {
+		self.impl.bindEvents();
+		return self;
+	};
+	
+	/**
+	 * Stops UI events recording
+	 */
+	self.stop = function() {
+		self.impl.unbindEvents();
+		return self;
+	};
+	
+	/**
+	 * Resets UI events recording
+	 */
+	self.reset = function() {
+		self.stop();
+		self.context.uiRecords = [];
+		self.start();
+		return self;
+	};
+	
+	/**
+	 * Refreshes UI events bindings
+	 */
+	self.refreshBindings = function() {
+		self.impl.unbindEvents();
+		self.impl.bindEvents();
+		return self;
+	};
+	
+	// Event flow management
+	
+	/**
+	 * Low level event handler. 
+	 * Captures an eventName, given a DOM eventObject and the related JQuery selector pointing to the event target,
+	 * then creates a UIRecord object, puts it into UI records buffer and calls any attached UIRecorder event handlers.
+	 */
+	self.impl.onEvent = function(eventName, eventObject, targetSelector) {
+		// Creates a UIRecord object
+		var uiRecord = {};
+		// UI Record event
+		uiRecord.timestamp = Date.now();
+		uiRecord.eventName = eventName;
+		uiRecord.ctxKey = self.ctxKey;
+		// UI Record dom element target
+		uiRecord.domId = targetSelector.attr('id');
+		uiRecord.domElt = targetSelector.prop('tagName');
+		uiRecord.cssClass = targetSelector.attr('class');
+		uiRecord.selector = eventObject.data.firedRule.selector;
+		uiRecord.index = $(uiRecord.selector).index(targetSelector);
+		// UI Record UI object
+		uiRecord.uiObject = eventObject.data.firedRule.uiObject;
+		// UI Record user data
+		uiRecord.inputValue = targetSelector.val();
+		uiRecord.rightClick = (eventObject.button===2);
+		uiRecord.key = eventObject.key;
+		uiRecord.shiftKey = eventObject.shiftKey;
+		uiRecord.ctrlKey = eventObject.ctrlKey;
+		uiRecord.altKey = eventObject.altKey;
+		uiRecord.metaKey = eventObject.metaKey;
+		
+		// stores ui record into buffer
+		if(self.options.noBuffering!==true) self.context.uiRecords.push(uiRecord);
+		// calls any registered event handlers
+		if(self.impl.onUIRecordSubscribers.length>0) {
+			for(var i=0;i<self.impl.onUIRecordSubscribers.length;i++) {					
+				self.impl.onUIRecordSubscribers[i](targetSelector, uiRecord, self);
+			}
+		}
+	};
+	
+	self.impl.bindEvents = function() {
+		self.options.interactionRules.forEach(function(r){
+			var events = r.eventType
+			if($.isArray(events)) events = events.join(' ');
+			// creates event handler if not already defined
+			if(!r.eventHandler) r.eventHandler = function(e) {self.impl.onEvent(e.type,e,$(this));};
+			// event data object
+			var data = {
+				ctxKey:self.ctxKey,
+				firedRule:r
+			};
+			// registers event handler
+			$(r.selector).on(events,null,data,r.eventHandler);
+		});
+	};
+	self.impl.unbindEvents = function() {
+		self.options.interactionRules.forEach(function(r){			
+			// unbinds event handler if defined
+			if(r.eventHandler) {
+				var events = r.eventType
+				if($.isArray(events)) events = events.join(' ');
+				$(r.selector).off(events,null,r.eventHandler);
+			}
+		});
+	};
+	
+	/**
+	 * Registers an event handler which is called each time a user interaction is recorded
+	 *@param Function eventHandler a function with signature eventHandler(targetSelector, uiRecord, uiRecorder)
+	 */
+	self.onUIRecord = function(eventHandler) {
+		if(!$.isFunction(eventHandler)) throw wncd.createServiceException('ui record event handler should be a function', wncd.errorCodes.INVALID_ARGUMENT);
+		self.impl.onUIRecordSubscribers.push(eventHandler);
+		return self;
+	};
+	self.impl.onUIRecordSubscribers = [];
+});
+wncd.createUIRecorder = function(options) {return new wncd.UIRecorder(options);};
