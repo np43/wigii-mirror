@@ -1868,18 +1868,31 @@ wncd.AgileStoryBoard = function(container, options) {
 		self.context.stories.sort(function(a,b){
 			if(a.position===undefined) a.position=0;
 			if(b.position===undefined) b.position=0;
-			//if status is done then sort by date
-			if(a.status=="5completer"){
-				return b.date - a.date;
-			} else {
-				return a.position - b.position;
-			}
+			return a.position - b.position;
 		});
 		// Adds stories to board
+		var doneStories = [];
 		for(var i=0;i<self.context.stories.length;i++) {
 			var story = self.context.stories[i];
+			// if story is done, then stores it temporarily into a buffer
+			if(story.status=="5completer") doneStories.push(story);
 			// only shows story compatible with assignee filter
 			// and not deleted
+			else {			
+				if(!story.deleted && (self.context.assigneeFilter===undefined || self.context.assigneeFilter == story.assignee)) {
+					self.impl.addStoryToBoard(story);
+				}
+			}
+		}	
+		// sorts done stories by date
+		doneStories.sort(function(a,b){
+			if(a.date===undefined) a.date=0;
+			if(b.date===undefined) b.date=0;
+			return b.date - a.date;
+		});
+		// renders done stories column
+		for(var i=0;i<doneStories.length;i++) {
+			var story = doneStories[i];
 			if(!story.deleted && (self.context.assigneeFilter===undefined || self.context.assigneeFilter == story.assignee)) {
 				self.impl.addStoryToBoard(story);
 			}
@@ -1897,12 +1910,16 @@ wncd.AgileStoryBoard = function(container, options) {
 			//wigii().log(story.status+'#'+self.ctxKey+"_"+statusIndex+" div.storyBoardColumnContent");
 			var storyHtml = $('#'+self.ctxKey+"_"+statusIndex+" div.storyBoardColumnContent").wncd("html")
 			.div("story_"+story.id,"story");
-			// records story position as an attribute
+			// records story position and date as an attribute
 			storyHtml.$().attr('data-storypos',story.position);
+			storyHtml.$().attr('data-storydate',story.date);
 			if(reorder) {
 				// retrieves lower priority story (ie with higher position)
 				var lowerStory = storyHtml.$().parent().find("div.story").filter(function(index,elt){
-					return $(this).attr('data-storypos') > story.position;
+					//if status is done then sort by date (descending)
+					if(story.status=="5completer") return $(this).attr('data-storydate') < story.date;
+					// else sort by position
+					else return $(this).attr('data-storypos') > story.position;
 				});
 				if(lowerStory.length > 0) {
 					storyHtml.$().insertBefore(lowerStory[0]);
@@ -2204,12 +2221,14 @@ wncd.comment(function(){/**
  * - noBuffering: Boolean. If true, UI records are not buffered into the UIRecorder. 
  * In that case you should register a UIRecord event handler to listen to the user interaction flow. 
  * By default, buffering is active. Use reset method to clear the buffer at a given point in time.
- * 
+ * - showGUI: Boolean. If true, then shows GUI at start, else keeps dialog hidden. Can be displayed on demand by calling the show method. 
+ * By default GUI is hidden at start.
+ 
  * UI Recorder Object model:
  *
  * InteractionRule {
- *	 selector: String. JQuery selector on sensitive elements.
- *	 uiObject: String|Object. UI object descriptor, or a name, or a plain object.
+ *	 uiObject: String|Object. UI object semantic descriptor, or a name, or a plain object.
+ *   selector: String. JQuery selector on sensitive elements.
  *	 eventType: String|Array. One or several events to capture.
  * }
  *
@@ -2242,8 +2261,8 @@ wncd.UIRecorder = function(options) {
 	
 	// Interaction Rule object
 	
-	self.impl.createInteractiveRule = function(selector,uiObject,eventType) {
-		return {selector:selector,uiObject:uiObject,eventType:eventType};
+	self.impl.createInteractiveRule = function(uiObject,selector,eventType) {
+		return {uiObject:uiObject,selector:selector,eventType:eventType};
 	};
 	
 	/**
@@ -2259,10 +2278,10 @@ wncd.UIRecorder = function(options) {
 	/**
 	 * Builds an array of InteractionRules using the 'r' symbol as a rule constructor.
 	 *@example wncd.createUIRecorder().setupInteractionRules(function(r){ return [
-	 *	r(".H","link","click"),
-	 *	r("button, .ui-buttons","button","click"),
-	 *	r(":text","textInput","input"),
-	 *	r(":input","input","change")
+	 *	r("link",".H","click"),
+	 *	r("button","button, .ui-buttons","click"),
+	 *	r("textInput",":text","input"),
+	 *	r("input",":input","change")
 	 *];});
 	 */
 	self.setupInteractionRules = function(scratchPad) {
@@ -2274,11 +2293,32 @@ wncd.UIRecorder = function(options) {
 	
 	// Defines default options
 
+	// by default setups rules to record user interaction on a wigii instance
 	if(!self.options.interactionRules) self.setupInteractionRules(function(r){ return [
-		r(".H","link","click"),
-		r("button, .ui-buttons","button","click"),
-		r(":text","textInput","input"),
-		r(":input","input","change")
+		r("homePageWigiiNamespaceMenu", "ul#homePageWigiiNamespaceMenu li.H, ul#homePageWigiiNamespaceMenu li.H a","click"),
+		r("homePageModuleMenu", "ul#homePageModuleMenu li.H, ul#homePageModuleMenu li.H a","click"),
+		r("groupPanelCollapse", "div#groupPanel div.collapse","click"),
+		r("groupPanelFolderMenu", "div#groupPanel div.cm, div#groupPanel div.cm > div","click"),
+		r("groupPanelRootFolders", "div#groupPanel ul#group_0","click"),
+		r("groupPanelFolder", "div#groupPanel ul#group_0 li, div#groupPanel ul#group_0 li > div > a","click"),
+		r("groupPanelFolderExpand", "div#groupPanel ul#group_0 li > div > span.folder","click"),
+		r("groupPanelFolderMenu", "div#groupPanel ul#group_0 li > div > span.menu","click"),
+		r("homeMenu", "ul#navigateMenuBsp li.home > a","click"),
+		r("navigationMenu", "ul#navigateMenuBsp li.dropdown > a, ul#navigateMenuBsp li.dropdown ul.dropdown-menu > li > a, ul#navigateMenuBsp li.dropdown-submenu ul.dropdown-menu > li > a","click"),
+		r("elementListRow", "div#moduleView div.dataZone tr.H","click"),
+		r("elementMenu", "div#moduleView div.dataZone tr.H > td > div.menu","click"),
+		r("element", "div#moduleView div.dataZone tr.H > td > div","click"),
+		r("addNewElement", "div.toolbarBox > div.addNewElement","click"),
+		r("elementDetailButton", "div#elementDialog div.T div.H","click"),
+		r("elementField", "div.field > div.value :input","change"),
+		r("elementField", "div.field > div.value :text","input"),
+		r("elementField", "div.field > div.addC.d","click"),
+		r("elementField", "div.field > div.label > span.expand","click"),
+		r("elementField", "div.field > div.label > span.H.addJournalItem","click"),
+		r("link", "a.H","click"),
+		r("button", "button.ui-button, div.ui-dialog div.ui-dialog-buttonset > button.ui-button, button","click"),
+		r("textInput", ":text","input"),
+		r("input", ":input","change")
 	];});
 	
 	
@@ -2311,11 +2351,84 @@ wncd.UIRecorder = function(options) {
 	};
 	
 	/**
+	 * Replays the recorded sequence of action
+	 */
+	self.replay = function() {
+		// stops recording
+		self.stop();
+		// plays current buffer
+		self.play(self.context.uiRecords);
+		return self;
+	};
+	
+	/**
+	 * Plays a given list of UIRecords
+	 */
+	self.play = function(uiRecords) {
+		// builds a sequence of user interactions
+		var uiSeq = wncd.ctlSeq();
+		var previousRecord=undefined;
+		uiRecords.forEach(function(uiRecord){
+			/*
+			if(previousRecord && uiRecord.timestamp>previousRecord.timestamp) {
+				var pause = (uiRecord.timestamp-previousRecord.timestamp)/1000;
+				uiSeq.addFx(wncd.pause(2));
+			}
+			*/
+			uiSeq.addFx(wncd.fx(self.impl.playUIRecord,uiRecord));
+			// if event=change, then adds a 1s pause
+			if(uiRecord.eventName=='change') uiSeq.addFx(wncd.pause(1));
+			// if event=click, then adds a 2s pause
+			if(uiRecord.eventName=='click') uiSeq.addFx(wncd.pause(2));
+			previousRecord=uiRecord;
+		});
+		// executes sequence
+		wncd.programme(uiSeq.toFx());
+		return self;
+	};
+	
+	/**
+	 * Plays one specific UIRecord
+	 */
+	self.impl.playUIRecord = function(uiRecord) {
+		// finds target
+		var target = [];
+		// uses domId if defined
+		if(uiRecord.domId) target = $(uiRecord.domId);
+		// if domId not found and index>-1 then selects target
+		if(target.length==0 && uiRecord.index>-1) target = $(uiRecord.selector).eq(uiRecord.index);
+		// if not found, then refines with class selection
+		if(target.length==0 && uiRecord.cssClass) target = $(uiRecord.selector).find('.'+uiRecord.cssClass.replace(/ /g,'.'));
+		// if not found or multiple selection, ignores action
+		if(target.length!=1) {wigii().log("not found "+uiRecord.selector+" "+uiRecord.index+" "+uiRecord.cssClass); return;}
+		// execute action based on event name
+		if(uiRecord.eventName=='click') target.click();
+		else if(uiRecord.eventName=='input') target.val(uiRecord.inputValue);
+		else if(uiRecord.eventName=='change') target.val(uiRecord.inputValue);		
+	};
+	
+	/**
 	 * Refreshes UI events bindings
 	 */
 	self.refreshBindings = function() {
 		self.impl.unbindEvents();
 		self.impl.bindEvents();
+		
+		// creates a specific uiRecord
+		var uiRecord = {};
+		var targetSelector = $('body');
+		// UI Record event
+		uiRecord.timestamp = Date.now();
+		uiRecord.eventName = 'refreshBindings';
+		uiRecord.ctxKey = self.ctxKey;
+		// UI Record dom element target
+		uiRecord.domId = targetSelector.attr('id');
+		uiRecord.domElt = targetSelector.prop('tagName');
+		uiRecord.cssClass = targetSelector.attr('class');
+		uiRecord.selector = 'body';
+		uiRecord.index = $(uiRecord.selector).index(targetSelector);
+		
+		self.impl.onUIRecord(targetSelector, uiRecord);
 		return self;
 	};
 	
@@ -2350,6 +2463,9 @@ wncd.UIRecorder = function(options) {
 		uiRecord.altKey = eventObject.altKey;
 		uiRecord.metaKey = eventObject.metaKey;
 		
+		self.impl.onUIRecord(targetSelector, uiRecord);
+	};	
+	self.impl.onUIRecord = function(targetSelector, uiRecord) {
 		// stores ui record into buffer
 		if(self.options.noBuffering!==true) self.context.uiRecords.push(uiRecord);
 		// calls any registered event handlers
@@ -2359,7 +2475,6 @@ wncd.UIRecorder = function(options) {
 			}
 		}
 	};
-	
 	self.impl.bindEvents = function() {
 		self.options.interactionRules.forEach(function(r){
 			var events = r.eventType
@@ -2396,5 +2511,20 @@ wncd.UIRecorder = function(options) {
 		return self;
 	};
 	self.impl.onUIRecordSubscribers = [];
+	
+	/**
+	 * Shows GUI to interact with the UIRecorder object
+	 */
+	self.show = function() {
+		wncd.popup(function(popup){
+			wncd.currentDiv()
+			.button("Start",self.start)
+			.button("Rebind",self.refreshBindings)
+			.button("Stop",self.stop)
+			.button("Play",self.replay)
+			.button("Reset",self.reset);
+		});
+	};
+	if(self.options.showGUI) self.show();
 });
 wncd.createUIRecorder = function(options) {return new wncd.UIRecorder(options);};
