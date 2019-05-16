@@ -326,7 +326,7 @@ class ElementPListRowsForElementBlogImpl extends ElementPGroupableSelectablePage
             } else {
                 $value = $rm->formatValueFromFS($header, $element);
                 if($xmlHeader["displayAsBoolean"]=="1" && $field->getDataType()->getDataTypeName()!="Booleans"){
-                    $value = $rm->doFormatForBoolean($value!=null, false, $value);
+                	$value = $rm->doFormatForBoolean($value!=null, false, $value, $xmlHeader);
                 }
             }
 

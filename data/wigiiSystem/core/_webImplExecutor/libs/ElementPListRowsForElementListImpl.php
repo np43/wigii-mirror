@@ -83,7 +83,7 @@ class ElementPListRowsForElementListImpl extends ElementPGroupableSelectablePage
             } else {
                 $value = $this->getTrm()->formatValueFromFS($header, $element);
                 if($xmlHeader["displayAsBoolean"]=="1" && $field->getDataType()->getDataTypeName()!="Booleans"){
-                    $value = $this->getTrm()->doFormatForBoolean($value!=null, false, $value);
+                	$value = $this->getTrm()->doFormatForBoolean($value!=null, false, $value, $xmlHeader);
                 }
                 if(	!$header->isElementAttributeSelector() &&
                     ($field->getDataType()->getDataTypeName()=="Blobs" || $field->getDataType()->getDataTypeName()=="Textes" )
