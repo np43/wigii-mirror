@@ -1747,7 +1747,7 @@
 			}	
 			// Html emission
 			var htmlB = htmlEmitter.htmlBuilder();
-			htmlB.tag('ul','id',self.ctxKey,'class',htmlEmitter.emittedClass()+(options.cssClass?' '+options.cssClass:''));
+			htmlB.tag('ul','id',self.ctxKey,'class',htmlEmitter.emittedClass()+(self.options.cssClass?' '+self.options.cssClass:''));
 			var shouldContinue=true;
 			var n = 0;			
 			while(shouldContinue) {
@@ -9116,13 +9116,13 @@ wncd.UIRecorder = function(options) {
 	self.ctxKey = wncd.ctxKey+'_'+self.className+self.instantiationTime;
 	self.options = options || {};
 	self.context = {uiRecords: []};
-	self.impl = {};
-	
-	// Interaction Rule object
-	
-	self.impl.createInteractiveRule = function(uiObject,selector,eventType) {
-		return {uiObject:uiObject,selector:selector,eventType:eventType};
+	self.impl = {
+		onUIRecordSubscribers:[],
+		beforePlayUIRecordSubscribers:[],
+		afterPlayUIRecordSubscribers:[]
 	};
+	
+	// Configuration
 	
 	/**
 	 * Gets or sets the array of InteractionRules to be used with the UI recorder
@@ -9134,6 +9134,7 @@ wncd.UIRecorder = function(options) {
 			return self;
 		}
 	};
+
 	/**
 	 * Builds an array of InteractionRules using the 'r' symbol as a rule constructor.
 	 *@example wncd.createUIRecorder().setupInteractionRules(function(r){ return [
@@ -9150,120 +9151,19 @@ wncd.UIRecorder = function(options) {
 	};
 	
 	
-	// Defines default options
-
-	// by default setups rules to record user interaction on a wigii instance
-	if(!self.options.interactionRules) self.setupInteractionRules(function(r){ return [
-		r("homePageWigiiNamespaceMenu", "ul#homePageWigiiNamespaceMenu li.H, ul#homePageWigiiNamespaceMenu li.H a","click"),
-		r("homePageModuleMenu", "ul#homePageModuleMenu li.H, ul#homePageModuleMenu li.H a","click"),
-		r("groupPanelCollapse", "div#groupPanel div.collapse","click"),
-		r("groupPanelFolderMenu", "div#groupPanel div.cm, div#groupPanel div.cm > div","click"),
-		r("groupPanelRootFolders", "div#groupPanel ul#group_0","click"),
-		r("groupPanelFolder", "div#groupPanel ul#group_0 li, div#groupPanel ul#group_0 li > div > a","click"),
-		r("groupPanelFolderExpand", "div#groupPanel ul#group_0 li > div > span.folder","click"),
-		r("groupPanelFolderMenu", "div#groupPanel ul#group_0 li > div > span.menu","click"),
-		r("homeMenu", "ul#navigateMenuBsp li.home > a","click"),
-		r("navigationMenu", "ul#navigateMenuBsp li.dropdown > a, ul#navigateMenuBsp li.dropdown ul.dropdown-menu > li > a, ul#navigateMenuBsp li.dropdown-submenu ul.dropdown-menu > li > a","click"),
-		r("elementListRow", "div#moduleView div.dataZone tr.H","click"),
-		r("elementMenu", "div#moduleView div.dataZone tr.H > td > div.menu","click"),
-		r("element", "div#moduleView div.dataZone tr.H > td > div","click"),
-		r("addNewElement", "div.toolbarBox > div.addNewElement","click"),
-		r("elementDetailButton", "div#elementDialog div.T div.H","click"),
-		r("elementField", "div.field > div.value :input","change"),
-		r("elementField", "div.field > div.value :text","input"),
-		r("elementField", "div.field > div.addC.d","click"),
-		r("elementField", "div.field > div.label > span.expand","click"),
-		r("elementField", "div.field > div.label > span.H.addJournalItem","click"),
-		r("link", "a.H","click"),
-		r("button", "button.ui-button, div.ui-dialog div.ui-dialog-buttonset > button.ui-button, button","click"),
-		r("textInput", ":text","input"),
-		r("input", ":input","change")
-	];});
-	
-	
 	// Methods
+	
 	
 	/**
 	 * Starts UI events recording
 	 */
 	self.start = function() {
+		if(self.options.showGUI && !self.context.playList) {
+			// creates an empty list
+			self.context.playList = self.context.playListEmitter.list(function(i){},self.impl.renderUIRecordInList);
+		}
 		self.impl.bindEvents();
 		return self;
-	};
-	
-	/**
-	 * Stops UI events recording
-	 */
-	self.stop = function() {
-		self.impl.unbindEvents();
-		return self;
-	};
-	
-	/**
-	 * Resets UI events recording
-	 */
-	self.reset = function() {
-		self.stop();
-		self.context.uiRecords = [];
-		self.start();
-		return self;
-	};
-	
-	/**
-	 * Replays the recorded sequence of action
-	 */
-	self.replay = function() {
-		// stops recording
-		self.stop();
-		// plays current buffer
-		self.play(self.context.uiRecords);
-		return self;
-	};
-	
-	/**
-	 * Plays a given list of UIRecords
-	 */
-	self.play = function(uiRecords) {
-		// builds a sequence of user interactions
-		var uiSeq = wncd.ctlSeq();
-		var previousRecord=undefined;
-		uiRecords.forEach(function(uiRecord){
-			/*
-			if(previousRecord && uiRecord.timestamp>previousRecord.timestamp) {
-				var pause = (uiRecord.timestamp-previousRecord.timestamp)/1000;
-				uiSeq.addFx(wncd.pause(2));
-			}
-			*/
-			uiSeq.addFx(wncd.fx(self.impl.playUIRecord,uiRecord));
-			// if event=change, then adds a 1s pause
-			if(uiRecord.eventName=='change') uiSeq.addFx(wncd.pause(1));
-			// if event=click, then adds a 2s pause
-			if(uiRecord.eventName=='click') uiSeq.addFx(wncd.pause(2));
-			previousRecord=uiRecord;
-		});
-		// executes sequence
-		wncd.programme(uiSeq.toFx());
-		return self;
-	};
-	
-	/**
-	 * Plays one specific UIRecord
-	 */
-	self.impl.playUIRecord = function(uiRecord) {
-		// finds target
-		var target = [];
-		// uses domId if defined
-		if(uiRecord.domId) target = $(uiRecord.domId);
-		// if domId not found and index>-1 then selects target
-		if(target.length==0 && uiRecord.index>-1) target = $(uiRecord.selector).eq(uiRecord.index);
-		// if not found, then refines with class selection
-		if(target.length==0 && uiRecord.cssClass) target = $(uiRecord.selector).find('.'+uiRecord.cssClass.replace(/ /g,'.'));
-		// if not found or multiple selection, ignores action
-		if(target.length!=1) {wigii().log("not found "+uiRecord.selector+" "+uiRecord.index+" "+uiRecord.cssClass); return;}
-		// execute action based on event name
-		if(uiRecord.eventName=='click') target.click();
-		else if(uiRecord.eventName=='input') target.val(uiRecord.inputValue);
-		else if(uiRecord.eventName=='change') target.val(uiRecord.inputValue);		
 	};
 	
 	/**
@@ -9291,6 +9191,192 @@ wncd.UIRecorder = function(options) {
 		return self;
 	};
 	
+	/**
+	 * Stops UI events recording
+	 */
+	self.stop = function() {
+		self.impl.unbindEvents();
+		return self;
+	};
+	
+	/**
+	 * Resets UI events recording
+	 */
+	self.reset = function() {
+		self.stop();
+		self.context.uiRecords = [];
+		if(self.options.showGUI) {
+			self.context.playList = undefined;
+			self.context.playListEmitter.reset();
+		}
+		self.start();
+		return self;
+	};
+	
+	/**
+	 * Plays a given list of UIRecords
+	 */
+	self.play = function(uiRecords) {
+		// builds a sequence of user interactions
+		var uiSeq = wncd.ctlSeq();
+		var previousRecord=undefined;
+		uiRecords.forEach(function(uiRecord){
+			/*
+			if(previousRecord && uiRecord.timestamp>previousRecord.timestamp) {
+				var pause = (uiRecord.timestamp-previousRecord.timestamp)/1000;
+				uiSeq.addFx(wncd.pause(2));
+			}
+			*/
+			uiSeq.addFx(wncd.fx(self.impl.playUIRecordProcess,uiRecord));
+			// if event=change, then adds a 1s pause
+			if(uiRecord.eventName=='change') uiSeq.addFx(wncd.pause(1));
+			// if event=input, then adds a 0.25s pause
+			if(uiRecord.eventName=='change') uiSeq.addFx(wncd.pause(0.25));
+			// if event=click, then adds a 2s pause
+			if(uiRecord.eventName=='click') uiSeq.addFx(wncd.pause(2));
+			// if event=refreshBindings, then adds a 1s pause
+			if(uiRecord.eventName=='refreshBindings') uiSeq.addFx(wncd.pause(1));
+			previousRecord=uiRecord;
+		});
+		if(self.options.showGUI) self.context.playList.clearHighLight();
+		// executes sequence		
+		wncd.programme(uiSeq.toFx());
+		return self;
+	};
+	
+	/**
+	 * Replays the recorded sequence of action
+	 */
+	self.replay = function() {
+		// stops recording
+		self.stop();
+		// plays current buffer
+		self.play(self.context.uiRecords);
+		return self;
+	};
+	
+	/**
+	 * Shows GUI to interact with the UIRecorder object
+	 */
+	self.show = function() {
+		wncd.popup(function(popup){
+			wncd.currentDiv()
+			.button("Start",self.start, "uiRecorderStartButton uiRecorderIgnore")
+			.button("Rebind",self.refreshBindings, "uiRecorderRebindButton uiRecorderIgnore")
+			.button("Stop",self.stop, "uiRecorderStopButton uiRecorderIgnore")
+			.button("Play",self.replay, "uiRecorderPlayButton uiRecorderIgnore")
+			.button("Reset",self.reset, "uiRecorderResetButton uiRecorderIgnore");
+			self.context.playListEmitter = wncd.currentDiv().div(self.ctxKey+"_PlayList","uiRecorderPlayList uiRecorderIgnore");
+		});
+	};
+	
+	/**
+	 * Registers an event handler which is called each time a user interaction is recorded
+	 *@param Function eventHandler a function with signature eventHandler(targetSelector, uiRecord, uiRecorder)
+	 */
+	self.onUIRecord = function(eventHandler) {
+		if(!$.isFunction(eventHandler)) throw wncd.createServiceException('ui record event handler should be a function', wncd.errorCodes.INVALID_ARGUMENT);
+		self.impl.onUIRecordSubscribers.push(eventHandler);
+		return self;
+	};
+	
+	/**
+	 * Registers an event handler which is called before a specific UIRecord is played
+	 *@param Function eventHandler a function with signature eventHandler(uiRecord, uiRecorder)
+	 */
+	self.beforePlayUIRecord = function(eventHandler) {
+		if(!$.isFunction(eventHandler)) throw wncd.createServiceException('beforePlayUIRecord event handler should be a function', wncd.errorCodes.INVALID_ARGUMENT);
+		self.impl.beforePlayUIRecordSubscribers.push(eventHandler);
+		return self;
+	};
+	
+	/**
+	 * Registers an event handler which is called after a specific UIRecord is played
+	 *@param Function eventHandler a function with signature eventHandler(uiRecord, uiRecorder)
+	 */
+	self.afterPlayUIRecord = function(eventHandler) {
+		if(!$.isFunction(eventHandler)) throw wncd.createServiceException('afterPlayUIRecord event handler should be a function', wncd.errorCodes.INVALID_ARGUMENT);
+		self.impl.afterPlayUIRecordSubscribers.push(eventHandler);
+		return self;
+	};
+	
+	// Implementation 
+	
+	/**
+	 * Interaction Rule object
+	 *@return InteractionRule
+	 */
+	self.impl.createInteractiveRule = function(uiObject,selector,eventType) {
+		return {uiObject:uiObject,selector:selector,eventType:eventType};
+	};
+	
+	/**
+	 * Complete process of playing one specific UI record, with events firing
+	 */
+	self.impl.playUIRecordProcess = function(uiRecord) {
+		// calls any registered before play event handlers
+		if(self.impl.beforePlayUIRecordSubscribers.length>0) {
+			for(var i=0;i<self.impl.beforePlayUIRecordSubscribers.length;i++) {					
+				self.impl.beforePlayUIRecordSubscribers[i](uiRecord, self);
+			}
+		}
+		// highlights record in list
+		if(self.options.showGUI) self.context.playList.next();
+		// plays UI record
+		self.impl.playUIRecord(uiRecord);
+		
+		// calls any registered after play event handlers
+		if(self.impl.afterPlayUIRecordSubscribers.length>0) {
+			for(var i=0;i<self.impl.afterPlayUIRecordSubscribers.length;i++) {					
+				self.impl.afterPlayUIRecordSubscribers[i](uiRecord, self);
+			}
+		}
+	};
+	
+	/**
+	 * Plays one specific UIRecord
+	 */
+	self.impl.playUIRecord = function(uiRecord) {
+		// nothing to do on refreshBindings
+		if(uiRecord.eventName=='refreshBindings') return;
+		
+		// finds target
+		var target = [];
+		// uses domId if defined
+		if(uiRecord.domId) target = $(uiRecord.domId);
+		// if domId not found and index>-1 then selects target
+		if(target.length==0 && uiRecord.index>-1) target = $(uiRecord.selector).eq(uiRecord.index);
+		// if not found, then refines with class selection
+		if(target.length==0 && uiRecord.cssClass) target = $(uiRecord.selector).filter('.'+uiRecord.cssClass.replace(/ /g,'.'));
+		// if not found or multiple selection, ignores action
+		if(target.length!=1) {wigii().log("not found "+uiRecord.selector+" "+uiRecord.index+" "+uiRecord.cssClass); return;}
+		// execute action based on event name
+		if(uiRecord.eventName=='click') target.click();
+		else if(uiRecord.eventName=='input') target.val(uiRecord.inputValue);
+		else if(uiRecord.eventName=='change') {
+			if(target.attr('type')=='checkbox') target.click();
+			else target.val(uiRecord.inputValue);
+		}
+	};
+	
+	/**
+	 * Renders a UI Record in a list
+	 *@param int i index of item in the list (1 to size)
+	 *@param UIRecord uiRecord instance of UIRecord to render
+	 *@param wncd.UnorderedList list instance of wncd.UnorderedList in which the UIRecord is rendered
+	 */
+	self.impl.renderUIRecordInList = function(i,uiRecord,list) {
+		return wncd.getHtmlBuilder()
+		.tag('span','class','uiRecordTimestamp').put(uiRecord.timestamp).$tag('span')
+		.tag('span','class','uiRecordEventName').put(uiRecord.eventName).$tag('span')
+		.put('on')
+		.tag('span','class','uiRecordCssClass').put(uiRecord.cssClass).$tag('span')
+		.put('from')
+		.tag('span','class','uiRecordSelector').put(uiRecord.selector).$tag('span')
+		.html();
+	};
+	
+	
 	// Event flow management
 	
 	/**
@@ -9299,6 +9385,11 @@ wncd.UIRecorder = function(options) {
 	 * then creates a UIRecord object, puts it into UI records buffer and calls any attached UIRecorder event handlers.
 	 */
 	self.impl.onEvent = function(eventName, eventObject, targetSelector) {
+		// filters target with ignore class
+		if(targetSelector.hasClass('uiRecorderIgnore')) return;
+		// filters eventObject which already contain a uiRecord
+		if(eventObject[self.ctxKey]) return;
+		
 		// Creates a UIRecord object
 		var uiRecord = {};
 		// UI Record event
@@ -9322,11 +9413,16 @@ wncd.UIRecorder = function(options) {
 		uiRecord.altKey = eventObject.altKey;
 		uiRecord.metaKey = eventObject.metaKey;
 		
+		// registers uiRecord instance in event object
+		eventObject[self.ctxKey] = uiRecord;
+		// processes next stage in uiRecord event handling
 		self.impl.onUIRecord(targetSelector, uiRecord);
 	};	
 	self.impl.onUIRecord = function(targetSelector, uiRecord) {
 		// stores ui record into buffer
 		if(self.options.noBuffering!==true) self.context.uiRecords.push(uiRecord);
+		// displays ui record in list
+		if(self.options.showGUI) self.context.playList.add(uiRecord);
 		// calls any registered event handlers
 		if(self.impl.onUIRecordSubscribers.length>0) {
 			for(var i=0;i<self.impl.onUIRecordSubscribers.length;i++) {					
@@ -9360,30 +9456,36 @@ wncd.UIRecorder = function(options) {
 		});
 	};
 	
-	/**
-	 * Registers an event handler which is called each time a user interaction is recorded
-	 *@param Function eventHandler a function with signature eventHandler(targetSelector, uiRecord, uiRecorder)
-	 */
-	self.onUIRecord = function(eventHandler) {
-		if(!$.isFunction(eventHandler)) throw wncd.createServiceException('ui record event handler should be a function', wncd.errorCodes.INVALID_ARGUMENT);
-		self.impl.onUIRecordSubscribers.push(eventHandler);
-		return self;
-	};
-	self.impl.onUIRecordSubscribers = [];
+	// Startup
 	
-	/**
-	 * Shows GUI to interact with the UIRecorder object
-	 */
-	self.show = function() {
-		wncd.popup(function(popup){
-			wncd.currentDiv()
-			.button("Start",self.start)
-			.button("Rebind",self.refreshBindings)
-			.button("Stop",self.stop)
-			.button("Play",self.replay)
-			.button("Reset",self.reset);
-		});
-	};
+	// By default setups rules to record user interaction on a wigii instance
+	if(!self.options.interactionRules) self.setupInteractionRules(function(r){ return [
+		/*r("homePageWigiiNamespaceMenu", "ul#homePageWigiiNamespaceMenu li.H, ul#homePageWigiiNamespaceMenu li.H a","click"),*/
+		/*r("homePageModuleMenu", "ul#homePageModuleMenu li.H, ul#homePageModuleMenu li.H a","click"),*/
+		r("groupPanelCollapse", "div#groupPanel div.collapse","click"),
+		r("groupPanelFolderMenu", "div#groupPanel div.cm, div#groupPanel div.cm > div","click"),
+		r("groupPanelRootFolders", "div#groupPanel ul#group_0","click"),
+		r("groupPanelFolder", "div#groupPanel ul#group_0 li, div#groupPanel ul#group_0 li > div > a","click"),
+		r("groupPanelFolderExpand", "div#groupPanel ul#group_0 li > div > span.folder","click"),
+		r("groupPanelFolderMenu", "div#groupPanel ul#group_0 li > div > span.menu","click"),
+		r("homeMenu", "ul#navigateMenuBsp li.home > a","click"),
+		r("navigationMenu", "ul#navigateMenuBsp li.dropdown > a, ul#navigateMenuBsp li.dropdown ul.dropdown-menu > li > a, ul#navigateMenuBsp li.dropdown-submenu ul.dropdown-menu > li > a","click"),
+		r("elementListRow", "div#moduleView div.dataZone tr.H","click"),
+		r("elementMenu", "div#moduleView div.dataZone tr.H > td > div.menu","click"),
+		r("element", "div#moduleView div.dataZone tr.H > td > div","click"),
+		r("addNewElement", "div.toolbarBox > div.addNewElement","click"),
+		r("elementDetailButton", "div#elementDialog div.T div.H","click"),
+		r("elementField", "div.field > div.value :input","change"),
+		r("elementField", "div.field > div.value :text","input"),
+		r("elementField", "div.field > div.addC.d","click"),
+		r("elementField", "div.field > div.label > span.expand","click"),
+		r("elementField", "div.field > div.label > span.H.addJournalItem","click"),
+		r("link", "a.H","click"),
+		r("button", "div.ui-dialog div.ui-dialog-buttonset > button.ui-button","click"),
+		r("textInput", ":text","input"),
+		r("input", ":input","change")
+	];});
+	
 	if(self.options.showGUI) self.show();
 });
 wncd.createUIRecorder = function(options) {return new wncd.UIRecorder(options);};

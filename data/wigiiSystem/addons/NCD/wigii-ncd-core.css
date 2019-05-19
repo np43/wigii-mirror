@@ -675,3 +675,24 @@ div.storyBoardForm {
 	margin:5px;
 	margin-right:10px;
 }
+/********************************
+* Wigii NCD UIRecorder styling
+*********************************/
+div.uiRecorderPlayList {
+	margin-top:5px;
+}
+div.uiRecorderPlayList ul {
+	list-style: none;
+	margin:0;
+	padding:0;
+}
+div.uiRecorderPlayList li {
+	padding:2px;
+}
+div.uiRecorderPlayList li.highlighted {
+	background-color:#3333ff
+}
+div.uiRecorderPlayList li > span {
+	padding-left:2px;
+	padding-right:2px;
+}

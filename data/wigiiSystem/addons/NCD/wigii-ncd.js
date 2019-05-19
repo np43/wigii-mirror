@@ -1747,7 +1747,7 @@
 			}	
 			// Html emission
 			var htmlB = htmlEmitter.htmlBuilder();
-			htmlB.tag('ul','id',self.ctxKey,'class',htmlEmitter.emittedClass()+(options.cssClass?' '+options.cssClass:''));
+			htmlB.tag('ul','id',self.ctxKey,'class',htmlEmitter.emittedClass()+(self.options.cssClass?' '+self.options.cssClass:''));
 			var shouldContinue=true;
 			var n = 0;			
 			while(shouldContinue) {
