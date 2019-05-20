@@ -122,11 +122,12 @@ if %ERRORLEVEL% neq 0 goto winScpError
 
 :getClientProdUserAddonFolders
 echo Downloads %WIGII_CLIENT% user addon folders
+rem supports: Medidata addon. (uses wildcard selector to not fail if not exist)
 mkdir %WIGII_TARGET_ENV%\users\%WIGII_CLIENT%
 %WINSCP_CMD% ^
  "%WIGII_CONNEXION%" ^
  "lcd %WIGII_TARGET_ENV%\users\%WIGII_CLIENT%" ^
- "get -transfer=binary -filemask=*/|*.?*;*/data/uploadedFiles/*;*/data/uploadedFiles/*/ %WIGII_HOST_ENV%/users/%WIGII_CLIENT%/* .\" ^
+ "get -transfer=binary -filemask=*/|*.?*;*/data/uploadedFiles/*;*/data/uploadedFiles/*/ %WIGII_HOST_ENV%/users/%WIGII_CLIENT%/Medi* .\" ^
   "close" ^
  "exit"
 if %ERRORLEVEL% neq 0 goto winScpError
