@@ -61,7 +61,8 @@ class ObjectListArrayImpl extends Model implements ObjectList
 
 	public function count()
 	{
-		return (count($this->objArray));
+	    if(!empty($this->objArray)) return (count($this->objArray));
+	    else return 0;
 	}
 
 	// Utilities for key management
