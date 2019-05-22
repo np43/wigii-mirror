@@ -161,9 +161,20 @@ class IncludeConfigController extends ConfigControllerWithFuncExpVM {
                                 // if only selected xml attributes, then updates the xml node attributes with the included attributes
                                 $xmlAttributes = $includeExp->getXmlAttr();
                                 if(!empty($xmlAttributes)) {
-                                    foreach($xmlAttributes as $xmlAttr) {
-                                        simplexml_addAttribute($includeNode,$xmlAttr,(string)$result[$xmlAttr]);
+                                    // if xml attributes contains wildcard, then recopies all attributes
+                                    if(in_array('*', $xmlAttributes)) {
+                                        foreach($result->attributes() as $name=>$value) {
+                                            if(!$includeNode->hasAttribute($name)) simplexml_addAttribute($includeNode,$name,$value);
+                                        }
                                     }
+                                    // else only the ones defined in array
+                                    else {
+                                        foreach($xmlAttributes as $xmlAttr) {
+                                            simplexml_addAttribute($includeNode,$xmlAttr,(string)$result[$xmlAttr]);
+                                        }
+                                    }
+                                    // clears include attribute
+                                    $includeNode['include']='';
                                 }
                                 // else replaces node with included ones
                                 else $this->mergeXmlNodeWithInclude($includeNode,$result);
