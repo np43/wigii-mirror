@@ -734,17 +734,21 @@ class ElementEvaluator extends RecordEvaluator
 	
 	/**
 	 * Returns the first matching parent group name, ID or object given a name, array of names or drop-down xml configuration 
-	 * FuncExp signature : <code>cfgParentGroup(name, returnAttribute=groupname|id|group, silent=false)</code><br/>
+	 * FuncExp signature : <code>cfgParentGroup(name, returnAttribute=groupname|id|group|groupnameMatch, silent=false)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) name: String|Array|SimpleXmlElement the name or possible names of the group to search for in the parent hierarchy. If name is not defined, returns the direct parent group.
-	 * - Arg(1) returnAttribute: String. The name of the group attribute to return. Defaults to groupname. If 'group' then returns Group object, if 'groupnameMatch' then return the value matching using separator and index.
+	 * - Arg(1) returnAttribute: String. The name of the group attribute to return. Defaults to groupname. If 'group' then returns Group object, if 'groupnameMatch' then returns the value matching using separator and index.
 	 * - Arg(2) silent: Boolean. If true, then if parent group cannot be retrieved, then no Exception is thrown, but null is returned instead, else Exception is thrown as usual. Defaults to silent (true).	 
-	 * - Arg(3) separator|start: 
-	 * 				if String. optional, If defined, then use the string as a separator to explode the groupname to consider for matching. I.E =" ", and next parameter to 0 then takes the first word of the groupname to do the matching
-	 * 				if INT. opitonal, If defined do the comparaison starting from this character num	 
-	 * - Arg(4) index|len: INT = 0
-	 * 				if Arg3 is String : optional, If defined, then compare the exploded value at this index
-	 * 				if Arg3 is Int : optional, If defined, then takes len char after start for the comparaison	 
+	 * - Arg(3) separator|start: = null
+	 * 				if separator as String. Optional, if defined, then uses the string as a separator to explode the groupname to consider for matching.
+	 * 				if start as Int. Optional, if defined does the comparaison starting from this character number
+	 * - Arg(4) index|len|stopStr:
+	 * 		if Arg3 is String and index is numeric. Optional, if defined, then compares the exploded value at this index. Defaults to first word (index=0).
+	 * 		if Arg3 is Int. Optional, ff defined, then takes len char after start for the comparaison.
+	 *      if Arg3 is String and stopStr as String. Optional, if defined, then compares the exploded tail until stopStr is found.
+	 * @example to match group name starting with business key "C12345 MyCustomer" write cfgParentGroup(customers,"groupnameMatch",true," ")
+	 * to match group name ending with business key "MyCustomer C12345" write cfgParentGroup(customers,"groupnameMatch",true," ","10") (put an index big enough to ensure getting last word)
+	 * to match group name ending with business key in parenthesis "MyCustomer (C12345)" write cfgParentGroup(customers,"groupnameMatch",true,"(",")")
 	 * @return String|Int|Group
 	 * @throws ServiceException INVALID_STATE if Wigii is not capable to return a current selected group name in the calling context.
 	 */
@@ -805,7 +809,11 @@ class ElementEvaluator extends RecordEvaluator
 					if($separator && is_numeric($separator)){
 						$groupnameMatch = substr($groupnameMatch, $separator, $index);
 					} else if($separator && is_string($separator)){
-						$groupnameMatch = explode($separator, $groupnameMatch)[$index];
+						if(is_numeric($index)) $groupnameMatch= explode($separator, $groupnameMatch)[$index];
+						elseif(is_string($index)) {
+						    $groupnameMatch = end(explode($separator, $groupnameMatch, 2)); // gets tail
+						    $groupnameMatch = explode($index, $groupnameMatch)[0]; // gets head
+						}
 					}
 					if($matches[$groupnameMatch]) {
 						$returnValue = $group;

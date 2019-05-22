@@ -2291,11 +2291,15 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * Where arguments are :
 	 * - Arg(0) fieldName: FieldSelector of the dropDown field. A Field from which to get the possible values as a drop-down.
 	 * - Arg(1) separator|start: = null
-	 * 				if String. optional, If defined, then use the string as a separator to explode the groupname to consider for matching. I.E =" ", and next parameter to 0 then takes the first word of the groupname to do the matching
-	 * 				if INT. opitonal, If defined do the comparaison starting from this character num
-	 * - Arg(2) index|len: INT = 0
-	 * 				if Arg1 is String : optional, If defined, then compare the exploded value at this index
-	 * 				if Arg1 is Int : optional, If defined, then takes len char after start for the comparaison
+	 * 				if separator as String. Optional, if defined, then uses the string as a separator to explode the groupname to consider for matching.
+	 * 				if start as Int. Optional, if defined does the comparaison starting from this character number
+	 * - Arg(2) index|len|stopStr:
+	 * 				if Arg1 is String and index is numeric. Optional, if defined, then compares the exploded value at this index. Defaults to first word (index=0).
+	 * 				if Arg1 is Int. Optional, ff defined, then takes len char after start for the comparaison.
+	 *              if Arg1 is String and stopStr as String. Optional, if defined, then compares the exploded tail until stopStr is found.
+	 * @example to match group name starting with business key "C12345 MyCustomer" write getDropdownValueFromGroupOrParentGroups(customers," ")
+	 * to match group name ending with business key "MyCustomer C12345" write getDropdownValueFromGroupOrParentGroups(customers," ","10") (put an index big enough to ensure getting last word)
+	 * to match group name ending with business key in parenthesis "MyCustomer (C12345)" write getDropdownValueFromGroupOrParentGroups(customers,"(",")")
 	 * @return String the current nearest value found in the group hierachy from the drop down list
 	 */
 	public function getDropdownValueFromGroupOrParentGroups($args) {
@@ -2320,7 +2324,11 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			if($separator && is_numeric($separator)){
 				$returnValue= substr($returnValue, $separator, $index);
 			} else if($separator && is_string($separator)){
-				$returnValue= explode($separator, $returnValue)[$index];
+			    if(is_numeric($index)) $returnValue= explode($separator, $returnValue)[$index];
+			    elseif(is_string($index)) {
+			        $returnValue = end(explode($separator, $returnValue, 2)); // gets tail
+			        $returnValue = explode($index, $returnValue)[0]; // gets head
+			    }
 			}
 			if(!$matchers[$returnValue]) {
 				// checks parent group matching
