@@ -164,7 +164,7 @@ class IncludeConfigController extends ConfigControllerWithFuncExpVM {
                                     // if xml attributes contains wildcard, then recopies all attributes
                                     if(in_array('*', $xmlAttributes)) {
                                         foreach($result->attributes() as $name=>$value) {
-                                            if(!$includeNode->hasAttribute($name)) simplexml_addAttribute($includeNode,$name,$value);
+                                            if(!$includeNode[$name]) simplexml_addAttribute($includeNode,$name,$value);
                                         }
                                     }
                                     // else only the ones defined in array
