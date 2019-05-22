@@ -1313,6 +1313,10 @@ class TemplateRecordManager extends Model {
 		}
 		return "";
 	}
+	
+	public function doFormatForLinkToTel($value){
+		return '<a href="tel:'.str_replace(array(" ",".","/","-"),"",$value).'">'.$value.'</a>';
+	}
 
 	public function doFormatForLinks($value, $xml=array(), $doRegroupSimilarValue=false){
 		//we do a groupement on the value
@@ -2228,6 +2232,8 @@ class TemplateRecordManager extends Model {
 					return $this->doFormatForColor($value);
 				} else if($xml["htmlArea"]=="1"){
 					return $this->doFormatForHtmlText($value, $xml["deactivateHTMLPurifier"]!="1");
+				} else if($xml["linkToTel"]=="1"){
+					return $this->doFormatForLinkToTel($value);
 				} else {
 					return $this->doFormatForText($value, $doRegroupSimilarValue);
 				}
