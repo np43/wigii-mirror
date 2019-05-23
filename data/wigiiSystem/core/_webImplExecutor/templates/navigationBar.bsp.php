@@ -255,6 +255,15 @@ if($p->isRealUserPublic()) {
                             ?>><? echo $transS->t($p, "addIndicatorMenuItem");?></a><?
                             ?></li><?
 
+                        // WNCD UIRecorder
+                        if(defined("WNCD_UIRECORDER") && defined("WEB_WNCD")){
+                            ?><li id="wncdUIRecorder"><?
+                				?><a href="#" <?
+                					?>onclick="wncd.program.context.uirecorder = wncd.createUIRecorder({showGUI:true});"<?
+                					?>>UI Recorder</a><?
+                			?></li><?
+            			}
+            			
                         //logout
                         ?><li id="userMenuLogout"><?
                             // reset wigii_anchor cookie

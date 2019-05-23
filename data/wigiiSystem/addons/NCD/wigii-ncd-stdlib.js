@@ -2242,6 +2242,8 @@ wncd.comment(function(){/**
  *	 index: Integer. Index of element in JQuery selected collection
  *	 uiObject: String|Object. UI object descriptor as defined in the fired interaction rule.
  *	 inputValue: String. Input field value if defined.
+ *	 inputName: String. Input field name if defined.
+ *   inputType: String. Input field type if defined.
  *	 rightClick: Boolean. True if mouse right button has been clicked
  *	 key: String. Keyboard value if defined
  *	 shiftKey: Boolean. True if shift key has been pressed
@@ -2301,9 +2303,13 @@ wncd.UIRecorder = function(options) {
 	self.start = function() {
 		if(self.options.showGUI && !self.context.playList) {
 			// creates an empty list
-			self.context.playList = self.context.playListEmitter.list(function(i){},self.impl.renderUIRecordInList);
+			self.context.playList = self.context.playListEmitter.list(function(i){},self.options.renderUIRecordInList);
 		}
 		self.impl.bindEvents();
+		if(self.options.showGUI) {
+			$("#uiRecorderPlayButton").removeClass("uiRecorderPlaying");
+			$("#uiRecorderStartButton").addClass("uiRecorderRecording");
+		}
 		return self;
 	};
 	
@@ -2335,8 +2341,9 @@ wncd.UIRecorder = function(options) {
 	/**
 	 * Stops UI events recording
 	 */
-	self.stop = function() {
+	self.stop = function() {		
 		self.impl.unbindEvents();
+		if(self.options.showGUI) $("#uiRecorderStartButton").removeClass("uiRecorderRecording");
 		return self;
 	};
 	
@@ -2358,6 +2365,7 @@ wncd.UIRecorder = function(options) {
 	 * Plays a given list of UIRecords
 	 */
 	self.play = function(uiRecords) {
+		if(self.options.showGUI) $("#uiRecorderPlayButton").addClass("uiRecorderPlaying");
 		// builds a sequence of user interactions
 		var uiSeq = wncd.ctlSeq();
 		var previousRecord=undefined;
@@ -2379,7 +2387,14 @@ wncd.UIRecorder = function(options) {
 			if(uiRecord.eventName=='refreshBindings') uiSeq.addFx(wncd.pause(1));
 			previousRecord=uiRecord;
 		});
-		if(self.options.showGUI) self.context.playList.clearHighLight();
+		// finish playing sequence
+		uiSeq.addFx(wncd.scripte(function(){
+			if(self.options.showGUI) {
+				self.context.playList.clearHighLight();
+				$("#uiRecorderPlayButton").removeClass("uiRecorderPlaying");
+			}
+		}));
+		
 		// executes sequence		
 		wncd.programme(uiSeq.toFx());
 		return self;
@@ -2402,10 +2417,10 @@ wncd.UIRecorder = function(options) {
 	self.show = function() {
 		wncd.popup(function(popup){
 			wncd.currentDiv()
-			.button("Start",self.start, "uiRecorderStartButton uiRecorderIgnore")
+			.button("Start",self.start, "uiRecorderStartButton uiRecorderIgnore","uiRecorderStartButton")
 			.button("Rebind",self.refreshBindings, "uiRecorderRebindButton uiRecorderIgnore")
 			.button("Stop",self.stop, "uiRecorderStopButton uiRecorderIgnore")
-			.button("Play",self.replay, "uiRecorderPlayButton uiRecorderIgnore")
+			.button("Play",self.replay, "uiRecorderPlayButton uiRecorderIgnore","uiRecorderPlayButton")
 			.button("Reset",self.reset, "uiRecorderResetButton uiRecorderIgnore");
 			self.context.playListEmitter = wncd.currentDiv().div(self.ctxKey+"_PlayList","uiRecorderPlayList uiRecorderIgnore");
 		});
@@ -2488,15 +2503,15 @@ wncd.UIRecorder = function(options) {
 		// if domId not found and index>-1 then selects target
 		if(target.length==0 && uiRecord.index>-1) target = $(uiRecord.selector).eq(uiRecord.index);
 		// if not found, then refines with class selection
-		if(target.length==0 && uiRecord.cssClass) target = $(uiRecord.selector).filter('.'+uiRecord.cssClass.replace(/ /g,'.'));
+		if(target.length==0 && uiRecord.cssClass) target = $(uiRecord.selector).filter('.'+uiRecord.cssClass.replace(/[ ]+/g,'.'));
 		// if not found or multiple selection, ignores action
 		if(target.length!=1) {wigii().log("not found "+uiRecord.selector+" "+uiRecord.index+" "+uiRecord.cssClass); return;}
 		// execute action based on event name
 		if(uiRecord.eventName=='click') target.click();
 		else if(uiRecord.eventName=='input') target.val(uiRecord.inputValue);
 		else if(uiRecord.eventName=='change') {
-			if(target.attr('type')=='checkbox') target.click();
-			else target.val(uiRecord.inputValue);
+			if(target.attr('type')=='checkbox' || target.attr('type')=='radio') target.click();
+			else target.val(uiRecord.inputValue).change();
 		}
 	};
 	
@@ -2506,15 +2521,38 @@ wncd.UIRecorder = function(options) {
 	 *@param UIRecord uiRecord instance of UIRecord to render
 	 *@param wncd.UnorderedList list instance of wncd.UnorderedList in which the UIRecord is rendered
 	 */
-	self.impl.renderUIRecordInList = function(i,uiRecord,list) {
-		return wncd.getHtmlBuilder()
-		.tag('span','class','uiRecordTimestamp').put(uiRecord.timestamp).$tag('span')
-		.tag('span','class','uiRecordEventName').put(uiRecord.eventName).$tag('span')
-		.put('on')
-		.tag('span','class','uiRecordCssClass').put(uiRecord.cssClass).$tag('span')
-		.put('from')
-		.tag('span','class','uiRecordSelector').put(uiRecord.selector).$tag('span')
-		.html();
+	if(!self.options.renderUIRecordInList) self.options.renderUIRecordInList = function(i,uiRecord,list) {
+		// timestamp
+		if(i==1) list.context.previousTimestamp = uiRecord.timestamp;	
+		var timestamp = Math.floor((uiRecord.timestamp-list.context.previousTimestamp)/1000.0);
+		if(timestamp==0) timestamp = '0';
+		// event label
+		var eventLabel = uiRecord.eventName;
+		if(uiRecord.eventName=='refreshBindings') eventLabel='wait for refresh';
+		// ui object label
+		var uiObjectLabel = '';
+		if($.isPlainObject(uiRecord.uiObject)) uiObjectLabel = uiRecord.uiObject.label;
+		else uiObjectLabel = uiRecord.uiObject;		
+		// id
+		var id = uiRecord.domId;
+		/*if(!id && uiRecord.cssClass) id = uiRecord.domElt+'.'+uiRecord.cssClass.replace(/[ ]+/g,'.');*/
+		// if form field, then displays field name and value
+		if(uiRecord.inputName && (uiRecord.eventName=='input' || uiRecord.eventName=='change')) {
+			id = uiRecord.inputName;
+			if(id) id = id.split('_value')[0];
+		}
+		// value
+		var value='';
+		if(uiRecord.inputValue && (uiRecord.eventName=='input' || uiRecord.eventName=='change')) value = uiRecord.inputValue;
+		
+		var htmlb = wncd.getHtmlBuilder()
+		.tag('span','class','uiRecordNo').put(i).put('.').$tag('span')
+		.tag('span','class','uiRecordTimestamp').put(timestamp).put('s').$tag('span')
+		.tag('span','class','uiRecordEventName').put(eventLabel).$tag('span');
+		if(uiObjectLabel) htmlb.put('on').tag('span','class','uiRecordUIObject').put(uiObjectLabel).$tag('span');
+		if(id) htmlb.tag('span','class','uiRecordDomId').put(id).$tag('span');
+		if(value) htmlb.put(':').tag('span','class','uiRecordInputValue').put(value).$tag('span');
+		return htmlb.html();
 	};
 	
 	
@@ -2547,6 +2585,8 @@ wncd.UIRecorder = function(options) {
 		uiRecord.uiObject = eventObject.data.firedRule.uiObject;
 		// UI Record user data
 		uiRecord.inputValue = targetSelector.val();
+		uiRecord.inputName = targetSelector.attr('name');
+		uiRecord.inputType = targetSelector.attr('type');
 		uiRecord.rightClick = (eventObject.button===2);
 		uiRecord.key = eventObject.key;
 		uiRecord.shiftKey = eventObject.shiftKey;
@@ -2603,27 +2643,35 @@ wncd.UIRecorder = function(options) {
 	if(!self.options.interactionRules) self.setupInteractionRules(function(r){ return [
 		/*r("homePageWigiiNamespaceMenu", "ul#homePageWigiiNamespaceMenu li.H, ul#homePageWigiiNamespaceMenu li.H a","click"),*/
 		/*r("homePageModuleMenu", "ul#homePageModuleMenu li.H, ul#homePageModuleMenu li.H a","click"),*/
-		r("groupPanelCollapse", "div#groupPanel div.collapse","click"),
-		r("groupPanelFolderMenu", "div#groupPanel div.cm, div#groupPanel div.cm > div","click"),
-		r("groupPanelRootFolders", "div#groupPanel ul#group_0","click"),
-		r("groupPanelFolder", "div#groupPanel ul#group_0 li, div#groupPanel ul#group_0 li > div > a","click"),
-		r("groupPanelFolderExpand", "div#groupPanel ul#group_0 li > div > span.folder","click"),
-		r("groupPanelFolderMenu", "div#groupPanel ul#group_0 li > div > span.menu","click"),
-		r("homeMenu", "ul#navigateMenuBsp li.home > a","click"),
-		r("navigationMenu", "ul#navigateMenuBsp li.dropdown > a, ul#navigateMenuBsp li.dropdown ul.dropdown-menu > li > a, ul#navigateMenuBsp li.dropdown-submenu ul.dropdown-menu > li > a","click"),
-		r("elementListRow", "div#moduleView div.dataZone tr.H","click"),
-		r("elementMenu", "div#moduleView div.dataZone tr.H > td > div.menu","click"),
-		r("element", "div#moduleView div.dataZone tr.H > td > div","click"),
-		r("addNewElement", "div.toolbarBox > div.addNewElement","click"),
-		r("elementDetailButton", "div#elementDialog div.T div.H","click"),
-		r("elementField", "div.field > div.value :input","change"),
-		r("elementField", "div.field > div.value :text","input"),
-		r("elementField", "div.field > div.addC.d","click"),
-		r("elementField", "div.field > div.label > span.expand","click"),
-		r("elementField", "div.field > div.label > span.H.addJournalItem","click"),
-		r("link", "a.H","click"),
-		r("button", "div.ui-dialog div.ui-dialog-buttonset > button.ui-button","click"),
-		r("textInput", ":text","input"),
+		r("group panel collapse", "div#groupPanel div.collapse","click"),
+		r("group panel folder menu", "div#groupPanel div.cm, div#groupPanel div.cm > div","click"),
+		r("group panel root folders", "div#groupPanel ul#group_0","click"),
+		r("group panel folder", "div#groupPanel ul#group_0 li, div#groupPanel ul#group_0 li > div > a","click"),
+		r("group panel folder expand", "div#groupPanel ul#group_0 li > div > span.folder","click"),
+		r("group panel folder menu", "div#groupPanel ul#group_0 li > div > span.menu","click"),
+		r("home menu", "ul#navigateMenuBsp li.home > a","click"),
+		r("navigation menu", "ul#navigateMenuBsp li.dropdown > a, ul#navigateMenuBsp li.dropdown ul.dropdown-menu > li > a, ul#navigateMenuBsp li.dropdown-submenu ul.dropdown-menu > li > a","click"),
+		r("element list row", "div#moduleView div.dataZone tr.H","click"),
+		r("element menu", "div#moduleView div.dataZone tr.H > td > div.menu","click"),
+		/*r("element", "div#moduleView div.dataZone tr.H > td > div","click"),*/
+		r("add new element", "div.toolbarBox > div.addNewElement","click"),
+		r("element detail button Edit", "div#elementDialog div.T div.H.el_edit","click"),
+		r("element detail button Copy", "div#elementDialog div.T div.H.el_copy","click"),
+		r("element detail button Change status", "div#elementDialog div.T div.H.el_status","click"),
+		r("element detail button Organize", "div#elementDialog div.T div.H.el_organize","click"),
+		r("element detail button Delete", "div#elementDialog div.T div.H.el_delete","click"),
+		r("element field", "div.field > div.value :input","change"),
+		r("element field", "div.field > div.value :text","input"),
+		r("element field", "div.field > div.addC.d","click"),
+		r("element field", "div.field > div.label > span.expand","click"),
+		r("element field", "div.field > div.label > span.H.addJournalItem","click"),
+		r("link Feedback", "a.H.el_feedback","click"),
+		r("link Element", "a.H.el_sendLink","click"),
+		r("link Print", "a.H.el_printDetails","click"),
+		r("button OK", "div.ui-dialog div.ui-dialog-buttonset > button.ok","click"),
+		r("button Cancel", "div.ui-dialog div.ui-dialog-buttonset > button.cancel","click"),
+		r("button Close", "div.ui-dialog button.ui-dialog-titlebar-close","click"),
+		r("text", ":text","input"),
 		r("input", ":input","change")
 	];});
 	

@@ -1664,6 +1664,24 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 	
 	/**
+	 * Returns true if a given Field exists in the Record
+	 * FuncExp signature : <code>cfgFieldExists(fieldName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) fieldName: String|FieldSelector. The name of the field for which to check for existence.
+	 * @return Boolean true if field exists in current record, else false
+	 */
+	public function cfgFieldExists($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new RecordException('cfgFieldExist func exp takes at one argument: the fieldName for which to check for existence.', RecordException::INVALID_ARGUMENT);
+	    $fieldName = $args[0];
+	    if($fieldName instanceof FieldSelector) $fieldName = $fieldName->getFieldName();
+	    else $fieldName = $this->evaluateArg($fieldName);
+	    
+	    $returnValue = $this->getRecord()->getFieldList()->doesFieldExist($fieldName);
+	    return $returnValue;
+	}
+	
+	/**
 	 * Returns the translated label of a Field in the Record
 	 * FuncExp signature : <code>cfgFieldLabel(fieldName)</code><br/>
 	 * Where arguments are :

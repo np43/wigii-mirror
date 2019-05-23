@@ -687,7 +687,10 @@ div.uiRecorderPlayList ul {
 	padding:0;
 }
 div.uiRecorderPlayList li {
-	padding:2px;
+	padding-top:4px;
+	padding-bottom:4px;
+	padding-left:2px;
+	padding-right:2px;
 }
 div.uiRecorderPlayList li.highlighted {
 	background-color:#3333ff
@@ -695,4 +698,20 @@ div.uiRecorderPlayList li.highlighted {
 div.uiRecorderPlayList li > span {
 	padding-left:2px;
 	padding-right:2px;
+}
+div.uiRecorderPlayList li > span.uiRecordDomId {
+	margin:2px;
+	border-style:solid;
+	border-width:2px;
+	border-radius:5px;
+	border-color:#3333ff;
+}
+div.uiRecorderPlayList li > span.uiRecordInputValue {
+	font-weight:bold;
+}
+button#uiRecorderPlayButton.uiRecorderPlaying {
+	background-color:#3333ff
+}
+button#uiRecorderStartButton.uiRecorderRecording {
+	background-color:#3333ff
 }
