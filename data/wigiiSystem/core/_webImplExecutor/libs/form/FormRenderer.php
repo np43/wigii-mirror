@@ -500,7 +500,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 					
 					//Display label div in case of MultipleEdit and noLabel=1
 					if($this->isMultiple() && $fieldXml["noLabel"]=="1" && $fieldXml["displayViewOnly"]!="1"){
-						$rm->put('<div class="label" style="width:0px;" >'); //Padding is 20px
+						$rm->put('<div class="label" style="width:25px;" >'); //Padding is 20px
 						$tempClass = "checkField";
 						if($rm->getRecord()->getWigiiBag()->isDisabled($fieldName)){
 							$tempClass .= " disabled ";
