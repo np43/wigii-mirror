@@ -29,8 +29,25 @@ set RETURNVALUE=0
 echo Changes code page to UTF-8
 chcp 65001
 if "%WIGII_CLI%"=="" (echo Wigii ERROR: Wigii dev CLI is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
+set WIGII_ENV_BACKUP=%WIGII_ENV%
+
+:chooseNewClientModules
+set WIGII_NEWCLIENT_MODULES=Activities;CMS;Catalog;CatalogOrders;Contacts;CustomerOrders;Dimensions;Encashments;Equipments;Espace;Events;Filemanager;Journal;LegalEntities;Plan;Portal;Projects;Scripts;Subscriptions;Tasks;TimeAllocation
+echo Client %1 will be activated with the modules :
+echo %WIGII_NEWCLIENT_MODULES%
+echo.
+echo Press enter if OK with current proposition or select a subset of modules
+set /P WIGII_CHOSEN_MODULES=" "
+if not "%WIGII_CHOSEN_MODULES%"=="" set WIGII_NEWCLIENT_MODULES=%WIGII_CHOSEN_MODULES%
+
+:createClientDev
 call %WIGII_CLI%\wigii_createClient.bat %*
 SET RETURNVALUE=%ERRORLEVEL%
+rem if client has been created using a config pack, then removes unwanted client_*_config.xml files from client config folder
+rem new namespace are created by reading directly from config pack new client folder.
+if "%WIGII_DEFAULT_NEWCLIENT_PACK%"=="" goto end
+del /Q %WIGII_ENV_BACKUP%\data\wigiiSystem\configs\%1\client_*_config.xml > nul
+del /Q %WIGII_ENV_BACKUP%\data\wigiiSystem\configs\%1\client_*_config_g.xml > nul
 goto end
 :end
 REM clears all variables and exits with return value

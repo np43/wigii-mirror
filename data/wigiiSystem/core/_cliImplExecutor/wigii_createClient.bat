@@ -94,6 +94,7 @@ set WIGII_NEWCLIENT_CONFIGS=%WIGII_ENV%\data\wigiiSystem\configs\Example
 set WIGII_NEWCLIENT_IMPL=%WIGII_ENV%\data\wigiiSystem\core\api\impl\Example
 set WIGII_NEWCLIENT_WWW=%WIGII_WWW%Example
 :endSetupNewClient
+if "%WIGII_NEWCLIENT_MODULES%"=="" set WIGII_NEWCLIENT_MODULES=CMS;Contacts;Dimensions;Events;Filemanager;Scripts
 echo Creates new client "%WIGII_CLIENT%" using new client pack "%WIGII_NEWCLIENT%"
 
 :createUsers
@@ -193,7 +194,6 @@ copy "%WIGII_CREATEDBSQL%" %MYSQL_CMDFILE%
 if %ERRORLEVEL% neq 0 goto mySqlError
 :initializeDb
 echo Initializes %WIGII_DB% database
-set WIGII_CLIENT_MODULES=CMS;Contacts;Dimensions;Events;Filemanager;Scripts
 copy NUL %MYSQL_CMDFILE%
 echo INSERT INTO `Users` SET  >> %MYSQL_CMDFILE%
 echo	`username` = 						"%WIGII_SUPERADMIN%",  >> %MYSQL_CMDFILE%
@@ -221,10 +221,10 @@ echo 	`moduleEditor` = 					TRUE,  >> %MYSQL_CMDFILE%
 echo 	`readAllUsersInWigiiNamespace` = 	TRUE,  >> %MYSQL_CMDFILE%
 echo 	`adminCreator` = 					TRUE,  >> %MYSQL_CMDFILE%
 echo 	`userCreator` = 					TRUE,  >> %MYSQL_CMDFILE%
-echo 	`moduleAccess` =  					"Admin;%WIGII_CLIENT_MODULES%",  >> %MYSQL_CMDFILE%
-echo 	`readAllGroupsInWigiiNamespace` = 	"%WIGII_CLIENT_MODULES%",  >> %MYSQL_CMDFILE%
-echo 	`rootGroupCreator` = 				"%WIGII_CLIENT_MODULES%",  >> %MYSQL_CMDFILE%
-echo 	`groupCreator` = 					"%WIGII_CLIENT_MODULES%",  >> %MYSQL_CMDFILE%
+echo 	`moduleAccess` =  					"Admin;%WIGII_NEWCLIENT_MODULES%",  >> %MYSQL_CMDFILE%
+echo 	`readAllGroupsInWigiiNamespace` = 	"%WIGII_NEWCLIENT_MODULES%",  >> %MYSQL_CMDFILE%
+echo 	`rootGroupCreator` = 				"%WIGII_NEWCLIENT_MODULES%",  >> %MYSQL_CMDFILE%
+echo 	`groupCreator` = 					"%WIGII_NEWCLIENT_MODULES%",  >> %MYSQL_CMDFILE%
 echo 	`sys_date` = 						UNIX_TIMESTAMP(),  >> %MYSQL_CMDFILE%
 echo 	`sys_user` = 						1,  >> %MYSQL_CMDFILE%
 echo 	`isRole` = 							TRUE  >> %MYSQL_CMDFILE%
@@ -339,7 +339,6 @@ if %RETURNVALUE% GTR 0 (
 )
 REM clears all variables and exits with return value
 set WIGII_CLIENT=
-set WIGII_CLIENT_MODULES=
 set WIGII_DB=
 set WIGII_DB_USER=
 set WIGII_DB_PWD=
@@ -354,6 +353,7 @@ set WIGII_NEWCLIENT_LABEL=
 set WIGII_NEWCLIENT_CONFIGS=
 set WIGII_NEWCLIENT_IMPL=
 set WIGII_NEWCLIENT_WWW=
+set WIGII_NEWCLIENT_MODULES=
 SET WIGII_FX=
 set MYSQL_CMD=
 if exist %MYSQL_CMDFILE% del /Q %MYSQL_CMDFILE%

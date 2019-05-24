@@ -26,14 +26,15 @@ REM This script refreshes an existing client development environment from produc
 REM Created by CWE on 16.04.2019
 REM 
 
-set WIGII_CLIENT=%1
-set USAGE=%0 wigii_client
+set USAGE=%0 wigii_client [-noDb]
 set RETURNVALUE=0
 SET PREVIOUS_PATH=%CD%
 cd %~dp0
 echo Changes code page to UTF-8
 chcp 65001
 
+set WIGII_CLIENT=%1
+if "%2"=="-noDb" (set WIGII_OPTION_NODB=1) else (set WIGII_OPTION_NODB=0)
 if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
 if "%WIGII_HOST%"=="" (echo Wigii ERROR: WIGII_HOST is not defined. & set RETURNVALUE=1009 & goto end)
 
@@ -67,6 +68,7 @@ rem uses start /B /W cmd /c ... instead of call ... to make sure environment var
 start /B /W "%WIGII_HOST%-versionProdConfig.bat" cmd /c %WIGII_ADMIN_HOME%\configs\%WIGII_HOST%-versionProdConfig.bat %WIGII_CLIENT%
 if %ERRORLEVEL% neq 0 (RETURNVALUE=%ERRORLEVEL% & goto end)
 
+if "%WIGII_OPTION_NODB%"=="1" goto prepareProdConfig
 :getClientProdDb
 echo Get latest production database for %WIGII_CLIENT%
 rem backups WIGII_CONNEXION and WINSCP_CMD
@@ -132,6 +134,7 @@ mkdir %WIGII_TARGET_ENV%\users\%WIGII_CLIENT%
  "exit"
 if %ERRORLEVEL% neq 0 goto winScpError
 
+if "%WIGII_OPTION_NODB%"=="1" goto refreshDevConfig
 :importsDb
 rem checks that db dump exists before imports
 if "%WIGII_DB_DUMP%"=="" (echo Wigii ERROR: no db dump to import for %WIGII_CLIENT% & set RETURNVALUE=404 & goto end)
@@ -171,7 +174,8 @@ copy /Y %WIGII_TARGET_WEB%\%WIGII_CLIENT%\*.* %WIGII_WWW%\%WIGII_CLIENT%
 echo Refreshes dev user
 xcopy %WIGII_TARGET_ENV%\users\%WIGII_CLIENT%\* %WIGII_USERS%\%WIGII_CLIENT% /e /s
 
-echo Done. Dev env %WIGII_CLIENT% refreshed from production.
+if "%WIGII_OPTION_NODB%"=="1" echo Done. Dev env %WIGII_CLIENT% refreshed from production (except database).
+if not "%WIGII_OPTION_NODB%"=="1" echo Done. Dev env %WIGII_CLIENT% refreshed from production.
 goto end
 :mySqlError
 set RETURNVALUE=2501
@@ -183,6 +187,7 @@ echo Erreur de communication WinScp
 goto end
 :end
 REM clears all variables and exits with return value
+set WIGII_OPTION_NODB=
 set MYSQL_CMD=
 if not "%MYSQL_CMDFILE%"=="" del /Q %MYSQL_CMDFILE%
 SET MYSQL_CMDFILE=

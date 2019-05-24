@@ -26,12 +26,12 @@ REM Refreshes an existing client development environment from production server.
 REM Created by CWE on 16.04.2019
 REM 
 
-set WIGII_CLIENT=%1
-set USAGE=%0 wigii_client
+set USAGE=%0 wigii_client [-noDb]
 set RETURNVALUE=0
 echo Changes code page to UTF-8
 chcp 65001
 
+set WIGII_CLIENT=%1
 if "%WIGII_CLIENT%"=="" (echo Wigii ERROR: Wigii client is not defined. Usage: %USAGE% & set RETURNVALUE=1009 & goto end)
 if "%WIGII_ADMIN_HOME%"=="" (echo Wigii ERROR: WIGII_ADMIN_HOME is not defined. Call %~nx0 from USER-adminConsole.bat & set RETURNVALUE=1009 & goto end)
 IF %WIGII_ADMIN_HOME:~-1%==\ SET WIGII_ADMIN_HOME=%WIGII_ADMIN_HOME:~0,-1%
@@ -41,7 +41,7 @@ rem extracts WIGII_HOST from mapping
 for /F "tokens=2 delims==" %%a in ('findstr /C:"%WIGII_LEGALENTITY%_%WIGII_CLIENT%_host" %WIGII_ADMIN_HOME%\configs\%WIGII_LEGALENTITY%-client-host.bat') do (set WIGII_HOST=%%a)
 if "%WIGII_HOST%"=="" (echo Wigii ERROR: Wigii host has not been found for client %WIGII_CLIENT% in %WIGII_LEGALENTITY%-client-host.bat & set RETURNVALUE=1009 & goto end)
 rem call wigii-refreshDevEnv for selected host
-call %WIGII_ADMIN_HOME%\servers\%WIGII_HOST%-refreshDevEnv.bat %WIGII_CLIENT%
+call %WIGII_ADMIN_HOME%\servers\%WIGII_HOST%-refreshDevEnv.bat %WIGII_CLIENT% %2
 SET RETURNVALUE=%ERRORLEVEL%
 goto end
 
