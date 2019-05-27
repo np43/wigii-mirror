@@ -312,7 +312,7 @@ class ElementPListExportICSCalendar extends ElementPListWebImplWithWigiiExecutor
 //		eput("ActOnBeforeAddElementP");
 		$this->put("BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Wigii system//Wigii ".VERSION_NUMBER." MIMEDIR//EN
+PRODID:-//Wigii (R) software//Wigii ".VERSION_NUMBER." MIMEDIR//EN
 X-WR-CALNAME:".$this->getCalendarName()."
 BEGIN:VTIMEZONE
 TZID:Europe/Berlin

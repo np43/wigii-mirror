@@ -26,6 +26,7 @@
  * Created by LWR on 21 july 09
  * Modified by CWE on 01.12.2015 to support JS notifications
  * Modified by Medair (CWE) on 24.11.2016 to protect against Cross Site Scripting
+ * Modified by CWE on 27.05.2019 to ensure that methods getCrtModule and getCrtWigiiNamespace always return valid objects and not null.
  */
 class ExecutionServiceWebImpl extends ExecutionServiceImpl
 {
@@ -414,6 +415,7 @@ $otherJsCode
 
 	private $crtModule;
 	public function getCrtModule(){
+	    if(!isset($this->crtModule)) $this->crtModule = $this->getModuleAdminService()->getEmptyModule();
 		return $this->crtModule;
 	}
 	protected function setCrtModule($m){

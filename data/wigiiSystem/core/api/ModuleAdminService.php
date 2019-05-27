@@ -52,6 +52,11 @@ interface ModuleAdminService
 	public function getDimensionsModule($principal);
 	
 	/**
+	 * Gets an Empty module instance
+	 */
+	public function getEmptyModule();
+	
+	/**
 	 * Returns the module with the specified name
 	 * @param Principal $principal authenticated user performing the operation
 	 * @throws ModuleAdminServiceException if an error occurs

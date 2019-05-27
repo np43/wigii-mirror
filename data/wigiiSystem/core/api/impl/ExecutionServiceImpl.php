@@ -24,7 +24,8 @@
 /**
  * ExecutionService implementation which supports the Wigii communication protocol
  * Created on 21 juil. 09 by LWR
- * Modified by CWE on 08.04.2019 to bind root system Principal to request Wigii namespace by default. 
+ * Modified by CWE on 08.04.2019 to bind root system Principal to request Wigii namespace by default.
+ * Modified by CWE on 27.05.2019 to ensure that methods getCrtModule and getCrtWigiiNamespace always return valid objects and not null. 
  */
 class ExecutionServiceImpl implements ExecutionService {
 
@@ -195,34 +196,18 @@ class ExecutionServiceImpl implements ExecutionService {
 	}
 
 	public function getCrtWigiiNamespace(){
-//		if(!isset($this->crtWigiiNamespace)){
-//			$this->setCrtWigiiNamespace(null);
-//		}
+	    if(!isset($this->crtWigiiNamespace)) $this->crtWigiiNamespace = $this->getWigiiNamespaceAdminService()->getEmptyWigiiNamespaceForDefaultClient();
 		return $this->crtWigiiNamespace;
 	}
 	protected function setCrtWigiiNamespace($ns){
 		$this->crtWigiiNamespace = $ns;
-//		if($ns == null){
-//			$this->crtWigiiNamespace = $this->getWigiiNamespaceAdminService()->getEmptyWigiiNamespaceForClient($this->getExecPrincipal(), $this->getExecPrincipal()->getWigiiNamespace()->getClient());
-//		} else if (is_string($ns)) {
-//			$this->crtWigiiNamespace = $this->getWigiiNamespaceAdminService()->getWigiiNamespaceForClient($this->getExecPrincipal(), $ns, $this->getExecPrincipal()->getWigiiNamespace()->getClient());
-//		} else {
-//			$this->crtWigiiNamespace = $ns;
-//		}
 	}
 	public function getCrtModule(){
-//		if(!isset($this->crtModule)){
-//			$this->setCrtModule(null);
-//		}
+	    if(!isset($this->crtModule)) $this->crtModule = $this->getModuleAdminService()->getEmptyModule();	        
 		return $this->crtModule;
 	}
 	protected function setCrtModule($m){
 		$this->crtModule = $m;
-//		if($m == null || is_string($m)){
-//			$this->crtModule = $this->getModuleAdminService()->getModule($this->getExecPrincipal(), $m, $this->getCrtWigiiNamespace()->getClient());
-//		} else {
-//			$this->crtModule = $m;
-//		}
 	}
 	public function getCrtContext(){
 		return $this->crtContext;
@@ -276,7 +261,6 @@ class ExecutionServiceImpl implements ExecutionService {
 	 * loads the requests and prepare for execution
 	 */
 	public function start(){
-		//throw new ExecutionServiceException("The start of the ExecutionService can not be done, because need of an implementation. Use Web Impl for i.e.", ExecutionServiceException::UNSUPPORTED_OPERATION);
 		$this->executionSink()->log("Start");
 		$this->remainingRequests = $this->addRequests($this->findUrl());
 	}

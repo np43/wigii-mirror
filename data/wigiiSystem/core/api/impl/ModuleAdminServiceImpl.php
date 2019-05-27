@@ -187,6 +187,27 @@ class ModuleAdminServiceImpl implements ModuleAdminService
 		$this->executionSink()->publishEndOperation("getDimensionsModule", $principal);
 		return $returnValue;
 	}
+	public function getEmptyModule()
+	{
+	    $this->executionSink()->publishStartOperation("getEmptyModule");
+	    try
+	    {
+	        $returnValue = $this->getCachedModule(Module::EMPTY_MODULE_NAME);
+	        if(!isset($returnValue))
+	        {
+	            $returnValue = Module::createInstance();
+	            $returnValue->setModuleName(Module::EMPTY_MODULE_NAME);
+	            $this->cacheModule($returnValue);
+	        }
+	    }
+	    catch(Exception $e)
+	    {
+	        $this->executionSink()->publishEndOperationOnError("getEmptyModule", $e);
+	        throw new ModuleAdminServiceException('',ModuleAdminServiceException::WRAPPING, $e);
+	    }
+	    $this->executionSink()->publishEndOperation("getEmptyModule");
+	    return $returnValue;
+	}
 	
 	public function getModuleFromSelectedGroups($principal, $groupLogExp)
 	{
@@ -436,7 +457,6 @@ class ModuleAdminServiceImpl implements ModuleAdminService
 
 	private function doGetModule($principal, $moduleName)
 	{
-		//if($moduleName == Module::EMPTY_MODULE_URL) $moduleName = null;
 		$returnValue = $this->getCachedModule($moduleName);
 		if(!isset($returnValue))
 		{

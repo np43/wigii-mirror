@@ -768,6 +768,43 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 
 	/**
+	* Gets the linked emails to current field value. Works with Attributs, MultipleAttributs or Booleans fields.
+	* FuncExp signature : <code>getEmailFromFS(fs,allEmails=false)</code><br/>
+	* Where arguments are :
+	* - Arg(0) fs : FieldSelector|String. A given field in the Record of type Attributs, MultipleAttributs or Booleans.
+	* - Arg(1) allEmails: Boolean. If true, then returns all attached emails, else only first one. Default to false.
+	* @return String|Array the first attached email or null if no email. If allEmails=true, then returns an array of emails.
+	*/
+	public function getEmailFromFS($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new RecordException('getEmailFromFS takes one argument which is a FieldSelector pointing to a Field of type Attributs, MultipleAttributs or Booleans', RecordException::INVALID_ARGUMENT);
+        if($args[0] instanceof FieldSelector) $fieldName = $args[0]->getFieldName();
+        else $fieldName = $this->evaluateArg($args[0]);
+	    if($nArgs>1) $allEmails = $this->evaluateArg($args[1]);
+	    else $allEmails=false;
+	    $rec = $this->getRecord();
+	    if(!isset($rec)) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
+	    
+	    $returnValue = TechnicalServiceProvider::getValueListArrayMapper(true, ValueListArrayMapper::Natural_Separators);	    
+	    $value = $rec->getLinkedEmailInField($this->getPrincipal(), $fieldName, $rec->getFieldValue($fieldName));
+	    //we always do the check of GroupEmailNotification to replace it as ""
+	    if(!is_array($value)) $value = array($value);
+	    foreach($value as $val){
+	        if(strstr($val, "##GroupEmailNotification##")) {
+	            $val = str_replace("##GroupEmailNotification##", "", $val);
+	        }
+	        if($val) $returnValue->addValue($val);
+	    }
+	    
+	    if(!$returnValue->isEmpty()) {
+	       $returnValue = $returnValue->getValueListArray();
+	       if(!$allEmails) $returnValue = reset($returnValue);
+	    }
+	    else $returnValue=null;
+	    return $returnValue;
+	}
+	
+	/**
 	 * Returns the translation of the label of a field as defined in the configuration file
 	 * FuncExp signature : <code>txtLabel(fs)</code><br/>
 	 * Where arguments are :
@@ -776,7 +813,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 */
 	public function txtLabel($args) {
 	    $nArgs = $this->getNumberOfArgs($args);
-	    if($nArgs<1 || !($args[0] instanceof FieldSelector)) throw new RecordException('txtLabel takes one argument which a FieldSelector pointing to a valid Field in the Record', RecordException::INVALID_ARGUMENT);
+	    if($nArgs<1 || !($args[0] instanceof FieldSelector)) throw new RecordException('txtLabel takes one argument which is a FieldSelector pointing to a valid Field in the Record', RecordException::INVALID_ARGUMENT);
 	    $field = $this->getRecord();
 	    if(!$field) throw new RecordException("no Record has been attached to RecordEvaluator", RecordException::INVALID_STATE);
 	    $field = $field->getFieldList()->getField($args[0]->getFieldName());
