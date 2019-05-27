@@ -26,6 +26,7 @@
  * Created by CWE on 2 juin 09
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  * Modified by Medair (CWE) on 01.09.2017 to enable root principal and public principal to create sub groups.
+ * Modified by CWE on 27.05.2019 to authorize root principal to persist sub groups.
  */
 class GroupAdminServiceImpl implements GroupAdminService
 {
@@ -665,13 +666,13 @@ class GroupAdminServiceImpl implements GroupAdminService
 			    elseif($principal->getRootGroupCreator($module)==null) $autoS->fail($principal, 'is not root group creator, therefore can not insert new root group');
 			}
 		}
-		// existing group -> group creator and principal has admin rights on group
+		// existing group -> group creator and principal has admin rights on group or is root principal
 		else
 		{
 			$origPRights = $origGroupP->getRights();
 			if(is_null($origPRights) ||
 				!$origPRights->canModify() ||
-				$principal->getGroupCreator($module)==null
+			    $principal->getGroupCreator($module)==null && !$autoS->isRootPrincipal($principal)
 			)
 			{
 				$autoS->fail($principal, "has no right to modify the group $groupErrorInfo");
@@ -3794,7 +3795,7 @@ where $select_Groups_whereClause ";
 			$nameFilter = lxEq(fs('groupname'), $groupName);
 		}
 		
-		$listFilter = lf($this->getFieldSelectorListForGroupWithoutDetail(), 
+		$listFilter = lf(null, /* CWE 27.05.2019 loads a complete group with detail */ 
 				lxAnd($nameFilter, lxEq(fs('id_group_parent'), $parentGroupId)), 
 				null, 1, 1);
 		$this->getSelectedGroups($principal, $listFilter, $groupPList);
@@ -3818,7 +3819,7 @@ where $select_Groups_whereClause ";
 				//update the name of the group is necessary:
 				if($groupP->getGroup()->getGroupName()!=$groupName){
 					$groupP->getGroup()->setGroupName($groupName);
-					$this->persistGroup($principal, $groupP->getGroup());
+					$this->persistGroup($principal, $groupP->getGroup(), fsl(fs('groupname')));
 				}
 				break;
 			default: throw new GroupAdminServiceException("group $groupName is not a unique child of group $parentGroupId", GroupAdminServiceException::INVALID_ARGUMENT);

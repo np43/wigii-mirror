@@ -24,6 +24,7 @@
 /**
  * Maps a group db record to a GroupP as a list
  * Created by CWE on 11 oct. 09
+ * Modified by CWE on 27.05.2019 to give access to group detail if pRights are set (used to allow rootPrincipal to see group detail)
  */
 class GroupPListMapper implements RowList
 {
@@ -77,7 +78,7 @@ class GroupPListMapper implements RowList
 	{
 		if(isset($row))
 		{
-			$canRead = formatBoolean($row['canRead']);
+		    $canRead = isset($this->pRights) || formatBoolean($row['canRead']);
 			$row['client'] = $this->principal->getWigiiNamespace()->getClient();
 			$groupP = GroupP::createInstance($this->groupAdminServiceImpl->createGroupInstanceFromRow($this->principal, $row, $canRead));
 			if(isset($this->pRights))
