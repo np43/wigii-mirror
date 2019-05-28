@@ -8614,18 +8614,18 @@ wncd.AgileStoryBoard = function(container, options) {
 	if(!self.options.renderStory) self.options.renderStory = function(storyBoard,storyHtml,story) {		
 		var self = storyBoard;			
 		storyHtml
-		.out("&#9998;","storyEditButton")
-		.out("&#10006;","storyDeleteButton");
+		.out('<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>',"storyEditButton")
+		.out('<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>',"storyDeleteButton");
 		//if status is done then do not allow change of position
 		if(self.options.noOrdering!=true && story.status!="5completer") {
-			storyHtml.out("&#11121;","storyMoveTopButton");
-			storyHtml.out("&#129093;","storyMoveUpButton");
+			storyHtml.out('<span class="glyphicon glyphicon-backward" style="transform: rotate(90deg);" aria-hidden="true"></span>',"storyMoveTopButton");
+			storyHtml.out('<span class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span>',"storyMoveUpButton");
 			//storyHtml.out("&#11014;","storyMoveUpButton");
 			//storyHtml.out("&#11105;","storyMoveUpButton");
-			storyHtml.out("&#129095;","storyMoveDownButton");
+			storyHtml.out('<span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span>',"storyMoveDownButton");
 			//storyHtml.out("&#11015;","storyMoveDownButton");
 			//storyHtml.out("&#11107;","storyMoveDownButton");
-			storyHtml.out("&#11123;","storyMoveBottomButton");
+			storyHtml.out('<span class="glyphicon glyphicon-forward" style="transform: rotate(90deg);" aria-hidden="true"></span>',"storyMoveBottomButton");
 		}
 		storyHtml
 		.out((story.assignee===null?self.options.filterUnassignedLabel:story.assignee),"storyAssignee")

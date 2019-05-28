@@ -637,23 +637,30 @@ div.storyBoardColumnContent div.story span {
 div.storyBoardColumnContent div.story span.storyEditButton {		
 	display:inline;	
 	float:left;
+	padding:4px 4px 6px 4px;
 }
 div.storyBoardColumnContent div.story span.storyDeleteButton {		
 	display:inline;
 	color:red;
-	padding-left:7px;
+	padding:4px 4px 6px 4px;
 	float:left;
 }
 div.storyBoardColumnContent div.story span.storyMoveUpButton, div.storyBoardColumnContent div.story span.storyMoveDownButton {
 	display:inline;
 	color:#3333ff;
-	padding-left:8px;
+	padding:2px 4px 8px 4px;
 	float:left;
 }
-div.storyBoardColumnContent div.story span.storyMoveTopButton, div.storyBoardColumnContent div.story span.storyMoveBottomButton {		
+ div.storyBoardColumnContent div.story span.storyMoveBottomButton {		
 	display:inline;
 	color:#3333ff;
-	padding-left:10px;
+	padding:5px 4px 5px 4px;
+	float:left;
+}
+div.storyBoardColumnContent div.story span.storyMoveTopButton {
+	display:inline;
+	color:#3333ff;
+	padding:2px 4px 8px 4px;
 	float:left;
 }
 div.storyBoardColumnContent div.story span.storyAssignee {		
