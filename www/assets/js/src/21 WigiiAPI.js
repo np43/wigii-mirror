@@ -1038,7 +1038,10 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						if($('#'+self.fieldId()+' :input').hasClass('htmlArea')){
 							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){ //create a function to ensure the value is set once the editor is ready
 								$(textarea).ckeditor().val(value);
-							});						
+							});
+						} else if($('#'+self.fieldId()+' :input').hasClass('flex') || $('#'+self.fieldId()+' :input').hasClass('chosen')) {
+							// if field is a flex or chosen drop-down, then triggers change event to refresh UI with new value
+							$('#'+self.fieldId()+' :input').val(value).change();
 						} else {
 							$('#'+self.fieldId()+' :input').val(value);
 						}
