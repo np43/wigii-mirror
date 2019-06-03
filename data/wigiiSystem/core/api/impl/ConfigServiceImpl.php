@@ -524,6 +524,8 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 		$this->debugLogger()->logBeginOperation('getLoadedXml');		
 		$returnValue = parent::getLoadedXml($lookupPath);
 		if(is_null($returnValue)) $returnValue = $this->getCoreConfigService()->getLoadedXml($lookupPath);
+		// CWE 03.06.2019 if using parameters config service, then also checks for loaded xml there 
+		if(is_null($returnValue) && $this->useParametersConfigService) $returnValue = $this->getParametersConfigService()->getLoadedXml($lookupPath);
 		$this->debugLogger()->logEndOperation('getLoadedXml');
 		return $returnValue;
 	}
@@ -600,6 +602,7 @@ class ConfigServiceImpl extends ConfigServiceCoreImpl
 					// CWE 09.04.2019: loads parameters based on modified xml
 					$coreCS->loadXml($lpParamAndXml, $readableXml);
 					$coreCS->loadParameters($lpParamAndXml, $readableXml);
+					$returnValue=true; /* CWE  29.05.2019: indicates to calling lookup method that fresh xml is here and that getLoaded* method should be called */
 					// loads all Objects
 					if(!$coreCS->isLoadingOnlyParameters()) {
 					    $this->loadAll($lpParamAndXml, $lpField, $readableXml, false);
