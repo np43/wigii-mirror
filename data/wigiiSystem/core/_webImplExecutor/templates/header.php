@@ -186,13 +186,12 @@ if(TechnicalServiceProvider::getBoxServiceFormExecutor()->isBoxEnabled()) {
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/bootstrap/bootstrap-submenu.min.css" type="text/css" media="all" />
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii_<?=ASSET_REVISION_NUMBER;?>.css" type="text/css" media="all" />
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl;?>assets/css/theme.css.php" type="text/css" media="all" />
+<?if(defined("WEB_WNCD")) { if(defined("WNCD_LOCAL_LIBS")) {?>
+<link media="all" type="text/css" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii-ncd-stdlib.css?v=<?=ASSET_REVISION_NUMBER;?>" rel="stylesheet"/>
+<?} else { ?>
+<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-stdlib.css" rel="stylesheet"/>
 <?
-if(defined("WEB_WNCD")) {
-?>
-<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-stdlib.css" rel="stylesheet"/-->
-<!-- link media="all" type="text/css" href="<?=SITE_ROOT_forFileUrl;?>assets/css/wigii-ncd-stdlib.css" rel="stylesheet"/-->
-<?
-}
+}}
 if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".css")){
 ?>
 <link rel="stylesheet" href="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.css?v=<?=ASSET_REVISION_NUMBER;?>" type="text/css" media="all" />

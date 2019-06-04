@@ -1,0 +1,380 @@
+/**
+ *  This file is part of Wigii (R) software.
+ *  Wigii is developed to inspire humanity. To Humankind we offer Gracefulness, Righteousness and Goodness.
+ *  
+ *  Wigii is free software: you can redistribute it and/or modify it 
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, 
+ *  or (at your option) any later version.
+ *  
+ *  Wigii is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ *  See the GNU General Public License for more details.
+ *
+ *  A copy of the GNU General Public License is available in the Readme folder of the source code.  
+ *  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @copyright  Copyright (c) 2016-2017  Wigii.org
+ *  @author     <http://www.wigii.org/system/libs>      Wigii.org 
+ *  @link       <http://www.wigii-system.net>           <https://github.com/wigii/wigii>   Source Code
+ *  @license    <http://www.gnu.org/licenses/>          GNU General Public License
+ */
+ 
+ /*!
+  * Wigii Natural Code Development (NCD) standard library CSS
+  * Created by Camille Weber (camille@wigii.org), 15.11.2017
+  */
+
+/**************************************
+* Wigii NCD ObjectDocBrowser styling
+**************************************/
+div.ncd.method a.selfLink {
+	text-decoration:none;
+	color:black;
+}
+div.docBrowser {
+	overflow-y:auto;
+}
+div.docBrowserToolbar ul {
+	padding:0;
+	margin:0;
+	margin-top:5px;
+	margin-bottom:5px;
+	margin-right:5px;
+	list-style: none;
+	cursor:pointer;	
+}
+div.docBrowserToolbar ul li {
+	padding-left:5px;
+	padding-top:5px;
+	border: 1px solid #3333ff;
+	border-radius: 5px;
+	padding-bottom:3px;
+	margin-bottom:2px;
+	margin-left:2px;
+	text-align:center;
+}
+div.docBrowserToolbar ul li:hover, div.docBrowserToolbar ul li.selected {
+	background-color: #3333ff;
+}
+div#nullEmitter {
+	display:none;
+}
+div.docBrowser div.method {
+	margin:10px 30px;
+}
+div.docBrowser a.methodName {	
+}
+div.docBrowser span.classKeyword {
+	padding-right: 8px;
+}
+div.docBrowser span.functionKeyword {
+	padding-right: 8px;
+}
+div.docBrowser span.keyword {
+	color:blue;
+}
+div.docBrowser span.methodExpand {
+	cursor:pointer;
+	padding-right:8px;	
+}
+div.docBrowser div.methodSrc, div.docBrowser div.classSrc {
+	display:none;
+}
+div.docBrowser div.methodSrc textarea, div.docBrowser div.classSrc textarea {
+	white-space:pre;
+}
+div.docBrowser span.methodSrcExpand, div.docBrowser span.classSrcExpand {
+	cursor:pointer;
+	padding-left:8px;	
+}
+div.docBrowser span.typeAssignement {
+	padding-left: 8px;
+	padding-right: 8px;
+}
+div.docBrowser span.scalarValue {
+}
+/**************************************
+* Wigii NCD AutocompletionSense styling
+**************************************/	 
+div.autocompletionsense {
+	overflow-y:auto;
+	background-color:white;
+	top:2px;
+	border: 1px solid #3333ff;
+	border-radius: 5px;
+	padding-bottom:3px;
+}
+div.autocompletionsense ul {
+	padding:0;
+	margin:0;
+	margin-top:5px;
+	margin-bottom:5px;
+	list-style: none;
+	cursor:pointer;	
+}
+div.autocompletionsense ul li {
+	padding-left:5px;
+}
+div.autocompletionsense ul li.highlighted {
+	background-color: #3333ff;
+	border-radius: 2px;
+	padding-left:5px;
+}
+/**************************************
+* Wigii NCD ContextualMenu styling
+**************************************/
+div.contextualMenu ul {
+	list-style: none;
+	cursor:pointer;
+	background-color:#ccccff;
+	border: 1px solid #3333ff;
+	border-radius: 5px;
+	padding:0;
+	margin:0;
+	margin-left:2px;	
+}
+div.contextualMenu ul li {	
+	display:table-row;
+}
+div.contextualMenu ul li:hover {
+	background-color: #3333ff;
+	border-radius: 2px;
+}
+div.contextualMenu span.label {
+	text-align:left;
+	white-space:nowrap;
+	display:table-cell;
+	padding:3px;
+}
+div.contextualMenu span.rightMenu, div.contextualMenu span.noMenu {
+	text-align:right;
+	font-size: 0.6em;
+	padding-left:5px;
+	padding-right:2px;
+	color:#000099;
+	display:table-cell;
+}
+
+/**************************************
+* Wigii NCD Desktop styling
+**************************************/
+div.desktop img.logo {
+	margin:15px;
+}
+div.desktop div.userMenuContainer {
+	padding:8px;
+	padding-top:15px;	
+}
+div.desktop div.userMenuContainer > span.userMenuButton {
+	cursor:pointer;
+	font-size:30px;	
+}
+div.desktop div.headerBar {
+	padding-top: 25px;
+}
+div.desktop div.footerBar {
+	padding-top:12px;
+	padding-left:5px;
+	border-top: solid black 1px;
+	color:#3333ff;
+}
+div.desktop div.footerBar span.ncd {
+	font-size:15px;
+}
+/**************************************
+* Wigii NCD SelfLearningTaskList styling
+**************************************/
+div.taskList p.task {
+	padding-bottom:20px;
+}
+div.taskList p.task span.taskLabel {
+	font-weight:bold;
+}
+div.taskList p.task span.taskCompleted {
+	padding:5px;
+	margin-right:5px;
+	margin-left:5px;
+	color:green;
+	cursor:pointer;
+	border: 1px solid;
+	border-radius:40%;
+}
+div.taskList p.task span.taskAborted {
+	padding:5px;
+	margin-right:5px;	
+	color:red;
+	cursor:pointer;
+	border: 1px solid;
+	border-radius:40%;
+}
+div.taskList p.task span.taskRun {
+	padding:5px;
+	margin-right:5px;
+	cursor:pointer;
+	border: 1px solid;
+	border-radius:40%;
+}
+div.taskList p.task.completed {
+	color: green;
+	text-decoration: line-through;
+}
+div.taskList p.task.aborted {
+	color: red;
+	text-decoration: line-through;
+}
+/**************************************
+* Wigii NCD AgileStoryBoard styling
+**************************************/
+button.ncd.storyBoardCreateButton {
+	font-size:large;
+	background-color:green;
+	color:white;
+	border:none;
+	padding:5px;
+	margin-right:20px;
+	margin-left:5px;
+}
+div.storyBoardFilters {
+	min-height:40px;
+}
+span.storyBoardFilterLabel {
+	padding-left:5px;
+	padding-right:10px;
+}
+button.ncd.storyBoardFilter {
+	font-size:medium;
+}
+button#storyBoardFilter_all {
+	margin-left:5px;
+}
+button.storyBoardFilter.activeFilter {
+	background-color:#aac9ff;
+}
+div.h.storyBoard {
+	/*overflow-y:auto;*/
+}
+div.storyBoardColumn {
+	border: solid 1px black;		
+	overflow-x:visible;
+}
+div.storyBoardColumnHeader {	
+	text-align:center;	
+	padding-top:10px;	
+	border-bottom: solid 1px black;
+	background-color:#0cd2ff;
+	font-weight:bold;
+}
+div.storyBoardColumnContent {
+	overflow-y:auto;	
+	overflow-x:visible;
+	padding-bottom:3px;
+}
+div.storyBoardColumnContent.dragOn {
+	border: solid 1px blue;
+}
+div.story.ui-draggable.ui-draggable-dragging {
+	max-width:200px;
+}
+div.storyBoardColumnContent div.story {
+	cursor:pointer;
+	background-color:white;
+	border: solid 2px #3333ff;
+	border-radius: 5px;
+	margin:2px;
+	padding-left:2px;
+	padding-right:2px;	
+	max-height:200px;
+	overflow-y:hidden;	
+}
+div.storyBoardColumnContent div.story span {	
+	display:block;	
+}
+div.storyBoardColumnContent div.story span.storyEditButton {		
+	display:inline;	
+	float:left;
+	padding:4px 4px 6px 4px;
+}
+div.storyBoardColumnContent div.story span.storyDeleteButton {		
+	display:inline;
+	color:red;
+	padding:4px 4px 6px 4px;
+	float:left;
+}
+div.storyBoardColumnContent div.story span.storyMoveUpButton, div.storyBoardColumnContent div.story span.storyMoveDownButton {
+	display:inline;
+	color:#3333ff;
+	padding:2px 4px 8px 4px;
+	float:left;
+}
+ div.storyBoardColumnContent div.story span.storyMoveBottomButton {		
+	display:inline;
+	color:#3333ff;
+	padding:5px 4px 5px 4px;
+	float:left;
+}
+div.storyBoardColumnContent div.story span.storyMoveTopButton {
+	display:inline;
+	color:#3333ff;
+	padding:2px 4px 8px 4px;
+	float:left;
+}
+div.storyBoardColumnContent div.story span.storyAssignee {		
+	font-size:12px;
+	font-weight:bold;
+	color:#3333ff;
+	clear:both;
+}
+div.storyBoardColumnContent div.story span.storyLabel {		
+	font-size:12px;
+	font-weight:bold;
+	padding-top:4px;
+	padding-bottom:4px;
+}
+div.storyBoardColumnContent div.story span.storyDescription {	
+	font-size:12px;
+}
+div.storyBoardForm {
+	margin:5px;
+	margin-right:10px;
+}
+/********************************
+* Wigii NCD UIRecorder styling
+*********************************/
+div.uiRecorderPlayList {
+	margin-top:5px;
+}
+div.uiRecorderPlayList ul {
+	list-style: none;
+	margin:0;
+	padding:0;
+}
+div.uiRecorderPlayList li {
+	padding-top:4px;
+	padding-bottom:4px;
+	padding-left:2px;
+	padding-right:2px;
+}
+div.uiRecorderPlayList li.highlighted {
+	background-color:#3333ff
+}
+div.uiRecorderPlayList li > span {
+	padding-left:2px;
+	padding-right:2px;
+}
+div.uiRecorderPlayList li > span.uiRecordDomId {
+	margin:2px;
+	border-style:solid;
+	border-width:2px;
+	border-radius:5px;
+	border-color:#3333ff;
+}
+div.uiRecorderPlayList li > span.uiRecordInputValue {
+	font-weight:bold;
+}
+button#uiRecorderPlayButton.uiRecorderPlaying {
+	background-color:#3333ff
+}
+button#uiRecorderStartButton.uiRecorderRecording {
+	background-color:#3333ff
+}

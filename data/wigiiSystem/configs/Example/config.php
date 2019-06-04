@@ -24,8 +24,6 @@
 /* CONFIG FILE */
 //******************
 
-define("WEB_WNCD",true);
-
 //*******************
 //* SMTP parameters */
 //*******************

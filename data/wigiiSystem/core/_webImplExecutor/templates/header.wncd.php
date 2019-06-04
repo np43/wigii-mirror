@@ -54,9 +54,11 @@ window.wigiiNcdEtp = {options:{
 	}
 }};
 </script>
-<script src="https://www.wigii.org/system/libs/wigii-ncd-core.min.js"></script>
-<!-- script src="https://www.wigii.org/system/libs/wigii-ncd-core.js"></script-->
+<?if(defined("WNCD_LOCAL_LIBS")) {?>
 <!-- script src="<?=SITE_ROOT_forFileUrl;?>assets/js/wigii-ncd-core.js"></script-->
-<?
+<script src="<?=SITE_ROOT_forFileUrl;?>assets/js/wigii-ncd-core.min.js?v=<?=ASSET_REVISION_NUMBER;?>"></script>
+<?} else { ?>
+<script src="https://www.wigii.org/system/libs/wigii-ncd-core.min.js"></script>
+<?}
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end header.wncd.php"] = microtime(true);
 $this->executionSink()->publishEndOperation("TEMPLATE header.wncd.php");

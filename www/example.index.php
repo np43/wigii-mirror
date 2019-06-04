@@ -68,7 +68,8 @@ define("ELEMENT_STATISTIC_ENABLED", false);
 define("FILE_STATISTIC_ENABLED", false);
 define("TEMPORARYUPLOADEDFILE_lifetime", 60 * 60 * 24); //number of second a file remains in the temp folder
 define("TEMPORARYUNZIPFORVIEWINGFILE_lifetime", 60 * 60 * 12); //number of second a file remains in the temp folder for viewing
-
+define("WEB_WNCD",true);
+define("WNCD_LOCAL_LIBS",true);
 
 /**
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

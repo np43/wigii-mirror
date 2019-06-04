@@ -4130,6 +4130,75 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		});
 		
 		ncddoc(function(){/**
+		 * Formats the given number of seconds as a Time string in the format HH:mm
+		 *@param Int s a given number of seconds (can be negative)
+		 *@return String well formatted time string
+		*/},
+		wigiiApi.seconds2Time = function(s){
+			var neg = s < 0;
+			if(neg) s = -s; //if time is negative do all calculation as if positive + adds minus at the end
+			var h = s / 3600;
+			var min = h - Math.floor(h);
+			h = Math.floor(h);
+			min = min*60;
+			min = Math.round(min);
+			if(min==60){
+				min = '00';
+				h++;
+			} else if(min<10){
+				min = '0'+min;
+			}
+			if(neg) return "-"+h+':'+min;
+			return h+':'+min;
+		});
+		
+		ncddoc(function(){/**
+		 * Formats a string as a Time HH:mm
+		 *@param String s partially formated time string
+		 *@return String well formatted time string
+		*/},
+		wigiiApi.format2Time = function(s){
+			if(s=="") return "";
+			var min = "";
+			var h = "";
+			var t = s.split(":");
+			if(t.length>1){
+				h = t[0];
+				min = t[1];
+				if(parseInt(min)<10){
+					min = "0"+parseInt(min);
+				}
+			} else if((s+"").length>2){
+				s = s+""; //convert to string
+				min = s.substr(-2,2);
+				h = s.substr(0,s.length-2);
+			} else {
+				h = s;
+				min = '00';
+			}
+			if(h==""){
+				h = "0";
+			}
+			if(min>"59"){
+				min="??";
+			}
+			return h+':'+min;
+		});
+		
+		ncddoc(function(){/**
+		 * Transforms a duration represented as a time string HH:mm in the correspondant number of seconds.
+		 *@param String duration time string in the format HH:mm
+		 *@return Int the duration in seconds
+		*/},
+		wigiiApi.time2Seconds = function(duration){
+			if(duration!=""){
+				var time = duration.split(":");
+				if(time[0]<0) return (time[0]*3600)-(time[1]*60);
+				else return (time[0]*3600)+(time[1]*60);
+			} else return 0;
+		});
+		
+		ncddoc(function(){/**
 		 * Returns a string representing a date in a French style (d.m.Y H:i:s).
 		 *@param Integer|String timestamp timestamp to convert to date string or Wigii date string.
 		 *@param String options a formating option string. One of : 

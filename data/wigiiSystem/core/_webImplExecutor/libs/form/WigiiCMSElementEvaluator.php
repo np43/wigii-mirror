@@ -34,6 +34,7 @@
  * Updated by Wigii.org (Camille Weber) on 05.03.2018 to move it to standard Wigii distribution
  * Updated by Wigii.org (Lionel Weber) on 12.12.2018 to support HTMLCode based articles
  * Updated by Wigii.org (Camille Weber) on 14.02.2019 to include on demand a Google site verification code in html header
+ * Updated by Wigii.org (Camille Weber) on 04.06.2019 to take advantage of local Wigii NCD libraries instead of requesting www.wigii.org/system/libs
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -962,6 +963,8 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 		$footer = (!empty($footer)?'<div class="wigii-footer wigii-cms content">'.$footer.'</div>':'');
 		$js = (!empty($js)?"<script>".$js."</script>":'');
 		$ncdProgramOutput = '<div id="programOutput"></div>';
+		if(defined("WNCD_LOCAL_LIBS")) $ncdCoreLib=SITE_ROOT_forFileUrl."assets/js/wigii-ncd-core.min.js?v=".ASSET_REVISION_NUMBER;
+		else $ncdCoreLib="https://www.wigii.org/system/libs/wigii-ncd-core.min.js";
 		
 		// Creates footer
 		$returnValue = <<<PAGEFOOTER
@@ -1034,7 +1037,7 @@ $(document).ready(function(){
 });
 </script>
 $ncdProgramOutput
-<script src="https://www.wigii.org/system/libs/wigii-ncd-core.min.js"></script>
+<script src="$ncdCoreLib"></script>
 $footer
 $js
 </div>
@@ -1232,7 +1235,8 @@ JSPUBLICCOMMENTS;
 		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";		
 		$googleSiteVerifCode= $options->getValue('googleSiteVerifCode');
 		if(!empty($googleSiteVerifCode)) $googleSiteVerifCode= '<meta name="google-site-verification" content="'.$googleSiteVerifCode.'"/>'."\n";
-		$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii-core.js"></script>';
+		//$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii-core.js"></script>';
+		$wigiiJS = '<script type="text/javascript" src="'.SITE_ROOT_forFileUrl.'assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
 		$wigiiJS .= "<script type='text/javascript' >
 SITE_ROOT = '".SITE_ROOT."';
 CLIENT_NAME = '".CLIENT_NAME."';
@@ -1244,6 +1248,9 @@ wigii().initContext();
 </script>";
 		//$wigiiCSS = '<link rel="stylesheet" href="https://resource.wigii.org/assets/css/wigii-core.css" type="text/css" media="all" />';
 		$wigiiCSS = '';/* not compatible yet with CMS */
+		if(defined("WNCD_LOCAL_LIBS")) $ncdStdCss = '<link media="all" type="text/css" href="'.SITE_ROOT_forFileUrl.'assets/css/wigii-ncd-stdlib.css?v='.ASSET_REVISION_NUMBER.'" rel="stylesheet"/>';
+		else $ncdStdCss = '<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-stdlib.css" rel="stylesheet"/>';
+		
 		$returnValue = <<<HTMLHEAD
 <!DOCTYPE html>
 <!--
@@ -1279,7 +1286,7 @@ $metaDescription $metaKeywords $metaAuthor $googleSiteVerifCode
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 $wigiiJS
 $wigiiCSS
-<link media="all" type="text/css" href="https://www.wigii.org/system/libs/wigii-ncd-stdlib.css" rel="stylesheet"/>
+$ncdStdCss
 <style>
 $css
 </style>

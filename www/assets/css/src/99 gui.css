@@ -348,4 +348,27 @@ div.cm div.checked {
     margin-right: 6px;
 }
 
+/************************************************
+* KanBan board and NCD integration 
+*************************************************/
+#workZone div.dataZone.wncd * {
+	box-sizing:border-box;
+}
+button.ncd {
+	font-size:x-large;	
+	margin:0.1em;
+	margin-left:0em;
+	padding:0.05em 0.2em;
+	border-style:solid;
+	border-radius:0.2em;
+	border-color:black;
+	cursor:pointer;
+}
+button.ncd:hover, button.ncd:focus {
+	border-color:blue;
+}
+div.storyBoardFilters {
+	padding-top:3px;
+}
+
 
