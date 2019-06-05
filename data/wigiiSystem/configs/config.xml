@@ -413,7 +413,7 @@ jsCodeInForm="
 				<attribute>pop3SSL</attribute>
 			</authenticationMethod>
 			<authenticationServer type="Strings" expand="1"/>
-			<password type="Strings" secret="1" require="0" expand="1" noAutofill="1"/>
+			<password type="Strings" secret="1" genPassword="1" showPassword="1" require="0" expand="1" noAutofill="1"/>
 			<passwordHasBeenEdited type="Booleans" require="0" />
 			<canModifyOwnPassword type="Booleans" require="0" />
 			<passwordLife type="Strings" require="0" help="passworLife_help" expand="1"/>

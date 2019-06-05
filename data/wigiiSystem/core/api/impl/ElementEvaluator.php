@@ -809,7 +809,12 @@ class ElementEvaluator extends RecordEvaluator
 					if($separator && is_numeric($separator)){
 						$groupnameMatch = substr($groupnameMatch, $separator, $index);
 					} else if($separator && is_string($separator)){
-						if(is_numeric($index)) $groupnameMatch= explode($separator, $groupnameMatch)[$index];
+					    if(is_numeric($index)) {
+					        $groupnameMatch= explode($separator, $groupnameMatch);
+					        if($index < 0) $groupnameMatch = $groupnameMatch[0];
+					        elseif($index >= count($groupnameMatch)) $groupnameMatch = end($groupnameMatch);
+					        else $groupnameMatch = $groupnameMatch[$index];
+					    }
 						elseif(is_string($index)) {
 						    $groupnameMatch = end(explode($separator, $groupnameMatch, 2)); // gets tail
 						    $groupnameMatch = explode($index, $groupnameMatch)[0]; // gets head

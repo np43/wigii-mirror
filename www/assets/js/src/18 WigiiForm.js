@@ -727,6 +727,38 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	$(formId+' div.field').mouseleave(function(e){
 		$(this).find(".addinfo").hide();
 	});
+	
+	// CWE 05.06.2019 handles genPasswordBtn
+	$(formId+' div.field div.value span.genPasswordBtn').click(function(e){
+		var inputId = $(this).attr('data-wigii-for');
+		if(inputId) {
+			if($('#'+inputId).attr('type')=='password') $(this).parent().find('span.showPasswordBtn[data-wigii-for="'+inputId+'"]').click();
+			$('#'+inputId).val(wigii().genPassword());			
+		}
+	});
+	// CWE 05.06.2019 handles showPasswordBtn
+	$(formId+' div.field div.value span.showPasswordBtn').click(function(e){
+		var inputId = $(this).attr('data-wigii-for');
+		if(inputId) {
+			$(this).show();
+			if($('#'+inputId).attr('type')=='password') {
+				$('#'+inputId).attr('type','text');
+				$(this).css('text-decoration','line-through');
+			}
+			else {
+				$('#'+inputId).attr('type','password');
+				$(this).css('text-decoration','none');
+			}
+		}
+	});
+	$(formId+' div.field div.value span.showPasswordBtn').each(function(i){
+		var inputId = $(this).attr('data-wigii-for');
+		var showPasswordBtn = $(this);
+		if(inputId) {
+			$('#'+inputId).on('input',function(){ showPasswordBtn.show(); });
+		}
+	});
+	
 	if(isWorkzoneViewDocked()) addScrollWithShadow($(formId).parent().prop("id"));	
 }
 

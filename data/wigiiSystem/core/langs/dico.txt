@@ -1354,6 +1354,8 @@ Contacts_tab_help_SDN:NRS and IRS have access to some #groups# in this tab:NRS e
 Filemanager_tab_help_SDN:NRS and IRS have access to some #groups# in this tab:NRS et IRS peuvent accéder à certain #-groups# dans cet onglet:::::::::
 
 passworLife_help:Examples\:<br />30 = password must reset every 30days<br />-1 = password must be reset on next login<br />-30 = password must reset at next login and must be redefined every 30 days<br />reset = reset the password date to today:Exemples\:<br />30 = le mot-de-passe doit être changé tous les 30 jours<br />-1 = le mot-de-passe doit être changé au prochain login<br />-30 = le mot-de-passe doit être changé au prochain login ainsi que tous les 30 jours<br />reset = défini la date de changement de password à aujourd'hui.::::::::
+showPasswordBtn_help:Hide or display password characters:Masquer ou montrer les caractères du mot de passe:::::::::
+genPasswordBtn_help:Generate a new password:Générer un nouveau mot de passe:::::::::
 
 feedbackAccessToElement:Feedback is about #element#:Le feedback est à propos #ofElement#:::::::::
 directAccessElement:Direct access to #thisElement#:Accès direct à #thisElement#:::::::::

@@ -103,6 +103,16 @@ $this->put('" value="');
 $this->put($val = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, $subFieldName)));
 $this->put('" />');
 
+// CWE 05.06.2019 adds a show password button
+if($fieldXml["secret"]=="1" && $fieldXml["showPassword"]=="1") {
+    $labelForTitle=$transS->t($p, 'showPasswordBtn_help');
+    $this->put('<span class="showPasswordBtn" style="display:none;cursor:pointer;font-size:24px;font-weight:bold;padding:2px;" title="'.$labelForTitle.'" data-wigii-for="'.$inputId.'">&#128065;</span>');
+}
+// CWE 05.06.2019 adds a generate password button
+if($fieldXml["secret"]=="1" && $fieldXml["genPassword"]=="1") {
+    $labelForTitle=$transS->t($p, 'genPasswordBtn_help');
+    $this->put('<span class="genPasswordBtn" style="cursor:pointer;font-size:18px;font-weight:bold;padding:2px;" title="'.$labelForTitle.'" data-wigii-for="'.$inputId.'">&#128272;</span>');
+}
 
 if($fieldXml["persistCookie"]=="1" && $_POST["action"]==null && $this->getRecord()->getId()==0){
 	//on ajoute le code pour persister la dernière valeur tapée et pour la préremplir si

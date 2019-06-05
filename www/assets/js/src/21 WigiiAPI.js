@@ -4000,6 +4000,14 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			return value;
 		});
 
+		ncddoc(function(){/** 
+		 * Generates a random integer value between min and max included 
+		*/},
+		wigiiApi.rand = function (minV, maxV) {
+			var nPos = (maxV-minV+1);
+			return minV - 1 + Math.floor(1 + Math.random()*nPos);
+		});
+		
 		ncddoc(function(){/**
 		 * Generates a range of numbers, starting from one number, to another number, by a given step.
 		 * @param Number from start number, can be integer, float, positive, null or negative.
@@ -4024,6 +4032,64 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 				else throw wigiiApi.createServiceException('step cannot be 0',wigiiApi.errorCodes.INVALID_ARGUMENT);
 			}
+		});
+		
+		ncddoc(function(){/**
+		 * Generates a password
+		 * @param int length Password length, default to 12 characters.
+		 * @return String generated password composed of letters, digits and ponctuation characters
+		*/},
+		wigiiApi.genPassword = function(length) {
+			if(length===undefined) length=12;
+		    var returnValue = [];
+		    var randomSet = [
+		        ['-',':','#','!'],
+		        ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'],
+		        ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'],
+		        ['0','1','2','3','4','5','6','7','8','9']
+		    ];
+		    
+		    var oneSymbol=false;
+		    // first character is always a char
+		    var symbolTreshold=-1;
+            var digitTreshold=100;
+		    for(var i=0;i<length;i++) {
+		        var charType = wigiiApi.rand(0,100);		        
+		        // if not first character, then 20% symbol, 30% digit, rest chars
+		        if(i>0) {
+		           symbolTreshold=20;
+		           digitTreshold=70;
+		        }
+		        // selects char type based on some weights
+		        var lowerCaseTreshold = symbolTreshold+(digitTreshold-symbolTreshold)/2;
+		        if(0<=charType && charType<=symbolTreshold) charType=0;
+		        else if(symbolTreshold+1<=charType && charType<=lowerCaseTreshold) charType=1;
+		        else if(lowerCaseTreshold+1<=charType && charType<=digitTreshold) charType=2;
+		        else if(digitTreshold+1<=charType && charType<=100) charType=3;
+		        else charType=2;
+		        
+		        if(i>0) {
+	    	       // if char type is not a symbol, then move treshold up
+	    	       if(charType!=0) symbolTreshold+=5; 
+		           // else moves treshold down
+	    	       else {
+	    	           symbolTreshold-=5;
+	    	           oneSymbol=true;
+	    	       }
+		        }	        
+		        // select random char in selected set
+		        var charV = wigiiApi.rand(0,randomSet[charType].length-1);
+		        charV = randomSet[charType][charV];
+		        returnValue.push(charV);
+		    }
+		    // if no symbol, then adds one randomly
+		    if(!oneSymbol) {
+		    	charV = wigiiApi.rand(0,randomSet[0].length-1);
+		    	charV = randomSet[0][charV];
+		        returnValue[wigiiApi.rand(1,returnValue.length-1)] = charV;
+		    }
+		    
+		    return returnValue.join('');
 		});
 		
 		ncddoc(function(){/**

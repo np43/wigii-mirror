@@ -2295,7 +2295,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * 				if start as Int. Optional, if defined does the comparaison starting from this character number
 	 * - Arg(2) index|len|stopStr:
 	 * 				if Arg1 is String and index is numeric. Optional, if defined, then compares the exploded value at this index. Defaults to first word (index=0).
-	 * 				if Arg1 is Int. Optional, ff defined, then takes len char after start for the comparaison.
+	 * 				if Arg1 is Int. Optional, if defined, then takes len char after start for the comparaison.
 	 *              if Arg1 is String and stopStr as String. Optional, if defined, then compares the exploded tail until stopStr is found.
 	 * @example to match group name starting with business key "C12345 MyCustomer" write getDropdownValueFromGroupOrParentGroups(customers," ")
 	 * to match group name ending with business key "MyCustomer C12345" write getDropdownValueFromGroupOrParentGroups(customers," ","10") (put an index big enough to ensure getting last word)
@@ -2324,7 +2324,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			if($separator && is_numeric($separator)){
 				$returnValue= substr($returnValue, $separator, $index);
 			} else if($separator && is_string($separator)){
-			    if(is_numeric($index)) $returnValue= explode($separator, $returnValue)[$index];
+			    if(is_numeric($index)) {
+			        $returnValue = explode($separator, $returnValue);
+			        if($index < 0) $returnValue = $returnValue[0];
+			        elseif($index >= count($returnValue)) $returnValue = end($returnValue);
+			        else $returnValue = $returnValue[$index];
+			    }
 			    elseif(is_string($index)) {
 			        $returnValue = end(explode($separator, $returnValue, 2)); // gets tail
 			        $returnValue = explode($index, $returnValue)[0]; // gets head
