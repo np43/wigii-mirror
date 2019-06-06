@@ -3447,13 +3447,175 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $versionSync;
 	}
 	
+	// Wigii Duplicate Element on Field management
+	
+	/**
+	 * Build the jsCode needed in the detail of an item on which we want to activate duplicate on field
+	 * FuncExp signature : <code>duplicateElementOnFieldJsCodeInElementDetail(options)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) options: WigiiBPLParameter.
+	 * 		elementId : the element id
+	 * 		label : the label of the duplicate button
+	 * 		duplicateElementOnField : the name of the field on which we want to duplicate the element, should be an Attributs or MultipleAttributs
+	 * @return String js code
+	 */
+	public function duplicateElementOnFieldJsCodeInElementDetail($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		$i = 0;
+		if($nArgs>0) $options = $this->evaluateArg($args[0]);
+		if(!($options instanceof WigiiBPLParameter)) throw new FuncExpEvalException('The duplicateElementOnFieldJsCodeInElementDetail function takes one argument which is a wigiiBPLParam', FuncExpEvalException::INVALID_ARGUMENT);
+		
+		$elementId = $options->getValue("elementId");
+		if(!$elementId){
+			throw new RecordException('The duplicateElementOnFieldJsCodeInElementDetail function requries elementId to not be empty', RecordException::INVALID_ARGUMENT);
+		}
+		$label= $options->getValue("label");
+		$duplicateElementOnField= $options->getValue("duplicateElementOnField");
+		if($duplicateElementOnField instanceof FieldSelector) $duplicateElementOnField = $duplicateElementOnField->getFieldName();
+		return "
+		(function(){
+			var f = wigii().form();
+			if(f.elementIsEditable()){
+				var manageDuplication = function() {
+					if(!f.writableCurrentGroupId()){
+						console.log('please select a folder in which you can write');
+						jAlert(wigii().txtDico('l01','Please select first a folder in which you are able to write.','l02',\"Veuillez sélectionner d'abord un dossier dans lequel vous pouvez écrire.\"));
+					} else {
+					console.log('activity Duplicate $duplicateElementOnField');
+					update('activityDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/activity/DuplicateOnField/groupId='+f.writableCurrentGroupId()+'/elementId=".$elementId."/label=".$label."/duplicateElementOnField=".$duplicateElementOnField."');
+					}
+				};
+				f.tool('duplicate".$duplicateElementOnField."').label(wigii().getHtmlBuilder().putStartTag('span','class','glyphicon glyphicon-duplicate').putEndTag('span').html()+' ".$label."').click(manageDuplication).$.css('font-weight','bold');
+			}
+		})();";
+	}
+	
+	/**
+	 * Manage the duplicate on field of an item
+	 * FuncExp signature : <code>duplicateOnFieldController()</code><br/>
+	 * @return true
+	 */
+	public function duplicateOnFieldController($args){
+		$this->assertFxOriginIsNotPublic();
+		$nArgs = $this->getNumberOfArgs($args);
+		$activity = $this->getRecord();
+		$p = $this->getPrincipal();
+		$transS = ServiceProvider::getTranslationService();
+		$elementId = $activity->getFieldValue("elementId");
+		$groupId = $activity->getFieldValue("groupId");
+		$duplicateElementOnField= $activity->getFieldValue("duplicateElementOnField");
+		$elS = ServiceProvider::getElementService();
+		$wigiiBpl = ServiceProvider::getWigiiBPL();
+		
+		$errorMessage = "";
+		if(!$elementId){
+			$errorMessage .= $transS->t($p,"duplicateElementOnFieldElementIdCannotBeNull")."<br />";
+		}
+		if(!$groupId){
+			$errorMessage .= $transS->t($p,"duplicateElementOnFieldGroupIdCannotBeNull")."<br />";
+		}
+		if(!$duplicateElementOnField){
+			$errorMessage .= $transS->t($p,"duplicateElementOnFieldValueFieldCannotBeNull")."<br />";
+		}
+		//fetch element from elementId and groupId
+		$elementP = sel($p,elementP($elementId,null,cs_g($p,$groupId)),dfasl(dfas("NullDFA")));
+		if(!$elementP){
+			$errorMessage .= $transS->t($p,"elementCannotBeNull")." id:".$elementId." groupId: ".$groupId."<br />";
+		} else {
+			$element = $elementP->getElement();
+		}
+		
+		if($errorMessage){
+			echo '<br /><font style="color:red;font-weight:bold;">'.$errorMessage.'</font><br /><br />';
+			return false;
+		} else { 
+			$values = $activity->getFieldValue("values");
+			if($values && is_array($values) && count($values)>0){
+				foreach ($values as $value){
+					switch($element->getFieldList()->getField($duplicateElementOnField)->getDataType()->getDataTypeName()){
+						case "MultipleAttributes":
+							$value = Array($value);
+							break;
+						default:
+							//nothing to do, keep value as is
+					}
+					ServiceProvider::getDataFlowService()->processDataSource(
+						$p,
+						$wigiiBpl->buildCopyElementDataFlowConnector($element, cs_g($p,$groupId)),
+						dfasl(
+							dfas("ElementSetterDFA","setCalculatedFieldSelectorMap",cfsMap(cfs($duplicateElementOnField,$value))),
+							dfas("ElementRecalcDFA"),
+							dfas("ElementDFA","setMode","1","setGroupId",$groupId),
+							dfas("ElementUpdateSharingDFA")
+						),
+						true,
+						TechnicalServiceProvider::getWigiiEventsDispatcher()
+					);
+					//the method under has the problem of the autoorganize not managed
+					//$element->setFieldValue($value,$duplicateElementOnField);
+					//$wigiiBpl->elementEvalCalcFields($p, $this, wigiiBPLParam('element',$element));
+					//$elS->insertElementCopy($p, $element, $groupId);
+				}
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Load recurring activity data from valueField from the element
+	 * FuncExp signature : <code>duplicateElementOnFieldLoadValues()</code><br/>
+	 * @return true
+	 */
+	public function duplicateElementOnFieldLoadValues($args){
+		$nArgs = $this->getNumberOfArgs($args);
+		$activity = $this->getRecord();
+		$p = $this->getPrincipal();
+		$transS = ServiceProvider::getTranslationService();
+		$elementId = $activity->getFieldValue("elementId");
+		$groupId = $activity->getFieldValue("groupId");
+		$duplicateElementOnField= $activity->getFieldValue("duplicateElementOnField");
+		
+		$errorMessage = "";
+		if(!$elementId){
+			$errorMessage .= $transS->t($p,"duplicateElementOnFieldElementIdCannotBeNull")."<br />";
+		}
+		if(!$groupId){
+			$errorMessage .= $transS->t($p,"duplicateElementOnFieldGroupIdCannotBeNull")."<br />";
+		}
+		if(!$duplicateElementOnField){
+			$errorMessage .= $transS->t($p,"duplicateElementOnFieldValueFieldCannotBeNull")."<br />";
+		}
+		
+		if($errorMessage){
+			echo '<br /><font style="color:red;font-weight:bold;">'.$errorMessage.'</font><br /><br />';
+			return false;
+		} else { 
+			//lookup xml of $duplicateElementOnField and merge attribute in field values of activity
+			$configS = $this->getFormExecutor()->getWigiiExecutor()->getConfigurationContext();
+			$xml = $configS->g($p, ServiceProvider::getGroupAdminService()->getGroupWithoutDetail($p, $groupId)->getDbEntity());
+			$fieldXml = $activity->getFieldList()->getField("values")->getXml();
+			foreach($xml->fields->{$duplicateElementOnField}->attribute as $attribute){
+				simplexml_appendChild($fieldXml, $attribute);
+			}
+		}
+		return true;
+	}
+	
 	// Wigii Recurring activity management
 	
 	/**
 	 * Build the jsCode needed in the detail of an item on which we want to activate recurrence
-	 * FuncExp signature : <code>getJsCodeInDetailToManageRecurrence(options)</code><br/>
+	 * FuncExp signature : <code>recurringJsCodeInElementDetail(options)</code><br/>
 	 * Where arguments are :
-	 * - Arg(0) options: WigiiBPLParameter. The email
+	 * - Arg(0) options: WigiiBPLParameter.
+	 * 		elementId : the element id
+	 * 		isRecurring : Boolean
+	 * 		startDate : the start date of reccurence
+	 * 		isRecurringField : the name of the isRecurring field (should be of type Booleans)
+	 * 		timeRangeField : the name of the timeRange field
+	 * 		keyField : the name of the key field, key is used to have a unique identifier linking together all the recurrent element
+	 * 		valueField : the name of the field in which the recurrence values will be stored
+	 * 		summaryField : the name of a summary field containing the explanation of the recurrence (not implemented)
 	 * @return String js code
 	 */
 	public function recurringJsCodeInElementDetail($args){
@@ -3492,7 +3654,7 @@ class RecordEvaluator implements FuncExpEvaluator
 						jAlert(wigii().txtDico('l01','Please select first a folder in which you are able to write.','l02',\"Veuillez sélectionner d'abord un dossier dans lequel vous pouvez écrire.\"));
 					} else {
 						console.log('activity Recurring $isRecurring $startDate $isRecurringFieldName $timeRangeFieldName $keyFieldName $valueFieldName $summaryFieldName');
-						update('activityDialog/'+crtWigiiNamespaceUrl+'/Events/activity/Recurring/groupId='+f.writableCurrentGroupId()+'/elementId=".$elementId."/startDate=".$startDate."/isRecurring=".$isRecurring."/isRecurringFieldName=".$isRecurringFieldName."/timeRangeFieldName=".$timeRangeFieldName."/keyFieldName=".$keyFieldName."/valueFieldName=".$valueFieldName."/summaryFieldName=".$summaryFieldName."');
+						update('activityDialog/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'/activity/Recurring/groupId='+f.writableCurrentGroupId()+'/elementId=".$elementId."/startDate=".$startDate."/isRecurring=".$isRecurring."/isRecurringFieldName=".$isRecurringFieldName."/timeRangeFieldName=".$timeRangeFieldName."/keyFieldName=".$keyFieldName."/valueFieldName=".$valueFieldName."/summaryFieldName=".$summaryFieldName."');
 					}
 				};
 				f.tool('manageRecurrence').label(wigii().getHtmlBuilder().putStartTag('span','class','glyphicon glyphicon-refresh').putEndTag('span').html()+wigii().txtDico('l01',' Recurrence','l02',' Récurrence')).click(manageRecurrence).$.css('font-weight','bold');
@@ -3566,6 +3728,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * @return true
 	 */
 	public function recurringController($args){
+		$this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		//if($nArgs != 1) throw new FuncExpEvalException('The manageRecurrence function takes two argument which is the email value', FuncExpEvalException::INVALID_ARGUMENT);
 		$activity = $this->getRecord();

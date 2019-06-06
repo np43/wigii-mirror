@@ -326,6 +326,25 @@ jsCodeInForm="
 			<deleteRecurrenceCheck type="Booleans" displayHidden="1" />
 		</fields>
 	</Recurring>
+	
+	<DuplicateOnField
+		labelWidth="220"
+		totalWidth="440"
+		executeResultExpOnStart="0"
+		resultExp='duplicateOnFieldController()'
+		keepModifyingExp=''
+		submitLabel='concat(txtDico(newMap("l01","Ok","l02","Ok")))'
+		><label_l01>Duplicate #element# on a field</label_l01><label_l02>Dupliquer #element# sur un champ</label_l02>
+		<fields>
+			<elementId type="Strings" displayHidden="1" defaultExp='ctlSeq(fillElementFromUrl("1"),duplicateElementOnFieldLoadValues(),ctlIgnoreReturnValue())' ></elementId>
+			<groupId type="Strings" displayHidden="1" ></groupId>
+			<label type="Strings" displayHidden="1" ></label>
+			<duplicateElementOnField type="Strings" displayHidden="1" ></duplicateElementOnField>
+			<values type="MultipleAttributs" chosen="1" expand="1" require="1">
+				<label_l01>Choose values</label_l01><label_l02>Choisissez les valeurs</label_l02>
+			</values>
+		</fields>
+	</DuplicateOnField>		
 
 	<exportMenu>
 		<fields>
