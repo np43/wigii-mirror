@@ -90,33 +90,7 @@ if($this->shouldBeResponsive($exec->getCrtAction())) {
 }
 ?>
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
-<?
-if(file_exists(CLIENT_WEB_PATH."favicon.ico")){
-?>
-<link rel="shortcut icon" href="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>favicon.ico" type="image/x-icon" />
-<?
-} else if(file_exists(CLIENT_WEB_PATH."favicon.jpg")){
-?>
-<link rel="shortcut icon" href="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>favicon.jpg" type="image/x-icon" />
-<?
-} else if(file_exists(CLIENT_WEB_PATH."favicon.gif")){
-?>
-<link rel="shortcut icon" href="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>favicon.gif" type="image/x-icon" />
-<?
-} else if(file_exists(CLIENT_WEB_PATH."favicon.png")){
-?>
-<link rel="shortcut icon" href="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>favicon.png" type="image/x-icon" />
-<?
-} else if(file_exists("favicon.jpg")){
-?>
-<link rel="shortcut icon" href="<?=SITE_ROOT_forFileUrl;?>favicon.jpg" type="image/x-icon" />
-<?
-} else {
-?>
-<link rel="shortcut icon" href="<?=SITE_ROOT_forFileUrl;?>favicon.gif" type="image/x-icon" />
-<?
-}
-?>
+<?=includeFaviconLink(); ?>
 <script type="text/javascript" ><?
 //Definition of JS constante
 ?>

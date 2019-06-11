@@ -398,7 +398,11 @@ class DetailRenderer extends FieldRenderer implements FieldListVisitor {
 					$dbValue = $rm->getRecord()->getFieldValue($field->getFieldName());
 					if(is_array($dbValue)) $dbValue = implode(',',$dbValue);
 					$dataAttributes='data-wigii-dbvalue="'.$rm->formatValueToPreventInjection($dbValue).'"';
-				}	
+				}
+				elseif($dataTypeName=='Booleans') {
+				    $dbValue = $rm->getRecord()->getFieldValue($field->getFieldName());
+				    if($dbValue) $dataAttributes='data-wigii-dbvalue="1"';
+				}
 				$rm->put('<div class="'.$class.'" style="'.$style.'" '.$dataAttributes.'>');
 				if($dataType!= null && $dataTypeName!="Links" &&
 					!$rm->getRecord()->getWigiiBag()->isFilled($field->getFieldName()) &&

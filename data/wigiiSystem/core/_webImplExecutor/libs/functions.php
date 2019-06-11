@@ -323,3 +323,16 @@ function resolveFilePath($path) {
     else $returnValue = FILES_PATH.$path;    
     return $returnValue;
 }
+/**
+ * Returns some html code to include favicon link
+ */
+function includeFaviconLink() {
+    $returnValue = '';
+    if(file_exists(CLIENT_WEB_PATH."favicon.ico")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.ico" type="image/x-icon" />';
+    else if(file_exists(CLIENT_WEB_PATH."favicon.jpg")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.jpg" type="image/x-icon" />';
+    else if(file_exists(CLIENT_WEB_PATH."favicon.gif")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.gif" type="image/x-icon" />';
+    else if(file_exists(CLIENT_WEB_PATH."favicon.png")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.png" type="image/x-icon" />';
+    else if(file_exists("favicon.jpg")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.'favicon.jpg" type="image/x-icon" />';
+    else $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.'favicon.gif" type="image/x-icon" />';
+    return $returnValue;
+}

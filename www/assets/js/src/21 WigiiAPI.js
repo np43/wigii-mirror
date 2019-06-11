@@ -1042,6 +1042,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						} else if($('#'+self.fieldId()+' :input').hasClass('flex') || $('#'+self.fieldId()+' :input').hasClass('chosen')) {
 							// if field is a flex or chosen drop-down, then triggers change event to refresh UI with new value
 							$('#'+self.fieldId()+' :input').val(value).change();
+						} else if($('#'+self.fieldId()).attr('data-wigii-datatype')=='Booleans') {
+							$('#'+self.fieldId()+' :input').prop('checked',value==true);
 						} else {
 							$('#'+self.fieldId()+' :input').val(value);
 						}
@@ -1097,7 +1099,15 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){
 								returnValue = $(textarea).ckeditor().val();
 							});							
-						} 
+						}
+						else if($('#'+self.fieldId()).attr('data-wigii-datatype')=='Booleans') {
+							if(self.formId()=='detailElement_form'){
+								returnValue = ($('#'+self.fieldId()+' div.value').attr('data-wigii-dbvalue')=='1');
+							}
+							else {
+								returnValue = ($('#'+self.fieldId()+' :input').prop('checked')==true);
+							}							
+						}
 						else if(self.formId()=='detailElement_form'){
 							returnValue = $('#'+self.fieldId()+' div.value').html();
 						}
