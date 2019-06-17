@@ -30,18 +30,12 @@ $this->executionSink()->publishStartOperation("TEMPLATE footer.php");
 
 ?>
 </div>
-<?
-
-// Wigii light client
-if($exec->getCrtAction()!="c") {
-?>
 <script type="text/javascript" >
 if(reqOnHash != null){
 	self.location = "<?=(HTTPS_ON ? "https" : "http" );?>://<?=$_SERVER['HTTP_HOST']?><?=$_SERVER['REQUEST_URI']?>"+crtHash;
 	update(reqOnHash);
 }
 </script>
-<? } ?>
 </body>
 </html><?
 

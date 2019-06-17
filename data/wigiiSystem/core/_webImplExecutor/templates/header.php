@@ -235,41 +235,6 @@ else{
 }
 <?
 
-// Wigii light client
-if($exec->getCrtAction()=="c") {
-?>
-</script>
-<?
-if(defined("WEB_WNCD")) { include(TEMPLATE_PATH . "header.wncd.php");}
-if(file_exists(CLIENT_WEB_PATH.CLIENT_NAME.".js")){
-?><script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL.CLIENT_NAME;?>.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script><?
-}
-if(file_exists(CLIENT_WEB_PATH."CKTemplates.js.php")){
-?>
-<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js.php?v=<?=ASSET_REVISION_NUMBER;?>" ></script>
-<?
-} else if(file_exists(CLIENT_WEB_PATH."CKTemplates.js")){
-?>
-<script type="text/javascript" src="<?=SITE_ROOT_forFileUrl.CLIENT_WEB_URL;?>CKTemplates.js?v=<?=ASSET_REVISION_NUMBER;?>" ></script>
-<?
-}
-if(file_exists(CLIENT_CONFIG_PATH.CLIENT_NAME.".js")){
-?><script type="text/javascript">
-<?php include CLIENT_CONFIG_PATH.CLIENT_NAME.".js"; ?>
-</script><?
-}
-flush();
-$companyColor = $configS->getParameter($p, null, "companyColor");
-$rCompanyColor = $configS->getParameter($p, null, "companyReverseColor");
-if(!$companyColor) $rCompanyColor = "#3E4552";
-if(!$rCompanyColor) $rCompanyColor = "#fff";
-?>
-<div id="mainDiv">
-<?
-}
-
-// Wigii default client
-else {
 //wigii_anchor cookie reload process and check
 ?>
 $.cookie('wigii_anchor', '#',  { path: '/' });
@@ -440,6 +405,5 @@ $('#systemConsole').css('display','none').resizable({handles:'e,w',stop:function
     }
     ?>
 <?
-}
 //$GLOBALS["executionTime"][$GLOBALS["executionTimeNb"]++." "."end header.php"] = microtime(true);
 $this->executionSink()->publishEndOperation("TEMPLATE header.php");

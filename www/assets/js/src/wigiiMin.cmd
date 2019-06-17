@@ -35,4 +35,5 @@ del ..\wigii_%v%.js
 copy NUL ..\wigii_%v%.js
 for %%i in (*.min.js) do type "%%i" >> ..\wigii_%v%.js
 
+copy ..\wigii_%v%.js ..\wigii-core.js
 pause

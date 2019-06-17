@@ -408,7 +408,7 @@ class ExecutionServiceImpl implements ExecutionService {
 			//else bind last role id used in context
 			if(!$this->getCrtContext()){
 				//prevent incrementing contextIds on download or light client
-				if($this->getCrtAction()!="download" && $this->getCrtAction()!="c") $this->loadNewContext();
+				if($this->getCrtAction()!="download") $this->loadNewContext();
 				if($p->getRoleListener()) $roleId = $p->getRoleListener()->getCalculatedRoleId($this->getCrtWigiiNamespace()->getWigiiNamespaceUrl());
 				if($roleId && $p->getUserId()!=$roleId){
 					$p = ServiceProvider :: getAuthenticationService()->changeToRole($p, $roleId);

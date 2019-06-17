@@ -145,7 +145,11 @@ $.fn.select2.amd.define('select2/data/wigiiAjaxAdapter',[
     }
 
     var options = $.extend({
-      type: 'GET'
+      type: 'GET',
+      /* CWE 13.06.2019 allows select2 ajax calls to originate from a cross origin and 
+       * pass current wigii session cookie. This is used by Wigii LightClient. */
+      crossDomain: true,
+      xhrFields: {withCredentials: true}
     }, this.ajaxOptions);
 
     if (typeof options.url === 'function') {

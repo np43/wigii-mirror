@@ -2407,12 +2407,30 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 * Where arguments are :
 	 * - Arg(0) key: String|Array. A defined entry in the dictionary, or an array defining a set of translations.
 	 * Array keys are language codes and array values are the translated strings.
+	 * Or alternative signature : <code>txtDico(lang1,label1,lang2,label2)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0,2,4,...) langI: String. Language code like l01, l02, etc
+	 * - Arg(1,3,5,...) labelI: String. Translated label.
 	 * @return String the translated key or the key itself if no entry is defined in the dictionary	 
 	 */
 	public function txtDico($args) {
 	    $nArgs = $this->getNumberOfArgs($args);
 	    if($nArgs<1) throw new FuncExpEvalException('txtDico takes one argument which is the key to lookup into the dictionary', FuncExpEvalException::INVALID_ARGUMENT);
-	    $key = $this->evaluateArg($args[0]);
+	    // if we have a collection of lang code and labels, then builds an array
+	    if($nArgs>1) {
+	        $key = array();
+	        $i=0;
+	        while($i<$nArgs) {
+	            $lang = $this->evaluateArg($args[$i]);
+	            $i++;
+	            if($i<$nArgs) {
+	                $label = $this->evaluateArg($args[$i]);
+	                $key[$lang] = $label;
+	            }
+	            $i++;
+	        }
+	    }
+	    else $key = $this->evaluateArg($args[0]);
 	    if(is_array($key)) {
 	    	$returnValue = $key[$this->getTranslationService()->getLanguage()];
 	    	if(empty($returnValue)) $returnValue = reset($key);

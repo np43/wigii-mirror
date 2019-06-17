@@ -650,7 +650,7 @@ class AuthenticationServiceImpl implements AuthenticationService
 		$user = $this->findUserForClient($p, $username, ValueObject::createInstance($password), $postFix, $client);
 
 		//if no user with this name si found
-		if(!isset($user)) throw new AuthenticationServiceException('User '.$username." dosen't exist for client ".$client->getClientName(), AuthenticationServiceException::INVALID_USERNAME);
+		if(!isset($user)) throw new AuthenticationServiceException('User '.$username." doesn't exist for client ".$client->getClientName(), AuthenticationServiceException::INVALID_USERNAME);
 		$user = $user->getUser(); // retrieves User from UserP.
 		$userd = $user->getDetail();
 

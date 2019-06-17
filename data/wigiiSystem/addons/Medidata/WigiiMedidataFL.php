@@ -65,7 +65,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		// loads the customers and extracts the medical cases
 		return sel($this->getPrincipal(),elementPList(lxInGR($this->evaluateFuncExp(fx('companyDataConfig','customerGroupLx'))),lf(null,$customerNumber)),dfasl(
 			dfas("ElementMatrixDFA",
-				"setColumns",array('caseNumber_','caseLaw_','caseDate_','caseTariff_'),
+				"setColumns",array('caseNumber_','caseLaw_','caseDate_','caseTariff_','caseOffice_'),
 				"setFromRow","1",
 				"setCalculatedColumns",array('contactNumber'=>fs('contactNumber'))
 			),
@@ -78,6 +78,7 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 						'caseLaw'=>oVal($data->{'caseLaw_'}),
 						'caseDate'=>oVal($data->{'caseDate_'}),
 						'caseTariff'=>oVal($data->{'caseTariff_'}),
+						'caseOffice'=>oVal($data->{'caseOffice_'})
 					));
 				}
 			}),

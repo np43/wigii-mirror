@@ -178,7 +178,7 @@ define("EMPTY_ANSWER_ID_URL", "NoAnswer");
 //start the CLIENT implementation
 include_once (CLIENT_CONFIG_PATH . "start.php");
 
-//add the CLIENT configuraiton
+//add the CLIENT configuration
 include_once (CLIENT_CONFIG_PATH . "config.php");
 
 if(ServiceProvider::getTranslationService()->getLanguage()==null){

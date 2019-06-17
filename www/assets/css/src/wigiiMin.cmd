@@ -19,4 +19,6 @@ for %%i in (*.css) do type "%%i" >> ..\wigii_%v%.css
 
 %JAVA_PATH%\java -jar yuicompressor-2.4.8.jar -o ..\wigii_%v%.css ..\wigii_%v%.css
 
+copy ..\wigii_%v%.css ..\wigii-core.css
+
 pause

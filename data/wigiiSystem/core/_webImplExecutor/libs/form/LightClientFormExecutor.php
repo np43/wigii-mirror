@@ -39,6 +39,7 @@
  * 
  * Created by CWE on October 26th 2015.
  * Modified by Medair (LMA) in December 2016.
+ * Refactored by Wigii.org (CWE) on 17.06.2019 to allow calls from WigiiApi.js
  */
 class LightClientFormExecutor extends WebServiceFormExecutor {
 	private $_debugLogger;
@@ -69,25 +70,7 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 		$trm->clear();
 		$trm->setOutputEnabled(false);
 		return $trm;
-	}
-	
-	/*
-	public function setTrm($trm){ $this->templateRecordManager = $trm; }
-	public function getTrm(){ return $this->trm; }
-	public function setRecord($record) {
-		if(!isset($this->templateRecordManager)){
-			$this->templateRecordManager = $this->createTrmInstance();
-		}
-		$this->templateRecordManager->reset($record);
-	}
-	public function getRecord() {
-		if(isset($this->templateRecordManager))
-			return $this->getTrm()->getRecord();
-			else return null;
-	}
-	
-	*/
-	
+	}	
 
 	/**
 	 * @return String returns the name of the current flow in which this element is evaluated.
@@ -106,12 +89,26 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 	// Light Client implementation
 	
 	public function isMinimalPrincipalAuthorized() {return true;}
-	public function processAndEnds($p,$exec) {
+	public function processAndEnds($p,$exec) {	    
+	    // stateful service and authorized to cross-origin calls (only with Wigii protocol)
+	    if($exec->getIsUpdating()) {
+	       header("Access-Control-Allow-Origin: ".$_SERVER['HTTP_ORIGIN']);
+	       header("Access-Control-Allow-Credentials: true");
+	    }
+	    // sets language
+	    $transS = ServiceProvider::getTranslationService();
+	    $exec->addJsCode("crtLanguage = '" . $transS->getLanguage(true) . "';
+crtLang = '" . $transS->getLanguage() . "';
+crtWigiiNamespaceUrl = '" . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "';
+crtModuleName = '" . $exec->getCrtModule()->getModuleUrl() . "';
+");
 		// 1. tries to handle element request
 		if($this->processElementRequest($p, $exec)) return;
 		// else Unsupported request
 		else throw new FormExecutorException('Unsupported request '.$exec->getCrtRequest(), FormExecutorException::UNSUPPORTED_OPERATION);		
 	}
+	
+	private $groupIdInWhichToAdd;
 	
 	/**
 	 * Process Element request
@@ -153,12 +150,11 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 				$this->setFormId($formId);
 				$this->setSubmitUrl(null);
 				$this->setRecord($element);
-				//$this->setCorrectionWidth(26);
 				$this->setLabelWidth($labelWidth);
 				$this->setTotalWidth($totalWidth);
 				$trm = $this->getTrm();
 				$trm->setP($p);
-				$detailR = LightDetailRenderer::createInstance($this->getFormId(), $trm);
+				$detailR = LightDetailRenderer::createInstance($this->getFormId(), $trm, $totalWidth, $labelWidth);
 				$detailR->setP($p);
 				$detailR->setRecordIsWritable($isWritable);
 				$this->setDetailRenderer($detailR);
@@ -171,6 +167,7 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 			}			
 			// /item/id/edit
 			elseif(arrayMatch($args,'item',$id,'edit')) {
+			    FormExecutorException::throwNotImplemented();
 				// fetches Element
 				$elementP = $this->fetchElement($p, $exec, $id->getValue());
 				$element = $elementP->getElement();
@@ -196,12 +193,11 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 				$this->setFormId($formId);
 				$this->setSubmitUrl($submitUrl);
 				$this->setRecord($element);
-				//$this->setCorrectionWidth(26);
 				$this->setLabelWidth($labelWidth);
 				$this->setTotalWidth($totalWidth);
 				$trm = $this->getTrm();
 				$trm->setP($p);
-				$formR = LightFormRenderer::createInstance($this, $this->getFormId(), $trm);
+				$formR = LightFormRenderer::createInstance($this, $this->getFormId(), $trm, $totalWidth, $labelWidth);
 				$formR->setP($p);
 				$this->setFormRenderer($formR);
 				$trm->setFormRenderer($formR);
@@ -220,8 +216,43 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 			}
 			// /folder/id/add
 			elseif(arrayMatch($args,'folder',$id,'add')) {
-				FormExecutorException::throwNotImplemented();
-				$returnValue=true;
+			    $this->groupIdInWhichToAdd = $id->getValue();
+			    // creates new Element			    
+			    $element = Element :: createInstance($exec->getCrtModule());
+			    
+			    // configures rendering process
+			    $configS = $this->getConfigService();
+			    $module = $element->getModule();
+			    $idAnswer = $exec->getIdAnswer();
+			    $submitUrl = $exec->getCrtRequest();
+			    if(is_null($idAnswer)) {
+			        $idAnswer="mainDiv";
+			        $submitUrl = 'mainDiv/'.$submitUrl;
+			    }
+			    $totalWidth = 0 + $configS->getParameter($p, $module, "elementTotalWidth");
+			    $labelWidth = 0 + $configS->getParameter($p, $module, "elementLabelWidth");
+			    $formId = $idAnswer.'_folder_'.$this->groupIdInWhichToAdd.'_add';
+			    $isWritable = true;
+			    $this->setCurrentFlowNameOnElement($element, ElementEvaluator::ELEMENT_FLOW_ADD);
+			    $this->setIsDialog(false);
+			    $this->setFormId($formId);
+			    $this->setSubmitUrl($submitUrl);
+			    $this->setRecord($element);
+			    $this->setLabelWidth($labelWidth);
+			    $this->setTotalWidth($totalWidth);
+			    $trm = $this->getTrm();
+			    $trm->setP($p);
+			    $formR = LightFormRenderer::createInstance($this, $this->getFormId(), $trm, $totalWidth, $labelWidth);
+			    $formR->setP($p);
+			    $this->setFormRenderer($formR);
+			    $trm->setFormRenderer($formR);
+			    
+			    // launches Form resolution
+			    $state = "start";
+			    if ($_POST["action"] != null) $state = addslashes($_POST["action"]);
+			    $this->ResolveForm($p, $exec, $state);
+			    
+			    $returnValue=true;
 			}
 		}
 		return $returnValue;
@@ -239,36 +270,42 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 		/* to be implemented */
 	}
 	
-	protected function doRenderForm($p, $exec) {
+	protected function doRenderForm($p, $exec) {	    
 		switch($this->getCurrentFlowName()) {
 			case ElementEvaluator::ELEMENT_FLOW_READ:
 				$this->displayElementDetail($p, $exec);
 				break;
 			case ElementEvaluator::ELEMENT_FLOW_EDIT:
+			case ElementEvaluator::ELEMENT_FLOW_ADD:
 				$this->displayElementForm($p, $exec);
 				break;
 		}
+	}
+	
+	protected function getGroupIdInWhichToAdd($p, $exec){
+	    return $this->groupIdInWhichToAdd;
+	}
+	/**
+	 * @return GroupListAdvancedImpl containing the group in which to add the element
+	 */
+	public function getGroupInWhichToAdd($p, $exec){
+	    $groupAS = ServiceProvider::getGroupAdminService();
+	    $groupPList = GroupListAdvancedImpl::createInstance();
+	    $groupAS->getGroupsWithoutDetail($p, array($this->getGroupIdInWhichToAdd($p, $exec)=>$this->getGroupIdInWhichToAdd($p, $exec)), $groupPList);
+	    return $groupPList;
 	}
 	
 	// Main rendering functions
 		
 	public function displayElementDetail($p,$exec) {
 		$trm = $this->getTrm();
-		
-		$trm->initTwig('read');
-		
-		echo $trm->getHtmlAndClean();
-		
-		//$exec->addJsCode($detailR->getJsCodeAfterShow());
-		
-		/*
 		$detailR = $trm->getDetailRenderer();
 		
 		$detailR->resetJsCodeAfterShow();
 		$trm->displayRemainingDetails();
-		
+		$trm->put('<div class="clear"></div>');
+		echo $trm->getHtmlAndClean();
 		$exec->addJsCode($detailR->getJsCodeAfterShow());		
-		//*/
 	}	
 	public function displayElementForm($p,$exec) {
 		$trm = $this->getTrm();
@@ -276,13 +313,10 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 		
 		$formR->resetJsCodeAfterShow();
 		$trm->openForm($this->getFormId(), $this->getSubmitUrl(), $this->getTotalWidth(), false);
-		$formR->displayFormErrors();
-		echo $trm->getHtmlAndClean();
-		$trm->initTwig('update');
-		echo $trm->getHtmlAndClean();
+		$trm->displayRemainingForms();
 		$trm->closeForm($this->getFormId(), $this->goToNextState(), $this->getSubmitLabel(), $this->isDialog(), $trm->t("cancel"));
 		$trm->addJsCodeAfterFormIsShown($this->getFormId());
-		echo $trm->getHtmlAndClean();
+    	echo $trm->getHtmlAndClean();    	
 		$exec->addJsCode($formR->getJsCodeAfterShow());	
 	}
 }

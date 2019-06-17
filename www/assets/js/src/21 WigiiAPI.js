@@ -1871,6 +1871,67 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		});
 		
 		ncddoc(function(){/**
+		 * Wigii Light Client		 
+		 */},
+		wigiiApi.LightClient = function(target,options) {
+			var self = this;
+			self.className = 'LightClient';
+			self.instantiationTime = Date.now();
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className+self.instantiationTime;
+			self.options = options || {};
+			self.context = {};
+			self.$ = $(target);
+			if(self.$.length>1) throw wigiiApi.createServiceException('Wigii LightClient target can only be activated on a JQuery collection containing one element', wigiiApi.errorCodes.INVALID_ARGUMENT); 
+			
+			self.context.target = self.$.attr('id') || self.ctxKey;
+			self.$.attr('id',self.context.target);
+						
+			/**
+			 * Calls an action on LightClient web service and updates target with the received html
+			 */
+			self.c = function(wigiiNamespaceUrl,moduleName,action,options) {
+				if(!action.startsWith('/')) action = '/'+action;
+				var url = self.context.target+'/'+wigiiNamespaceUrl+'/'+moduleName+'/c'+action;
+				url = wigiiApi.SITE_ROOT +"Update/"+crtContextId+wigiiApi.EXEC_requestSeparator+url;
+				$.ajax({
+					url: encodeURI(url),
+					success: wigiiApi.parseUpdateResult,
+					error: wigiiApi.defaultFxErrorHandler,
+					crossDomain: true,
+					xhrFields: {withCredentials: true}
+				});
+				return self;
+			};
+			
+			/**
+			 * Returns a FormHelper centered on target form
+			 */
+			self.form = function() {
+				return self.$.find('form').wigii('FormHelper');
+			};
+			
+			/**
+			 * Submits the targeted form
+			 */
+			self.submitForm = function() {
+				var f = self.$.find('form');
+				if(f.length==1) {
+					var url = f.attr('action');
+					if(!url.startsWith(wigiiApi.SITE_ROOT)) url = wigiiApi.SITE_ROOT+url;
+					f.ajaxSubmit({
+						type:"POST",
+						url: encodeURI(url),
+						success: wigiiApi.parseUpdateResult,
+						error: wigiiApi.defaultFxErrorHandler,
+						crossDomain: true,
+						xhrFields: {withCredentials: true}
+					});
+				}
+				return self;
+			};
+		});
+		
+		ncddoc(function(){/**
 		 * WNCD container instance
 		*/},
 		wigiiApi.WncdContainer = function(wncd) {
@@ -2758,6 +2819,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				return (!returnValue?{$:selection}:returnValue);
 			};
 			
+			self.LightClient = function(selection,options) {
+				var returnValue=undefined;
+				// checks we have only one element		
+				if(selection && selection.length==1) {
+					returnValue = wigiiApi.createLightClient(selection,options);
+				}
+				else if(selection && selection.length>1) throw wigiiApi.createServiceException('Wigii LightClient selector can only be activated on a JQuery collection containing one element and not '+selection.length, wigiiApi.errorCodes.INVALID_ARGUMENT);
+				return (!returnValue?{$:selection}:returnValue);
+			};
+			
 			self.DropDownConstraint = function(selection,matrix) {
 				//var ctxKey = self.ctxKey+"_DropDownConstraint";
 				var returnValue=undefined;
@@ -3401,6 +3472,13 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		*/},
 		wigiiApi.createButtonHelper = function(btn,options) {
 			return new wigiiApi.ButtonHelper(btn,options);
+		});
+		
+		ncddoc(function(){/**
+		 * Creates a LightClient instance on a given target
+		*/},
+		wigiiApi.createLightClient = function(target,options) {
+			return new wigiiApi.LightClient(target,options);
 		});
 		
 		ncddoc(function(){/**

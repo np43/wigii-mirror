@@ -4339,12 +4339,10 @@ invalidCompleteCache();
 	
 			$openAnswer = false; //just a flag in case of exception thrown during answering. if this is the case we need to close the answer in the exception management
 	
-			$hasRelogedIn = false;
 			if (!$started) {
 				if ($this->doAutoLoginIfNeeded()) {
 					//after each login we need to clear the configuration context to reload everything
 					$this->clearWigiiContext();
-					$hasRelogedIn = true;
 					// CWE 2015.02.11: clear all requests and force reload
 					$rRequests = $exec->getRemainingRequests();
 					if(count($rRequests) == 1) {
@@ -4405,7 +4403,14 @@ invalidCompleteCache();
 						case "start":
 							break;
 						case "fx":
-							if($crossOrigin) ServiceProvider::getAuthorizationService()->assertCrossOriginAuthorized($p,$_SERVER['HTTP_REFERER'],$exec->getCrtAction());
+						    // CWE 13.06.2019: direct Fx calls are not authorized except if FX_Authorized_DirectCalls is true
+						    if($directAccess && (!defined("FX_Authorized_DirectCalls") || !FX_Authorized_DirectCalls)) throw new AuthorizationServiceException("Direct access request is forbidden for action ".$exec->getCrtAction(),AuthorizationServiceException::FORBIDDEN);
+						    elseif ($crossOrigin) ServiceProvider::getAuthorizationService()->assertCrossOriginAuthorized($p,$_SERVER['HTTP_REFERER'],$exec->getCrtAction());
+							break;
+						case "c":
+							// CWE 13.06.2019: direct c calls are not authorized except if LightClient_Authorized_DirectCalls is true
+						    if($directAccess && (!defined("LightClient_Authorized_DirectCalls") || !LightClient_Authorized_DirectCalls)) throw new AuthorizationServiceException("Direct access request is forbidden for action ".$exec->getCrtAction(),AuthorizationServiceException::FORBIDDEN);
+							elseif ($crossOrigin) ServiceProvider::getAuthorizationService()->assertCrossOriginAuthorized($p,$_SERVER['HTTP_REFERER'],$exec->getCrtAction());
 							break;
 						// and the trusted sites
 						default: 
@@ -4623,6 +4628,7 @@ invalidCompleteCache();
 				case "newSubscription" :
 				case "externalAccess" :
 				case "externalAccessRequest" :
+				case "c":
 					return true;
 					break;
 				case "element":
@@ -4645,7 +4651,7 @@ invalidCompleteCache();
 		//if still not logged in
 		if($authS->isMainPrincipalMinimal()){
 			//if unsuccessfull, remove the cookie
-			$exec->addJsCode($authS->getJsCodeToUnsetWigiiCredentialCookie($p));
+			$exec->addJsCode($authS->getJsCodeToUnsetWigiiCredentialCookie(null));
 			// if not successfull, try auto login as public user
 			if(	(strpos($exec->findUrl(), 'JSCode/'.WigiiNamespace::EMPTY_NAMESPACE_URL.'/'.Module::EMPTY_MODULE_URL.'/wakeup')===false) &&
 				(strpos($exec->findUrl(), 'loginForm/'.WigiiNamespace::EMPTY_NAMESPACE_URL.'/'.Module::ADMIN_MODULE.'/login')===false)){

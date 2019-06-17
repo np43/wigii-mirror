@@ -229,7 +229,7 @@ class AuthenticationServiceWebImpl extends AuthenticationServiceImpl {
 		$client = $this->getClientAdminService()->getClient($p, $this->getCrtClientName());
 		$user = $this->getUserAdminService()->findUserForClient($p, $username, $client);
 		//if no user with this name si found
-		if(!isset($user)) return false; //throw new AuthenticationServiceException('User '.$username." dosen't exist for client ".$client->getClientName(), AuthenticationServiceException::FORBIDDEN);
+		if(!isset($user)) return false; //throw new AuthenticationServiceException('User '.$username." doesn't exist for client ".$client->getClientName(), AuthenticationServiceException::FORBIDDEN);
 		$user = $user->getUser(); // retrieves User from UserP.
 		//check if the user is blacklisted
 		if(!$this->isNotBlacklisted($user)) return false; //throw new AuthenticationServiceException('User '.$username." is unauthorized in Admin config file for client ".$client->getClientName(), AuthenticationServiceException::FORBIDDEN);

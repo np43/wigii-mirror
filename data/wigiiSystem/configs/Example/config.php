@@ -56,6 +56,19 @@ define ("EMAIL_defaultPop3Server", "mail.xxx.xx");
 define("DEFAULT_LANGUAGE", "l01");
 ServiceProvider::getTranslationService()->setVisibleLanguage(array("l01"=>"English", "l02"=>"Français"));
 
+//****************************
+/* FX Web service parameters */
+//****************************
+// By default fx calls are authorized only from site root or trusted cross-origin referers. See Admin_config for more details.
+// If standalone html files or other clients (for example Excel) need to perform direct fx calls on Wigii, then FX_Authorized_DirectCall should be defined to true.
+// This is used for Wigii.org AtelierEncode ETPs or Wigii App development. 
+//if(!defined("FX_Authorized_DirectCalls")) define("FX_Authorized_DirectCalls",true);
+
+// By default LightClient calls (c calls) are authorized only from site root or trusted cross-origin referers. See Admin_config for more details.
+// If standalone html files need to perform direct c calls on Wigii, then LightClient_Authorized_DirectCall should be defined to true.
+// This is used for Wigii App development.
+//if(!defined("LightClient_Authorized_DirectCalls")) define("LightClient_Authorized_DirectCalls",true);
+
 //*********************
 /* DEFAULT parameters */
 //*********************

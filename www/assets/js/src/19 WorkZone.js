@@ -3699,7 +3699,7 @@ function setListenersToCalendar(groupUpId, groupUpLabel, crtLanguage, crtView, c
 	        });
 	    },
 		eventRender: function(event, element) {
-	        element.find('.fc-event-title').html(event.title);
+	        element.find('.fc-title').html(event.title);
 	        element.unbind('contextmenu');
 	        element.bind('contextmenu', function (e) { //FullCalendar right click properly handled
 	            if (e.which == 3) {

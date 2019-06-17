@@ -1348,7 +1348,45 @@ class RecordEvaluator implements FuncExpEvaluator
 			}
 		}
 		return $returnValue;
-	}	
+	}
+	
+	/**
+	 * Sets a calculated value to a field only if its format is valid, else displays error message.
+	 * FuncExp signature : <code>ctlAcceptFormat(acceptFormatExp, errorMessage)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) acceptFormatExp: FuncExp. A FuncExp which accepts and formats field value. Throws an exception if format is invalid.
+	 * - Arg(1) errorMessage: String|Map. An error message to attach to the field if acceptFormatExp throws an exception. Can be a map of (exception code => error message).
+	 * @example ctlAssertFormat(txtAcceptPhone(noTel,"+41"),txtDico("l01","Invalid phone number","No de tél invalide"))
+	 * @return mixed the calculated value to set to the field
+	 */
+	public function ctlAcceptFormat($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new FuncExpEvalException("ctlAcceptFormat func exp takes two arguments: the acceptFormatExp and errorMessage", FuncExpEvalException::INVALID_ARGUMENT);	    
+	    $currentValue = $this->getCurrentFieldValue();
+	    try {
+	        // accepts and formats value
+	        $returnValue = $this->evaluateArg($args[0]);
+	        // updates current value with accepted value
+	        $this->updateCurrentFieldSubFieldValue(null, $returnValue);
+	    }
+	    catch(Exception $e) {
+	        // keeps current value
+	        $returnValue = $currentValue;
+	        
+	        // if exception then shows the error message
+	        $errorMessage = $this->evaluateArg($args[1]);
+	        if(is_array($errorMessage)) $errorMessage = $errorMessage[$e->getCode()];
+	        // gets an eventual translation of the message
+	        if(!empty($errorMessage)) $errorMessage = $this->getTrm()->t($errorMessage);
+	        	        
+	        $form = $this->getFormExecutor();
+	        if(isset($form)) {
+	            $form->addErrorToField($errorMessage, $this->getCurrentField()->getFieldName());
+	        }
+	        else throw new FuncExpEvalException($errorMessage, FuncExpEvalException::INVALID_RETURN_VALUE);
+	    }
+	    return $returnValue;	    
+	}
 	
 	/**
 	 * Sets a calculated value to a field only if check returns true, else displays error message.
