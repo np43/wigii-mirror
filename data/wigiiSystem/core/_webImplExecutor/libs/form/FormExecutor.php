@@ -1097,6 +1097,7 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 			elseif(is_string($value) && !empty($value)) $resolvedValues[$name] = $value;
 			else {
 				if($value) $resolvedValues[$name] = "1";
+				else if($value===null || $value==="") $resolvedValues[$name] = "";
 				else $resolvedValues[$name] = "0";
 			}
 		}
