@@ -64,6 +64,10 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 		return $this->_executionSink;
 	}	
 	
+	private $rootPincipal; //this is needed for the auto sharing to some groups defined in configuration
+	public function setRootPrincipal($rootP){ $this->rootPrincipal = $rootP; }
+	protected function getRootPrincipal(){ return $this->rootPrincipal; }
+	
 	protected function createTrmInstance() {
 		$trm = LightClientTRM::createInstance();
 		$trm->setConfigService($this->getConfigService());
@@ -166,10 +170,10 @@ crtModuleName = '" . $exec->getCrtModule()->getModuleUrl() . "';
 				$returnValue=true;
 			}			
 			// /item/id/edit
-			elseif(arrayMatch($args,'item',$id,'edit')) {
-			    FormExecutorException::throwNotImplemented();
+			elseif(arrayMatch($args,'item',$id,'edit')) {			    
 				// fetches Element
 				$elementP = $this->fetchElement($p, $exec, $id->getValue());
+				if(!$elementP->getRights()->canWriteElement()) throw new AuthorizationServiceException('No rights to edit element '.$elementP->getId(), AuthorizationServiceException::UNAUTHORIZED);
 				$element = $elementP->getElement();
 				
 				// configures rendering process
@@ -217,6 +221,10 @@ crtModuleName = '" . $exec->getCrtModule()->getModuleUrl() . "';
 			// /folder/id/add
 			elseif(arrayMatch($args,'folder',$id,'add')) {
 			    $this->groupIdInWhichToAdd = $id->getValue();
+			    $groupP = ServiceProvider::getGroupAdminService()->getGroup($p,$this->groupIdInWhichToAdd);
+			    if(is_null($groupP) || is_null($groupP->getRights())) throw new AuthorizationServiceException('Group '.$this->groupIdInWhichToAdd.' is not accessible.', AuthorizationServiceException::NOT_FOUND);
+			    if(!$groupP->getRights()->canWriteElement()) throw new AuthorizationServiceException('Cannot insert element in group '.$this->groupIdInWhichToAdd, AuthorizationServiceException::UNAUTHORIZED);
+			    
 			    // creates new Element			    
 			    $element = Element :: createInstance($exec->getCrtModule());
 			    
@@ -262,12 +270,16 @@ crtModuleName = '" . $exec->getCrtModule()->getModuleUrl() . "';
 	// FormExecutor implementation
 	
 	protected function doSpecificCheck($p, $exec) {
-		// CWE 19.12.2016 stops execution to implement only rendering process for now
-		$this->addStateError();
+		/* no specific check */
 	}
 	
 	protected function actOnCheckedRecord($p, $exec) {
-		/* to be implemented */
+		switch($this->getCurrentFlowName()) {			
+			case ElementEvaluator::ELEMENT_FLOW_EDIT:
+			case ElementEvaluator::ELEMENT_FLOW_ADD:
+				$this->persistElement($p, $exec, false);
+				break;
+		}
 	}
 	
 	protected function doRenderForm($p, $exec) {	    
@@ -319,6 +331,52 @@ crtModuleName = '" . $exec->getCrtModule()->getModuleUrl() . "';
     	echo $trm->getHtmlAndClean();    	
 		$exec->addJsCode($formR->getJsCodeAfterShow());	
 	}
+	
+	// Utilities
+	
+	private $oldRecord;
+	/**
+	 * Fetches old record from the DB in order to :
+	 * - update Files and Emails hidden fields
+	 * - enable FuncExp on element save to have access to old record.
+	 * @param Principal $p current principal editing the element
+	 * @param ExecutionService $exec current ExecutionService
+	 * @param int $id the ID of the element beeing edited
+	 * @return Element the old element as currently in the database.
+	 */
+	public function fetchOldRecord($p, $exec, $id){
+	    if(!isset($this->oldRecord) || $this->oldRecord->getId()!=$id){
+	        $bag = FormBag::createInstance();
+	        $ffl = FormFieldList::createInstance($bag);
+	        $oldElement = Element::createInstance($exec->getCrtModule(), $ffl, $bag);
+	        $oldElement->setId($id);
+	        
+	        $elS = ServiceProvider::getElementService();
+	        $elS->fillElement($p, $oldElement);
+	        
+	        $formFieldList = $oldElement->getFieldList();
+	        //add content on Files with htmlArea
+	        $fsl = FieldSelectorListArrayImpl::createInstance();
+	        foreach($formFieldList->getListIterator() as $field){
+	            if($field->getDataType()!=null){
+	                if($field->getDataType()->getDataTypeName()=="Files"){
+	                    $fieldXml = $field->getXml();
+	                    if($fieldXml["htmlArea"]=="1"){
+	                        $fsl->addFieldSelector($field->getFieldName(), "content");
+	                    }
+	                }
+	            }
+	        }
+	        if(!$fsl->isEmpty()){
+	            $oldElement->setFieldList(FieldListArrayImpl::createInstance());
+	            $elS->fillElement($p, $oldElement, $fsl);
+	            $oldElement->setFieldList($formFieldList);
+	        }
+	        $this->oldRecord = $oldElement;
+	    }
+	    return $this->oldRecord;
+	}
+	
 }
 
 

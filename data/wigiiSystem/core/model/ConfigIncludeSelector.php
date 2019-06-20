@@ -106,7 +106,10 @@ class ConfigIncludeSelector extends Model
 	    $args = array();
 	    if(isset($this->configFilePath)) $args[] = $this->configFilePath;
 	    if(isset($this->configNodePath)) $args[] = $this->configNodePath;
-	    if(!empty($this->xmlAttributes)) $args[] = $this->xmlAttributes;
+	    if(!empty($this->xmlAttributes)) {
+	        if(count($this->xmlAttributes)==1) $args[] = reset($this->xmlAttributes);
+	        else $args[] = array_values($this->xmlAttributes);
+	    }
 	    $returnValue = fx('cis', $args);
 	    return $returnValue;
 	}

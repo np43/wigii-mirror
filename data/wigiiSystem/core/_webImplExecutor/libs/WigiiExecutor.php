@@ -112,14 +112,17 @@ class WigiiExecutor extends WigiiCoreExecutor {
 		// if not defined, returns default mapping
 		if(empty($returnValue)) {
 			switch($action) {
-				case "c": $returnValue = 'LightClientFormExecutor'; break;
+				case "c": 
+				    if(defined("LightClient_Authorized_DirectCalls") && LightClient_Authorized_DirectCalls) $returnValue = (object)array('className'=>'LightClientFormExecutor','options'=>ObjectConfigurator::createInstance(array('setRootPrincipal'=>$this->getRootPrincipal())));
+				    else throw new AuthorizationServiceException("Access to LightClient is forbidden", AuthorizationServiceException::FORBIDDEN);
+				    break;
 				case "help": $returnValue = 'HelpServiceFormExecutor'; break;
 				case "public": $returnValue = 'PublicWebServiceFormExecutor'; break;
 				case "inpublic": $returnValue = (object)array('className'=>'PublicWebServiceFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true))); break;
 				case "fx": $returnValue = 'FxWebServiceFormExecutor'; break;
 				case "infx": $returnValue = (object)array('className'=>'FxWebServiceFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true))); break;
 				case "box" : $returnValue = 'BoxServiceFormExecutor'; break;
-				case "www": $returnValue = $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
+				case "www": $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
 				case "inwww": $returnValue = (object)array('className'=>'WigiiWebCMSFormExecutor','options'=>ObjectConfigurator::createInstance(array('setIsIntegrated'=>true,'setPublicPrincipal'=>$this->getPublicPrincipal()))); break;
 				case "qliksense" : $returnValue = 'QlikSenseFormExecutor'; break;
 				default: $returnValue = null;

@@ -120,7 +120,7 @@ class MultipleAttributs extends DataTypeInstance {
 			$isDisplayDbValueSet = ($fieldXml["displayDBValue"]=="1");
 			foreach($attributes as $attr){
 //				eput($attr);
-				$color = (string)$attr["color"];			
+				$color = str_replace('#','',(string)$attr["color"]);
 				$sAttr = (string)$attr;
 				if(array_search($sAttr, $value) === false) continue; //$value[(string)$attr] == null) continue;
 				if(!$isDisplayDbValueSet) {

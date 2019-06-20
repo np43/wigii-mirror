@@ -102,7 +102,7 @@ class WebServiceFormExecutor extends FormExecutor implements WebExecutor {
 		$wigiiBPL = ServiceProvider::getWigiiBPL();
 		$elementP = $wigiiBPL->elementFetch($p, $this, $param);
 		// if element does not exist or is not readable throw a NOT_FOUND exception
-		if(is_null($elementP)) throw $this->createElementNotFoundException($p, $id);
+		if(is_null($elementP) || is_null($elementP->getRights())) throw $this->createElementNotFoundException($p, $id);
 		return $elementP;
 	}
 	

@@ -69,16 +69,11 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 		return $groupPList;
 	}
 	protected function renderBeforeForm($p, $exec, $state){
-		$transS = ServiceProvider::getTranslationService();
 		if($this->getState() == "start"){
 			$exec->cacheAnswer($p, $exec->getIdAnswer(), "addElement", "element/add/".$this->getGroupIdInWhichToAdd($p, $exec));
 		}
 	}
 	protected function renderInForm($p, $exec, $state){
-
-		$transS = ServiceProvider::getTranslationService();
-		$config = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
-
 		$element = $this->getRecord();
 
 		if($this->getState()=="addMessageToNotification"){
@@ -110,11 +105,7 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 
 	protected function actOnCheckedRecord($p, $exec) {
 		$elS = ServiceProvider::getElementService();
-		$configS = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
 		$transS = ServiceProvider::getTranslationService();
-		$groupAS = ServiceProvider :: getGroupAdminService();
-
-		$storeFileInWigiiBag = $configS->getParameter($p, null, "storeFileContentIntoDatabase") == "1";
 
 		//the element can be added as well in other groups if defined in an attribut idGroup
 		$groupPList = $this->getGroupInWhichToAdd($p, $exec);
@@ -145,6 +136,13 @@ class AddElementFormExecutor extends EditElementFormExecutor {
 			}
 		}
 
+		// CWE 20.06.2019: refactored logic in FormExecutor::doInsertElement method
+		$this->doInsertElement($p, $exec);
+		/*
+		$configS = $this->getWigiiExecutor()->getConfigurationContext(); //ServiceProvider::getConfigService();
+		$groupAS = ServiceProvider :: getGroupAdminService();
+		$storeFileInWigiiBag = $configS->getParameter($p, null, "storeFileContentIntoDatabase") == "1";
+		
 		$newFileFieldSelectorList = $this->updateHiddenFields($p, $exec, $storeFileInWigiiBag, null);
 		//we need to do this to handle the doNotPersist case (even when dynamics)
 		$fsl = FieldSelectorListArrayImpl::createInstance(false);
@@ -222,6 +220,8 @@ class AddElementFormExecutor extends EditElementFormExecutor {
         	}
         	$this->getWigiiExecutor()->getNotificationService()->unblockNotificationPostingValue();
         }
+        */
+		
 		$elS->unlock($p, $this->getRecord());
 
 		$this->endActOnCheckedRecord($p, $exec);

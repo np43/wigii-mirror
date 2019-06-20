@@ -1247,6 +1247,207 @@ abstract class FormExecutor extends Model implements RecordStructureFactory, TRM
 	}
 	
 	/**
+	 * Persists current element in database
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 * @param Boolean $autoAdd if true, indicates that Element has already been auto inserted by autoSave function.
+	 * @param WigiiBPLParameter $options a bag of options to configure the persist process
+	 */
+	public function persistElement($p,$exec,$autoAdd, $options=null) {
+	    $elS = ServiceProvider::getElementService ();
+	    
+	    if($this->getRecord()->isNew()) $this->doInsertElement($p, $exec, $options);
+	    else $this->doUpdateElement($p, $exec, $autoAdd, $options);
+	    
+	    $elS->unLock ( $p, $this->getRecord () );
+	}
+	/**
+	 * Inserts current element in database
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 * @param WigiiBPLParameter $options a bag of options to configure the insert process
+	 */
+	protected function doInsertElement($p,$exec, $options=null) {
+	    $elS = ServiceProvider::getElementService ();
+	    $configS = $this->getWigiiExecutor ()->getConfigurationContext ();
+	    $groupAS = ServiceProvider :: getGroupAdminService();
+	    
+	    $storeFileInWigiiBag = $configS->getParameter($p, null, "storeFileContentIntoDatabase") == "1";
+	    $groupPList = $this->getGroupInWhichToAdd($p, $exec);
+	    
+	    $newFileFieldSelectorList = $this->updateHiddenFields($p, $exec, $storeFileInWigiiBag, null);
+	    //we need to do this to handle the doNotPersist case (even when dynamics)
+	    $fsl = FieldSelectorListArrayImpl::createInstance(false);
+	    foreach($this->getRecord()->getFieldList()->getListIterator() as $field){
+	        if($field->getDataType()!=null){
+	            $fsl->addFieldSelector($field->getFieldName());
+	        }
+	    }
+	    if($newFileFieldSelectorList != null){
+	        $fsl->mergeFieldSelectorList($newFileFieldSelectorList);
+	    }
+	    //remove any doNotPersist fields
+	    foreach($fsl->getListIterator() as $fs){
+	        $fieldXml = $this->getRecord()->getFieldList()->getField($fs->getFieldName())->getXml();
+	        if($fieldXml["doNotPersist"]=="1"){
+	            $fsl->removesField($fs->getFieldName());
+	        }
+	    }
+	    
+	    // merges policy evaluator field selector list
+	    if(isset($this->fieldSelectorListFromPolicyEvaluator)) {
+	        $fslForUpdate = FieldSelectorListArrayImpl::createInstance(false);
+	        $fslForUpdate->mergeFieldSelectorList($fsl);
+	        $fslForUpdate->mergeFieldSelectorList($this->fieldSelectorListFromPolicyEvaluator);
+	    }
+	    else $fslForUpdate = $fsl;
+	    
+	    $moveId = $this->getRecord()->getMoveGroupInRecord();
+	    if($moveId) {
+	        $moveId = $this->getWigiiExecutor()->evaluateConfigParameter($p, $exec, $moveId, $this->getRecord());
+	        $moveId = explode(";", $moveId); //if the moveId contains multiple groups then move in multiple
+	        if(is_array($moveId)) $moveId = array_combine($moveId, $moveId);
+	    }
+	    
+	    
+	    if($moveId){
+	        $elS->insertElement($p, $this->getRecord(), reset($moveId), $fslForUpdate);
+	    }else{
+	        $elS->insertElement($p, $this->getRecord(), $this->getGroupIdInWhichToAdd($p, $exec), $fslForUpdate);
+	    }
+	    $this->updateFilesOnDisk($p, $exec, $storeFileInWigiiBag, null, true);
+	    
+	    if($this->getState()=="persistAndSkipNotify"){
+	        $this->getWigiiExecutor()->getNotificationService()->skipNextNotification();
+	    }
+	    $this->getWigiiExecutor()->throwEvent()->insertElement(PWithElementWithGroupPList::createInstance($p, $this->getRecord(), $groupPList));
+	    
+	    //authosharing is done only if no moveId defined
+	    //autosharing defined in configuration are done on groups that could be not writable
+	    //lookup if any selected attribut idGroup
+	    if(!$moveId) {
+	        $gids = ValueListArrayMapper::createInstance(true, ValueListArrayMapper::Natural_Separators, true);
+	        $this->getRecord()->getLinkedIdGroupInRecord($p, $gids);
+	        if($gids && !$gids->isEmpty()){
+	            $elS->shareElement($this->getRootPrincipal(), $this->getRecord()->getId(), $gids->getListIterator());
+	            $gpl = GroupListArrayImpl::createInstance();
+	            $groupAS->getGroupsWithoutDetail($p, $gids->getListIterator(), $gpl);
+	            $this->getWigiiExecutor()->getNotificationService()->blockNotificationPostingValue();
+	            foreach($gpl->getListIterator() as $group){
+	                //notification here do not follow the skipNotification as it is a sharing notification and not an update notification
+	                $this->getWigiiExecutor()->throwEvent()->shareElement(PWithElementWithGroup :: createInstance($p, $this->getRecord(), $group));
+	            }
+	            $this->getWigiiExecutor()->getNotificationService()->unblockNotificationPostingValue();
+	        }
+	    } else if(count($moveId)>1) {
+	        array_shift($moveId); //remove first group as already inserted in that group
+	        //in case multiple result in moveId then add sharing
+	        $elS->shareElement($this->getRootPrincipal(), $this->getRecord()->getId(), $moveId);
+	        $gpl = GroupListArrayImpl::createInstance();
+	        $groupAS->getGroupsWithoutDetail($p, $moveId, $gpl);
+	        $this->getWigiiExecutor()->getNotificationService()->blockNotificationPostingValue();
+	        foreach($gpl->getListIterator() as $group){
+	            //notification here do not follow the skipNotification as it is a sharing notification and not an update notification
+	            $this->getWigiiExecutor()->throwEvent()->shareElement(PWithElementWithGroup :: createInstance($p, $this->getRecord(), $group));
+	        }
+	        $this->getWigiiExecutor()->getNotificationService()->unblockNotificationPostingValue();
+	    }
+	}
+	
+	/**
+	 * Updates current element in database
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 * @param Boolean $autoAdd if true, indicates that Element has already been auto inserted by autoSave function.
+	 * @param WigiiBPLParameter $options a bag of options to configure the update process
+	 */
+	protected function doUpdateElement($p,$exec,$autoAdd, $options=null) {
+	    $elS = ServiceProvider::getElementService ();
+	    $configS = $this->getWigiiExecutor ()->getConfigurationContext ();
+	    
+	    $storeFileInWigiiBag = $configS->getParameter ( $p, null, "storeFileContentIntoDatabase" ) == "1";
+	    // we need the old Record to manage correctly the Files
+	    $oldRecord = $this->fetchOldRecord ( $p, $exec, $this->getRecord ()->getId () );
+	    
+	    // $fieldSelectorList will contains File content and thumbnail subfield for each File field with a new File
+	    $newFileFieldSelectorList = $this->updateHiddenFields ( $p, $exec, $storeFileInWigiiBag, $oldRecord );
+	    $actualFieldSelectorList = $this->getFieldSelectorList ();
+	    
+	    if ($actualFieldSelectorList->isEmpty () && $newFileFieldSelectorList != null) {
+	        // then set the FieldSelectorList to all
+	        foreach ( $this->getRecord ()->getFieldList ()->getListIterator () as $field ) {
+	            if ($field->getDataType () != null) {
+	                $actualFieldSelectorList->addFieldSelector ( $field->getFieldName () );
+	            }
+	        }
+	    }
+	    if ($newFileFieldSelectorList != null) {
+	        $actualFieldSelectorList->mergeFieldSelectorList ( $newFileFieldSelectorList );
+	    }
+	    
+	    // remove any doNotPersist fields
+	    if ($actualFieldSelectorList->isEmpty ()) {
+	        foreach ( $this->getRecord ()->getFieldList ()->getListIterator () as $field ) {
+	            if ($field->getDataType () != null) {
+	                $fieldXml = $field->getXml ();
+	                if ($fieldXml ["doNotPersist"] == "1" || ! $this->getRecord ()->getWigiiBag ()->isChanged ( $field->getFieldName () )) {
+	                    // ignore
+	                } else {
+	                    $actualFieldSelectorList->addFieldSelector ( $field->getFieldName () );
+	                }
+	            }
+	        }
+	    } else {
+	        foreach ( $actualFieldSelectorList->getListIterator () as $fs ) {
+	            $fieldXml = $this->getRecord ()->getFieldList ()->getField ( $fs->getFieldName () )->getXml ();
+	            if ($fieldXml ["doNotPersist"] == "1" || ! $this->getRecord ()->getWigiiBag ()->isChanged ( $fs->getFieldName () )) {
+	                $actualFieldSelectorList->removesField ( $fs->getFieldName () );
+	            }
+	        }
+	    }
+	    
+	    // if nothing to update, then no update is necessary
+	    // do not updateElement with an emptyFieldSelector otherwise it will
+	    // change all fields in it
+	    if (! $actualFieldSelectorList->isEmpty ()) {
+	        // merges policy evaluator field selector list
+	        if(isset($this->fieldSelectorListFromPolicyEvaluator)) {
+	            $fslForUpdate = FieldSelectorListArrayImpl::createInstance(false);
+	            $fslForUpdate->mergeFieldSelectorList($actualFieldSelectorList);
+	            $fslForUpdate->mergeFieldSelectorList($this->fieldSelectorListFromPolicyEvaluator);
+	        }
+	        else $fslForUpdate = $actualFieldSelectorList;
+	        
+	        $elS->updateElement ( $p, $this->getRecord (), $fslForUpdate );
+	    }
+	    
+	    $this->updateFilesOnDisk ( $p, $exec, $storeFileInWigiiBag, $oldRecord, false );
+	    
+	    if ($this->getState () == "persistAndSkipNotify") {
+	        $this->getWigiiExecutor ()->getNotificationService ()->skipNextNotification ();
+	    }
+	    
+	    // if edit after having done auto add (auto save on add), then throw an insert event
+	    if ($autoAdd) {
+	        $this->getWigiiExecutor ()->throwEvent ()->insertElement ( PWithElementWithGroupPList::createInstance ( $p, $this->getRecord (), ($configS->getGroupPList ( $p, $exec->getCrtModule () )->count () == 1 ? $configS->getGroupPList ( $p, $exec->getCrtModule () ) : null) ) );
+	    } 	// else throws an update event
+	    else {
+	        $this->getWigiiExecutor ()->throwEvent ()->updateElement ( PWithElementWithGroupPList::createInstance ( $p, $this->getRecord (), ($configS->getGroupPList ( $p, $exec->getCrtModule () )->count () == 1 ? $configS->getGroupPList ( $p, $exec->getCrtModule () ) : null) ) );
+	    }
+        // autosharing is available only if not subElement
+        if (! $this->getRecord ()->isSubElement ()) {
+            // autosharing in new record to other group coming from attribut idGroup
+            // CWE 17.03.2018 logic refactored in method WigiiBPL->elementUpdateSharing
+            $oldGids = ValueListArrayMapper::createInstance ( true, ValueListArrayMapper::Natural_Separators, true );
+            $oldRecord->getLinkedIdGroupInRecord ( $p, $oldGids);
+            ServiceProvider::getWigiiBPL()->elementUpdateSharing($p, $this, wigiiBPLParam(
+              'element',$this->getRecord(),
+              'oldGroupIds',$oldGids->getListIterator()
+            ));	       
+        }
+	}
+	
+	/**
 	 * @return FuncExpEvaluator returns a configured FuncExpEvaluator ready to be used to executes func exp
 	 */
 	public function getFuncExpEval($p, $exec,$rec=null) {

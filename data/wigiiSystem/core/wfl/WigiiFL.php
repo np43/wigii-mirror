@@ -3386,8 +3386,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 			// password expiration check
 			if ($currentPrincipal->passwordExpired()) {
 				if ($currentPrincipal->canModifyRealUserPassword()) {
+				    // CWE 19.06.2019: forces logout on password expiration
+				    $authS->logout();
 					throw new AuthenticationServiceException($currentPrincipal->getUserlabel() . " password is expired.", AuthenticationServiceException :: EXPIRED_PASSWORD);
 				} else {
+				    // CWE 19.06.2019: forces logout on password expiration
+				    $authS->logout();
 					throw new AuthenticationServiceException($currentPrincipal->getUserlabel() . " user is expired.", AuthenticationServiceException :: EXPIRED_PRINCIPAL);
 				}
 			}

@@ -74,12 +74,29 @@ class ReduceCfgFieldForIncludeDFA implements DataFlowActivity
 	        if(!isset($this->configIncludeSelector)) throw new DataFlowServiceException('No include config file path has been given.', DataFlowServiceException::CONFIGURATION_ERROR);
 	    }
 	}
-	public function processDataChunk($data, $dataFlowContext) {
-	    // ignores group start or end, freetext
-	    if($data->attributes && ($data->attributes['groupStart']=='1' || $data->attributes['groupEnd']=='1' || !isset($data->attributes['type']))) $returnValue = $data;
-	    // else reduces field to include expression
+	public function processDataChunk($data, $dataFlowContext) {	    
+	    // reduces group start to include expression
+	    if($data->attributes && $data->attributes['groupStart']=='1') {
+	        $this->configIncludeSelector->setNodePath('fields/'.$data->name.'[1]');
+	        $this->configIncludeSelector->setXmlAttr('*');
+	        $includExp = $this->configIncludeSelector->toFx();
+	        $includeExp = fx2str($includExp);
+	        $returnValue = cfgField($data->name,array('groupStart'=>'1','include'=>$includeExp));
+	    }
+	    // reduces group end to include expression
+	    elseif($data->attributes && $data->attributes['groupEnd']=='1') {
+	        $this->configIncludeSelector->setNodePath('fields/'.$data->name.'[2]');
+	        $this->configIncludeSelector->setXmlAttr('*');
+	        $includExp = $this->configIncludeSelector->toFx();
+	        $includeExp = fx2str($includExp);
+	        $returnValue = cfgField($data->name,array('groupEnd'=>'1','include'=>$includeExp));
+	    }
+	    // ignores freetext
+	    elseif($data->attributes && !isset($data->attributes['type'])) $returnValue = $data;
+	    // reduces field to include expression
 	    else {
 	        $this->configIncludeSelector->setNodePath('fields/'.$data->name);
+	        $this->configIncludeSelector->setXmlAttr(null);
 	        $includExp = $this->configIncludeSelector->toFx();
 	        $includeExp = fx2str($includExp);
 	        $returnValue = cfgField($data->name,array('include'=>$includeExp));

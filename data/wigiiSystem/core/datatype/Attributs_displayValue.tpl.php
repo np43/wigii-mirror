@@ -30,7 +30,7 @@ if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 $value = $this->formatValueFromRecord($fieldName, null, $this->getRecord());
 $xml = $field->getXml();
 $color = $xml->xpath('attribute[@color and (text()="'.$this->getRecord()->getFieldValue($fieldName).'")]');
-if($color){ $color = (string)$color[0]["color"]; }
+if($color){ $color = str_replace("#","",(string)$color[0]["color"]); }
 
 if((string)$xml["isTimeline"]=="1"){
 
@@ -143,7 +143,7 @@ if((string)$xml["isTimeline"]=="1"){
                 if($xml["displayAsTag"]=="1"){
                     $label = $this->doFormatForTag($label, $xml, $labelDBValue);
                 } else if ((string)$attribute["color"]){
-                    $color = (string)$attribute["color"];
+                    $color = str_replace('#','',(string)$attribute["color"]);
                     $label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'; margin-right:'. ((($parentWidth)/$useMultipleColumn)/2). 'px;">'.$label.'</span>';
                 }
                 if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
@@ -211,7 +211,7 @@ if((string)$xml["isTimeline"]=="1"){
                 if($xml["displayAsTag"]=="1"){
                     $label = $this->doFormatForTag($label, $xml, $labelDBValue);
                 } else if ((string)$attribute["color"]){
-                    $color = (string)$attribute["color"];
+                    $color = str_replace('#','',(string)$attribute["color"]);
                     $label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$label.'</span>';
                 }
                 if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;

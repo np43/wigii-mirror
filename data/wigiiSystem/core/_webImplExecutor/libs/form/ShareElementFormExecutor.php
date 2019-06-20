@@ -37,10 +37,6 @@ class ShareElementFormExecutor extends FormExecutor {
 	}
 
 	protected function actOnCheckedRecord($p, $exec) {
-		$elS = ServiceProvider::getElementService();
-
-		//$elS->persistElement($p, $this->getRecord());
-
 		$req = $exec->getIdAnswer()."/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleUrl()."/element/detail/".$this->getRecord()->getId();
 		$exec->addRequests($req);
 		$exec->addJsCode("storeRequest('".$exec->getIdAnswer()."', '$req')");

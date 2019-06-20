@@ -162,7 +162,7 @@ if((string)$fieldXml["isTimeline"]=="1"){
 					if($fieldXml["displayAsTag"]=="1"){
 						$label = $this->doFormatForTag($label, $fieldXml, $labelDBValue);
 					} else if ((string)$attribute["color"]){
-						$color = (string)$attribute["color"];
+						$color = str_replace('#','',(string)$attribute["color"]);
 						$label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'; margin-right:'. ((($parentWidth)/$useMultipleColumn)/2). 'px;">'.$label.'</span>';
 					}
 					if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
@@ -230,7 +230,7 @@ if((string)$fieldXml["isTimeline"]=="1"){
 					if($fieldXml["displayAsTag"]=="1"){
 						$label = $this->doFormatForTag($label, $fieldXml, $labelDBValue);
 					} else if ((string)$attribute["color"]){
-						$color = (string)$attribute["color"];
+						$color = str_replace('#','',(string)$attribute["color"]);
 						$label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$label.'</span>';
 					}
 					if($useMultipleColumn>0) $labelWidth = (($parentWidth-5)/$useMultipleColumn)-30;
@@ -349,7 +349,7 @@ $('div#" . $formId . "__" . $fieldName . " .value').mouseover(function(e) { radi
 			if($fieldXml["displayAsTag"]=="1"){
 				$label = $this->doFormatForTag($label, $fieldXml, $labelDBValue);
 			} else if ((string)$attribute["color"]){
-				$color = (string)$attribute["color"];
+				$color = str_replace('#','',(string)$attribute["color"]);
 				$label = '<span style="padding:2px 10px 2px 10px;line-height:21px;background-color:#'.$color.';color:#'.getBlackOrWhiteFromBackgroundColor($color).'">'.$label.'</span>';
 			}
 			if($useMultipleColumn>0) $labelWidth = ($parentWidth/$useMultipleColumn)-17;//17 is the width of the checkbox
