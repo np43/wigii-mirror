@@ -2753,9 +2753,27 @@ class RecordEvaluator implements FuncExpEvaluator
 		// extends Record FieldList with matrix fields (starting at row 2 as row 1 is already in the config file)
 		$rec = $fe->getRecord();
 		$fieldList = $rec->getFieldList();
+		// CWE 20.06.2019 reorder given column array to match field list order
+		$tempMap = array();
+		foreach($columns as $col) {
+		    $tempMap[$col.$fromRow] = $col;
+		}
+		$tempList = array(); $i=$nCols;
+		foreach($fieldList->getListIterator() as $field) {
+		    // if field matches selected col
+		    $col = $tempMap[$field->getFieldName()];
+		    if(isset($col)) {
+		        $tempList[] = $col;
+		        $i--;
+		    }
+		    if($i<=0) break;
+		}
+		$originalColumns = $columns;
+		if(count($tempList)==$nCols) $columns = $tempList;
+		
 		for($i=$fromRow+1;$i<=$toRow;$i++) {
 			// creates row if doesn't exist
-			if(!$fieldList->doesFieldExist($columns[0].$i)) {
+			if(!$fieldList->doesFieldExist($columns[0].$i)) {			    
 				for($j=0;$j<$nCols;$j++) {
 					// clones field of first row and renames
 					$row1Field = $fieldList->getField($columns[$j].$fromRow);
@@ -2772,7 +2790,7 @@ class RecordEvaluator implements FuncExpEvaluator
 		if($fe->getState() == "start" && $fillMatrixValues instanceof FuncExp) {
 			$fillMatrixValues->addArgument($fromRow);
 			$fillMatrixValues->addArgument($toRow);
-			$fillMatrixValues->addArgument($columns);
+			$fillMatrixValues->addArgument($originalColumns);
 			$fillMatrixValues->addArgument($rec);
 			$this->evaluateFuncExp($fillMatrixValues,$this);
 		}
@@ -2879,6 +2897,24 @@ class RecordEvaluator implements FuncExpEvaluator
 		// extends Record FieldList with matrix fields (starting at row 2 as row 1 is already in the config file)
 		$rec = $fe->getRecord();
 		$fieldList = $rec->getFieldList();
+		// CWE 20.06.2019 reorder given column array to match field list order
+		$tempMap = array();
+		foreach($columns as $col) {
+		    $tempMap[$col.$fromRow] = $col;
+		}
+		$tempList = array(); $i=$nCols;
+		foreach($fieldList->getListIterator() as $field) {
+		    // if field matches selected col
+		    $col = $tempMap[$field->getFieldName()];
+		    if(isset($col)) {
+		        $tempList[] = $col;
+		        $i--;
+		    }
+		    if($i<=0) break;
+		}
+		$originalColumns = $columns;
+		if(count($tempList)==$nCols) $columns = $tempList;
+		
 		for($i=$fromRow+1;$i<=$toRow;$i++) {
 			// creates row if doesn't exist
 			if(!$fieldList->doesFieldExist($columns[0].$i)) {
@@ -2961,6 +2997,24 @@ class RecordEvaluator implements FuncExpEvaluator
 		// extends Record FieldList with matrix fields (starting at row 2 as row 1 is already in the config file)
 		$rec = $fe->getRecord();
 		$fieldList = $rec->getFieldList();
+		// CWE 20.06.2019 reorder given column array to match field list order
+		$tempMap = array();
+		foreach($columns as $col) {
+		    $tempMap[$col.$fromRow] = $col;
+		}
+		$tempList = array(); $i=$nCols;
+		foreach($fieldList->getListIterator() as $field) {
+		    // if field matches selected col
+		    $col = $tempMap[$field->getFieldName()];
+		    if(isset($col)) {
+		        $tempList[] = $col;
+		        $i--;
+		    }
+		    if($i<=0) break;
+		}
+		$originalColumns = $columns;
+		if(count($tempList)==$nCols) $columns = $tempList;
+		
 		for($i=$fromRow+1;$i<=$toRow;$i++) {
 			// creates row if doesn't exist
 			if(!$fieldList->doesFieldExist($columns[0].$i)) {

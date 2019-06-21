@@ -1588,19 +1588,25 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			 * @example copyFields(['articleNumber_1,label_1,quantity_1'],['articleNumber_2,label_2,quantity_2'])
 			 * @return FieldHelper a FieldHelper instance centered on the copied fields
 			 */
-			self.copyFields = function(fromFields,toFields,beforeTarget) {
-				var i = 0;				
+			self.copyFields = function(fromFields,toFields,beforeTarget) {							
 				if(!$.isArray(toFields)) toFields = [toFields];
+				if(!$.isArray(fromFields)) fromFields = [fromFields];
+				// maps fromFields toFields				
+				var fieldMap = {};
+				for(var i=0;i<fromFields.length;i++) {
+					fieldMap[fromFields[i]] = toFields[i];
+				}
 				// iterates on the selected fields
 				self.fields(fromFields).forEachField(function(field){
 					var fieldHtml = field.$[0].outerHTML;
+					var fieldName = field.fieldName();
 					// replaces current field name by new field name (in every reference
-					fieldHtml = fieldHtml.replace(new RegExp(field.fieldName(),'g'),toFields[i]);
+					fieldHtml = fieldHtml.replace(new RegExp(fieldName,'g'),fieldMap[fieldName]);
 					// insert html
 					if(beforeTarget==undefined) field.$.parent().append(fieldHtml);
 					else field.formHelper().$.insertBefore(beforeTarget);
 					// binds js events on new field
-					var newField = field.formHelper().field(toFields[i])
+					var newField = field.formHelper().field(fieldMap[fieldName]);
 					newField.$.find('.select2, .cke').remove();					
 					addJsCodeAfterFormIsShown('#'+newField.fieldId());
 					i++;
