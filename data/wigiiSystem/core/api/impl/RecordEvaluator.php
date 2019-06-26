@@ -1435,6 +1435,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Where arguments are :
 	 * - Arg(0) calculatedValue: Any. The calculated value to return after evaluation.
 	 * - Arg(1) fieldName: String|FieldSelector. Optional. The name of the field to which to add an error message. If not set, takes current field.
+	 * - Arg(2) errorMessage: String|Map. Optional error message to attach to the field. Can be a map of (exception code => error message).
 	 * @return mixed the calculated value or null if an error occured. Call FuncExp ctlCheckNoError to check if attached FormExecutor has some errors.
 	 */
 	public function ctlException2FieldError($args) {
@@ -1453,7 +1454,15 @@ class RecordEvaluator implements FuncExpEvaluator
 	                else $fieldName = $this->evaluateArg($args[1]);
 	            }
 	            else $fieldName = $this->getCurrentField()->getFieldName();
-	            $form->addErrorToField($e->getMessage(), $fieldName);
+	            // gets optional error message
+	            if($nArgs>2) {
+	               $errorMessage = $this->evaluateArg($args[2]);
+	               if(is_array($errorMessage)) $errorMessage = $errorMessage[$e->getCode()];
+	               // gets an eventual translation of the message
+	               if(!empty($errorMessage)) $errorMessage = $this->getTrm()->t($errorMessage);
+	            }
+	            else $errorMessage = $e->getMessage();
+	            $form->addErrorToField($errorMessage, $fieldName);
 	        }	        
 	    }
 	    // CWE 11.03.2019 if no Form, but field is given and of type Blobs, then add exception as a comment
@@ -1464,9 +1473,18 @@ class RecordEvaluator implements FuncExpEvaluator
 	        catch(Exception $e) {
 	            // and adds exception message as an element comment
 	            if($e instanceof ServiceException) $e = $e->getWigiiRootException();
+	            // gets optional error message
+	            if($nArgs>2) {
+	                $errorMessage = $this->evaluateArg($args[2]);
+	                if(is_array($errorMessage)) $errorMessage = $errorMessage[$e->getCode()];
+	                // gets an eventual translation of the message
+	                if(!empty($errorMessage)) $errorMessage = $this->getTrm()->t($errorMessage);
+	            }
+	            else $errorMessage = $e->getMessage();
+	            // adds comment to blob field
 	            $this->evaluateFuncExp(fx('ctlAddComment',$args[1],
 	                '<div class="fieldError" style="width: 100%;">'
-	                .$this->getTrm()->t("errorNumber").' '.$e->getCode().': '.$e->getMessage()
+	                .$this->getTrm()->t("errorNumber").' '.$e->getCode().': '.$errorMessage
 	                .'</div>'
 	            ));
 	        }	    
