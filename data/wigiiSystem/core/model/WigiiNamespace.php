@@ -70,7 +70,15 @@ class WigiiNamespace extends Model
 		}
 		return $this->wigiiNamespaceName;
 	}
-	
+	/**
+	 * Returns the translated label of the Wigiinamespace
+	 * @param Principal $p current principal
+	 */
+	public function getWigiiNamespaceLabel($p) {
+	    $returnValue = ServiceProvider::getTranslationService()->t($p, "homePageNamespaceLabel_".str_replace(' ', '%20', $this->wigiiNamespaceName));
+	    if($returnValue == "homePageNamespaceLabel_".str_replace(' ', '%20', $this->wigiiNamespaceName)) $returnValue = $this->wigiiNamespaceName;
+	    return $returnValue;
+	}
 }
 
 

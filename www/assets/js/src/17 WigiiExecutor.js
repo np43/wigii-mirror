@@ -40,7 +40,7 @@ function printObj(obj) {
 crtElementId = null; //id of the current selectedElement
 crtElementType = 'element'; //type name of the current selectedElement
 crtRoleId = null;
-crtContextId = 0; //id of the current JS context, this is used to manage context from multiple browser window
+if(!window.crtContextId) crtContextId = 0; //id of the current JS context, this is used to manage context from multiple browser window
 crtWigiiNamespaceUrl = null;
 crtModuleName = null;
 crtWorkingModuleName = null;

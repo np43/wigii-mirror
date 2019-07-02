@@ -32,6 +32,7 @@
  * - ensure to have a valid attached ElementInfo before updating or deleting elements.
  * - check if element is not blocked before updating or deleting it.
  * - check that if an Element_beforeDeleteExp parameter is defined, then deletion is authorized
+ * Modified by Wigii.org (CWE) on 27.06.2019 to add configuration parameter deleteAllSharings which removes all sharings (in all namespaces) of element before deletion
  */
 class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 {	
@@ -47,6 +48,7 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 		$this->freeMemory();
 		$this->reloadElementAfterInsert = true;		
 		$this->putInTrashBin = true;
+		$this->deleteAllSharings=false;
 	}	
 	public function freeMemory() {
 		unset($this->mode);
@@ -253,6 +255,14 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 	 */
 	protected function setPutInTrashBin($bool) {
 		$this->putInTrashBin = $bool;
+	}
+	
+	private $deleteAllSharings;
+	/**
+	 * If true, then removes all element sharing (in all namespaces) before deleting the element. Else only accessible sharings are removed. Default to false.
+	 */
+	public function setDeleteAllSharings($bool) {
+	    $this->deleteAllSharings = $bool;
 	}
 	
 	// stream data event handling
@@ -613,13 +623,18 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 			
 			//gets all group containing element
 			$groupList = GroupListAdvancedImpl::createInstance(false);
-			$elS->getAllGroupsContainingElement($principal, $element, $groupList);
-			
-			//remove any limitedWriteGroup
-			if($element->getSys_creationUser() == $principal->getRealUserId()) $groupList = $groupList->getSGroups();
-			//remove any unreadable group
-			else $groupList = $groupList->getWriteGroups();
-			
+			// CWE 27.06.2019 if deleteAllSharings then removes sharing from all groups containing element, even non-accessible groups
+			if($this->deleteAllSharings) {
+			    $elS->getAllGroupsContainingElement($this->getRootPrincipal(), $element, $groupList);
+			}
+			else {
+    			$elS->getAllGroupsContainingElement($principal, $element, $groupList);
+    			
+    			//remove any limitedWriteGroup
+    			if($element->getSys_creationUser() == $principal->getRealUserId()) $groupList = $groupList->getSGroups();
+    			//remove any unreadable group
+    			else $groupList = $groupList->getWriteGroups();
+			}
 			//remove autoSharing
 			$gids = ValueListArrayMapper::createInstance(true, ValueListArrayMapper::Natural_Separators, true);
 			$element->getLinkedIdGroupInRecord($principal, $gids);

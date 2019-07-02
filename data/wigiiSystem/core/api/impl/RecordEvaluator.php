@@ -3282,6 +3282,257 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $returnValue;
 	}
 	
+	/**
+	 * Checks the validity of an opening time table given as a matrix. 
+	 * If opening hours are not coherent, then adds error to matrix fields and prevents saving the record.
+	 * The matrix has the form of four fields per week-day, one for Morning opening time, one for Morning closing time, 
+	 * one for Afternoon opening time and one for Afternoon closing time. 
+	 * By default: 
+	 * - checks for seven days in a week.
+	 * - opening time table fields are called amStart_1 = Opening time Monday morning, amEnd_1 = Closing time Monday morning, 
+	 * pmStart_1 = Opening time Monday afernoon, pmEnd_1 = Closing time Monday afternoon, ...,
+	 * amStart_7 = Opening time Sunday morning, amEnd_7 = Closing time Sunday morning,
+	 * pmStart_7 = Opening time Sunday afernoon, pmEnd_7 = Closing time Sunday afternoon
+	 * - opening time table fields should be of Times (or Strings) datatype.
+	 * FuncExp signature: <code>checkOpeningTimeTable(options=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) options: WigiiBPLParameter. A optional bag of options to configure the opening time table. The following options are supported:
+	 *  amStartFieldPrefix: String. Field name prefix for morning start time. Defaults to "amStart_".
+	 *  amEndFieldPrefix: String. Field name prefix for morning end time. Defaults to "amEnd_".
+	 *  pmStartFieldPrefix: String. Field name prefix for afternoon start time. Defaults to "pmStart_".
+	 *  pmEndFieldPrefix: String. Field name prefix for afternoon end time. Defaults to "pmEnd_".
+	 *  nbWeekDays: Int. Number of week days in the time table. Default to 7 (Monday to Sunday).
+	 *  nonStop: Boolean. If true, then week-days are open non-stop. No closing at noon. Only a morning start time and an afternoon end time. Defaults to false.
+	 * 	record: Record. Record where to read the time table values. Defaults to current record.
+	 * @return Record the record containing the opening time table
+	 * @postcondition if time table is not valid, then some errors are added to the time table fields or an exception is thrown if record is not attached to any FormExecutor.
+	 */
+	public function checkOpeningTimeTable($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>0) $options = $this->evaluateArg($args[0]);
+	    else $options = wigiiBPLParam();
+	    $amStart = $options->getValue('amStartFieldPrefix');
+	    if(!isset($amStart)) $amStart = 'amStart_';
+	    $amEnd = $options->getValue('amEndFieldPrefix');
+	    if(!isset($amEnd)) $amEnd = 'amEnd_';
+	    $pmStart = $options->getValue('pmStartFieldPrefix');
+	    if(!isset($pmStart)) $pmStart = 'pmStart_';
+	    $pmEnd = $options->getValue('pmEndFieldPrefix');
+	    if(!isset($pmEnd)) $pmEnd = 'pmEnd_';
+	    $nbWeekDays = $options->getValue('nbWeekDays');
+	    if(!isset($nbWeekDays)) $nbWeekDays = 7;
+	    if(!(1<=$nbWeekDays && $nbWeekDays<=7)) throw new RecordException('nbWeekDays should be between 1 and 7', RecordException::INVALID_ARGUMENT);
+	    $nonStop = ($options->getValue('nonStop')==true);
+	    $record = $options->getValue('record');
+	    $extRec = false;
+	    if(!isset($record)) $record = $this->getRecord();
+	    else $extRec = true;
+	    
+	    $errorMessages = array();	    
+	    
+	    // checks each day of week
+	    for($i=1;$i<=$nbWeekDays;$i++) {
+	        $amStartT = $record->getFieldValue($amStart.$i);
+	        if(!$nonStop) $amEndT = $record->getFieldValue($amEnd.$i);
+	        else $amEndT=null;
+	        if(!$nonStop) $pmStartT = $record->getFieldValue($pmStart.$i);
+	        else $pmStartT = null;
+	        $pmEndT = $record->getFieldValue($pmEnd.$i);
+	        
+	       // check for valid combinaisons of empty (0) or non-empty (1) times
+	       $dayOk = true;
+	       // am_open am_close pm_open pm_close
+	       // 0 0 0 0 = OK
+	       // 1 0 0 1 = OK	       	       
+	       // 0 0 1 1 = OK 
+	       // 1 1 0 0 = OK
+	       // 1 1 1 1 = OK
+	       
+	       // morning closing without morning opening 
+	       // 0 1 0 0 = KO
+	       // 0 1 0 1 = KO 
+	       // 0 1 1 0 = KO
+	       // 0 1 1 1 = KO
+	       if($amEndT!=null && $amStartT==null) {
+	           $errorMessages[$amStart.$i] = 'compulsory_field';
+	           $dayOk = false;
+	       }
+
+	       // morning opening without morning closing
+	       // 1 0 0 0 = KO
+	       // 1 0 1 0 = KO
+	       // 1 0 1 1 = KO
+	       if($amStartT!=null && $amEndT==null && !($pmStartT==null && $pmEndT!=null)) {
+	           $errorMessages[$amEnd.$i] = 'compulsory_field';
+	           $dayOk = false;
+	       }
+	       
+	       // afternoon closing without opening
+	       // 1 1 0 1 = KO	       
+	       // 0 0 0 1 = KO
+	       if($pmStartT==null && $pmEndT!=null && ($amStartT!=null && $amEndT!=null || $amStartT==null && $amEndT==null)) {
+	           $errorMessages[$pmStart.$i] = 'compulsory_field';
+	           $dayOk = false;
+	       }
+	       // afternoon opening without closing	       
+	       // 1 1 1 0 = KO
+	       // 0 0 1 0 = KO
+	       if($pmStartT!=null && $pmEndT==null && ($amStartT!=null && $amEndT!=null || $amStartT==null && $amEndT==null)) {
+	           $errorMessages[$pmEnd.$i] = 'compulsory_field';
+	           $dayOk = false;
+	       }
+	        
+	       // if day is OK, then checks time order from morning opening to afternoon closing
+	       if($dayOk) {
+	           // fills missing values
+	           if($amEndT==null) $amEndT=$amStartT;
+	           if($pmStartT==null) $pmStartT=$amEndT;
+	           if($pmEndT==null) $pmEndT=$pmStartT;
+	           // checks order
+	           if($amStartT!=null || $pmStartT!=null) {
+	               if($amEndT<$amStartT) $errorMessages[$amEnd.$i] = 'endTime_error';
+	               if($pmStartT<$amEndT) $errorMessages[$pmStart.$i] = 'startTimeAfterEnd_error';
+	               if($pmEndT<$pmStartT) $errorMessages[$pmEnd.$i] = 'endTime_error';
+	           }
+	       }
+	    }
+	    
+	    // displays errors
+	    if(!empty($errorMessages)) {
+	        $form = $this->getFormExecutor();
+	        $trm = $this->getTrm();
+	        // as field errors
+	        if(isset($form) && !$extRec) {
+	            foreach($errorMessages as $fieldName => $errMsg) {
+	                $form->addErrorToField($trm->t($errMsg), $fieldName);
+	            }
+	        }
+	        // or throws an exception
+	        else {
+	            $errorMessage = 'Opening time table error.';
+	            foreach($errorMessages as $fieldName => $errMsg) {
+	                if($errorMessage!='') $errorMessage.="\n";
+	                $errorMessage .= $fieldName.': '.$trm->t($errMsg);
+	            }
+	            throw new RecordException($errorMessage, RecordException::INVALID_VALUES);
+	        }
+	    }
+	    return $record;
+	}
+	
+	/**
+	 * Uses an opening time table to check if it is open at the given date and time and for the given duration.
+	 * The opening time table should be a matrix with four fields per week-day, one for Morning opening time, one for Morning closing time,
+	 * one for Afternoon opening time and one for Afternoon closing time.
+	 * By default:
+	 * - checks for seven days in a week.
+	 * - opening time table fields are called amStart_1 = Opening time Monday morning, amEnd_1 = Closing time Monday morning,
+	 * pmStart_1 = Opening time Monday afernoon, pmEnd_1 = Closing time Monday afternoon, ...,
+	 * amStart_7 = Opening time Sunday morning, amEnd_7 = Closing time Sunday morning,
+	 * pmStart_7 = Opening time Sunday afernoon, pmEnd_7 = Closing time Sunday afternoon
+	 * - opening time table fields should be of Times (or Strings) datatype.
+	 * FuncExp signature: <code>logIsOpenAtDate(date, time, options=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) date: Date in Wigii format. Date to check if open. If not given, takes today.
+	 * - Arg(1) time: Time in Wigii format. Time to check if open. If not given, takes now.
+	 * - Arg(2) options: WigiiBPLParameter. A optional bag of options to configure the opening time table. The following options are supported:
+	 *  duration: Int. Optional duration in minutes. If set, then checks that it is open at given date and time AND for the given duration.
+	 *  endTime: Time in Wigii format. Optional time until which to check if open.
+	 *  amStartFieldPrefix: String. Field name prefix for morning start time. Defaults to "amStart".
+	 *  amEndFieldPrefix: String. Field name prefix for morning end time. Defaults to "amEnd".
+	 *  pmStartFieldPrefix: String. Field name prefix for afternoon start time. Defaults to "pmStart".
+	 *  pmEndFieldPrefix: String. Field name prefix for afternoon end time. Defaults to "pmEnd".
+	 *  nbWeekDays: Int. Number of week days in the time table. Default to 7 (Monday to Sunday).
+	 *  nonStop: Boolean. If true, then week-days are open non-stop. No closing at noon. Only a morning start time and an afternoon end time. Defaults to false.
+	 * 	record: Record. Record where to read the time table values. Defaults to current record.
+	 * @return Boolean true if it is open at the given date and time and for the given duration, else false.
+	 */
+	public function logIsOpenAtDate($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>0) $begDate = $this->evaluateArg($args[0]);
+	    else $begDate = null;
+	    if($nArgs>1) $begTime = $this->evaluateArg($args[1]);
+	    else $begTime = null;
+	    if($nArgs>2) $options = $this->evaluateArg($args[2]);
+	    else $options = wigiiBPLParam();
+	    $amStart = $options->getValue('amStartFieldPrefix');
+	    if(!isset($amStart)) $amStart = 'amStart_';
+	    $amEnd = $options->getValue('amEndFieldPrefix');
+	    if(!isset($amEnd)) $amEnd = 'amEnd_';
+	    $pmStart = $options->getValue('pmStartFieldPrefix');
+	    if(!isset($pmStart)) $pmStart = 'pmStart_';
+	    $pmEnd = $options->getValue('pmEndFieldPrefix');
+	    if(!isset($pmEnd)) $pmEnd = 'pmEnd_';
+	    $nbWeekDays = $options->getValue('nbWeekDays');
+	    if(!isset($nbWeekDays)) $nbWeekDays = 7;
+	    if(!(1<=$nbWeekDays && $nbWeekDays<=7)) throw new RecordException('nbWeekDays should be between 1 and 7', RecordException::INVALID_ARGUMENT);
+	    $nonStop = ($options->getValue('nonStop')==true);
+	    $record = $options->getValue('record');
+	    if(!isset($record)) $record = $this->getRecord();
+	    
+	    // initializes missing values
+	    $now = time();
+	    if(empty($begDate)) $begDate = date('Y-m-d',$now);
+	    if(empty($begTime)) $begTime = date('H:i',$now).":00";
+	    
+	    // gets end time
+	    $endTime = $options->getValue('endTime');
+	    if(!isset($endTime)) {
+	        $endTime = $options->getValue('duration');
+	        if(isset($endTime)) {
+    	        $endTime = intval($endTime);
+    	        if($endTime <= 0) throw new RecordException('duration should be positive', RecordException::INVALID_ARGUMENT);
+    	        $endTime = (new DateTime($begDate.' '.$begTime))->add(new DateInterval('PT'.$endTime.'M'));
+    	        if($begDate != $endTime->format('Y-m-d')) throw new RecordException('duration cannot last until another day', RecordException::INVALID_ARGUMENT);
+    	        $endTime = $endTime->format('H:i').":00";
+	        }
+	    }
+	    if(isset($endTime) && $endTime <= $begTime) throw new RecordException('endTime should occur after start time', RecordException::INVALID_ARGUMENT);
+	        
+	    // selects week-day
+	    $weekDay = (new DateTime($begDate))->format('N');
+	    // if weekday is not in opening time table, then it is closed.
+	    if($weekDay > $nbWeekDays) return false;
+	    
+	    // gets hours
+	    $amStartTime = $record->getFieldValue($amStart.$weekDay);
+	    if($nonStop) $amEndTime = null;
+	    else $amEndTime = $record->getFieldValue($amEnd.$weekDay);
+	    if($nonStop) $pmStartTime = null; 
+	    else $pmStartTime = $record->getFieldValue($pmStart.$weekDay);
+	    $pmEndTime = $record->getFieldValue($pmEnd.$weekDay);	    
+	    
+	    $returnValue = false;	    
+	    // if non-stop checks whole day fit
+	    if($nonStop || $amEndTime==null && $pmStartTime==null) {
+	        // if open
+	        if($amStartTime!=null) {
+	            // should start when open
+	            if($begTime>=$amStartTime) {
+	                if(!isset($endTime)) $returnValue = true;
+	                // and end before closing
+	                elseif(isset($endTime) && $endTime <= $pmEndTime) $returnValue = true;	                
+	            }
+	        }
+	    }
+	    // else checks morning fit
+	    elseif($amEndTime != null && $begTime < $amEndTime) {
+	        // should start when open
+	        if($begTime>=$amStartTime) {
+	            if(!isset($endTime)) $returnValue = true;
+	            // and end before closing
+	            elseif(isset($endTime) && $endTime <= $amEndTime) $returnValue = true;
+	        }	        
+	    }
+	    // or afternoon fit
+	    elseif($pmStartTime != null && $begTime >= $pmStartTime) {
+	        if(!isset($endTime)) $returnValue = true;
+	        // should end before closing
+	        elseif(isset($endTime) && $endTime <= $pmEndTime) $returnValue = true;
+	    }
+	    return $returnValue;
+	}
+	
 	// System functions
 	
 	/**

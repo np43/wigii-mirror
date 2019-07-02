@@ -713,7 +713,11 @@ open_ended:Open ended:Sans fin:::::::
 p_of_time:% of time: % accompli:::::::
 
 endDate_error:The end date must be after the start date:La date de fin doit être après la date de début:::::::
+endTime_error:The end time must be after the start time:L&apos;heure de fin doit être après l&apos;heure de début:::::::
 startDate_error:The start date must be before the end date:La date de début doit être avant la date de fin:::::::
+startTime_error:The start time must be before the end time:L&apos;heure de début doit être avant l&apos;heure de fin:::::::
+startTimeAfterEnd_error:The start time must be after the end time:L&apos;heure de début doit être après l&apos;heure de fin:::::::
+invalidTime:Invalid time:Heure invalide::::::::
 
 moduleView:Views:Affichages::::::::
 navigationStyle:Navigation:Navigation::::::::

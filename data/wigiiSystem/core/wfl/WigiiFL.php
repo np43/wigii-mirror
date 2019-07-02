@@ -1003,9 +1003,10 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	
 	/**
 	 * Deletes an Element
-	 * FuncExp signature : <code>deleteElement(elementId)</code><br/>
+	 * FuncExp signature : <code>deleteElement(elementId,deleteAllSharings)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) elementId: int. The element id to be deleted
+	 * - Arg(1) deleteAllSharings: Boolean. If true, then all element sharings are deleted (even in non-accessible namespaces). Default to false.
 	 * 
 	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
 	 * @return int elementId
@@ -1015,13 +1016,9 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs < 1) throw new FuncExpEvalException('The deleteElement function takes at least one argument which is the elementId', FuncExpEvalException::INVALID_ARGUMENT);
 		$elementId = $this->evaluateArg($args[0]);
-		sel(
-			$this->getPrincipal(),
-			elementP($elementId),
-			dfasl(
-					dfas("ElementDFA","setMode","2")
-					)
-			);
+		if($nArgs>1) $deleteAllSharings = ($this->evaluateArg($args[1])==true);
+		else $deleteAllSharings = false;
+		sel($this->getPrincipal(),elementP($elementId),dfasl(dfas("ElementDFA","setMode","2","setDeleteAllSharings",$deleteAllSharings)));
 		return $elementId;
 	}
 	

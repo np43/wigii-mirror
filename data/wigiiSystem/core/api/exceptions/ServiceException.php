@@ -91,6 +91,10 @@ class ServiceException extends Exception
 	 * The service can provide a retryAfterCancel method.
 	 */
 	const OPERATION_CANCELED = 1010;
+	/**
+	 * indicates that some values in the current evaluated model are incorrect
+	 */
+	const INVALID_VALUES = 1011;
 
 	public function __construct($message = "", $code = self::UNKNOWN_ERROR, $previous=null) {
 		parent::__construct($message, $code);

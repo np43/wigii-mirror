@@ -684,7 +684,9 @@ function str2array($str, $level=1) {
   }
   return $rest;
 }
-//return a string HH:MM format from a float. HH can be more than 24, and seconds are rounded
+/**
+ *@return string in HH:MM format from a float. HH can be more than 24, and seconds are rounded 
+ */
 function float2time($timeAsFloat,$sep=":"){ 
 	$hour = (int) $timeAsFloat;
 	$min = round(fmod($timeAsFloat, 1) * 60);
@@ -694,7 +696,9 @@ function float2time($timeAsFloat,$sep=":"){
 	}
 	return sprintf('%02d'.$sep.'%02d', $hour, $min);
 }
-//return a float from a string in format HH:MM or HH:MM:SS, HH can be more than 24
+/**
+ *@return float from a string in format HH:MM or HH:MM:SS, HH can be more than 24 
+ */
 function time2float($timeAsString,$sep=":"){ 
 	list($h, $m, $s) = explode($sep,$timeAsString);
 	if($h<0){
