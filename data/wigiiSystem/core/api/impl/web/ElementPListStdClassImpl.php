@@ -554,7 +554,7 @@ class ElementPListStdClassImpl extends ElementPGroupableSelectablePagedListImpl 
 			$fieldSelectorList->addFieldSelector($fieldName,'version');
 			if($this->getIncludeFileTextContent()) $fieldSelectorList->addFieldSelector($fieldName,'textContent');			
 		}
-		// Addresses
+		// Emails
 		elseif($dataType instanceof Emails) {
 			$fieldSelectorList->addFieldSelector($fieldName,'proofStatus');
 			$fieldSelectorList->addFieldSelector($fieldName,'proofKey');
@@ -566,7 +566,7 @@ class ElementPListStdClassImpl extends ElementPGroupableSelectablePagedListImpl 
 			$fieldSelectorList->addFieldSelector($fieldName,'value');
 		}
 		// Urls
-		elseif($dataType instanceof Emails) {
+		elseif($dataType instanceof Urls) {
 			$fieldSelectorList->addFieldSelector($fieldName,'name');
 			$fieldSelectorList->addFieldSelector($fieldName,'target');
 			$fieldSelectorList->addFieldSelector($fieldName,'url');

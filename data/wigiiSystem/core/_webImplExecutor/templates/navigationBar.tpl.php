@@ -25,6 +25,8 @@
  * Created on 29 June 2011 by LWR
  * @deprecated since 4.602 28.11.2017, replaced by navigationBar.bsp
  */
+throw new ServiceException('deprecated since 4.602 28.11.2017, replaced by navigationBar.bsp', ServiceException::UNSUPPORTED_OPERATION);
+
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();
 if(!isset($authS)) $authS = ServiceProvider::getAuthenticationService();
 if(!isset($p)) $p = $authS->getMainPrincipal();

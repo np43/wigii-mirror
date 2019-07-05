@@ -2355,6 +2355,80 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Activates xml publication on a given group
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter the groupActivateXmlPublish business process needs the following parameters to run :
+	 * - group: int|Group|GroupP. Group (or group id) for which to activate the xml publish
+	 * - recalc: Boolean. If xml publish was already active on group and recalc is true, then a new xml feed code is calculated;
+	 * else if xml publish was not active now, but xml feed code already exist and recalc is false, then old xml code is kept. By default a new code is calculated.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return String the xml feed code
+	 */
+	public function groupActivateXmlPublish($principal, $caller, $parameter, $executionSink=null) {
+	    $this->executionSink()->publishStartOperation("groupActivateXmlPublish", $principal);
+	    $returnValue = null;
+	    try {
+	        if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        
+	        $groupAS = $this->getGroupAdminService();
+	        
+	        // extracts parameters	        
+	        $group = $parameter->getValue('group');
+	        if(!is_object($group)) $group = $this->getGroupAdminService()->getGroup($principal, $group);
+	        if($group instanceof GroupP) $group = $group->getDbEntity();
+	        if(!isset($group)) throw new WigiiBPLException('group cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        $origNS = $principal->getWigiiNamespace();
+	        $principal->bindToWigiiNamespace($group->getWigiiNamespace());
+	        $recalc = $parameter->getValue('recalc');
+	        
+	        // loads xml publish activity
+	        $xmlPublishRec = $this->getWigiiExecutor()->createActivityRecordForForm($principal, Activity::createInstance("groupXmlPublish"), $group->getModule());
+	        $xmlPublishRec->getWigiiBag()->importFromSerializedArray($group->getDetail()->getXmlPublish(), $xmlPublishRec->getActivity());
+	        $modified=false;
+	        
+	        // if xml feed code already exists
+	        if($xmlPublishRec->getFieldValue('xmlPublishCode')!=null) {
+	            // if already active and recalc, then calculates a new code
+	            if($xmlPublishRec->getFieldValue('enableGroupXmlPublish') && $recalc) {
+	                $xmlPublishRec->setFieldValue($group->getDetail()->getNewXmlPublishCode($principal, $group), "xmlPublishCode");
+	                $modified=true;
+	            }
+	            // else if not already active and recalc strictly not false then calculates a new code
+	            elseif(!$xmlPublishRec->getFieldValue('enableGroupXmlPublish')) {
+	                if($recalc!==false) $xmlPublishRec->setFieldValue($group->getDetail()->getNewXmlPublishCode($principal, $group), "xmlPublishCode");
+	                $xmlPublishRec->setFieldValue(true, "enableGroupXmlPublish");
+	                $modified=true;
+	            }
+	        }
+	        // else calculates a code
+	        else {
+	            $xmlPublishRec->setFieldValue($group->getDetail()->getNewXmlPublishCode($principal, $group), "xmlPublishCode");
+	            $xmlPublishRec->setFieldValue(true, "enableGroupXmlPublish");
+	            $modified=true;
+	        }
+	        $returnValue = $xmlPublishRec->getFieldValue('xmlPublishCode');
+	        
+	        // persists xml publish activity
+	        if($modified) {	           
+	           $xmlPublishRec->setFieldValue(false, "recalcXmlPublishCode");	        
+	           $group->getDetail()->setXmlPublish($xmlPublishRec->getWigiiBag()->exportAsSerializedArray($xmlPublishRec->getActivity()));
+	           $groupAS->setXmlPublish($principal, $group->getId(), $group->getDetail()->getXmlPublish());
+	        }
+	        $principal->bindToWigiiNamespace($origNS);
+	    }
+	    catch(Exception $e) {
+	        $this->executionSink()->publishEndOperationOnError("groupActivateXmlPublish", $e, $principal);
+	        $principal->bindToWigiiNamespace($origNS);
+	        throw $e;
+	    }
+	    $this->executionSink()->publishEndOperation("groupActivateXmlPublish", $principal);
+	    return $returnValue;
+	}
+	
+	/**
 	 * Fetches some posted data from HTTP POST request and builds an object based on the provided type
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @param Object $caller the object calling the Wigii business process.

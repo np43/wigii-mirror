@@ -1546,7 +1546,7 @@ class FuncExpBuilder {
 	 * and $x->getValue() will return "12345" and $y->getValue() will return "edit".
 	 * - If one array is longer than the other and that the smallest array has a ValueObject as last item, 
 	 * then it will has its value bound to the tail of the longest array.
-	 *  $funcExpBuilder->arrayMatch(array("item","12345","edit"), "item", $x) will return true and $x->getValue() will returny array("12345","edit");
+	 *  $funcExpBuilder->arrayMatch(array("item","12345","edit"), "item", $x) will return true and $x->getValue() will return array("12345","edit");
 	 *  - If two variables are on both sides, then the non null value will be bound to the variable with a null value, if both are non null, then matching is true if values are equal. 
 	 * @return Boolean true if input array matched pattern
 	 */

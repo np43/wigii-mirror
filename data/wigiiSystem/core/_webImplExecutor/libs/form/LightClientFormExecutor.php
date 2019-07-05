@@ -23,23 +23,26 @@
 
 /**
  * Wigii Light Client implementation.
- * A web client which answers to direct urls of type:
+ * A web client which answers to update urls of type:
+ * /NoWigiiNamespace/Home/c					: starts and displays accessible namespaces
+ * /WigiiNamespace/Module/c/item/all		: shows a list view with all elements in module
+ * /WigiiNamespace/Module/c/activity/item/all: shows a light view activity with all elements in module
  * /WigiiNamespace/Module/c/item/id			: displays element detail 
  * /WigiiNamespace/Module/c/item/id/edit 	: displays edit element form
  * /WigiiNamespace/Module/c/item/id/copy 	: displays copy element form
- * /WigiiNamespace/Module/c/folder 			: shows an expanded groupPanel
- * /WigiiNamespace/Module/c/folder/id 		: shows a listview                     
+ * /WigiiNamespace/Module/c/folder/id 		: shows a list view on folder
+ * /WigiiNamespace/Module/c/activity/folder/id: shows a light view activity on folder
  * /WigiiNamespace/Module/c/folder/id/add 	: displays add element form
- * /WigiiNamespace/Module/c 				: displays root folders
- * /NoWigiiNamespace/Home/c					: displays accessible namespaces
- * /WigiiNamespace/Home/c					: display accessible modules in namespace
+ * /WigiiNamespace/Module/c/groupPanel		: shows an expanded groupPanel
  * /WigiiNamespace/Module/c/list			: list view configuration Activity
  * /WigiiNamespace/Module/c/filter			: list filter Activity
  * /WigiiNamespace/Module/c/user			: user menu Activity
+ * /WigiiNamespace/Module/c 				: displays root folders of module
+ * /WigiiNamespace/Home/c					: display accessible modules in namespace
  * 
  * Created by CWE on October 26th 2015.
  * Modified by Medair (LMA) in December 2016.
- * Refactored by Wigii.org (CWE) on 17.06.2019 to allow calls from WigiiApi.js
+ * Refactored by Wigii.org (CWE) on 17.06.2019 to direct calls from WigiiApi.js
  */
 class LightClientFormExecutor extends WebServiceFormExecutor {
 	private $_debugLogger;
@@ -99,6 +102,7 @@ class LightClientFormExecutor extends WebServiceFormExecutor {
 	       header("Access-Control-Allow-Origin: ".$_SERVER['HTTP_ORIGIN']);
 	       header("Access-Control-Allow-Credentials: true");
 	    }
+	    else throw new FormExecutorException('Light client can only be called through update requests', FormExecutorException::UNAUTHORIZED);		
 	    // sets language
 	    $transS = ServiceProvider::getTranslationService();
 	    $exec->addJsCode("crtLanguage = '" . $transS->getLanguage(true) . "';
@@ -106,14 +110,91 @@ crtLang = '" . $transS->getLanguage() . "';
 crtWigiiNamespaceUrl = '" . $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "';
 crtModuleName = '" . $exec->getCrtModule()->getModuleUrl() . "';
 ");
-		// 1. tries to handle element request
-		if($this->processElementRequest($p, $exec)) return;
+	    // 1. trie to handle Home page
+	    if($exec->getCrtWigiiNamespace()->getWigiiNamespaceName()=='' &&
+	       $exec->getCrtModule()->isHomeModule() && 
+	       !$exec->hasCrtParameters()) $this->startLightClient($p, $exec);
+	    // 2. tries to handle list request
+	    elseif($this->processListRequest($p, $exec)) return;
+		// 3. tries to handle element request
+		elseif($this->processElementRequest($p, $exec)) return;
 		// else Unsupported request
 		else throw new FormExecutorException('Unsupported request '.$exec->getCrtRequest(), FormExecutorException::UNSUPPORTED_OPERATION);		
 	}
 	
-	private $groupIdInWhichToAdd;
+	/**
+	 * Starts Light Client
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 */
+	protected function startLightClient($p,$exec) {
+	    FormExecutorException::throwNotImplemented();
+	}
 	
+	/**
+	 * Process list request
+	 * /item/all  : shows a list view with all elements in module
+	 * /activity/item/all: shows a light view activity with all elements in module
+	 * /folder/id : shows a list view on folder
+	 * /activity/folder/id: shows a light view activity on folder
+	 * @param Principal $p current principal
+	 * @param ExecutionService $exec current request
+	 * @return boolean true if request has been recognized and processed, else false.
+	 */
+	protected function processListRequest($p,$exec) {
+	    $returnValue = false;
+	    // detects list request
+	    $args = $exec->getCrtParameters();
+	    if(empty($args)) $nArgs = 0; else $nArgs = count($args);
+	    if($nArgs > 0) {
+	        $id = ValueObject::createInstance();
+	        $activity = ValueObject::createInstance();
+	        
+	        // /item/all
+	        if(arrayMatch($args,'item','all')) {
+	            $activity->setValue('lightView');
+	            $groupLogExp = lxAllGroups($exec->getCrtWigiiNamespace(), $exec->getCrtModule());
+	            $returnValue=true;
+	        }
+	        // /activity/item/all
+	        elseif(arrayMatch($args,$activity,'item','all')) {
+	            $groupLogExp = lxAllGroups($exec->getCrtWigiiNamespace(), $exec->getCrtModule());
+	            $returnValue=true;
+	        }
+	        // /folder/id
+	        elseif(arrayMatch($args,'folder',$id)) {
+	            $activity->setValue('lightView');
+	            $groupLogExp = lxEq(fs('id'),$id->getValue());
+	            $returnValue=true;
+	        }
+	        // /activity/folder/id
+	        elseif(arrayMatch($args,$activity,'folder',$id)) {
+	            $groupLogExp = lxEq(fs('id'),$id->getValue());
+	            $returnValue=true;
+	        }
+	        
+	        // request is recognized. OK to go further
+	        if($returnValue) {
+	            // gets light view activity
+	            $activity = Activity::createInstance($activity->getValue());
+                // gets list context
+	            $lc = $this->getWigiiExecutor()->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), $activity->getActivityName());
+	            if(!$lc->isCrtViewLight()) $lc->setCrtViewToLight();
+	            // creates and configures ElementPList
+	            $elementPList = ElementPListRowsForLightClientImpl::createInstance($this->getWigiiExecutor(), $lc);
+	            
+	            FormExecutorException::throwNotImplemented();
+	            $elementPList->configureForActivity($p, $exec, $activity);	            
+	            // selects elements in db and renders html
+	            $elementPList->actOnBeforeAddElementP();
+	            ServiceProvider::getElementService()->getSelectedElementsInGroups($p, lxInGR($groupLogExp), $elementPList, $lc);
+	            $elementPList->actOnFinishAddElementP($lc->getTotalNumberOfObjects());
+	        }
+	    }	    
+	    return $returnValue;
+	}
+	
+	private $groupIdInWhichToAdd;
 	/**
 	 * Process Element request
 	 * /item/id  : displays element detail

@@ -248,6 +248,13 @@ class ExecutionServiceImpl implements ExecutionService {
 			return $this->crtParameters[$key];
 		}
 	}
+	public function countCrtParameters() {
+	    if(empty($this->crtParameters)) return 0;
+	    else return count($this->crtParameters);
+	}
+	public function hasCrtParameters() {
+	    return !empty($this->crtParameters);
+	}
 	protected function setCrtParameters($array){
 		$this->crtParameters = $array;
 	}

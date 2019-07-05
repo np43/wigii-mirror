@@ -25,6 +25,7 @@
  * Created on 8 July 2011 by LWR
  * @deprecated since 4.602 28.11.2017, replaced by navigationBar.bsp
  */
+throw new ServiceException('deprecated since 4.602 28.11.2017, replaced by navigationBar.bsp', ServiceException::UNSUPPORTED_OPERATION);
 
 //DEPENDENCIES
 //$roleList = list principal roles

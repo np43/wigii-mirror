@@ -586,7 +586,7 @@ class WigiiCoreExecutor {
 	protected function createShareElementFormExecutor($record, $formId, $submitUrl) {
 		return ShareElementFormExecutor :: createInstance($this, $record, $formId, $submitUrl);
 	}
-	protected function createExportFormExecutor($record, $formId, $submitUrl) {
+	public function createExportFormExecutor($record, $formId, $submitUrl) {
 		$what = $record->getActivity()->getActivityName();
 		switch ($what) {
 			case "exportExcelCalendar" :
@@ -599,7 +599,7 @@ class WigiiCoreExecutor {
 				throw new ServiceException("unknown export: " . $what, ServiceException :: INVALID_ARGUMENT);
 		}
 	}
-	protected function createExportICSFormExecutor($record, $formId, $submitUrl) {
+	public function createExportICSFormExecutor($record, $formId, $submitUrl) {
 		return ExportICSCalendarFormExecutor :: createInstance($this, $record, $formId, $submitUrl);
 	}
 	protected function createImportElementInFormExecutor($record, $formId, $submitUrl, $rootPrincipal, $crtSelectedGroupP) {
@@ -651,8 +651,12 @@ class WigiiCoreExecutor {
 	protected function createPortalGroupFormExecutor($groupP, $record, $formId, $submitUrl, $request) {
 		return PortalGroupFormExecutor :: createInstance($this, $groupP, $record, $formId, $submitUrl, $request);
 	}
+	/**
+	 * @deprecated by CWE on 03.07.2019 as FormExecutor is now loaded as a Web service (see WigiiExecutor::findWebExecutorForAction method) 
+	 */
 	protected function createXmlPublishGroupFormExecutor($groupP, $record, $formId, $submitUrl, $request) {
-		return XmlPublishGroupFormExecutor :: createInstance($this, $groupP, $record, $formId, $submitUrl, $request);
+		throw new FormExecutorException('createXmlPublishGroupFormExecutor method is deprecated', FormExecutorException::UNSUPPORTED_OPERATION);
+		//return XmlPublishGroupFormExecutor :: createInstance($this, $groupP, $record, $formId, $submitUrl, $request);
 	}
 	protected function createSubscriptionGroupFormExecutor($groupP, $record, $formId, $submitUrl, $request) {
 		return SubscriptionGroupFormExecutor :: createInstance($this, $groupP, $record, $formId, $submitUrl, $request);
@@ -684,7 +688,7 @@ class WigiiCoreExecutor {
 	protected function createModuleEditorRemoveEmailNotificationFormExecutor($record, $formId, $submitUrl){
 		return ModuleEditorRemoveEmailNotificationFormExecutor :: createInstance($this, $record, $formId, $submitUrl);
 	}
-	protected function createElementPListExportXmlInstance($wigiiExecutor, $lc){
+	public function createElementPListExportXmlInstance($wigiiExecutor, $lc){
 		return ElementPListExportXml :: createInstance($wigiiExecutor, $lc);
 	}
 	
@@ -726,6 +730,13 @@ class WigiiCoreExecutor {
 	}
 	private function usePublicPrincipalForDownloadRequest() {
 		$this->usePublicPrincipalForDownloadRequest = true;
+	}
+	/**
+	 * Asks WigiiExecutor to use PublicPrincipal for download request
+	 * @param Principal $p public principal
+	 */
+	public function setPublicPrincipalForDownloadRequest($p) {
+	    if(ServiceProvider::getAuthorizationService()->isPublicPrincipal($p)) $this->usePublicPrincipalForDownloadRequest();
 	}
 	private function resetUsePublicPrincipalForDownloadRequest() {
 		$this->usePublicPrincipalForDownloadRequest = false;
@@ -989,8 +1000,9 @@ class WigiiCoreExecutor {
 		header("Content-Type: text/html; charset=UTF-8");
 	}
 	
-	protected function displayNotFound($message = null) {
-		echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">';
+	public function displayNotFound($message = null) {
+	    header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+		echo '<!DOCTYPE html>';
 		echo "\n";
 		echo '<html><body><head><title>404 Not Found</title></head>';
 		echo '<h2>Page not found</h2>';
@@ -1000,8 +1012,9 @@ class WigiiCoreExecutor {
 		}
 		echo '</body></html>';
 	}
-	protected function displayNotAvailable($p, $message = null) {
-		echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">';
+	public function displayNotAvailable($p, $message = null) {
+	    header($_SERVER["SERVER_PROTOCOL"]." 403 Forbidden");
+		echo '<!DOCTYPE html>';
 		echo "\n";
 		echo '<html><body><head><title>403 Forbidden</title></head>';
 		echo '<h2>' . ServiceProvider :: getTranslationService()->t($p, "unavailableElement") . '</h2>';
@@ -4581,12 +4594,6 @@ invalidCompleteCache();
 			case "getNextElementInBlog" :
 			case "getNextElementInPreviewList" :
 			case "getCalendarEvents" :
-				//			case "JSON":
-				//			case "PDF":
-				//			case "Excel"
-				//			case "XML":
-				//			case "CSVRaw":
-				//			case "CSVPretty":
 				return true;
 				break;
 			case "element":
@@ -5873,7 +5880,7 @@ crtModuleLabel = '" . $currentModuleLabel. "';
 				$form->ResolveForm($p, $exec, $state);
 
 				break;
-			case "groupXmlPublish" :
+			case "groupXmlPublish_deprecated" : /* CWE 03.07.2019: replaced by XmlPublishGroupFormExecutor web service */
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
 				if (!$exec->getCrtModule()->isAdminModule())
@@ -6801,7 +6808,7 @@ onUpdateErrorCounter = 0;
 				$form->ResolveForm($p, $exec, $state);
 
 				break;
-			case "getXmlFeed" :
+			case "getXmlFeed_deprecated" : /* CWE 03.07.2019: replaced by XmlPublishGroupFormExecutor web service */
 				$i = 0;
 				$groupId = $exec->getCrtParameters($i++);
 				$xmlCode = $exec->getCrtParameters($i++);
@@ -9465,11 +9472,8 @@ onUpdateErrorCounter = 0;
 
 				$totalWidth = $configS->getParameter($p, $exec->getCrtModule(), "exportTotalWidth");
 				$labelWidth = $configS->getParameter($p, $exec->getCrtModule(), "exportLabelWidth");
-				;
-				if ($totalWidth == 0)
-					$totalWidth = 450;
-				if ($labelWidth == 0)
-					$labelWidth = 150;
+				if ($totalWidth == 0) $totalWidth = 450;
+				if ($labelWidth == 0) $labelWidth = 150;
 
 				//the dialog box parameters is independant of the module
 				$exportRec = $this->createActivityRecordForForm($p, Activity :: createInstance($what), $exec->getCrtModule());
@@ -9494,158 +9498,6 @@ onUpdateErrorCounter = 0;
 					$state = addslashes($_POST["action"]);
 				$form->ResolveForm($p, $exec, $state);
 				break;
-//				/**
-//				* Export urls can be:
-//				* CSV/export/urlencode('separator')/encoding/[includeChildrenGroup:BOOL{/groupId}+]
-//				* separator can be the character you want
-//				* encoding can be: ISO-8859-1 or UTF-8
-//				* if includeChildrenGroup and groupIds are not defined, then the elementList context will be used
-//				*/
-//			case "JSON" :
-//				if (!isset ($headerText))
-//					$headerText = 'Content-type: application/json';
-//			case "XML" :
-//				if (!isset ($headerText))
-//					$headerText = 'Content-type: text/xml';
-//			case "PDF" :
-//				if (!isset ($headerText))
-//					$headerText = 'Content-Type: application/pdf';
-//			case "Excel" :
-//				if (!isset ($headerText))
-//					$headerText = ElementPListExportExcel :: getContentTypeHeader();
-//			case "CSVRaw" :
-//			case "CSVPretty" :
-//				if (!isset ($headerText))
-//					$headerText = 'Content-type: application/vnd.ms-excel';
-//
-//				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
-//					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
-//
-//				$what = $exec->getCrtParameters(0);
-//
-//				if (!isset ($p))
-//					$p = ServiceProvider :: getAuthenticationService()->getMainPrincipal();
-//				if (!isset ($elS))
-//					$elS = ServiceProvider :: getElementService();
-//				if (!isset ($groupAS))
-//					$groupAS = ServiceProvider :: getGroupAdminService();
-//				if (!isset ($transS))
-//					$transS = ServiceProvider :: getTranslationService();
-//
-//				//sends the correct headers:
-//				//if you get error here, that means that the action is not setup in the shouldByPassHeader method
-//				header('Pragma: public');
-//				header('Cache-Control: max-age=0');
-//				header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-//				header("Last-Modified: " . gmdate("D, d M Y H:i:s") . "GMT");
-//				header($headerText);
-//
-//				switch ($what) {
-//					case "export" :
-//
-//						//filename creation
-//						switch ($exec->getCrtAction()) {
-//							case "CSVPretty" :
-//							case "CSVRaw" :
-//								$ext = "csv";
-//								break;
-//							case "PDF" :
-//								$ext = "pdf";
-//								break;
-//							case "Excel" :
-//								$ext = ElementPListExportExcel :: getFileExtensions();
-//								break;
-//							case "XML" :
-//								$ext = "xml";
-//								break;
-//							case "JSON" :
-//								$ext = "json";
-//								break;
-//						}
-//						$fileName = ($exec->getCrtWigiiNamespace()->getWigiiNamespaceName() ? $exec->getCrtWigiiNamespace()->getWigiiNamespaceName() . "_" : "") . $transS->t($p, $exec->getCrtModule()->getModuleUrl()) . "_" . date('Y.m.d') . "." . $ext;
-//
-//						header('Content-Disposition: attachment; filename="' . $fileName . '"');
-//
-//						//fetched parameters
-//						$i = 1;
-//						$separator = urldecode($exec->getCrtParameters($i++));
-//						if ($separator === "null")
-//							$separator = null;
-//						$encoding = urldecode($exec->getCrtParameters($i++));
-//
-//						//list context
-//						$lc = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "exportElements");
-//
-//						//if group parameters are set, then take the parameters
-//						if ($exec->getCrtParameters($i) != null) {
-//							$includeChildrenGroups = formatBoolean($exec->getCrtParameters($i++));
-//							$groupIds = array_slice($exec->getCrtParameters(), $i);
-//							$groupList = GroupListAdvancedImpl :: createInstance(false);
-//							$groupAS->getSelectedGroups($p, $groupAS->getListFilterForSelectGroupWithoutDetail($groupIds), $groupList);
-//							$lc->resetFetchCriteria($p, $this);
-//							$lc->setGroupPList($groupList, $includeChildrenGroups);
-//						} else {
-//							//else take the elementListContext
-//							$elementListContext = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "elementList");
-//							if ($elementListContext->getMultipleSelection() != null) {
-//								$lc->resetFetchCriteria($p, $this);
-//								//							//add groupList on all
-//								//							$groupList = GroupListAdvancedImpl::createInstance();
-//								//							$lf = ListFilter::createInstance();
-//								//							$lf->setFieldSelectorList(ServiceProvider::getGroupAdminService()->getFieldSelectorListForGroupWithoutDetail());
-//								//							$groupAS->getAllGroups($p, $exec->getCrtModule(), $groupList, $lf);
-//								//							$lc->setGroupPList($groupList);
-//								//changed on 24 sept, when multiple select export in excel it is more natural to keep current group filter
-//								//the only limitation, is that the user needs to clic on all group if he has some selection in multiple groups
-//								$lc->matchFetchCriteria($elementListContext);
-//								//add the multipleSelection criterias in the LogExp
-//								$lc->addLogExpOnMultipleSelection($elementListContext->getMultipleSelection());
-//							} else {
-//								$lc->matchFetchCriteria($elementListContext);
-//							}
-//						}
-//
-//						//create a temp list context to allow the export change the context to each group
-//						$lcTemp = $this->getListContext($p, $exec->getCrtWigiiNamespace(), $exec->getCrtModule(), "TempExportExcelElements");
-//
-//						$elementPList = $this->createElementPListForExport($p, $exec, $exec->getCrtAction(), $lc, $lcTemp, $separator, $encoding);
-//
-//						if ($exec->getCrtAction() == "Excel" || $exec->getCrtAction() == "PDF") {
-//
-//							//loop through the groupTree to make export per group
-//							if ($elementListContext->getMultipleSelection() != null) {
-//								$elementPList->setAllOnOnePage(true);
-//								$groupList = $lc->getGroupPList();
-//							} else {
-//								$groupList = $lc->getGroupPList();
-//							}
-//
-//							if ($groupList == null || $groupList->isEmpty())
-//								return "No group selected";
-//							//fetch the groupPTree to be able to loop throug the structure
-//							$groupPTree = GroupPListTreeArrayImpl :: createInstance();
-//							$lf = ListFilter :: createInstance();
-//							$lf->setFieldSelectorList(ServiceProvider :: getGroupAdminService()->getFieldSelectorListForGroupWithoutDetail());
-//							$groupAS->getAllGroups($p, $exec->getCrtModule(), $groupPTree, $lf);
-//
-//							$elementPList->setGroupPList($groupList);
-//							$groupPTree->visitInDepth($elementPList);
-//
-//							$elementPList->saveFile();
-//
-//						} else {
-//							//flat export
-//							$elementPList->actOnBeforeAddElementP();
-//							$nbRow = $elS->getSelectedElementsInGroups($p, $lc->getGroupLogExp(), $elementPList, $lc);
-//
-//							$elementPList->actOnFinishAddElementP($nbRow);
-//						}
-//
-//						$this->throwEvent()->exportElements(PWithModuleWithElementPList :: createInstance($p, $exec->getCrtModule(), $elementPList));
-//
-//						break;
-//				}
-//				exit;
 			case "groupSelectorPanel" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
 					throw new AuthenticationServiceException($exec->getCrtAction() . " needs login", AuthenticationServiceException :: FORBIDDEN_MINIMAL_PRINCIPAL);
@@ -9653,9 +9505,6 @@ onUpdateErrorCounter = 0;
 				$groupAS = ServiceProvider :: getGroupAdminService();
 				$groupIds = array_slice($exec->getCrtParameters(), 1);
 				if ($groupIds[0] == "0") {
-//					//select all root groups
-//					$groupList = GroupListAdvancedImpl :: createInstance(false);
-//					$groupAS->getAllGroups($p, $exec->getCrtModule(), $groupList, $groupAS->getListFilterForSelectRootGroupsWithoutDetail($exec->getCrtModule()));
 					$groupList = $this->getConfigurationContext()->getRootGroupsInModule($p, $exec->getCrtModule());
 					$groupIds = $groupList->getGroupIds();
 				} else {

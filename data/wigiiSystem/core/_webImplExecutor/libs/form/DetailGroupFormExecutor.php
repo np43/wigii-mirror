@@ -116,6 +116,11 @@ class DetailGroupFormExecutor extends FormExecutor {
 				//$record->setFieldValue($actRec4->getFieldValue("enableGroupXmlPublish")==true, "groupXmlPublish");
 				if($actRec4->getFieldValue("enableGroupXmlPublish")==true){
 					$record->setFieldValue("_blank", "groupXmlPublishPreview", "target");
+					// CWE 03.07.2019 shows public excel export links
+					$record->setFieldValue(SITE_ROOT.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/getXmlFeed/".$group->getId()."/".$actRec4->getFieldValue("xmlPublishCode")."/excel", "groupExcelPublishPreview", "url");
+					if($this->getWigiiExecutor()->getConfigurationContext()->mf($p, $group->getModule(), Activity::createInstance("exportExcelCalendar"))) {
+					   $record->setFieldValue(SITE_ROOT.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/getXmlFeed/".$group->getId()."/".$actRec4->getFieldValue("xmlPublishCode")."/excelcal", "groupExcelCalPublishPreview", "url");
+					}
 					$record->setFieldValue(SITE_ROOT.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/getXmlFeed/".$group->getId()."/".$actRec4->getFieldValue("xmlPublishCode"), "groupXmlPublishPreview", "url");
 					$record->setFieldValue($transS->t($p, "groupCsvPublishParametersExplanation"), "groupCsvPublishParametersExplanation");
 					$record->setFieldValue(SITE_ROOT.$group->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$group->getModule()->getModuleUrl()."/getXmlFeed/".$group->getId()."/".$actRec4->getFieldValue("xmlPublishCode")."/csv", "groupCsvPublishPreview", "url");

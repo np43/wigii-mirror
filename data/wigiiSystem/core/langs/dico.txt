@@ -764,7 +764,9 @@ groupPortalPreview:External webpage:Page web externe:::::::::
 groupPortal_help:Display an external webpage:Afficher une page web externe:::::::
 groupXmlPublish:Publish #group#:Publier #group#:::::::::
 groupXmlPublishPreview:Publish XML:Publier en XML:::::::::
-groupCsvPublishParametersExplanation:Optional parameters can be added after\: the separator ";" or "," or "tab" | the encoding "UTF-8" or "ISO-8859-1" | if you don't want to receive as an attached file "integrated" . Each parameter must be separated by a "/":Des paramêtres optionnels peuvent être ajouté après\: le séparateur ";" ou "," ou "tab" | l'encodage des caractères "UTF-8" ou "ISO-8859-1" | si vous ne voulez pas recevoir en tant que fichier attaché "integrated" . Chaque paramêtre doit être séparé par un "/":::::::::
+groupExcelPublishPreview:Publish Excel:Publier en Excel:::::::::
+groupExcelCalPublishPreview:Publish Excel calendar:Publier un calendrier Excel:::::::::
+groupCsvPublishParametersExplanation:Optional parameters can be added after\: the separator ";" or "," or "tab" | the encoding "UTF-8" or "ISO-8859-1" | if you don't want to receive as an attached file "integrated" . Each parameter must be separated by a "/":Des paramètres optionnels peuvent être ajoutés après\: le séparateur ";" ou "," ou "tab" | l'encodage des caractères "UTF-8" ou "ISO-8859-1" | si vous ne voulez pas recevoir en tant que fichier attaché "integrated" . Chaque paramètre doit être séparé par un "/":::::::::
 groupCsvPublishPreview:Publish CSV:Publier en CSV:::::::::
 groupCsvRawPublishPreview:Publish CSV (RAW):Publier en CSV (RAW):::::::::
 groupCsvBackupPublishPreview:Publish in CSV for backup:Publier en CSV for backup:::::::::
@@ -881,13 +883,13 @@ moduleEditorNewNamespaceSupportExplanation:Define a support name and email to ad
 moduleEditorNewNamespaceSupportName:Name:Nom:
 moduleEditorNewNamespaceSupportEmail:Email:Email:
 moduleEditorNewNamespaceLinkToUserExplanation:Please define the user who will be managing this new namespace.:Veuillez définir le nom de l'utilisateur allant gérer cet espace de nom:
-moduleEditorNewNamespaceAuthenticationExplanation:If this user is new, please define his credentials.:Si cet utilisateur est nouveau, veuillez définir ces paramêtres d'authentification.:::
+moduleEditorNewNamespaceAuthenticationExplanation:If this user is new, please define his credentials.:Si cet utilisateur est nouveau, veuillez définir ces paramètres d'authentification.:::
 wigiiNamespaceAlreadyExist:This namespace already exist, please choose an other name.:Cet espace de nom existe déjà, veuillez choisir un autre nom.::::
 wigiiNamespaceWronFormat:A namespace name cannot contains special chars.:Le nom d'un espace de nom ne peut pas contenir de caractère spéciaux.:::
 wigiiNamespaceWrongFormat:The namespace name can only contains alphanumerical characters and space, dot, dash or underscore.:Le nom d'un espace ne peut que contenir des caractères alphanumérique et espace, point, tiret, sous-tiret.:::
 usernameWrongFormat:Wrong format:Mauvais format:
 wigiiNamespaceAlreadyExist:The namespace name already exists. Please choose a new one.:Le nom de l'espace existe déjà, veuillez choisir un autre nom.:
-newUserNeedsCredentials:For new user you need to define credentials.:Pour un nouvel utilisateur il est obligatoire de définir les paramêtres d'accès.:::
+newUserNeedsCredentials:For new user you need to define credentials.:Pour un nouvel utilisateur il est obligatoire de définir les paramètres d'accès.:::
 moveInTrashBin:Sent to \: :Envoyé(s) dans \: :
 trashbinGroupName:zz. Trashbin:zz. Corbeille::::
 trashBinGroupOperationImpossible:#ThisGroup# is the trashbin, therefore the operation cannot complete.:#ThisGroup# est la corbeille, par conséquent l'opération ne peut pas se terminer.::::
@@ -950,7 +952,7 @@ photo:Photo:Photo:::::::::
 pleaseEnterCode:Please enter this code\::Veuillez recopier le code\::::::::::
 presentation:Presentation:Présentation:::::::::
 realUser:Real user:Utilisateur réel:::::::::
-recalcXmlPublishCode:Recalculate a new code:Recalcul un nouveau code:::::::::
+recalcXmlPublishCode:Recalculate a new code:Recalculer un nouveau code:::::::::
 requiredSeparator:A separator is required for CSV exportation (defautl is\:  , ):Un séparateur doit être défini pour l'exportation CSV (par défaut\:  ; ):::::::::
 resetMultipleSelection:Deselect view:Déselectionner la vue:::::::::
 reverseSelectedItem:Click to reverse the filter. When active, the result will only have #elements# without\::Cliquez pour inverser le filtre. Lorsque activé, le résultat contiendra #elements# qui n'ont pas\::::::::::

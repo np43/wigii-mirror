@@ -263,6 +263,14 @@ if($p->isRealUserPublic()) {
                 					?>>UI Recorder</a><?
                 			?></li><?
             			}
+            			// Light Client
+            			if(defined("WEB_LIGHTCLIENT")){
+            			    ?><li id="startLightClient"><?
+                				?><a href="#" <?
+                				?>onclick="update('mainDiv/NoWigiiNamespace/Home/c'); return false;"<?
+                				?>>Light Client</a><?
+                			?></li><?
+            			}
             			
                         //logout
                         ?><li id="userMenuLogout"><?

@@ -314,13 +314,19 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "setUserRight":
 					case "removeUser":
 					case "getAllUsers":
-					case "setGroupDescription":
-					case "setXmlPublish":
+					case "setGroupDescription":					
 					case "setEmailNotification":
 						$this->assertPrincipalHasAttachedUser($principal);
 						$this->assertPrincipalHasAdminAccess($principal);
 						return null; /* principal gets no special rights */
-					case "setSubscription":
+					case "setXmlPublish":
+					    // 04.07.2019 CWE root principal is authorized to activate xml publication on groups 
+					    if(!$this->isRootPrincipal($principal)) {
+					        $this->assertPrincipalHasAttachedUser($principal);
+					        $this->assertPrincipalHasAdminAccess($principal);
+					    }
+					    return null; /* principal gets no special rights */
+					case "setSubscription":					
 					    if(!$this->isPublicPrincipal($principal) && !$this->isRootPrincipal($principal)) {
 							$this->assertPrincipalHasAttachedUser($principal);
 							$this->assertPrincipalHasAdminAccess($principal);

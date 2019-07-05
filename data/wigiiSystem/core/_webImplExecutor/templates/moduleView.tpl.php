@@ -65,7 +65,7 @@ if($exec->getIdAnswer()!='moduleView' && $exec->getIsUpdating()){ //!$exec->getI
 	} else {
 		switch($exec->getCrtModule()->getModuleName()){
 			default:
-				//$exec->addJsCode(" moduleView_setHeight(); ");
+			    if($lc->getCrtTemplate()==null) throw new ServiceException('no template associated to current view', ServiceException::CONFIGURATION_ERROR);
 				include(TEMPLATE_PATH . $lc->getCrtTemplate());
 		}
 	}

@@ -27,6 +27,7 @@
  * Enhanced by CWE on 09.10.2015 to constraint search space with a list of included/excluded groups.
  * Modified by CWE on 07.02.2018 to handle Wigii NCD module views
  * Modified by Medair(CWE) 12.03.2018 to handle listFilterExp config parameter to always predefine as filtering LogExp on the module view.
+ * Modified by CWE on 4.7.2019 to include Light Client views
  */
 class ListContext extends ListFilter {
 
@@ -57,6 +58,7 @@ class ListContext extends ListFilter {
 	const blogViewTemplate = "elementBlog.tpl.php";
 	const wncdView = "wncd";
 	const wncdViewTemplate = "elementWncd.tpl.php";
+	const lightView = "light";
 	
 	public function setCrtViewToList(){
 		$this->setCrtView(ListContext::listView);
@@ -79,6 +81,12 @@ class ListContext extends ListFilter {
 	public function isCrtViewWncd() {
 		return ($this->getCrtView() == ListContext::wncdView) || 
 		($this->getCrtTemplate() == ListContext::wncdViewTemplate);
+	}
+	public function setCrtViewToLight(){
+	    $this->setCrtView(ListContext::lightView);
+	}
+	public function isCrtViewLight(){
+	    return $this->getCrtView() == ListContext::lightView;
 	}
 	private $viewsTemplate;
 	public function getViewsTemplate(){
