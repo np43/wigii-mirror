@@ -2397,7 +2397,10 @@ order by isParent DESC
 		if(is_null($ugr)) throw new GroupAdminServiceException('ugr can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
 
 		$autoS = $this->getAuthorizationService();
-		// checks general authorization
+		// CWE 09.07.2019: authorizes root principal to set user rights
+		if($autoS->isRootPrincipal($principal)) return true;
+
+		// else checks general authorization
 		$autoS->assertPrincipalAuthorized($principal, "GroupAdminService", "setUserRight");
 		// check rights
 		$userAS = $this->getUserAdminServiceImpl();
@@ -2414,7 +2417,7 @@ order by isParent DESC
 			($ugr->canWriteElement() && !$groupP->getRights()->canWriteElement()) ||
 			($ugr->canShareElement() && !$groupP->getRights()->canShareElement())
 			)){
-			$autoS->fail($principal, "try to define higner rights on group ".$ugr->getGroupId());
+			$autoS->fail($principal, "try to define higher rights on group ".$ugr->getGroupId());
 		}
 		
 		//since 06/11/2012 the administrator can transfer access rights up to what he has access to
@@ -2529,7 +2532,7 @@ order by isParent DESC
 			($ugr->canWriteElement() && !$groupP->getRights()->canWriteElement()) ||
 			($ugr->canShareElement() && !$groupP->getRights()->canShareElement())
 			)){
-			$autoS->fail($principal, "try to remove higner rights on group ".$ugr->getGroupId());
+			$autoS->fail($principal, "try to remove higher rights on group ".$ugr->getGroupId());
 		}
 		
 		//since 06/11/2012 the administrator can transfer access rights up to what he has access to

@@ -263,12 +263,12 @@ interface UserAdminService
 	public function unLock($principal, $object);
 	
 	/**
-	 * Fills a list with all group in which the user is participan, with his respective rights,
+	 * Fills a list with all group in which the user is participant, with his respective rights,
 	 * each group is associated with the principal rights
 	 * principal: authenticated user performing the operation
 	 * userId: the user database id from which want the groups participants
-	 * module: module in wich we opperate (for propagation)
-	 * groupIds: all the groups that the P can currently reached, no check is done on the validity of those ids
+	 * module: module in wich we operate (for propagation)
+	 * groupIds: all the groups that the principal can currently reach, no check is done on the validity of those ids
 	 * groupRPList: the GroupRP list to be filled
 	 * listFilter: filter on the list; filters columns, does pagination and sorting
 	 * includePropagation: if true then user rights are dynamically calculated based on propagation,

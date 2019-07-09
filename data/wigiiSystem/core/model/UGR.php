@@ -99,8 +99,8 @@ class UGR extends DbEntityInstance
 	}
 	
 	/**
-	 * set rights from a r/s/w/x letter. the hierachical logic as x means you have all the others
-	 * is implemented.
+	 * set rights from a r/s/w/x letter. 
+	 * the hierachical logic is implemented. (x means you have all the others)
 	 * @return $this to allow easy inline setting
 	 */
 	public function setRightsFromLetter($letter){

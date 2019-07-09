@@ -200,8 +200,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 		{
 			case "UserAdminService":
 				switch($methodName)
-				{
-					case "getUser":
+				{					
 					case "findUserByName":
 						// AuthenticationService gets special read only right
 						if($this->isPrincipalAuthenticationService($principal))
@@ -225,8 +224,8 @@ class AuthorizationServiceImpl implements AuthorizationService
 						$this->assertPrincipalHasAttachedUser($principal);
 						return null; /* principal gets no special rights */
 					case "getAllUsersFromSystem":
+					case "getUser":
 						if($this->isRootPrincipal($principal)){
-							$this->assertPrincipalIsRootOrHasAttachedUser($principal);
 							return PrincipalRights::createInstance(array("isOwner"=>true, "canModify"=>true));
 						} else {
 							$this->assertPrincipalHasAttachedUser($principal);
@@ -246,8 +245,6 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "setUserRole":
 					case "removeUserRole":
 					case "getAllGroups":
-//					case "persistUserUserRight":
-//					case "removeUserUserRight":
 					case "matchModuleAccessOnRights":
 					case "getModuleAccessFromRights":
 					case "doesWigiiNamespaceExist":

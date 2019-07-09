@@ -1423,35 +1423,7 @@ where $username";
 	{
 		$principalId = $principal->getUserId();
 		if(is_null($principalId)) throw new UserAdminServiceException('principal attached user can not be null', UserAdminServiceException::INVALID_ARGUMENT);
-		$sqlB = $this->getSqlWhereClauseBuilderForSelectUsers('U');
-		/* CWE 2015.10.07: optimize SQL query
-		$id_user_owner = $sqlB->formatBinExp('UU.id_user_owner', '=', $principalId, MySqlQueryBuilder::SQLTYPE_INT);
-		$isOwner = $sqlB->formatBinExp('UU.isOwner', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN); //add by LWR
-		$isInPrincipalWigiiNamespace = $sqlB->formatBinExp('U.wigiiNamespace', '=', $principal->getWigiiNamespace()->getWigiiNamespaceName(), MySqlQueryBuilder::SQLTYPE_VARCHAR); //add by LWR
-		// adds where clause
-		if(!is_null($userLogExp))
-		{
-			// reduces logExp and clones it.
-			$userLogExp = $userLogExp->reduceNegation(true);
-			$userLogExp = $sqlB->buildWhereClause($userLogExp);
-			if(!is_null($userLogExp) && $userLogExp != '') $userLogExp = " and ".$userLogExp;
-		}
-		// order by clause
-		if(!is_null($userSortingKeyList))
-		{
-			$sqlB->convertFieldSortingKeyListToOrderByClause($userSortingKeyList);
-			$orderByClause = ' '.$sqlB->getOrderByClause();
-		} else $orderByClause='';
-		return "SELECT ".$this->getSqlColumnsForUser('U').", 1 as isOwner
-FROM Users as U
-LEFT JOIN Users_Users as UU ON U.id_user = UU.id_user
-WHERE (
-	($id_user_owner and $isOwner)
-	".($principal->isReadAllUsersInWigiiNamespace() ? " or $isInPrincipalWigiiNamespace " : "")."
-	".($principal->isWigiiNamespaceCreator() ? " or 1 " : "")."
-)".$userLogExp." GROUP BY U.id_user ".$orderByClause;
-		*/
-		
+		$sqlB = $this->getSqlWhereClauseBuilderForSelectUsers('U');		
 		// adds where clause
 		if(!is_null($userLogExp))
 		{
@@ -1612,7 +1584,7 @@ WHERE (
 		if(is_null($principalId)) throw new UserAdminServiceException('principal attached user can not be null', UserAdminServiceException::INVALID_ARGUMENT);
 		$sqlB = $this->getSqlWhereClauseBuilderForSelectUsers('U');
 		$id_user_owner = $sqlB->formatBinExp('UU.id_user_owner', '=', $principalId, MySqlQueryBuilder::SQLTYPE_INT);
-		$isOwner = $sqlB->formatBinExp('UU.isOwner', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN); //add by LWR
+		$isOwner = $sqlB->formatBinExp('UU.isOwner', '=', true, MySqlQueryBuilder::SQLTYPE_BOOLEAN);
 		$isInPrincipalWigiiNamespace = $sqlB->formatBinExp('U.wigiiNamespace', '=', $principal->getWigiiNamespace()->getWigiiNamespaceName(), MySqlQueryBuilder::SQLTYPE_VARCHAR); //add by LWR
 		// adds where clause
 		if(!is_null($userLogExp))
@@ -3572,7 +3544,10 @@ WHERE (
 		if(is_null($principal)) throw new UserAdminServiceException('principal can not be null', UserAdminServiceException::INVALID_ARGUMENT);
 
 		$autoS = $this->getAuthorizationService();
-		// checks general authorization
+		// CWE 09.07.2019 authorizes root principal to set User Group Rights, and therefore check module access validity
+		if($autoS->isRootPrincipal($principal)) return true;
+		
+		//else checks general authorization
 		$autoS->assertPrincipalAuthorized($principal, "UserAdminService", "getModuleAccessFromRights");
 		// check specific rights
 		//no other check is required. Every user can getModuleAccess on Rights of a user
@@ -3660,7 +3635,10 @@ WHERE (
 		if(is_null($principal)) throw new UserAdminServiceException('principal can not be null', UserAdminServiceException::INVALID_ARGUMENT);
 
 		$autoS = $this->getAuthorizationService();
-		// checks general authorization
+		// CWE 09.07.2019 authorizes root principal to set User Group Rights, and therefore update module access consequently
+		if($autoS->isRootPrincipal($principal)) return true;
+		
+		// else checks general authorization		
 		$autoS->assertPrincipalAuthorized($principal, "UserAdminService", "matchModuleAccessOnRights");
 		// check specific rights
 		// existing user/role -> user creator and principal owns user
@@ -3671,8 +3649,6 @@ WHERE (
 		{
 			$autoS->fail($principal, "has no right to update module access for the user $userErrorInfo");
 		}
-		//??? any body can do that, because this is only keeping user data integrity.
-		//??? i.e.: changing a ugr on a X group, will call this method, and p has not necessarly rights on the user.
 	}
 	protected function getSqlForGetUGRModule($userId)
 	{

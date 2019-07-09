@@ -6195,12 +6195,12 @@ crtModuleLabel = '" . $currentModuleLabel. "';
 					$userPRenderer->prepareRendering($p, $exec, $this);
 					if($roleMapping){
 						$lf = $userAS->getListFilterForRoleList();
-						$userAS->getAllRoles($p, $userPRenderer, $lf); //, $userAS->getListFilterForUserList());
+						$userAS->getAllRoles($p, $userPRenderer, $lf);
 					} else {
 						$lf = $userAS->getListFilterForUserList();
-//						$userAS->getAllUsers($p, $userPRenderer, $lf); //, $userAS->getListFilterForUserList());
 						//in order to access to the description of all users we need to provide the RootPrincipal
-						$userAS->getAllUsersFromSystem($this->getRootPrincipal(), $userPRenderer, $lf); //, $userAS->getListFilterForUserList());
+						//$userAS->getAllUsers($p, $userPRenderer, $lf);						
+						$userAS->getAllUsersFromSystem($this->getRootPrincipal(), $userPRenderer, $lf);
 					}
 					$userPRenderer->endRendering($p, $exec, $this);
 

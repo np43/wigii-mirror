@@ -1143,6 +1143,67 @@ class WigiiBPL
 	}
 	
 	/**
+	 * Sets an UGR on a given group for a given user Id.
+	 * @param Principal $principal authenticated user executing the Wigii business process
+	 * @param Object $caller the object calling the Wigii business process.
+	 * @param WigiiBPLParameter $parameter A WigiiBPLParameter instance with the following parameters :
+	 * - group: Int|Group|GroupP. The group Id or group object for which to set the UGR
+	 * - user: Int|User|UserP. The user Id or user object for which to set the UGR
+	 * - right: String. User access rights on group. One of x=group admin, w=write element, s=share element, r=read element.
+	 * - allowDowngrade: Boolean. If true, then allows to down grade existing rights on this folder. Else higher rights are kept. Default to false.
+	 * @param ExecutionSink $executionSink an optional ExecutionSink instance that can be used to log Wigii business process actions.
+	 * @throws WigiiBPLException|Exception in case of error
+	 * @return Int 1 if UGR has been inserted or modified in DB, 0 if UGR already existed and didn't need to be modified.
+	 */
+	public function adminSetUserGroupRight($principal, $caller, $parameter, $executionSink=null) {
+	    $this->executionSink()->publishStartOperation("adminSetUserGroupRight", $principal);
+	    $returnValue = null;
+	    try {
+	        if(is_null($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        if(is_null($parameter)) throw new WigiiBPLException('parameter cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        // checks parameters
+	        $groupId = $parameter->getValue('group');
+	        if(is_object($groupId)) $groupId = $groupId->getId();
+	        if($groupId == null) throw new WigiiBPLException('group cannot be null', WigiiBPLException::INVALID_ARGUMENT);	        
+	        $userId = $parameter->getValue('user');
+	        if(is_object($userId)) $userId = $userId->getId();
+	        if($userId == null) throw new WigiiBPLException('user cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	        $right = $parameter->getValue('right');
+	        switch($right) {
+	            case 'x':
+	            case 'w':
+	            case 's':
+	            case 'r':
+	               break;
+	            default: throw new WigiiBPLException('right should be one of x,w,s,r', WigiiBPLException::INVALID_ARGUMENT);
+	        }
+	        $allowDowngrade = ($parameter->getValue('allowDowngrade')==true);
+	        
+	        // 1. fetches original ugr
+	        $origUgr = $this->getUGR($principal, $groupId, $userId);
+	        // 2. sets UGR in database if did not exist or if rights are higher or if allowDowngrade and rights are lower. 
+	        if(!isset($origUgr) || 
+	           $right > $origUgr->getLetter() ||
+	           $allowDowngrade && $right < $origUgr->getLetter() ) {
+	               
+	           $ugr = UGR::createInstance($groupId, $userId);
+	           $ugr->setRightsFromLetter($right);
+	           ServiceProvider::getGroupAdminService()->setUserRight($principal, $ugr);
+	           ServiceProvider::getUserAdminService()->matchModuleAccessOnRights($principal, $userId);
+	           $returnValue = 1;
+	        }
+	        // else no change
+	        else $returnValue = 0;
+	    }
+	    catch(Exception $e) {
+	        $this->executionSink()->publishEndOperationOnError("adminSetUserGroupRight", $e, $principal);
+	        throw $e;
+	    }
+	    $this->executionSink()->publishEndOperation("adminSetUserGroupRight", $principal);
+	    return $returnValue;
+	}
+	
+	/**
 	 * Returns the current listContext
 	 * @param Principal $principal authenticated user executing the Wigii business process
 	 * @return ListContext
@@ -2860,6 +2921,45 @@ class WigiiBPL
     	    $this->groupConfigCache[$group->getId()] = $returnValue;
 	    }
 	    $this->debugLogger()->logEndOperation('getConfigGroupForGroup');
+	    return $returnValue;
+	}
+	
+	private $getUGRCache=null;
+	/**
+	 * Returns any existing explicit User Group Right object between the given user id and group id.
+	 * Does not calculate rights based on rights inheritance. Returns null if no explicit UGR exists in database between this group and user.
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param int $groupId existing group id in database. No check is done on the validity of the group id.
+	 * @param int $userId existing user id in the databse. No check is done on the validity of the user id.
+	 * @return UGR or null if nothing exists in database
+	 */
+	public function getUGR($principal, $groupId, $userId) {
+	    $this->debugLogger()->logBeginOperation('getUGR');
+	    $returnValue=null;
+	    // checks arguments
+	    if(!isset($groupId)) throw new WigiiBPLException('groupId cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	    if(!isset($userId)) throw new WigiiBPLException('userId cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	    // checks if UGR is already in cache
+	    if(!isset($this->getUGRCache)) $this->getUGRCache = array();
+	    $returnValue = $this->getUGRCache[$groupId."_".$userId];
+	    if($returnValue===null) {
+    	    // builds sql
+    	    $mySqlF = TechnicalServiceProvider::getMySqlFacade();	    
+    	    $sqlB = $mySqlF->getSqlBuilder();
+    	    $id_user = $sqlB->formatBinExp('UGR.id_user', '=', $userId, MySqlQueryBuilder::SQLTYPE_INT);
+    	    $id_group = $sqlB->formatBinExp('UGR.id_group', '=', $groupId, MySqlQueryBuilder::SQLTYPE_INT);
+    	    $sql = "select UGR.id_user, UGR.id_group, UGR.canModify, UGR.canWriteElement, UGR.canShareElement from Users_Groups_Rights as UGR where $id_user and $id_group";
+    	    // queries database
+    	    $dbCS = ServiceProvider::getDbAdminService()->getDbConnectionSettings($principal);
+    	    $returnValue = $mySqlF->selectOne($principal, $sql, $dbCS);
+    	    // builds result
+    	    if(isset($returnValue)) $returnValue = UGR::createInstance($groupId,$userId,$returnValue);
+    	    // puts result in cache. Explicit false if nothing in db
+    	    $this->getUGRCache[$groupId."_".$userId] = (isset($returnValue)?$returnValue:false);
+	    }
+	    // if cache recorded that no UGR in db, then returns null
+	    elseif($returnValue===false) $returnValue = null;
+	    $this->debugLogger()->logEndOperation('getUGR');
 	    return $returnValue;
 	}
 	

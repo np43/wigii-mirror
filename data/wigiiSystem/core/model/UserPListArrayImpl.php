@@ -41,9 +41,16 @@ class UserPListArrayImpl extends ObjectListArrayImpl implements UserPList
 	public function addUserP($userP)
 	{
 		if(!isset($userP)) throw new ListException("userP cannot be null", ListException::INVALID_ARGUMENT);
-		$user = $userP->getUser();
 		$key = $userP->getId(); //$this->getKeyWithNameModuleWigiiNamespace($user->getUsername(), null, $user->getWigiiNamespace());
 		if(isset($this->objArray[$key])) throw new ListException("a user with same key $key has already been added", ListException::ALREADY_EXISTS);
 		$this->objArray[$key] = $userP;
+	}
+	public function getUserP($userId) {
+	    if(!isset($this->objArray)) return null;
+	    return $this->objArray[$userId];
+	}
+	public function getFirstUserP(){
+	    if(!isset($this->objArray)) return null;
+	    return reset($this->objArray);
 	}
 }
