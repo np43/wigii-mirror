@@ -65,6 +65,14 @@ class ObjectListArrayImpl extends Model implements ObjectList
 	    else return 0;
 	}
 
+	/**
+	 * Gets first object from the list, return null if empty
+	 */
+	public function getFirst() {
+	    if(empty($this->objArray)) return null;
+	    else return reset($this->objArray);
+	}
+	
 	// Utilities for key management
 
 	/**

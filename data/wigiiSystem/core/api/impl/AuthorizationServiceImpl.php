@@ -340,6 +340,9 @@ class AuthorizationServiceImpl implements AuthorizationService
 					case "moveGroup":
 						$this->assertPrincipalIsRoot($principal);
 						return null; /* principal gets no special rights */
+					case "getTempRight":
+					    $this->assertPrincipalHasAttachedUser($principal);
+					    return null; /* principal gets no special rights */
 				}
 				break;
 			case "ElementService":
@@ -462,7 +465,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 		throw new AuthorizationServiceException('unknown service and method, can not grant authorization', AuthorizationServiceException::FORBIDDEN);
 	}
 
-	protected function assertPrincipalHasAttachedUser($principal){
+	public function assertPrincipalHasAttachedUser($principal){
 		if($principal->getAttachedUser()==null){
 			throw new AuthorizationServiceException("Principal has not an attached user", AuthorizationServiceException::FORBIDDEN);
 		}

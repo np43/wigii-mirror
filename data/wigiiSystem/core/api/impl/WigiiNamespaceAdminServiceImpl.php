@@ -291,7 +291,7 @@ class WigiiNamespaceAdminServiceImpl implements WigiiNamespaceAdminService
 
 	private function doGetWigiiNamespaceForClient($principal, $wigiiNamespaceName, $client)
 	{
-		//if($wigiiNamespaceName == WigiiNamespace::EMPTY_NAMESPACE_URL) $wigiiNamespaceName = null;
+		if($wigiiNamespaceName == WigiiNamespace::EMPTY_NAMESPACE_URL) $wigiiNamespaceName = $this->getEmptyWigiiNamespaceName();
 		$returnValue = $this->getCachedWigiiNamespace($client, $wigiiNamespaceName);
 		if(!isset($returnValue))
 		{

@@ -27,6 +27,7 @@
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
  * Modified by Medair (CWE) on 01.09.2017 to enable root principal and public principal to create sub groups.
  * Modified by CWE on 27.05.2019 to authorize root principal to persist sub groups.
+ * Modified by CWE on 10.07.2019 to manage temporary write rights on groups
  */
 class GroupAdminServiceImpl implements GroupAdminService
 {
@@ -423,6 +424,44 @@ class GroupAdminServiceImpl implements GroupAdminService
 		$this->groupsGroupsBuilder = $groupsGroupsBuilder;
 	}
 
+	
+	// System principal management
+	
+	/**
+	 * Adds a system principal or a list of system principals to the GroupAdminService
+	 */
+	public function addSystemPrincipal($systemPrincipal)
+	{
+	    if(is_null($systemPrincipal)) return;
+	    $this->getSystemPrincipals()->unionPrincipalList($systemPrincipal);
+	    $this->debugLogger()->write("received ".$systemPrincipal->count()." system principals.");
+	}
+	private $systemPrincipals;
+	/**
+	 * Returns the list of actual system principals owned by the GroupAdminService
+	 */
+	protected function getSystemPrincipals()
+	{
+	    //autowired
+	    if(!isset($this->systemPrincipals))
+	    {
+	        $this->systemPrincipals = PrincipalListArrayImpl::createInstance();
+	    }
+	    return $this->systemPrincipals;
+	}
+	/**
+	 * Gets the root principal
+	 */
+	protected function getRootPrincipal()
+	{
+	    $returnValue = ServiceProvider::getAuthorizationService()->findRootPrincipal($this->getSystemPrincipals());
+	    if(is_null($returnValue)) throw new AuthorizationServiceException("root principal has not been initialized by Service Provider", AuthorizationServiceException::FORBIDDEN);
+	    return $returnValue;
+	}
+	
+	
+	
+	
 	// Service implementation
 
 	public function persistGroup($principal, $group, $fieldSelectorList=null)
@@ -2397,8 +2436,8 @@ order by isParent DESC
 		if(is_null($ugr)) throw new GroupAdminServiceException('ugr can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
 
 		$autoS = $this->getAuthorizationService();
-		// CWE 09.07.2019: authorizes root principal to set user rights
-		if($autoS->isRootPrincipal($principal)) return true;
+		// CWE 09.07.2019: authorizes root principal to set user rights if different than existing
+		if($autoS->isRootPrincipal($principal)) return ($origUgr==null || $ugr->getLetter() != $origUgr->getLetter());
 
 		// else checks general authorization
 		$autoS->assertPrincipalAuthorized($principal, "GroupAdminService", "setUserRight");
@@ -2450,7 +2489,8 @@ order by isParent DESC
 			$autoS->fail($principal, "cannot downgrade own admin rights on group ".$ugr->getGroupId());
 		}
 		
-		return true;
+		// returns true if new ugr is different than existing
+		return ($origUgr==null || $ugr->getLetter() != $origUgr->getLetter());
 	}
 
 	public function removeUser($principal, $groupId, $userId)
@@ -2516,6 +2556,10 @@ order by isParent DESC
 		if(is_null($ugr)) throw new GroupAdminServiceException('ugr can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
 
 		$autoS = $this->getAuthorizationService();
+		
+		// CWE 10.07.2019: authorizes root principal to remove user rights
+		if($autoS->isRootPrincipal($principal)) return true;
+		
 		// checks general authorization
 		$autoS->assertPrincipalAuthorized($principal, "GroupAdminService", "removeUser");
 		// check rights
@@ -3829,6 +3873,139 @@ where $select_Groups_whereClause ";
 		}
 		return $groupP;
 	}
+	
+	
+	// Temporary User Rights management
+	
+	private $tempUserRights;
+	
+	/**
+	 * Gets a temporary Write right on the given group for current principal
+	 * @param Principal $principal current principal
+	 * @param Int $groupId group Id for which to set a temporary write right
+	 * @param Principal $rootP root principal or principal with higher admin rights as guarantor
+	 * @throws GroupAdminServiceException in case of error
+	 * @return TempWriteRight temporary created write right instance or null if not needed 
+	 */
+	public function getTempWriteRight($principal, $groupId, $rootP)
+	{
+	    $returnValue = null;
+	    $this->executionSink()->publishStartOperation("getTempWriteRight", $principal);
+	    try
+	    {
+	        // 1. checks that group exists
+	        $groupP = $this->getGroup($principal, $groupId);
+	        if(!isset($groupP)) throw new GroupAdminServiceException('group '.$groupId.' does not exist in database', GroupAdminServiceException::NOT_FOUND);
+	        // 2. checks that principal is authorized to ask for write rights
+	        $returnValue = $this->assertPrincipalAuthorizedForGetTempRight($principal, $groupP, 'w');
+	        // 3. upgrades UGR if needed
+	        if(isset($returnValue)) {
+	            if(!($rootP instanceof Principal)) throw new GroupAdminServiceException('root principal or principal with higher admin rights is required to get a temporary right on group '.$groupId, GroupAdminServiceException::INVALID_ARGUMENT);
+	            $oldUgr = ServiceProvider::getWigiiBPL()->getUGR($principal, $returnValue->getGroupId(), $returnValue->getUserId());
+	            if($this->setUserRight($rootP, $returnValue) > 0) {
+	                $returnValue->setSys_creationDate(time());
+	                // 4. caches temporary created right
+	                if(!isset($this->tempUserRights)) $this->tempUserRights = array();
+	                $this->tempUserRights[$returnValue->getGroupId().'_'.$returnValue->getUserId()] = (object)array('ugr'=>$returnValue, 'oldUgr'=>$oldUgr);
+	            }
+	            else $returnValue = null;
+	        }
+	    }
+	    catch (GroupAdminServiceException $gaE){
+	        $this->executionSink()->publishEndOperationOnError("getTempWriteRight", $gaE, $principal);
+	        throw $gaE;
+	    }
+	    catch (AuthorizationServiceException $asE){
+	        $this->executionSink()->publishEndOperationOnError("getTempWriteRight", $asE, $principal);
+	        throw $asE;
+	    }
+	    catch(Exception $e)
+	    {
+	        $this->executionSink()->publishEndOperationOnError("getTempWriteRight", $e, $principal);
+	        throw new GroupAdminServiceException('',GroupAdminServiceException::WRAPPING, $e);
+	    }
+	    $this->executionSink()->publishEndOperation("getTempWriteRight", $principal);
+	    return $returnValue;
+	}
+	/**
+	 * Revokes a temporary right which had been previously set
+	 * @param Principal $principal current principal
+	 * @param TempWriteRight $tempRight previously created temporary rights
+	 * @throws GroupAdminServiceException in case of error
+	 * @return boolean true if temp right has been removed. False if nothing needed to be done or if temp right didn't exist anymore.
+	 */
+	public function revokeTempRight($principal, $tempRight)
+	{
+	    $returnValue = false;
+	    $this->executionSink()->publishStartOperation("revokeTempRight", $principal);
+	    try
+	    {
+	        // 1. checks that given tempRight exists in list of created temporary rights
+	        if(!empty($this->tempUserRights) && isset($tempRight) 
+	            && $this->tempUserRights[$tempRight->getGroupId().'_'.$tempRight->getUserId()]->ugr===$tempRight) {
+	            // 2. restores old ugr to database using root principal
+	            $oldUgr = $this->tempUserRights[$tempRight->getGroupId().'_'.$tempRight->getUserId()]->oldUgr;
+	            if(isset($oldUgr)) $returnValue = ($this->setUserRight($this->getRootPrincipal(), $oldUgr) > 0);
+	            else $returnValue = ($this->removeUser($this->getRootPrincipal(), $tempRight->getGroupId(), $tempRight->getUserId()) > 0);
+	            // 3. removes UGR from cache
+	            unset($this->tempUserRights[$tempRight->getGroupId().'_'.$tempRight->getUserId()]);
+	        }
+	    }
+	    catch (GroupAdminServiceException $gaE){
+	        $this->executionSink()->publishEndOperationOnError("revokeTempRight", $gaE, $principal);
+	        throw $gaE;
+	    }
+	    catch (AuthorizationServiceException $asE){
+	        $this->executionSink()->publishEndOperationOnError("revokeTempRight", $asE, $principal);
+	        throw $asE;
+	    }
+	    catch(Exception $e)
+	    {
+	        $this->executionSink()->publishEndOperationOnError("revokeTempRight", $e, $principal);
+	        throw new GroupAdminServiceException('',GroupAdminServiceException::WRAPPING, $e);
+	    }
+	    $this->executionSink()->publishEndOperation("revokeTempRight", $principal);
+	    return $returnValue;
+	}
+	
+	/**
+	 * Asserts that principal is authorized to get a temporary right.
+	 * @param Principal $principal current principal
+	 * @param GroupP $groupP groupP for current principal for which to get extra rights
+	 * @param String $right a group right as a letter. One of x,w,s,r
+	 * @throws GroupAdminServiceException
+	 * @return TempWriteRight UGR request ready to be stored or null if principal already has required rights
+	 */
+	protected function assertPrincipalAuthorizedForGetTempRight($principal, $groupP, $right)
+	{
+	    if(is_null($principal)) throw new GroupAdminServiceException('principal can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
+	    if(is_null($groupP)) throw new GroupAdminServiceException('groupP can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
+	    switch($right) {
+	        case 'w':
+	            break;
+	        case 'x':
+	        case 's':
+	        case 'r':
+	            throw new GroupAdminServiceException('temporary rights of type x,s or r are not supported for know', GroupAdminServiceException::UNSUPPORTED_OPERATION);
+	        default: throw new GroupAdminServiceException('right should be one of x,w,s,r');	        
+	    }
+	    
+	    $autoS = $this->getAuthorizationService();
+	    // checks general authorization
+	    $autoS->assertPrincipalAuthorized($principal, "GroupAdminService", "getTempRight");
+	    
+	    // checks original rights
+	    $pRight = $groupP->getRights();
+	    if(is_null($pRight)) $autoS->fail($principal, "cannot read group ".$groupP->getId());
+	    
+	    // creates UGR request if requested right is higher than current right
+	    $returnValue = null;
+	    if($right > $pRight->getLetter()) $returnValue = TempWriteRight::createInstance($principal, $groupP->getId());
+	    
+	    return $returnValue;	    
+	}
+	
+	
 }
 
 // SQL builders

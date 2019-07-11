@@ -21,7 +21,8 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/* A wigii User Group Right
+/**
+ * A wigii User Group Right
  * Created by CWE on 31 mai 09
  */
 class UGR extends DbEntityInstance

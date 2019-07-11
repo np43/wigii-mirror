@@ -501,6 +501,8 @@ class ServiceProvider
 		if(!isset($this->groupAdminService))
 		{
 			$this->groupAdminService = $this->createGroupAdminServiceInstance();
+			// adds system principals
+			$this->groupAdminService->addSystemPrincipal($this->getSystemPrincipals());
 		}
 		return $this->groupAdminService;
 	}

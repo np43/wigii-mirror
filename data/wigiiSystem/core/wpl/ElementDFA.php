@@ -623,18 +623,21 @@ class ElementDFA implements DataFlowActivity, RootPrincipalDFA
 			
 			//gets all group containing element
 			$groupList = GroupListAdvancedImpl::createInstance(false);
+			$elS->getAllGroupsContainingElement($principal, $element, $groupList);
+			
+			//remove any limitedWriteGroup
+			if($element->getSys_creationUser() == $principal->getRealUserId()) $groupList = $groupList->getSGroups();
+			//remove any unreadable group
+			else $groupList = $groupList->getWriteGroups();
+			// checks that principal has rights to delete element
+			if($groupList->isEmpty()) $this->getAuthorizationService()->fail($principal, "has no rights to delete element ".$element->getId());
+			
 			// CWE 27.06.2019 if deleteAllSharings then removes sharing from all groups containing element, even non-accessible groups
 			if($this->deleteAllSharings) {
+			    $groupList->reset(false);
 			    $elS->getAllGroupsContainingElement($this->getRootPrincipal(), $element, $groupList);
 			}
-			else {
-    			$elS->getAllGroupsContainingElement($principal, $element, $groupList);
-    			
-    			//remove any limitedWriteGroup
-    			if($element->getSys_creationUser() == $principal->getRealUserId()) $groupList = $groupList->getSGroups();
-    			//remove any unreadable group
-    			else $groupList = $groupList->getWriteGroups();
-			}
+			
 			//remove autoSharing
 			$gids = ValueListArrayMapper::createInstance(true, ValueListArrayMapper::Natural_Separators, true);
 			$element->getLinkedIdGroupInRecord($principal, $gids);

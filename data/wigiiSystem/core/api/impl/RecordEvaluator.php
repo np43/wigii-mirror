@@ -1246,6 +1246,40 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 
 	/**
+	 * Tries to get a temporary write right on the given group before executing the sequence of FuncExp.
+	 * This FuncExp is useful when a sequence of instructions should be executed on a group requiring write access, but current principal only has read access.
+	 * The principal has his rights temporarily upgraded to Write access, the time of execution. 
+	 * Internally root principal is required to guaranty access rights upgrade.
+	 * FuncExp signature : <code>ctlSeqWrite(groupId, f1, f2, f3, ...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) groupId: int. Group for which gain write access
+	 * - Arg(1..n) fI: list of func exp to be executed in sequence.
+	 * @throws AuthorizationServiceException if upgrade is not possible 
+	 * @return mixed the return value of last instruction 
+	 */
+	public function ctlSeqWrite($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('ctlSeqWrite takes at least one argument which is the group id', FuncExpEvalException::INVALID_ARGUMENT);
+	    $returnValue = null;
+	    if($nArgs>1) {
+	        $groupId = $this->evaluateArg($args[0]);
+	        $gAS = ServiceProvider::getGroupAdminService();
+	        $tempWrite = $gAS->getTempWriteRight($this->getPrincipal(), $groupId, $this->getRootPrincipalIfAvailable());
+	        try {
+	            for($i=1;$i<$nArgs;$i++) {
+	                $returnValue = $this->evaluateArg($args[$i]);
+	            }
+	            if(isset($tempWrite)) $gAS->revokeTempRight($this->getPrincipal(), $tempWrite);
+	        }
+	        catch(Exception $e) {
+	            if(isset($tempWrite)) $gAS->revokeTempRight($this->getPrincipal(), $tempWrite);
+	            throw $e;
+	        }
+	    }
+	    return $returnValue;
+	}
+	
+	/**
 	 * Instructs the RecordEvaluator to ignore the last return value and do not update the underlying field value.
 	 * FuncExp signature : <code>ctlIgnoreReturnValue(f1, f2, ...)</code><br/>
 	 * Where arguments are :
@@ -1728,6 +1762,28 @@ class RecordEvaluator implements FuncExpEvaluator
 	        if($returnAttribute == 'group') return $returnValue;
 	        else return $returnValue->getAttribute($returnAttribute);
 	    }
+	}
+	
+	/**
+	 * Returns default group accessible in given module (at least read rights are guaranteed)
+	 * FuncExp signature : <code>cfgDefaultGroup(module, namespace=null)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) module: String|Module. Module name for which to get the default accessible group.
+	 * - Arg(1) namespace: String|WigiiNamespace. 
+	 * @return Int id of default accessible group or null if module is not accessible all
+	 */
+	public function cfgDefaultGroup($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('cfgDefaultGroup takes at least one argument which is the module for which to get the default group', FuncExpEvalException::INVALID_ARGUMENT);
+	    $module = $this->evaluateArg($args[0]);
+	    $options = null;
+	    if($nArgs>1) {
+	        $options = wigiiBPLParam();
+	        $options->setValue('namespace', $this->evaluateArg($args[1]));
+	    }
+	    $returnValue = ServiceProvider::getWigiiBPL()->getDefaultGroupForModule($this->getPrincipal(), $module, $options);
+	    if(isset($returnValue)) $returnValue = $returnValue->getId();
+	    return $returnValue;
 	}
 	
 	/**
@@ -2752,6 +2808,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * 3. renders the Form or Detail for the new fields
 	 */
 	public function renderFormMatrix($args) {
+	    $this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<4) throw new FuncExpEvalException('renderFormMatrix takes at least four arguments which are the fromRow index, toRow index, an optional FuncExp to fetch the field values and at least one column name', FuncExpEvalException::INVALID_ARGUMENT);
 		$fromRow = $this->evaluateArg($args[0]);
@@ -2835,6 +2892,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * - Arg(5) matrixElt: Element. The Element containing the matrix to be filled.
 	 */
 	public function fillMatrixFromElements($args) {
+	    $this->assertFxOriginIsNotPublic();
 		$this->debugLogger()->logBeginOperation('fillMatrixFromElements');
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<6) throw new FuncExpEvalException('fillMatrixFromElements takes at least six arguments which are elementList,fromFields,fromRow,toRow,toColumns,matrixElt', FuncExpEvalException::INVALID_ARGUMENT);
@@ -2899,7 +2957,8 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * 1. dynamically modifies Element FieldList to integrate new Fields to match the number of rows in matrix, 
 	 * 2. calls FormChecker on each new fields, adds any error to field or fills underlying Wigii bag with the correct posted value
 	 */
-	public function resolveFormMatrix($args) {	
+	public function resolveFormMatrix($args) {
+	    $this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<3) throw new FuncExpEvalException('resolveFormMatrix takes at least three arguments which are the fromRow index, toRow index and at least one column name', FuncExpEvalException::INVALID_ARGUMENT);
 		$fromRow = $this->evaluateArg($args[0]);
@@ -2967,6 +3026,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * - Arg(2...) colI: string. The name of the matrix columns to be cleared.
 	 */
 	public function clearFormMatrix($args) {
+	    $this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<3) throw new FuncExpEvalException('clearFormMatrix takes at least three arguments which are the fromRow index, toRow index and at least one column name', FuncExpEvalException::INVALID_ARGUMENT);
 		$fromRow = $this->evaluateArg($args[0]);
@@ -3000,6 +3060,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * - Arg(2...) colI: string. The name of the matrix columns to be created.
 	 */
 	public function createFormMatrix($args) {
+	    $this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<3) throw new FuncExpEvalException('createFormMatrix takes at least three arguments which are the fromRow index, toRow index and at least one column name', FuncExpEvalException::INVALID_ARGUMENT);
 		$fromRow = $this->evaluateArg($args[0]);
@@ -3063,16 +3124,20 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * - Arg(4) options: WigiiBPLParameter. A optional bag of options to configure the save element process. The following options are supported:
 	 * 	persistModeExp: FuncExp. A FuncExp which is evaluated against the matching element and determines which persistence action should be done on it.
 	 * 					It should return one of the constants ElementDFA::MODE_PERSIST (1), ElementDFA::MODE_DELETE (2) or ElementDFA::MODE_FILTER (4)
+	 *  useTempWrite: Boolean. If true, then tries to get a temporary write right on the destination. Else uses current principal rights. Default to false.
 	 * @return ElementP the updated or new inserted element.
 	 */
-	public function saveElementFieldsTo($args) {		
+	public function saveElementFieldsTo($args) {
+	    $this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<4) throw new FuncExpEvalException('saveElementFieldsTo takes at least four arguments which are the fromFields array of field names, element log exp or id to select target element, target group log exp or id and toFields mapping array', FuncExpEvalException::INVALID_ARGUMENT);
 		$principal=$this->getPrincipal();
+		$rootP = $this->getRootPrincipalIfAvailable();
 		$fe = $this->getFormExecutor();		
 		if(!isset($fe)) throw new FuncExpEvalException('saveElementFieldsTo can only be called in the scope of a Form lifecycle, make sure to call it in funcExp attributes of a configuration file', FuncExpEvalException::INVALID_STATE);
 		$configS = $fe->getWigiiExecutor()->getConfigurationContext();
 		$exec = ServiceProvider::getExecutionService();
+		$gAS = ServiceProvider::getGroupAdminService();
 		
 		$fromFields = $this->evaluateArg($args[0]);
 		if(!($fromFields instanceof FieldSelectorList)) {
@@ -3096,10 +3161,15 @@ class RecordEvaluator implements FuncExpEvaluator
 		else {
 			$groupId = $groupLogExp;
 			$groupLogExp = lxEq(fs('id'),$groupId);
-		}
-		$toFields = $this->evaluateArg($args[3]);
+		}		
+		$toFields = $this->evaluateArg($args[3]);		
 		if($nArgs>4) $options = $this->evaluateArg($args[4]);
 		else $options = wigiiBPLParam();
+		
+		// if useTempWrite, then tries to add a temporary write right for the principal before saving the elements
+		$tempWrite=null;
+		if($options->getValue('useTempWrite')) $tempWrite = $gAS->getTempWriteRight($principal, $groupId, $rootP);
+		if(isset($tempWrite)) $this->debugLogger()->write('got temp '.$tempWrite->getLetter().' on '.$tempWrite->getGroupId());
 		
 		$returnValue = null;
 		$crtNamespace = null; $hasAdaptiveWigiiNamespace = null;
@@ -3174,7 +3244,15 @@ class RecordEvaluator implements FuncExpEvaluator
 					// if a persistModeExp is given into the options, then evaluates it to determine what should be done with the element
 					$persistModeExp = $options->getValue('persistModeExp');
 					if(isset($persistModeExp)) {
-						return ServiceProvider::getWigiiBPL()->evaluateFuncExp($dataFlowContext->getPrincipal(), $persistModeExp, $elementP->getDbEntity());
+					    // Retrieves principal used to evaluate persistModeExp. 
+					    // Should always be current principal and not root principal to avoid unwanted code injection.
+					    $p = $dataFlowContext->getAttribute('persistModeExpP');
+					    if(!isset($p)) {
+					        $p = $this->getPrincipal();
+					        $p->bindToWigiiNamespace($dataFlowContext->getPrincipal()->getWigiiNamespace());
+					        $dataFlowContext->setAttribute('persistModeExpP',$p);
+					    }
+					    return ServiceProvider::getWigiiBPL()->evaluateFuncExp($p, $persistModeExp, $elementP->getDbEntity());
 					}
 					// else always persists the element
 					else return ElementDFA::MODE_PERSIST;
@@ -3196,14 +3274,16 @@ class RecordEvaluator implements FuncExpEvaluator
 				})
 			),true/*,$fe->getWigiiExecutor()->throwEvent() notifications not enabled for now.*/);
 			
+			if(isset($tempWrite)) $gAS->revokeTempRight($principal, $tempWrite);
 			if(isset($crtNamespace)) {
-				$principal->bindToWigiiNamespace($crtNamespace);
+				$principal->bindToWigiiNamespace($crtNamespace);				
 				if(!$hasAdaptiveWigiiNamespace) $principal->setAdaptiveWigiiNamespace(false);
 			}
 		}
 		catch(Exception $e) {
+		    if(isset($tempWrite)) $gAS->revokeTempRight($principal, $tempWrite);
 			if(isset($crtNamespace)) {
-				$principal->bindToWigiiNamespace($crtNamespace);
+				$principal->bindToWigiiNamespace($crtNamespace);				
 				if(!$hasAdaptiveWigiiNamespace) $principal->setAdaptiveWigiiNamespace(false);
 			}
 			throw $e;
@@ -3227,12 +3307,16 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * - Arg(5) groupLogExp|groupId: LogExp|int. The destination group selector. Can be an group ID or a group log exp.
 	 * - Arg(6) options: WigiiBPLParameter. A optional bag of options to configure the save element process. The following options are supported:
 	 * 	persistModeExp: FuncExp. A FuncExp which is evaluated against the matching destination element and determines which persistence action should be done on it.
-	 * 					It should return one of the constants ElementDFA::MODE_PERSIST (1), ElementDFA::MODE_DELETE (2) or ElementDFA::MODE_FILTER (4)	 
+	 * 					It should return one of the constants ElementDFA::MODE_PERSIST (1), ElementDFA::MODE_DELETE (2) or ElementDFA::MODE_FILTER (4)
+	 *  useTempWrite: Boolean. If true, then tries to get a temporary write right on the destination. Else uses current principal rights. Default to false.	 
 	 * @return ElementPList an ElementPList containing the updated or new inserted elements.
 	 */
 	public function saveMatrixTo($args) {
+	    $this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs<6) throw new FuncExpEvalException('saveMatrixTo takes at least six arguments which are the fromRow index, toRow index, columns array, toFields mapping array, keyColumn and target group log exp or id', FuncExpEvalException::INVALID_ARGUMENT);
+		$principal=$this->getPrincipal();
+		$rootP = $this->getRootPrincipalIfAvailable();
 		$fromRow = $this->evaluateArg($args[0]);
 		$toRow = $this->evaluateArg($args[1]);
 		$columns = $this->evaluateArg($args[2]);
@@ -3243,41 +3327,57 @@ class RecordEvaluator implements FuncExpEvaluator
 		if($nArgs>6) $options = $this->evaluateArg($args[6]);
 		else $options = null;
 		
+		// if useTempWrite, then tries to add a temporary write right for the principal before saving the elements
+		$tempWrite=null; $gAS = ServiceProvider::getGroupAdminService();
+		if(isset($options) && $options->getValue('useTempWrite')) {
+		    if($groupLogExp instanceof LogExp) $groupId = sel($principal,groupList($groupLogExp),dfasl(dfas("NullDFA")));
+		    else $groupId = $groupLogExp;
+		    if(isset($groupId)) $tempWrite = $gAS->getTempWriteRight($principal, $groupId, $rootP);
+		}
+		if(isset($tempWrite)) $this->debugLogger()->write('got temp '.$tempWrite->getLetter().' on '.$tempWrite->getGroupId());
+		
 		// calls saveElementFieldsTo on each matrix row
 		$rec = $this->getRecord();
 		$fieldList = $rec->getFieldList();
 		$fx = fx('saveElementFieldsTo');
 		$keyColumnIndex = null;
 		$returnValue = ElementPListArrayImpl::createInstance();
-		for($i=$fromRow;$i<=$toRow;$i++) {
-			$row = array();			
-			for($j=0;$j<$nCols;$j++) {
-				// looks for key column index to build element selector
-				if(!isset($keyColumnIndex) && isset($keyColumn) && ($columns[$j]==$keyColumn)) $keyColumnIndex=$j;
-				// checks if column name is a matrix field or a standard element field
-				$fieldName = $columns[$j].$i;
-				if(!$fieldList->doesFieldExist($fieldName)) $fieldName = $columns[$j];
-				if(!$fieldList->doesFieldExist($fieldName)) throw new FuncExpEvalException("field $fieldName is not a valid field in matrix columns or element",FuncExpEvalException::INVALID_ARGUMENT);
-				$row[] = $fieldName;
-			}
-			$elementLogExp=null;
-			if(isset($keyColumnIndex)) {
-				$elementLogExp=$rec->getFieldValue($row[$keyColumnIndex]);				
-				if(!empty($elementLogExp)) {
-					$fsKey = $toFields[$keyColumnIndex];
-					if(!($fsKey instanceof FieldSelector)) $fsKey = fs($fsKey);
-					$elementLogExp = lxEq($fsKey,$elementLogExp);
-				}
-				else $elementLogExp=null;
-			}
-			$fx->setArguments(array($row,
-				$elementLogExp,
-				$groupLogExp,
-				$toFields,
-				$options
-			));
-			$elementP = $this->evaluateFuncExp($fx,$this);
-			if(isset($elementP)) $returnValue->addElementP($elementP);
+		try {
+    		for($i=$fromRow;$i<=$toRow;$i++) {
+    			$row = array();			
+    			for($j=0;$j<$nCols;$j++) {
+    				// looks for key column index to build element selector
+    				if(!isset($keyColumnIndex) && isset($keyColumn) && ($columns[$j]==$keyColumn)) $keyColumnIndex=$j;
+    				// checks if column name is a matrix field or a standard element field
+    				$fieldName = $columns[$j].$i;
+    				if(!$fieldList->doesFieldExist($fieldName)) $fieldName = $columns[$j];
+    				if(!$fieldList->doesFieldExist($fieldName)) throw new FuncExpEvalException("field $fieldName is not a valid field in matrix columns or element",FuncExpEvalException::INVALID_ARGUMENT);
+    				$row[] = $fieldName;
+    			}
+    			$elementLogExp=null;
+    			if(isset($keyColumnIndex)) {
+    				$elementLogExp=$rec->getFieldValue($row[$keyColumnIndex]);				
+    				if(!empty($elementLogExp)) {
+    					$fsKey = $toFields[$keyColumnIndex];
+    					if(!($fsKey instanceof FieldSelector)) $fsKey = fs($fsKey);
+    					$elementLogExp = lxEq($fsKey,$elementLogExp);
+    				}
+    				else $elementLogExp=null;
+    			}
+    			$fx->setArguments(array($row,
+    				$elementLogExp,
+    				$groupLogExp,
+    				$toFields,
+    				$options
+    			));
+    			$elementP = $this->evaluateFuncExp($fx,$this);
+    			if(isset($elementP)) $returnValue->addElementP($elementP);
+    		}
+    		if(isset($tempWrite)) $gAS->revokeTempRight($principal, $tempWrite);
+		}
+		catch(Exception $e) {
+		    if(isset($tempWrite)) $gAS->revokeTempRight($principal, $tempWrite);
+		    throw $e;
 		}
 		return $returnValue;
 	}
@@ -3547,6 +3647,7 @@ class RecordEvaluator implements FuncExpEvaluator
 	 * Should be a subclass of StringBufferExecutionSink. Defaults to StringBufferExecutionSink.
 	 */
 	public function sysLogExec($args) {
+	    $this->assertFxOriginIsNotPublic();
 		$nArgs = $this->getNumberOfArgs($args);
 		if($nArgs > 0) {
 			// gets fx

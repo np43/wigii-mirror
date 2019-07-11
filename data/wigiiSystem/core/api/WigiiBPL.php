@@ -2924,6 +2924,51 @@ class WigiiBPL
 	    return $returnValue;
 	}
 	
+	/**
+	 * Returns group accessible by default by the principal in the given module
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param Module|String $module module for which to get the default accessible group
+	 * @param WigiiBPLParameter $options optional bag of parameters to configure the default group calculation. It supports:
+	 * - namespace: WigiiNamespace|String. WigiiNamespace if different from current namespace
+	 * @return GroupP GroupP or null if principal cannot access given module
+	 */
+	public function getDefaultGroupForModule($principal, $module, $options=null) {
+	    $this->debugLogger()->logBeginOperation('getDefaultGroupForModule');
+	    if(!isset($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	    if(!isset($module)) throw new WigiiBPLException('module cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	    if(!($module instanceof Module)) $module = ServiceProvider::getModuleAdminService()->getModule($principal, $module);
+	    $wigiiNamespace = null;
+	    if(isset($options)) {
+	        $wigiiNamespace = $options->getValue('namespace');
+	        if(isset($wigiiNamespace) && !($wigiiNamespace instanceof WigiiNamespace)) {
+	            $wigiiNamespace = ServiceProvider::getWigiiNamespaceAdminService()->getWigiiNamespace($principal, $wigiiNamespace);
+	        }
+	    }
+	    
+	    $returnValue=null;
+	    // if group belongs to another namespace, tries to bind principal to new namespace
+	    if(isset($wigiiNamespace) && $wigiiNamespace->getWigiiNamespaceName() != $principal->getWigiiNamespace()->getWigiiNamespaceName()) {
+	        $origNS = $principal->getWigiiNamespace();
+	        $principal->bindToWigiiNamespace($wigiiNamespace);
+	    }
+	    else $origNS = null;
+	    // gets accessible group list
+	    $returnValue = $this->getWigiiExecutor()->getConfigurationContext()->getGroupPList($principal,$module);	    
+	    // gets first accessible group
+	    if(isset($returnValue)) $returnValue = $returnValue->getFirst();
+	    // if no accessible group found, tries to fetch again database to ensure query on fresh data
+	    if(!isset($returnValue) || is_null($returnValue->getRights())) {
+	        $returnValue = GroupListAdvancedImpl::createInstance(false);
+	        $groupAS = $this->getGroupAdminService();
+	        $groupAS->getAllGroups($principal, $module, $returnValue,lf($groupAS->getFieldSelectorListForGroupWithoutDetail()));
+	        $returnValue = $returnValue->getReadGroups()->getFirst();
+	    }
+
+	    if(isset($origNS)) $principal->bindToWigiiNamespace($origNS);
+	    $this->debugLogger()->logEndOperation('getDefaultGroupForModule');
+	    return $returnValue;
+	}
+	
 	private $getUGRCache=null;
 	/**
 	 * Returns any existing explicit User Group Right object between the given user id and group id.

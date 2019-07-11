@@ -48,14 +48,17 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 	private $rootGroupsPerModuleWithoutTrash;
 	private $groupForConfigCache;
 
+	// Object lifecycle
+	
 	public function __construct(){
 		$this->debugLogger()->write("creating instance");
 	}	
 	public function serialize() {
-		return serialize(array("groupPListPerModule" => $this->groupPListPerModule,
-			"includeChildrenGroupsPerModule" => $this->includeChildrenGroupsPerModule,
-			"rootGroupsPerModule" => $this->rootGroupsPerModule,
-			"groupForConfigCache" => $this->groupForConfigCache));
+	    $arr = array("groupPListPerModule" => $this->groupPListPerModule,
+	        "includeChildrenGroupsPerModule" => $this->includeChildrenGroupsPerModule,
+	        "rootGroupsPerModule" => $this->rootGroupsPerModule,
+	        "groupForConfigCache" => $this->groupForConfigCache);
+		return serialize($arr);
 	}
 	public function unserialize($serialized) {
 		$arr = unserialize($serialized);
@@ -68,21 +71,22 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		$returnValue = new self();
 		return $returnValue;
 	}
-
+	
+	// dependency injection
+	
 	private function debugLogger() {
-		if(!isset($this->_debugLogger)) {
-			$this->_debugLogger = DebugLogger::getInstance("ConfigurationContextImpl");
-		}
-		return $this->_debugLogger;
+	    if(!isset($this->_debugLogger)) {
+	        $this->_debugLogger = DebugLogger::getInstance("ConfigurationContextImpl");
+	    }
+	    return $this->_debugLogger;
 	}
 	private function executionSink() {
-		if(!isset($this->_executionSink)) {
-			$this->_executionSink = ExecutionSink::getInstance("ConfigurationContextImpl");
-		}
-		return $this->_executionSink;
+	    if(!isset($this->_executionSink)) {
+	        $this->_executionSink = ExecutionSink::getInstance("ConfigurationContextImpl");
+	    }
+	    return $this->_executionSink;
 	}
-
-	// dependency injection
+	
 	public function setConfigService($configService) {
 		$this->configS = $configService;
 	}
@@ -116,7 +120,8 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 	}
 
 
-	//Context
+	// Context
+	
 	protected function getContextKey($principal, $module){
 		return "(".($principal->getWigiiNamespace()!=null?$principal->getWigiiNamespace()->getWigiiNamespaceName():"")."(".$principal->getUserId()."(".($module!=null?$module->getModuleName():"").")))";
 	}
@@ -129,30 +134,17 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		$this->includeChildrenGroupsPerModule[$key] = $includeChildrenGroups;
 	}
 
-//	/**
-//	 * RootGroupInModuleWithoutTrash is available only
-//	 */
-//	public function getRootGroupsInModuleWithoutTrash($p, $module){
-//		if(!isset($this->rootGroupsPerModuleWithoutTrash)) return null;
-//		return $this->rootGroupsPerModuleWithoutTrash[$this->getContextKey($p, $module)];
-//	}
-//	protected function setRootGroupsInModuleWithoutTrash($rootGroupsWithoutTrash, $p, $module){
-//		if(!isset($this->rootGroupsPerModuleWithoutTrash)) $this->rootGroupsPerModuleWithoutTrash = array();
-//		$this->rootGroupsPerModuleWithoutTrash[$this->getContextKey($p, $module)] = $rootGroupsWithoutTrash;
-//	}
-	public function getRootGroupsInModule($p, $module){
-		if(!isset($this->rootGroupsPerModule)) return null;
-		return $this->rootGroupsPerModule[$this->getContextKey($p, $module)];
-	}
-	protected function setRootGroupsInModule($rootGroups, $p, $module){
-		if(!isset($this->rootGroupsPerModule)) $this->rootGroupsPerModule = array();
-		$this->rootGroupsPerModule[$this->getContextKey($p, $module)] = $rootGroups;
-	}
-	//
+	/**
+	 * Gets configuration GroupPList for principal and given module
+	 * @param Principal $principal current principal
+	 * @param Module $module module
+	 * @param Int $desiredGroupId id of the group to select if possible, else fallsback with first possible readable group 
+	 * @param Boolean $includeChildrenGroups if true indicates that element selection includes children groups and therefore GroupPList should be the root groups.
+	 * @return GroupPListArrayImpl the actual active list of groups
+	 */
 	public function getGroupPList($principal, $module, $desiredGroupId=null, $includeChildrenGroups=null){
 		if(!isset($this->groupPListPerModule)) $this->groupPListPerModule = array();
 		if(!isset($this->includeChildrenGroupsPerModule)) $this->includeChildrenGroupsPerModule = array();
-
 		$authS = $this->getAuthorizationService();
 		$key = $this->getContextKey($principal, $module);
 		//if principal has no access to module, then no fetch to all groups.
@@ -168,10 +160,9 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 			$lf = ListFilter::createInstance();
 			$lf->setFieldSelectorList($groupAS->getFieldSelectorListForGroupWithoutDetail());
 			$groupAS->getAllGroups($principal, $module, $groupLA, $lf);
-			if($includeChildrenGroups === null) $includeChildrenGroups = false; //normaly always display subfolders list (whithout the element list) except if a filter is set. DEPRECATED $this->getConfigService()->getParameter($principal, $module, "Group_IncludeChildrenGroupsOnSelect") == "1";
+			if($includeChildrenGroups === null) $includeChildrenGroups = false;
 			$selectAllGroupsOnFirstLoad = (string)$this->getConfigService()->getParameter($principal, $module, "Group_selectAllGroupsOnFirstLoad") === "1";
 			if($groupLA != null && !$groupLA->isEmpty()){
-//				fput($groupLAIterator);
 				$this->setRootGroupsInModule($groupLA->getRootGroups(), $principal, $module);
 				//treat the case when a folder is defined in parameters
 				$readGroups = $groupLA->getReadGroups()->getListIterator();
@@ -194,24 +185,12 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 					if($this->groupPListPerModule[$key]){
 						reset($this->groupPListPerModule[$key]);
 						$groupId = key($this->groupPListPerModule[$key]);
-//						fput($groupId);
 					} else $groupId = null;
-//					fput($this->groupPListPerModule[$key]);
-//					fput($groupId);
-//					fput($groupLAIterator);
 					if($groupId && $readGroups[$groupId]){
-//						fput($groupId);
 						$this->groupPListPerModule[$key] = GroupPListArrayImpl::createInstance()->addGroupP($readGroups[$groupId]);
 					} else {
 						//take the first readable group
 						$this->groupPListPerModule[$key] = GroupPListArrayImpl::createInstance()->addGroupP(reset($readGroups));
-//						//select root groups, or first readable group
-//						if($groupLA->isAllRootGroupsReadable()){
-//							$this->groupPListPerModule[$key] = $groupLA->getRootGroups();
-//						} else {
-//							//take the first readable group
-//							$this->groupPListPerModule[$key] = GroupPListArrayImpl::createInstance()->addGroupP(reset($readGroups));
-//						}
 					}
 				}
 			} else {
@@ -221,17 +200,24 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		}
 		return $this->groupPListPerModule[$key];
 	}
+	
 	public function doesGroupListIncludeChildren($principal, $module){
 		if(!isset($this->includeChildrenGroupsPerModule)) return null;
 		return $this->includeChildrenGroupsPerModule[$this->getContextKey($principal, $module)];
 	}
 
-	/**
-	 * given a groupP finds the closest group (in the hierarchy) with a configuration file. If no group with config is find root group is returned;
-	 */
-	protected function getGroupForConfig($principal, $crtGroupP){
-		return $this->doGetGroupForConfig($principal, $crtGroupP, true);
+	public function getRootGroupsInModule($p, $module){
+	    if(!isset($this->rootGroupsPerModule)) return null;
+	    return $this->rootGroupsPerModule[$this->getContextKey($p, $module)];
 	}
+	protected function setRootGroupsInModule($rootGroups, $p, $module){
+	    if(!isset($this->rootGroupsPerModule)) $this->rootGroupsPerModule = array();
+	    $this->rootGroupsPerModule[$this->getContextKey($p, $module)] = $rootGroups;
+	}
+		
+	
+	// Config group cache
+	
 	/**
 	 * Given a group finds the closest group (in the hierarchy) having a configuration file. 
 	 * If no group with config is found then returns null.
@@ -241,6 +227,12 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 	 */
 	public function isConfigGroupAvailableForGroup($principal, $crtGroupP){
 		return $this->doGetGroupForConfig($principal, $crtGroupP, false);
+	}
+	/**
+	 * given a groupP finds the closest group (in the hierarchy) with a configuration file. If no group with config is find root group is returned;
+	 */
+	protected function getGroupForConfig($principal, $crtGroupP){
+	    return $this->doGetGroupForConfig($principal, $crtGroupP, true);
 	}
 	protected function doGetGroupForConfig($principal, $crtGroupP, $returnRootGroupIfNull){
 		if(!isset($this->groupForConfigCache)){
@@ -310,10 +302,10 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		return $crtGroupId;
 	}
 
+	
 	// ConfigService Interface
 
 	public function getParameter($principal, $module, $name){
-//		eput($this->groupPListPerModule);
 		$dynConf = $this->allowGroupDynamicConfig($principal, $module);
 		if(	$dynConf &&
 			isset($this->groupPListPerModule) &&
@@ -408,7 +400,9 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		}
 	}
 
+	
 	//Config Service as is
+	
 	public function dt($datatypeName){
 		return $this->getConfigService()->dt($datatypeName);
 	}
@@ -436,7 +430,6 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 	public function getModuleConfigFilename($principal, $module, $wigiiNamespace){
 		return $this->getConfigService()->getModuleConfigFilename($principal, $module, $wigiiNamespace);
 	}
-
 
 	public function getGroupParameter($principal, $group, $name){
 		return $this->getConfigService()->getGroupParameter($principal, $this->getGroupForConfig($principal, $group), $name);
