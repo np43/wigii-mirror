@@ -1552,11 +1552,14 @@ MDTINVOICERESPSTATUS;
 				$articleNumber = $this->assertNotNull($catalogOrder, 'articleNumber');
 				$tariffNumber = $catalogOrder->getFieldValue('tariffNumber');
 				if(empty($tariffNumber)) $tariffNumber = $articleNumber;
+				//check if tariffType and tariffNumber are in the designation
+				//if yes remove it from designation and take value
 				list($designation,$tariffType) = explode($tariffNumber,$this->assertNotNull($catalogOrder, 'designation'));
 				$tariffType = trim($tariffType);
 				$remark = str_replace(array('OSM','ASTO'), "", $tariffType);
 				if(!empty($remark) && $remark==$tariffType) $remark=null;
 				if(!empty($remark)) $tariffType = str_replace($remark,"",$tariffType);
+				//if tariffType is defined in catalogOrder then take it in priority above the one found in designation
 				$coTariffType = $catalogOrder->getFieldValue('tariffType');
 				if(!empty($coTariffType) && $coTariffType!='none') $tariffType = $coTariffType; 
 				$tariffType = $this->tariffTypeMapping[$tariffType];

@@ -480,6 +480,7 @@ else {
 	$valExistsInOption = false;
 	//define the options:
 	$html2text = new Html2text();
+	$attrKeys = null;
 	foreach($fieldXml->attribute as $attribute_key => $attribute){
 		$label = $this->getRecord()->getRedirectedFieldLabel($this->getP(), $fieldName, $attribute);
 		$tempDisabled = false;
@@ -526,7 +527,18 @@ else {
 			if(!$flex){
 				$label = str_replace(" ", "&nbsp;", $label);
 			}
-			$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.$selected.' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" title="'.$labelForTitle.'" >'.$label.'</option>');
+			//lookup for data- key in attribute, cache result for next iteration
+			if($attribute != "none" && $attrKeys===null){ //===null is to not recalculate list if none is found
+				$attrKeys = simplexml_getAttributesList($attribute, "data-");
+				if(!$attrKeys) $attrKeys = false;
+			}
+			$dataAttrs = "";
+			if($attrKeys){
+				foreach($attrKeys as $dataKey){
+					$dataAttrs .= ' '.$dataKey.'="'.htmlentities((string)$attribute[$dataKey]).'"';
+				}
+			}
+			$this->put('<option '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.$selected.' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" title="'.$labelForTitle.'" '.$dataAttrs.'>'.$label.'</option>');
 		}
 	}
 	// Medair (CWE) 08.02.2018: adds support of ajax drop-downs

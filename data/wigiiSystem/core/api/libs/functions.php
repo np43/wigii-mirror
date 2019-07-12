@@ -179,6 +179,23 @@ function fput($st, $dontStamp = false) {
 }
 
 /**
+ * Return an array with the attributes name of a Simplexml object.
+ * @param String $prefixFilter optional, a prefix on which to filter the result (ex: data-)
+ * @return array, the list of available attributes 
+ */
+function simplexml_getAttributesList($simplexml, $prefixFilter=null){
+	$attrKeys = array();
+	foreach($simplexml->attributes() as $name=>$value){
+		//if prefix filter only take the ones mathing
+		if($prefixFilter && substr($name,0,strlen($prefixFilter))==$prefixFilter){
+			$attrKeys[$name]=$name;
+		} elseif(!$prefixFilter) { //if no prefix filter then takes all
+			$attrKeys[$name]=$name;
+		}
+	}
+	return $attrKeys;
+}
+/**
  * Creates a new child element in the given parent element
  * @param SimpleXMLElement $parent parent node
  * @param String $name name of the child element

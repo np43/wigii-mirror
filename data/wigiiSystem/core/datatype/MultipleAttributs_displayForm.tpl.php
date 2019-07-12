@@ -255,7 +255,8 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 		//define the options:
 		$html2text = new Html2text();
 		$existingKeys = array();
-		foreach($attributes as $attribute_key => $attribute){			
+		$attrKeys = null;
+		foreach($attributes as $attribute_key => $attribute){
 			// filters dropdown using prefix filter
 			if($filterDropDown && $attribute != "none" && (($prefixFilter ? strpos((string)$attribute, $prefixFilter)!==0 : false) || ($regexFilter ? preg_match($regexFilter,(string)$attribute)===0 : false))) continue;
 			// CWE 09.02.2016: in public: filters disabled options
@@ -296,7 +297,18 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 				if(!$chosen){
 					$label = str_replace(" ", "&nbsp;", $label);
 				}
-				$this->put('<option  '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" '.$selected.' title="'.$labelForTitle.'" >'.$label.'</option>');
+				//lookup for data- key in attribute, cache result for next iteration
+				if($attribute != "none" && $attrKeys===null){ //===null is to not recalculate list if none is found
+					$attrKeys = simplexml_getAttributesList($attribute, "data-");
+					if(!$attrKeys) $attrKeys = false;
+				}
+				$dataAttrs = "";
+				if($attrKeys){
+					foreach($attrKeys as $dataKey){
+						$dataAttrs .= ' '.$dataKey.'="'.htmlentities((string)$attribute[$dataKey]).'"';
+					}
+				}
+				$this->put('<option  '.($tempDisabled || $attribute["disabled"]=="1" ? 'disabled="on"' : "").' '.($attribute["class"]!="" ? 'class="'.(string)$attribute["class"].'"' : "").' value="'.(string)$attribute.'" '.$selected.' title="'.$labelForTitle.'" '.$dataAttrs.'>'.$label.'</option>');
 			}
 		}
 		
