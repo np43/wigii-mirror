@@ -788,7 +788,7 @@ class ElementEvaluator extends RecordEvaluator
 			}
 		}
 		elseif(!empty($name)) {
-			$matches=array($name,$name);
+			$matches=array($name=>$name);
 		}		
 		
 		$gAS = ServiceProvider::getGroupAdminService();

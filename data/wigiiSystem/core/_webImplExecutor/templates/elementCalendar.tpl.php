@@ -119,23 +119,25 @@ if(!$url){ //displays list only if no url
                         ");
 	}
 
-	//Show in Outlook
+	//Show in Outlook (if group is readable)
 	$outlookButtonEnabled = false;
 	if($crtGroupP){
-		$xmlRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupXmlPublish"), $exec->getCrtModule());
-		$xmlRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getDbEntity()->getDetail()->getXmlPublish(), $xmlRec->getActivity());
-		if($xmlRec->getFieldValue("enableGroupXmlPublish")==true){
-			$outlookButtonEnabled = true;
-			$outlookUrl = str_replace("//", '\/\/', str_replace(" ", "%20", SITE_ROOT.$crtGroupP->getDbEntity()->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$crtGroupP->getDbEntity()->getModule()->getModuleUrl()."/getXmlFeed/".$crtGroupP->getDbEntity()->getId()."/".$xmlRec->getFieldValue("xmlPublishCode")."/ics"));
-			$intro = $transS->h($p, "howToLinkInOutlook1");
-			$intro = "<b>".implode("</p><p>", explode('\n', str_replace('"', '&quot;', $intro)))."</b>";
-			$expl = $transS->h($p, "howToLinkInOutlook2");
-			$expl = "</p><p>".implode("</p><p>", explode('\n', str_replace('"', '&quot;', $expl)))."";
-			$outlookHelp = "";
-		} else {
-			$outlookButtonEnabled = false;
-			$outlookHelp = $transS->h($p, "toEnableOutlookButtonHelp");
-		}
+	    if($crtGroupP->getRights()) {
+            $xmlRec = $this->createActivityRecordForForm($p, Activity :: createInstance("groupXmlPublish"), $exec->getCrtModule());
+        	$xmlRec->getWigiiBag()->importFromSerializedArray($crtGroupP->getDbEntity()->getDetail()->getXmlPublish(), $xmlRec->getActivity());
+        	if($xmlRec->getFieldValue("enableGroupXmlPublish")==true){
+        		$outlookButtonEnabled = true;
+        		$outlookUrl = str_replace("//", '\/\/', str_replace(" ", "%20", SITE_ROOT.$crtGroupP->getDbEntity()->getWigiiNamespace()->getWigiiNamespaceUrl()."/".$crtGroupP->getDbEntity()->getModule()->getModuleUrl()."/getXmlFeed/".$crtGroupP->getDbEntity()->getId()."/".$xmlRec->getFieldValue("xmlPublishCode")."/ics"));
+        		$intro = $transS->h($p, "howToLinkInOutlook1");
+        		$intro = "<b>".implode("</p><p>", explode('\n', str_replace('"', '&quot;', $intro)))."</b>";
+        		$expl = $transS->h($p, "howToLinkInOutlook2");
+        		$expl = "</p><p>".implode("</p><p>", explode('\n', str_replace('"', '&quot;', $expl)))."";
+        		$outlookHelp = "";
+        	} else {
+        		$outlookButtonEnabled = false;
+        		$outlookHelp = $transS->h($p, "toEnableOutlookButtonHelp");
+        	}
+	    }
 		$exec->addJsCode("" .
 				"if($('#searchBar .toolbarBox .outlook').length!=0){ $('#searchBar .toolbarBox .outlook').remove(); }" .
 				"$('#searchBar .toolbarBox').prepend('<div class=\"outlook L H ui-corner-all".($outlookButtonEnabled ? "" : " disabledR ")."\" title=\"$outlookHelp\" style=\"font-weight:bold;background-color:#fff;padding-bottom:5px;\"><span class=\"showInOutlookText\">".$transS->h($p, "showInOutlookButton")."<span></div>')" .

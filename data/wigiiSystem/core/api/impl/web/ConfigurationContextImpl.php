@@ -179,13 +179,16 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 				if($desiredGroupId){
 					if($readGroups[$desiredGroupId]){
 						$this->groupPListPerModule[$key] = GroupPListArrayImpl::createInstance()->addGroupP($readGroups[$desiredGroupId]);
+					} else if($groupLA->isAllRootGroupsReadable()) {
+					    //select the root
+					    $this->groupPListPerModule[$key] = $groupLA->getRootGroups();
 					} else {
-						//select the root
-						$this->groupPListPerModule[$key] = $groupLA->getRootGroups();
+					    //take the first readable group
+					    $this->groupPListPerModule[$key] = GroupPListArrayImpl::createInstance()->addGroupP(reset($readGroups));
 					}
 				} else if($selectAllGroupsOnFirstLoad || $desiredGroupId === 0){
 					if($groupLA->isAllRootGroupsReadable() || $includeChildrenGroups){
-						$this->groupPListPerModule[$key] = $groupLA->getRootGroups();
+						$this->groupPListPerModule[$key] = $groupLA->getRootGroups();					
 					} else {
 						//take the first readable group
 						$this->groupPListPerModule[$key] = GroupPListArrayImpl::createInstance()->addGroupP(reset($readGroups));
