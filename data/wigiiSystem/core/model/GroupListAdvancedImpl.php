@@ -24,7 +24,6 @@
 /**
  * GroupList advanced implementation
  * Created by LWR on 19 march 10
- *
  */
 class GroupListAdvancedImpl extends ObjectListArrayImpl implements GroupList, GroupPList, DbEntityList
 {

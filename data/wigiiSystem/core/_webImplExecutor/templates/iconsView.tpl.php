@@ -21,10 +21,12 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 03 may 2010
- * by LWR
+/**
+ * Created on 03 may 2010 by LWR
+ * @deprecated since V4
  */
+throw new ServiceException('iconsView is deprecated', ServiceException::DEPRECATED);
+
 if(!isset($groupS)) $groupS = ServiceProvider::getGroupAdminService();
 if(!isset($transS)) $transS = ServiceProvider::getTranslationService();
 if(!isset($exec)) $exec = ServiceProvider::getExecutionService();

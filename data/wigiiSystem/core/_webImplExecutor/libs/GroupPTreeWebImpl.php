@@ -24,8 +24,8 @@
 /**
  * Created on 25 sept. 09 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * @deprecated since V4
  */
-
 class GroupPTreeWebImpl extends Model implements GroupPTree {
 	
 	protected $nb;
@@ -38,6 +38,7 @@ class GroupPTreeWebImpl extends Model implements GroupPTree {
 		return $this->groups; }
 	
 	public static function createInstance(){
+	    throw new ServiceException('GroupPTreeWebImpl is deprecated. Prefer use GroupListAdvancedImpl or GroupPListTreeArrayImpl', ServiceException::DEPRECATED);
 		$gt = new self();
 		return $gt;
 	}

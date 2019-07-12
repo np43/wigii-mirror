@@ -6304,7 +6304,7 @@ onUpdateErrorCounter = 0;
 				if ($_POST["action"] != null) $state = ($_POST["action"]);
 
 				//get allGroups for P
-				$groupPTreeArrayImpl = GroupPListTreeArrayImpl::createInstance(); //GroupPTreeWebImpl::createInstance(); //
+				$groupPTreeArrayImpl = GroupPListTreeArrayImpl::createInstance();
 				$groupAS->getAllGroups($p, $workingModule, $groupPTreeArrayImpl, $groupAS->getListFilterForSelectGroupWithoutDetail());
 				$groupPTreeArrayImpl->cleanOnMarkup("r");
 				$groupIds = $groupPTreeArrayImpl->getIds();

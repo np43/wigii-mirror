@@ -36,7 +36,7 @@ if(!isset($ac)) $ac = $this->getAdminContext($p);
 
 ?><div id="adminGroup_list" class="BSB groupPanel"><?
 
-$groupPTreeArrayImpl = GroupPListTreeArrayImpl::createInstance(); //GroupPTreeWebImpl::createInstance(); //
+$groupPTreeArrayImpl = GroupPListTreeArrayImpl::createInstance();
 $groupAS->getAllGroups($p, $ac->getWorkingModule(), $groupPTreeArrayImpl, $ac->getGroupListFilter());
 $groupPTreeArrayImpl->cleanOnMarkup("x");
 

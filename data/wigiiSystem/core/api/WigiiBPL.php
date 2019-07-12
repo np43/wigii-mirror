@@ -2930,6 +2930,7 @@ class WigiiBPL
 	 * @param Module|String $module module for which to get the default accessible group
 	 * @param WigiiBPLParameter $options optional bag of parameters to configure the default group calculation. It supports:
 	 * - namespace: WigiiNamespace|String. WigiiNamespace if different from current namespace
+	 * - write: Boolean. If true, then forces to get a group with write rights. If false, then gets first group at least with read rights. Default to false.
 	 * @return GroupP GroupP or null if principal cannot access given module
 	 */
 	public function getDefaultGroupForModule($principal, $module, $options=null) {
@@ -2938,11 +2939,13 @@ class WigiiBPL
 	    if(!isset($module)) throw new WigiiBPLException('module cannot be null', WigiiBPLException::INVALID_ARGUMENT);
 	    if(!($module instanceof Module)) $module = ServiceProvider::getModuleAdminService()->getModule($principal, $module);
 	    $wigiiNamespace = null;
+	    $write=false;
 	    if(isset($options)) {
 	        $wigiiNamespace = $options->getValue('namespace');
 	        if(isset($wigiiNamespace) && !($wigiiNamespace instanceof WigiiNamespace)) {
 	            $wigiiNamespace = ServiceProvider::getWigiiNamespaceAdminService()->getWigiiNamespace($principal, $wigiiNamespace);
 	        }
+	        $write = ($options->getValue('write')==true);
 	    }
 	    
 	    $returnValue=null;
@@ -2952,18 +2955,38 @@ class WigiiBPL
 	        $principal->bindToWigiiNamespace($wigiiNamespace);
 	    }
 	    else $origNS = null;
-	    // gets accessible group list
-	    $returnValue = $this->getWigiiExecutor()->getConfigurationContext()->getGroupPList($principal,$module);	    
-	    // gets first accessible group
-	    if(isset($returnValue)) $returnValue = $returnValue->getFirst();
-	    // if no accessible group found, tries to fetch again database to ensure query on fresh data
-	    if(!isset($returnValue) || is_null($returnValue->getRights())) {
+	    // gets first accessible (or write) group
+	    if($write) $returnValue = $this->getWigiiExecutor()->getConfigurationContext()->getFirstWriteGroupInModule($principal,$module);	    
+	    else $returnValue = $this->getWigiiExecutor()->getConfigurationContext()->getFirstReadGroupInModule($principal,$module);
+		// if no group found, tries to force ConfigurationContext cache refresh
+	    if(!isset($returnValue)) {
+	        $this->debugLogger()->write('no accessible group found in cache, refreshes ConfigurationContext');
+	        $this->getWigiiExecutor()->getConfigurationContext()->getGroupPList($principal, $module);
+	        if($write) $returnValue = $this->getWigiiExecutor()->getConfigurationContext()->getFirstWriteGroupInModule($principal,$module);
+	        else $returnValue = $this->getWigiiExecutor()->getConfigurationContext()->getFirstReadGroupInModule($principal,$module);
+	    }
+		// if no group found, tries to fetch again database to ensure query on fresh data
+	    if(!isset($returnValue)) {
+	        $this->debugLogger()->write('no accessible group found in cache, queries database');
 	        $returnValue = GroupListAdvancedImpl::createInstance(false);
 	        $groupAS = $this->getGroupAdminService();
 	        $groupAS->getAllGroups($principal, $module, $returnValue,lf($groupAS->getFieldSelectorListForGroupWithoutDetail()));
-	        $returnValue = $returnValue->getReadGroups()->getFirst();
+	        if($write) $returnValue = $returnValue->getWriteGroups()->getFirst();
+	        else $returnValue = $returnValue->getReadGroups()->getFirst();
 	    }
-
+	    // checks result data
+	    if(isset($returnValue)) {
+	        // write ==> getRights->canWriteElement
+	        if($write && (is_null($returnValue->getRights()) || !$returnValue->getRights()->canWriteElement())) {
+	            $this->debugLogger()->write('write request, but no write group found');
+	            $returnValue = null;
+	        }
+	        // read ==> getRights not null
+	        elseif(!$write && is_null($returnValue->getRights())) {
+	            $this->debugLogger()->write('read request, but no accessible group found');
+	            $returnValue = null;
+	        }
+	    }
 	    if(isset($origNS)) $principal->bindToWigiiNamespace($origNS);
 	    $this->debugLogger()->logEndOperation('getDefaultGroupForModule');
 	    return $returnValue;

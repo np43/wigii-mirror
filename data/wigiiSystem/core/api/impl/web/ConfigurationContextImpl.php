@@ -34,6 +34,7 @@
  * 		with add/delete on subgroups and think that the config on subgroup will add or delete things on the parent
  * 		config.
  * Created on 22 Dec 2009 by LWR
+ * Modified by CWE on 11.07.2019 to store in session first read and write groups per module
  */
 class ConfigurationContextImpl extends Model implements ConfigurationContext, Serializable {
 
@@ -45,7 +46,8 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 	private $includeChildrenGroupsPerModule;
 	private $groupPListPerModule;
 	private $rootGroupsPerModule;
-	private $rootGroupsPerModuleWithoutTrash;
+	private $firstReadGroupPerModule;
+	private $firstWriteGroupPerModule;
 	private $groupForConfigCache;
 
 	// Object lifecycle
@@ -57,6 +59,8 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 	    $arr = array("groupPListPerModule" => $this->groupPListPerModule,
 	        "includeChildrenGroupsPerModule" => $this->includeChildrenGroupsPerModule,
 	        "rootGroupsPerModule" => $this->rootGroupsPerModule,
+	        "firstReadGroupPerModule" => $this->firstReadGroupPerModule,
+	        "firstWriteGroupPerModule" => $this->firstWriteGroupPerModule,
 	        "groupForConfigCache" => $this->groupForConfigCache);
 		return serialize($arr);
 	}
@@ -65,6 +69,8 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		$this->groupPListPerModule = $arr["groupPListPerModule"];
 		$this->includeChildrenGroupsPerModule = $arr["includeChildrenGroupsPerModule"];
 		$this->rootGroupsPerModule = $arr["rootGroupsPerModule"];
+		$this->firstReadGroupPerModule = $arr["firstReadGroupPerModule"];
+		$this->firstWriteGroupPerModule = $arr["firstWriteGroupPerModule"];
 		$this->groupForConfigCache = $arr["groupForConfigCache"];
 	}
 	public static function createInstance() {
@@ -152,6 +158,8 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 		if(!$module || (is_null($principal->getModuleAccess($module)) && !$authS->isPublicPrincipal($principal) && !$authS->isRootPrincipal($principal))){
 			$this->groupPListPerModule[$key] = null;
 			$this->includeChildrenGroupsPerModule[$key] = null;
+			$this->setFirstReadGroupInModule(null, $principal, $module);
+			$this->setFirstWriteGroupInModule(null, $principal, $module);
 			return null;
 		}
 		if($this->groupPListPerModule[$key] == null || is_array($this->groupPListPerModule[$key]) || $desiredGroupId!==null){
@@ -164,6 +172,8 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 			$selectAllGroupsOnFirstLoad = (string)$this->getConfigService()->getParameter($principal, $module, "Group_selectAllGroupsOnFirstLoad") === "1";
 			if($groupLA != null && !$groupLA->isEmpty()){
 				$this->setRootGroupsInModule($groupLA->getRootGroups(), $principal, $module);
+				$this->setFirstReadGroupInModule($groupLA->getReadGroups()->getFirst(), $principal, $module);
+				$this->setFirstWriteGroupInModule($groupLA->getWriteGroups()->getFirst(), $principal, $module);
 				//treat the case when a folder is defined in parameters
 				$readGroups = $groupLA->getReadGroups()->getListIterator();
 				if($desiredGroupId){
@@ -213,6 +223,24 @@ class ConfigurationContextImpl extends Model implements ConfigurationContext, Se
 	protected function setRootGroupsInModule($rootGroups, $p, $module){
 	    if(!isset($this->rootGroupsPerModule)) $this->rootGroupsPerModule = array();
 	    $this->rootGroupsPerModule[$this->getContextKey($p, $module)] = $rootGroups;
+	}
+	
+	public function getFirstReadGroupInModule($p, $module){
+	    if(!isset($this->firstReadGroupPerModule)) return null;
+	    return $this->firstReadGroupPerModule[$this->getContextKey($p, $module)];
+	}
+	protected function setFirstReadGroupInModule($groupP, $p, $module){
+	    if(!isset($this->firstReadGroupPerModule)) $this->firstReadGroupPerModule = array();
+	    $this->firstReadGroupPerModule[$this->getContextKey($p, $module)] = $groupP;
+	}
+	
+	public function getFirstWriteGroupInModule($p, $module){
+	    if(!isset($this->firstWriteGroupPerModule)) return null;
+	    return $this->firstWriteGroupPerModule[$this->getContextKey($p, $module)];
+	}
+	protected function setFirstWriteGroupInModule($groupP, $p, $module){
+	    if(!isset($this->firstWriteGroupPerModule)) $this->firstWriteGroupPerModule = array();
+	    $this->firstWriteGroupPerModule[$this->getContextKey($p, $module)] = $groupP;
 	}
 		
 	

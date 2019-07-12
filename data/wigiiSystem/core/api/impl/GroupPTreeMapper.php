@@ -24,6 +24,7 @@
 /**
  * Maps a group db record to a GroupP as a tree
  * Created by CWE on 22 sept. 09
+ * Modified by CWE on 11.07.2019 to detect if consumer is a GroupPList or GroupPTree
  */
 class GroupPTreeMapper extends Model implements RowList
 {
@@ -35,6 +36,7 @@ class GroupPTreeMapper extends Model implements RowList
 	private $parentGroupBuffer;
 	private $independantGroups;
 	private $children;
+	private $isGroupPList;
 
 	public static function createInstance($groupAdminServiceImpl, $principal, $pRights = null)
 	{
@@ -53,6 +55,7 @@ class GroupPTreeMapper extends Model implements RowList
 		$this->groupPBuffer = array();
 		$this->independantGroups = array();
 		$this->children = array();
+		$this->isGroupPList=false;
 	}
 	public function freeMemory()
 	{
@@ -112,12 +115,18 @@ class GroupPTreeMapper extends Model implements RowList
 	}
 
 	/**
-	 * Flushes the internal buffer into a GroupPTree
-	 * fieldSelectorList: field selector list used when fetching parent groups
+	 * Flushes the internal buffer into a GroupPTree (or list)
+	 * @param GroupPTree | GroupPList $groupPTree
+	 * @param FieldSelectorList $fieldSelectorList field selector list used when fetching parent groups
 	 */
 	public function flush($groupPTree, $fieldSelectorList=null)
 	{
 		if(is_null($groupPTree)) throw new GroupAdminServiceException('groupPTree can not be null', GroupAdminServiceException::INVALID_ARGUMENT);
+		// detects if groupPTree is a GroupPList
+		if($groupPTree instanceof GroupPList) $this->isGroupPList = true;
+        // else assumes it is a real GroupPTree	
+        else $this->isGroupPList = false;
+        
 		$this->parentGroupBuffer = array();
 		// flushes each group in buffer
 		foreach($this->independantGroups as $pgId => $groupP)
@@ -171,6 +180,7 @@ class GroupPTreeMapper extends Model implements RowList
 		else $parentGroup = null;
 
 		// adds groupP and parent to result tree
-		$groupPTree->addGroupP($groupP, $parentGroup);
+		if($this->isGroupPList) $groupPTree->addGroupP($groupP);
+		else $groupPTree->addGroupP($groupP, $parentGroup);
 	}
 }

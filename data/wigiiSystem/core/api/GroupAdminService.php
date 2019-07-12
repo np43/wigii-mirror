@@ -72,12 +72,12 @@ interface GroupAdminService
 	/**
 	 * Fills a tree with all groups, associated with the principal rights,
 	 * in which the current principal participates for the given module
-	 * principal: authenticated user performing the operation
-	 * module: the module for which we want the groups
-	 * groupPTree: the GroupP tree to be filled
-	 * listFilter: filter on the list; filters columns, does pagination and sorting
-	 * returns the number of groups added to the tree
-	 * throws GroupAdminServiceException in case of error
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param Module $module the module for which we want the groups
+	 * @param GroupPTree|GroupPList $groupPTree the GroupP tree (or list) to be filled
+	 * @param ListFilter $listFilter filter on the list; filters columns, does pagination and sorting
+	 * @return int the number of groups added to the tree
+	 * @throws GroupAdminServiceException in case of error
 	 */
 	public function getAllGroups($principal, $module, $groupPTree, $listFilter=null);
 
