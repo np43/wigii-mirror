@@ -607,6 +607,10 @@ class ElementEvaluator extends RecordEvaluator
 		$silent = false;
 		if($nArgs > 1) $silent = ($this->evaluateArg($args[1]) == true);
 		
+		$exec = ServiceProvider::getExecutionService();
+		$gAS = ServiceProvider::getGroupAdminService();
+		$p = $this->getPrincipal();
+		
 		// checks element dynamic attribute 'cfgCurrentGroup' and returns its value if exists		
 		$cfgCurrentGroup = $this->getElement()->getDynamicAttribute('cfgCurrentGroup');
 		if(isset($cfgCurrentGroup)) {
@@ -617,8 +621,6 @@ class ElementEvaluator extends RecordEvaluator
 			$flowContext = $this->getCurrentFlowName();
 			if($flowContext == ElementEvaluator::ELEMENT_FLOW_ADD ||
 				$flowContext == ElementEvaluator::ELEMENT_FLOW_COPY) {
-				$exec = ServiceProvider::getExecutionService();
-				$p = $this->getPrincipal();
 					
 				$returnValue = $this->getFormExecutor()->getGroupInWhichToAdd($p, $exec);
 				if(!$returnValue->isEmpty()) $returnValue = reset($returnValue->getListIterator());
@@ -629,10 +631,6 @@ class ElementEvaluator extends RecordEvaluator
 					$flowContext == ElementEvaluator::ELEMENT_FLOW_MULTIPLE_EDIT ||
 					$flowContext == ElementEvaluator::ELEMENT_FLOW_MULTIPLE_DELETE) {
 					
-				$exec = ServiceProvider::getExecutionService();
-				$p = $this->getPrincipal();
-				$gAS = ServiceProvider::getGroupAdminService();
-				
 				// gets all groups containing element
 				$groupPList = GroupPListArrayImpl::createInstance();
 				ServiceProvider::getElementService()->getAllGroupsContainingElement($p, $this->getElement(), $groupPList, lf($gAS->getFieldSelectorListForGroupWithoutDetail()));
@@ -666,8 +664,6 @@ class ElementEvaluator extends RecordEvaluator
 				else $returnValue = null;
 			}
 			elseif($flowContext == ElementEvaluator::ELEMENT_FLOW_DATAFLOW) {
-				$exec = ServiceProvider::getExecutionService();
-				$p = $this->getPrincipal();
 				// if element is new, then checks group list of GroupBasedWigiiApiClient
 				if($this->getElement()->isNew()) {
 				    $returnValue = null;
