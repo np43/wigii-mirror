@@ -553,7 +553,9 @@ class ConfigServiceCoreImpl implements ConfigService
 	public function allowGroupDynamicConfig($principal, $module)
 	{		
 		$moduleName = (is_string($module)? $module: (is_null($module)? '' : $module->getModuleName()));
-		$username = $principal->getUserId();
+		//$username = $principal->getUserId();
+		//userId is null in case of system principal
+		$username = $principal->getUsername().$principal->getUserId();
 		$lp = "($moduleName($username))";
 		if(!isset($this->groupDynamicConfigParamCache)) $this->groupDynamicConfigParamCache = array();
 		$returnValue = $this->groupDynamicConfigParamCache[$lp];
