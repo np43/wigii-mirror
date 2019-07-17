@@ -47,11 +47,67 @@ form select.filled + span.select2 {
 	border: 2px solid #f00;
     border-radius: 4px;	
 }
-
 form span.select2.select2-container {
 	margin-top:-4px;
 }
-
+/* displayFreeTimeSlots in TimeRanges */
+form .field .value .globalTimeSlots .timeSlotsContainer {
+	display:flex;
+	justify-content: center;
+	text-align:center;
+	margin-bottom:10px;
+}
+form .field .value .globalTimeSlots .dayTimeSlots {
+	border:1px #eee solid;
+	border-right:none;
+	flex-grow:1;
+}
+form .field .value .globalTimeSlots .dayTimeSlots:last-child {
+	border-right:1px #eee solid;
+}
+form .field .value .globalTimeSlots .dayTimeSlots:nth-child(odd) {
+	background-color:#f7f7f7;
+}
+form .field .value .globalTimeSlots .dayTimeSlots .timeSlotHeader {
+	border-bottom:1px #eee solid;
+	padding:3px 0px;
+}
+form .field .value .globalTimeSlots .dayTimeSlots .timeSlotHeader .title {
+	font-weight:bold;
+}
+form .field .value .globalTimeSlots .dayTimeSlots .timeSlotHeader .date {
+	font-size:x-small;
+}
+form .field .value .globalTimeSlots .dayTimeSlots .timeSlot {
+	padding:5px;
+	cursor:pointer;
+}
+form .field .value .globalTimeSlots .dayTimeSlots .timeSlot:hover {
+	background-color:#eee;
+}
+form .field .value .globalTimeSlots .commands {
+	cursor:pointer;
+	display:flex;
+	justify-content:space-between;
+}
+form .field .value .globalTimeSlots .commands>*:hover {
+	background-color:#eee;
+}
+form .field .value .globalTimeSlots .commands .glyphicon-chevron-left {
+	padding:10px 20px;
+	flex-grow:1;
+	text-align:left;
+}
+form .field .value .globalTimeSlots .commands .glyphicon-calendar {
+	padding:10px 20px;
+	flex-grow:2;
+	text-align:center;
+}
+form .field .value .globalTimeSlots .commands .glyphicon-chevron-right {
+	padding:10px 20px;
+	flex-grow:1;
+	text-align:right;
+}
 .elementDialog.docked .publicFormBorder{
 	margin-bottom: 30px;
 	margin-right: 10px;

@@ -49,6 +49,40 @@ $isRequire = 	$fieldXml["require"]=="1" && !$isPublicPrincipal ||
 $isNotExpanded = !$isFilled && $fieldXml["expand"]!="1" && (!$isRequire || $fieldXml["expand"]=="0");
 $inputId = $formId.'_'.$fieldName;
 
+if(!$disabled && $fieldXml["displayFreeTimeSlots"]){
+	$this->put('<div class="globalTimeSlots" >');
+	$this->put('<div class="commands" >');
+	$this->put('<span class="glyphicon glyphicon-chevron-left" ></span>');
+	$this->put('<span class="glyphicon glyphicon-calendar" ></span>');
+	$this->put('<span class="glyphicon glyphicon-chevron-right" ></span>');
+	$this->put('</div>');
+	
+	$this->put('<div class="timeSlotsContainer" >');
+	
+	$nbOfDays = (int)$fieldXml["nbOfDays"];
+	if(!$nbOfDays) $nbOfDays= 5;
+	for($i = 0; $i<$nbOfDays; $i++){
+		$this->put('<div class="dayTimeSlots">');
+			//this needs to be replaced by result of an ajax call
+			//this is added as an example
+			$day = array("Lundi","Mardi","Mercredi","Jeudi","Vendredi")[$i];
+			$this->put('<div class="timeSlotHeader" ><p class="title">'.$day.'</p><p class="date">0'.$i.' Août 2019</p></div>');
+			$this->put('<div class="timeSlot" >08h00</div>');
+			$this->put('<div class="timeSlot" >09h00</div>');
+			$this->put('<div class="timeSlot" >10h00</div>');
+			$this->put('<div class="timeSlot" >11h00</div>');
+			$this->put('<div class="timeSlot" >13h00</div>');
+			$this->put('<div class="timeSlot" >14h00</div>');
+			$this->put('<div class="timeSlot" >15h00</div>');
+			$this->put('<div class="timeSlot" >16h00</div>');
+		$this->put('</div>');
+	}
+	
+	$this->put('</div>'); //timeSlotsContainer
+	$this->put('</div>'); //globalTimeSlots
+}
+
+
 if($fieldXml["onlyDate"]!="1"){
 
 	//isAllDay
