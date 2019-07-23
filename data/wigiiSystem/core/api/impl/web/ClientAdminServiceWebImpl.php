@@ -103,7 +103,7 @@ class ClientAdminServiceWebImpl extends ClientAdminServiceImpl
 		$returnValue=parent::gatherExecutionContextInfo(wigiiBPLParam('outputFormat','stdClass'));
 		// gathers execution context info
 		$exec = ServiceProvider::getExecutionService();
-		$returnValue->{'clientIP'} = $_SERVER["REMOTE_ADDR"];
+		$returnValue->{'clientIP'} = $_SERVER["REMOTE_ADDR"].':'.$_SERVER["REMOTE_PORT"];
 		$returnValue->{'referer'} = $_SERVER["HTTP_REFERER"];
 		$returnValue->{'request'} = $exec->getCrtRequest();
 		$returnValue->{'wigiiNamespace'} = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();

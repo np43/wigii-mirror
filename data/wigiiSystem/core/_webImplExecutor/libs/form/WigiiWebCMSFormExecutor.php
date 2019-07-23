@@ -147,7 +147,7 @@ self.location = "<?=$publicUrl?>";
 				$wigiiFxError = $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e);
 				// CWE 23.07.2019 logs remote client IP address and reference url
 				if($wigiiFxError->context != null) {
-				    $wigiiFxError->context->{'clientIP'} = $_SERVER["REMOTE_ADDR"];
+				    $wigiiFxError->context->{'clientIP'} = $_SERVER["REMOTE_ADDR"].':'.$_SERVER["REMOTE_PORT"];
 				    $wigiiFxError->context->{'referer'} = $_SERVER["HTTP_REFERER"];
 				}
 				echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $wigiiFxError);
