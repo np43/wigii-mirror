@@ -93,6 +93,8 @@ class ClientAdminServiceWebImpl extends ClientAdminServiceImpl
 	 * - realUsername : real user name
 	 * - username : role name
 	 * - principalNamespace : principal current namespace
+	 * - clientIP: remote client IP address
+	 * - referer: remote client calling url
 	 * - version: Wigii system version label
 	 */
 	public function gatherExecutionContextInfo($options=null) {
@@ -101,6 +103,8 @@ class ClientAdminServiceWebImpl extends ClientAdminServiceImpl
 		$returnValue=parent::gatherExecutionContextInfo(wigiiBPLParam('outputFormat','stdClass'));
 		// gathers execution context info
 		$exec = ServiceProvider::getExecutionService();
+		$returnValue->{'clientIP'} = $_SERVER["REMOTE_ADDR"];
+		$returnValue->{'referer'} = $_SERVER["HTTP_REFERER"];
 		$returnValue->{'request'} = $exec->getCrtRequest();
 		$returnValue->{'wigiiNamespace'} = $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl();
 		$returnValue->{'module'} = $exec->getCrtModule()->getModuleUrl();

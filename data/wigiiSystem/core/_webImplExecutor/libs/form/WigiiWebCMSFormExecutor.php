@@ -143,8 +143,14 @@ self.location = "<?=$publicUrl?>";
 			// else displays exception as xml
 			else {
 				header("Access-Control-Allow-Origin: *");
-				header("Content-Type: text/xml; charset=UTF-8");			
-				echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e));
+				header("Content-Type: text/xml; charset=UTF-8");
+				$wigiiFxError = $this->getWigiiExecutor()->convertServiceExceptionToJson($p, $exec, $e);
+				// CWE 23.07.2019 logs remote client IP address and reference url
+				if($wigiiFxError->context != null) {
+				    $wigiiFxError->context->{'clientIP'} = $_SERVER["REMOTE_ADDR"];
+				    $wigiiFxError->context->{'referer'} = $_SERVER["HTTP_REFERER"];
+				}
+				echo TechnicalServiceProvider::getWplToolbox()->stdClass2Xml($p, 'wigiiFxError', $wigiiFxError);
 			}
 			// signals fatal error to monitoring system
 			ServiceProvider::getClientAdminService()->signalFatalError($e);
