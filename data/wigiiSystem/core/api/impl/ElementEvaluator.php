@@ -954,11 +954,18 @@ class ElementEvaluator extends RecordEvaluator
 		}
 		$urlLabel = $this->evaluateArg($args[2]);
 		$fieldMap = $this->evaluateArg($args[3]); //here the values are evaluated for each fields
+		// CWE 23.07.2019: currently notifications triggered by linking elements generates 1+2+3+4+...+n emails when multiple editing n elements
+		// notifications are disabled on link until bug is further investigated and corrected.
+		// this bug appeared when multiple updating tasks linked to events
+		/*
 		if($nArgs > 4){
 			$triggerNotification = $this->evaluateArg($args[4]);
 		} else {
 			$triggerNotification = true;
 		}
+		*/
+		$triggerNotification=false;
+		
 		$currentUrl = $this->getFieldValue(fs($urlField,"url"));
 		$elementId = explode("/",$currentUrl);
 		if(is_array($elementId)){
