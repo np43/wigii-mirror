@@ -472,7 +472,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 		// checks principal's validity
 		$this->getAuthenticationService()->assertPrincipalValid($principal);
 	}
-	protected function assertPrincipalHasAdminAccess($principal){
+	public function assertPrincipalHasAdminAccess($principal){
 		if($principal->getModuleAccess(Module::ADMIN_MODULE)==null){
 			throw new AuthorizationServiceException("Principal has not Admin access", AuthorizationServiceException::FORBIDDEN);
 		}
@@ -494,7 +494,7 @@ class AuthorizationServiceImpl implements AuthorizationService
 	{
 		if(!$this->isRootPrincipal($principal) && !$this->isPublicPrincipal($principal)) $this->fail($principal, 'is not root or not public');
 	}
-	protected function assertPrincipalIsRootOrIsPublicOrHasAttachedUser($principal)
+	public function assertPrincipalIsRootOrIsPublicOrHasAttachedUser($principal)
 	{
 		if(!$this->isRootPrincipal($principal) && !$this->isPublicPrincipal($principal)) $this->assertPrincipalHasAttachedUser($principal);
 	}

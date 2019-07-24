@@ -864,6 +864,10 @@ class ClientAdminServiceImpl implements ClientAdminService
 			$returnValue['code'] = $exception->getCode();
 			if($options->getValue('showStackTrace')) {
 				$returnValue['stackTrace'] = $exception->getTraceAsString();
+				// CWE 24.07.2019 if MySqlFacadeException::MYSQL_CONNECTION_FAILED, and stack trace is enabled, then shows connection failure details
+				if($exception instanceof MySqlFacadeException && $exception->getCode()==MySqlFacadeException::MYSQL_CONNECTION_FAILED && $exception->getConnectionFailureDetails()!=null) {
+				    $returnValue['message'] = $exception->getConnectionFailureDetails();
+				}
 			}
 		}
 		elseif(is_string($exception)) {

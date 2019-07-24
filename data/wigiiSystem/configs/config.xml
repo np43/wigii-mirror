@@ -424,7 +424,9 @@ jsCodeInForm="
 	<userEdit>
 		<fields>
 			<wigiiNamespace type="Strings" require="0" expand="1" enableDynamicAttributes="1" readonly='logNot(getAttr(sysUser("principal"),"isWigiiNamespaceCreator"))'/>
-			<username type="Strings" require="1" expand="1" help="adminMultipleUsername"/>
+			<username type="Strings" require="1" expand="1" help="adminMultipleUsername" defaultExp='ctlIf(eq(sysCrtIdAnswer(),"activityDialog"),fillActivityFromUrl(fsl(
+				fs("username"), fs("email")
+			)))'/>
 			<email type="Emails" expand="1" noAutofill="1"/>
 			<authenticationMethod type="Attributs" require="0" >
 				<attribute>usual</attribute>
@@ -434,8 +436,8 @@ jsCodeInForm="
 			<authenticationServer type="Strings" expand="1"/>
 			<password type="Strings" secret="1" genPassword="1" showPassword="1" require="0" expand="1" noAutofill="1"/>
 			<passwordHasBeenEdited type="Booleans" require="0" />
-			<canModifyOwnPassword type="Booleans" require="0" />
-			<passwordLife type="Strings" require="0" help="passworLife_help" expand="1"/>
+			<canModifyOwnPassword type="Booleans" require="0" defaultExp='ctlIf(eq(sysCrtIdAnswer(),"activityDialog"),logTrue())'/>
+			<passwordLife type="Strings" require="0" help="passworLife_help" expand="1" defaultExp='ctlIf(eq(sysCrtIdAnswer(),"activityDialog"),"-1")'/>
 			<description type="Blobs" isInLine="1" htmlArea="1" activateHtmlArea="0" height="100" expand="1"/>
 			<userAdminRights groupStart="1" />
 				<isWigiiNamespaceCreator type="Booleans" require="0" help="isWigiiNamespaceCreator_help"/>

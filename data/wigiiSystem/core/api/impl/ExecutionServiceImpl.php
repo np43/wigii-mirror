@@ -414,7 +414,7 @@ class ExecutionServiceImpl implements ExecutionService {
 			//if new context, then select appropriate calculated role
 			//else bind last role id used in context
 			if(!$this->getCrtContext()){
-				//prevent incrementing contextIds on download or light client
+				//prevent incrementing contextIds on download
 				if($this->getCrtAction()!="download") $this->loadNewContext();
 				if($p->getRoleListener()) $roleId = $p->getRoleListener()->getCalculatedRoleId($this->getCrtWigiiNamespace()->getWigiiNamespaceUrl());
 				if($roleId && $p->getUserId()!=$roleId){

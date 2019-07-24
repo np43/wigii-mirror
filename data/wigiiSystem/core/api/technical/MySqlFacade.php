@@ -1047,10 +1047,10 @@ class MySqlFacade
 		$returnValue = $this->getCachedDbConnection($cnxSettings);
 		if(!isset($returnValue))
 		{
-			$returnValue = mysqli_connect($cnxSettings->getHost(), $cnxSettings->getUsername(), $cnxSettings->getPassword());
-			if(!$returnValue) throw new MySqlFacadeException("Connection to database with: ".$cnxSettings->displayDebug()." failed.", MySqlFacadeException::INVALID_ARGUMENT);
+			$returnValue = @mysqli_connect($cnxSettings->getHost(), $cnxSettings->getUsername(), $cnxSettings->getPassword());
+			if(!$returnValue) throw new MySqlFacadeException("Connection to database with: ".$cnxSettings->displayDebug()." failed.", MySqlFacadeException::MYSQL_CONNECTION_FAILED);
 			if(!mysqli_select_db($returnValue, $cnxSettings->getDbName())){
-				throw new MySqlFacadeException("No database: ".$cnxSettings->getDbName()." on host: ".$cnxSettings->getHost(), MySqlFacadeException::INVALID_ARGUMENT);
+			    throw new MySqlFacadeException("No database: ".$cnxSettings->getDbName()." on host: ".$cnxSettings->getHost(), MySqlFacadeException::MYSQL_CONNECTION_FAILED);
 			}
 			//set the charset of the DB, default utf8mb4 (full UTF8)
 			if (!defined("DB_CHARSET")) define ("DB_CHARSET", "utf8mb4");

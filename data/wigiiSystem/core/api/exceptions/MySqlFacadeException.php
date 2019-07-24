@@ -30,16 +30,22 @@ class MySqlFacadeException extends ServiceException
 {
 	private $mysqlErrorMsg;
 	private $mysqlErrorNo;
+	private $connectionFailureDetails;
 	const MYSQL_NOERROR = 0;
 	const MYSQL_SQLERROR = 2501;
 	const MYSQL_NOTUNIQUE = 2502;
 	const MYSQL_NORECORDAFFECTED = 2503;
+	const MYSQL_CONNECTION_FAILED = 2504;
 	
 	const MYSQL_ERROR_NO_SUCH_TABLE = 1146;
 
 	public function __construct($message = "", $code = parent::UNKNOWN_ERROR, $previous=null,
 								$mySqlErrorMsg="", $mySqlErrorNo=MySqlFacadeException::MYSQL_NOERROR) {
-		parent::__construct($message, $code, $previous);
+	    if($code==MySqlFacadeException::MYSQL_CONNECTION_FAILED) {
+	        $this->connectionFailureDetails = $message;
+	        $message = 'Failed to connect to database';
+	    }
+        parent::__construct($message, $code, $previous);
 		$this->mysqlErrorMsg = $mySqlErrorMsg;
 		$this->mysqlErrorNo = $mySqlErrorNo;
 	}
@@ -51,6 +57,9 @@ class MySqlFacadeException extends ServiceException
 	public function getMySqlErrorNo()
 	{
 		return $this->mysqlErrorNo;
+	}
+	public function getConnectionFailureDetails() {
+	    return $this->connectionFailureDetails;
 	}
 }
 

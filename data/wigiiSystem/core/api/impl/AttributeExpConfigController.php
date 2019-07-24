@@ -25,13 +25,15 @@
  * A configuration controller which replaces 'attributeExp' nodes with their expanded form.
  * Created by CWE on 03 March 2014
  * Updated by Medair (CWE) on 15.12.2017 to add a public clearCache method
+ * Updated by CWE on 18.07.2019 to share in memory cache between all instances to support cyclique config loading
  */
 class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 {
 	private $_debugLogger;
 	private $attributeExpNodes;
 
-	private $configCache = array(); // config cache is living during whole php execution.
+	private static $configCache; // config cache is living during whole php execution.
+	private static $nullCache; // cache for empty result values
 	const CACHE_LEVEL_NONE = 0;
 	const CACHE_LEVEL_NAVIGATE = 1;
 	const CACHE_LEVEL_SESSION = 2;
@@ -41,6 +43,8 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 
 	public function reset() {
 		parent::reset();
+		if(!isset(self::$configCache)) self::$configCache=array();
+		if(!isset(self::$nullCache)) self::$nullCache=array();
 	}
 
 	public function freeMemory() {
@@ -50,7 +54,8 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 
 	public function clearCache() {
 	    $this->debugLogger()->logBeginOperation('clearCache');
-	    $this->configCache = array();
+	    self::$configCache = array();
+	    self::$nullCache = array();
 	    $this->debugLogger()->logEndOperation('clearCache');
 	    return $this;
 	}
@@ -161,7 +166,7 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 				try {
 					// evaluates func exp
 					if(!empty($funcExp)) {
-						//$this->debugLogger()->write($funcExp);
+					    if($this->debugLogger()->isEnabled()) $debugInfo = 'Evaluates attributeExp '.$funcExp;
 						$funcExp = str2fx($funcExp);
 						// looks in cache if we have already something
 						//calculate cacheKeyToken if cacheKeyToken parameter is defined
@@ -171,13 +176,23 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 							if($cacheToken!==null && $cacheToken!=="") $cacheToken = "_".md5($cacheToken);
 						} else $cacheToken = "";
 						$cacheKey = md5(TechnicalServiceProvider::getFieldSelectorFuncExpParser()->funcExpToString($funcExp)).$cacheToken;
-						$result = $this->getCachedAttributes($cacheKey, $cacheLevel);
-						// else evaluates the func exp
-						if(!isset($result)) {
-							$cacheResult = true;
-							$result = $this->evaluateFuncExp($funcExp);
+						// CWE 18.07.2019 checks if result is already known as empty
+						if(self::$nullCache[$cacheKey]) $result = null;
+						// else checks in cache
+						else {
+    						$result = $this->getCachedAttributes($cacheKey, $cacheLevel);
+    						// else evaluates the func exp
+    						if(!isset($result)) {
+    							$cacheResult = true;							
+    							if($this->debugLogger()->isEnabled()) {
+    							    if(!empty($lp) && $lp['moduleName']) $debugInfo.=" in module '".$lp['moduleName']."'";
+    							    if($fieldXml->nodeName) $debugInfo.=" for field '".$fieldXml->nodeName."'";
+    							    $this->debugLogger()->write($debugInfo);
+    							}
+    							$result = $this->evaluateFuncExp($funcExp);
+    						}
+    						else $cacheResult = false;
 						}
-						else $cacheResult = false;
 	
 					}
 					else $result = null;
@@ -214,6 +229,8 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 					simplexml_replaceNodeWithChildren($attributeExp, $result);
 					$updatedXml = true;
 				}
+				// else records result as empty
+				elseif($cacheResult) self::$nullCache[$cacheKey] = true;
 			}
 			$this->debugLogger()->logEndOperation('doProcessConfigurationNode');
 		}
@@ -229,7 +246,7 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 	 * @return SimpleXMLElement
 	 */
 	protected function getCachedAttributes($key, $cacheLevel=self::CACHE_LEVEL_NONE) {
-		$returnValue = $this->configCache[$key];
+		$returnValue = self::$configCache[$key];
 		// looks in session if cache level > none
 		if(!isset($returnValue) && $cacheLevel > self::CACHE_LEVEL_NONE) {
 			$returnValue = $this->getSessionAdminService()->getData($this, $key, ($cacheLevel == self::CACHE_LEVEL_PUBLIC));
@@ -237,7 +254,7 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 			if(!empty($returnValue)) {
 				// parses xml string to SimpleXmlElement
 				$returnValue = simplexml_load_string($returnValue);
-				$this->configCache[$key] = $returnValue;
+				self::$configCache[$key] = $returnValue;
 			}
 			else $returnValue = null;
 		}
@@ -250,7 +267,7 @@ class AttributeExpConfigController extends ConfigControllerWithFuncExpVM
 	 * @param int $cacheLevel one of CACHE_LEVEL_{NONE, NAVIGATE, SESSION or PUBLIC}
 	 */
 	protected function cacheAttributes($key, $attributes, $cacheLevel=self::CACHE_LEVEL_NONE) {
-		$this->configCache[$key] = $attributes;
+		self::$configCache[$key] = $attributes;
 		// stores value in session if cache level > none
 		if($cacheLevel > self::CACHE_LEVEL_NONE) {
 			// serializes SimpleXmlElement

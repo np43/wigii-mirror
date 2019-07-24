@@ -126,7 +126,9 @@ class TemplateRecordManager extends Model {
 		}
 		return $this->translationService;
 	}
-	//alias of t (translate) method of the Translation service
+    /**
+     * alias of t (translate) method of the Translation service
+     */
 	public function t($text, $node=null){
 		return $this->getTranslationService()->t($this->getP(), $text, $node);
 	}

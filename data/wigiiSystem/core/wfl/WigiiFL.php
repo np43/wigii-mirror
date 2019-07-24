@@ -3768,6 +3768,34 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    return $sendNotif;
 	}
 	
+	/**
+	 * Dispatches a Wigii event to a FuncExp located into the given ConfigPack evaluator class
+	 * FuncExp signature : <code>dispatchWigiiEvent(configPackEvaluatorClass,funcExpName)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) configPackEvaluatorClass: String. RecordEvaluator subclass name located in a configPack path.
+	 * - Arg(1) funcExpName: String. Name of the FuncExp to invoke in the scope of the configPackEvaluatorClass to handle the Wigii event.
+	 * This function cannot be called from public space (i.e. caller is located outside of the Wigii instance)
+	 */
+	public function dispatchWigiiEvent($args) {
+	    $this->assertFxOriginIsNotPublic();
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new FuncExpEvalException('dispatchWigiiEvent takes at least two arguments, the configPack evaluator class name and the FuncExp to call');
+	    $configPackEvaluatorClass = $this->evaluateArg($args[0]);
+	    $funcExpName = $this->evaluateArg($args[1]);
+	    if(empty($funcExpName)) throw new FuncExpEvalException('funcExpName cannot be empty', FuncExpEvalException::INVALID_ARGUMENT);
+	    
+	    // asserts that we are currently handling Wigii event	    
+	    $eventSubs = $this->evaluateArg(fs('wigiiEventSubscriber'));
+	    $eventName = $this->evaluateArg(fs('wigiiEventName'));
+	    $entityName = $this->evaluateArg(fs('wigiiEventEntity'));
+	    $eventObject = $this->evaluateArg(fs('wigiiEventObject'));
+	    if($eventSubs instanceof EventExpSubscriber) $eventSubs->assertOnEvent($eventName, $entityName, $eventObject);
+	    else throw new FuncExpEvalException('not handling Wigii event', FuncExpEvalException::INVALID_STATE);
+
+	    // dispatches event to configPack evaluator
+	    $this->evalConfigPackFx($configPackEvaluatorClass, fx($funcExpName,$eventObject,$eventSubs));
+	}
+	
 	// Box integration
 	
 	/**
@@ -3846,5 +3874,27 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    }
 	    // packages result
 	    return (object)array("results"=>$returnValue);
+	}
+	
+	// ConfigPack integration
+	
+	/**
+	 * Evaluates a FuncExp in the scope of a given ConfigPack element evaluator class
+	 * @param String $configPackEvaluatorClass existing RecordEvaluator subclass located in a ConfigPack path. 
+	 * @param FuncExp $fx FuncExp to evaluate
+	 * @return mixed FuncExp result 
+	 */
+	private function evalConfigPackFx($configPackEvaluatorClass,$fx) {
+	    $fxEval = $this->getFuncExpVM()->forkVM($configPackEvaluatorClass);	    
+        $returnValue = null;
+        try {
+            $returnValue = $fxEval->evaluateFuncExp($fx, $this);
+            $fxEval->freeMemory();
+        }
+        catch(Exception $e) {
+            $fxEval->freeMemory();
+            throw $e;
+        }
+        return $returnValue;
 	}
 }

@@ -1667,7 +1667,7 @@ class WigiiCoreExecutor {
 				'closeOnEscape: false, resizable:false' .
 				'}).dialog("moveToTop");' .
 				'$("#' . $domId . '").css("min-height", "0").prev().css("display","none");' .
-				'if(checkOpenItemTemp_url==null) { if(!wigii_preventOperationSuccessfullTimeout){ wigii_operationSuccessfullTimeout = setTimeout(function(){ $("#' . $domId . '").dialog("destroy"); }, 1000); } else { wigii_preventOperationSuccessfullTimeout = false; } }' .
+				'if(checkOpenItemTemp_url==null) { if(!wigii_preventOperationSuccessfullTimeout){ wigii_operationSuccessfullTimeout = setTimeout(function(){ $("#' . $domId . '").dialog("destroy"); actOnOperationSuccessful("'.$exec->getCrtRequest().'","'.$iconType.'");}, 1000); } else { wigii_preventOperationSuccessfullTimeout = false; } }' .
 				'else {$("#' . $domId . '").html($("#' . $domId . '").html()+"<br />'.$transS->t($p, "operationDoneWaitNextAction").'");}; ';
 		$jsCode .= 'if(isWorkzoneViewDocked() && $(".elementDialog.docked").children().length==0){manageWorkzoneViewDocked(\'hide\')};';		
 		$exec->addJsCode($jsCode);
@@ -4544,6 +4544,7 @@ invalidCompleteCache();
 				throw $ase;
 			}
 		} catch (Exception $e) {
+		    if($p==null) $p = $exec->getExecPrincipal();
 			if ($exec->getIsUpdating() && $openAnswer) echo ExecutionServiceImpl :: answerRequestSeparator;
 			ExceptionSink :: publish($e);
 			//if there is an exception and we shouldByPassHeaderAndFooter then we need
@@ -6038,30 +6039,37 @@ crtModuleLabel = '" . $currentModuleLabel. "';
 					$user->setRole(true);
 				}
 
-				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance(!$user->isRole() ? "userEdit" :	"roleEdit"), $exec->getCrtModule());
-				$this->createAccessAndFolderCreatorForm($user, $p, $userEditRec);
-				//set url to refresh on done, depending on context
-				$request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/" . $this->getAdminContext($p)->getSubScreen();
-
-				$form = $this->createNewUserFormExecutor($userP, $userEditRec, "newUser_form", $action, $request);
-				$form->setCorrectionWidth(43);
-				$form->setLabelWidth($labelWidth);
-				$form->setTotalWidth($totalWidth);
-
-				$state = "start";
-				if ($_POST["action"] != null)
-					$state = addslashes($_POST["action"]);
-				/*
-				if (!$p->isWigiiNamespaceCreator()) {
-					$userEditRec->setFieldValue($userP->getUser()->getWigiiNamespace()->getWigiiNamespaceName(), "wigiiNamespace");
-					$userEditRec->getWigiiBag()->setDisabled(true, "wigiiNamespace");
-					$userEditRec->setFieldValue($userP->getUser()->getDetail()->getModuleAccess(), "moduleAccess");
-					$userEditRec->getWigiiBag()->setDisabled(true, "moduleAccess");
-					$userEditRec->getWigiiBag()->setHidden(true, "moduleAccess");
+				// CWE 16.07.2019 tries to bind principal to admin role if not already done
+				$originalUserId = $p->getUserId();
+				if(!$p->isUserCreator()) {
+				    $adminRole = ServiceProvider::getWigiiBPL()->adminGetPrincipalAdminRolesByWigiiNamespace($p, $this, null);
+				    if(isset($adminRole)) $adminRole = $adminRole[$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()];
+				    if(isset($adminRole)) $p->bindToRole($adminRole);				    
 				}
-				*/
-				$form->ResolveForm($p, $exec, $state);
-
+				try {
+				    if(!$p->isUserCreator()) throw new AuthorizationServiceException('principal is not user creator', AuthorizationServiceException::UNAUTHORIZED);
+    				$userEditRec = $this->createActivityRecordForForm($p, Activity :: createInstance(!$user->isRole() ? "userEdit" :	"roleEdit"), $exec->getCrtModule());
+    				$this->createAccessAndFolderCreatorForm($user, $p, $userEditRec);
+    				//set url to refresh on done, depending on context				
+    				if($exec->getIdAnswer()=='activityDialog') $request = null; 
+    				else $request = "adminWorkZone/" . $exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl() . "/" . $exec->getCrtModule()->getModuleUrl() . "/display/" . $this->getAdminContext($p)->getSubScreen();
+                    
+    				$form = $this->createNewUserFormExecutor($userP, $userEditRec, "newUser_form", $action, $request);
+    				$form->setCorrectionWidth(43);
+    				$form->setLabelWidth($labelWidth);
+    				$form->setTotalWidth($totalWidth);
+    
+    				$state = "start";
+    				if ($_POST["action"] != null)
+    					$state = addslashes($_POST["action"]);
+    				$form->ResolveForm($p, $exec, $state);
+    				// binds back to original role
+    				if($originalUserId != $p->getUserId()) $p->bindToRole($originalUserId);
+				}
+				catch(Exception $userEditExc) {
+				    if($originalUserId != $p->getUserId()) $p->bindToRole($originalUserId);
+				    throw $userEditExc;
+				}
 				break;
 			case "userEdit" :
 				if (ServiceProvider :: getAuthenticationService()->isMainPrincipalMinimal())
@@ -12101,6 +12109,25 @@ $additionalJsCode
 				
 				$query = $exec->getCrtParameters(0);
 				$businessKey = $exec->getCrtParameters(1);
+				
+				// CWE 16.07.2019 allows to find user and switch to admin console to display user detail
+				if($exec->getCrtModule()->isAdminModule() && $query=='user') {
+				    $adminRole = ServiceProvider::getWigiiBPL()->adminGetPrincipalAdminRolesByWigiiNamespace($p, $this, null);
+				    if(isset($adminRole)) $adminRole = $adminRole[$exec->getCrtWigiiNamespace()->getWigiiNamespaceName()];
+				    if(isset($adminRole)) $p->bindToRole($adminRole);
+				    ServiceProvider::getAuthorizationService()->assertPrincipalHasAdminAccess($p);
+				    $ac = $this->getAdminContext($p);
+			        $ac->resetGroupFilter();
+			        $ac->resetUserFilter();
+			        $ac->resetUser2Filter();
+			        $ac->setSubScreen('adminUser');
+			        $ac->setWorkingModule($p->getModuleAccess($exec->getCrtParameters(2)));
+			        $ac->setUserListFilter(lf(null,lxEq(fs('id'),$businessKey)));
+			        $exec->addRequests("workZone/". $p->getWigiiNamespace()->getWigiiNamespaceUrl() . "/Admin/display/adminWorkZone/");
+			        $exec->addJsCode('setNavigationBarInAdminStateBsp();');
+				    break;
+				}
+				
 				$filterOnElements = ($exec->getCrtParameters(2)=='filter');
 				$editElement = ($exec->getCrtParameters(2)=='edit');
 				

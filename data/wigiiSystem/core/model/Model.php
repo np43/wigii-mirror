@@ -97,6 +97,13 @@ abstract class Model
 	protected function formatToString($var){return formatToString($var);}
 	protected function formatToEmailLabel($var){return formatToEmailLabel($var);}
 //	protected function formatToEmailArray($var){return formatToEmailArray($var);}
+
+	/**
+     * alias of t (translate) method of the Translation service
+     */
+	public function t($text, $node=null) {
+	    return ServiceProvider::getTranslationService()->t(ServiceProvider::getAuthenticationService()->getMainPrincipal(), $text, $node);
+	}
 }
 
 

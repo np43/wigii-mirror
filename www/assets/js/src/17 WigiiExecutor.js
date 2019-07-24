@@ -133,6 +133,10 @@ function actOnCancelDialog(id){
 	$('#'+id).html('');
 	closeAnyJsOnGoingStreams();
 }
+// called each time an operation successful is triggered
+function actOnOperationSuccessful(request,resultIconType) {
+	/*wigii().log(request+' '+resultIconType);*/
+}
 function emptyDialog(id){
 	$('#'+id).stopTime(); //very important to stop all the timers on elements that we will destroy.
 	$('#'+id+" *").stopTime(); //very important to stop all the timers on elements that we will destroy.

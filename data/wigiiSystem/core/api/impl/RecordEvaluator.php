@@ -3855,6 +3855,46 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $result;
 	}
 	
+	/**
+	 * Fills current activity with a list of pairs (key,value) given on current url.
+	 * If key maps to a field name, then field value is updated with given value on url, else its ignored.
+	 * FuncExp signature: <code>fillActivityFromUrl(startIndex,length) or fillActivityFromUrl(fsl)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) startIndex: int. Starts parsing the url arguments from this index. Default to 0.
+	 * - Arg(1) length: int. Specifies how many arguments should be parsed. If ommitted, then goes until the end.
+	 * Or
+	 * - Arg(0) fsl: FieldSelectorList. If given, then filters the incoming URL arguments to take only the (key,value) pairs matching the given field selectors.
+	 * This allows to control which fields we allow to update from the URL.
+	 */
+	public function fillActivityFromUrl($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>0) $startIndex = $this->evaluateArg($args[0]);
+	    else $startIndex = 0;
+	    // checks if we have a FieldSelectorList
+	    if($startIndex instanceof FieldSelectorList) {
+	        $fsl = $startIndex;
+	        $startIndex=0;
+	    }
+	    else {
+	        $fsl = null;
+	        if($nArgs>1) $length = $this->evaluateArg($args[1]);
+	        else $length=null;
+	    }
+	    
+	    $record = $this->getRecord();
+	    $fieldList = $record->getFieldList();
+	    $params = ServiceProvider::getExecutionService()->getCrtParameters();
+	    $params = array_slice($params, $startIndex,$length);
+	    foreach($params as $fieldDefault){
+	        list($fieldname, $value) = explode("=", $fieldDefault);
+	        list($fieldname, $subfieldname) = explode(".", $fieldname);
+	        // if FieldSelectorList is defined, then takes from URL only declared fields
+	        if(isset($fsl) && !$fsl->containsFieldSelector($fieldname,$subfieldname)) continue;
+	        // updates element field
+	        if($fieldList->doesFieldExist($fieldname)) $record->setFieldValue($value, $fieldname, $subfieldname);
+	    }
+	}
+	
 	// Data type validation functions
 	
 	/**

@@ -144,7 +144,7 @@ class User extends WigiiNamespaceEntity implements SysInformation
 		unset($tempUsername);
 		if(!defined('USERNAME_minLength')) define('USERNAME_minLength', 3);
 		if(!defined('USERNAME_maxLength')) define('USERNAME_maxLength', 64);
-		ArgValidator::assertNoSpecialCharsString("username $var is invalid. Only alphanumeric characters and _.- are allowed. Min length:".USERNAME_minLength." Max length:".USERNAME_maxLength,$var2,
+		ArgValidator::assertNoSpecialCharsString(str_replace(array('$var$','$USERNAME_minLength$','$USERNAME_maxLength$'),array($var,USERNAME_minLength,USERNAME_maxLength), $this->t("invalidNewUsername")),$var2,
 			USERNAME_minLength, USERNAME_maxLength, false, UserAdminServiceException::INVALID_USERNAME);
 		$this->username = $this->formatValue($var);
 	}

@@ -61,6 +61,7 @@
 	 */
 	public function setGroupId($groupId)  {
 		$this->groupId = $groupId;
+		return $this;
 	}
 	protected function getGroupId() {
 		return $this->groupId;
@@ -73,7 +74,9 @@
 		parent::event($eventName, $entityName, $module, $object);
 		if(isset($this->mail)) {
 			$this->executionSink()->publishStartOperation('event');
-			ServiceProvider::getDataFlowService()->processDataSource($this->getRootPrincipal(), newElement($this->getGroupId()), dfasl(
+			$rootP = $this->getRootPrincipal();
+			$rootP->setAdaptiveWigiiNamespace(true);
+			ServiceProvider::getDataFlowService()->processDataSource($rootP, newElement($this->getGroupId()), dfasl(
 				dfas('ElementSetterDFA',
 					'setCalculatedFieldSelectorMap', cfsMap(
 					cfs('date', date('Y-m-d H:i:s')),

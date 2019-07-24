@@ -77,6 +77,7 @@ class mockEmailServiceWebImpl extends EmailServiceWebImpl {
 	 */
 	public function setGroupId($groupId)  {
 		$this->groupId = $groupId;
+		return $this;
 	}
 	protected function getGroupId() {
 		return $this->groupId;
@@ -97,7 +98,9 @@ class mockEmailServiceWebImpl extends EmailServiceWebImpl {
 		$returnValue = 0;
 		try {
 			if(!empty($emails)) {
-				ServiceProvider::getDataFlowService()->processDataSource($this->getRootPrincipal(), array2df($emails), dfasl(
+			    $rootP = $this->getRootPrincipal();
+			    $rootP->setAdaptiveWigiiNamespace(true);
+				ServiceProvider::getDataFlowService()->processDataSource($rootP, array2df($emails), dfasl(
 					dfas('MapModel2ElementDFA', 'setGroupId', $this->getGroupId(),
 						'setModel2ElementMappingMethod', CallableObject::createInstance('mapWigiiEmail2Element', $this)),
 					dfas('ElementDFA', 'setMode', '1')

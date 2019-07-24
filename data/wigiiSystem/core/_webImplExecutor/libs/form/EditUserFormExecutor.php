@@ -48,7 +48,7 @@ class EditUserFormExecutor extends FormExecutor {
 
 	private $multipleUsernames;
 	protected function doSpecificCheck($p, $exec){
-		$workingModuleName = $this->getWigiiExecutor()->getAdminContext($p)->getWorkingModule()->getModuleName();
+		//$workingModuleName = $this->getWigiiExecutor()->getAdminContext($p)->getWorkingModule()->getModuleName();
 
 		$transS = ServiceProvider::getTranslationService();
 		$nsAS = ServiceProvider::getWigiiNamespaceAdminService();
@@ -456,8 +456,13 @@ class EditUserFormExecutor extends FormExecutor {
 		//important to clear the cancel stack
 		$exec->addJsCode("actOnCloseDialog('".$exec->getIdAnswer()."');");
 
+		// chains with display result request
 		if($this->getActOnCheckedRecordRequest()!=null){
 			$exec->addRequests($this->getActOnCheckedRecordRequest());
+		}
+		// if not specific request defined, shows operation successful message
+		else {
+		    $this->getWigiiExecutor()->operationSuccessfullMessage($exec->getIdAnswer(), 350, $this->getTrm()->t("operationDoneSuccessfully"), "", "done");
 		}
 	}
 
@@ -587,6 +592,9 @@ class EditUserFormExecutor extends FormExecutor {
 						"$('#".$this->getFormId()."_passwordHasBeenEdited_value_checkbox').attr('checked', true);" .
 					"}" .
 				"});" .
+			    "$('#".$this->getFormId()."_password_value_password ~ span.genPasswordBtn').click(function(){" .
+			         "$('#".$this->getFormId()."_passwordHasBeenEdited_value_checkbox').attr('checked', true);" .
+			    "});" .
 				"");
 		}
 

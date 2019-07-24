@@ -213,6 +213,7 @@ if($p->isRealUserPublic()) {
                                 ?><li class="<?=($p->getUserId() == $role->getId() ? " selected" : "");?>"><?
                                 ?><a href="#<?=$role->getWigiiNamespace()->getWigiiNamespaceUrl()."/".Module::ADMIN_MODULE;?>" class=""<?
                                 ?>onclick="<?=$exec->getUpdateJsCode($p->getRealUserId(), $p->getUserId(), $role->getWigiiNamespace(), Module::ADMIN_MODULE, 'NoAnswer', 'openAdmin', 'navigate/user/'.$role->getId()."/'+crtRoleId+'/'+crtWigiiNamespaceUrl+'/'+crtModuleName+'", true, true);?>"<? //we try to go in admin in the current module we are
+                                ?>data-wigii-roleid="<?=$role->getId();?>"<?
                                 ?>><?
                                 if($role->getDetail()->isWigiiNamespaceCreator()){
                                     echo $transS->t($p, "superAdmin").' <font class="darkGrayFont" style="font-size:small;">('.$transS->t($p, "asInRoleMenu")." ".$role->getUsername().(!$role->isRole() ? ' : '.$role->getWigiiNamespace()->getWigiiNamespaceName() : '').')</font>';

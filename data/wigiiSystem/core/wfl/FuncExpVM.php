@@ -291,14 +291,16 @@ class FuncExpVM implements FuncExpEvaluator {
 	
 	/**
 	 * Forks current FuncExpVM including configured parent evaluator.
+	 * @param String $newParentEvaluatorClass indicates the class to use for the forked VM parent evaluator. Keeps same class by default.
 	 * @return FuncExpVM
 	 */
-	public function forkVM() {
+	public function forkVM($newParentEvaluatorClass=null) {
 	    $parentEvaluator = $this->getParentFuncExpEvaluator();
 	    $p = $this->getPrincipal();
 	    // clones parent evaluator
 	    if(isset($parentEvaluator)) {
-	        $parentEvaluator = get_class($parentEvaluator);
+	        if(isset($newParentEvaluatorClass)) $parentEvaluator = $newParentEvaluatorClass;
+	        else $parentEvaluator = get_class($parentEvaluator);
 	        $parentEvaluator = ServiceProvider::getRecordEvaluator($p, $parentEvaluator);
 	        $parentEvaluator->setContext($p, null);
 	    }

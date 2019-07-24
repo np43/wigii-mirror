@@ -512,7 +512,7 @@ adminUserUserButton:User ownership:Possession d'utilisateur:::::::::
 adminUserUserButtonHelp:Define the users a user can see in Admin.:Définit les utilisateurs qu'un utilisateur peut voir dans l'Admin.:::::::::
 adminUsersAreRed:Administrators are in red:Les administrateurs sont en rouge:::::::::
 adminMultipleUsername:To create multiple users in one operation, add several usernames separated by a comma:Pour créer plusieurs utilisateurs en une opération, saisissez une liste de noms séparés par des virgules:::::::::
-usernameAlreadyUsed:Please choose another username (this one is already used):Veuillez choisir un autre nom d'utilisateur (celui-ci est déjà utilisé):::::
+usernameAlreadyUsed:Please choose another username (this one is already used):Veuillez choisir un autre nom d&apos;utilisateur (celui-ci est déjà utilisé):::::
 itemShownInFolders:#Element# is shown in the following #groups#:#Element# est montré dans #groups# suivants:::::
 
 
@@ -919,7 +919,7 @@ nbDatasDisplayedOn:#-Elements# display:#-Elements# affichés:::::::::
 nbDatasFound:found:trouvés:::::::::
 neverExpires:never:jamais:::::::::
 newPassword:New password:Nouveau mot de passe:::::::::
-samePassword:The new password must be different than the old one.:Le nouveau mot-de-passe doit être différent de l'ancien.:::::
+samePassword:The new password must be different than the old one.:Le nouveau mot-de-passe doit être différent de l&apos;ancien.:::::
 passwordDifferent:The password is not equal:Le mot de passe n'est pas identique::::::
 noGroupFound:#Group# not found:#Group# introuvable:::::::::
 noGroupFoundExplanation:#ThisGroup# is probably deleted or you don't have rigths to view it.:#ThisGroup# est probablement supprimé ou vous n'avez pas les droits pour le visualiser.:::::::::
@@ -1469,6 +1469,7 @@ pop3ServerConnectionProblem:Connection with pop3 server failed. Please try again
 pop3ResetPassword:Please change the password of your linked email account:Veuillez changer le mot de passe de votre compte email associé:::::::::
 resetPassword:Please ask your administrator to reset your password:Veuillez demander à votre administrateur de changer votre mot de passe:::::::::
 invalidUsername:Unknown user:Utilisateur inconnu:::::::::
+invalidNewUsername:Username $var$ is invalid. Only alphanumeric characters and _.- are allowed. Min length\: $USERNAME_minLength$ Max length\: $USERNAME_maxLength$:Le nom d&apos;utilisateur $var$ est invalide. Seulement sont autorisés, les caractères alpha-numériques et _.- . Longueur min\: $USERNAME_minLength$ Longueur max\: $USERNAME_maxLength$:::::::::
 forbiddenUser:Forbidden user:Utilisateur interdit:::::::::
 toManyLoginFailure:Please wait. Too many login failed. Try again in 10min:Veuillez attendre. Trop de tentatives infructeuses de login. Essayez à nouveau dans 10min.:::::::::
 noModuleAccess:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />No access is defined for this role:<img class="icon" src="images/icones/tango/22x22/emblems/emblem-unreadable.png" />Aucun accès n'est définit pour ce rôle:::::::::
