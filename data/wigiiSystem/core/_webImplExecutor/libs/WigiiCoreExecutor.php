@@ -1001,10 +1001,12 @@ class WigiiCoreExecutor {
 	}
 	
 	public function displayNotFound($message = null) {
-	    header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
-		echo '<!DOCTYPE html>';
-		echo "\n";
-		echo '<html><body><head><title>404 Not Found</title></head>';
+	    if(!headers_sent()) {
+    	    header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+    		echo '<!DOCTYPE html>';
+    		echo "\n";
+    		echo '<html><body><head><title>404 Not Found</title></head>';
+	    }
 		echo '<h2>Page not found</h2>';
 		echo '<p>The requested URL was not found on this server.</p>';
 		if ($message) {
@@ -1013,10 +1015,12 @@ class WigiiCoreExecutor {
 		echo '</body></html>';
 	}
 	public function displayNotAvailable($p, $message = null) {
-	    header($_SERVER["SERVER_PROTOCOL"]." 403 Forbidden");
-		echo '<!DOCTYPE html>';
-		echo "\n";
-		echo '<html><body><head><title>403 Forbidden</title></head>';
+	    if(!headers_sent()) {
+    	    header($_SERVER["SERVER_PROTOCOL"]." 403 Forbidden");
+    		echo '<!DOCTYPE html>';
+    		echo "\n";
+    		echo '<html><body><head><title>403 Forbidden</title></head>';
+	    }
 		echo '<h2>' . ServiceProvider :: getTranslationService()->t($p, "unavailableElement") . '</h2>';
 		echo '<p>' . ServiceProvider :: getTranslationService()->t($p, "unavailableElementExplication") . '</p>';
 		if ($message) {

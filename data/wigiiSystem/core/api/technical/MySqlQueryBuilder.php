@@ -123,7 +123,8 @@ class MySqlQueryBuilder
 			case MySqlQueryBuilder::SQLTYPE_INT:
 			case MySqlQueryBuilder::SQLTYPE_DOUBLE:
 				if($sval === '') return 'NULL';
-				else return $sval;
+				elseif(is_numeric($sval)) return $sval;
+				else throw new MySqlFacadeException('invalid SQL type', MySqlFacadeException::INVALID_ARGUMENT);
 			case MySqlQueryBuilder::SQLTYPE_BOOLEAN:
 				if($val == "0" ||
 					$val == null ||
