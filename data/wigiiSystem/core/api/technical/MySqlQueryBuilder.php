@@ -122,6 +122,7 @@ class MySqlQueryBuilder
 			case MySqlQueryBuilder::SQLTYPE_BIGINT:
 			case MySqlQueryBuilder::SQLTYPE_INT:
 			case MySqlQueryBuilder::SQLTYPE_DOUBLE:
+			    $sval = trim($sval);
 				if($sval === '') return 'NULL';
 				elseif(is_numeric($sval)) return $sval;
 				else throw new MySqlFacadeException('invalid SQL type', MySqlFacadeException::INVALID_ARGUMENT);
