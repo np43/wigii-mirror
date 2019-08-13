@@ -81,7 +81,19 @@
 				data = JSON.parse(data);
 			}
 			return data;
-		};		
+		};
+		riseNcd.storeObject = function(elementId, key, data) {
+			return riseNcd.call('riseNcd_storeObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', data);
+		};
+		riseNcd.getObject = function(elementId, key) {
+			var data = riseNcd.call('riseNcd_getObject("'+elementId+'"'+(key?',"'+key+'"':'')+')');
+			if(data) {
+				//data = data.replace(/\n|\r/g,' ');
+				//console.debug(data);
+				data = JSON.parse(data);
+			}
+			return data;
+		};
 		riseNcd.createDataStorage = function(groupId, description) {
 			return riseNcd.call('riseNcd_createDataStorage("'+groupId+'"'+(description?',"'+description+'"':'')+')');
 		};
@@ -869,7 +881,8 @@
 			 */
 			self.width = function(percent) {
 				var r = self.$()[0].getBoundingClientRect();
-				var w = Math.floor(r.right-r.left);
+				//var w = Math.floor(r.right-r.left);
+				var w = r.width;
 				if(percent && w>0) {
 					// computes new width
 					var newW = w;
@@ -906,7 +919,8 @@
 			 */
 			self.height = function(percent) {
 				var r = self.$()[0].getBoundingClientRect();
-				var h = Math.floor(r.bottom-r.top);
+				//var h = Math.floor(r.bottom-r.top);
+				var h = r.height;
 				if(percent && h>0) {
 					// computes new height
 					var newH = h;
@@ -940,10 +954,14 @@
 			 * Scales the underlying object to take the given percentage of the GameBoard size, but keeping the right proportions.			
 			 */
 			self.size = function(percent) {
-				// if board is horizontal, then resizes height of object to ensure not to cut some edges
-				if(mf.impl.gameBoard.width() > mf.impl.gameBoard.height()) return self.height(percent);
-				// else resizes width
-				else self.width(percent);
+				var objLandscapeRatio = self.width()/self.height();
+				var gameBoardLandscapeRatio = mf.impl.gameBoard.width()/mf.impl.gameBoard.height();
+				
+				if(gameBoardLandscapeRatio > objLandscapeRatio){
+					return self.height(percent);
+				} else {
+					return self.width(percent);
+				}
 			};
 			
 			/**
@@ -1525,6 +1543,10 @@
 							if(firstChild.attr('id') != self.ctxKey) self.$().insertBefore(firstChild);
 							// centers and resizes background to take full screen
 							self.position(0,0).size("100%");
+							//call option actOnDone if defined
+							if(self.options.actOnDone){
+								self.options.actOnDone(self);
+							}
 						}
 						catch(exc) {
 							mf.impl.publishException(exc);

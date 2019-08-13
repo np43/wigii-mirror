@@ -101,6 +101,103 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 	}
 	
 	/**
+	 * Stores JSON data into a shared storage place, identified by an element ID
+	 * FuncExp signature : <code>riseNcd_storeObject(elementId,key,jsonData)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) elementId: Int. Element ID located in https://rise.wigii.org/#NCD/Espace/, accessible by the user in which to store the JSON data
+	 * - Arg(1) key: String. The name of the key in the object for which we want to update the data. If not provided, always replace the whole object.
+	 * - Arg(2) data: String. The JSON string of the value associated to the given key
+	 * @return String Full object as JSON
+	 * @throws FuncExpEvalException in case of error.
+	 */
+	public function riseNcd_storeObject($args) {
+	    $p = $this->getPrincipal();
+	    // Extracts arguments
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException("riseNcd_storeObject takes three arguments: the element ID, the key and the JSON data", FuncExpEvalException::INVALID_ARGUMENT);
+	    $elementId = $this->evaluateArg($args[0]);
+	    if($nArgs>1) $key = $this->evaluateArg($args[1]);
+	    else $key = null;
+	    if($nArgs>2) {
+	        $data = $this->evaluateArg($args[2]);
+	        if(!empty($data)) {
+	            $data=json_decode($data);
+	            if(json_last_error()) throw new FuncExpEvalException("invalid json data.\n".$data, FuncExpEvalException::INVALID_ARGUMENT);
+	        }
+	    }
+	    else {
+	        $data = ServiceProvider::getWigiiBPL()->dataFetchFromPost($p, $this, wigiiBPLParam('type','json'));
+	    }
+	    // Stores data
+        // gets storage container
+        $fsl = fsl(fs('dataStorage'));
+        $element = sel($p, elementP($elementId,$fsl), dfasl(dfas("NullDFA")));
+        if(!isset($element)) throw new FuncExpEvalException("no existing or accessible element was found with ID ".$elementId, FuncExpEvalException::INVALID_ARGUMENT);
+        $element = $element->getDbEntity();
+        // Extracts existing data
+        $existingData = $element->getFieldValue('dataStorage');
+        /*
+         $html2text = new Html2text();
+         $html2text->setHtml($existingData);
+         $existingData =  $html2text->getText();
+         */
+        $temp=@json_decode($existingData);
+        if(json_last_error()) throw new FuncExpEvalException("invalid existing json data. Please correct stored data in element $elementId\n".$existingData, FuncExpEvalException::INVALID_ARGUMENT);
+        $existingData = $temp;
+        
+        //replace whole content
+        if(empty($key)) {
+            $existingData = $data;
+        } else { //replace key value
+            $existingData->{$key} = $data;
+        }
+        
+        // Persists new data
+        $existingData = @json_encode($existingData,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+        if(json_last_error()) throw new FuncExpEvalException("invalid json data. Please correct posted data", FuncExpEvalException::INVALID_ARGUMENT);
+        $element->setFieldValue($existingData,'dataStorage');
+        ServiceProvider::getElementService()->updateElement($p,$element,$fsl);
+	    return $existingData;
+	}
+	
+	/**
+	 * Gets JSON data from a shared storage place, identified by an element ID
+	 * FuncExp signature : <code>riseNcd_getObject(elementId,key)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) elementId: Int. Element ID located in https://rise.wigii.org/#NCD/Espace/, accessible by the user from which to get the JSON data
+ 	 * - Arg(1) key: String. Optional. The name of the key in the object for which we want to fetch the value.
+	 * @return String the JSON data
+	 * @throws FuncExpEvalException in case of error.
+	 */
+	public function riseNcd_getObject($args) {
+	    $p = $this->getPrincipal();
+	    // Extracts arguments
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException("riseNcd_storeData takes one argument: the element ID", FuncExpEvalException::INVALID_ARGUMENT);
+	    $elementId = $this->evaluateArg($args[0]);
+	    if($nArgs>1) $key = $this->evaluateArg($args[1]);
+	    else $key = null;
+	    
+	    // Gets storage container
+	    $element = sel($p, elementP($elementId,fsl(fs('dataStorage'))), dfasl(dfas("NullDFA")));
+	    if(!isset($element)) throw new FuncExpEvalException("no existing or accessible element was found with ID ".$elementId, FuncExpEvalException::INVALID_ARGUMENT);
+	    $element = $element->getDbEntity();
+	    // Returns existing data
+	    $returnValue = $element->getFieldValue('dataStorage');
+	    /*
+	     $html2text = new Html2text();
+	     $html2text->setHtml($returnValue);
+	     $returnValue =  $html2text->getText();
+	     */
+	    if(!empty($key)) {
+	        $temp=@json_decode($returnValue);
+	        if(json_last_error()) throw new FuncExpEvalException("invalid existing json data. Please correct stored data in element $elementId\n".$returnValue, FuncExpEvalException::INVALID_ARGUMENT);
+	        $returnValue = json_encode($temp->{$key},JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+	    }
+	    return $returnValue;
+	}
+	
+	/**
 	 * Stores JSON data into a shared storage place, identified by an element ID 
 	 * FuncExp signature : <code>riseNcd_storeData(elementId,keyField,jsonData)</code><br/>
 	 * Where arguments are :
@@ -623,6 +720,8 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 		}
 		return $returnValue;
 	}
+	
+	
 	
 	// Accessors
 	
