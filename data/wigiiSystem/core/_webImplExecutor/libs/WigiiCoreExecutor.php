@@ -7112,7 +7112,9 @@ onUpdateErrorCounter = 0;
 
 				//set the language for the system according to title or lang param
 				$this->setLanguageToPBasedOnGroupSubscription($p, $exec, $transS, $record, $lang);
-
+                // CWe 26.07.2019 pushes language to browser
+				$exec->addJsCode("crtLanguage = '" . $transS->getLanguage(true) . "';crtLang = '" . $transS->getLanguage() . "';");
+				
 				$state = "start";
 				if ($_POST["action"] != null)
 					$state = addslashes($_POST["action"]);

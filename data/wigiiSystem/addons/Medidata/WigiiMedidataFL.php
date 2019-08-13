@@ -270,6 +270,96 @@ MDTINVOICERESPSTATUS;
 	}
 	
 	/**
+	 * Checks if Medidata invoice xml file is deprecated compared to given customer order and should be re-generated.
+	 * Compares key data and financial amounts.<br/>
+	 * FuncExp signature : <code>checkIfMedidataInvoiceChanged(customerOrder,medidataInvoiceXml)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) customerOrder: Element of module CustomerOrders|ElementPDataFlowConnector. Given customer order to which is attached an XML Medidata General Invoice Request or reminder.
+	 * - Arg(1) medidataInvoiceXml: FieldSelector. Field of type File containing the generated Medidata invoice or reminder XML file
+	 * @return Boolean true if CustomerOrder data is different than XML invoice data, else false.
+	 */
+	public function checkIfMedidataInvoiceChanged($args) {
+	    $this->debugLogger()->logBeginOperation('checkIfMedidataInvoiceChanged');
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs < 2) throw new FuncExpEvalException('checkIfMedidataInvoiceChanged takes at least two parameters which first one should evaluate to an Element of type Wigii Company CustomerOrders, second be a FieldSelector pointing to a field of type Files containing a Medidata generated XML invoice or reminder file', FuncExpEvalException::INVALID_ARGUMENT);
+	    $customerOrder = $this->evaluateArg($args[0]);
+	    // fetches element if needed
+	    if($customerOrder instanceof ElementPDataFlowConnector) $customerOrder = sel($this->getPrincipal(),$customerOrder,dfasl(dfas("NullDFA")));
+	    if($customerOrder instanceof ElementP) $customerOrder = $customerOrder->getElement();
+	    if(!($customerOrder instanceof Element)) throw new FuncExpEvalException('checkIfMedidataInvoiceChanged takes a first parameter which should evaluate to an Element of type Wigii Company CustomerOrders', FuncExpEvalException::INVALID_ARGUMENT);
+	    // gets medidata XML invoice
+	    if($args[1] instanceof FieldSelector) $xmlFieldName = $args[1]->getFieldName();
+	    else {
+	        $xmlFieldName = $this->evaluateArg($args[1]);
+	        if($xmlFieldName instanceof FieldSelector) $xmlFieldName = $xmlFieldName->getFieldName();
+	    }
+	    $xmlField = $customerOrder->getFieldList()->getField($xmlFieldName);
+	    if(!($xmlField->getDataType() instanceof Files)) throw new FuncExpEvalException('checkIfMedidataInvoiceChanged takes second parameter which should be a FieldSelector pointing to a field of type Files containing a Medidata generated XML invoice file', FuncExpEvalException::INVALID_ARGUMENT);
+
+	    // initializes options
+	    $options = wigiiBPLParam();
+	    $options->setValue('xmlSchema','generalInvoiceRequest_450.xsd');
+	    $options->setValue('namespaceURI','http://www.forum-datenaustausch.ch/invoice');
+	    $options->setValue('namespacePrefix','invoice');
+	    
+	    // extracts Medidata XML
+	    $medidataXml = sel($this->getPrincipal(),elementFile2df($customerOrder, $xmlFieldName),dfasl(dfas("StringBufferDFA")));
+	    $medidataXml = $this->loadXmlDoc($medidataXml);
+	    // transforms it as SimpleXml
+	    $medidataXml = simplexml_import_dom($medidataXml);
+	    
+	    // extracts invoice tiers type (tiers_payant or tiers_garant)
+	    $invoiceTiersType = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/tiers_payant');
+	    if(!isset($invoiceTiersType)) $invoiceTiersType = $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/tiers_garant');
+	    $invoiceTiersXml = $invoiceTiersType;
+	    $invoiceTiersType = $invoiceTiersType->getName();
+	    
+	    // at beginning no change, then goes through a list of checks until a change is detected
+	    $noChange = true; $a=null; $b=null;
+	    // dueAmount changed ?
+	    if($noChange) {
+	        $a = $this->getXmlValue($invoiceTiersXml, 'invoice', './balance','amount_due');
+	        $b = $customerOrder->getFieldValue('dueAmount');
+	        $noChange = ($a == $b);
+	        if(!$noChange) $this->debugLogger()->write('dueAmount changed: '.$a.'!='.$b);
+	    }
+	    // nb of articles changed ?
+	    if($noChange) {
+	        // extract services
+	        $invoiceServices = $medidataXml->xpath("/invoice:request/invoice:payload/invoice:body/invoice:services/invoice:service");
+	        if($invoiceServices) $nbServices = count($invoiceServices);
+	        else $nbServices = 0;
+	        
+	        $a = $nbServices;
+	        $b = $customerOrder->getFieldValue('nbOfArticles');
+	        $noChange = ($a == $b);
+	        if(!$noChange) $this->debugLogger()->write('nbOfArticles changed: '.$a.'!='.$b);
+	    }
+	    // case id changed ?
+	    if($noChange) {
+	        // extracts law type (LAI=ivg,LAA=uvg,LAMAL=kvg)
+	        $invoiceLawType =  $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/uvg');
+	        if(!isset($invoiceLawType)) $invoiceLawType =  $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/ivg');
+	        if(!isset($invoiceLawType)) $invoiceLawType =  $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/kvg');
+	        $invoiceCaseXml = $invoiceLawType;
+	        $invoiceLawType = $invoiceLawType->getName();
+	        switch($invoiceLawType) {
+	            case 'uvg': $invoiceLawType='LAA'; break;
+	            case 'ivg': $invoiceLawType='LAI'; break;
+	            case 'kvg': $invoiceLawType='LAMal'; break;
+	        }
+	        
+	        $a = $this->getXmlValue($invoiceCaseXml, 'invoice', './','case_id');
+	        $b = $this->assertNoSepNotNull($customerOrder, 'caseNumber');
+	        $noChange = ($a == $b);
+	        if(!$noChange) $this->debugLogger()->write('caseNumber changed: '.$a.'!='.$b);
+	    }
+	    
+	    $this->debugLogger()->logEndOperation('checkIfMedidataInvoiceChanged');
+	    return !$noChange;
+	}
+	
+	/**
 	 * Generates a Medidata SendControl file using a generated Medidata xml file stored into a Wigii Company CustomerOrder element.<br/>
 	 * FuncExp signature : <code>genMedidataSendControl(customerOrder,medidataXml,options)</code><br/>
 	 * Where arguments are :

@@ -761,7 +761,237 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	
 	if(isWorkzoneViewDocked()) addScrollWithShadow($(formId).parent().prop("id"));	
 }
+function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName) {
+	/**
+	 * TimeSlotChooser component attached to a TimeRanges field
+	 * @param Object options a bag of options to configure the time slot chooser. It supports:
+	 * - nbOfDays: Int. Number of possible booking days to display. Default to 5.
+	 */
+	var TimeSlotChooser = function(formId,timeRangeFieldName,options) {
+		var self = this;
+		self.className = 'TimeSlotChooser';
+		self.ctxKey = formId+'_'+timeRangeFieldName+'_'+self.className;
+		self.options = options || {};
+		self.context = {			
+			pageNo:0,
+			nbPages:0,
+			queryObject:{
+				begDate:undefined,
+				nbOfDays:undefined
+			},
+			timeSlots:[],
+			timeSlotIndex:{}
+		};
+		self.impl = {
+			onSelectTimeSlotSubscribers:[]
+		};
+		self.formId = formId;
+		self.fieldName = timeRangeFieldName;
+		self.field = function() { return $('#'+self.formId+'__'+self.fieldName);};
+		self.$ = function() { return $('#'+self.formId+'__'+self.fieldName+' div.globalTimeSlots');};
+		
+		// initializes default options
+		if(!self.options.nbOfDays) self.options.nbOfDays=5;
+		
+		// time slot query
 
+		/**
+		 * Gets the query object sent to server when asking for free time slots
+		 */
+		self.queryObject = function() { return self.context.queryObject; };
+		/**
+		 * Loads the next set of time slots by querying the server
+		 * @param Function afterLoadAction callback executed after loading new page of time slots.
+		 * Callback function takes two parameters: the current TimeSlotChooser instance (self) and an optional context.
+		 * @param mixed ctx optional context variable to pass back to callback
+		 */
+		self.loadNewPage = function(afterLoadAction,ctx) {
+			var begDate;
+			// if no pages, then begDate is today
+			if(self.context.nbPages==0) begDate = wigii().day2string();
+			// else begDate is last page end slot date + 1 day
+			else {
+				begDate = (self.context.timeSlots[self.context.timeSlotIndex['page_'+self.context.nbPages+'_end']]).begDate;
+				begDate = (new Date(begDate)).getTime();
+				begDate += 3600*24*1000;
+				begDate = wigii().day2string(new Date(begDate));				
+			}
+			// initializes query object
+			self.context.queryObject.begDate = begDate;
+			self.context.queryObject.nbOfDays = self.options.nbOfDays;
+			// on receive time slots function
+			var onReceiveTimeSlots = function(data) {
+				if(data.length>0) {
+					var newPage = self.context.nbPages+1;
+					var n = self.context.timeSlots.length;
+					self.context.timeSlotIndex['page_'+newPage+'_start'] = n;
+					for(var i=0;i<data.length;i++) {
+						var timeSlot = data[i];
+						self.context.timeSlots.push(timeSlot);
+						self.context.timeSlotIndex[timeSlot.begDate+' '+timeSlot.begTime] = n;
+						n++;
+					}
+					self.context.timeSlotIndex['page_'+newPage+'_end'] = n-1;
+					self.context.nbPages = newPage;
+				}
+				if(afterLoadAction) afterLoadAction(self,ctx);
+			};
+			// queries for time slots
+			onReceiveTimeSlots(wigii().genTimeSlots(self.context.queryObject.begDate,undefined,{nbDays:self.context.queryObject.nbOfDays}));
+		};
+		
+		/**
+		 * Resets TimeSlotChooser
+		 */
+		self.reset = function() {			
+			self.context.timeSlotIndex = {};
+			self.context.timeSlots = [];
+			self.context.nbPages = 0;
+			self.context.pageNo = 0;
+			self.today();
+		};
+		
+		// navigation		
+		
+		/**
+		 * centers TimeSlotChooser on today
+		 */
+		self.today = function() { self.impl.gotoPage(1); };
+		/**
+		 * Loads next range
+		 */
+		self.nextRange = function() {
+			self.impl.gotoPage(self.context.pageNo+1);
+		};
+		/**
+		 * Loads previous range
+		 */
+		self.previousRange = function() {
+			if(self.context.pageNo>1) self.impl.gotoPage(self.context.pageNo-1);
+		};
+		
+		/**
+		 * Goes to specified page number
+		 * @param int n page number starting from 1
+		 */
+		self.impl.gotoPage = function(n) {
+			if(n<=0) throw wigii().createServiceException("page number should start at 1", wigii().errorCodes.INVALID_ARGUMENT);
+			var p = n;
+			// page display function
+			var displayPage = function(self) {
+				self.context.pageNo = p;
+				if(p==1) self.$().find('div.commands span.glyphicon-chevron-left').addClass('disabled');
+				else self.$().find('div.commands span.glyphicon-chevron-left').removeClass('disabled');
+				self.impl.renderTimeSlots(
+					self.context.timeSlotIndex['page_'+self.context.pageNo+'_start'],
+					self.context.timeSlotIndex['page_'+self.context.pageNo+'_end']
+				);
+			};
+			// recursive page loading function
+			var recursivelyLoadNewPage = function(self,i) {
+				if(i>0) self.loadNewPage(recursivelyLoadNewPage,i-1);
+				else displayPage(self);
+			}
+			// if page is already loaded, then displays it
+			if(self.context.nbPages >= p) displayPage(self);
+			// else if page is next page, then loads it and displays it
+			else if(p == self.context.nbPages + 1) self.loadNewPage(displayPage);
+			// else recursively loads all intermediate pages and then displays it
+			else recursivelyLoadNewPage(self,p-self.context.nbPages);
+		};
+		
+		// selection
+		
+		/**
+		 * Selects a time slot in the list of available slots
+		 */
+		self.selectTimeSlot = function(begDate, begTime) {
+			var timeSlot;
+			timeSlot = self.context.timeSlotIndex[begDate+' '+begTime];
+			if(timeSlot!==undefined) timeSlot = self.context.timeSlots[timeSlot];
+			// if a valid time slot has been selected
+			if(timeSlot) {
+				// updates time range sub fields
+				$('#'+self.formId+'_'+self.fieldName+'_begTime_text').val(timeSlot.begTime);
+				$('#'+self.formId+'_'+self.fieldName+'_endTime_text').val(timeSlot.endTime);
+				$('#'+self.formId+'_'+self.fieldName+'_begDate_text, #'+self.formId+'_'+self.fieldName+'_endDate_text')
+					.val(wigii().txtFrenchDate(timeSlot.begDate,'noTime'))
+					.change();
+				if($('#'+self.formId+'_'+self.fieldName+'_isAllDay_checkbox').prop('checked')) $('#'+self.formId+'_'+self.fieldName+'_isAllDay_checkbox').click();
+				// calls any registred eventHandlers
+				if(self.impl.onSelectTimeSlotSubscribers.length>0) {
+					for(var i=0;i<self.impl.onSelectTimeSlotSubscribers.length;i++) {
+						self.impl.onSelectTimeSlotSubscribers[i](timeSlot,self);
+					}
+				}
+			}
+		};
+		/**
+		 * Registers an event handler which is called when a time slot is selected
+		 * @param Function eventHandler a function with signature eventHandler(timeSlot,self)
+		 * where timeSlot is an object of the form 
+		 * {begDate: Date string YYYY-MM-DD. Time slot begin date, 
+		 *  begTime: Time string HH:MM. Time slot begin time, 
+		 *  endTime: Time string HH:MM. Optional time slot end time if known,
+		 *  other optional fields depending of time slot list received from server
+		 * }
+		 * and self points to this TimeSlotChooser instance
+		 */
+		self.onSelectTimeSlot = function(eventHandler) {
+			if(!$.isFunction(eventHandler)) throw wigii().createServiceException('onSelectTimeSlot event handler should be a function', wigii().errorCodes.INVALID_ARGUMENT);
+			self.impl.onSelectTimeSlotSubscribers.push(eventHandler);
+		};
+		
+		// html rendering
+		
+		self.impl.renderTimeSlots = function(startSlotIndex,stopSlotIndex) {
+			var html = self.impl.container.reset().htmlBuilder();
+			var crtDate;			
+			for(var i=startSlotIndex;i<=stopSlotIndex;i++) {
+				var timeSlot = self.context.timeSlots[i];
+				var displayHeader=false;
+				// puts first day header on start
+				if(i==startSlotIndex) {					
+					crtDate = timeSlot.begDate;
+					displayHeader=true;
+				}
+				// if date changes, then puts new day header
+				else if(timeSlot.begDate != crtDate) {
+					html.$tag('div');									
+					crtDate = timeSlot.begDate;
+					displayHeader=true;
+				}
+				if(displayHeader) {
+					html.tag('div','class','dayTimeSlots','data-timeslotdate',timeSlot.begDate);
+					var d = new Date(timeSlot.begDate);
+					html.tag('div','class','timeSlotHeader')
+						.tag('p','class','title').put(wigii().txtFrenchDate(d,'longDate')).$tag('p')
+						.tag('p','class','date').put(wigii().txtWeekDay(d)).$tag('p')
+					.$tag('div');
+				}
+				html.tag('div','class','timeSlot').put(timeSlot.begTime).$tag('div');
+			}
+			html.$tag('div');
+			html.emit();
+			// binds click on time slot
+			self.$().find('div.timeSlotsContainer div.timeSlot').click(function(){
+				self.selectTimeSlot($(this).parent().attr('data-timeslotdate'), $(this).text());
+			});
+		};
+		if(!window.wncd) wigii().createServiceException("Wigii NCD library is required to render TimeSlotChooser", wigii().errorCodes.CONFIGURATION_ERROR);
+		self.impl.container = self.$().find('div.timeSlotsContainer').wncd('html');
+		
+		// binds to time range field
+		self.field().data(self.ctxKey,self);
+		self.$().find('div.commands span.glyphicon-chevron-left').click(self.previousRange);
+		self.$().find('div.commands span.glyphicon-calendar').click(self.today);
+		self.$().find('div.commands span.glyphicon-chevron-right').click(self.nextRange);
+		// startup
+		self.today();
+	};
+	// creates time slot chooser component and binds to time range field
+	new TimeSlotChooser(formId,timeRangeFieldName);	
+}
 function convertTimestamps(obj){
 	//advanced search: match any TIMESTAMP() and convert them into a real timestamp
 	orignalText = $(obj).val();

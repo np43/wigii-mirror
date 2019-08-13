@@ -1282,6 +1282,24 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};					
 			
 			/**
+			 * If field is of type TimeRanges and displayFreeTimeSlots=1 in config, then returns TimeSlotChooser js component attached to field.
+			 * @returns TimeSlotChooser attached TimeSlotChooser component if defined
+			 */
+			self.timeSlotChooser = function() {
+				var returnValue = undefined;
+				// list iteration
+				if(self.list) {
+					throw wigiiApi.createServiceException('FieldHelper timeSlotChooser selector can only be called on one single field.', wigiiApi.errorCodes.UNSUPPORTED_OPERATION);
+				}
+				// single element implementation
+				else {
+					if(self.dataType()!='TimeRanges') throw wigiiApi.createServiceException('FieldHelper timeSlotChooser selector can only be called on a field of type TimeRanges.', wigiiApi.errorCodes.UNSUPPORTED_OPERATION);					
+					returnValue = self.$.data(self.formId()+'_'+self.fieldName()+'_'+'TimeSlotChooser');
+				}
+				return returnValue;
+			};
+			
+			/**
 			 * Returns the FormHelper containing this field
 			 */
 			self.formHelper = function() {
@@ -4187,6 +4205,79 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		});
 		
 		ncddoc(function(){/**
+		 * Generates a list of time slots
+		 * @param String|Date begDate date from which to start generating time slots. Defaults to today.
+		 * @param String begTime time (HH:MM) from which to start generating time slots. Defaults to now.
+		 * @param Object options bag of options to configure the time slots generation. It supports:
+		 * - nbDays: Int. Number of days. Default to 7.
+		 * - begTime: String. Opening time (HH:MM). Default to 08:00.
+		 * - endTime: String. Closing time (HH:MM). Default to 18:00.
+		 * - duration: Int. Slot duration in minutes. Default to 60.
+		 * @return Array an array of TimeSlot objects of the form 
+		 * {begDate: Date string YYYY-MM-DD. Time slot begin date, 
+		 *  begTime: Time string HH:MM. Time slot begin time, 
+		 *  endTime: Time string HH:MM. Time slot end time
+		 * }
+		*/},
+		wigiiApi.genTimeSlots = function(begDate,begTime,options) {
+			// converts begDate to YYYY-MM-DD
+			begDate = ($.type(begDate)== 'date'? begDate: new Date(begDate||Date.now()));
+			begDate = wigiiApi.day2string(begDate);
+			// converts begTime to HH:MM
+			if(!begTime) begTime = wigiiApi.date2Time();
+			// initiliazes options
+			options = options || {};
+			if(!options.nbDays) options.nbDays=7;
+			if(!options.begTime) options.begTime = '08:00';
+			if(!options.endTime) options.endTime = '18:00';
+			if(!options.duration) options.duration = 60;
+			
+			var returnValue = [];
+			var oneDay = 3600*24*1000; // one day duration in ms
+			if(options.duration > 0) {
+				// generates first day slots
+				var begDay = new Date(begDate+' '+(begTime > options.begTime? begTime: options.begTime)+':00').getTime();
+				var endDay = new Date(begDate+' '+options.endTime+':00').getTime();
+				var begSlot = begDay;
+				var endSlot = begSlot+options.duration*60*1000;
+				while(endSlot<=endDay) {
+					var timeSlot = {};
+					var d = new Date(begSlot);
+					timeSlot['begDate'] = wigiiApi.day2string(d);
+					timeSlot['begTime'] = wigiiApi.date2Time(d);
+					d = new Date(endSlot);
+					if(wigiiApi.day2string(d) == timeSlot['begDate']) timeSlot['endTime'] = wigiiApi.date2Time(d);
+					else timeSlot['endTime'] = options.endTime;
+					returnValue.push(timeSlot);
+					begSlot = endSlot;
+					endSlot += options.duration*60*1000;
+				}
+				// generate other day slots
+				begDay = new Date(begDate+' '+options.begTime+':00').getTime()+oneDay;
+				endDay = new Date(begDate+' '+options.endTime+':00').getTime()+oneDay;
+				for(var i=1;i<options.nbDays;i++) {
+					begSlot = begDay;
+					endSlot = begSlot+options.duration*60*1000;
+					while(endSlot<=endDay) {
+						var timeSlot = {};
+						var d = new Date(begSlot);
+						timeSlot['begDate'] = wigiiApi.day2string(d);
+						timeSlot['begTime'] = wigiiApi.date2Time(d);
+						d = new Date(endSlot);
+						if(wigiiApi.day2string(d) == timeSlot['begDate']) timeSlot['endTime'] = wigiiApi.date2Time(d);
+						else timeSlot['endTime'] = options.endTime;
+						returnValue.push(timeSlot);
+						begSlot = endSlot;
+						endSlot += options.duration*60*1000;
+					}
+					begDay += oneDay;
+					endDay += oneDay;
+				}
+			}
+			return returnValue;
+		});
+		
+		ncddoc(function(){/**
 		 * Reads the data coming from the source and processes it through the selected flow activities
 		 *@param Function source a data flow source function. 
 		 * A data source function is a function which takes an open DataFlowContext in parameter and then calls processDataChunk as many times as needed.
@@ -4313,6 +4404,26 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		});
 		
 		ncddoc(function(){/**
+		 * Converts a date to a Time in the format HH:mm
+		 * @param Date date the date instance to convert to time string. If undefined takes current date.
+		 * @return String the date formatted as a time String
+		*/},
+		wigiiApi.date2Time = function(date) {
+			if(!date) date = new Date();
+			var returnValue = '';
+			// hours
+			var c = date.getHours();
+			if(c<10) returnValue += "0"+c;
+			else returnValue += c;
+			// minutes
+			c = date.getMinutes();
+			if(c<10) returnValue += ":0"+c;
+			else returnValue += ":"+c;
+			
+			return returnValue;
+		});
+		
+		ncddoc(function(){/**
 		 * Formats a string as a Time HH:mm
 		 *@param String s partially formated time string
 		 *@return String well formatted time string
@@ -4365,47 +4476,158 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * noSeconds: display date and time up to minutes, 
 		 * noTime: displays only date without time, 
 		 * noDate: displays only time without date.
+		 * longDate: displays date with month name and without dot separator
 		*/},
 		wigiiApi.txtFrenchDate = function(timestamp, options) {			
 			var d = ($.type(timestamp)== 'date'? timestamp: new Date(timestamp));
 			var returnValue = '';
 			var v = 0;
-			if(options!= 'noDate') {
+			if(options=='longDate') {
 				// Day
 				v = d.getDate();
 				if(v<10) returnValue += '0'+v;
 				else returnValue += v;
-				returnValue += '.';			
+				returnValue += ' ';
 				// Month
-				v = d.getMonth()+1;
-				if(v<10) returnValue += '0'+v;
-				else returnValue += v;
-				returnValue += '.';
+				returnValue += wigiiApi.txtMonth(d);
+				returnValue += ' ';
 				// Year
 				returnValue += d.getFullYear();
 			}
-			if(options != 'noTime') {
-				if(options != 'noDate') returnValue += ' ';
-				// Hour
-				v = d.getHours();
-				if(v<10) returnValue += '0'+v;
-				else returnValue += v;
-				returnValue += ':';
-				// Minute
-				v = d.getMinutes();
-				if(v<10) returnValue += '0'+v;
-				else returnValue += v;
-				if(options != 'noSeconds') {
-					returnValue += ':';
-					// Seconds
-					v = d.getSeconds();
+			else {
+				if(options!= 'noDate') {
+					// Day
+					v = d.getDate();
 					if(v<10) returnValue += '0'+v;
 					else returnValue += v;
+					returnValue += '.';			
+					// Month
+					v = d.getMonth()+1;
+					if(v<10) returnValue += '0'+v;
+					else returnValue += v;
+					returnValue += '.';
+					// Year
+					returnValue += d.getFullYear();
+				}
+				if(options != 'noTime') {
+					if(options != 'noDate') returnValue += ' ';
+					// Hour
+					v = d.getHours();
+					if(v<10) returnValue += '0'+v;
+					else returnValue += v;
+					returnValue += ':';
+					// Minute
+					v = d.getMinutes();
+					if(v<10) returnValue += '0'+v;
+					else returnValue += v;
+					if(options != 'noSeconds') {
+						returnValue += ':';
+						// Seconds
+						v = d.getSeconds();
+						if(v<10) returnValue += '0'+v;
+						else returnValue += v;
+					}
 				}
 			}
 			
 			return returnValue;
 		});
+		
+		ncddoc(function(){/**
+			 * Returns the translated name of the week day of a given date.
+			 *@param String|Date date for which to get the week day name
+			*/},
+			wigiiApi.txtWeekDay = function(date) {			
+				var d = ($.type(date)== 'date'? date: new Date(date||Date.now()));
+				var returnValue = '';
+				switch(d.getDay()) {
+				case 0:
+					returnValue = wigiiApi.txtDico('l01','Sunday','l02','Dimanche');
+					break;
+				case 1:
+					returnValue = wigiiApi.txtDico('l01','Monday','l02','Lundi');
+					break;
+				case 2:
+					returnValue = wigiiApi.txtDico('l01','Tuesday','l02','Mardi');
+					break;
+				case 3:
+					returnValue = wigiiApi.txtDico('l01','Wednesday','l02','Mercredi');
+					break;
+				case 4:
+					returnValue = wigiiApi.txtDico('l01','Thursday','l02','Jeudi');
+					break;
+				case 5:
+					returnValue = wigiiApi.txtDico('l01','Friday','l02','Vendredi');
+					break;
+				case 6:
+					returnValue = wigiiApi.txtDico('l01','Saturday','l02','Samedi');
+					break;
+				}
+				return returnValue;				
+			});
+		
+		ncddoc(function(){/**
+			 * Returns the translated name of the month name of a given date.
+			 *@param String|Date date for which to get the month name
+			 *@param String options a formating option string. One of : 
+			 * shortName: returns an abbreviated month name (without trailing point) (Jan, Feb, etc)
+			*/},
+			wigiiApi.txtMonth = function(date,options) {			
+				var d = ($.type(date)== 'date'? date: new Date(date||Date.now()));
+				var shortName = (options=='shortName');
+				var returnValue = '';
+				switch(d.getMonth()) {
+				case 0:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Jan','l02','Jan');
+					else returnValue = wigiiApi.txtDico('l01','January','l02','Janvier');
+					break;
+				case 1:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Feb','l02','Fév');
+					else returnValue = wigiiApi.txtDico('l01','February','l02','Février');
+					break;
+				case 2:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Mar','l02','Mars');
+					else returnValue = wigiiApi.txtDico('l01','March','l02','Mars');
+					break;
+				case 3:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Apr','l02','Avr');
+					else returnValue = wigiiApi.txtDico('l01','April','l02','Avril');
+					break;
+				case 4:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','May','l02','Mai');
+					else returnValue = wigiiApi.txtDico('l01','May','l02','Mai');
+					break;
+				case 5:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Jun','l02','Juin');
+					else returnValue = wigiiApi.txtDico('l01','June','l02','Juin');
+					break;
+				case 6:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Jul','l02','Juil');
+					else returnValue = wigiiApi.txtDico('l01','July','l02','Juillet');
+					break;
+				case 7:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Aug','l02','Août');
+					else returnValue = wigiiApi.txtDico('l01','August','l02','Août');
+					break;
+				case 8:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Sept','l02','Sept');
+					else returnValue = wigiiApi.txtDico('l01','September','l02','Septembre');
+					break;
+				case 9:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Oct','l02','Oct');
+					else returnValue = wigiiApi.txtDico('l01','October','l02','Octobre');
+					break;
+				case 10:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Nov','l02','Nov');
+					else returnValue = wigiiApi.txtDico('l01','November','l02','Novembre');
+					break;
+				case 11:
+					if(shortName) returnValue = wigiiApi.txtDico('l01','Dec','l02','Déc');
+					else returnValue = wigiiApi.txtDico('l01','December','l02','Décembre');
+					break;
+				}
+				return returnValue;				
+			});
 		
 		ncddoc(function(){/**
 		 * Serializes an XML Dom object to string

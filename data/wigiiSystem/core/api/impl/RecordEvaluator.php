@@ -835,6 +835,24 @@ class RecordEvaluator implements FuncExpEvaluator
 	}
 
 	/**
+	 * Returns the name of the first field of type Files which is not null in the list of given fields.
+	 * FuncExp signature : <code>firstFile(fs1,fs2,fs3,...)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0..n) fsI: FieldSelector|String. Field of type Files to check if not null
+	 * @return String name of field of type Files or null if no arg or all are null
+	 */
+	public function firstFile($args){
+	    if($this->getNumberOfArgs($args) > 0) {
+	        foreach($args as $arg){
+	            if($arg instanceof FieldSelector) $fs = fs($arg->getFieldName(),'name');
+	            else $fs = fs($this->evaluateArg($arg),'name');
+	            if($this->evaluateArg($fs) != null) return $fs->getFieldName();
+	        }
+	    }
+	    else return null;
+	}
+	
+	/**
 	 * Returns the biggest argument (works with strings and numbers, uses php max function)
 	 * Returns null if no arg
 	 */

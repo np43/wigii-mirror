@@ -58,7 +58,7 @@ if(!$disabled && $fieldXml["displayFreeTimeSlots"]){
 	$this->put('</div>');
 	
 	$this->put('<div class="timeSlotsContainer" >');
-	
+	/*
 	$nbOfDays = (int)$fieldXml["nbOfDays"];
 	if(!$nbOfDays) $nbOfDays= 5;
 	for($i = 0; $i<$nbOfDays; $i++){
@@ -66,7 +66,7 @@ if(!$disabled && $fieldXml["displayFreeTimeSlots"]){
 			//this needs to be replaced by result of an ajax call
 			//this is added as an example
 			$day = array("Lundi","Mardi","Mercredi","Jeudi","Vendredi")[$i];
-			$this->put('<div class="timeSlotHeader" ><p class="title">'.$day.'</p><p class="date">0'.$i.' Août 2019</p></div>');
+			$this->put('<div class="timeSlotHeader" ><p class="title">0'.($i+1).' Août 2019</p><p class="date">'.$day.'</p></div>');
 			$this->put('<div class="timeSlot" >08h00</div>');
 			$this->put('<div class="timeSlot" >09h00</div>');
 			$this->put('<div class="timeSlot" >10h00</div>');
@@ -77,9 +77,10 @@ if(!$disabled && $fieldXml["displayFreeTimeSlots"]){
 			$this->put('<div class="timeSlot" >16h00</div>');
 		$this->put('</div>');
 	}
-	
+	*/
 	$this->put('</div>'); //timeSlotsContainer
 	$this->put('</div>'); //globalTimeSlots
+	$this->getExecutionService()->addJsCode('addJsCodeOnTimeRangeChooser("'.$formId.'","'.$fieldName.'");');
 }
 
 
