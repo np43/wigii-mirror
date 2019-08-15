@@ -82,6 +82,12 @@
 			}
 			return data;
 		};
+		riseNcd.aStoreObject = function(elementId, key, data, callback) {
+			return riseNcd.aCall('riseNcd_storeObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', data, callback);
+		};
+		riseNcd.aGetObject = function(elementId, key, callback) {
+			return riseNcd.aCall('riseNcd_getObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', null, callback);
+		};
 		riseNcd.storeObject = function(elementId, key, data) {
 			return riseNcd.call('riseNcd_storeObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', data);
 		};
@@ -128,6 +134,35 @@
 			}
 			return returnValue;
 		});
+		
+		ncddoc(function(){/**
+			 * Calls asynchronously Rise NCD Web service and use callback on success
+			 *@param String fx the FuncExp to call as a web service expression
+			 *@param Object|Array data optional data to post with the Fx call. (if null, then calls using GET, else POSTS)
+			*/},
+			riseNcd.aCall = function(fx,data,callback) {		
+				var url = wigiiApi.SITE_ROOT+'NCD/Espace/fx/'+$.base64EncodeUrl(fx);
+				if(data) {
+					$.ajax({type:"POST",
+						url:url,
+						dataType:'json',
+						contentType: 'text/plain',
+						data: JSON.stringify(data),
+						crossDomain: true,
+						xhrFields: {withCredentials: true},
+						async:true					
+					}).done(callback);
+				}
+				else {
+					$.ajax({type:"GET",
+						url:url,
+						crossDomain: true,
+						xhrFields: {withCredentials: true},
+						async:true					
+					}).done(callback);
+				}
+				return true;
+			});
 		
 		// Projet ATELIER ENCODE / PARTAGE
 		
