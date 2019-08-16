@@ -82,6 +82,8 @@ define("WNCD_LOCAL_LIBS",true);
 if(strpos($_SERVER['SCRIPT_FILENAME'], "indexModif.php") !== false){
 	$MAINTENANCE_ON = true;
 } else $MAINTENANCE_ON = false;
+define ("RELOAD_Message", 'The system has just been upgraded. Please close your browser and open it again.');
+//define ("MAINTENANCE_Message", "Mardi 20 août: Maintenance serveur planifiée.Interruption de service de 22h à minuit. Merci pour votre compréhension.");
 
 // SITE_ROOT & SITE_ROOT_forFileUrl constant
 if (HTTPS_ON) {
