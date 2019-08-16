@@ -4566,7 +4566,7 @@ invalidCompleteCache();
 			$exec->addJsCode("" .
 					"if($('#footerBar span:first a').length){" .
 					"if($('#footerBar span:first a').text() != '".VERSION_LABEL."'){" .
-					"if($('#wigiiMaintenanceMessage').length==0){ $('#pUsername').after('<span UNSELECTABLE=\"on\" style=\" -moz-user-select: none; -khtml-user-select: none; unselectable:on; user-select: none; \" ><span id=\"wigiiMaintenanceMessage\" style=\"color:#fff; background-color:#f00; font-weight:bold;font-size:14px\"></span></span>'); } $('#wigiiMaintenanceMessage').html('".(RELOAD_Message ? '&nbsp;&nbsp;'.RELOAD_Message.'&nbsp;&nbsp;' : '')."');" .
+					"if($('#wigiiReloadMessage').length==0){ $('#pUsername').after('<span UNSELECTABLE=\"on\" style=\" -moz-user-select: none; -khtml-user-select: none; unselectable:on; user-select: none; \" ><span id=\"wigiiReloadMessage\" style=\"color:#fff; background-color:#f00; font-weight:bold;font-size:14px\"></span></span>'); } $('#wigiiReloadMessage').html('".(RELOAD_Message ? '&nbsp;&nbsp;'.RELOAD_Message.'&nbsp;&nbsp;' : '')."');" .
 					"}" .
 					"}");
 		}

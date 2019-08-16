@@ -49,7 +49,8 @@ $postponeTimer = 1000*60*15; //"15min";
 	?></span><?
 
 	?><span UNSELECTABLE="on" style=" -moz-user-select: none; -khtml-user-select: none; unselectable:on; user-select: none; " ><?
-		echo '<span id="wigiiMaintenanceMessage" style="color:#fff; background-color:#f00; font-weight:bold;font-size:14px">'.(defined('MAINTENANCE_Message') && MAINTENANCE_Message ? '&nbsp;&nbsp;'.MAINTENANCE_Message.'&nbsp;&nbsp;' : '').'</span>';
+       echo '<span id="wigiiReloadeMessage" style="color:#fff; background-color:#f00; font-weight:bold;font-size:14px"></span>';
+       if(defined('MAINTENANCE_Message') && MAINTENANCE_Message) echo '<span id="wigiiMaintenanceMessage" style="color:#fff; background-color:DarkOrange; font-weight:bold;font-size:14px">&nbsp;&nbsp;'.MAINTENANCE_Message.'&nbsp;&nbsp;</span>';
 	?></span><?
 
 	?><span id="cronJobs" style="margin-left:10px;"><?
