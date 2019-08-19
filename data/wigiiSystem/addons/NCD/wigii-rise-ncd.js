@@ -85,11 +85,23 @@
 		riseNcd.aStoreObject = function(elementId, key, data, callback) {
 			return riseNcd.aCall('riseNcd_storeObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', data, callback);
 		};
+		riseNcd.aSynchObject = function(elementId, data, callback) {
+			return riseNcd.aCall('riseNcd_synchObject("'+elementId+'")', data, callback);
+		};
 		riseNcd.aGetObject = function(elementId, key, callback) {
 			return riseNcd.aCall('riseNcd_getObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', null, callback);
 		};
 		riseNcd.storeObject = function(elementId, key, data) {
 			return riseNcd.call('riseNcd_storeObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', data);
+		};
+		riseNcd.synchObject = function(elementId, data) {
+			var data = riseNcd.call('riseNcd_synchObject("'+elementId+'")',data);
+			if(data) {
+				//data = data.replace(/\n|\r/g,' ');
+				//console.debug(data);
+				data = JSON.parse(data);
+			}
+			return data;
 		};
 		riseNcd.getObject = function(elementId, key) {
 			var data = riseNcd.call('riseNcd_getObject("'+elementId+'"'+(key?',"'+key+'"':'')+')');

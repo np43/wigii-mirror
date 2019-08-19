@@ -161,6 +161,58 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 	}
 	
 	/**
+	 * Synch JSON data into a shared storage place, identified by an element ID
+	 * FuncExp signature : <code>riseNcd_synchObject(elementId,jsonData)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) elementId: Int. Element ID located in https://rise.wigii.org/#NCD/Espace/, accessible by the user in which to store the JSON data
+	 * - Arg(2) data: String. The JSON string of with the values to synch to the existing value
+	 * @return String Full object as JSON
+	 * @throws FuncExpEvalException in case of error.
+	 */
+	public function riseNcd_synchObject($args) {
+	    $p = $this->getPrincipal();
+	    // Extracts arguments
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException("riseNcd_synchObject takes two arguments: the element ID and the JSON data", FuncExpEvalException::INVALID_ARGUMENT);
+	    $elementId = $this->evaluateArg($args[0]);
+	    if($nArgs>1) {
+	        $data = $this->evaluateArg($args[1]);
+	        if(!empty($data)) {
+	            $data=json_decode($data);
+	            if(json_last_error()) throw new FuncExpEvalException("invalid json data.\n".$data, FuncExpEvalException::INVALID_ARGUMENT);
+	        }
+	    }
+	    else {
+	        $data = ServiceProvider::getWigiiBPL()->dataFetchFromPost($p, $this, wigiiBPLParam('type','json'));
+	    }
+	    // gets storage container
+	    $fsl = fsl(fs('dataStorage'));
+	    $element = sel($p, elementP($elementId,$fsl), dfasl(dfas("NullDFA")));
+	    if(!isset($element)) throw new FuncExpEvalException("no existing or accessible element was found with ID ".$elementId, FuncExpEvalException::INVALID_ARGUMENT);
+	    $element = $element->getDbEntity();
+	    // Extracts existing data
+	    $existingData = $element->getFieldValue('dataStorage');
+	    /*
+	     $html2text = new Html2text();
+	     $html2text->setHtml($existingData);
+	     $existingData =  $html2text->getText();
+	     */
+	    $temp=@json_decode($existingData);
+	    if(json_last_error()) throw new FuncExpEvalException("invalid existing json data. Please correct stored data in element $elementId\n".$existingData, FuncExpEvalException::INVALID_ARGUMENT);
+	    $existingData = $temp;
+	    //synch data
+	    foreach($data as $key=>$value){
+	        $existingData->{$key} = $value;
+	    }
+	    // Persists new data
+	    $existingData = @json_encode($existingData,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+	    if(json_last_error()) throw new FuncExpEvalException("invalid json data. Please correct posted data", FuncExpEvalException::INVALID_ARGUMENT);
+	    $element->setFieldValue($existingData,'dataStorage');
+	    ServiceProvider::getElementService()->updateElement($p,$element,$fsl);
+	    return $existingData;
+	}
+	
+	/**
 	 * Gets JSON data from a shared storage place, identified by an element ID
 	 * FuncExp signature : <code>riseNcd_getObject(elementId,key)</code><br/>
 	 * Where arguments are :
