@@ -169,6 +169,16 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 	 * @return String Full object as JSON
 	 * @throws FuncExpEvalException in case of error.
 	 */
+	protected function riseNcd_synchObjRec($result,$obj){
+        foreach($obj as $key=>$value){
+            if(!isset($result->$key)) $result->{$key} = new stdClass();
+            if(is_object($value)){
+                $this->riseNCD_synchObjRec($result->{$key},$value);
+            } else {
+                $result->{$key} = $value;
+            }
+        }
+	}
 	public function riseNcd_synchObject($args) {
 	    $p = $this->getPrincipal();
 	    // Extracts arguments
@@ -201,9 +211,16 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 	    if(json_last_error()) throw new FuncExpEvalException("invalid existing json data. Please correct stored data in element $elementId\n".$existingData, FuncExpEvalException::INVALID_ARGUMENT);
 	    $existingData = $temp;
 	    //synch data
-	    foreach($data as $key=>$value){
-	        $existingData->{$key} = $value;
-	    }
+	    $this->riseNCD_synchObjRec($existingData, $data);
+// 	    foreach($data as $key=>$value){
+// 	        if(is_object($value)){
+// 	            foreach($value as $k=>$v){
+// 	                $existingData->{$key}->{$k} = $v;
+// 	            }
+// 	        } else {
+//     	        $existingData->{$key} = $value;
+// 	        }
+// 	    }
 	    // Persists new data
 	    $existingData = @json_encode($existingData,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
 	    if(json_last_error()) throw new FuncExpEvalException("invalid json data. Please correct posted data", FuncExpEvalException::INVALID_ARGUMENT);
