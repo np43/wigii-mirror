@@ -85,8 +85,8 @@
 		riseNcd.aStoreObject = function(elementId, key, data, callback) {
 			return riseNcd.aCall('riseNcd_storeObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', data, callback);
 		};
-		riseNcd.aSynchObject = function(elementId, data, callback) {
-			return riseNcd.aCall('riseNcd_synchObject("'+elementId+'")', data, callback);
+		riseNcd.aSynchObject = function(elementId, data, callbackOnSuccess, callbackOnFailure) {
+			return riseNcd.aCall('riseNcd_synchObject("'+elementId+'")', data, callbackOnSuccess, callbackOnFailure);
 		};
 		riseNcd.aGetObject = function(elementId, key, callback) {
 			return riseNcd.aCall('riseNcd_getObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', null, callback);
@@ -152,7 +152,7 @@
 			 *@param String fx the FuncExp to call as a web service expression
 			 *@param Object|Array data optional data to post with the Fx call. (if null, then calls using GET, else POSTS)
 			*/},
-			riseNcd.aCall = function(fx,data,callback) {		
+			riseNcd.aCall = function(fx,data,callbackOnSuccess,callbackOnFailure) {		
 				var url = wigiiApi.SITE_ROOT+'NCD/Espace/fx/'+$.base64EncodeUrl(fx);
 				if(data) {
 					$.ajax({type:"POST",
@@ -163,7 +163,7 @@
 						crossDomain: true,
 						xhrFields: {withCredentials: true},
 						async:true					
-					}).done(callback);
+					}).done(callbackOnSuccess).fail(callbackOnFailure);
 				}
 				else {
 					$.ajax({type:"GET",
@@ -171,7 +171,7 @@
 						crossDomain: true,
 						xhrFields: {withCredentials: true},
 						async:true					
-					}).done(callback);
+					}).done(callbackOnSuccess).fail(callbackOnFailure);
 				}
 				return true;
 			});

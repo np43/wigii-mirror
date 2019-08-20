@@ -207,25 +207,28 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 	     $html2text->setHtml($existingData);
 	     $existingData =  $html2text->getText();
 	     */
-	    $temp=@json_decode($existingData);
-	    if(json_last_error()) throw new FuncExpEvalException("invalid existing json data. Please correct stored data in element $elementId\n".$existingData, FuncExpEvalException::INVALID_ARGUMENT);
-	    $existingData = $temp;
-	    //synch data
-	    $this->riseNCD_synchObjRec($existingData, $data);
-// 	    foreach($data as $key=>$value){
-// 	        if(is_object($value)){
-// 	            foreach($value as $k=>$v){
-// 	                $existingData->{$key}->{$k} = $v;
-// 	            }
-// 	        } else {
-//     	        $existingData->{$key} = $value;
-// 	        }
-// 	    }
-	    // Persists new data
-	    $existingData = @json_encode($existingData,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
-	    if(json_last_error()) throw new FuncExpEvalException("invalid json data. Please correct posted data", FuncExpEvalException::INVALID_ARGUMENT);
-	    $element->setFieldValue($existingData,'dataStorage');
-	    ServiceProvider::getElementService()->updateElement($p,$element,$fsl);
+	    //synch and update only if data contains some data
+	    if($data!=new StdClass()){
+    	    $temp=@json_decode($existingData);
+    	    if(json_last_error()) throw new FuncExpEvalException("invalid existing json data. Please correct stored data in element $elementId\n".$existingData, FuncExpEvalException::INVALID_ARGUMENT);
+    	    $existingData = $temp;
+    	    //synch data
+    	    $this->riseNCD_synchObjRec($existingData, $data);
+    // 	    foreach($data as $key=>$value){
+    // 	        if(is_object($value)){
+    // 	            foreach($value as $k=>$v){
+    // 	                $existingData->{$key}->{$k} = $v;
+    // 	            }
+    // 	        } else {
+    //     	        $existingData->{$key} = $value;
+    // 	        }
+    // 	    }
+    	    // Persists new data
+    	    $existingData = @json_encode($existingData,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+    	    if(json_last_error()) throw new FuncExpEvalException("invalid json data. Please correct posted data", FuncExpEvalException::INVALID_ARGUMENT);
+    	    $element->setFieldValue($existingData,'dataStorage');
+    	    ServiceProvider::getElementService()->updateElement($p,$element,$fsl);
+	    }
 	    return $existingData;
 	}
 	
