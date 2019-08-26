@@ -32,7 +32,7 @@ previewCrtHeight = 10;
 
 function getBasicCKEditorToolbar(){
 	return [
-		[ 'Bold','Italic','Underline','TextColor'],['NumberedList','BulletedList','Outdent','Indent','Link', 'Image','Table','Scayt','Templates']];
+		[ 'Bold','Italic','Underline','TextColor','PasteText'],['NumberedList','BulletedList','Outdent','Indent','Link', 'Image','Templates']];
 }
 function getMediumCKEditorToolbar(){
 	return [
@@ -523,7 +523,11 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 		} else {
 			toolbar = getBasicCKEditorToolbar();
 		}
-		height = 100;
+		if($(this).hasClass('activateHtmlArea')){
+			height = 100;
+		} else {
+			height = 40;			
+		}
 		maxHeight = 450;
 		options = {};
 		if($(this).hasClass('wordlimit') && !$(this).hasClass('isJournal')){

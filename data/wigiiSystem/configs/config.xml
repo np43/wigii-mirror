@@ -25,6 +25,7 @@
 			doNotPersist,
 			allowOnReadOnly,
 			activateHtmlArea,
+			htmlArea,
 			includeTime,
 			enableForEmailing,
 			isDefaultForEmailing,

@@ -1,4 +1,28 @@
 /******************************
+* CKEditor
+******************************/
+.field .value .cke_bottom {
+	display:none;
+}
+.field .value .cke_top {
+	padding:0px;
+}
+.field .value .cke_toolbox_collapser {
+	float:left;
+	border:none;
+	height:auto;
+	width:auto;
+	padding:5px 10px;
+	cursor:pointer;
+}
+.field .value .cke_button {
+	height:auto;
+	widht:auto;
+}
+.field .value .cke_toolbox_collapser * {
+	cursor:pointer;
+}
+/******************************
 * JQUERY-UI
 ******************************/
 .ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus, .ui-button:hover, .ui-button:focus { border:2px solid #ccc; }

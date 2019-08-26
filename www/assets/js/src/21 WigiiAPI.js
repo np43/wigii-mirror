@@ -1098,7 +1098,11 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						if($('#'+self.fieldId()+' :input').hasClass('htmlArea')){
 							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){
 								returnValue = $(textarea).ckeditor().val();
-							});							
+							});
+							//if CKEditor not ready yet, take the value from the DOM
+							if(typeof(returnValue)=="undefined"){
+								returnValue = $('#'+self.fieldId()+' :input').val();
+							}
 						}
 						else if($('#'+self.fieldId()).attr('data-wigii-datatype')=='Booleans') {
 							if(self.formId()=='detailElement_form'){

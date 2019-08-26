@@ -16,10 +16,13 @@
 	text-align:right;
 	padding-right:0px;
 }
+div.field.total {
+	border-top:1px solid black;
+}
 div.field.total>div.value {
 	font-weight:bold;
-	border-top:4px double black;
-	padding-top:1px;
+	border-bottom:4px double black;
+	padding-bottom:1px;
 }
 div.field.total>div.value>* {
 	font-weight:bold;

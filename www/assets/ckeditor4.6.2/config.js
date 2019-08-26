@@ -12,8 +12,10 @@ if(!CKEDITOR.wigiiCustom) {
 		config.scayt_autoStartup = false;
 		config.removePlugins = 'scayt';
 		
+		config.autoGrow_onStartup = true; 
+		
 		config.colorButton_colorsPerRow = 8;
-	
+		
 		//config.extraPlugins = 'embed';
 		
 		config.colorButton_colors =
