@@ -279,7 +279,7 @@ class ServiceProvider
 	}
 
 	/**
-	 * Returns an instance of wigii TranslationAdmin service
+	 * Returns an instance of wigii Translation service
 	 * throws ServiceProviderException if an error occurs
 	 */
 	public static function getTranslationService()
@@ -346,6 +346,15 @@ class ServiceProvider
 	public static function getFuncExpVM($principal, $parentEvaluator=null, $className=null)
 	{
 		return ServiceProvider::getInstance()->getFuncExpVMInstance($principal, $parentEvaluator, $className);
+	}
+	
+	/**
+	 * Returns an instance of wigii FuncExp store service
+	 * @return FuncExpStoreService
+	 */
+	public static function getFuncExpStoreService()
+	{
+	    return ServiceProvider::getInstance()->getFuncExpStoreServiceInstance();
 	}
 	
 	/**
@@ -800,6 +809,18 @@ class ServiceProvider
 	    throw new ServiceProviderException($custoExc->getMessage()." AND ".$stdExc->getMessage(), ServiceProviderException::INVALID_ARGUMENT);
 	}
 	
+	private $funcExpStoreService;
+	/**
+	 * default as singleton
+	 */
+	protected function getFuncExpStoreServiceInstance() {
+	    if(!isset($this->funcExpStoreService))
+	    {
+	        $this->funcExpStoreService = $this->createFuncExpStoreServiceInstance();
+	    }
+	    return $this->funcExpStoreService;
+	}
+	
 	private $dataFlowService;
 	/**
 	 * default as singleton
@@ -1020,6 +1041,14 @@ class ServiceProvider
 	protected function createDataFlowServiceInstance()
 	{
 		return new DataFlowServiceImpl();
+	}
+	
+	/**
+	 * defaults as FuncExpStoreService
+	 */
+	protected function createFuncExpStoreServiceInstance()
+	{
+	    return new FuncExpStoreService();
 	}
 	
 	/**

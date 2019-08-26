@@ -765,11 +765,12 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 	
 	if(isWorkzoneViewDocked()) addScrollWithShadow($(formId).parent().prop("id"));	
 }
-function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName) {
+function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 	/**
 	 * TimeSlotChooser component attached to a TimeRanges field
 	 * @param Object options a bag of options to configure the time slot chooser. It supports:
 	 * - nbOfDays: Int. Number of possible booking days to display. Default to 5.
+	 * - timeSlotQueryUrl: String. URL where to query for time slots. If not defined, then uses Wigii time slots generator function.
 	 */
 	var TimeSlotChooser = function(formId,timeRangeFieldName,options) {
 		var self = this;
@@ -841,7 +842,24 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName) {
 				if(afterLoadAction) afterLoadAction(self,ctx);
 			};
 			// queries for time slots
-			onReceiveTimeSlots(wigii().genTimeSlots(self.context.queryObject.begDate,undefined,{nbDays:self.context.queryObject.nbOfDays}));
+			if(self.options.timeSlotQueryUrl) {
+				if(!self.impl.ajaxOptions) {
+					self.impl.ajaxOptions = {};
+					self.impl.ajaxOptions.type = 'POST';
+					self.impl.ajaxOptions.contentType = 'text/plain';
+					self.impl.ajaxOptions.dataType = 'json';
+					self.impl.ajaxOptions.processData = false;
+					self.impl.ajaxOptions.xhrFields = {withCredentials: true};
+					self.impl.ajaxOptions.crossDomain = true;
+					self.impl.ajaxOptions.error = wigii().defaultFxErrorHandler;
+				}
+				self.impl.ajaxOptions.url = self.options.timeSlotQueryUrl;
+				self.impl.ajaxOptions.data = JSON.stringify(self.context.queryObject);
+				self.impl.ajaxOptions.success = onReceiveTimeSlots;
+				$.ajax(self.impl.ajaxOptions);
+			}
+			// else uses default Wigii time slot generator
+			else onReceiveTimeSlots(wigii().genTimeSlots(self.context.queryObject.begDate,undefined,{nbDays:self.context.queryObject.nbOfDays}));
 		};
 		
 		/**
@@ -992,9 +1010,12 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName) {
 		self.$().find('div.commands span.glyphicon-chevron-right').click(self.nextRange);
 		// startup
 		self.today();
-	};
+	};	
 	// creates time slot chooser component and binds to time range field
-	new TimeSlotChooser(formId,timeRangeFieldName);	
+	var options = {}; var tsc =$('#'+formId+'__'+timeRangeFieldName+' div.globalTimeSlots');
+	if(tsc.attr('data-nbofdays')) options.nbOfDays = Number.parseInt(tsc.attr('data-nbofdays'));
+	if(tsc.attr('data-freetimeslotsexp')) options.timeSlotQueryUrl = encodeURI(SITE_ROOT+"useContext/"+crtContextId+EXEC_requestSeparator+crtWigiiNamespaceUrl+"/"+crtModuleName+"/"+(publicP?"public/storedFx":"fx")+"/"+tsc.attr('data-freetimeslotsexp'));	
+	new TimeSlotChooser(formId,timeRangeFieldName,options);	
 }
 function convertTimestamps(obj){
 	//advanced search: match any TIMESTAMP() and convert them into a real timestamp

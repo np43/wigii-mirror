@@ -24,6 +24,7 @@
 /**
  * A WebService which executes some public calls and returns data to the client.
  * Created by LWR on 12.09.2018
+ * Modified by CWE on 23.08.2019 to interface FuncExpStoreService and allow public calls of stored FuncExp
  */
 class PublicWebServiceFormExecutor extends WebServiceFormExecutor {
 	private $_debugLogger;
@@ -70,23 +71,34 @@ class PublicWebServiceFormExecutor extends WebServiceFormExecutor {
 		$fxEval = null;
 		try {
 			$callname = $exec->getCrtParameters(0);
-			if(empty($callname)) {
-				// if no parameter then checks in POST data
-				throw new FormExecutorException('callname cannot be empty', FormExecutorException::INVALID_ARGUMENT);
-			}
-			$fx = FuncExp::createInstance($callname);
-			//add current parameters as args
-			foreach($exec->getCrtParameters() as $key=>$arg){
-				if($key==0) continue;
-				$fx->addArgument($arg);
-			}
-			$fx->setOriginIsPublic();
+			if(empty($callname)) throw new FormExecutorException('callname cannot be empty', FormExecutorException::INVALID_ARGUMENT);			
 			
-			// evaluates FuncExp if authorized by evaluator
 			$fxEval = $this->getFuncExpEval($p, $exec);
-			if(method_exists($fxEval->getParentFuncExpEvaluator(),"isCallAuthorizedFromPublic") && $fxEval->getParentFuncExpEvaluator()->isCallAuthorizedFromPublic($fx)===true){
-				$result = $fxEval->evaluateFuncExp($fx, $this);
-			} else throw new AuthorizationServiceException($callname.' is forbidden', AuthorizationServiceException::FORBIDDEN);
+			
+			// retrieves stored fx using given key and token
+			if($callname == 'storedFx') {
+			    $key = $exec->getCrtParameters(1);
+			    $token = $exec->getCrtParameters(2);
+			    $fx = ServiceProvider::getFuncExpStoreService()->getStoredFx($p, $key, $token);
+			    if(is_null($fx)) throw new FuncExpStoreServiceException('stored fx '.$key.($token?' with token:'.$token.' ':'').' is not found', FuncExpStoreServiceException::NOT_FOUND); 
+			}
+			// else builds FuncExp by name
+			else {
+			    $fx = FuncExp::createInstance($callname);
+			    //add current parameters as args
+			    foreach($exec->getCrtParameters() as $key=>$arg){
+			        if($key==0) continue;
+			        $fx->addArgument($arg);
+			    }
+			    // checks authorization
+			    if(!(method_exists($fxEval->getParentFuncExpEvaluator(),"isCallAuthorizedFromPublic") && $fxEval->getParentFuncExpEvaluator()->isCallAuthorizedFromPublic($fx)===true)) {
+			        throw new AuthorizationServiceException($callname.' is forbidden', AuthorizationServiceException::FORBIDDEN);
+			    }
+			}
+			
+			// evaluates FuncExp
+			$fx->setOriginIsPublic();
+			$result = $fxEval->evaluateFuncExp($fx, $this);
 			
 			// returns result to client if not null
 			if(isset($result)) $this->serializePublicCallResult($p,$exec,$result);

@@ -435,6 +435,17 @@ class AuthorizationServiceImpl implements AuthorizationService
 						return null; /* principal gets no special rights */
 				}
 				break;
+			case "FuncExpStoreService":
+			    switch($methodName)
+			    {
+			        case "openFxForPublic":
+			            $this->assertPrincipalIsPublic($principal);
+			            return null; /* principal gets no special rights */
+			        case "getStoredFx":
+			            $this->assertPrincipalIsRootOrIsPublicOrHasAttachedUser($principal);
+			            return null; /* principal gets no special rights */
+			    }
+			    break;
 			case "ServiceProvider":
 				switch($methodName)
 				{

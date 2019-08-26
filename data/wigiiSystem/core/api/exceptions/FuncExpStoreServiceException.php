@@ -19,15 +19,18 @@
  *  @author     <http://www.wigii.org/system>      Wigii.org 
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
- */ 
-
+ */
 
 /**
- * Standard Wigii version 
- * and specific version type including customer name and revision number
+ * Func Exp store service exception
+ * Created by CWE on 23.08.2019
+ * error code range from 5000 to 5099
  */
-define("VERSION_NUMBER", "4.725");
-define("REVISION_NUMBER", "G484");
-define("ASSET_REVISION_NUMBER", "G484"); // this token will be used to load wigii_...js and wigii_...css
-define("VERSION_TYPE", ""); // use the version type to version the customer customization, for example 'MyCompany R1234'
-define("VERSION_LABEL", "Wigii ® software, v.".VERSION_NUMBER." ".REVISION_NUMBER." ".VERSION_TYPE." A-".ASSET_REVISION_NUMBER);
+class FuncExpStoreServiceException extends ServiceException
+{
+	public function __construct($message = "", $code = parent::UNKNOWN_ERROR, $previous=null) {
+		parent::__construct($message, $code, $previous);
+	}
+}
+
+

@@ -3845,7 +3845,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    if($nArgs<1) throw new FuncExpEvalException('select2Ajax takes at least one argument which is the attribute matching expresssion', FuncExpEvalException::INVALID_ARGUMENT);
 	    // extracts attribute matching exp
 	    $attributeMatchExp = $args[0];
-	    if(!($attributeMatchExp instanceof FuncExp)) throw new FuncExpEvalException('attributeMatchExp should be a valid FuncExp');
+	    if(!($attributeMatchExp instanceof FuncExp)) throw new FuncExpEvalException('attributeMatchExp should be a valid FuncExp', FuncExpEvalException::CONFIGURATION_ERROR);
 	    // extracts input pattern and adds it to the selector
 	    if($nArgs>1) $attributeMatchExp->addArgument($args[1]);
 	    // evaluates attribute matching exp
@@ -3874,6 +3874,38 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	    }
 	    // packages result
 	    return (object)array("results"=>$returnValue);
+	}
+	
+	/**
+	 * Runs a free time slots selector and returns the result to a TimeSlotChooser component attached to a TimeRanges field
+	 * This FuncExp is used in the implementation of the freeTimeSlotsExp configuration parameter.
+	 * FuncExp signature : <code>timeSlotChooserQuery(freeTimeSlotsExp,queryObject)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) freeTimeSlotsExp: FuncExp. A FuncExp which selects free time slots in the system and returns an array of StdClass instances of the form 
+	 *  {begDate: Date string YYYY-MM-DD, begTime: Time string HH:MM, endTime: Time string HH:MM}  
+	 * The FuncExp signature is of the form getFreeTimeSlots(...,queryOptions) : Array
+	 *  where queryOptions is a WigiiBPLParameter instance containing some query fields (for example begDate and nbOfDays)
+	 * - Arg(1) queryObject StdClass. Time slots query object sent from the attached TimeSlotChooser component. If not provided, assumes it is in the POST.
+	 * @return Array an array of StdClass instances of the form {begDate: Date string YYYY-MM-DD, begTime: Time string HH:MM, endTime: Time string HH:MM}
+	 */
+	public function timeSlotChooserQuery($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<1) throw new FuncExpEvalException('timeSlotChooserQuery takes at least one argument which is the free time slots selector expression', FuncExpEvalException::INVALID_ARGUMENT);
+	    // extracts free time slots exp
+	    $freeTimeSlotsExp = $args[0];
+	    if(!($freeTimeSlotsExp instanceof FuncExp)) throw new FuncExpEvalException('freeTimeSlotsExp should be a valid FuncExp', FuncExpEvalException::CONFIGURATION_ERROR);
+        // extracts query object and adds it to selector
+        if($nArgs>1) $queryObject = $this->evaluateArg($args[1]);
+        else $queryObject = ServiceProvider::getWigiiBPL()->dataFetchFromPost($this->getPrincipal(), $this, wigiiBPLParam('type','json'));
+        if($queryObject instanceof stdClass) {
+            $queryOptions = wigiiBPLParam();
+            foreach($queryObject as $key=>$value) {
+                $queryOptions->setValue($key, $value);
+            }
+            $freeTimeSlotsExp->addArgument($queryOptions);
+        }
+	    // evaluates free time slots expression and returns its result
+	    return $this->evaluateFuncExp($freeTimeSlotsExp);
 	}
 	
 	// ConfigPack integration

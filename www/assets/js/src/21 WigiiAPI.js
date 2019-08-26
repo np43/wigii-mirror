@@ -4224,17 +4224,21 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * }
 		*/},
 		wigiiApi.genTimeSlots = function(begDate,begTime,options) {
+			var today = wigiiApi.day2string();
 			// converts begDate to YYYY-MM-DD
 			begDate = ($.type(begDate)== 'date'? begDate: new Date(begDate||Date.now()));
-			begDate = wigiiApi.day2string(begDate);
-			// converts begTime to HH:MM
-			if(!begTime) begTime = wigiiApi.date2Time();
-			// initiliazes options
+			begDate = wigiiApi.day2string(begDate);			
+			// initializes options
 			options = options || {};
 			if(!options.nbDays) options.nbDays=7;
 			if(!options.begTime) options.begTime = '08:00';
 			if(!options.endTime) options.endTime = '18:00';
 			if(!options.duration) options.duration = 60;
+			// converts begTime to HH:MM
+			if(!begTime) {
+				if(begDate==today) begTime = wigiiApi.date2Time();
+				else begTime = options.begTime;
+			}
 			
 			var returnValue = [];
 			var oneDay = 3600*24*1000; // one day duration in ms

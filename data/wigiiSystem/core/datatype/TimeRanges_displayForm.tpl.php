@@ -50,37 +50,42 @@ $isNotExpanded = !$isFilled && $fieldXml["expand"]!="1" && (!$isRequire || $fiel
 $inputId = $formId.'_'.$fieldName;
 
 if(!$disabled && $fieldXml["displayFreeTimeSlots"]){
-	$this->put('<div class="globalTimeSlots" >');
-	$this->put('<div class="commands" >');
-	$this->put('<span class="glyphicon glyphicon-chevron-left" ></span>');
-	$this->put('<span class="glyphicon glyphicon-calendar" ></span>');
-	$this->put('<span class="glyphicon glyphicon-chevron-right" ></span>');
-	$this->put('</div>');
-	
-	$this->put('<div class="timeSlotsContainer" >');
-	/*
-	$nbOfDays = (int)$fieldXml["nbOfDays"];
-	if(!$nbOfDays) $nbOfDays= 5;
-	for($i = 0; $i<$nbOfDays; $i++){
-		$this->put('<div class="dayTimeSlots">');
-			//this needs to be replaced by result of an ajax call
-			//this is added as an example
-			$day = array("Lundi","Mardi","Mercredi","Jeudi","Vendredi")[$i];
-			$this->put('<div class="timeSlotHeader" ><p class="title">0'.($i+1).' Août 2019</p><p class="date">'.$day.'</p></div>');
-			$this->put('<div class="timeSlot" >08h00</div>');
-			$this->put('<div class="timeSlot" >09h00</div>');
-			$this->put('<div class="timeSlot" >10h00</div>');
-			$this->put('<div class="timeSlot" >11h00</div>');
-			$this->put('<div class="timeSlot" >13h00</div>');
-			$this->put('<div class="timeSlot" >14h00</div>');
-			$this->put('<div class="timeSlot" >15h00</div>');
-			$this->put('<div class="timeSlot" >16h00</div>');
-		$this->put('</div>');
-	}
-	*/
-	$this->put('</div>'); //timeSlotsContainer
+	// nbOfDays for which to fetch free time slots. Defaults to 5.
+    $nbOfDays = (string)$fieldXml["nbOfDays"];
+    if(empty($nbOfDays)) $nbOfDays=5;
+    else $nbOfDays = intval($nbOfDays);
+    // freeTimeSlotsExp (is mandatory)
+    $freeTimeSlotsExp = (string)$fieldXml["freeTimeSlotsExp"];
+    $freeTimeSlotsExp = str2fx($freeTimeSlotsExp);
+    if(!($freeTimeSlotsExp instanceof FuncExp)) throw new FieldRendererException('freeTimeSlotsExp should be a valid FuncExp', FieldRendererException::CONFIGURATION_ERROR);
+    // resolves any fixed argument list in the scope of current element (before generating callable url)
+    $args = $freeTimeSlotsExp->getArguments();
+    if(!empty($args)) {
+        $args = $this->evalfx(fx('newList',$args));
+        $freeTimeSlotsExp->setArguments($args);
+    }
+    // wraps free time slots exp with timeSlotChooserQuery standard FuncExp and serializes result as json
+    $freeTimeSlotsExp = fx('newJsonString',fx('timeSlotChooserQuery',$freeTimeSlotsExp));
+    if($isPublicPrincipal) {
+        // opens Func Exp to be called from public
+        $freeTimeSlotsExp = ServiceProvider::getFuncExpStoreService()->openFxForPublic($this->getP(), $freeTimeSlotsExp, null, wigiiBPLParam('multipleCalls',true,'expirationTime',15*60));
+    }
+    else {
+        // serializes the FuncExp as a callable url
+        $freeTimeSlotsExp = fx2str($freeTimeSlotsExp);
+        $freeTimeSlotsExp = base64url_encode($freeTimeSlotsExp);
+    }    
+    
+    $this->put('<div class="globalTimeSlots" data-nbofdays="'.$nbOfDays.'" data-freetimeslotsexp="'.$freeTimeSlotsExp.'">');
+    	$this->put('<div class="commands" >');
+    	$this->put('<span class="glyphicon glyphicon-chevron-left" ></span>');
+    	$this->put('<span class="glyphicon glyphicon-calendar" ></span>');
+    	$this->put('<span class="glyphicon glyphicon-chevron-right" ></span>');
+    	$this->put('</div>');	
+    	$this->put('<div class="timeSlotsContainer" >');	
+    	$this->put('</div>'); //timeSlotsContainer
 	$this->put('</div>'); //globalTimeSlots
-	$this->getExecutionService()->addJsCode('addJsCodeOnTimeRangeChooser("'.$formId.'","'.$fieldName.'");');
+	$this->getExecutionService()->addJsCode('addJsCodeOnTimeRangeChooser("'.$formId.'","'.$fieldName.'", '.($isPublicPrincipal?'true':'false').');');
 }
 
 
