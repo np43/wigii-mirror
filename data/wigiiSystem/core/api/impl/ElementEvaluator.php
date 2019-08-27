@@ -876,9 +876,11 @@ class ElementEvaluator extends RecordEvaluator
 		//refresh group panel and moduleView
 		$this->debugLogger()->write('invalids group panel cache');
 		$exec = ServiceProvider::getExecutionService();
-		$exec->addRequests("groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel");
-		$exec->addJsCode("invalidCache('moduleView');");
-		$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
+		if($exec->getCrtAction() != 'newSubscription') {
+    		$exec->addRequests("groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel");
+    		$exec->addJsCode("invalidCache('moduleView');");
+    		$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
+		}
 		$this->debugLogger()->logEndOperation('ctlRefreshGroupPanel');
 		if($group) return $group->getId();
 	}

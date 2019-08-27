@@ -27,7 +27,7 @@
  * and specific version type including customer name and revision number
  */
 define("VERSION_NUMBER", "4.725");
-define("REVISION_NUMBER", "G484");
-define("ASSET_REVISION_NUMBER", "G484"); // this token will be used to load wigii_...js and wigii_...css
+define("REVISION_NUMBER", "G485");
+define("ASSET_REVISION_NUMBER", "G485"); // this token will be used to load wigii_...js and wigii_...css
 define("VERSION_TYPE", ""); // use the version type to version the customer customization, for example 'MyCompany R1234'
 define("VERSION_LABEL", "Wigii ® software, v.".VERSION_NUMBER." ".REVISION_NUMBER." ".VERSION_TYPE." A-".ASSET_REVISION_NUMBER);

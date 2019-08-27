@@ -780,6 +780,7 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 		self.context = {			
 			pageNo:0,
 			nbPages:0,
+			endOfData:false,
 			queryObject:{
 				begDate:undefined,
 				nbOfDays:undefined
@@ -839,6 +840,7 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 					self.context.timeSlotIndex['page_'+newPage+'_end'] = n-1;
 					self.context.nbPages = newPage;
 				}
+				else self.context.endOfData = true;
 				if(afterLoadAction) afterLoadAction(self,ctx);
 			};
 			// queries for time slots
@@ -869,6 +871,7 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 			self.context.timeSlotIndex = {};
 			self.context.timeSlots = [];
 			self.context.nbPages = 0;
+			self.context.endOfData = false;
 			self.context.pageNo = 0;
 			self.today();
 		};
@@ -904,10 +907,14 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 				self.context.pageNo = p;
 				if(p==1) self.$().find('div.commands span.glyphicon-chevron-left').addClass('disabled');
 				else self.$().find('div.commands span.glyphicon-chevron-left').removeClass('disabled');
-				self.impl.renderTimeSlots(
-					self.context.timeSlotIndex['page_'+self.context.pageNo+'_start'],
-					self.context.timeSlotIndex['page_'+self.context.pageNo+'_end']
-				);
+				if(p>=self.context.nbPages && self.context.endOfData) self.$().find('div.commands span.glyphicon-chevron-right').addClass('disabled');
+				else self.$().find('div.commands span.glyphicon-chevron-right').removeClass('disabled');
+				if(p<=self.context.nbPages) {
+					self.impl.renderTimeSlots(
+						self.context.timeSlotIndex['page_'+self.context.pageNo+'_start'],
+						self.context.timeSlotIndex['page_'+self.context.pageNo+'_end']
+					);
+				}				
 			};
 			// recursive page loading function
 			var recursivelyLoadNewPage = function(self,i) {
@@ -917,9 +924,9 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 			// if page is already loaded, then displays it
 			if(self.context.nbPages >= p) displayPage(self);
 			// else if page is next page, then loads it and displays it
-			else if(p == self.context.nbPages + 1) self.loadNewPage(displayPage);
+			else if(p == self.context.nbPages + 1 && !self.context.endOfData) self.loadNewPage(displayPage);
 			// else recursively loads all intermediate pages and then displays it
-			else recursivelyLoadNewPage(self,p-self.context.nbPages);
+			else if(!self.context.endOfData) recursivelyLoadNewPage(self,p-self.context.nbPages);
 		};
 		
 		// selection
@@ -1009,7 +1016,7 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 		self.$().find('div.commands span.glyphicon-calendar').click(self.today);
 		self.$().find('div.commands span.glyphicon-chevron-right').click(self.nextRange);
 		// startup
-		self.today();
+		if(self.field().css('display')!=='none') self.today();
 	};	
 	// creates time slot chooser component and binds to time range field
 	var options = {}; var tsc =$('#'+formId+'__'+timeRangeFieldName+' div.globalTimeSlots');
