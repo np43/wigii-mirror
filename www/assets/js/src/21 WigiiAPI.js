@@ -1036,7 +1036,10 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 						$('#'+self.fieldId()+' :input[name='+self.fieldName()+'_'+subFieldName+']').val(value);
 					} else {
 						if($('#'+self.fieldId()+' :input').hasClass('htmlArea')){
-							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){ //create a function to ensure the value is set once the editor is ready
+							/* always set the value directly in DOM, this to ensure no timing problem */
+							$('#'+self.fieldId()+' :input').val(value);
+							/* + set the value in ckeditor */
+							$('#'+self.fieldId()+' :input').ckeditor(function(textarea){
 								$(textarea).ckeditor().val(value);
 							});
 						} else if($('#'+self.fieldId()+' :input').hasClass('flex') || $('#'+self.fieldId()+' :input').hasClass('chosen')) {
