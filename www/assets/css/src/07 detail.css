@@ -1,21 +1,30 @@
-.center, div.field.center>div.label, div.field.center>div.value {
+.Title1, div.field.Title1>.value {
+	font-size:x-large;
+	font-weight:500;
+}
+.Title2, div.field.Title2>.value  {
+	font-size:large;
+	font-weight:500;
+}
+.Title3, div.field.Title3>.value  {
+	font-size:normal;
+	font-weight:500;
+}
+.center, div.field.center>div.label, div.field.center>div.value, #moduleView .list div.dataList table tr td div.center {
 	text-align:center;
 }
-.left, div.field.left>div.label, div.field.left>div.value {
+.left, div.field.left>div.label, div.field.left>div.value, #moduleView .list div.dataList table tr td div.left {
 	text-align:left;
 	padding-left:1px;
 }
-.right, div.field.right>div.label, div.field.right>div.value, div.field.right>div.value>* {
+.right, div.field.right>div.label, div.field.right>div.value, div.field.right>div.value>*, #moduleView .list div.dataList table tr td div.right {
 	text-align:right;
 	padding-right:5px;
-}
-div.field.right>div.value {
-	padding-right:0px;
 }
 .bold, div.field.bold>div.label, div.field.bold>div.value, div.field.bold>div.value>* {
 	font-weight:bold;
 }
-.valueRight, div.field.valueRight>div.value, div.field.valueRight>div.value>* {
+.valueRight, div.field.valueRight>div.value, div.field.valueRight>div.value>*, #moduleView .list div.dataList table tr td div.valueRight {
 	text-align:right;
 	padding-right:0px;
 }

@@ -222,15 +222,6 @@
 	height:auto;
 	white-space:normal;
 }
-#moduleView .list div.dataList table tr td div.displayAsTitle1 {
-	font-size:22px;
-}
-#moduleView .list div.dataList table tr td div.displayAsTitle2 {
-	font-size:18px;
-}
-#moduleView .list div.dataList table tr td div.displayAsTitle3 {
-	font-size:16px;
-}
 #moduleView .list div.dataList table tr td div p{
 	margin:0px; padding:0px;
 }

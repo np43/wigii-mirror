@@ -1277,34 +1277,58 @@ class TemplateRecordManager extends Model {
 	/**
 	 * Format value
 	 */
-	public function doFormatForText($value){
-		//nothing special to format for standard text
-		if(is_array($value)){
+	public function doFormatForText($value,$fieldXml=array()){
+		$size = null;
+	    if($fieldXml["displayAsTitle1"]=="1") $size=16;
+	    if($fieldXml["displayAsTitle2"]=="1") $size=18;
+	    if($fieldXml["displayAsTitle3"]=="1") $size=22;
+	    if(is_array($value)){
+		    if($size){
+		        foreach($value as $key=>$val){
+		            $value[$key] = '<font style="font-size:'.$size.'px;">'.$val.'</font>';
+		        }
+		    }
 			return $value;
+		}
+		if($size){
+		    return '<font style="font-size:'.$size.'px;">'.$value.'</font>';
 		}
 		return $value;
 	}
 	/**
 	 * Formats html content for display and if purify is true, then removes all active content like scripts and iframes.
 	 */
-	public function doFormatForHtmlText($value, $purify=true){
+	public function doFormatForHtmlText($value, $purify=true, $fieldXml=array()){
 		$purifier = TechnicalServiceProvider::getHTMLPurifier();
+		$size = null;
+		if($fieldXml["displayAsTitle1"]=="1") $size=16;
+		if($fieldXml["displayAsTitle2"]=="1") $size=18;
+		if($fieldXml["displayAsTitle3"]=="1") $size=22;
+		
+		$returnValue = null;
 		if(is_array($value)){
-			$result = array();
+		    $returnValue = array();
 			foreach($value as $key=>$val){
 				if($purify && $this->isHTMLPurifierEnabled()){
-					$result[$key] = $purifier->purify(htmlspecialchars_decode($val, ENT_QUOTES));
+				    $returnValue[$key] = $purifier->purify(htmlspecialchars_decode($val, ENT_QUOTES));
 				} else {
-					$result[$key] = htmlspecialchars_decode($val, ENT_QUOTES);
+				    $returnValue[$key] = htmlspecialchars_decode($val, ENT_QUOTES);
+				}
+				if($size){
+				    $returnValue[$key] = '<font style="font-size:'.$size.'px;">'.$returnValue[$key].'</font>';
 				}
 			}
-			return $result;
-		}
-		if($purify && $this->isHTMLPurifierEnabled()){
-			return $purifier->purify(htmlspecialchars_decode($value, ENT_QUOTES));
 		} else {
-			return htmlspecialchars_decode($value, ENT_QUOTES);
+    		if($purify && $this->isHTMLPurifierEnabled()){
+    		    $returnValue = $purifier->purify(htmlspecialchars_decode($value, ENT_QUOTES));
+    		} else {
+    		    $returnValue = htmlspecialchars_decode($value, ENT_QUOTES);
+    		}
+    		if($size){
+    		    $returnValue = '<font style="font-size:'.$size.'px;">'.$returnValue.'</font>';
+    		}
 		}
+		return $returnValue;
 	}
 	public function doFormatForColor($value){
 		if($value){
@@ -1950,9 +1974,9 @@ class TemplateRecordManager extends Model {
 			case "Blobs":
 			case "Texts":
 				if($xml["htmlArea"]=="1"){
-					return $this->doFormatForHtmlText($value, $xml["deactivateHTMLPurifier"]!="1");
+				    return $this->doFormatForHtmlText($value, $xml["deactivateHTMLPurifier"]!="1",$xml);
 				} else {
-					return $this->doFormatForText($value);
+				    return $this->doFormatForText($value,$xml);
 				}
 				break;
 			case "Links":
@@ -2233,11 +2257,11 @@ class TemplateRecordManager extends Model {
 				} else if($xml["colorPicker"]=="1"){
 					return $this->doFormatForColor($value);
 				} else if($xml["htmlArea"]=="1"){
-					return $this->doFormatForHtmlText($value, $xml["deactivateHTMLPurifier"]!="1");
+				    return $this->doFormatForHtmlText($value, $xml["deactivateHTMLPurifier"]!="1", $xml);
 				} else if($xml["linkToTel"]=="1"){
 					return $this->doFormatForLinkToTel($value);
 				} else {
-					return $this->doFormatForText($value, $doRegroupSimilarValue);
+				    return $this->doFormatForText($value, $xml);
 				}
 				break;
 			case "Times":
@@ -2261,7 +2285,7 @@ class TemplateRecordManager extends Model {
 			case "Urls":
 				switch($subFieldName){
 					case "name":
-						return $this->doFormatForText($value);
+					    return $this->doFormatForText($value,$xml);
 						break;
 					case null:
 						$value = $this->formatValueToPreventInjection($this->getRecord()->getFieldValue($fieldName, "url"));
