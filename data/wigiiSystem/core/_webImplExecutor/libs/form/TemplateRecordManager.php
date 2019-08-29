@@ -1279,9 +1279,9 @@ class TemplateRecordManager extends Model {
 	 */
 	public function doFormatForText($value,$fieldXml=array()){
 		$size = null;
-	    if($fieldXml["displayAsTitle1"]=="1") $size=16;
+	    if($fieldXml["displayAsTitle1"]=="1") $size=22;
 	    if($fieldXml["displayAsTitle2"]=="1") $size=18;
-	    if($fieldXml["displayAsTitle3"]=="1") $size=22;
+	    if($fieldXml["displayAsTitle3"]=="1") $size=16;
 	    if(is_array($value)){
 		    if($size){
 		        foreach($value as $key=>$val){
@@ -1301,9 +1301,9 @@ class TemplateRecordManager extends Model {
 	public function doFormatForHtmlText($value, $purify=true, $fieldXml=array()){
 		$purifier = TechnicalServiceProvider::getHTMLPurifier();
 		$size = null;
-		if($fieldXml["displayAsTitle1"]=="1") $size=16;
+		if($fieldXml["displayAsTitle1"]=="1") $size=22;
 		if($fieldXml["displayAsTitle2"]=="1") $size=18;
-		if($fieldXml["displayAsTitle3"]=="1") $size=22;
+		if($fieldXml["displayAsTitle3"]=="1") $size=16;
 		
 		$returnValue = null;
 		if(is_array($value)){
