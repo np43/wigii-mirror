@@ -10,6 +10,12 @@
 	font-size:normal;
 	font-weight:500;
 }
+.Title1, div.field.Title1>.value input, .Title1, div.field.Title1>.value textarea, 
+.Title2, div.field.Title2>.value input, .Title2, div.field.Title2>.value textarea,
+.Title3, div.field.Title3>.value input, .Title3, div.field.Title3>.value textarea {
+	font-size:small;
+	font-weight:bold;
+}
 .center, div.field.center>div.label, div.field.center>div.value, #moduleView .list div.dataList table tr td div.center {
 	text-align:center;
 }
