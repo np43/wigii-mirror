@@ -21,9 +21,9 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 11 february 10
- * by LWR
+/**
+ * Created on 11 february 10 by LWR
+ * Modified by CWE on 28.08.2019 to prevent FuncExp injection in URL if principal is not config editor
  */
 class PortalGroupFormExecutor extends FormExecutor {
 
@@ -47,14 +47,12 @@ class PortalGroupFormExecutor extends FormExecutor {
 	}
 
 	protected function doSpecificCheck($p, $exec){
-
 		$transS = ServiceProvider::getTranslationService();
 		$rec = $this->getRecord();
-		$group = $this->getGroupP()->getGroup();
-
-		//if a name is filled, then the url is required
-		if($rec->getFieldValue("url", "name") != null && $rec->getFieldValue("url", "url")==null){
-			$this->addErrorToField($transS->h($p, "aUrlIsRequiredIfANameIsDefined"), "url");
+		//if url is a FuncExp and principal is not config editor, then not authorized
+		if(is_fx(stripslashes($rec->getFieldValue("url", "url"))) && 
+		   !ServiceProvider::getWigiiBPL()->adminIsPrincipalConfigEditor($p)) {
+		    $this->addErrorToField($transS->h($p, "noRightsToEditFuncExp"), "url");
 		}
 	}
 

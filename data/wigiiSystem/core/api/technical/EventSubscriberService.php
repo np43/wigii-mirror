@@ -200,6 +200,9 @@ class EventSubscriberService {
 							throw new ServiceException("unknown event: ".$eventName." for entity: ".$entityName, ServiceException::INVALID_ARGUMENT);
 					}
 					break;
+				case "Function":
+				    $eventSubscriberList->addEventSubscriber($this->getElementStatisticService(), true);
+				    break;
 				default:
 					throw new ServiceException("unknown entity: ".$entityName, ServiceException::INVALID_ARGUMENT);
 

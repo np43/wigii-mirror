@@ -44,23 +44,26 @@
  * 		ii. can give access to Admin module to user the principal has a UU
  *		iii. can give isAdminCreator to user the principal has a UU
  *		iv. will be readAllUsersInWigiiNamespace
- *	b. isRootGroupCreator (par module)
+ *	b. isRootGroupCreator (per module)
  *		i. will be a groupCreator
  *		ii. can create a group with no parent, or can modify a group on which the principal has X rights to be set with no parent (in that case, add new UGR because the propagation will change when having no parent).
  *
  * 3) User or group readAll in wigiiNamespace
  * 	a. isReadAllUsersInWigiiNamespace
- *		i. will full rights on each users of the wigiiNamespace of the principal (including himself)
- *		   the write right is determine in adition with the user/admin creator
+ *		i. will have full rights on each users of the wigiiNamespace of the principal (including himself)
+ *		   the write right is determined in adition with the user/admin creator
  *	b. isReadAllGroupsInWigiiNamespace (per module)
- *		i. will have full rights on each groups of the wigiiNamespace of the principal (except all private groups)
- *		   the write rights is determine in adition with the group/rootGroup creator
+ *		i. will have full rights on each groups of the wigiiNamespace of the principal
+ *		   the write rights is determined in adition with the group/rootGroup creator
  *
- * 4) WigiiNamespace creator
+ * 4) Module editor
+ * 		i. will have the ability to modify the configuration files of the wigiiNamespace of the principal 
+ *
+ * 5) WigiiNamespace creator
  * 		i. will have the input box wigiiNamespace allowing the user to define the wigiiNamespace of each user or groups he can access
+ *      ii. will have the ability to create a new wigiiNamespace using the namespace wizard
+ * 
  *
- * 5) Module creator
- * 		not implemented yet
  */
 class Principal extends Model
 {

@@ -114,6 +114,16 @@ class ExecutionSink
 		}
 	}
 
+	/**
+	 * Dispatches an ExecFunction Wigii event
+	 * @param String $functionName name of the function currently beeing executed
+	 * @param Principal $principal current principal executing the function
+	 * @param Element $element main element concerned by this function
+	 */
+	public function throwExecFunctionEvent($functionName, $principal, $element) {
+	    TechnicalServiceProvider::getWigiiEventsDispatcher()->execFunction(PWithElementWithFunctionName::createInstance($principal,$element,$functionName));
+	}
+	
 	// Utils
 
 	protected function writeMessage($message)

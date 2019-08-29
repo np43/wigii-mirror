@@ -25,6 +25,7 @@
  * This service manages a queue of http requests following the Wigii communication protocol.
  * It allows to iterate through the requests and load the request context in some public accessors.
  * Created on 24 juil. 09 by LWR
+ * Modified by CWE on 28.08.2019 to enable storage of execution variables and to expose if current request is in public scope or not
  */
 interface ExecutionService {
 
@@ -45,7 +46,7 @@ interface ExecutionService {
 	public function loadNextRequest($wigiiExecutor);
 
 	/**
-	 * process the url to make it array of requests, and add it to the remaingin request.
+	 * process the url to make it array of requests, and add it to the remaining request.
 	 * @return array return the array of request which was defined in this url.
 	 */
 	public function addRequests($url);
@@ -68,6 +69,12 @@ interface ExecutionService {
 	public function getExecPrincipal();
 
 	/**
+	 * Returns true if current execution is in public scope (typically running with the Public Principal)
+	 * Defaults to false.
+	 */
+	public function getIsInPublic();
+	
+	/**
 	 * get current system version
 	 */
 	public function getVersion();
@@ -75,6 +82,22 @@ interface ExecutionService {
 	 * get current system version type as void/beta/rc/ etc..
 	 */
 	public function getVersionType();
+	
+	// Execution variables
+	
+	/**
+	 * Returns the value of an execution variable
+	 * @param String $name variable name
+	 * @return mixed any valid PHP value or object, stored in memory during the ExecutionService lifecycle or null if not defined
+	 */
+	public function getVar($name);
+	
+	/**
+	 * Stores a variable into the ExecutionService
+	 * @param String $name variable name. If already exists, value is replaced.
+	 * @param mixed $value any valid PHP value or object, stored in memory during the ExecutionService lifecycle
+	 */
+	public function setVar($name, $value);
 }
 
 

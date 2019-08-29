@@ -457,6 +457,14 @@ class WigiiEventsDispatcher implements WigiiEvents, MultiplexedEvent, EventSubsc
 		$this->dispatchEvent($e);
 	}
 
+	/**
+	 * execFunction
+	 */
+	public function execFunction($pWithElementWithFunctionName){
+	    $e = $this->createEventStackInstance($pWithElementWithFunctionName->getFunctionName(), "Function", $pWithElementWithFunctionName->getElement()->getModule(), $pWithElementWithFunctionName);
+	    $this->dispatchEvent($e);
+	}
+	
 	// Wigii multiplexed events
 
 	public function event($eventName, $entityName, $module, $object) {

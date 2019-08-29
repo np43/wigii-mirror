@@ -3069,7 +3069,7 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	 * @return Boolean true if current principal is a public principal else false.
 	 */
 	public function ctlIsInPublic($args) {
-	    return $this->getAuthorizationService()->isPublicPrincipal($this->getPrincipal());
+	    return ServiceProvider::getExecutionService()->getIsInPublic() || $this->getAuthorizationService()->isPublicPrincipal($this->getPrincipal());
 	}
 	
 	/**

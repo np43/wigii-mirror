@@ -39,6 +39,7 @@ class ExecutionServiceImpl implements ExecutionService {
 	private $_executionSink;
 
 	private $isUpdating; //if true, then only text formatted with the communication protocol is returned. Otherwise, html is returned
+	private $isInPublic; //if true, indicates that current execution is in public scope (typically managed by Public principal)
 	private $originalContext; //this is the object containing the original context
 	private $idAnswer; //this is the id for the answer request
 	private $crtWigiiNamespace; //this is the wigiiNamespace of the request, it contains the client
@@ -49,6 +50,7 @@ class ExecutionServiceImpl implements ExecutionService {
 	private $crtRequest; //this a string with the current request (just for information, not really used)
 	private $crtFragment; //this a string with the current fragments (www.domain.ch/#fragments)
 	private $remainingRequests; //store in an array each request. A loop will be done on each request
+	private $executionVariables; //an in memory stored array of variables for the whole ExecutionService lifecycle
 
 	//dependant service
 	private $wigiiNamespaceAS;
@@ -174,6 +176,16 @@ class ExecutionServiceImpl implements ExecutionService {
 		return $this->getAuthenticationService()->getMainPrincipal();;
 	}
 
+	public function getIsInPublic() {
+	    return ($this->isInPublic==true);
+	}
+	/**
+	 * Informs ExecutionService that current scope becomes public
+	 */
+	public function setIsInPublic() {
+	    $this->isInPublic = true;
+	    $this->debugLogger()->write("Execution scope switches to public");
+	}
 	public function wasFoundInJSCache(){
 		return $this->idAnswer == ExecutionServiceImpl::answerFoundInJSCache;
 	}
@@ -461,7 +473,26 @@ class ExecutionServiceImpl implements ExecutionService {
 		//do not reset the crt context as it kept for all this execution
 	}
 
+	// Execution variables
 
+	/**
+	 * @see ExecutionService::getVar()
+	 */
+	public function getVar($name) {
+	    if(!isset($this->executionVariables)) return null;
+	    return $this->executionVariables[$name];
+	}
+	
+	/**
+	 * @see ExecutionService::setVar()
+	 */
+	public function setVar($name, $value) {
+	    if(!isset($name)) throw new ExecutionServiceException('name cannot be empty', ExecutionServiceException::INVALID_ARGUMENT);
+	    if(!isset($this->executionVariables)) $this->executionVariables = array();
+	    $this->executionVariables[$name] = $value;
+	    $this->debugLogger()->write("stores execution variable $name");
+	}
+	
 	// debugs
 
 	public function displayDebug(){
@@ -487,7 +518,4 @@ class ExecutionServiceImpl implements ExecutionService {
 	public function getVersionType(){
 		return VERSION_TYPE;
 	}
-
-
-
 }

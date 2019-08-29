@@ -229,6 +229,26 @@ class FuncExpBuilder {
 	}
 	
 	/**
+	 * Checks if a given string is a FuncExp
+	 * @param String $str string to check if it is an FuncExp
+	 * @return mixed returns boolean false if string is not a FuncExp, else returns parsed FuncExp object
+	 */
+	public function is_fx($str) {
+	    $returnValue = false;
+	    if(!empty($str)) {
+    	    try {
+    	        fput($str);
+    	        $returnValue = $this->str2fx($str);
+    	        if(!($returnValue instanceof FuncExp)) $returnValue = false;
+    	    }
+    	    catch(StringTokenizerException $ste) {
+    	        if($ste->getCode() != StringTokenizerException::SYNTAX_ERROR) throw $ste;
+    	    }
+	    }
+	    return $returnValue;
+	}
+	
+	/**
 	 * Converts a LogExp given into its string form to a semantically equivalent FuncExp
 	 * @param String $str a log exp in its string form
 	 * @return FuncExp

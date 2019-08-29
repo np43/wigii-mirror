@@ -1234,11 +1234,45 @@ class WigiiBPL
 	    // 3. Checks existence of SuperAdmin role into Principal role list
 	    foreach($principal->getRoleListener()->getAdminRoleIds() as $adminId) {
 	        $adminRole = $principal->getRoleListener()->getUser($adminId);
-            // finds first super admin role
-            if($adminRole->getDetail()->isWigiiNamespaceCreator()) {
-               return true;
-            }
-        }
+	        // finds first super admin role
+	        if($adminRole->getDetail()->isWigiiNamespaceCreator()) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+	
+	/**
+	 * Checks if principal is a config editor in the current namespace
+	 * @param Principal $principal
+	 * @return boolean true if Principal can edit config else false
+	 */
+	public function adminIsPrincipalConfigEditor($principal) {
+	    if(!isset($principal)) throw new WigiiBPLException('principal cannot be null', WigiiBPLException::INVALID_ARGUMENT);
+	    
+	    // 1. root principal or public principal are not config editors
+	    if($principal->getAttachedUser() == null) return false;
+	    
+	    // 2. Ensures to have Principal role list loaded
+	    if(!($principal->getRoleListener() instanceof UserListForNavigationBarImpl)) {
+	        $defaultWigiiNamespace = (string)$this->getConfigService()->getParameter($principal, null, "defaultWigiiNamespace");
+	        if(!$defaultWigiiNamespace) $defaultWigiiNamespace = $principal->getRealWigiiNamespace()->getWigiiNamespaceUrl();
+	        $principal->refetchAllRoles($this->getUserAdminService()->getListFilterForNavigationBar(), UserListForNavigationBarImpl::createInstance($defaultWigiiNamespace));
+	    }
+	    
+	    // 3. Checks existence of SuperAdmin role or Module Editor role (in same namespace) into Principal role list
+	    $wigiiNamespace = $principal->getWigiiNamespace()->getWigiiNamespaceName();
+	    foreach($principal->getRoleListener()->getAdminRoleIds() as $adminId) {
+	        $adminRole = $principal->getRoleListener()->getUser($adminId);
+	        // finds first super admin role
+	        if($adminRole->getDetail()->isWigiiNamespaceCreator()) {
+	            return true;
+	        }
+	        // checks if same namespace and module editor
+	        if($adminRole->getWigiiNamespace()->getWigiiNamespaceName()==$wigiiNamespace && $adminRole->getDetail()->isModuleEditor()) {
+	            return true;
+	        }
+	    }
 	    return false;
 	}
 	

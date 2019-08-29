@@ -243,6 +243,10 @@ interface WigiiEvents {
 	 */
 	public function deleteUser($pWithUser);
 
+	/**
+	 * execFunction
+	 */
+	public function execFunction($pWithElementWithFunctionName);
 }
 
 

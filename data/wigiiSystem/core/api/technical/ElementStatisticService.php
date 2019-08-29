@@ -124,7 +124,7 @@ class ElementStatisticService implements MultiplexedEvent {
 		
 		//eput("ElementStatistic->getSqlForInsertEvent ".$eventName." ".$entityName." ".$module->getModuleUrl()." ".get_class($object));
 		
-		if($entityName == "Element"){
+		if($entityName == "Element" || $entityName == "Function"){
 			$element = $object->getElement();
 			if(is_null($element)) throw new StatisticServiceException('element can not be null', StatisticServiceException::INVALID_ARGUMENT);
 		}
@@ -180,7 +180,7 @@ class ElementStatisticService implements MultiplexedEvent {
 					$sqlB->insertValue("elementId", $elementP->getElement()->getId(), MySqlQueryBuilder::SQLTYPE_VARCHAR);
 				}
 			}
-		} else if($entityName == "Element"){
+		} else if($entityName == "Element" || $entityName == "Function"){
 			$sqlB->insertValue("timestamp", $time, MySqlQueryBuilder::SQLTYPE_INT);
 			$sqlB->insertValue("eventName", $eventName, MySqlQueryBuilder::SQLTYPE_VARCHAR);
 			$sqlB->insertValue("entityName", $entityName, MySqlQueryBuilder::SQLTYPE_VARCHAR);

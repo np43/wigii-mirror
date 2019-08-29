@@ -34,6 +34,7 @@
 class RecordEvaluator implements FuncExpEvaluator
 {
 	private $_debugLogger;
+	private $_executionSink;
 	private $record;
 	private $currentField;
 	private $principal;
@@ -178,6 +179,15 @@ class RecordEvaluator implements FuncExpEvaluator
 		return $this->_debugLogger;
 	}
 
+	private function executionSink()
+	{
+	    if(!isset($this->_executionSink))
+	    {
+	        $this->_executionSink = ExecutionSink::getInstance("RecordEvaluator");
+	    }
+	    return $this->_executionSink;
+	}
+	
 	private $formExecutor;
 	/**
 	 * Injects the current executing FormExecutor that can be used by funcExp implementators
@@ -4249,8 +4259,6 @@ class RecordEvaluator implements FuncExpEvaluator
 	 */
 	public function recurringController($args){
 		$this->assertFxOriginIsNotPublic();
-		$nArgs = $this->getNumberOfArgs($args);
-		//if($nArgs != 1) throw new FuncExpEvalException('The manageRecurrence function takes two argument which is the email value', FuncExpEvalException::INVALID_ARGUMENT);
 		$activity = $this->getRecord();
 		$p = $this->getPrincipal();
 		$elS = ServiceProvider::getElementService();
@@ -4315,8 +4323,8 @@ class RecordEvaluator implements FuncExpEvaluator
 		//if edit recurrence ensure that startDate >= element date
 		if(!$stopRecurrence && $isRecurring && $startDate<$elementDate){
 			$errorMessage .= $transS->t($p,"recurringStartDateCannotBeEarlierThanElementDate")."<br />";
-			eput($startDate);
-			eput($elementDate);
+// 			eput($startDate);
+// 			eput($elementDate);
 		}
 		$endDate = $activity->getFieldValue("endDate");
 		if(!$endDate){
@@ -4657,6 +4665,9 @@ class RecordEvaluator implements FuncExpEvaluator
 							$elS->insertElementCopy($p, $element, $groupId);
 						}
 					}
+					// records ExecFunction event
+					$this->executionSink()->throwExecFunctionEvent("recurringController", $p, $element);
+					
 				} elseif($valueFieldName && $keyFieldName) {
 					//update recurrence pattern on "old" linked elements
 					//fetch all linked recurrent element if keyField is defined

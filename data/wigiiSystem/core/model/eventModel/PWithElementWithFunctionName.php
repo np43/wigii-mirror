@@ -19,15 +19,30 @@
  *  @author     <http://www.wigii.org/system>      Wigii.org 
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
- */ 
-
-
-/**
- * Standard Wigii version 
- * and specific version type including customer name and revision number
  */
-define("VERSION_NUMBER", "4.725");
-define("REVISION_NUMBER", "G490");
-define("ASSET_REVISION_NUMBER", "G490"); // this token will be used to load wigii_...js and wigii_...css
-define("VERSION_TYPE", ""); // use the version type to version the customer customization, for example 'MyCompany R1234'
-define("VERSION_LABEL", "Wigii ® software, v.".VERSION_NUMBER." ".REVISION_NUMBER." ".VERSION_TYPE." A-".ASSET_REVISION_NUMBER);
+
+/*
+ * Created on 27.08.2019
+ * by CWE
+ */
+
+class PWithElementWithFunctionName extends BaseEventModel {
+	
+	protected $element;
+	public function setElement($var){ $this->element = $var; }
+	public function getElement(){ return $this->element; }
+	
+	protected $functionName;
+	public function setFunctionName($var){ $this->functionName = $var; }
+	public function getFunctionName(){ return $this->functionName; }
+	
+	public static function createInstance($p, $element=MANDATORY_ARG, $functionName=MANDATORY_ARG){
+		$r = new self();
+		$r->setP($p);
+		$r->setElement($element);
+		$r->setFunctionName($functionName);
+		return $r;
+	}
+}
+
+

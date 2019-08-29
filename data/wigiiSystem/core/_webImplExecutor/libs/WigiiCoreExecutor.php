@@ -157,8 +157,9 @@ class WigiiCoreExecutor {
 	protected function getPublicPrincipal() {
 		$this->executionSink()->publishStartOperation("getPublicPrincipal");
 		$returnValue = ServiceProvider :: getAuthorizationService()->findPublicPrincipal($this->getSystemPrincipals());
-		if (is_null($returnValue))
-			throw new AuthorizationServiceException("public principal has not been initialized by Service Provider", AuthorizationServiceException :: FORBIDDEN);
+		if (is_null($returnValue)) throw new AuthorizationServiceException("public principal has not been initialized by Service Provider", AuthorizationServiceException :: FORBIDDEN);
+		// CWE 28.08.2019: informs ExecutionService that request scope is switching to Public
+		ServiceProvider::getExecutionService()->setIsInPublic();
 		$this->executionSink()->publishEndOperation("getPublicPrincipal");
 		return $returnValue;
 	}
@@ -4373,7 +4374,6 @@ invalidCompleteCache();
 				}
 			}
 	
-			//if no request, then display the last module for principal
 			$p = $exec->getExecPrincipal();
 	
 			$this->executionSink()->publishStartOperation("processAndEnds", $p);

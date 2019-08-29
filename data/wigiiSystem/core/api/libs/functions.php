@@ -1116,7 +1116,11 @@ function evalfx($principal, $funcExp, $modules=null) {
  * Converts a string to a FuncExp
  */
 function str2fx($str) {return TechnicalServiceProvider::getFuncExpBuilder()->str2fx($str);}
-
+/**
+ * Checks if a given string is a FuncExp
+ * @return mixed returns boolean false if string is not a FuncExp, else returns parsed FuncExp object
+ */
+function is_fx($str) {return TechnicalServiceProvider::getFuncExpBuilder()->is_fx($str);}
 /**
  * Converts a LogExp given into its string form to a semantically equivalent FuncExp
  * @param String $str a log exp in its string form

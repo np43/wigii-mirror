@@ -926,6 +926,7 @@ noGroupFoundExplanation:#ThisGroup# is probably deleted or you don't have rigths
 noParent:No parent:Aucun parent:::::::::
 noRightsOnGroup:You do not have access to any #group#. Please check with your administrator.:Vous n'avez accès à aucun #-group#. Veuillez contacter votre administrateur.:::::::::
 noRightsOnUser:You do not have rights to this user. If you remove this user of #thisGroup# you will no more be able to add him again.:Vous n'avez aucun droit sur cet utilisateur. Si vous lui enlever ces droits, vous ne serez plus en mesure de les lui remettre.:::::::::
+noRightsToEditFuncExp:You do not have rights to define or modify a FuncExp:Vous n&apos;avez pas le droit de définir ou de modifier une Func Exp::::::::
 none:&nbsp;:&nbsp;:::::::::
 object:Subject:Objet:::::::::
 ok:Ok:Ok:::::::::

@@ -65,7 +65,7 @@ interface WebExecutor {
 	 * Wigii API can be accessed using the ServiceProvider class,
 	 * State can be stored into the session using the SessionAdminService.
 	 * This object is exclusive and not recycled. Its lifecycle starts with the http request and ends when processing is finished.
-	 * @param Principal $p current authenticated user executing the request. (Principal is never a minimal principal).
+	 * @param Principal $p current authenticated user executing the request.
 	 * @param ExecutionService $exec ExecutionService instance holding all the request details.
 	 * @throws Exception this method can throw exceptions which will be handled by the WigiiExecutor.
 	 */

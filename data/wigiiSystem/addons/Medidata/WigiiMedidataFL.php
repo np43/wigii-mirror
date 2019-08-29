@@ -39,6 +39,16 @@ class WigiiMedidataFL extends FuncExpVMAbstractFL
 		return $this->_debugLogger;
 	}
 
+	private $_executionSink;
+	private function executionSink()
+	{
+	    if(!isset($this->_executionSink))
+	    {
+	        $this->_executionSink = ExecutionSink::getInstance("WigiiMedidataFL");
+	    }
+	    return $this->_executionSink;
+	}
+	
 	private $trm;
 	public function setTrm($trm) {
 		$this->trm = $trm;
@@ -478,6 +488,9 @@ MDTINVOICERESPSTATUS;
 	            "setFileName","Medidata/send/".$customerOrder->getFieldValue($sendControlFieldName,"name").$customerOrder->getFieldValue($sendControlFieldName,"type")
 	            )
 	        ));
+	    
+	    // records ExecFunction event
+	    $this->executionSink()->throwExecFunctionEvent("sendMedidataInvoiceRequest", $this->getPrincipal(), $customerOrder);
 	    
 	    $this->debugLogger()->logEndOperation('sendMedidataInvoiceRequest');
 	    return $returnValue;

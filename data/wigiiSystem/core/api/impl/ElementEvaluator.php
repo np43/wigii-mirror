@@ -873,13 +873,14 @@ class ElementEvaluator extends RecordEvaluator
 		if($group != null && !($group instanceof Group)) {
 			$group = ServiceProvider::getGroupAdminService()->getGroupWithoutDetail($p, $group);
 		}
-		//refresh group panel and moduleView
-		$this->debugLogger()->write('invalids group panel cache');
+		//refresh group panel and moduleView (only if js has not already been sent once in execution)
 		$exec = ServiceProvider::getExecutionService();
-		if($exec->getCrtAction() != 'newSubscription') {
+		if(!$exec->getVar('ctlRefreshGroupPanelIsCalled') && !$exec->getIsInPublic()) {
+		    $this->debugLogger()->write('invalids group panel cache');
     		$exec->addRequests("groupPanel/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/groupPanel");
     		$exec->addJsCode("invalidCache('moduleView');");
     		$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
+    		$exec->setVar('ctlRefreshGroupPanelIsCalled',true);
 		}
 		$this->debugLogger()->logEndOperation('ctlRefreshGroupPanel');
 		if($group) return $group->getId();
@@ -891,7 +892,10 @@ class ElementEvaluator extends RecordEvaluator
 	 */
 	public function ctlRefreshModuleView($args) {
 		$exec = ServiceProvider::getExecutionService();
-		$exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
+		if(!$exec->getVar('ctlRefreshModuleViewIsCalled') && !$exec->getIsInPublic()) {
+		    $exec->addJsCode("setTimeout(function(){update('moduleView/".$exec->getCrtWigiiNamespace()->getWigiiNamespaceUrl()."/".$exec->getCrtModule()->getModuleName()."/display/moduleView');}, 100);");
+		    $exec->setVar('ctlRefreshModuleViewIsCalled',true);
+		}
 	}
 	
 	/**

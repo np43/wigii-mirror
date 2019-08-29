@@ -622,4 +622,11 @@ class DataFlowContextWigiiEvents implements WigiiEvents {
 	public function deleteUser($pWithUser){
 		$this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, "delete", "User", null, $pWithUser);
 	}
+	
+	/**
+	 * execFunction
+	 */
+	public function execFunction($pWithElementWithFunctionName){
+	    $this->dataFlowContext->getDataFlowService()->dispatchWigiiEvent($this->dataFlowContext, $pWithElementWithFunctionName->getFunctionName(), "Function", $pWithElementWithFunctionName->getElement()->getModule(), $pWithElementWithFunctionName);
+	}
 }
