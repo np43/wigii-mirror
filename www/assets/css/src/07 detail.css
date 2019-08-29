@@ -9,6 +9,9 @@
 	text-align:right;
 	padding-right:5px;
 }
+div.field.right>div.value {
+	padding-right:0px;
+}
 .bold, div.field.bold>div.label, div.field.bold>div.value, div.field.bold>div.value>* {
 	font-weight:bold;
 }
