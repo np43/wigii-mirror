@@ -1206,6 +1206,16 @@ MDTINVOICERESPSTATUS;
 	        $vatIndex[(string)$vatDetail["vat_rate"]] = $i;
 	    }
 	    
+	    // extracts coding line
+	    $codingLine =  $this->getXmlValue($medidataXml, 'invoice', '/request/payload/body/esr9','coding_line');
+	    if(!isset($codingLine)) {
+	        $codingLine = $this->evaluateFuncExp(fx('txtFormatSwissBvrCodingLine',
+	            $this->getXmlValue($invoiceTiersXml,'invoice','./balance','amount_due'),
+	            substr($this->getXmlValue($medidataXml,'invoice','/request/payload/body/esrQR','iban'),-9),
+	            $this->getXmlValue($medidataXml,'invoice','/request/payload/body/esrQR','reference_number')
+	        ));
+	    }
+	    
 	    // generates invoice title
 	    if($invoiceTiersType=='tiers_payant') {	        
 	        if($invoiceType=='reminder') {
@@ -1247,6 +1257,7 @@ MDTINVOICERESPSTATUS;
 	    }
 	    $options->setValue('vatDetails',$vatDetails);
 	    $options->setValue('vatIndex',$vatIndex);
+	    $options->setValue('codingLine',$codingLine);
 	    
 	    // prints invoice request as html
 	    $htmlContent = $this->evaluateFuncExp(fx('printElementWithTemplate',$customerOrder,$printTemplate,$options));
@@ -1371,8 +1382,18 @@ MDTINVOICERESPSTATUS;
 		if(!empty($remark)) $xml = $this->createXmlElement($returnValue, 'remark', $options, $remark);
 		// tiers payant
 		$this->createInvoice45TiersPayant($returnValue, $customerOrder, $options);
+		
+		// type of ESR (QR or 9) supported by insurance
+		$insurance = $options->getValue('invoiceTo');
 		// esr QR
-		$this->createInvoice45esrQR($returnValue, $customerOrder, $options);
+		if($insurance->getFieldValue('esrType')=='esrQR') {
+		    $this->createInvoice45esrQR($returnValue, $customerOrder, $options);
+		}				
+		// defaults to esr 9
+		else {
+		    $this->createInvoice45esr9($returnValue, $customerOrder, $options);
+		}
+		
 		// case management
 		switch($customerOrder->getFieldValue('caseLaw')){
 			case 'LAI':
@@ -1560,6 +1581,45 @@ MDTINVOICERESPSTATUS;
 		$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($legalEntity, 'entityAddress','zip_code'));
 		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($legalEntity, 'entityAddress','city'));
 		return $returnValue;
+	}
+	
+	/**
+	 * Creates an invoice request esr9 node
+	 * @param DOMElement $invoiceBody current invoice body node
+	 * @param Element $customerOrder element of type CustomerOrders sourcing the invoice creation
+	 * @param WigiiBPLParameter $options optional bag of options to configure the generation process
+	 * @return DOMElement the created invoice esr QR node
+	 */
+	protected function createInvoice45esr9($invoiceBody,$customerOrder,$options) {
+	    $legalEntity = $options->getValue('legalEntity');
+	    $returnValue = $this->createXmlElement($invoiceBody, 'esr9', $options);
+	    $returnValue->setAttribute('type', '16or27');
+	    $participantNumber = $legalEntity->getFieldValue('BVR');
+	    if($participantNumber==null) $participantNumber = $legalEntity->getFieldValue('CCP');
+	    if($participantNumber==null) throw new WigiiMedidataException("CCP or BVR field cannot be empty",WigiiMedidataException::XML_VALIDATION_ERROR);
+	    $returnValue->setAttribute('participant_number', $participantNumber);
+	    $returnValue->setAttribute('reference_number', $this->evaluateFuncExp(fx('txtFormatSwissBvr',$this->assertNotNull($customerOrder,'customerOrderNumber'),true)));
+	    $returnValue->setAttribute('coding_line', $this->evaluateFuncExp(fx('txtFormatSwissBvrCodingLine',
+	        $customerOrder->getFieldValue('dueAmount'),
+	        $participantNumber,
+	        $this->assertNotNull($customerOrder,'customerOrderNumber')
+	    )));
+	    // bank
+	    $xml = $this->createXmlElement($returnValue, 'bank', $options);
+	    $xml = $this->createXmlElement($xml, 'company', $options);
+	    $this->createXmlElement($xml, 'companyname', $options, 'Postfinance SA');
+	    $xml = $this->createXmlElement($xml, 'postal', $options);
+	    $this->createXmlElement($xml, 'zip', $options, '3030');
+	    $this->createXmlElement($xml, 'city', $options, 'Bern');
+	    // creditor
+	    $xml = $this->createXmlElement($returnValue, 'creditor', $options);
+	    $xml = $this->createXmlElement($xml, 'company', $options);
+	    $this->createXmlElement($xml, 'companyname', $options, $this->assertNotNull($legalEntity, 'entityName'));
+	    $xml = $this->createXmlElement($xml, 'postal', $options);
+	    $this->createXmlElement($xml, 'street', $options, $this->assertNotNull($legalEntity, 'entityAddress','street'));
+	    $this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($legalEntity, 'entityAddress','zip_code'));
+	    $this->createXmlElement($xml, 'city', $options, $this->assertNotNull($legalEntity, 'entityAddress','city'));
+	    return $returnValue;
 	}
 			
 	/**

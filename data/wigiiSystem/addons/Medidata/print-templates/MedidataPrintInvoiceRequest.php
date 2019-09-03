@@ -459,7 +459,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
     </div>
 </div></div>
 <div class="field patient" style="width:100%">
-	<div class="value" style="width:100%;text-align:right;font-weight:normal;font-size:12pt;font-family:ocr-b-std,sans-serif;letter-spacing:3px;"><?=$trm->evalfx(fx('txtFormatSwissBvrCodingLine',$xmlVal($tiersXml,'./balance','amount_due'),substr($xmlVal($medidataXml,'/request/payload/body/esrQR','iban'),-9),$xmlVal($tiersXml,'/request/payload/body/esrQR','reference_number')))?></div>
+	<div class="value" style="width:100%;text-align:right;font-weight:normal;font-size:12pt;font-family:ocr-b-std,sans-serif;letter-spacing:3px;"><?=$options->getValue('codingLine')?></div>
 </div>
 </body>
 </html><?php 
