@@ -79,6 +79,9 @@ div.field.subTotal>div.value {
 .borderLeft {
 	border-left:1px solid black;
 }
+.borderLigthGray, .borderLigthGray * {
+	border-color:lightGray;
+}
 table {
 	border-collapse:collapse;
 }
