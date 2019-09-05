@@ -12,7 +12,7 @@ if(!CKEDITOR.wigiiCustom) {
 		config.scayt_autoStartup = false;
 		config.removePlugins = 'scayt';
 		
-		config.autoGrow_onStartup = true; 
+		config.autoGrow_onStartup = false; //after living with it, it is better when autogrow is not done automatically
 		
 		config.colorButton_colorsPerRow = 8;
 		
