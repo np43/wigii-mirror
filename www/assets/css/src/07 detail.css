@@ -54,7 +54,7 @@ div.field.subTotal>div.value {
 	padding-top:4px;
 }
 .noWrap {
-	white-space:nowrap;
+	white-space:pre;
 }
 .borders {
 	border:1px solid black;

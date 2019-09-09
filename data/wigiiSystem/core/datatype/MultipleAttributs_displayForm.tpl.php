@@ -69,7 +69,7 @@ if((string)$fieldXml["useCheckboxes"]=="1"){
 		if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
 		
 		if(!$firstLoop && !$useMultipleColumn) {
-		    $this->put('<br>'); //next line for the next label and checkbox
+		    $this->put('<br style="clear:both;">'); //next line for the next label and checkbox; 09.09.2019: added clear float.
 		}
 		
 		//the checkbox is before the text of the option

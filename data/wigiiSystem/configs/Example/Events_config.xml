@@ -83,9 +83,9 @@
 	<fields >
 		<groupLeft groupStart="1" noFieldset="1" noLabel="1" totalWidth="500"  /> <!-- Example of other groupStart attr: useMultipleColumn="x" totalWidth="x" labelWidth="x" groupHasAtLeastFilled="x" class="fieldGroupRight" -->
 
-			<subject excelExport="auto" type="Strings" require="1" displayAsTitle1="1"><label_l01>Subject</label_l01><label_l02>Sujet</label_l02></subject>
-			<period excelExport="50" type="TimeRanges" require="1" displayAsTitle2="1"><label_l01>When</label_l01><label_l02>Quand</label_l02></period>
-			<location excelExport="auto" type="Strings" require="0" displayAsTitle3="1" expand="1"><label_l01>Location</label_l01><label_l02>Location</label_l02></location>
+			<subject excelExport="auto" type="Strings" require="1" displayAsTitle1="0"><label_l01>Subject</label_l01><label_l02>Sujet</label_l02></subject>
+			<period excelExport="50" type="TimeRanges" require="1" displayAsTitle2="0"><label_l01>When</label_l01><label_l02>Quand</label_l02></period>
+			<location excelExport="auto" type="Strings" require="0" displayAsTitle3="0" expand="1"><label_l01>Location</label_l01><label_l02>Location</label_l02></location>
 			<author excelExport="auto" type="Emails" enableForNotification="1" enableForEmailing="1" autoFillWithPrincipalEmail="1" require="0" ><label_l01>Contact email</label_l01><label_l02>Email de contact</label_l02></author>
 			<labels excelExport="auto" type="Attributs" require="0" displayAsTag="1" expand="1" >
 				<label_l01>Labels</label_l01><label_l02>Label</label_l02>

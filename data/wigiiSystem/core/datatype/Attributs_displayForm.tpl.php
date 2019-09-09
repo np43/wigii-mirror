@@ -314,7 +314,7 @@ $('div#" . $formId . "__" . $fieldName . " .value').mouseover(function(e) { radi
 		if($isPublicPrincipal && $attribute["disabled"]=="1") continue;
 
 		if(!$firstLoop && !$useMultipleColumn) {
-			$this->put('<br>'); //next line for the next label and radiobutton
+		    $this->put('<br style="clear:both;">'); //next line for the next label and radiobutton; 09.09.2019: added clear float.
 		}
 		
 		//the radioButton is before the text of the option
