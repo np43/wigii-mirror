@@ -33,7 +33,7 @@ class RowListGroupPathImpl extends RowListArrayImpl
 	 * idColumnName: existing column in row which is the id, to be used as a key in the array.
 	 * if null, then row are numerically indexed according to php default array behavior.
 	 */
-	public static function createInstance($crtWigiiNamespaceName = null)
+	public static function createInstance($crtWigiiNamespaceName = null, $valueColumnName=UNUSED_ARG)
 	{
 		$returnValue = new self();
 		$returnValue->reset();

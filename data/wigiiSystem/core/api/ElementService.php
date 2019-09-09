@@ -176,6 +176,17 @@ interface ElementService
 	 */
 	public function countAllElementsInGroups($principal, $groupList, $includeChildrenGroups=true, $listFilter=null);
 	
+	/**
+	 * Builds the distribution of a field into a given selection of elements.
+	 * Returns a map with the key equals to the field values and the the value equal to its frequency (number of occurences into the selected elements)
+	 * @param Principal $principal authenticated user performing the operation
+	 * @param LogExpInGroup $inGroupLogExp element search space
+	 * @param String $fieldName element field for which to build the distribution
+	 * @param LogExp $fieldSelectorLogExp optional LogExp to filter the elements
+	 * @param int $limit optional limit of the number of values returned.
+	 * @return Array a map of field values with their frequency. The array is sorted by frequency. Higher first.
+	 */
+	public function countElementFieldValuesInGroups($principal, $inGroupLogExp, $fieldName, $fieldSelectorLogExp=null, $limit=null);
 	
 	/**
 	 * Finds all duplicated elements in selected groups, for a given field selector and fills a list of Element IDs

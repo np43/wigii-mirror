@@ -357,9 +357,18 @@ class FormBag extends Model implements BulkLoadableWigiiBag {
 				throw new ServiceException("invalidTime", ServiceException::INVALID_ARGUMENT);
 			}
 		}
-		if($subFieldXml["sqlType"]=="date" || $subFieldXml["sqlType"]=="datetime"){
+		if($subFieldXml["sqlType"]=="date"){
+		    $D = null; $M = null; $Y = null;
+		    if (Dates::fromString($newValue, $D, $M, $Y)){
+		        $newValue = Dates::toString($D, $M, $Y, "yyyy-mm-dd");
+		        $oldValue = Dates::formatDisplay($oldValue, "yyyy-mm-dd");
+		    } else {
+		        throw new ServiceException("invalidDate", ServiceException::INVALID_ARGUMENT);
+		    }
+		}
+		if($subFieldXml["sqlType"]=="datetime"){
 			$D = null; $M = null; $Y = null;
-			$h = null; $i = null; $s = null;
+			$h = null; $i = null; $s = null;			
 			if (Dates::fromString($newValue, $D, $M, $Y, $h, $i, $s)){
 				$newValue = Dates::toString($D, $M, $Y, "yyyy-mm-dd", $h, $i, $s, "hh:mm:ss");
 				$oldValue = Dates::formatDisplay($oldValue, "yyyy-mm-dd", "hh:mm:ss");

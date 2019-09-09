@@ -24,8 +24,8 @@
 /**
  * Created on 21 July 2011 by LWR
  * Modified by Medair in 2016 for maintenance purposes (see SVN log for details)
+ * Modified by CWE on 03.09.2019 to add group semantic tagging. Groups marked as archive are automatically collapsed. Groups marked as truncated have no children rendered.
  */
-
 class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 	
 	protected $depth = 0;
@@ -63,6 +63,63 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 	 */
 	protected function getTrashBinGroup() {
 		return $this->trashBinGroup;
+	}
+	
+	// Group semantic tagging
+	/**
+	 * An array of array of the form [tagName1=>[groupId1, groupId2, ...], tagName2=>[groupId2, groupId3, ...]]
+	 * First array is a map between a tag name and array of group Ids (group ids are organized by ids [groupId=>groupId]). 
+	 * @var Array
+	 */
+	protected $groupTags;
+	/**
+	 * Tags a group
+	 * @param Int|Group|GroupP $groupId
+	 * @param String $tagName
+	 */
+	protected function tagGroup($groupId,$tagName) {
+	    if(!isset($this->groupTags)) $this->groupTags=array();
+	    if($groupId==null || $tagName==null) throw new GroupAdminServiceException('groupId or tagName cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
+	    if($groupId instanceof DbEntity) $groupId = $groupId->getId();
+	    if(!isset($this->groupTags[$tagName])) $this->groupTags[$tagName] = array();
+	    $this->groupTags[$tagName][$groupId] = $groupId;
+	}
+	/**
+	 * Checks if a group has a given tag or has inherited from a given tag
+	 * @param Int|Group|GroupP $groupId
+	 * @param String $tagName
+	 * @param boolean $inherited true if tag is searched into the hierarchy of parents, else only current group is looked at. By default inheritance is active.
+	 * @return Boolean true if group has tag or has inherited from tag
+	 */
+	protected function groupHasTag($groupId,$tagName,$inherited=true) {
+	    if(!isset($this->groupTags)) return false;
+	    if($groupId==null || $tagName==null) throw new GroupAdminServiceException('groupId or tagName cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
+	    if($groupId instanceof DbEntity) $groupId = $groupId->getId();
+	    if(!isset($this->groupTags[$tagName])) return false;
+	    if($this->groupTags[$tagName][$groupId]==$groupId) return true;
+	    if($inherited) {
+	        foreach($this->groupTags[$tagName] as $tagGroupId) {
+	            if(array_key_exists($tagGroupId, $this->parentStack)) return true;
+	        }	        
+	    }
+	    return false;
+	}
+	/**
+	 * Returns an array with semantic tags attached to a group
+	 * @param Int|Group|GroupP $groupId $groupId
+	 * @param boolean $inherited true if tags a looked up into the whole hierarchy of parents
+	 * @return Array an array of tags (key and value are tag names)
+	 */
+	protected function getGroupTags($groupId,$inherited=true) {
+	    $returnValue = array();
+	    if($groupId==null) throw new GroupAdminServiceException('groupId cannot be null', GroupAdminServiceException::INVALID_ARGUMENT);
+	    if($groupId instanceof DbEntity) $groupId = $groupId->getId();
+	    if(isset($this->groupTags)) {
+	        foreach($this->groupTags as $tagName => $tagGroupIds) {
+	            if($this->groupHasTag($groupId, $tagName, $inherited)) $returnValue[$tagName] = $tagName;
+	        }
+	    }
+	    return $returnValue;
 	}
 	
 	protected $displayCM;
@@ -151,10 +208,17 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 	}
 	private $first;
 	public function addGroupP($groupP, $parentGroup){
-		$this->nb ++;
+	    $this->nb ++;
 		if($this->groups[$groupP->getGroup()->getId()] != null) throw new ListException("the group ".$groupP->getGroup()->getId().":".$groupP->getGroup()->getGroupName()." already exists in GroupPTree.", ListException::ALREADY_EXISTS);
 		$this->groups[$groupP->getGroup()->getId()]=$groupP;
 		$group = $groupP->getGroup();
+		
+		// CWE 03.09.2019 tags groups starting with z. or zz. as archive
+		if($group->getId() != $this->trashBinGroup && (stripos($group->getGroupName(),'z.')===0 || stripos($group->getGroupName(),'zz.')===0)) {
+		    $this->tagGroup($group->getId(), "archive");
+		}
+		// CWE 03.09.2019 if group is tagged as truncated, then cuts tree rendering
+		$isTruncated = (isset($parentGroup) && $this->groupHasTag($parentGroup->getId(), "truncated"));
 		
 		if($this->isCurrentParent($parentGroup)){
 			//same parent
@@ -162,21 +226,25 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 			//elder parent.
 			while(!$this->isCurrentParent($parentGroup)){
 				$this->depth--;
-				$this->popParent();
-				?></li></ul><?
+				$pg = $this->popParent();
+				if(!$this->groupHasTag($pg->getId(), "truncated")){?></li></ul><?}
 			}
 		} else if($parentGroup) {
 			//new parent
 			$this->depth ++;
 			// verifies if current group is contained in trashbin, if yes, does not unfold.
-			$isInTrashBin = isset($this->trashBinGroup) && ($parentGroup->getId() == $this->trashBinGroup || $this->parentLookup($this->trashBinGroup));			
-			?><ul<?=($this->getNbLevelToExpandOnInit()+1<=$this->depth || $isInTrashBin ? ' class="n" style="display:none;" ' : '');?>><?
+			$isInTrashBin = isset($this->trashBinGroup) && ($parentGroup->getId() == $this->trashBinGroup || $this->parentLookup($this->trashBinGroup));
+			// CWE 03.09.2019 if current group is in archive, then do not unfold
+			$isInArchive = $this->groupHasTag($parentGroup->getId(), "archive");
+			if(!$isTruncated){?><ul<?=($this->getNbLevelToExpandOnInit()+1<=$this->depth || $isInTrashBin || $isInArchive ? ' class="n" style="display:none;" ' : '');?>><?}
 			$this->pushParent($parentGroup);
 		} else if(!$this->first){
-			?></li><?
+		    if(!$this->groupHasTag($group->getId(), "truncated")){?></li><?}
 		} else {
 			$this->first=false;
 		}
+		if($isTruncated) return $this;
+		
 		$id = 'group_'.$groupP->getGroup()->getId();
 		$class .= "";
 		$class .= ($groupP->getRights() == null ? "noRights ":"");
@@ -187,6 +255,8 @@ class GroupPTreeGroupPanelImpl extends Model implements GroupPTree {
 		$class .= ($this->depth == 0 ?"level1 ":"");
 		// marks trashbin
 		if($groupP->getGroup()->getId()==$this->trashBinGroup) $class .= "trashbin ";
+		// CWE 03.09.2019 adds semantic tags as classes
+		$class .= implode(" ",$this->getGroupTags($group->getId(), false))." ";		
 		?><li id="<?=$id;?>" class="<?=$class;?>"><?
 		 $this->writeHtmlForGroupItem($groupP);
 		

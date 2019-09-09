@@ -24,40 +24,48 @@
 /**
  * RowList array implementation
  * Created by CWE on 13 janv. 10
+ * Modified by CWE on 06.09.2019 to support key/value pairing for two columns rows
  */
 class RowListArrayImpl extends ObjectListArrayImpl implements RowList
 {
 	protected $idColumnName;
 	private $colVerified;
+	protected $valueColumnName;
 
 	/**
-	 * idColumnName: existing column in row which is the id, to be used as a key in the array.
-	 * if null, then row are numerically indexed according to php default array behavior.
+	 * @param String $idColumnName existing column in row which is the id, to be used as a key in the array.
+	 * If null, then row are numerically indexed according to php default array behavior.
+	 * @param String $valueColumnName existing column in row which will be used as the value to store in the array.
+	 * If null, then complete rows are stored.
 	 */
-	public static function createInstance($idColumnName=null)
+	public static function createInstance($idColumnName=null, $valueColumnName=null)
 	{
 		$returnValue = new self();
 		$returnValue->reset();
 		$returnValue->idColumnName = $idColumnName;
 		$returnValue->colVerified = false;
+		$returnValue->valueColumnName = $valueColumnName;
 		return $returnValue;
 	}
 	public function addRow($row)
 	{
 		if(is_null($row)) throw new ListException("row cannot be null", ListException::INVALID_ARGUMENT);
-		if(isset($this->idColumnName))
-		{
-			if(!$this->colVerified)
-			{
-				$this->colVerified = true;
-				if(!array_key_exists($this->idColumnName, $row))
-				{
-					throw new ListException("id column name '".$this->idColumnName."' is invalid in record", ListException::INVALID_ARGUMENT);
-				}
-			}
-			$this->objArray[$row[$this->idColumnName]] = $row;
+		// checks column definition
+		if(!$this->colVerified) {
+		    if(isset($this->idColumnName) && !array_key_exists($this->idColumnName, $row)) {
+		        throw new ListException("id column name '".$this->idColumnName."' is invalid in record", ListException::INVALID_ARGUMENT);
+		    }
+		    if(isset($this->valueColumnName) && !array_key_exists($this->valueColumnName, $row)) {
+		        throw new ListException("value column name '".$this->valueColumnName."' is invalid in record", ListException::INVALID_ARGUMENT);
+		    }
+		    $this->colVerified=true;
 		}
-		else $this->objArray[] = $row;
+		// extracts value to store
+		if(isset($this->valueColumnName)) $value = $row[$this->valueColumnName];
+		else $value = $row;
+		// stores value in row list
+		if(isset($this->idColumnName)) $this->objArray[$row[$this->idColumnName]] = $value;
+		else $this->objArray[] = $value;
 	}
 	/**
 	 * if array was created with an idColumnName, then index should be a real database id

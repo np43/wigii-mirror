@@ -159,6 +159,9 @@
 	overflow-x:auto;
 	overflow-y:scroll;
 }
+#moduleView .list div.dataList span.tag {
+	float:left;
+}
 
 #moduleView .list div.dataList table{
 	border-collapse:collapse;
@@ -185,6 +188,9 @@
 #moduleView .list div.dataList table tr.groupByTitle td div {
 	padding-left:17px;
 	padding-top:10px;
+}
+#moduleView .list div.dataList table tr.groupByTitle span.tag{
+	float:none;
 }
 
 #moduleView .list div.dataList table tr td{
@@ -323,7 +329,9 @@
 	border-bottom:none;
 	/* background-color:#f6f6f6; */
 }
-
+#moduleView .blog div.dataBlog span.tag {
+	float:left;
+}
 #moduleView .blog div.dataBlog div.groupList{
 	background-color:#fff;
 	clear:both;
@@ -367,6 +375,9 @@
 	font-weight:bold;
 	padding-left:17px;
 	padding-top:20px;
+}
+#moduleView .blog div.dataBlog div.groupByTitle span.tag{
+	float:none;
 }
 #moduleView .blog div.dataBlog div.el{
 	float:left;

@@ -24,21 +24,23 @@
 /**
  * An association between a FieldSelector and a FuncExp
  * Created by CWE on 27 janvier 2014
+ * Modified by CWE on 04.09.2019 to add a relative weight
  */
 class CalculatedFieldSelector extends Model
 {
 	private $fieldSelector;
 	private $funcExp;
+	private $weight;
 
-	public static function createInstance($fieldSelector, $funcExp) {
+	public static function createInstance($fieldSelector, $funcExp, $weight=1) {
 		$returnValue = new self();
 		$returnValue->setFieldSelector($fieldSelector);
 		$returnValue->setFuncExp($funcExp);
 		return $returnValue;
 	}
 
-	public static function createInstanceByFieldName($fieldName, $funcExp, $subFieldName=null) {
-		return self::createInstance(FieldSelector::createInstance($fieldName, $subFieldName), $funcExp);
+	public static function createInstanceByFieldName($fieldName, $funcExp, $subFieldName=null, $weight=1) {
+		return self::createInstance(FieldSelector::createInstance($fieldName, $subFieldName), $funcExp, $weight);
 	}
 	
 	public function getFieldSelector() {
@@ -53,5 +55,12 @@ class CalculatedFieldSelector extends Model
 	}
 	public function setFuncExp($funcExp) {
 		$this->funcExp = $funcExp;
+	}
+	
+	public function getWeight() {
+	    return $this->weight;
+	}
+	public function setWeight($weight) {
+	    $this->weight = $weight;
 	}
 }

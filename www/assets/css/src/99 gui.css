@@ -126,7 +126,9 @@ div.field div.addinfo {
 	padding:0px;
 	margin-top:5px;
 }
-
+#help span.tag {
+	float:left;
+}
 /* pour afficher les ids des groupes */
 #help span.idGrp {
 	font-size:x-small;

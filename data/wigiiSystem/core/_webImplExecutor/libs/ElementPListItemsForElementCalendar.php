@@ -21,11 +21,11 @@
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
  */
 
-/*
- * Created on 6 oct. 09
- * by LWR
+/**
+ * ElementPList for FullCalendar JSON query
+ * Created on 6 oct. 09 by LWR
+ * Modified by CWE on 05.09.2019 to support classExp
  */
-
 class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiExecutor {
 
 	private $isGroupedBy;
@@ -185,9 +185,12 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 		//location
 		if($fMap["locationAddress"]){
 			$location = array();
-			$location[] = $element->getFieldValue($fMap["locationAddress"], "city");
-			$location[] = $element->getFieldValue($fMap["locationAddress"], "state");
-			$location[] = $element->getFieldValue($fMap["locationAddress"], "country");
+			$value = $element->getFieldValue($fMap["locationAddress"], "city");
+			if($value!=null) $location[]=$value;
+			$value = $element->getFieldValue($fMap["locationAddress"], "state");
+			if($value!=null) $location[]=$value;
+			$value = $element->getFieldValue($fMap["locationAddress"], "country");
+			if($value!=null) $location[]=$value;
 			$location = implode(" / ", $location);
 		} else if ($fMap["locationString"]){
 			$location = $element->getFieldValue($fMap["locationString"]);
@@ -249,11 +252,6 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 			$startDateInt = strtotime("$y/$m/$d $time");
 			
 			$endDate = $element->getFieldValue($fMap["period"], "endDate");
-// 			fput("------------------");
-// 			fput("begDate: ".$startDate);
-// 			fput("startDateInt: ".$startDateInt);
-// 			fput("endDate: ".$endDate);
-// 			fput("endDateInt: ".$endDateInt);
 			if($endDate == null){
 				$endDate = $startDate;
 				$endDateInt = $startDateInt;
@@ -280,8 +278,6 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 			$allDay = $element->getFieldValue($fMap["period"], "isAllDay");
 			if($allDay == null || $allDay == 0) $allDay = "false";
 			else $allDay = "true";
-// 			fput("endDate: ".$endDate);
-// 			fput("endDateInt: ".$endDateInt);
 		}
 		if($fMap["startdate"]){
 			$startDate = $element->getFieldValue($fMap["startdate"], "value");
@@ -321,14 +317,6 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 		$color = null;
 		if($fMap["label"]){
 			$label = $element->getFieldValue($fMap["label"]);
-//			fput($label);
-//			fput($element->getFieldList()->getField($fMap["label"])->getXml()->asXML());
-//			fput($element->getFieldList()->getField($fMap["label"])->getXml()->xpath('attribute[(text()="'.$label.'")]'));
-//			$p = $this->getP();
-//			$exec = ServiceProvider::getExecutionService();
-//			fput($exec->getCrtModule());
-//			fput($this->getWigiiExecutor()->getConfigurationContext()->getCrtConfigGroupId($p, $exec));
-//			fput($this->getWigiiExecutor()->getConfigurationContext()->m($p, $exec->getCrtModule())->fields);
 			$color = $element->getFieldList()->getField($fMap["label"])->getXml()->xpath('attribute[@color and (text()="'.$label.'")]');
 			if($color){ $color = str_replace("#", "", (string)$color[0]["color"]); }
 		}
@@ -353,10 +341,11 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 		$startDateISO = date("Y-m-d H:i", $startDateInt);
 		$endDateISO = date("Y-m-d H:i", $endDateInt);
 		
-// 		fput("begDateISO: ".$startDateISO);
-// 		fput("startDateInt: ".$startDateInt);
-// 		fput("endDateISO: ".$endDateISO);
-// 		fput("endDateInt: ".$endDateInt);
+		//add class if classExp is defined in calendarView activity
+		$classExp = $this->getWigiiExecutor()->getConfigurationContext()->ma($this->getP(), $exec->getCrtModule(), Activity::createInstance("calendarView"));
+		$classExp = (string)($classExp["classExp"]);
+		if($classExp) $classExp = $this->getWigiiExecutor()->evaluateFuncExp($this->getP(),$exec,str2Fx($classExp),$elementP->getElement());
+		else $classExp='';
 		
 		echo "{";
 		echo "id:'$elementId',";
@@ -366,6 +355,7 @@ class ElementPListItemsForElementCalendar extends ElementPListWebImplWithWigiiEx
 		echo "end:'$endDateISO',";
 		echo "allDay: $allDay,";
 		echo "className:'".($this->isHighlight() ? ' highlight ' : '')." ".($elementP->getRights()==null || !$elementP->getRights()->canWriteElement() ? ' readOnly ' : '')."".($element->isState_important1() ? ' important1 ' : '')."".($element->isState_important2() ? ' important2 ' : '')."".($element->isState_locked() ? ' locked ' : '')."',"; //"+(elementCalendar_currentEventSelected == $elementId ? 'selected' : '')";
+		echo "classExp:'".$classExp."',";
 		if($color){
 			echo "color:'#".$color."',";
 			echo "textColor:'#".getBlackOrWhiteFromBackgroundColor($color)."',";

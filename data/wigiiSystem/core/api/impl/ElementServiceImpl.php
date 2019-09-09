@@ -2346,6 +2346,103 @@ group by tmp1.id_group";
 		return "select count(countE.Eid) from (".$sqlForGetAllElementsInGroups.") as countE";
 	}
 	
+	public function countElementFieldValuesInGroups($principal, $inGroupLogExp, $fieldName, $fieldSelectorLogExp=null, $limit=null) {
+	    $this->executionSink()->publishStartOperation("countElementFieldValuesInGroups", $principal);
+	    $eltQP = null;
+	    try
+	    {
+	        if(is_null($inGroupLogExp)) throw new ElementServiceException('inGroupLogExp can not be null', ElementServiceException::INVALID_ARGUMENT);
+	        if(!isset($fieldName)) throw new ElementServiceException('fieldName can not be null', ElementServiceException::INVALID_ARGUMENT);
+	        if(isset($limit) && !is_numeric($limit)) throw new ElementServiceException('limit should be a positive integer', ElementServiceException::INVALID_ARGUMENT);	        
+	        $subFieldName=null;
+	        if($fieldName instanceof FieldSelector) {
+	            $subFieldName = $fieldName->getSubFieldName();
+	            $fieldName = $fieldName->getFieldName();
+	        }
+	        if(!isset($subFieldName)) $subFieldName = 'value';
+	        
+	        // gets groupList
+	        $gAS = $this->getGroupAdminServiceImpl();
+	        $groupSelectionLogExp = $gAS->convertInGroupLogExp2GroupLogExp($inGroupLogExp);	        
+	        $groupList = GroupListArrayImpl::createInstance();
+	        $gAS->getSelectedGroupsWithoutDetail($principal, $groupSelectionLogExp, $groupList);
+	        
+	        // checks if ingrouplogexp is a single instance of LogExpInGroup
+	        if(!($inGroupLogExp instanceof LogExpInGroup)) throw new ElementServiceException('inGroupLogExp should be a single instance of GroupLogExp and reduce to a single list of groups. Multiple inGroupLogExp is not supported.', ElementServiceException::INVALID_ARGUMENT);
+	        
+	        // checks authorization
+	        $pRights = $this->assertPrincipalAuthorizedForGetAllElementsInGroups($principal, $groupList);
+	        $pRightsFromDb = !isset($pRights);
+	        
+	        $returnValue = null;
+	        $fieldSelectorList = fsl(fs($fieldName));
+	        
+	        // computes effective field list
+	        $eltQP = $this->getElementQueryPlanner(MySqlFacade::Q_SELECTALL, $this->getReservedSqlJoinsForGetAllElementsInGroups(),
+	            $fieldSelectorList, $fieldSelectorLogExp);
+	        if($eltQP->areFieldSelected())
+	        {
+	            $cS = $this->getConfigService();
+	            // if ConfigService supports method unselectSubElementConfig
+	            // then unselects any previous sub element config
+	            if($this->subElementConfigSupport['unselectSubElementConfig']) $cS->unselectSubElementConfig($principal);
+	            $cS->getGroupsFields($principal, $groupList, null, $eltQP);
+	        }
+	        
+	        // gets elements
+	        $dbCS = $this->getDbAdminService()->getDbConnectionSettings($principal);
+	        $n = $eltQP->getNumberOfQueries();
+	        $strategy = $eltQP->getQueryStrategy();
+	        $mysqlF = $this->getMySqlFacade();
+	        if($n > 1 || $strategy != ElementQueryPlanner::QSTRATEGY_JOIN) {
+	            throw new ElementServiceException('unsupported query strategy for counting element field values', ElementServiceException::UNSUPPORTED_OPERATION);
+	        }
+	        
+	        if($n == 1) {
+	            // gets sql for getAllElementsInGroups
+	            $sqlB = $this->getSqlBuilderForGetAllElementsInGroups($principal, $strategy, $groupList, $pRightsFromDb, $inGroupLogExp->includeChildrenGroups());
+	            $fieldSqlColName = $sqlB->encodeFieldNameForSelect($fieldName, $subFieldName);
+	            $sql = $eltQP->getSql(0,$sqlB);	            
+	            // gets sql for count element field values
+	            $sql = $this->getSqlForCountElementFieldValuesInGroups($sql, $fieldSqlColName);
+	            // adds limit to select
+	            if(isset($limit)) {
+	                $sql .= ' LIMIT 0,'.$limit;
+	            }
+	            // executes query
+	            $returnValue = RowListArrayImpl::createInstance('fieldValue','frequency');
+	            if($mysqlF->selectAll($principal, $sql, $dbCS, $returnValue) > 0) {
+	                $returnValue = $returnValue->getListIterator();
+	            }
+	            else $returnValue=null;
+	        }
+	        else $returnValue = null;
+	        $eltQP->freeMemory();
+	    }
+	    catch(ElementServiceException $ese)
+	    {
+	        if(isset($eltQP)) $eltQP->freeMemory();
+	        $this->executionSink()->publishEndOperationOnError("countElementFieldValuesInGroups", $ese, $principal);
+	        throw $ese;
+	    }
+	    catch (AuthorizationServiceException $asE){
+	        if(isset($eltQP)) $eltQP->freeMemory();
+	        $this->executionSink()->publishEndOperationOnError("countElementFieldValuesInGroups", $asE, $principal);
+	        throw $asE;
+	    }
+	    catch(Exception $e)
+	    {
+	        if(isset($eltQP)) $eltQP->freeMemory();
+	        $this->executionSink()->publishEndOperationOnError("countElementFieldValuesInGroups", $e, $principal);
+	        throw new ElementServiceException('',ElementServiceException::WRAPPING, $e);
+	    }
+	    $this->executionSink()->publishEndOperation("countElementFieldValuesInGroups", $principal);
+	    return $returnValue;
+	}	
+	protected function getSqlForCountElementFieldValuesInGroups($sqlForGetAllElementsInGroups,$fieldSqlColName) {
+	    return "select ".$fieldSqlColName." as fieldValue, count(".$fieldSqlColName.") as frequency from (".$sqlForGetAllElementsInGroups.") as countFV group by ".$fieldSqlColName." order by frequency desc";
+	}
+	
 	public function findDuplicatesFromSelectedElementsInGroups($principal, $inGroupLogExp, $duplicateKey, $elementIds, $listFilter=null) {
 		$this->executionSink()->publishStartOperation("findDuplicatesFromSelectedElementsInGroups", $principal);
 		$eltQP = null;

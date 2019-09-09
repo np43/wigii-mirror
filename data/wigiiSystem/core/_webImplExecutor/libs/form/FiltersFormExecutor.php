@@ -218,20 +218,33 @@ class FiltersFormExecutor extends FormExecutor {
 						default:
 							throw new MySqlFacadeException('invalid SQL type', MySqlFacadeException::INVALID_ARGUMENT);
 					}
+					$defaultView=true;
+                    // specific for attributs/multiple attributs
 			    	if($subf->getName()=="value" && ($field->getDataType()->getDataTypeName() == "Attributs" || $field->getDataType()->getDataTypeName() == "MultipleAttributs" )){
-			    		?><div class="searchOptions"><?
-			    		foreach($field->getXml()->xpath('attribute') as $att){
-						    if((string)$att == null || (string)$att=="none") continue;
-				    		?><div class="H fB"><?
-				    			echo $transS->t($p, (string)$att, $att);
-				    			?><label style="display:none;"><?=$field->getFieldName().".".$subf->getName()." ".$op." ".'"'.$att.'"';?></label><?
-				    		?></div><?
-			    		}
-			    		?></div><?
-			    	} else {
+			    	    $attributes = $field->getXml()->xpath('attribute');
+			    	    $isAjax = ((string)($field->getXml()["attributeMatchExp"])!='');
+			    	    // CWE 06.09.2019: displays all options if less than 25 and not ajax
+			    	    if(!$isAjax && !empty($attributes) && count($attributes) <= 25) {
+    			    		?><div class="searchOptions"><?
+    			    		foreach($attributes as $att){
+    						    if((string)$att == null || (string)$att=="none") continue;
+    				    		?><div class="H fB"><?
+    				    			echo $transS->t($p, (string)$att, $att);
+    				    			?><label style="display:none;"><?=$field->getFieldName().".".$subf->getName()." ".$op." ".'"'.$att.'"';?></label><?
+    				    		?></div><?
+    			    		}
+    			    		?></div><?
+    			    		$defaultView=false;
+			    	    }
+			    	    // else keeps default view
+			    	    else {
+			    	        $op = "LIKE";
+			    	        $val = '"XXXX"';
+			    	    }
+			    	}
+			    	// default subfield selector wizard
+			    	if($defaultView) {
 			    		$help = $transS->h($p, "advancedFilterHelp_".$field->getDataType()->getDataTypeName().($subf->getName()!="value" ? "_".$subf->getName() : ""));
-//			    		fput($help);
-//			    		fput("advancedFilterHelp_".$field->getDataType()->getDataTypeName().($subf->getName()!="value" ? "_".$subf->getName() : ""));
 			    		if($help !="advancedFilterHelp_".$field->getDataType()->getDataTypeName().($subf->getName()!="value" ? "_".$subf->getName() : "")){
 			    			$help = 'onmouseover="showHelp(this, \''.$help.'\',20,\'fromCenter\',0,200,0);" onmouseout="hideHelp();"';
 			    		} else $help = null;

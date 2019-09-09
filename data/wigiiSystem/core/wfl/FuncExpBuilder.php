@@ -550,12 +550,15 @@ class FuncExpBuilder {
 	 * @param String|FieldSelector $fieldName the fieldName or directly a FieldSelector instance.
 	 * @param FuncExp $funcExp the associated FuncExp
 	 * @param String $subFieldName optional string to be used as a sub field.
+	 * @param int|float $weight relative weight allocated to this calculated field selector (used in scoring algorithms)
+	 * @return CalculatedFieldSelector
 	 */
-	public function cfs($fieldName, $funcExp, $subFieldName=null) {
+	public function cfs($fieldName, $funcExp, $subFieldName=null, $weight=1) {
 		if($fieldName instanceof FieldSelector) $fs = $fieldName;
 		else $fs = $this->fs($fieldName, $subFieldName);
-		$returnValue = CalculatedFieldSelector::createInstance($fs, $funcExp);
+		$returnValue = CalculatedFieldSelector::createInstance($fs, $funcExp,$weight);
 		if($funcExp instanceof FuncExpParameter) $funcExp->registerSetterMethod('setFuncExp', $returnValue);
+		if($weight instanceof FuncExpParameter) $weight->registerSetterMethod('setWeight', $returnValue);
 		return $returnValue;
 	}
 	

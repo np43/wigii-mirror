@@ -472,11 +472,12 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 	/**
 	 * Creates a CalculatedFieldSelector given the fieldName, funcExp and optional subFieldName
 	 * See method 'cfs' in FuncExpBuilder class.
-	 * FuncExp signature : <code>cfs(fieldName, funcExp, subFieldName = null)</code><br/>
+	 * FuncExp signature : <code>cfs(fieldName, funcExp, subFieldName = null, weight=1)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) fieldName: evaluates to string which is a field name
 	 * - Arg(1) funcExp: a FuncExp that should be used as a calculated expression
 	 * - Arg(2) subFieldName: optional. Evaluates to string which is the subfield name
+	 * - Arg(3) weight: int|float. Relative weight allocated to this calculated field selector (used in scoring algorithms)
 	 * @return CalculatedFieldSelector a CalculatedFieldSelector instance
 	 */
 	public function cfs($args) {
@@ -486,7 +487,8 @@ class WigiiFL extends FuncExpVMAbstractFL implements RootPrincipalFL
 		if(!($funcExp instanceof FuncExp || $funcExp instanceof FieldSelector)) $funcExp = $this->evaluateArg($funcExp);
 		return $this->getFuncExpBuilder()->cfs($this->evaluateArg($args[0]),
 			$funcExp,
-			($nArgs > 2 ? $this->evaluateArg($args[2]) : null));
+			($nArgs > 2 ? $this->evaluateArg($args[2]) : null),
+		    ($nArgs > 3 ? $this->evaluateArg($args[3]) : 1));
 	}
 
 	/**

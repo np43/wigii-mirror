@@ -187,6 +187,10 @@ if(!$url){ //displays list only if no url
 
 //define starting view / date
 $crtView = $lc->getCrtViewParams("crtView");
+if($crtView==null) {
+    $crtView = $configS->ma($p, $exec->getCrtModule(), Activity::createInstance("calendarView"));
+    $crtView = (string)($crtView["defaultView"]);
+}
 if($crtView==null) $crtView = "month";
 $crtDate = $lc->getCrtViewParams("crtDate");
 if($crtDate==null) $crtDate = "crtDate='".date("Y-m-d")."';";

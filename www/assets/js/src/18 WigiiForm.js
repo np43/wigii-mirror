@@ -632,6 +632,10 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 			options.selectId = current.attr('id');
 			options.dataAdapter = $.fn.select2.amd.require('select2/data/wigiiAjaxAdapter');
 		}
+		
+		// CWE 06.09.2019 adds translations to select2 ajax messages
+		options.language = lang;		
+		
 		current.select2(options);
 	});
 	
@@ -947,6 +951,10 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 					.val(wigii().txtFrenchDate(timeSlot.begDate,'noTime'))
 					.change();
 				if($('#'+self.formId+'_'+self.fieldName+'_isAllDay_checkbox').prop('checked')) $('#'+self.formId+'_'+self.fieldName+'_isAllDay_checkbox').click();
+				// shows time range sub fields
+				$('input#'+self.formId+'_'+self.fieldName+'_begTime_text').parent().parent().show();
+				$('label[for="'+self.formId+'_'+self.fieldName+'_begDate_text"], input#'+self.formId+'_'+self.fieldName+'_begDate_text').parent().show();
+				$('label[for="'+self.formId+'_'+self.fieldName+'_endDate_text"], input#'+self.formId+'_'+self.fieldName+'_endDate_text').parent().show();
 				// calls any registred eventHandlers
 				if(self.impl.onSelectTimeSlotSubscribers.length>0) {
 					for(var i=0;i<self.impl.onSelectTimeSlotSubscribers.length;i++) {
@@ -1017,6 +1025,14 @@ function addJsCodeOnTimeRangeChooser(formId, timeRangeFieldName, publicP) {
 		self.$().find('div.commands span.glyphicon-chevron-right').click(self.nextRange);
 		// startup
 		if(self.field().css('display')!=='none') self.today();
+		// hide isAllDay checkbox
+		$('label[for="'+self.formId+'_'+self.fieldName+'_isAllDay_checkbox"], input#'+self.formId+'_'+self.fieldName+'_isAllDay_checkbox').parent().hide();
+		// if no date selected, then hides time range subfields
+		if($('#'+self.formId+'_'+self.fieldName+'_begDate_text').val()=='') {
+			$('input#'+self.formId+'_'+self.fieldName+'_begTime_text').parent().parent().hide();
+			$('label[for="'+self.formId+'_'+self.fieldName+'_begDate_text"], input#'+self.formId+'_'+self.fieldName+'_begDate_text').parent().hide();
+			$('label[for="'+self.formId+'_'+self.fieldName+'_endDate_text"], input#'+self.formId+'_'+self.fieldName+'_endDate_text').parent().hide();
+		}
 	};	
 	// creates time slot chooser component and binds to time range field
 	var options = {}; var tsc =$('#'+formId+'__'+timeRangeFieldName+' div.globalTimeSlots');

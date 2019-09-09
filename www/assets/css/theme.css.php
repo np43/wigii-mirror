@@ -114,6 +114,11 @@ button.publicFormBorder:hover {
 .M {
   background-color:#<?=$multipleSelected;?>;
 }
+.Canceled {
+	color:#999;
+	background-color:#eee;
+	text-decoration:line-through;
+}
 .L, a.L {
   color:#<?=$link;?>;
 }

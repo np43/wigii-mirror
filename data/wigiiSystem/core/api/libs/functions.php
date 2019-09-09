@@ -1216,8 +1216,10 @@ function cs_g($principal, $groupId) {return ServiceProvider::getWigiiBPL()->buil
  * @param String|FieldSelector $fieldName the fieldName or directly a FieldSelector instance.
  * @param FuncExp $funcExp the associated FuncExp
  * @param String $subFieldName optional string to be used as a sub field.
+ * @param int|float $weight relative weight allocated to this calculated field selector (used in scoring algorithms)
+ * @return CalculatedFieldSelector
  */
-function cfs($fieldName, $funcExp, $subFieldName=null) {return TechnicalServiceProvider::getFuncExpBuilder()->cfs($fieldName, $funcExp, $subFieldName);}
+function cfs($fieldName, $funcExp, $subFieldName=null,$weight=1) {return TechnicalServiceProvider::getFuncExpBuilder()->cfs($fieldName, $funcExp, $subFieldName,$weight);}
 
 /**
  * Builds a CalculatedFieldSelectorMap based on an array of CalculatedFieldSelectors

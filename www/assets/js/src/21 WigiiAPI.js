@@ -1326,6 +1326,57 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				}
 			};
 			
+			/**
+			 * Adds an error message to the field
+			 * @param String msg error message to display
+			 * @return FieldHelper for chaining
+			 */
+			self.addError = function(msg) {	
+				// list iteration
+				if(self.list) {
+					var iterator = self.getIterator();
+					var actions = function(){iterator.addError(msg);};
+					self.iterate(iterator,actions);
+				}
+				// single element implementation
+				else if(msg!='') {
+					var error = $('#'+self.fieldId()+' div.fieldError');
+					if(error.length==0) {
+						$('#'+self.fieldId()).prepend('<div class="fieldError" style="width:100%;"></div>');
+						error = '<img class="icon error" src="'+wigiiApi.SITE_ROOT+'/images/icones/tango/22x22/emblems/emblem-unreadable.png">'
+						if($('#'+self.fieldId()+' div.label').length) {
+							$('#'+self.fieldId()+' div.label').prepend(error);
+						}
+						else {
+							$('#'+self.fieldId()+' div.value').prepend(error);
+						}
+						error = $('#'+self.fieldId()+' div.fieldError');
+					}
+					if(error.html()!='') msg = error.html()+'<br/>'+msg;
+					error.html(msg);
+				}
+				return self;
+			};
+			
+			/**
+			 * Clears errors attached to a field
+			 * @return FieldHelper for chaining
+			 */
+			self.clearErrors = function() {	
+				// list iteration
+				if(self.list) {
+					var iterator = self.getIterator();
+					var actions = function(){iterator.addError(msg);};
+					self.iterate(iterator,actions);
+				}
+				// single element implementation
+				else {
+					$('#'+self.fieldId()+' div.fieldError').remove();
+					$('#'+self.fieldId()+' img.icon.error').remove();
+				}
+				return self;
+			};
+			
 			// Event handling
 			
 			/**
@@ -1796,6 +1847,27 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					// sets focus on OK button to manage pressing enter to copy directly in current folder
 					$('#organizeDialog').next().find('button.ok').focus();
 				}	
+			};
+			
+			/**
+			 * Adds an error message to a field
+			 * @param String fieldName the field selector
+			 * @param String msg the error message
+			 * @return FormHelper for chaining
+			 */
+			self.addError = function (fieldName, msg){
+				self.field(fieldName).addError(msg);
+				return self;
+			};
+			
+			/**
+			 * Clears the errors attached to a field
+			 * @param String fieldName the field selector
+			 * @return FormHelper for chaining
+			 */
+			self.clearErrors = function (fieldName){
+				self.field(fieldName).clearErrors();
+				return self;
 			};
 			
 			// Event handling
@@ -3819,7 +3891,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * Print the details of the element
 		*/},
 		wigiiApi.printElement = function(wigiiNamespaceUrl,moduleName,elementId) {
-			window.open(SITE_ROOT +"usecontext/"+crtContextId+"/__/"+wigiiNamespaceUrl+'/'+moduleName+'/element/print/'+elementId);
+			window.open(wigiiApi.SITE_ROOT +"usecontext/"+crtContextId+"/__/"+wigiiNamespaceUrl+'/'+moduleName+'/element/print/'+elementId);
 		});
 		
 		ncddoc(function(){/**
@@ -3827,7 +3899,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		*/},
 		wigiiApi.printElementWithTemplate = function(wigiiNamespaceUrl,moduleName,elementId,template) {
 			if(template) template = "/"+template;
-			window.open(SITE_ROOT +"usecontext/"+crtContextId+"/__/"+wigiiNamespaceUrl+'/'+moduleName+'/element/template/'+elementId+template);
+			window.open(wigiiApi.SITE_ROOT +"usecontext/"+crtContextId+"/__/"+wigiiNamespaceUrl+'/'+moduleName+'/element/template/'+elementId+template);
 		});
 		
 		ncddoc(function(){/**
@@ -3861,6 +3933,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		wigiiApi.form = function() {
 			var form = $('#elementDialog form');
 			if(form.length == 0) form = $('#detailElement_form');
+			if(form.length == 0) form = $('#addSubscription_form');
 			return form.wigii('FormHelper');
 		});
 		

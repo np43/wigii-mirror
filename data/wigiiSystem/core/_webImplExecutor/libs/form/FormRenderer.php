@@ -450,7 +450,7 @@ class FormRenderer extends FieldRenderer implements FieldListVisitor {
 						}
 						//add red cross on error
 						if(!empty($error)){
-							$rm->put('<img class="icon" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/emblems/emblem-unreadable.png" /> ');
+							$rm->put('<img class="icon error" src="'.SITE_ROOT_forFileUrl.'images/icones/tango/22x22/emblems/emblem-unreadable.png" /> ');
 						}
 						//add * on require
 						if($isRequire){

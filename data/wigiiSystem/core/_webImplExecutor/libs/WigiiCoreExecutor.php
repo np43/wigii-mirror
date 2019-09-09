@@ -2556,9 +2556,9 @@ class WigiiCoreExecutor {
 		$listContext->matchFetchCriteria($originalListContext);
 	
 		//adding fieldLogExp on period field
-		$startDate = $exec->getCrtParameters(0); //receive with no time zone, -> the GMT time
+		$startDate = (int) $exec->getCrtParameters(0); //receive with no time zone, -> the GMT time
 		$endDate = (int) $exec->getCrtParameters(1); //receive with no time zone, -> receive the GMT time
-		$crtView = (int) $exec->getCrtParameters(2); 
+		$crtView = $exec->getCrtParameters(2); //view name
 		$crtDate = $exec->getCrtParameters(3); //receive with no time zone, -> receive the GMT time
 		//since new version of FullCalendar, it is confirured with no timezone. Considering it is more
 		//natural that the calendar is used in one current timezone and there everyone refers to 
@@ -2584,10 +2584,8 @@ class WigiiCoreExecutor {
 // 		fput(date("d.m.Y h:i",$startDate)." ".$startDate);
 // 		fput(date("d.m.Y h:i",$endDate)." ".$endDate);
 // 		fput(date("d.m.Y h:i",$crtDate)." ".$crtDate);
-		if ($crtView)
-			$originalListContext->setCrtViewParams($crtView, "crtView");
-		if ($crtDate)
-			$originalListContext->setCrtViewParams($crtDate, "crtDate");
+		if ($crtView) $originalListContext->setCrtViewParams($crtView, "crtView");
+		if ($crtDate) $originalListContext->setCrtViewParams($crtDate, "crtDate");
 	
 		if ($startDate != null && $endDate != null) {
 			//find first TimeRange field or Dates

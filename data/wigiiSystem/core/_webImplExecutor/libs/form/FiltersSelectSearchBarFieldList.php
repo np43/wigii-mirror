@@ -103,8 +103,7 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 		} else {
 			$elAttributName = (string)$fieldXml["elementAttribut"];
 			$elFieldName = (string)$fieldXml["field"];
-			$elSubFieldName = (string)$fieldXml["subField"];
-			$isDbValueSet = ($fieldXml["displayDBValue"] == '1');			
+			$elSubFieldName = (string)$fieldXml["subField"];			
 			$fieldName = $fieldXml->getName();
 			if($elFieldName){
 				$elField = $configS->mf($p, $this->getModule())->xpath("$elFieldName");
@@ -138,7 +137,10 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 				}
 			}
 			
+			$isAllowNewValues=false; $isDbValueSet=false;
 			if($elField["type"]=="Attributs" || $elField["type"]=="MultipleAttributs"){
+			    $isDbValueSet = ($elField["displayDBValue"] == '1');
+			    $isAllowNewValues = ($elField["allowNewValues"] == '1');
 				$attribute = '';
 				//add the element fields
 				//$html2text = new Html2text();
@@ -171,15 +173,24 @@ class FiltersSelectSearchBarFieldList implements FieldList {
 		$filtersRec->getFieldList()->renameField($filterAttrI->getFieldName(), $fieldName);
 
 		if($fieldXml["type"] == "groupFilter" || $elField["type"]=="Attributs" || $elField["type"]=="MultipleAttributs"){
+		    // CWE 0609.2019. injects allow new values
+		    if($isAllowNewValues) $isAllowNewValues = 'allowNewValues="1"';
+		    else $isAllowNewValues='';
+		    // CWE 06.09.2019. injects ajax options if defined
+		    $ajaxOptions = (string)$elField["attributeMatchExp"];
+		    if(!empty($ajaxOptions)) {
+		        $ajaxOptions = 'attributeMatchExp="'.$ajaxOptions.'"';
+		        $ajaxOptions .= ' queryMinLength="'.(string)$elField["queryMinLength"].'"';
+		        $ajaxOptions .= ' queryDelay="'.(string)$elField["queryDelay"].'"';
+		    }
 			// activate chosen drop downs in advanced search
 			if((string)$elField["useCheckboxes"]=="1" || (string)$elField["useRadioButtons"]=="1"){
 				// handle checkboxes as is 
 				$size = ($elField["useMultipleColumn"] < 3 ? $elField["useMultipleColumn"] : '3');
-				$filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="MultipleAttributs" expand="1" useCheckboxes="1" isInLine="1" chosen="1" useMultipleColumn="'.$size.'"><label>'.$label.'</label>' . $attribute . '</'.$filterAttrI->getFieldName().'>'));
+				$filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="MultipleAttributs" expand="1" useCheckboxes="1" isInLine="1" chosen="1" useMultipleColumn="'.$size.'" '.$ajaxOptions.' '.$isAllowNewValues.'><label>'.$label.'</label>' . $attribute . '</'.$filterAttrI->getFieldName().'>'));
 			} else {
 				// activate chosen drop downs in advanced search
-				$size='chosen="1"';
-				$filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="MultipleAttributs" expand="1" '.$size.'><label>'.$label.'</label>' . $attribute . '</'.$filterAttrI->getFieldName().'>'));	
+			    $filterAttrI->setXml(simplexml_load_string('<'.$filterAttrI->getFieldName().' type="MultipleAttributs" expand="1" chosen="1" '.$ajaxOptions.' '.$isAllowNewValues.'><label>'.$label.'</label>' . $attribute . '</'.$filterAttrI->getFieldName().'>'));	
 			}
 			// in the case of checkboxes we want them also in the search bar
 		} else if($elField["type"]=="Booleans"){

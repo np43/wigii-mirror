@@ -98,9 +98,7 @@ class EditUserFormExecutor extends FormExecutor {
 		}
 
 		//other fields should not have any problems
-		//eput($userEditRec->getFieldValue("wigiiNamespace"));
 		$user->setWigiiNamespace($nsAS->getWigiiNamespace($p, $userEditRec->getFieldValue("wigiiNamespace")));
-//		$user->setRole($userEditRec->getFieldValue("isRole"));
 
 		//try to set the username
 		//if the username contains the defaultEmailPostfix, delete it
@@ -109,10 +107,12 @@ class EditUserFormExecutor extends FormExecutor {
 			if($user->isRole()){
 				$usernames = array($userEditRec->getFieldValue("$usernameFieldName"));
 			} else {
-				$usernames = preg_split("/".ValueListArrayMapper::Natural_Separators."/", $userEditRec->getFieldValue("$usernameFieldName"));
+			    // CWE 06.09.2019: keeps only comma and semi-colon separators for multiple user creation
+				$usernames = preg_split("/[,;]+/", $userEditRec->getFieldValue("$usernameFieldName"));
 			}
 			$this->multipleUsernames = array();
 			foreach($usernames as $username){
+			    $username = trim($username);
 				$result = array();
 				$allow = '[_a-z0-9-]';
 				$defaultEmailPostfix = EMAIL_postfix;
@@ -131,7 +131,13 @@ class EditUserFormExecutor extends FormExecutor {
 					if($user->getWigiiNamespace()->getWigiiNamespaceName()){
 						$username = $username."@".$user->getWigiiNamespace()->getWigiiNamespaceName();
 					}
-				}			
+				}
+				// CWE 06.09.2019 does not allow spaces in real user name
+				elseif(strpos($username,' ')!==false) {
+				    if(!defined('USERNAME_minLength')) define('USERNAME_minLength', 3);
+				    if(!defined('USERNAME_maxLength')) define('USERNAME_maxLength', 64);
+				    $this->addErrorToField(str_replace(array('$var$','$USERNAME_minLength$','$USERNAME_maxLength$'),array($username,USERNAME_minLength,USERNAME_maxLength), $this->t("invalidNewUsername")),"$usernameFieldName");
+				}
 				$this->multipleUsernames[$username] = $username;	
 			}
 			$user->setUsername(reset($this->multipleUsernames));

@@ -211,7 +211,7 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 							}
 							if(!empty($begDate)){
 								// si la date de début est vide, tous les champs sont considérés comme vides
-								$value .= Dates::formatDisplay($begDate, "dd mmm yyyy");
+								$value .= Dates::formatDisplay($begDate, "dd mmm yyyy",null);
 								if($begDate == $endDate || empty($endDate)) null;
 								if(!$isAllDay && !empty($begTime)){
 									$value .= " - ";
@@ -223,7 +223,7 @@ class ElementPListExportExcel extends ElementPListWebImplWithWigiiExecutor imple
 								$value .= ' > ';
 								if(!$isAllDay && !empty($endDate) && $begDate != $endDate) $value .= " ";
 								if ($begDate != $endDate)
-								$value .= Dates::formatDisplay($endDate, "dd mmm yyyy");
+								$value .= Dates::formatDisplay($endDate, "dd mmm yyyy",null);
 								if(!$isAllDay && !empty($endTime)){
 									if (!empty($endDate) && $begDate != $endDate) $value .= " - ";
 									$value .= Times::formatDisplay($endTime, "hh:mm");

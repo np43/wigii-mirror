@@ -109,6 +109,7 @@ div.incLeft3 {
 	margin-left:120px;
 }
 
+
 .elementDialog.docked {
 	padding: 10px;
 }
@@ -252,6 +253,9 @@ div.elementDetail {
 	float:left;
 	/* add by ACA on 17.08.16 it for made an nearest positioned ancestor and solve a bug with position on scroll with IE & Chrome */
 	position: relative;
+}
+div.elementDetail span.tag {
+	float:left;
 }
 
 div.elementDetail h4, div.elementDetail h3 {

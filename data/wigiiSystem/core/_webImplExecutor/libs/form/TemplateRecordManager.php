@@ -1494,7 +1494,7 @@ class TemplateRecordManager extends Model {
 			if($isAllDay){
 				return date($begDateFormat, $value).($begDate!=$endDate && $endValue ? ' - '.date("d.m.Y", $endValue) : "");
 			} else {
-				return date(($begTime ? $begDateFormat." H:i" : $begDateFormat), $value).($begDate!=$endDate && $endValue ? ' - '.date(($endTime ? "d.m.Y H:i" : "d.m.Y"), $endValue) : "");
+			    return date(($begTime ? $begDateFormat." H:i" : $begDateFormat), $value).($endValue ? ' - '.date(trim(($begDate!=$endDate ? "d.m.Y":"").($endTime ? " H:i" : "")), $endValue) : "");
 			}
 		}
 		if ($value==null) $value = $this->t("empty");
@@ -1781,8 +1781,6 @@ class TemplateRecordManager extends Model {
 	//$labelDBValue is to find the right color in case there is color attributes
 	public function doFormatForTag($value, $xml, $labelDBValue=null){
 		if($value==null) return;	
-		// Modified by AC on 07.19.2016 we remove the rule css "white-space: nowrap" to prevent the sector tag be too long
-		//$preFix = '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;white-space:nowrap;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].'" >';
 		if(is_array($value)){
 			//the labelDBValue contains the list of options in the same order but not translated. We need to do the correct matching after to take only the values to have numeric fields.
 			if($labelDBValue) $labelDBValue = array_values($labelDBValue);
@@ -1791,7 +1789,7 @@ class TemplateRecordManager extends Model {
 				if($val!=null && $val!="none"){
 					$color = $xml->xpath('attribute[@color and (text()="'.($labelDBValue ? $labelDBValue[$key] : $value[$key]).'")]');
 					if($color){ $color = str_replace("#","",(string)$color[0]["color"]); }
-					$returnValue .= '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'" >'.$value[$key].'</span> ';
+					$returnValue .= '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'" >'.$value[$key].'</span> ';
 				}
 			}
 			return $returnValue;
@@ -1799,7 +1797,7 @@ class TemplateRecordManager extends Model {
 			if($value!=null && $value!="none"){
 				$color = $xml->xpath('attribute[@color and (text()="'.($labelDBValue ? $labelDBValue : $value).'")]');
 				if($color){ $color = str_replace("#","",(string)$color[0]["color"]); }
-				return '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;float:left;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'" >'.$value.'</span> ';
+				return '<span class="tag ui-corner-all" style="padding:2px 10px 2px 10px;margin-bottom:4px;margin-right:5px;'.$xml["tagStyle"].($color ? "background-color:#".$color.";color:#".getBlackOrWhiteFromBackgroundColor($color).";" : "").'" >'.$value.'</span> ';
 			}
 		}
 	}
