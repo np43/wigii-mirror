@@ -1547,6 +1547,15 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			};
 			
 			/**
+			 * Returns true if enter key should not submit the form
+			 * cf. Wigii configuration parameter noSubmitOnEnter
+			 * @return Boolean
+			 */
+			self.noSubmitOnEnter = function() {
+				return $('#'+self.formId()).hasClass('noSubmitOnEnter');
+			};
+			
+			/**
 			 * Returns the ID of the current group
 			 * @return String the current group ID
 			 */
@@ -1672,6 +1681,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				for(var i=0;i<fromFields.length;i++) {
 					fieldMap[fromFields[i]] = toFields[i];
 				}
+				var noSubmitOnEnter = self.noSubmitOnEnter();
 				// iterates on the selected fields
 				self.fields(fromFields).forEachField(function(field){
 					var fieldHtml = field.$[0].outerHTML;
@@ -1683,7 +1693,10 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					else field.formHelper().$.insertBefore(beforeTarget);
 					// binds js events on new field
 					var newField = field.formHelper().field(fieldMap[fieldName]);
-					newField.$.find('.select2, .cke').remove();					
+					newField.$.find('.select2, .cke').remove();
+					if(noSubmitOnEnter) {
+						newField.$.find(':not(textarea):input').keydown(function(e){ if(e.keyCode == 13){ e.stopPropagation(); e.preventDefault(); $(this).change();}});
+					}
 					addJsCodeAfterFormIsShown('#'+newField.fieldId());
 					i++;
 				});

@@ -1074,6 +1074,8 @@ class TemplateRecordManager extends Model {
 		$this->put(' method="post" ');
 		$this->put(' enctype="multipart/form-data" ');
 		$this->put(' action="'.$submitAction.'" ');
+		// CWE 11.09.2019: pushes config parameter noSubmitOnEnter to browser as a class
+		if((string)$this->getConfigService()->getParameter($this->getP(), $this->getRecord()->getModule(), "noSubmitOnEnter")=="1") $class = ($class ? $class.' ':'').'noSubmitOnEnter';
 		if($class)	$this->put(' class="'.$class.'" ');
 		// CWE 26.08.2016: prevents autofilling forms into Admin module, except for login page
 		// autocomplete=off doesn't work at field level for special login fields like username,password,email. autocomplete=off should be put at form level		
