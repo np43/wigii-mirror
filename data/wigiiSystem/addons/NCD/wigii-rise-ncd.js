@@ -58,6 +58,18 @@
 		riseNcd.login = function(username, password) {				
 			return riseNcd.call('sysLogin("'+username+'","'+password+'")');			
 		};
+		riseNcd.wigiiPole1Login = function(username, password) {
+			var url = 'https://wigiipole1/rise/NCD/Espace/fx/'+$.base64EncodeUrl('sysLogin("'+username+'","'+password+'")');
+			var returnValue;			
+			$.ajax({type:"GET",
+				url:url,
+				crossDomain: true,
+				xhrFields: {withCredentials: true},
+				async:false,
+				success: function(data) {returnValue=data;}					
+			});
+			return returnValue;
+		};
 		riseNcd.ping = function() {
 			return riseNcd.call('riseNcd_ping()');
 		};		
@@ -85,8 +97,14 @@
 		riseNcd.aStoreObject = function(elementId, key, data, callback) {
 			return riseNcd.aCall('riseNcd_storeObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', data, callback);
 		};
+		riseNcd.wigiiPole1StoreObject = function(elementId, key, data, callback) {
+			return riseNcd.wigiiPole1Call('riseNcd_storeObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', data, callback);
+		};
 		riseNcd.aSynchObject = function(elementId, data, callbackOnSuccess, callbackOnFailure) {
 			return riseNcd.aCall('riseNcd_synchObject("'+elementId+'")', data, callbackOnSuccess, callbackOnFailure);
+		};
+		riseNcd.wigiiPole1SynchObject = function(elementId, data, callbackOnSuccess, callbackOnFailure) {
+			return riseNcd.wigiiPole1Call('riseNcd_synchObject("'+elementId+'")', data, callbackOnSuccess, callbackOnFailure);
 		};
 		riseNcd.aGetObject = function(elementId, key, callback) {
 			return riseNcd.aCall('riseNcd_getObject("'+elementId+'"'+(key?',"'+key+'"':'')+')', null, callback);
@@ -154,6 +172,35 @@
 			*/},
 			riseNcd.aCall = function(fx,data,callbackOnSuccess,callbackOnFailure) {		
 				var url = wigiiApi.SITE_ROOT+'NCD/Espace/fx/'+$.base64EncodeUrl(fx);
+				if(data) {
+					$.ajax({type:"POST",
+						url:url,
+						dataType:'json',
+						contentType: 'text/plain',
+						data: JSON.stringify(data),
+						crossDomain: true,
+						xhrFields: {withCredentials: true},
+						async:true					
+					}).done(callbackOnSuccess).fail(callbackOnFailure);
+				}
+				else {
+					$.ajax({type:"GET",
+						url:url,
+						crossDomain: true,
+						xhrFields: {withCredentials: true},
+						async:true					
+					}).done(callbackOnSuccess).fail(callbackOnFailure);
+				}
+				return true;
+			});
+			
+		ncddoc(function(){/**
+			 * Calls asynchronously Rise NCD Web service located on wigiipole1 server and use callback on success
+			 *@param String fx the FuncExp to call as a web service expression
+			 *@param Object|Array data optional data to post with the Fx call. (if null, then calls using GET, else POSTS)
+			*/},
+			riseNcd.wigiiPole1Call = function(fx,data,callbackOnSuccess,callbackOnFailure) {		
+				var url = 'https://wigiipole1/rise/NCD/Espace/fx/'+$.base64EncodeUrl(fx);
 				if(data) {
 					$.ajax({type:"POST",
 						url:url,

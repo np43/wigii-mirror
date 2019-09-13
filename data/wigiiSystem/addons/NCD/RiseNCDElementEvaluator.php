@@ -76,6 +76,10 @@ class RiseNCDElementEvaluator extends WigiiOrgElementEvaluator
 			case "mf_getCode":
 			case "mf_jsonEncode":
 				return true;
+			case "riseNcd_synchObject":
+			case "riseNcd_storeObject":
+			    if($_SERVER['HTTP_HOST']=='localhost'||$_SERVER['HTTP_HOST']=='wigiipole1') return true;
+			    else return false;
 		}
 		return false;
 	}
