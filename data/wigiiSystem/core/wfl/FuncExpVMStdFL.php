@@ -2737,7 +2737,7 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	 */
 	public function txtFormatSwissBvrCodingLine($args) {
 	    $nArgs = $this->getNumberOfArgs($args);
-	    if($nArgs<3) throw new FuncExpEvalException('txtFormatSwissBvr takes at least three arguments: the amount, the participant number and the reference number argument which is the reference number', FuncExpEvalException::INVALID_ARGUMENT);
+	    if($nArgs<3) throw new FuncExpEvalException('txtFormatSwissBvrCodingLine takes at least three arguments: the amount, the participant number and the reference number argument which is the reference number', FuncExpEvalException::INVALID_ARGUMENT);
         
 	    // extracts trust center code
 	    if($nArgs>3) $trustCenter = str_pad($this->evaluateArg($args[3]),2,'0',STR_PAD_LEFT);
