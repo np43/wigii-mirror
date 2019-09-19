@@ -90,7 +90,18 @@ class CliExecutor {
 			throw new AuthorizationServiceException("public principal has not been initialized by Service Provider", AuthorizationServiceException :: FORBIDDEN);
 		$this->executionSink()->publishEndOperation("getPublicPrincipal");
 		return $returnValue;
-	}
+	}	
+	/**
+	 * Gets web socket server principal
+	 */
+	protected function getWebSockSrvPrincipal() {
+	    $this->executionSink()->publishStartOperation("getWebSockSrvPrincipal");
+	    $returnValue = ServiceProvider :: getAuthorizationService()->findWebSockSrvPrincipal($this->getSystemPrincipals());
+	    if (is_null($returnValue))
+	        throw new AuthorizationServiceException("web socket server principal has not been initialized by Service Provider", AuthorizationServiceException :: FORBIDDEN);
+	        $this->executionSink()->publishEndOperation("getWebSockSrvPrincipal");
+	        return $returnValue;
+	}	
 
 	//dependency injection
 
@@ -136,6 +147,18 @@ class CliExecutor {
 		}
 		return $this->clientAS;
 	}		
+	
+	private $webSockSrv;
+	public function setWebSocketServer($webSockServer) {
+	    $this->webSockSrv = $webSockServer;
+	}
+	protected function getWebSocketServer() {
+	    // autowired
+	    if(!isset($this->webSockSrv)) {
+	        $this->webSockSrv = TechnicalServiceProvider::getWebSocketServer();
+	    }
+	    return $this->webSockSrv;
+	}
 	
 	private $principal;
 	/**
@@ -439,5 +462,12 @@ class CliExecutor {
 	            'outputAsString', true
 	        )));
 	    }
+	}
+	
+	protected function runWebSocketServer($argc, $argv, $subArgIndex) {
+	    $this->getWebSocketServer()->run($this->getWebSockSrvPrincipal());
+	}
+	protected function stopWebSocketServer($argc, $argv, $subArgIndex) {
+	    $this->getWebSocketServer()->stop($this->getWebSockSrvPrincipal());
 	}
 }

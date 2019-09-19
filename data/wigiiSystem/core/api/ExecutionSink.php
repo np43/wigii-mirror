@@ -115,6 +115,18 @@ class ExecutionSink
 	}
 
 	/**
+	 * Logs an error in production log (without stack trace)
+	 * @param String $prodLogMessage specific contextual production log message
+	 * @param Exception $exception catched exception to display (exception class, exception code and message).
+	 */
+	public function logError($prodLogMessage,$exception) {
+	    if($this->isEnabled())
+	    {
+	        $this->writeMessage($prodLogMessage.' '.get_class($exception).' '.$exception->getCode().' '.$exception->getMessage());
+	    }
+	}
+	
+	/**
 	 * Dispatches an ExecFunction Wigii event
 	 * @param String $functionName name of the function currently beeing executed
 	 * @param Principal $principal current principal executing the function

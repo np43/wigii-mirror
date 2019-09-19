@@ -77,6 +77,10 @@ class ServiceProviderCliImpl extends ServiceProvider
 	{		
 		return new ModuleAdminServiceWebImpl();
 	}
+	protected function createAuthorizationServiceInstance()
+	{
+	    return new AuthorizationServiceCliImpl();
+	}
 	
 	protected function createConfigServiceInstance()
 	{

@@ -42,5 +42,6 @@
 		<BoxServiceException from="4800" to="4899"/>
 		<ElementFileAdminServiceException from="4900" to="4999" />
 		<FuncExpStoreServiceException from="5000" to="5099" />
+		<WigiiWebSocketServerException from="5100" to="5199" />
 	</exceptions>
 </errorcodes>

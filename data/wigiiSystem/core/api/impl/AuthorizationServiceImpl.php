@@ -27,6 +27,7 @@
  * Modified by CWE on 23.09.2014 to add stamping support.
  * Modified by Medair (CWE) on 28.04.2017 to activate stamping on standard DataFlow sources
  * Modified by Medair (CWE) on 01.09.2017 to enable root principal and public principal to persist sub groups.
+ * Modified by CWE on 19.09.2019 to expose a new system principal WebSockSrvPrincipal used by WigiiWebSocketServer.
  */
 class AuthorizationServiceImpl implements AuthorizationService
 {
@@ -192,6 +193,41 @@ class AuthorizationServiceImpl implements AuthorizationService
 		return $principalList->getPrincipal($publicP->getUsername(), $publicP->getWigiiNamespace()->getClient());
 	}
 
+	
+	private $webSockSrvPrincipal;
+	protected function getWebSockSrvPrincipal() {return $this->webSockSrvPrincipal;}
+	protected function setWebSockSrvPrincipal($webSockSrvPrincipal) {$this->webSockSrvPrincipal = $webSockSrvPrincipal;}
+	protected function createWebSockSrvPrincipal($wigiiNamespace, $moduleAccess)
+	{
+	    if(is_null($wigiiNamespace)) throw new AuthorizationServiceException("wigiiNamespace cannot be null", AuthorizationServiceException::INVALID_ARGUMENT);
+	    $webSockSrvPrincipal = Principal::createInstanceFromArray(array(
+	        "username"=>'AUTZSWSP',
+	        "wigiiNamespace"=>$wigiiNamespace,
+	        "moduleAccess"=>$moduleAccess
+	    ));
+	    return $webSockSrvPrincipal;
+	}
+	
+	public function isWebSockSrvPrincipal($principal)
+	{
+	    if(is_null($principal)) return false;
+	    if($this->getWebSockSrvPrincipal() === $principal)
+	    {
+	        return $this->getAuthenticationService()->isPrincipalValid($principal);
+	    }
+	    else return false;
+	}
+	public function assertPrincipalIsWebSockSrv($principal)
+	{
+	    if(! $this->isWebSockSrvPrincipal($principal)) $this->fail($principal, 'is not WebSocketServer');
+	}
+	public function findWebSockSrvPrincipal($principalList)
+	{
+	    if(is_null($principalList)) return null;
+	    $wssrvP = $this->getWebSockSrvPrincipal();
+	    if(is_null($wssrvP)) return null;
+	    return $principalList->getPrincipal($wssrvP->getUsername(), $wssrvP->getWigiiNamespace()->getClient());
+	}
 
 	public function assertPrincipalAuthorized($principal, $serviceName, $methodName)
 	{

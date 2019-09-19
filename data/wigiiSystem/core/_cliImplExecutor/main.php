@@ -58,10 +58,12 @@ if(!defined("CLIENT_NAME")) {
 define("wigiiSystem_PATH", "../../");
 define("CORE_PATH", wigiiSystem_PATH . "core/");
 define("IMPL_PATH", CORE_PATH . "_webImplExecutor/");
+define("CLI_PATH", CORE_PATH . "_cliImplExecutor/");
 define("TEMPLATE_PATH", IMPL_PATH . "templates/");
 define("DATATYPE_PATH", CORE_PATH . "datatype/");
 define("LANG_FOLDER", CORE_PATH . "langs/");
 if(!defined("NO_CLIENT")) define("CLIENT_CONFIG_PATH", wigiiSystem_PATH . "configs/" . CLIENT_NAME . "/");
+if(!defined("NO_CLIENT")) define("CLIENT_DATA_PATH", wigiiSystem_PATH."../../users/" . CLIENT_NAME . "/");
 define("ADDONS_PATH", wigiiSystem_PATH . "addons/");
 // Medair (CWE) 25.08.2017 added access to :
 // temporary uploaded files zone (to enable batch file upload)

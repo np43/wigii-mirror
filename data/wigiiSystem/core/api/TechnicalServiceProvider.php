@@ -1104,6 +1104,36 @@ class TechnicalServiceProvider
 	    return $this->cfgFieldLogExpEvaluator;
 	}
 	
+	private $webSocketServer;
+	
+	/**
+	 * @return WigiiWebSocketServer
+	 */
+	public static function getWebSocketServer()
+	{
+	    return self::getInstance()->getWebSocketServerInstance();
+	}
+	
+	/**
+	 * default singleton
+	 */
+	protected function getWebSocketServerInstance()
+	{
+	    if(!isset($this->webSocketServer))
+	    {
+	        $this->webSocketServer = $this->createWebSocketServerInstance();
+	    }
+	    return $this->webSocketServer;
+	}
+	
+	/**
+	 * default as WigiiWebSocketServer
+	 */
+	protected function createWebSocketServerInstance()
+	{
+	    return WigiiWebSocketServer::createInstance(ServiceProvider::getClientAdminService()->getDefaultClient(),WigiiWebSocketServer::MODE_PROXY);
+	}
+	
 	
 	// base infrastructure
 

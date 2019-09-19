@@ -19,15 +19,35 @@
  *  @author     <http://www.wigii.org/system>      Wigii.org 
  *  @link       <http://www.wigii-system.net>      <https://github.com/wigii/wigii>   Source Code
  *  @license    <http://www.gnu.org/licenses/>     GNU General Public License
- */ 
-
+ */
 
 /**
- * Standard Wigii version 
- * and specific version type including customer name and revision number
+ * Web sockets Func Exp library to be used with Wigii Web Socket server
+ * Created by CWE on 18.09.2019
  */
-define("VERSION_NUMBER", "4.730");
-define("REVISION_NUMBER", "G504");
-define("ASSET_REVISION_NUMBER", "G504"); // this token will be used to load wigii_...js and wigii_...css
-define("VERSION_TYPE", ""); // use the version type to version the customer customization, for example 'MyCompany R1234'
-define("VERSION_LABEL", "Wigii ® software, v.".VERSION_NUMBER." ".REVISION_NUMBER." ".VERSION_TYPE." A-".ASSET_REVISION_NUMBER);
+class WigiiWebSocketFL extends FuncExpVMAbstractFL
+{	
+	// Dependency injection
+	
+    private $webSocketServer;
+    public function setWebSocketServer($webSocketServer) {
+        $this->webSocketServer = $webSocketServer;
+    }
+    /**
+     * @return WigiiWebSocketServer
+     */
+    protected function getWebSocketServer() {
+        if(!isset($this->webSocketServer)) throw new WigiiWebSocketServerException('web socket server is not configured', WigiiWebSocketServerException::CONFIGURATION_ERROR);
+        else return $this->webSocketServer;
+    }
+    
+    // Func Exp library
+    
+    /**
+	 * Stops Wigii web socket server
+	 * FuncExp signature : <code>wssrvStop()</code>
+	 */
+	public function wssrvStop($args) {
+		return $this->getWebSocketServer()->stop($this->getPrincipal());
+	}	
+}

@@ -134,6 +134,13 @@ class FuncExpVMContext
 			$this->useModule($className, $moduleInstance);
 		}
 	}
+	/**
+	 * Gets an instance of a module given its class name (module should already be loaded in context)
+	 * @param String $className
+	 */
+	public function getModule($className) {
+	    return $this->modules[$className];
+	}
 	
 	/**
 	 * Returns the object stored with this variable or throws an exception if not found

@@ -92,6 +92,14 @@ class TechnicalServiceProviderCliImpl extends TechnicalServiceProvider
 	{
 		return new ExceptionSinkCliImpl();
 	}
+	
+	/**
+	 * default as WigiiWebSocketServer
+	 */
+	protected function createWebSocketServerInstance()
+	{
+	    return WigiiWebSocketServer::createInstance(ServiceProvider::getClientAdminService()->getDefaultClient(),WigiiWebSocketServer::MODE_CLI);
+	}
 }
 
 

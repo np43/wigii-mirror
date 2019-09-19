@@ -756,7 +756,7 @@ class ClientAdminServiceImpl implements ClientAdminService
 	 * Returns the name to use for the empty client.
 	 * This implementation returns ''
 	 */
-	protected function getEmptyClientName()
+	public function getEmptyClientName()
 	{
 		return '';
 	}
