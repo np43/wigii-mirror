@@ -4,6 +4,18 @@ use Ratchet\MessageComponentInterface;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Factory as LoopFactory;
 use React\EventLoop\TimerInterface;
+use React\Socket\Server as Reactor;
+use Ratchet\Server\IoServer;
+use Ratchet\WebSocket\WsServer;
+use Ratchet\WebSocket\WsServerInterface;
+use Ratchet\Http\HttpServer;
+use Ratchet\Http\HttpServerInterface;
+use Ratchet\Http\OriginCheck;
+use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RouteCollection;
+use Ratchet\Http\Router;
+use Symfony\Component\Routing\Matcher\UrlMatcher;
+use Symfony\Component\Routing\RequestContext;
 
 /**
  *  This file is part of Wigii (R) software.
@@ -36,24 +48,30 @@ use React\EventLoop\TimerInterface;
  * Depends on cboden/ratchet software suite for network protocols implementation.
  * Created by CWE on 17.09.2019
  */
-class WigiiWebSocketServer implements MessageComponentInterface
+class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterface
 {   
     /**
      * @var LoopInterface main server event loop
      */
-    private $srvLoop;
+    protected $srvLoop;
     /**
      * @var TimerInterface server periodic timer
      */
-    private $srvTimer;
+    protected $srvTimer;
     /**
      * @var array map of WigiiWebSocketServer instances, one per wigii client. (array key is client name, array value is WigiiWebSocketServer instance)
      */
-    private $clientWorkers;
+    protected $clientWorkers;
     /**
      * @var SplObjectStorage set of open sockets for current wigii client.
      */
-    private $connections;
+    protected $connections;
+    
+    // Server network details
+    
+    protected $httpHost;
+    protected $port;
+    protected $ipAddress;
     
     // Object lifecycle
     
@@ -177,8 +195,13 @@ class WigiiWebSocketServer implements MessageComponentInterface
         return $this->clientName;
     }      
     
+    public function getClientUrl() {
+        if($this->isNoClient()) return 'NoClient';
+        else return $this->getClientName();
+    }
+    
     public function isNoClient() {
-        return (defined("NO_CLIENT") || $this->getClientAdminService()->getEmptyClientName() === $this->clientName);
+        return ($this->getClientAdminService()->getEmptyClientName() === $this->clientName);
     }
     
     /**
@@ -228,6 +251,10 @@ class WigiiWebSocketServer implements MessageComponentInterface
         return $returnValue;
     }
     
+    public function getSubProtocols() {
+        return array('wigii','wncd','js');
+    }
+    
     // Administration
     
     /**
@@ -237,6 +264,15 @@ class WigiiWebSocketServer implements MessageComponentInterface
     public function run($principal) {
         $this->getAuthorizationService()->assertPrincipalIsWebSockSrv($principal);
         if($this->getMode()!=self::MODE_CLI) throw new WigiiWebSocketServerException('server must be in mode CLI to start running', WigiiWebSocketServerException::NOT_ALLOWED);
+        // upgrades execution mode to server
+        $this->setMode(self::MODE_SRV);
+        // gets server configuration
+        $this->port = $this->getParameter('port');
+        if($this->port==null) $this->port='8080';
+        $this->httpHost = 'localhost';
+        $this->ipAddress = '0.0.0.0';
+        $sslCert = $this->getParameter('sslCert');
+        $passPhrase = $this->getParameter('passPhrase');
         // creates main server event loop
         $this->srvLoop = LoopFactory::create();
         // adds periodic check of server fx queue
@@ -248,12 +284,67 @@ class WigiiWebSocketServer implements MessageComponentInterface
             catch(Exception $e) {
                 $srv->endOnError($principal,$e);
             }
-        });  
-        // upgrades execution mode to server
-        $this->setMode(self::MODE_SRV);
+        });
+        // prepares client workers
+        $clientWorkersRouting = new RouteCollection();
+        if($this->getXmlConfig()->clients) {
+            if(!isset($this->clientWorkers)) $this->clientWorkers=array();
+            foreach($this->getXmlConfig()->clients->children() as $clientXmlConfig) {
+                $clientWorker = $this->prepareClientWorker($principal, $clientXmlConfig);
+                $this->clientWorkers[$clientWorker->getClientUrl()] = $clientWorker;
+                $clientWorkersRouting->add($clientXmlConfig->getName(), $clientWorker->workerRoute);
+            }
+        }
+        if(empty($this->clientWorkers)) throw new WigiiWebSocketServerException('no Wigii clients active for web sockets connections',WigiiWebSocketServerException::CONFIGURATION_ERROR);
+        // configures ssl
+        $context=array();
+        if($sslCert!=null) {
+            $context['tls'] = array(
+                'local_cert'=>CLI_PATH.$sslCert,
+                'passphrase'=>$passPhrase,
+                'allow_self_signed' => true, 
+                'verify_peer' => false
+            );
+        }
+        // creates TCP server socket
+        $ioServer = new Reactor(($sslCert!=null?'tls://':'tcp://').$this->ipAddress.':'.$this->port, $this->srvLoop,$context);        
+        // wraps socket with message components
+        $ioServer = new IoServer(new HttpServer(new Router(new UrlMatcher($clientWorkersRouting, new RequestContext()))), $ioServer, $this->srvLoop);
         // starts the event loop
         $this->executionSink()->log('Server started');
-        $this->srvLoop->run();
+        $ioServer->run();
+    }
+    
+    private $workerRoute;
+    /**
+     * Prepares a worker for a Wigii client
+     * @param Principal $p current principal
+     * @param SimpleXMLElement $clientXmlConfig web socket wigii client xml config node as defined in the WebSockets_config.xml
+     * @return WigiiWebSocketServer a Wigii web socket server instance ready to handle routed messages for specific wigii client
+     */
+    protected function prepareClientWorker($p, $clientXmlConfig) {
+        if($this->getMode()!=self::MODE_SRV) throw new WigiiWebSocketServerException('new client workers can only be added by the main server', WigiiWebSocketServerException::NOT_ALLOWED);
+        if(!$clientXmlConfig) throw new WigiiWebSocketServerException('clientXmlConfig cannot be null', WigiiWebSocketServerException::INVALID_ARGUMENT);
+        // extracts configuration parameters
+        $clientName = (string)$clientXmlConfig['clientName'];
+        if(empty($clientName)) $clientName = $clientXmlConfig->getName();
+        $clientUrl = (string)$clientXmlConfig['clientUrl'];
+        if(empty($clientUrl)) $clientUrl = '/'.$clientName;        
+        // creates client worker instance
+        $returnValue = new self();
+        $returnValue->setMode(self::MODE_WORKER);
+        $returnValue->setClient($this->getClientAdminService()->getClient($p, $clientName));
+        $this->debugLogger()->write('prepares client worker for '.$clientName.' listening on '.$clientUrl);       
+        // prepares WebSocket protocol component
+        $comp = new WsServer($returnValue);
+        $comp->enableKeepAlive($this->srvLoop);
+        $comp->setStrictSubProtocolCheck(true);
+        // checks origin: only allows from same server
+        $comp = new OriginCheck($comp,array($this->httpHost));
+        // prepares routing component
+        $hostMatcher = $this->httpHost;
+        $returnValue->workerRoute = new Route($clientUrl, array('_controller' => $comp), array('Origin' => $this->httpHost), array(), $hostMatcher, array(), array('GET'));
+        return $returnValue;
     }
     
     /**
@@ -349,20 +440,25 @@ class WigiiWebSocketServer implements MessageComponentInterface
     // Web socket server implementation
     
     public function onOpen(ConnectionInterface $conn) {
-        WigiiWebSocketServerException::throwNotImplemented();
+        // registers new connection in list of open connections
+        if(!isset($this->connections)) $this->connections = new SplObjectStorage();
+        $this->connections->attach($conn);
+        $this->executionSink()->log('new connection for client '.$this->getClientUrl());
     }
     
     public function onMessage(ConnectionInterface $from, $msg) {
-        WigiiWebSocketServerException::throwNotImplemented();
+        $this->debugLogger()->write($msg);
     }
     
     public function onClose(ConnectionInterface $conn) {
-        WigiiWebSocketServerException::throwNotImplemented();
+        // unregisters connection
+        if(isset($this->connections)) $this->connections->detach($conn);
+        $this->executionSink()->log('closing connection for client '.$this->getClientUrl());
     }
     
     public function onError(ConnectionInterface $conn, \Exception $e) {
-        $conn->close();
-        WigiiWebSocketServerException::throwNotImplemented();
+        $this->executionSink()->logError('error on connection for client '.$this->getClientUrl(), $e);
+        $conn->close();       
     }
     
     /**
@@ -399,7 +495,7 @@ class WigiiWebSocketServer implements MessageComponentInterface
         // gets queue of fx files
         $fxDir = $this->getClientDataPath().'data/webSocketQueue/';
         $fxFiles = @scandir($fxDir);
-        if($fxFiles===false) throw new WigiiWebSocketServerException('error reading fx queue for client '.($this->isNoClient() ? 'NoClient':$this->getClientName()), WigiiWebSocketServerException::UNKNOWN_ERROR);
+        if($fxFiles===false) throw new WigiiWebSocketServerException('error reading fx queue for client '.$this->getClientUrl(), WigiiWebSocketServerException::UNKNOWN_ERROR);
         // pops next valid fx, discards any deprecated files
         if(!empty($fxFiles)) {
             $deprecatedFiles = array();
@@ -418,7 +514,7 @@ class WigiiWebSocketServer implements MessageComponentInterface
                 // else reads content
                 else {
                     $returnValue = file_get_contents($fxDir.$fxFile);
-                    if($returnValue===false) throw new WigiiWebSocketServerException('error reading file '.$fxFile.' in queue for client '.($this->isNoClient() ? 'NoClient':$this->getClientName()), WigiiWebSocketServerException::UNKNOWN_ERROR);
+                    if($returnValue===false) throw new WigiiWebSocketServerException('error reading file '.$fxFile.' in queue for client '.$this->getClientUrl(), WigiiWebSocketServerException::UNKNOWN_ERROR);
                     // parses content as a FuncExp
                     if(!empty($returnValue)) $returnValue = str2fx($returnValue);
                     else $returnValue = null;

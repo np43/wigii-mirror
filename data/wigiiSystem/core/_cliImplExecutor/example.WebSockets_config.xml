@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <WebSockets>
 	<parameters 
-		port="8080" 
+		port="8080"
+		sslCert="localhost.pem"
+		passPhrase=""
 	/>
 	<!-- list of Wigii clients for which web socket server is active -->
 	<clients>

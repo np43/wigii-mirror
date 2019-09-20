@@ -426,6 +426,76 @@ class CliExecutor {
 	    $this->put(evalfx($this->getCurrentPrincipal(), $fx));
 	}
 	
+	/**
+	 * Generates a self signed ssl certificate using an xml file describing the certificate details
+	 * Xml file should be of the form:
+	 * <sslcertrequest>
+	 *     <commonName>localhost</commonName>
+	 *     <countryName>CH</countryName>
+	 *     <stateOrProvinceName></stateOrProvinceName>
+	 *     <localityName></localityName>
+	 *     <organizationName></organizationName>
+	 *     <organizationUnitName></organizationUnitName>
+	 *     <emailAddress></emailAddress>
+	 *     <!-- optional config -->
+	 *     <validity>3650</validity>
+	 *     <keyBits>2048</keyBits>
+	 *     <keyPassPhrase></keyPassPhrase>
+	 * </sslcertrequest>
+	 * Certifcate is valid for 10 years by default.
+	 * Outputs the certificate and private key in pem format
+	 */
+	protected function genSslCert($argc, $argv, $subArgIndex) {
+	    // gets ssl request xml file
+	    if($subArgIndex >= $argc) throw new ServiceException('config file is missing. Usage is genSslCert sslCertConfigFilePath [certOutFilePath]', ServiceException::INVALID_ARGUMENT);
+	    else {
+	        $sslCertRequFile = $argv[$subArgIndex++];
+	        // loads xml
+	        $sslCertRequ = simplexml_load_file($sslCertRequFile);
+	        if($sslCertRequ===false) throw new ServiceException('error loading ssl certificate xml config file '.$sslCertRequFile);
+	        $keyBits = (string)$sslCertRequ->keyBits;
+	        if(empty($keyBits)) $keyBits = 2048;
+	        $validity = (string)$sslCertRequ->validity;
+	        if(empty($validity)) $validity = 3650;
+	        $passPhrase = (string)$sslCertRequ->passPhrase;
+	        if(empty($passPhrase)) $passPhrase=null;
+	        // generates new private key
+	        $privkey = openssl_pkey_new(array(
+	            "private_key_bits" => intval($keyBits),
+	            "private_key_type" => OPENSSL_KEYTYPE_RSA
+	        ));
+	        if($privkey===false) throw new ServiceException('cannot generate new private key. '.openssl_error_string(),ServiceException::WRAPPING);
+	        
+	        // generates certificate
+	        $cert = openssl_csr_new(array(
+	            "commonName"=>(string)$sslCertRequ->commonName,
+	            "countryName"=>(string)$sslCertRequ->countryName,
+	            "stateOrProvinceName"=>(string)$sslCertRequ->stateOrProvinceName,
+	            "localityName"=>(string)$sslCertRequ->localityName,
+	            "organizationName"=>(string)$sslCertRequ->organizationName,
+	            "organizationUnitName"=>(string)$sslCertRequ->organizationUnitName,
+	            "emailAddress"=>(string)$sslCertRequ->emailAddress
+	        ), $privkey);
+	        $cert = openssl_csr_sign($cert, null, $privkey, intval($validity));
+	        
+	        // gets output file name
+	        if($subArgIndex < $argc) $outputFile = $argv[$subArgIndex++];
+	        else $outputFile=null;
+	        
+	        // exports certificate
+	        openssl_x509_export($cert, $returnValue);
+	        if(isset($outputFile)) $certContent = $returnValue;
+	        else $this->put($returnValue);
+	        // exports private key
+	        openssl_pkey_export($privkey, $returnValue, $passphrase);
+	        if(isset($outputFile)) $certContent.= $returnValue;
+	        else $this->put($returnValue);
+	        
+	        if(isset($outputFile)) if(!file_put_contents($outputFile, $certContent)) throw new ServiceException('error writing certificate to file '.$outputFile, ServiceException::WRAPPING);
+	        @unlink('.rnd');
+	    }
+	}
+	
 	protected function useConfigPackModule($argc, $argv, $subArgIndex) {
 	    // gets config file path
 	    if($subArgIndex >= $argc) throw new ServiceException('config file path is missing. Usage is useConfigPackModule configFilePath', ServiceException::INVALID_ARGUMENT);

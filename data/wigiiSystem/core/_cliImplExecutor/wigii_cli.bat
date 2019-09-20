@@ -30,6 +30,8 @@ IF NOT exist %WIGII_CLI_PHP_ENGINE% (echo Wigii ERREUR: %WIGII_CLI_PHP_ENGINE% h
 set WIGII_CLI_PHP_INI=.\php.ini
 if exist %WIGII_PHP_ENV%\php.ini (set WIGII_CLI_PHP_INI=%WIGII_PHP_ENV%\php.ini)
 
+set OPENSSL_CONF=%WIGII_PHP_ENV%\extras\ssl\openssl.cnf
+
 if "%1"=="-shell" (%WIGII_CLI_PHP_ENGINE% -c %WIGII_CLI_PHP_INI% -f main.php -- %*) else (%WIGII_CLI_PHP_ENGINE% -c %WIGII_CLI_PHP_INI% -f main.php -- %* > out.log 2> err.log)
 set RETURNVALUE=%ERRORLEVEL%
 :end

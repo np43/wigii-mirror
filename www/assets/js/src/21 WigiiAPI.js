@@ -3893,6 +3893,32 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		});
 		
 		ncddoc(function(){/**
+		 * Interprets a Wigii message received from the server
+		 * @param String protocol message semantic protocol. One of wigii, wncd, js
+		 * @param String message message content received from the server (typically trough a web socket connection)
+		*/},
+		wigiiApi.parseWigiiMessage = function(protocol,message) {
+			var code;
+			switch(protocol) {
+			case "wigii":
+				wigiiApi.parseUpdateResult(message);
+				break;
+			case "wncd":
+				code = wncd.fxString2obj(message);
+				wncd.program(code);
+				break;
+			case "js":
+				// scopes received message
+				code = "wncd.script(function(){"+message+";})";
+				// interprets it
+				code = wncd.fxString2obj(code);
+				wncd.program(code);
+				break;
+			default: throw wigiiApi.createServiceException('unsupported protocol '+protocol,wigiiApi.errorCodes.INVALID_ARGUMENT);
+			}
+		});
+		
+		ncddoc(function(){/**
 		 * Shows the details of the element
 		*/},
 		wigiiApi.showElement = function(wigiiNamespaceUrl,moduleName,elementId,urlArgs) {
@@ -4082,6 +4108,34 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			else if(textStatus != 'abort') exception = {code:xhr.status||wigiiApi.errorCodes.UNKNOWN_ERROR,message:xhr.responseText||"Ajax status: "+textStatus};
 			// shows exception as a centered popup
 			if(exception) wigiiApi.getHelpService().showFloatingHelp(undefined, undefined, wigiiApi.exception2html(exception,context), {localContent:true,position:"center",removeOnClose:true});
+		});
+		
+		ncddoc(function(){/**
+		 * Opens a Web socket on the specified url.
+		 * @param String url wigii web socket server url to handle duplex communication
+		 * @param String protocol wigii web socket sub-protocol. One of wigii, wncd or js.
+		 * @param Object options optional bag to configure the web socket. It supports:
+		 * - onOpen: Function. Specifies the callback to handle the web socket open event.
+		 * - onMessage: Function. Specifies the callback to handle the web socket message event. Defaults to wigiiApi.parseWigiiMessage
+		 * - onError: Function. Specifies the callback to handle the web socket error event. By default, event is ignored.
+		 * - onClose: Function. Specifies the callback to handle the web socket close event. By default, event is ignored.
+		 * @return WebSocket the web socket instance
+		*/},
+		wigiiApi.openWebSocket = function(url,protocol,options) {
+			options = options || {};
+			switch(protocol) {
+				case "wigii":
+				case "wncd":
+				case "js":
+					break;
+				default: throw wigiiApi.createServiceException('unsupported protocol '+protocol,wigiiApi.errorCodes.INVALID_ARGUMENT);
+			}
+			var returnValue = new WebSocket(url,protocol);
+			if(options.onOpen) returnValue.addEventListener('open',options.onOpen);
+			returnValue.addEventListener('message',options.onMessage || wigiiApi.parseWigiiMessage);
+			if(options.onError) returnValue.addEventListener('error',options.onError);
+			if(options.onClose) returnValue.addEventListener('close',options.onClose);
+			return returnValue;
 		});
 		
 		ncddoc(function(){/**
