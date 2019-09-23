@@ -66,7 +66,11 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
      * @var SplObjectStorage set of open sockets for current wigii client.
      */
     protected $connections;
-    
+    /**
+     * @var ConnectionInterface current active connection
+     */
+    private $crtConnection;
+
     // Server network details
     
     protected $httpHost;
@@ -253,6 +257,14 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
     
     public function getSubProtocols() {
         return array('wigii','wncd','js');
+    }
+
+    /**
+     * Returns protocol supported by current open web socket
+     */
+    public function getCrtProtocol() {
+        if(!isset($this->crtConnection)) throw new WigiiWebSocketServerException('no web socket currently open', WigiiWebSocketServerException::INVALID_STATE);
+        return $this->crtConnection->wigiiProtocol;
     }
     
     // Administration
@@ -442,12 +454,133 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
     public function onOpen(ConnectionInterface $conn) {
         // registers new connection in list of open connections
         if(!isset($this->connections)) $this->connections = new SplObjectStorage();
-        $this->connections->attach($conn);
+        $conn->wigiiProtocol = reset($conn->httpRequest->getHeader('Sec-WebSocket-Protocol'));
+        $conn->wigiiSessionId = null;
+        $this->connections->attach($conn);        
         $this->executionSink()->log('new connection for client '.$this->getClientUrl());
     }
     
     public function onMessage(ConnectionInterface $from, $msg) {
+        $this->executionSink()->publishStartOperation('onMessage');
+        // switches context and loads current session
+        //$from->wigiiSessionId = $this->switchContext($from->wigiiSessionId);
+        $p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+        $this->crtConnection = $from;
+        try {
+            $this->debugLogger()->write($msg);
+            // parses incoming fx
+            $fx = str2fx($msg);
+            // evaluates Fx
+            if($fx instanceof FuncExp) {
+                // sets origin as public
+                $fx->setOriginIsPublic();                
+                $this->evalFx($p, $fx);
+                // ignores return value
+            }            
+            $this->executionSink()->publishEndOperation('onMessage');
+        }
+        catch(Exception $e) {
+            $this->executionSink()->publishEndOperationOnError('onMessage', $e);
+            // sends back error to client
+            $this->jsCallFunction($p, 'wigii().displayWigiiException', $this->convertServiceExceptionToJson($p, $from, $e));
+            // signals fatal error to monitoring system
+            ServiceProvider::getClientAdminService()->signalFatalError($e);            
+        }
+        $this->crtConnection = null;
+    }
+    
+    /**
+     * Sends a message to current open web socket
+     * @param Principal $p current principal handling the web socket connection
+     * @param String $msg a message to send to the browser. Should be compatible with current protocol
+     */
+    public function sendMessage($p,$msg) {
+        if(!isset($this->crtConnection)) throw new WigiiWebSocketServerException('no web socket currently open', WigiiWebSocketServerException::INVALID_STATE);
         $this->debugLogger()->write($msg);
+        $this->crtConnection->send($msg);
+    }
+    
+    /**
+     * Sends some js code to browser
+     * @param Principal $p current principal handling the web socket connection
+     * @param String $jsCode valid js code to be executed on client side
+     */
+    public function sendJsCode($p,$jsCode) {
+        if($jsCode==null) return;
+        $msg = '';
+        switch($this->getCrtProtocol()) {
+            case "wncd":
+                $msg = 'wncd.script(function(){';
+                $msg .= $jsCode;
+                $msg .= ';})';
+                break;
+            case "js":
+                $msg = $jsCode.';';
+                break;
+            case "wigii":
+                $msg = ExecutionServiceImpl::answerRequestSeparator;
+                $msg .= 'JSCode';
+                $msg .= ExecutionServiceImpl::answerParamSeparator;
+                $msg .= $jsCode.';';
+                break;
+        }
+        if($msg!='') $this->sendMessage($p, $msg);
+    }
+    
+    /**
+     * Assigns a value to a variable on client side
+     * @param Principal $p current principal handling the web socket connection
+     * @param String $varName path to variable (can be a chain of names separated by dots)
+     * @param mixed $varValue value to assign to variable. Should be JSON serializable.
+     */
+    public function jsAssignVar($p, $varName,$varValue) {
+        $this->sendJsCode($p, $this->formatJsName($varName).'='.$this->formatJsValue($varValue));
+    }
+    
+    /**
+     * Calls a function on client side
+     * @param Principal $p current principal handling the web socket connection
+     * @param String $funcName path to function (can be a chain of names separated by dots)
+     * @param Array|mixed $args array of arguments or one single argument. Each argument should be JSON serializable.
+     */
+    public function jsCallFunction($p, $funcName,$args) {
+        $funcCall = $this->formatJsName($funcName).'(';
+        if(is_array($args)) {
+            $first=true;
+            foreach($args as $arg) {
+                if($first) $first=false;
+                else $funcCall .= ',';
+                $funcCall .= $this->formatJsValue($arg);
+            }
+        }
+        else $funcCall .= $this->formatJsValue($args);
+        $funcCall .= ')';
+        $this->sendJsCode($p, $funcCall);
+    }
+    
+    /**
+     * Checks and format a js name. Only allows dots separated chains.
+     * Asserts that name is safe against unwanted code injection.
+     * @param String $jsName a path to a variable or function
+     * @return String sanitized js name
+     */
+    public function formatJsName($jsName) {
+        if(empty($jsName)) throw new WigiiWebSocketServerException('jsName cannot be null.', WigiiWebSocketServerException::INVALID_ARGUMENT);
+        // sanitizes js name by keeping only alphanumeric chars, dots and parenthesis
+        $matches=null;
+        if(preg_match('/[_a-zA-Z0-9\.\(\)]+/',$jsName,$matches)===false || $matches[0]!=$jsName) throw new WigiiWebSocketServerException('invalid jsName '.$jsName, WigiiWebSocketServerException::INVALID_ARGUMENT);
+        return $matches[0];
+    }
+    
+    /**
+     * Checks, serializes and formats a value to be sent as js to browser
+     * @param mixed $jsValue any JSON serializable value
+     * @return String valid json string
+     */
+    public function formatJsValue($jsValue) {
+        $returnValue = json_encode($jsValue,JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK|JSON_UNESCAPED_SLASHES);
+        if($returnValue=== false) throw new WigiiWebSocketServerException('Invalid js value. JSON encode error '.json_last_error().' '.json_last_error_msg(), WigiiWebSocketServerException::INVALID_ARGUMENT);
+        return $returnValue;
     }
     
     public function onClose(ConnectionInterface $conn) {
@@ -486,6 +619,10 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
     
     // Implementation
     
+    protected function switchContext($sessionId) {
+        WigiiWebSocketServerException::throwNotImplemented();
+    }
+    
     /**
      * Pops next Fx to be executed from the queue or null if queue is empty
      * @return FuncExp
@@ -518,6 +655,8 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
                     // parses content as a FuncExp
                     if(!empty($returnValue)) $returnValue = str2fx($returnValue);
                     else $returnValue = null;
+                    // marks fx origin as public
+                    if($returnValue instanceof FuncExp) $returnValue->setOriginIsPublic();
                     // marks file to be deleted
                     $deprecatedFiles[] = $fxFile;
                     // returns
@@ -535,9 +674,10 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
     }
     
     /**
-     * Evaluates FuncExp using given principal
+     * Evaluates FuncExp using given principal and returns result
      * @param Principal $principal
      * @param FuncExp $fx
+     * @return mixed FuncExp result
      */
     protected function evalFx($principal,$fx) {
         $vm = ServiceProvider::getFuncExpVM($principal);
@@ -548,12 +688,52 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
             $wigiiWebSocketFL = $vm->getFuncExpVMServiceProvider()->getFuncExpVMContext()->getModule('WigiiWebSocketFL');
             $wigiiWebSocketFL->setWebSocketServer($this);
             // evaluates FuncExp
-            $vm->evaluateFuncExp($fx,$this);
+            return $vm->evaluateFuncExp($fx,$this);
         }
         catch(Exception $e) {
             $vm->freeMemory();
             throw $e;
         }
+    }
+    
+    /**
+     * Converts a PHP ServiceException to a StdClass ready to be pushed in JSON to client
+     * @param Principal $p current principal executing the request
+     * @param ConnectionInterface $conn current web socket connection
+     * @param ServiceException|Exception $exception the exception to be converted to StdClass
+     * @return StdClass a stdClass instance of the form :
+     * {context: calls getExecutionContext(), exception:{class: exception class, message: error message, code: exception code}}
+     */
+    protected function convertServiceExceptionToJson($p,$conn,$exception) {
+        if(!isset($exception)) return null;
+        if($exception instanceof ServiceException) $exception = $exception->getWigiiRootException();
+        $returnValue = array();
+        $returnValue['name'] = get_class($exception);
+        $returnValue['message'] = $exception->getMessage();
+        $returnValue['code'] = $exception->getCode();
+        $returnValue = (object)$returnValue;
+        
+        $returnValue = array('context'=>$this->getExecutionContext($p, $conn),'exception'=>$returnValue);
+        return (object)$returnValue;
+    }
+    
+    /**
+     * Gets an StdClass instance representing the current execution context, ready to be pushed in JSON to client
+     * @param Principal $p current principal executing the request
+     * @param ConnectionInterface $conn current web socket connection
+     * @return StdClass a stdClass instance of the form :
+     * {protocol: wigii application protocol, realUsername: real user name, username: role name, principalNamespace: principal current namespace,
+     *  version: Wigii system version label}
+     */
+    protected function getExecutionContext($p,$conn) {
+        if(!isset($p) || !isset($conn)) throw new ServiceException("principal and web socket connection cannot be null", ServiceException::INVALID_ARGUMENT);
+        $returnValue = array();
+        $returnValue['protocol'] = $conn->wigiiProtocol;
+        $returnValue['realUsername'] = $p->getRealUsername();
+        $returnValue['username'] = $p->getUsername();
+        $returnValue['principalNamespace'] = $p->getWigiiNamespace()->getWigiiNamespaceUrl();
+        $returnValue['version'] = VERSION_LABEL;
+        return (object)$returnValue;
     }
     
     private $xmlConfig;

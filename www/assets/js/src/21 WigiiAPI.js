@@ -4120,6 +4120,7 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		 * - onError: Function. Specifies the callback to handle the web socket error event. By default, event is ignored.
 		 * - onClose: Function. Specifies the callback to handle the web socket close event. By default, event is ignored.
 		 * @return WebSocket the web socket instance
+		 * @example wncd.program.context.ws = wigii().openWebSocket('wss://localhost:8080/example','wncd');
 		*/},
 		wigiiApi.openWebSocket = function(url,protocol,options) {
 			options = options || {};
@@ -4130,12 +4131,52 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					break;
 				default: throw wigiiApi.createServiceException('unsupported protocol '+protocol,wigiiApi.errorCodes.INVALID_ARGUMENT);
 			}
-			var returnValue = new WebSocket(url,protocol);
-			if(options.onOpen) returnValue.addEventListener('open',options.onOpen);
-			returnValue.addEventListener('message',options.onMessage || wigiiApi.parseWigiiMessage);
-			if(options.onError) returnValue.addEventListener('error',options.onError);
-			if(options.onClose) returnValue.addEventListener('close',options.onClose);
-			return returnValue;
+			var ws = new WebSocket(url,protocol);
+			if(options.onOpen) ws.addEventListener('open',options.onOpen);
+			ws.addEventListener('message',options.onMessage || function(e){ wigiiApi.parseWigiiMessage(ws.protocol,e.data); });
+			if(options.onError) ws.addEventListener('error',options.onError);
+			if(options.onClose) ws.addEventListener('close',options.onClose);
+			return ws;
+		});
+		
+		ncddoc(function(){/**
+		 * Calls a FuncExp on server through the given web socket and handles the result through the given callback
+		 * @param WebSocket open web socket on wigii server
+		 * @param String fx the FuncExp string to be called on server side
+		 * @param Function|String a callback Function to call with the FuncExp result or the name of a variable to be assigned with the result.
+		 * The variable name can be a variable path separated with dots (for instance wncd.program.context.X)
+		 * @example wigii().webSocketCallFx(wncd.program.context.ws,'sysUsername()',wigii().log);		 
+		*/},
+		wigiiApi.webSocketCallFx = function(ws,fx,resultHandler) {
+			if(!ws) throw wigiiApi.createServiceException('web socket cannot be null',wigiiApi.errorCodes.INVALID_ARGUMENT);
+			if(!fx) throw wigiiApi.createServiceException('func exp cannot be null',wigiiApi.errorCodes.INVALID_ARGUMENT);
+			// if resultHandler is a callback function
+			if($.isFunction(resultHandler)) {
+				// creates a temporary callback wrapping resultHandler
+				if(!wigiiApi.webSocketCallbacks) wigiiApi.webSocketCallbacks = {};
+				var fxResultHandler = wigiiApi.objCreateEntry(wigiiApi.webSocketCallbacks,'fx',true);
+				wigiiApi.webSocketCallbacks[fxResultHandler] = function(fxResult) {
+					delete wigiiApi.webSocketCallbacks[fxResultHandler];
+					resultHandler(fxResult);
+				};
+				// instructs server to call the callback on return
+				fx = 'wscallback("wigii().webSocketCallbacks.'+fxResultHandler+'",'+fx+')';
+			}
+			// else if resulHandler is a variable
+			else if(resultHandler) {
+				// assigns result to it
+				fx = 'wsassign("'+resultHandler+'",'+fx+')';
+			}
+			// calls fx
+			ws.send(fx);
+		});
+		
+		ncddoc(function(){/**
+		 * Displays to user an exception thrown on Wigii server side and received as a json object
+		 * @param Object wigiiJsonException wigii exception encoded as a json object of the form {exception: Exception details, context: Wigii execution context}
+		*/},
+		wigiiApi.displayWigiiException = function(wigiiJsonException) {			
+			wigiiApi.getHelpService().showFloatingHelp(undefined, undefined, wigiiApi.exception2html(wigiiJsonException.exception,wigiiJsonException.context), {localContent:true,position:"center",removeOnClose:true});
 		});
 		
 		ncddoc(function(){/**
@@ -4789,6 +4830,29 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			return (typeof XMLSerializer!=="undefined") ? 
 					(new window.XMLSerializer()).serializeToString(xmlDom) : 
 					xmlDom.xml;
+		});
+		
+		ncddoc(function(){/**
+		 * Creates a new unique entry into a given object to store a default value. 
+		 * This function ensures to always add an entry to the object and not ovwerwrite any existing entries.
+		 * @param Object obj existing object in which add a new property
+		 * @param String keyPrefix a prefix to prepend to the property name
+		 * @param any defaultVal any default value to store in the created property
+		 * @return String the new property name
+		*/},
+		wigiiApi.objCreateEntry = function(obj,keyPrefix,defaultVal) {
+			if(!obj) throw new wigiiApi.ServiceException("obj cannot be null", wigiiApi.errorCodes.INVALID_ARGUMENT);
+			keyPrefix = (keyPrefix || '')+''+Date.now();
+			var i=0;
+			while(i<2000) {
+				key = keyPrefix+''+i;
+				if(!obj.hasOwnProperty(key)) {
+					obj[key] = defaultVal;
+					return key;
+				}
+				i++;
+			}
+			throw new wigiiApi.ServiceException("not able to generate a unique entry", wigiiApi.errorCodes.ALREADY_EXISTS);
 		});
 		
 		ncddoc(function(){/**

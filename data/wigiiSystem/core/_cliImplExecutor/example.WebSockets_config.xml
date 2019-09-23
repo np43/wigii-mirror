@@ -7,6 +7,12 @@
 	/>
 	<!-- list of Wigii clients for which web socket server is active -->
 	<clients>
-		<Example clientName="Example" clientUrl="/example"/>
+		<Example clientName="Example" clientUrl="/example"
+			serviceProvider="ServiceProviderCliExampleImpl"
+			db_host="localhost"
+			db_user="wgi"
+			db_pwd="mywgi-pass"
+			db_name="wigii_example"
+		/>
 	</clients>
 </WebSockets>

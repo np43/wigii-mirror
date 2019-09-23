@@ -483,11 +483,12 @@ class CliExecutor {
 	        else $outputFile=null;
 	        
 	        // exports certificate
+	        $returnValue=null;
 	        openssl_x509_export($cert, $returnValue);
 	        if(isset($outputFile)) $certContent = $returnValue;
 	        else $this->put($returnValue);
 	        // exports private key
-	        openssl_pkey_export($privkey, $returnValue, $passphrase);
+	        openssl_pkey_export($privkey, $returnValue, $passPhrase);
 	        if(isset($outputFile)) $certContent.= $returnValue;
 	        else $this->put($returnValue);
 	        

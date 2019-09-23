@@ -56,6 +56,7 @@ if(!defined("CLIENT_NAME")) {
 } 
 
 define("wigiiSystem_PATH", "../../");
+define("wigiiSystem_WEBPATH",wigiiSystem_PATH."../../www/");
 define("CORE_PATH", wigiiSystem_PATH . "core/");
 define("IMPL_PATH", CORE_PATH . "_webImplExecutor/");
 define("CLI_PATH", CORE_PATH . "_cliImplExecutor/");
@@ -70,6 +71,9 @@ define("ADDONS_PATH", wigiiSystem_PATH . "addons/");
 define("TEMPORARYUPLOADEDFILE_path",  wigiiSystem_PATH."tempUploadedFiles/");
 // and client files to enable data manipulation
 if(!defined("NO_CLIENT")) define("FILES_PATH", wigiiSystem_PATH."../../users/" . CLIENT_NAME . "/data/uploadedFiles/");
+
+// wigii version
+include_once(wigiiSystem_WEBPATH."version.php");
 
 //load the class paths
 include (IMPL_PATH . "autoload.php");

@@ -50,4 +50,30 @@ class WigiiWebSocketFL extends FuncExpVMAbstractFL
 	public function wssrvStop($args) {
 		return $this->getWebSocketServer()->stop($this->getPrincipal());
 	}	
+	
+	/**
+	 * Assigns a value to a variable
+	 * FuncExp signature : <code>wsassign(varName,varValue)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) varName: String. Name of the js variable to which assign a value
+	 * - Arg(1) varValue: mixed. An JSON serializable value to assign to the variable
+	 */
+	public function wsassign($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new WigiiWebSocketServerException('wsassign takes two arguments: the var name and var value', WigiiWebSocketServerException::INVALID_ARGUMENT);
+	    return $this->getWebSocketServer()->jsAssignVar($this->getPrincipal(), $this->evaluateArg($args[0]), $this->evaluateArg($args[1]));
+	}
+	
+	/**
+	 * Evaluates a Func Exp and pushes the result into a callback
+	 * FuncExp signature : <code>wscallback(funcName,fx)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) funcName: String. js function to call back with Func Exp result
+	 * - Arg(1) fx: FuncExp. Func Exp to evaluate
+	 */
+	public function wscallback($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs<2) throw new WigiiWebSocketServerException('wscallback takes two arguments: the callback function name and Func Exp to evaluate', WigiiWebSocketServerException::INVALID_ARGUMENT);
+	    return $this->getWebSocketServer()->jsCallFunction($this->getPrincipal(), $this->evaluateArg($args[0]), $this->evaluateArg($args[1]));
+	}
 }
