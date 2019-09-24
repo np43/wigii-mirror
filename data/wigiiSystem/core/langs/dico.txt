@@ -401,7 +401,7 @@ user:User:Utilisateur:::::::::
 calculatedRole:Calculated user:Utilisateur calculé:::::::::
 wigiiBusyLoading:Loading...:Chargement...:::::::
 wigiiBusySaving:Transmitting to server...:Transmission avec le serveur en cours...:::::::
-wigiiNotLoadedMessage:If page does not load, please click on the HOME menu.:Si la page ne se charge pas, cliquez sur le menu ACCUEIL.:::::::
+wigiiNotLoadedMessage:If the page does not load properly,<br />please click on the refresh button of your browser.:Si la page ne se charge pas correctement,<br />veuillez cliquer sur le bouton rafraichir de votre navigateur.:::::::
 wigiiFilteringLoading:Filtering...:Mise en place du filtre...:::::
 wigiiCredentialExpirationTime:days:jours::::::
 wigiiLoginIntroductionText:<b>Login problems?</b><br />Send an email to :<b>Problème de login?</b><br />Envoyez un email à :::::
