@@ -1256,7 +1256,7 @@ groupLockedExplanation:An other user has open #thisGroup# and is doing a modific
 
 customElementsSelection:custom selection #ofElements#:sélection personnalisée #ofElements#:::::::::
 
-noElementInGroup:Empty #group#. No #element# is loaded.:#Group# vide. Aucun #-element# trouvé.:::::::::
+noElementInGroup:Empty #group#. No #element# is loaded.:#Group# vide. Aucun élément trouvé.:::::::::
 noElementMatchSearchCriteria:No #element# matches the search criteria.:Aucun #-element# ne correspond aux critères de recherche.:::::::::
 noUserFound:<h3 style="margin\:10px;">No user found</h3>:<h3 style="margin\:10px;">Aucun utilisateur trouvé</h3>:::::::::
 noRoleFound:<h3 style="margin\:10px;">No role found</h3>:<h3 style="margin\:10px;">Aucun rôle trouvé</h3>:::::::::
