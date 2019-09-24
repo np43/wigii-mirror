@@ -35,6 +35,7 @@
  * Updated by Wigii.org (Lionel Weber) on 12.12.2018 to support HTMLCode based articles
  * Updated by Wigii.org (Camille Weber) on 14.02.2019 to include on demand a Google site verification code in html header
  * Updated by Wigii.org (Camille Weber) on 04.06.2019 to take advantage of local Wigii NCD libraries instead of requesting www.wigii.org/system/libs
+ * Updated by Wigii.org (Lionel Weber) on 24.09.2019 to include on demand a favicon link in html header
  */
 class WigiiCMSElementEvaluator extends ElementEvaluator
 {
@@ -824,6 +825,7 @@ class WigiiCMSElementEvaluator extends ElementEvaluator
 			$this->mapField2Option('metaKeywords',$intro,$options);
 			$this->mapField2Option('metaAuthor',$intro,$options);
 			$this->mapField2Option('googleSiteVerifCode',$intro,$options);
+			$this->mapField2Option(fs('faviconLink','url'),$intro,$options);
 			$this->mapField2Option('introBgColor',$intro,$options);
 			$this->mapField2Option('introBgAlpha',$intro,$options);
 			$this->mapField2Option(fs('imgIntroBG','url'),$intro,$options);			
@@ -1118,6 +1120,7 @@ JSPUBLICCOMMENTS;
 		$fslForFetch = fsl(fs('siteTitle'),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG','url'));
 		// appends some additional fields
 		if($this->getFieldXml('googleSiteVerifCode')) $fslForFetch->addFieldSelectorInstance(fs('googleSiteVerifCode'));
+		if($this->getFieldXml('faviconLink')) $fslForFetch->addFieldSelectorInstance(fs('faviconLink'));
 		
 		$returnValue = sel($this->getPrincipal(),elementPList(lxInG(lxEq(fs('id'),$options->getValue('groupId'))),
 				lf($fslForFetch,
@@ -1235,6 +1238,8 @@ JSPUBLICCOMMENTS;
 		if(isset($metaAuthor)) $metaAuthor = '<meta name="author" content="'.str_replace('"','',$metaAuthor).'"/>'."\n";		
 		$googleSiteVerifCode= $options->getValue('googleSiteVerifCode');
 		if(!empty($googleSiteVerifCode)) $googleSiteVerifCode= '<meta name="google-site-verification" content="'.$googleSiteVerifCode.'"/>'."\n";
+		$faviconLink= $options->getValue('faviconLink');
+		if(!empty($faviconLink)) $faviconLink = '<link rel="shortcut icon" href="'.$faviconLink.'" type="image/x-icon" />'."\n";
 		//$wigiiJS = '<script type="text/javascript" src="https://resource.wigii.org/assets/js/wigii-core.js"></script>';
 		$wigiiJS = '<script type="text/javascript" src="'.SITE_ROOT_forFileUrl.'assets/js/wigii_'.ASSET_REVISION_NUMBER.'.js"></script>';
 		$wigiiJS .= "<script type='text/javascript' >
@@ -1287,6 +1292,7 @@ $metaDescription $metaKeywords $metaAuthor $googleSiteVerifCode
 $wigiiJS
 $wigiiCSS
 $ncdStdCss
+$faviconLink
 <style>
 $css
 </style>
@@ -1738,6 +1744,7 @@ HTMLCSS;
 			case "intro": 
 				$returnValue = fsl(fs("siteTitle"),fs("metaDescription"),fs("metaKeywords"),fs("metaAuthor"),fs('contentIntro'),fs('enablePublicComments'),fs('introComments'),fs('introBgColor'),fs('introBgAlpha'),fs('imgIntroBG'),fs('imgIntroBG','url')); 
 				if($this->getFieldXml('googleSiteVerifCode')) $returnValue->addFieldSelectorInstance(fs('googleSiteVerifCode'));
+				if($this->getFieldXml('faviconLink')) $returnValue->addFieldSelectorInstance(fs('faviconLink'));
 				break;
 			case "logo": $returnValue = fsl(fs("contentLogo")); break;
 			case "menu": $returnValue = fsl(fs("contentMenu")); break;

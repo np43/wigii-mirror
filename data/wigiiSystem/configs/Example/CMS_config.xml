@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<!-- Config version G314 -->
+<!-- Config version G514 -->
 <CMS>
 
 	<parameters
@@ -152,6 +152,7 @@
 				<introBgColor labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" colorPicker="1" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="0" ><label_l01>Background color of the introduction</label_l01><label_l02>Couleur de fond de l'intro</label_l02></introBgColor>
 				<introBgAlpha labelWidth="270" enableDynamicAttributes="1"  excelExport="auto" type="Strings" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" isInLine="0" ><label_l01>Background opacity of the intro (0=transp. 1=opac)</label_l01><label_l02>Opacité du fond de l'intro (0=transp. 1=opaque)</label_l02></introBgAlpha>
 				<imgIntroBG enableDynamicAttributes="1"  excelExport="auto" type="Urls" onlyUrl="1" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Background image url</label_l01><label_l02>Url pour image de fond</label_l02></imgIntroBG>
+				<faviconLink enableDynamicAttributes="1"  excelExport="auto" type="Urls" onlyUrl="1" require='0' disabled='notNullAndNotEq(contentType,"intro")' expand="1" htmlArea="1" activateHtmlArea="0" fullToolbarHtmlArea="1" isInLine="1" ><label_l01>Custom favicon url</label_l01><label_l02>Url pour une favicon personnalisée</label_l02></faviconLink>
 			<groupIntro groupEnd="1" expand="1"/>
 			<groupContent groupStart="1"><label_l01>Article</label_l01><label_l02>Article</label_l02></groupContent>
 				<contentPosition excelExport="auto" type="Numerics" require="0" hidden="1" clearOnCopy="1"><label_l01>Position</label_l01><label_l02>Position</label_l02></contentPosition>
