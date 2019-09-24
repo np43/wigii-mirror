@@ -1694,6 +1694,8 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					// binds js events on new field
 					var newField = field.formHelper().field(fieldMap[fieldName]);
 					newField.$.find('.select2, .cke').remove();
+					newField.$.removeAttr('data-select2-id');
+					$("option", newField.$).removeAttr('data-select2-id');
 					if(noSubmitOnEnter) {
 						newField.$.find(':not(textarea):input').keydown(function(e){ if(e.keyCode == 13){ e.stopPropagation(); e.preventDefault(); $(this).change();}});
 					}

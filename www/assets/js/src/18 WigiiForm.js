@@ -634,7 +634,7 @@ function addJsCodeAfterFormIsShown(formId, lang, templateFilter, templateFile){
 		}
 		
 		// CWE 06.09.2019 adds translations to select2 ajax messages
-		options.language = lang;		
+		options.language = lang;
 		
 		current.select2(options);
 	});
