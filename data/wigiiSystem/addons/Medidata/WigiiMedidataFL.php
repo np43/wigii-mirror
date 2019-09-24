@@ -1485,8 +1485,10 @@ MDTINVOICERESPSTATUS;
 		$xml->setAttribute('salutation', $this->formatValue($patient, 'title'));
 		$this->createXmlElement($xml, 'familyname', $options, $this->assertNotNull($patient, 'last_name'));
 		$this->createXmlElement($xml, 'givenname', $options, $this->assertNotNull($patient, 'first_name'));
+		$streetDetails = $this->splitStreetDetails($this->assertNotNull($patient, 'address','street'));
+		if($streetDetails['subAddressing']) $this->createXmlElement($xml, 'subaddressing', $options, substr($streetDetails['subAddressing'],0,35));
 		$xml = $this->createXmlElement($xml, 'postal', $options);
-		$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($patient, 'address','street'));
+		$this->createXmlElement($xml, 'street', $options, $streetDetails['street']);
 		$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($patient, 'address','zip_code'));
 		$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($patient, 'address','city'));
 		// guarantor
@@ -1496,8 +1498,10 @@ MDTINVOICERESPSTATUS;
 		if(!empty($patient->getFieldValue('tutor_last_name'))) {
 			$this->createXmlElement($xml, 'familyname', $options, $this->assertNotNull($patient, 'tutor_last_name'));
 			$this->createXmlElement($xml, 'givenname', $options, $this->assertNotNull($patient, 'tutor_first_name'));
+			$streetDetails = $this->splitStreetDetails($this->assertNotNull($patient, 'tutor_address','street'));
+			if($streetDetails['subAddressing']) $this->createXmlElement($xml, 'subaddressing', $options, substr($streetDetails['subAddressing'],0,35));
 			$xml = $this->createXmlElement($xml, 'postal', $options);
-			$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($patient, 'tutor_address','street'));
+			$this->createXmlElement($xml, 'street', $options, $streetDetails['street']);
 			$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($patient, 'tutor_address','zip_code'));
 			$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($patient, 'tutor_address','city'));
 		}
@@ -1506,8 +1510,10 @@ MDTINVOICERESPSTATUS;
 			$xml->setAttribute('salutation', $this->formatValue($patient, 'title'));
 			$this->createXmlElement($xml, 'familyname', $options, $this->assertNotNull($patient, 'last_name'));
 			$this->createXmlElement($xml, 'givenname', $options, $this->assertNotNull($patient, 'first_name'));
+			$streetDetails = $this->splitStreetDetails($this->assertNotNull($patient, 'address','street'));
+			if($streetDetails['subAddressing']) $this->createXmlElement($xml, 'subaddressing', $options, substr($streetDetails['subAddressing'],0,35));
 			$xml = $this->createXmlElement($xml, 'postal', $options);
-			$this->createXmlElement($xml, 'street', $options, $this->assertNotNull($patient, 'address','street'));
+			$this->createXmlElement($xml, 'street', $options, $streetDetails['street']);
 			$this->createXmlElement($xml, 'zip', $options, $this->assertNotNull($patient, 'address','zip_code'));
 			$this->createXmlElement($xml, 'city', $options, $this->assertNotNull($patient, 'address','city'));
 		}
@@ -1964,13 +1970,28 @@ MDTINVOICERESPSTATUS;
 		// validates xml document against given schema
 		if(!$xmlDoc->schemaValidate($schemaPath)) {
 			$xmlErrors = libxml_get_errors();
-			$exception = 'xml document is not valid against schema '.$schema;
-			$fatalError=false;
+			//$exception = 'xml document is not valid against schema '.$schema;
+			$exception = 'XML document is not valid:';
+			$fatalError=false; $parsedErrors = 0;
+			$unparsedErrors = '';
 			foreach($xmlErrors as $xmlError) {
 				if($xmlError->code == 3083) continue; /* skips Warning XML_SCHEMAP_WARN_SKIP_SCHEMA */
-				$exception .= "\n".'XML error '.$xmlError->code.' on line '.$xmlError->line.': '.$xmlError->message;
+				//$exception .= "\n".'XML error '.$xmlError->code.' on line '.$xmlError->line.': '.$xmlError->message;
+				$xmlErrorDetails = null;
+				if(preg_match("/^Element '\{.*\}(\w+)'(, attribute '(.*)')?: \[.*\] (.*)$/", $xmlError->message,$xmlErrorDetails)!==false && !empty($xmlErrorDetails)) {
+				    $exception .= "<br/>Element <b>".$xmlErrorDetails[1].'</b>'; // element
+				    if($xmlErrorDetails[3]) {
+				        $exception .= ' attribute <b>'.$xmlErrorDetails[3].'</b>';
+				    }
+				    $exception .= ":<br/>";
+				    $exception .= $xmlErrorDetails[4];
+				    $parsedErrors++;
+				}
+				else $unparsedErrors .= "</br>".$xmlError->message;				
 				$fatalError = true;
 			}
+			// shows unparsed errors only if no parsed errors
+			if($parsedErrors==0) $exception .= $unparsedErrors;
 			if($fatalError) $exception = new WigiiMedidataException($exception,WigiiMedidataException::XML_VALIDATION_ERROR);
 			else $exception=null;
 		}
@@ -2116,6 +2137,30 @@ MDTINVOICERESPSTATUS;
 	 * @throws WigiiMedidataException if assertion fails
 	 */
 	protected function assertCantonNotNull($element,$fieldName) {return $this->assertCanton($element, $fieldName,false);}	
+	
+	/**
+	 * Splits a detailed street by lines and returns an array of the form
+	 * [street=> Last line of street details, subAddressing => String. Other lines}
+	 * @param String $street
+	 * @return array
+	 */
+	protected function splitStreetDetails($street) {
+	    $lines = preg_split('/\n/', $street);
+	    $returnValue = array();
+	    if($lines===false) $returnValue['street'] = $street;
+	    else {
+	        $n = count($lines);
+	        $returnValue['subAddressing'] = '';
+	        for($i=0;$i<$n;$i++) {
+	            if($i<$n-1) {
+	                $returnValue['subAddressing'] .= "\n".$lines[$i];
+	            }
+	            else $returnValue['street'] = $lines[$i];
+	        }
+	    }
+	    return $returnValue;
+	}
+	
 	/**
 	 * Formats and translates a field value using the Wigii TRM
 	 * @param Element $element element from which to get the field value

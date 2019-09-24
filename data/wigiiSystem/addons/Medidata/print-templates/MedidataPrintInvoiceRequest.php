@@ -225,7 +225,7 @@ table.vatSummary td:last-child, table.vatSummary th:last-child {
             </div>
             <div class="field patient">
             	<div class="label">Rue</div>
-            	<div class="value"><?=$xmlVal($tiersXml,'./patient/person/postal/street')?></div>
+            	<div class="value"><?=($xmlVal($tiersXml,'./patient/person/subaddressing')?$xmlVal($tiersXml,'./patient/person/subaddressing').'&nbsp;&#183;&nbsp;':'').$xmlVal($tiersXml,'./patient/person/postal/street')?></div>
             </div>
             <div class="field patient">
             	<div class="label">NPA</div>
