@@ -787,8 +787,8 @@ importInMultilanguageExplanation:For multilanguage values, you need one column p
 importInProcessExplanation:First select the #group# in which you want to import data, then define the headers\:<ul><li>this list is already completed with the current fields</li><li>you can delete some of them (new ones will be invalid)</li><li>all separators must match</li></ul>:Premiérement sélectionnez #group# dans lequel vous désirez faire l'import, puis définissez les en-têtes\:<ul><li>la liste actuelle est déjà complétée avec les champs définissant #anElement#</li><li>vous pouvez supprimer les en-têtes non nécessaire (tout en-tête ajoutée serait invalide)</li><li>tous les séparateurs doivent être identique</li></ul>:::::::::
 importInRawData:Raw data to import (CSV format):Données brut à importer (format CSV):::::::::
 importAvailableHeaders:Here is the list of headers you can use in your import file:Voici la liste des en-têtes que vous pouvez utiliser dans votre fichier d'import::::::
-noDataToImport:No data to import.:Aucune données à importer.:::::
-elementsImported:#-elements# imported.:#-elements# importés.:
+noDataToImport:No data to import.:Aucune donnée à importer.:::::
+elementsImported:#-elements# imported.:éléments importés.:
 csvFile:CSV file:Fichier CSV:
 
 trackHistoryChanged:changed:a modifié:::::::::
@@ -813,8 +813,8 @@ fieldKeyMustBeInHeader:Field key must appear in the header list.:Le champ clé d
 ifElementIdInHeaderFieldKeyMustBeElementId:If you provide #element# ids, then "#element# id" must be used as key field.:Si vous donnez les ids #ofElements#, vous devez choisir comme champ clé "Id #ofElement#."::::::
 elementsUpdated:#-elements# updated.:#-elements# mis à jour.:
 elementsHaventBeenFound:#-elements# are not corresponding to any existing #-element#.:#-elements# ne correspondent a aucun #anElement# existant.:::
-clicHereToImportNoneExistingElements:Clic here to import remaining #-elements#...:Cliquez ici pour importer #elements# restant...:
-noDataToImport:No data to update.:Aucune données à mettre-à-jour.:::::
+clicHereToImportNoneExistingElements:Clic here to import remaining #-elements#...:Cliquez ici pour importer #elements# restants...:
+noDataToImport:No data to update.:Aucune donnée à mettre-à-jour.:::::
 
 findDuplicatesMenuItem:Find duplicates...:Trouver les doublons...::::
 finDuplicatesInGroupId:Find duplicates in #group#:Trouver les duplicatas dans #group#:
@@ -1003,7 +1003,7 @@ state_locked:Locked:Vérouillé:::::::::
 state_lock:Lock:Vérouiller:::::::::
 state_blocked:Blocked:Bloqué:::::::::
 state_block:Block:Bloquer:::::::::
-state_noStatus:No status defined:Aucun status défini:::::::::
+state_noStatus:No status defined:Aucun statut défini:::::::::
 state_ownLocked:Locked by you:Vérouillé par vous-même:::::::::
 lockedThe:Locked on :Vérrouillé le :::::::
 deprecatedThe:Deprecated on :Obsolète le :::::::
@@ -1257,7 +1257,7 @@ groupLockedExplanation:An other user has open #thisGroup# and is doing a modific
 customElementsSelection:custom selection #ofElements#:sélection personnalisée #ofElements#:::::::::
 
 noElementInGroup:Empty #group#. No #element# is loaded.:#Group# vide. Aucun élément trouvé.:::::::::
-noElementMatchSearchCriteria:No #element# matches the search criteria.:Aucun #-element# ne correspond aux critères de recherche.:::::::::
+noElementMatchSearchCriteria:No #element# matches the search criteria.:Aucun élément ne correspond aux critères de recherche.:::::::::
 noUserFound:<h3 style="margin\:10px;">No user found</h3>:<h3 style="margin\:10px;">Aucun utilisateur trouvé</h3>:::::::::
 noRoleFound:<h3 style="margin\:10px;">No role found</h3>:<h3 style="margin\:10px;">Aucun rôle trouvé</h3>:::::::::
 noGroupFound:<h3 style="margin\:10px;">No #group# found</h3>:<h3 style="margin\:10px;">Aucun #-group# trouvé</h3>:::::::::
