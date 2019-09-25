@@ -9,7 +9,6 @@ use Ratchet\Server\IoServer;
 use Ratchet\WebSocket\WsServer;
 use Ratchet\WebSocket\WsServerInterface;
 use Ratchet\Http\HttpServer;
-use Ratchet\Http\HttpServerInterface;
 use Ratchet\Http\OriginCheck;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -305,7 +304,7 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
      * @throws WigiiWebSocketServerException INVALID_CONNECTION if connection is not valid
      */
     public function assertConnectionIsValid($connectionId) {
-        if(!$this->isConnectionValid($connectionId)) throw new WigiiWebSocketServerException('connection id '.$connectionId.' is invalid.', WigiiWebSocketServerException::INVALID_CONNECTION);
+        if(!$this->isConnectionValid($connectionId)) throw new WigiiWebSocketServerException('connection '.$connectionId.' is invalid.', WigiiWebSocketServerException::INVALID_CONNECTION);
     }
     
     // Administration

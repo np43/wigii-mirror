@@ -1027,7 +1027,6 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 				toUpdate.connectedUsers[self.context.connectionId] = {username:wigiiApi.getUsername(),connectionId:self.context.connectionId};
 				// prepares fx
 				var fx = 'ctlSeq(wsJoinGroup("'+self.options.groupName+'"),wsForwardToGroup("'+self.options.groupName+'",wsCallback("wigii().getPresenceService().impl.onUpdateSharedModel",wsShareDataInGroup(base64json2obj("'+$.base64Encode(JSON.stringify(toUpdate))+'"),"'+self.options.groupName+'"))))';
-				//wigiiApi.log('ready to call fx '+fx);
 				// calls fx trough web socket
 				wigiiApi.webSocketCallFx(self.context.ws,fx);
 			};
@@ -1039,10 +1038,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 			// GUI actions
 			
 			self.impl.clickOnUser = function(user) {
-				wigii().log("click on "+user.username+' connected through '+user.connectionId);
+				// prepares fx
+				var fx = 'wsForwardToPeer("'+user.connectionId+'",wsCallback("wncd.popup","Hello '+user.username+'! My name is '+wigiiApi.getUsername()+'"))';
+				// calls fx trough web socket
+				wigiiApi.webSocketCallFx(self.context.ws,fx);
 			};
 			self.impl.clickOnEveryone = function() {
-				wigii().log("click on everyone");
+				// prepares fx
+				var fx = 'wsForwardToGroup("'+self.options.groupName+'",wsCallback("wncd.popup","Hello everyone! My name is '+wigiiApi.getUsername()+'"))';
+				// calls fx trough web socket
+				wigiiApi.webSocketCallFx(self.context.ws,fx);
 			};
 			
 			// startup
