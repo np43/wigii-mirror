@@ -44,7 +44,7 @@ class WigiiWebSocketFL extends FuncExpVMAbstractFL
     // Func Exp library
     
     /**
-	 * Stops Wigii web socket server
+	 * Stops Wigii web socket server.
 	 * FuncExp signature : <code>wsSrvStop()</code>
 	 */
 	public function wsSrvStop($args) {
@@ -59,7 +59,7 @@ class WigiiWebSocketFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Assigns a value to a variable
+	 * Assigns a value to a variable.
 	 * FuncExp signature : <code>wsAssignVar(varName,varValue)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) varName: String. Name of the js variable to which assign a value
@@ -72,7 +72,7 @@ class WigiiWebSocketFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Evaluates a Func Exp and pushes the result into a callback
+	 * Evaluates a Func Exp and pushes the result into a callback.
 	 * FuncExp signature : <code>wsCallback(funcName,fx)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) funcName: String. js function to call back with Func Exp result
@@ -85,7 +85,7 @@ class WigiiWebSocketFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Evaluates a Func Exp and pushes the result to a peer
+	 * Evaluates a Func Exp and pushes the result to a peer.
 	 * FuncExp signature : <code>wsForwardToPeer(connectionId,fx)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) connectionId: String. A currently open socket id
@@ -105,7 +105,7 @@ class WigiiWebSocketFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Evaluates a Func Exp and pushes the result to all open connections into a group
+	 * Evaluates a Func Exp and pushes the result to all open connections into a group.
 	 * FuncExp signature : <code>wsForwardToGroup(groupName,fx)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) groupName: String. An existing group
@@ -125,7 +125,7 @@ class WigiiWebSocketFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Creates a new group (and joins to it)
+	 * Creates a new group (and joins to it).
 	 * FuncExp signature : <code>wsCreateGroup(groupName,accessKey=null)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) groupName: String. Group name, should be unique for whole wigii client
@@ -143,7 +143,7 @@ class WigiiWebSocketFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
-	 * Join an existing group or create a new group
+	 * Join an existing group or create a new group.
 	 * FuncExp signature : <code>wsJoinGroup(groupName,accessKey=null)</code><br/>
 	 * Where arguments are :
 	 * - Arg(0) groupName: String. Group name, should be unique for whole wigii client

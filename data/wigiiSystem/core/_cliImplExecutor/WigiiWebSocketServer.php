@@ -322,7 +322,8 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
         // gets server configuration
         $this->port = $this->getParameter('port');
         if($this->port==null) $this->port='8080';
-        $this->httpHost = 'localhost';
+        $this->httpHost = $this->getParameter('httpHost');
+        if($this->httpHost==null) $this->httpHost = 'localhost';
         $this->ipAddress = '0.0.0.0';
         $sslCert = $this->getParameter('sslCert');
         $passPhrase = $this->getParameter('passPhrase');
