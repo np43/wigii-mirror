@@ -327,8 +327,13 @@ function resolveFilePath($path) {
  * Returns some html code to include favicon link
  */
 function includeFaviconLink() {
+    $authS = ServiceProvider::getAuthenticationService();
+    $p = $authS->getMainPrincipal();
+    $configS = ServiceProvider::getConfigService();
+    $faviconLink = $configS->getParameter($p, null, "faviconLink");
     $returnValue = '';
-    if(file_exists(CLIENT_WEB_PATH."favicon.ico")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.ico" type="image/x-icon" />';
+    if((string)$faviconLink!="") $returnValue = '<link rel="shortcut icon" href="'.(substr($faviconLink,0,4)=="http" ? $faviconLink : SITE_ROOT_forFileUrl.$faviconLink).'" type="image/x-icon" />';
+    else if(file_exists(CLIENT_WEB_PATH."favicon.ico")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.ico" type="image/x-icon" />';
     else if(file_exists(CLIENT_WEB_PATH."favicon.jpg")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.jpg" type="image/x-icon" />';
     else if(file_exists(CLIENT_WEB_PATH."favicon.gif")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.gif" type="image/x-icon" />';
     else if(file_exists(CLIENT_WEB_PATH."favicon.png")) $returnValue = '<link rel="shortcut icon" href="'.SITE_ROOT_forFileUrl.CLIENT_WEB_URL.'favicon.png" type="image/x-icon" />';
