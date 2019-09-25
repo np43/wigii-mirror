@@ -24,6 +24,8 @@ REM
 SET PREVIOUS_PATH=%CD%
 cd %~dp0
 if "%WIGII_PHP_ENV%"=="" (set WIGII_PHP_ENV=C:\wamp\bin\php\php7.3.1)
+if "%WIGII_CLI_OUT%"=="" (set WIGII_CLI_OUT=out.log)
+if "%WIGII_CLI_ERR%"=="" (set WIGII_CLI_ERR=err.log)
 SET WIGII_CLI_PHP_ENGINE=%WIGII_PHP_ENV%\php.exe
 IF NOT exist %WIGII_CLI_PHP_ENGINE% (echo Wigii ERREUR: %WIGII_CLI_PHP_ENGINE% has not been found & set RETURNVALUE=404 & goto end)
 
@@ -32,7 +34,7 @@ if exist %WIGII_PHP_ENV%\php.ini (set WIGII_CLI_PHP_INI=%WIGII_PHP_ENV%\php.ini)
 
 set OPENSSL_CONF=%WIGII_PHP_ENV%\extras\ssl\openssl.cnf
 
-if "%1"=="-shell" (%WIGII_CLI_PHP_ENGINE% -c %WIGII_CLI_PHP_INI% -f main.php -- %*) else (%WIGII_CLI_PHP_ENGINE% -c %WIGII_CLI_PHP_INI% -f main.php -- %* > out.log 2> err.log)
+if "%1"=="-shell" (%WIGII_CLI_PHP_ENGINE% -c %WIGII_CLI_PHP_INI% -f main.php -- %*) else (%WIGII_CLI_PHP_ENGINE% -c %WIGII_CLI_PHP_INI% -f main.php -- %* > %WIGII_CLI_OUT% 2> %WIGII_CLI_ERR%)
 set RETURNVALUE=%ERRORLEVEL%
 :end
 cd %PREVIOUS_PATH%
