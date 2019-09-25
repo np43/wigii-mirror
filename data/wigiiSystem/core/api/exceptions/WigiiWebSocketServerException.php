@@ -29,6 +29,21 @@
 class WigiiWebSocketServerException extends ServiceException
 {	
     
+    /**
+     * Trying to create a new group with a name already in use
+     */
+    const GROUP_ALREADY_EXISTS = 5101;
+    
+    /**
+     * Connection ID points to an invalid connection. It should be removed or discarded.
+     */
+    const INVALID_CONNECTION = 5102;
+    
+    /**
+     * Group name does not exist
+     */
+    const INVALID_GROUP = 5103;
+    
 	public function __construct($message = "", $code = parent::UNKNOWN_ERROR, $previous=null) {
 		parent::__construct($message, $code, $previous);
 	}

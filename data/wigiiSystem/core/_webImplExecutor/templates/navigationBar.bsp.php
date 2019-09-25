@@ -170,10 +170,10 @@ if($p->isRealUserPublic()) {
                 <li class="dropdown">
                     <a href="#" class="username data-submenu" data-submenu data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?= $username; ?> <span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                        <li style="background: #EDEFF2;">
+                        <li id="userMenuUsername" style="background: #EDEFF2;" data-wigii-username="<?= $realUser->getUsername() ?>">
                             <a href="#" style=""><?= $transS->t($p, 'username') ?>: <?= $realUser->getUsername() ?></a>
                         </li>
-                        <li style="background: #EDEFF2;">
+                        <li id="userMenuUserEmail" style="background: #EDEFF2;" data-wigii-userEmail="<?= $p->getValueInGeneralContext('email') ?>">
                             <a href="#" style=""><?= $transS->t($p, 'principalEmail') ?>: <?= $p->getValueInGeneralContext('email') ?></a>
                         </li>
                         <?
@@ -270,6 +270,14 @@ if($p->isRealUserPublic()) {
                 				?><a href="#" <?
                 				?>onclick="update('mainDiv/NoWigiiNamespace/Home/c'); return false;"<?
                 				?>>Light Client</a><?
+                			?></li><?
+            			}
+            			// Light Client
+            			if(defined("WEB_PRESENCESERVICE") && defined("WEB_WNCD")){
+            			    ?><li id="presenceService"><?
+                				?><a href="#" <?
+                					?>onclick="wigii().getPresenceService().show();"<?
+                					?>>Presences...</a><?
                 			?></li><?
             			}
             			

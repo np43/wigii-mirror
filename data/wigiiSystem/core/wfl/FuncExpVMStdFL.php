@@ -910,6 +910,24 @@ class FuncExpVMStdFL extends FuncExpVMAbstractFL
 	}
 	
 	/**
+	 * Deserializes an stdClass instance which has been serialized using base64_encode(json_encode(stdClass))<br/>
+	 * FuncExp signature : <code>base64json2obj(str)</code><br/>
+	 * Where arguments are :
+	 * - Arg(0) str: A base 64 string around a json string
+	 * @return stdClass the deserialized object
+	 */
+	public function base64json2obj($args) {
+	    $nArgs = $this->getNumberOfArgs($args);
+	    if($nArgs>0) {
+	        $returnValue = base64_decode($this->evaluateArg($args[0]));
+	        if($returnValue===false) throw new FuncExpEvalException('error decoding base64 json string',FuncExpEvalException::INVALID_ARGUMENT);
+	        $returnValue = json_decode($returnValue);
+	        return $returnValue;
+	    }
+	    else return null;
+	}
+	
+	/**
 	 * Constructs a DataFlowActivitySelector instance that wraps a FuncExp.<br/>
 	 * FuncExp signature is: <code>dfasfx(funcExp)</code><br/>
 	 * Where arguments are :

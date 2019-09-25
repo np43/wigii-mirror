@@ -927,6 +927,129 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		});
 		
 		ncddoc(function(){/**
+		 * Wigii Presence Service
+		 * Manages presence of connected users
+		*/},
+		wigiiApi.PresenceService = function(options) {
+			var self = this;
+			self.className = 'PresenceService';
+			self.instantiationTime = Date.now();
+			self.ctxKey = wigiiApi.ctxKey+'_'+self.className;
+			self.options = options || {};
+			/*
+			self.context = {
+				sharedModel:{connectedUsers:{
+					"12345":{username:"XXX",connectionId:"12345"},
+					"12346":{username:"YYY",connectionId:"12346"}
+				}}
+			};
+			*/
+			self.context = {
+				sharedModel:{connectedUsers:{}}
+			};
+			
+			self.impl = {};
+			
+			// Initializes default options
+			
+			if(!self.options.wsUrl) {
+				var url = new URL(wigiiApi.SITE_ROOT);
+				self.options.wsUrl = 'wss://'+url.host+':8080'+url.pathname.substring(0,url.pathname.length-1);
+			}
+			if(!self.options.groupName) self.options.groupName = 'wigii.'+self.className;		
+			
+			// Service methods
+			
+			/**
+			 * Displays presence service panel on the screen
+			 */
+			self.show = function() {
+				if(!self.impl.panel) wncd.popup(function(popup){
+					self.impl.panel = popup.body().wncd('html');
+					popup.remove(function(){self.impl.panel = undefined;});
+					self.impl.renderPanel();
+				});
+				else self.impl.renderPanel();
+			};
+			
+			// Implementation
+			
+			self.impl.renderPanel = function() {
+				var html = self.impl.panel.reset().htmlBuilder();
+				// renders connected users
+				var users = self.context.sharedModel.connectedUsers;
+				var n=0;
+				for(var cnxId in users) {
+					var user = users[cnxId];
+					html.tag('span',
+						'class','connectedUser tag ui-corner-all',
+						'style','padding:2px;margin:2px;cursor:pointer;',
+						'data-wigii-cnxId',cnxId)
+					.out(user.username).$tag('span');
+					n++;
+				}
+				if(n==0) html.tag('p').out("no connected users").$tag('p');
+				else {
+					// renders everyone tag
+					html.tag('span',
+						'class','everyone tag ui-corner-all',
+						'style','padding:2px;margin:2px;cursor:pointer;')
+					.out('Everyone').$tag('span');
+				}
+				html.emit();
+				// adds click listener on user tags
+				self.impl.panel.$().find('span.connectedUser').click(function(){
+					var user = self.context.sharedModel.connectedUsers[$(this).attr('data-wigii-cnxId')];
+					self.impl.clickOnUser(user);
+				});
+				// adds click listener on everyone tag
+				self.impl.panel.$().find('span.everyone').click(self.impl.clickOnEveryone);
+			};
+			
+			self.impl.bind = function() {				
+				// open web socket to wigii server
+				self.context.ws = wigiiApi.openWebSocket(self.options.wsUrl,'wncd',{
+					onError:function() {
+						wigiiApi.publishException(new wigiiApi.createServiceException('could not open web socket',wigiiApi.errorCodes.UNKNOWN_ERROR));
+					},
+					onOpen:function() {
+						wigiiApi.webSocketCallFx(self.context.ws,'wsGetConnectionId()',self.impl.onSetConnectionId);
+					}
+				});
+			};
+			
+			// Server events
+			
+			self.impl.onSetConnectionId = function(connectionId) {
+				self.context.connectionId = connectionId;
+				// prepares model update
+				var toUpdate = {connectedUsers:{}};
+				toUpdate.connectedUsers[self.context.connectionId] = {username:wigiiApi.getUsername(),connectionId:self.context.connectionId};
+				// prepares fx
+				var fx = 'ctlSeq(wsJoinGroup("'+self.options.groupName+'"),wsForwardToGroup("'+self.options.groupName+'",wsCallback("wigii().getPresenceService().impl.onUpdateSharedModel",wsShareDataInGroup(base64json2obj("'+$.base64Encode(JSON.stringify(toUpdate))+'"),"'+self.options.groupName+'"))))';
+				//wigiiApi.log('ready to call fx '+fx);
+				// calls fx trough web socket
+				wigiiApi.webSocketCallFx(self.context.ws,fx);
+			};
+			self.impl.onUpdateSharedModel = function(sharedModel) {
+				self.context.sharedModel = sharedModel;
+				if(self.impl.panel) self.impl.renderPanel();
+			};
+			
+			// GUI actions
+			
+			self.impl.clickOnUser = function(user) {
+				wigii().log("click on "+user.username+' connected through '+user.connectionId);
+			};
+			self.impl.clickOnEveryone = function() {
+				wigii().log("click on everyone");
+			};
+			
+			// startup
+			self.impl.bind();
+		});
+		
+		ncddoc(function(){/**
 		 * Wigii Field helper.
 		 * A class which helps manage fields lifecycle.
 		*/},
@@ -3520,6 +3643,16 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		});
 		
 		ncddoc(function(){/**
+		 * Returns a PresenceService instance
+		*/},
+		wigiiApi.getPresenceService = function() {
+			if(!wigiiApi['presenceServiceInstance']) {
+				wigiiApi.presenceServiceInstance = new wigiiApi.PresenceService();
+			}
+			return wigiiApi.presenceServiceInstance;
+		});
+		
+		ncddoc(function(){/**
 		 * Returns a JQueryService instance
 		*/},
 		wigiiApi.getJQueryService = function() {
@@ -4162,12 +4295,12 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 					resultHandler(fxResult);
 				};
 				// instructs server to call the callback on return
-				fx = 'wscallback("wigii().webSocketCallbacks.'+fxResultHandler+'",'+fx+')';
+				fx = 'wsCallback("wigii().webSocketCallbacks.'+fxResultHandler+'",'+fx+')';
 			}
 			// else if resulHandler is a variable
 			else if(resultHandler) {
 				// assigns result to it
-				fx = 'wsassign("'+resultHandler+'",'+fx+')';
+				fx = 'wsAssignVar("'+resultHandler+'",'+fx+')';
 			}
 			// calls fx
 			ws.send(fx);
@@ -4186,6 +4319,19 @@ window.greq = window.greaterOrEqual = function(a,b){return a>=b;};
 		*/},
 		wigiiApi.lang = function() {
 			return crtLang;
+		});
+		
+		ncddoc(function(){/**
+		 * Returns current real user name
+		*/},
+		wigiiApi.getUsername = function() {
+			return $('ul#navigateMenuBsp li#userMenuUsername').attr('data-wigii-username');
+		});
+		ncddoc(function(){/**
+		 * Returns current real user email
+		*/},
+		wigiiApi.getUserEmail = function() {
+			return $('ul#navigateMenuBsp li#userMenuUserEmail').attr('data-wigii-useremail');
 		});
 		
 		// Functions

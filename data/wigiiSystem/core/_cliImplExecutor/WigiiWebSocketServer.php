@@ -63,14 +63,27 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
      */
     protected $clientWorkers;
     /**
-     * @var SplObjectStorage set of open sockets for current wigii client.
+     * @var array set of open sockets for current wigii client. (array key is connection Id)
      */
     protected $connections;
     /**
      * @var ConnectionInterface current active connection
      */
     private $crtConnection;
-
+    /**
+     * @var boolean outbound on current connection is disabled
+     */
+    private $crtConnectionOutboundDisabled;
+    /**
+     * @var array an array of outbounding connection ids (key and values are connection ids)
+     */
+    private $outboundingConnections;
+    /**
+     * @var array an array of outbounding group names (key and values are group names)
+     */
+    private $outboundingGroups;
+    
+    
     // Server network details
     
     protected $httpHost;
@@ -267,6 +280,34 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
         return $this->crtConnection->wigiiProtocol;
     }
     
+    /**
+     * Returns current connection id
+     */
+    public function getCrtConnectionId() {
+        if(!isset($this->crtConnection)) throw new WigiiWebSocketServerException('no web socket currently open', WigiiWebSocketServerException::INVALID_STATE);
+        return $this->crtConnection->wigiiConnectionId;
+    }
+    
+    /**
+     * Checks that a connection ID is still a valid open connection
+     * @param String $connectionId
+     * @return boolean true if connection id points to a valid open connection, else false
+     */
+    public function isConnectionValid($connectionId) {
+        if(!isset($this->connections)) return false;
+        if(!isset($connectionId)) throw new WigiiWebSocketServerException('connectionId cannot be null',WigiiWebSocketServerException::INVALID_ARGUMENT);
+        return ($this->connections[$connectionId]!=null);
+    }
+    
+    /**
+     * Asserts that a connection ID is a valid open connection
+     * @param String $connectionId
+     * @throws WigiiWebSocketServerException INVALID_CONNECTION if connection is not valid
+     */
+    public function assertConnectionIsValid($connectionId) {
+        if(!$this->isConnectionValid($connectionId)) throw new WigiiWebSocketServerException('connection id '.$connectionId.' is invalid.', WigiiWebSocketServerException::INVALID_CONNECTION);
+    }
+    
     // Administration
     
     /**
@@ -453,11 +494,25 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
     
     public function onOpen(ConnectionInterface $conn) {
         // registers new connection in list of open connections
-        if(!isset($this->connections)) $this->connections = new SplObjectStorage();
+        if(!isset($this->connections)) $this->connections = array();
         $conn->wigiiProtocol = reset($conn->httpRequest->getHeader('Sec-WebSocket-Protocol'));
         $conn->wigiiSessionId = null;
-        $this->connections->attach($conn);        
-        $this->executionSink()->log('new connection for client '.$this->getClientUrl());
+        $conn->wigiiConnectionId = $this->createConnectionId($conn);
+        $this->connections[$conn->wigiiConnectionId] = $conn;        
+        $this->executionSink()->log('new connection for client '.$this->getClientUrl().' ['.$conn->wigiiConnectionId.']');
+    }
+        
+    protected function createConnectionId($conn) {
+        $returnValue = 'cnx'.floor(microtime(true)*1000);
+        $i=0;
+        if(isset($this->connections)) {
+            while($i<2000) {
+                if(!isset($this->connections[$returnValue.$i])) return $returnValue.$i;
+                $i++;
+            }
+            throw new ListException("not able to generate a unique connection id", ListException::ALREADY_EXISTS);
+        }
+        return $returnValue.$i;
     }
     
     public function onMessage(ConnectionInterface $from, $msg) {
@@ -465,6 +520,7 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
         // switches context and loads current session
         //$from->wigiiSessionId = $this->switchContext($from->wigiiSessionId);
         $p = ServiceProvider::getAuthenticationService()->getMainPrincipal();
+        $this->resetOutbounding($p);
         $this->crtConnection = $from;
         try {
             $this->debugLogger()->write($msg);
@@ -487,17 +543,92 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
             ServiceProvider::getClientAdminService()->signalFatalError($e);            
         }
         $this->crtConnection = null;
+        $this->resetOutbounding($p);
     }
     
     /**
-     * Sends a message to current open web socket
+     * Sends a message to current open web socket (and/or outbound list of connections and groups)
      * @param Principal $p current principal handling the web socket connection
      * @param String $msg a message to send to the browser. Should be compatible with current protocol
      */
     public function sendMessage($p,$msg) {
         if(!isset($this->crtConnection)) throw new WigiiWebSocketServerException('no web socket currently open', WigiiWebSocketServerException::INVALID_STATE);
         $this->debugLogger()->write($msg);
-        $this->crtConnection->send($msg);
+        $alreadySent = array();
+        // if outbound is not disabled, sends to current socket
+        if(!$this->crtConnectionOutboundDisabled) {
+            $this->crtConnection->send($msg);
+            $alreadySent[$this->crtConnection->wigiiConnectionId] = true;
+        }
+        // sends to all outbounded group participants
+        if(isset($this->outboundingGroups)) {
+            foreach($this->outboundingGroups as $groupName) {
+                if(isset($this->wsGroupConnections[$groupName])) {
+                    foreach($this->wsGroupConnections[$groupName] as $connectionId => $v) {
+                        if(isset($this->connections[$connectionId]) && !$alreadySent[$connectionId]) {
+                            $this->connections[$connectionId]->send($msg);
+                            $alreadySent[$connectionId] = true;
+                        }
+                    }
+                }
+            }
+        }
+        // sends to all registered outbounded connections
+        if(isset($this->outboundingConnections)) {
+            foreach($this->outboundingConnections as $connectionId) {
+                if(isset($this->connections[$connectionId]) && !$alreadySent[$connectionId]) {
+                    $this->connections[$connectionId]->send($msg);
+                    $alreadySent[$connectionId] = true;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Resets outbounding settings to default
+     * @param Principal $principal current principal
+     */    
+    public function resetOutbounding($principal) {
+        $this->crtConnectionOutboundDisabled = false;
+        $this->outboundingConnections = null;
+        $this->outboundingGroups = null;
+    }
+    
+    /**
+     * Disables any output message on the current connection
+     * @param Principal $principal current principal
+     */
+    public function disableCrtConnectionOutbound($principal) {
+        $this->crtConnectionOutboundDisabled=true;
+    }
+    /**
+     * Enables output messages on the current connection (true by default)
+     * @param Principal $principal current principal
+     */
+    public function enableCrtConnectionOutbound($principal) {
+        $this->crtConnectionOutboundDisabled = false;
+    }
+    
+    /**
+     * Registers a connection id in the outbounding list to ensure outbound messages are sent to it 
+     * @param Principal $principal current principal
+     * @param String $connectionId a valid open connection id
+     */
+    public function addOutboundingConnection($principal, $connectionId) {
+        $this->assertConnectionIsValid($connectionId);
+        if(!isset($this->outboundingConnections)) $this->outboundingConnections = array();
+        $this->outboundingConnections[$connectionId] = $connectionId;
+    }
+    
+    /**
+     * Registers a group in the outbounding list to ensure outbound messages are sent to its members
+     * @param Principal $principal current principal
+     * @param String $groupName a valid group
+     */
+    public function addOutboundingGroup($principal, $groupName) {
+        $this->assertGroupExists($principal, $groupName);
+        if(!isset($this->outboundingGroups)) $this->outboundingGroups = array();
+        $this->outboundingGroups[$groupName] = $groupName;
     }
     
     /**
@@ -585,7 +716,7 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
     
     public function onClose(ConnectionInterface $conn) {
         // unregisters connection
-        if(isset($this->connections)) $this->connections->detach($conn);
+        if(isset($this->connections)) unset($this->connections[$conn->wigiiConnectionId]);
         $this->executionSink()->log('closing connection for client '.$this->getClientUrl());
     }
     
@@ -615,6 +746,162 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
         $this->doStop($principal);
         $this->executionSink()->log("Server stopped.");
         ExceptionSink::publish($exception);
+    }
+    
+    // Group management
+    
+    /**
+     * @var array map of StdClass instances representing a web socket group. (array key is group name, stdClass is of the form {groupName:String, accessKey:String}
+     */
+    protected $wsGroups;
+    /**
+     * @var array of arrays. Records each group. For each group, records each open connection ids. (array(groupName => array(connectionId => join timestamp)))
+     */
+    protected $wsGroupConnections;
+    
+    /**
+     * Creates a new group
+     * @param Principal $principal current principal executing the process
+     * @param String $connectionId a valid connection ID asking for group creation. It will automatically join.
+     * @param String $groupName desired group name. It should be unique in whole server
+     * @param String $accessKey optional access key to protect group operations
+     * @throws WigiiWebSocketServerException GROUP_ALREADY_EXISTS if group name is already used for an existing group
+     */
+    public function createGroup($principal,$connectionId,$groupName,$accessKey=null) {
+        if(!isset($groupName)) throw new WigiiWebSocketServerException('group name cannot be null', WigiiWebSocketServerException::INVALID_ARGUMENT);
+        // asserts connection id
+        $this->assertConnectionIsValid($connectionId);
+        if(!isset($this->wsGroups)) $this->wsGroups = array();
+        // checks that group not already exists
+        if(isset($this->wsGroups[$groupName])) throw new WigiiWebSocketServerException('Group '.$groupName.' cannot be created, a group with same name already exists', WigiiWebSocketServerException::GROUP_ALREADY_EXISTS);
+        // creates group
+        $this->wsGroups[$groupName] = (object)array('groupName'=>$groupName,'accessKey'=>$accessKey);
+        if(!isset($this->wsGroupConnections)) $this->wsGroupConnections = array();
+        $this->wsGroupConnections[$groupName] = array(); // empty array of connections
+        // joins group
+        $this->joinGroup($principal, $connectionId, $groupName, $accessKey);
+    }
+    
+    /**
+     * Join an existing group or creates one
+     * @param Principal $principal current principal executing the process
+     * @param String $connectionId a valid connection ID asking to join group. Group will be automatically created if not existing.
+     * @param String $groupName group name to join
+     * @param String $accessKey optional access key
+     */
+    public function joinGroup($principal,$connectionId,$groupName,$accessKey=null) {
+        if(!isset($groupName)) throw new WigiiWebSocketServerException('group name cannot be null', WigiiWebSocketServerException::INVALID_ARGUMENT);
+        // asserts connection id
+        $this->assertConnectionIsValid($connectionId);
+        // creates group if not existing
+        if(!isset($this->wsGroups) || $this->wsGroups[$groupName]==null) $this->createGroup($principal, $connectionId, $groupName, $accessKey);
+        // checks access key
+        if($this->wsGroups[$groupName]->accessKey!=$accessKey) throw new WigiiWebSocketServerException('Invalid access key. Not authorized to join group.', WigiiWebSocketServerException::UNAUTHORIZED);
+        // registers connection in group now
+        $this->wsGroupConnections[$groupName][$connectionId] = time();
+    }
+    
+    /**
+     * Leaves an existing group
+     * @param Principal $principal current principal executing the process
+     * @param String $connectionId a valid connection ID asking to leave group. Group will be automatically deleted if everyone left.
+     * @param String $groupName group name to leave
+     */
+    public function leaveGroup($principal,$connectionId,$groupName) {
+        if(!isset($connectionId)) throw new WigiiWebSocketServerException('connection id cannot be null', WigiiWebSocketServerException::INVALID_ARGUMENT);
+        if(!isset($groupName)) throw new WigiiWebSocketServerException('group name cannot be null', WigiiWebSocketServerException::INVALID_ARGUMENT);
+        $groupIsEmpty=false;
+        // removes connection from group
+        if(isset($this->wsGroupConnections) && isset($this->wsGroupConnections[$groupName])) {
+            unset($this->wsGroupConnections[$groupName][$connectionId]);
+            // removes group if empty
+            $groupIsEmpty = empty($this->wsGroupConnections[$groupName]);
+            if($groupIsEmpty) unset($this->wsGroupConnections[$groupName]);
+        }
+        // deletes group if empty
+        if($groupIsEmpty && isset($this->wsGroups)) unset($this->wsGroups[$groupName]);
+    }
+    
+    /**
+     * Checks if a group exists
+     * @param Principal $principal current principal executing the process
+     * @param String $groupName
+     * @return boolean true if group exists, else false
+     */
+    public function groupExists($principal, $groupName) {
+        if(!isset($groupName)) throw new WigiiWebSocketServerException('groupName cannot be null', WigiiWebSocketServerException::INVALID_ARGUMENT);
+        return (isset($this->wsGroups) && $this->wsGroups[$groupName]!=null);
+    }
+    
+    public function assertGroupExists($principal, $groupName) {
+        if(!$this->groupExists($principal, $groupName)) throw new WigiiWebSocketServerException('group '.$groupName.' does not exist', WigiiWebSocketServerException::INVALID_GROUP);
+    }
+    
+    // Storage service
+    
+    private $storedData = array();
+    
+    /**
+     * Stores the value in the server.
+     * @param Object $obj the caller instance saving data in the server (normally $this)
+     * @param String $name a is a logical key under which to store the value.
+     * for example in the ConfigService we store the ConfigFolderPath like this:
+     * ->storeData($this, "ConfigFolderPath", $path); and we get it:
+     * ->getData($this, "ConfigFolderPath");
+     */
+    public function storeData($obj, $name, $value) {
+        $k = $this->getKey($obj, $name);
+        $this->storedData[$k] = $value;
+        return;
+    }
+    
+    /**
+     * Gets the value stored in the server
+     * @param Object $obj the caller instance which saved the data in the session (normally $this)
+     * @param String $name a is a logical key under which the value is stored.
+     */
+    public function getData($obj, $name) {
+        $k = $this->getKey($obj, $name);
+        $returnValue = $this->storedData[$k];
+        return $returnValue;
+    }
+    
+    /**
+     * clear the value stored in the server
+     * pass the same obj and name used to store the value.
+     */
+    public function clearData($obj, $name) {
+        $k = $this->getKey($obj, $name);
+        return $this->clearDataKey($k);
+    }
+    
+    /**
+     * clears one specific data key
+     * @param String $key complete storage key
+     */
+    public function clearDataKey($key){
+        unset($this->storedData[$key]);
+        return;
+    }
+    /**
+     * Clears all the pairs (key, value) stored for this object.
+     * @param String|Object $obj obj can be the object which was used to store values, or can be a class name,
+     * in that case all the values of any instances of this class will be cleared from the server.
+     */
+    public function clearObjData($obj) {
+        if(empty($obj)) return;
+        elseif(is_object($obj)) $key = get_class($obj);
+        else $key = $obj;
+        $key = '/'.$key.'_.*/';
+        
+        $objKeys = preg_grep($key, array_keys($this->storedData));
+        foreach($objKeys as $k) {
+            unset($this->storedData[$k]);
+        }
+    }
+    
+    private function getKey($obj, $name){
+        return get_class($obj)."_".$name;
     }
     
     // Implementation
