@@ -13,6 +13,7 @@
 			db_user="wgi"
 			db_pwd="mywgi-pass"
 			db_name="wigii_example"
+			authorizeDirectCalls="0"
 		/>
 	</clients>
 </WebSockets>

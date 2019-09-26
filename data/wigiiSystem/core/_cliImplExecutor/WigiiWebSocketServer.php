@@ -393,7 +393,10 @@ class WigiiWebSocketServer implements MessageComponentInterface, WsServerInterfa
         $comp->enableKeepAlive($this->srvLoop);
         $comp->setStrictSubProtocolCheck(true);
         // checks origin: only allows from same server
-        $comp = new OriginCheck($comp,array($this->httpHost));
+        $allowedOrigins = array($this->httpHost);
+        // except if authorizeDirectCalls=1 then allows also single html file calls
+        if($clientXmlConfig['authorizeDirectCalls']=='1') $allowedOrigins[] = 'null';
+        $comp = new OriginCheck($comp,$allowedOrigins);
         // prepares routing component
         $hostMatcher = $this->httpHost;
         $returnValue->workerRoute = new Route($clientUrl, array('_controller' => $comp), array('Origin' => $this->httpHost), array(), $hostMatcher, array(), array('GET'));
