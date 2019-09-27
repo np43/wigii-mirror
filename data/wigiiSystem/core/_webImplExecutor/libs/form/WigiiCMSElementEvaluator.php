@@ -1375,7 +1375,7 @@ div.wigii-cms.title { color:#$titleTextColor; font-size:$titleTextSize }
 /* background-color of footer */
 div.wigii-globalContainer>div.wigii-footer.wigii-cms.content { background-color:#$footerBgColor; }
 /* text color of footer */
-div.wigii-footer.wigii-cms.content a { color:#$footerTextColor; }
+div.wigii-footer.wigii-cms.content, div.wigii-footer.wigii-cms.content a { color:#$footerTextColor; }
 /* side margin percentage */
 div.wigii-menu #wigii-logo { margin-left:$marginWidth; }
 div.wigii-menu ul { margin-right:$marginWidth; }
